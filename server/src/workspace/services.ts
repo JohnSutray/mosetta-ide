@@ -5,6 +5,8 @@ import { OsWatcher } from '../fs/watcher.js';
 import { RamFs } from '../fs/ram-fs.js';
 import { SearchIndex } from '../search/search-index.js';
 import { LspServer } from '../lsp/server.js';
+import { TerminalHost } from '../term/host.js';
+import { packageManager } from '../env/shell.js';
 import type { Logger } from '../log.js';
 import type { Workspace } from './workspace.js';
 
@@ -13,6 +15,7 @@ export class Services {
   readonly ram: RamFs;
   readonly index: SearchIndex;
   readonly watcher: OsWatcher;
+  readonly terminals: TerminalHost;
   readonly lsp: LspServer[] = [];
 
   private readonly offs: Array<() => void> = [];
@@ -63,6 +66,25 @@ export class Services {
       }),
     );
 
+    this.terminals = new TerminalHost((reason) => ws.hold(reason), log);
+    this.offs.push(
+      this.terminals.on((event) => {
+        switch (event.type) {
+          case 'data':
+            ws.broadcast('term.data', { name: event.name, data: event.data });
+            break;
+          case 'exit':
+            ws.broadcast('term.exit', { name: event.name, exitCode: event.exitCode });
+            break;
+          case 'list':
+            ws.broadcast('term.list', this.terminals.list());
+            break;
+          default:
+            break;
+        }
+      }),
+    );
+
     this.offs.push(
       config.onChange((bundle) => {
         this.os.applySettings(bundle.settings.fs);
@@ -81,6 +103,9 @@ export class Services {
     if (watching) this.watcher.start();
 
     await this.ram.prime();
+
+    await this.primeManifests();
+
     if (this.config.settings.index.enabled) this.index.rebuild();
 
     if (watching) this.watcher.release();
@@ -91,6 +116,13 @@ export class Services {
     });
 
     if (this.config.settings.lsp.startOnOpen) this.startLanguageServers();
+  }
+
+  private async primeManifests(): Promise<void> {
+    for (const file of this.ram.files()) {
+      if (!file.path.endsWith('package.json')) continue;
+      await this.ram.peekDoc(file.path).catch(() => undefined);
+    }
   }
 
   private startLanguageServers(): void {
@@ -116,6 +148,27 @@ export class Services {
     }
   }
 
+  openTerminal(options: {
+    name: string;
+    kind?: 'manual' | 'script';
+    command?: string;
+    cwd?: string;
+    cols?: number;
+    rows?: number;
+  }) {
+    const { cwd, ...rest } = options;
+    return this.terminals.open({
+      ...rest,
+      cwd: cwd ? this.ws.resolve(cwd) : this.ws.root,
+    });
+  }
+
+  packageManager(): string {
+    const top = this.ram.listSync('') ?? [];
+    const names = new Set(top.map((entry) => entry.name));
+    return packageManager((file) => names.has(file));
+  }
+
   lspFor(key: string): LspServer | null {
     return this.lsp.find((server) => server.handles(key)) ?? null;
   }
@@ -126,6 +179,7 @@ export class Services {
 
   dispose(): void {
     for (const off of this.offs.splice(0)) off();
+    this.terminals.dispose();
     this.watcher.dispose();
     for (const server of this.lsp.splice(0)) server.dispose();
     this.index.dispose();

@@ -12,6 +12,9 @@ import type {
   SearchStats,
   LogLine,
   LspStatus,
+  NpmScriptInfo,
+  TerminalInfo,
+  TerminalKind,
   WorkspaceId,
   WorkspaceInfo,
   WriteResult,
@@ -55,6 +58,26 @@ export interface Api {
   'lsp.status': { params: null; result: LspStatus[] };
   'lsp.hover': { params: { path: string; line: number; character: number }; result: HoverInfo | null };
   'lsp.diagnostics': { params: { path: string }; result: FileDiagnostics };
+
+  'npm.list': { params: null; result: NpmScriptInfo[] };
+  'npm.run': { params: { id: string; cols?: number; rows?: number }; result: TerminalInfo };
+
+  'term.list': { params: null; result: TerminalInfo[] };
+  'term.open': {
+    params: {
+      name: string;
+      kind?: TerminalKind;
+      command?: string;
+      cwd?: string;
+      cols?: number;
+      rows?: number;
+    };
+    result: TerminalInfo;
+  };
+  'term.attach': { params: { name: string }; result: { info: TerminalInfo; buffer: string } };
+  'term.write': { params: { name: string; data: string }; result: null };
+  'term.resize': { params: { name: string; cols: number; rows: number }; result: null };
+  'term.close': { params: { name: string }; result: null };
 }
 
 export type ApiMethod = keyof Api;
@@ -76,6 +99,10 @@ export interface Events {
 
   'lsp.status': LspStatus;
   'lsp.diagnostics': FileDiagnostics;
+
+  'term.list': TerminalInfo[];
+  'term.data': { name: string; data: string };
+  'term.exit': { name: string; exitCode: number };
 
   log: LogLine;
 }

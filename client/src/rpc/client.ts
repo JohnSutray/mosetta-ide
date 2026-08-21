@@ -37,7 +37,10 @@ export class RpcClient {
   private retry = 0;
   private closed = false;
 
-  constructor(private readonly url = defaultUrl()) {
+  constructor(private readonly url = defaultUrl()) {}
+
+  connect(): void {
+    if (this.socket) return;
     this.open();
   }
 
@@ -115,6 +118,7 @@ export class RpcClient {
 }
 
 function defaultUrl(): string {
+  if (typeof location === 'undefined') return `ws://127.0.0.1:${DEFAULT_PORT}${WS_PATH}`;
   const host = location.hostname || '127.0.0.1';
   const port = import.meta.env.DEV ? DEFAULT_PORT : location.port;
   return `ws://${host}:${port}${WS_PATH}`;

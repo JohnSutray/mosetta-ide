@@ -3,7 +3,9 @@ import { configGet } from './config.js';
 import { docClose, docEdit, docOpen, docReload, docSave, docState } from './doc.js';
 import { fsList, fsRead, fsWrite } from './fs.js';
 import { lspDiagnostics, lspHover, lspStatus } from './lsp.js';
+import { npmList, npmRun } from './npm.js';
 import { indexSearch, indexStats } from './search.js';
+import { termAttach, termClose, termList, termOpen, termResize, termWrite } from './term.js';
 import { treeList, treeStats } from './tree.js';
 import {
   workspaceAttach,
@@ -48,4 +50,14 @@ export const handlers: HandlerTable = {
   'lsp.status': lspStatus,
   'lsp.hover': lspHover,
   'lsp.diagnostics': lspDiagnostics,
+
+  'npm.list': npmList,
+  'npm.run': npmRun,
+
+  'term.list': termList,
+  'term.open': termOpen,
+  'term.attach': termAttach,
+  'term.write': termWrite,
+  'term.resize': termResize,
+  'term.close': termClose,
 };

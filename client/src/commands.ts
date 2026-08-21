@@ -13,8 +13,11 @@ import {
   problemsPanelVisible,
   reloadDoc,
   saveDoc,
+  scriptsPanelVisible,
+  terminalPanelVisible,
   treePanelVisible,
 } from './state/session.js';
+import { openManualTerminal } from './state/terminals.js';
 
 export function registerCommands(): void {
   registerCommand('file.save', () => saveDoc());
@@ -35,6 +38,14 @@ export function registerCommands(): void {
   registerCommand('panel.problems', () => {
     problemsPanelVisible.value = !problemsPanelVisible.value;
   });
+
+  registerCommand('panel.scripts', () => {
+    scriptsPanelVisible.value = !scriptsPanelVisible.value;
+  });
+  registerCommand('panel.terminal', () => {
+    terminalPanelVisible.value = !terminalPanelVisible.value;
+  });
+  registerCommand('terminal.manual', () => openManualTerminal());
 
   registerCommand('search.everywhere', () => openSearch());
   registerCommand('search.next', () => moveSelection(1));

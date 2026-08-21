@@ -4,7 +4,7 @@ import { baseName, extensionOf } from '../workspace/paths.js';
 import type { RamFs } from '../fs/ram-fs.js';
 import { match } from './matcher.js';
 import { fold, indexString, Vocabulary, type Indexed } from './text.js';
-import { parseScripts } from './npm-scripts.js';
+import { parseScripts, type NpmScript } from './npm-scripts.js';
 import { canParse, loadTypeScript, parseSymbols, type SymbolKind } from './ts-symbols.js';
 
 interface Entry {
@@ -33,6 +33,7 @@ const SYMBOL_DETAIL: Record<SymbolKind, string> = {
 export class SearchIndex {
   private files: Entry[] = [];
   private scripts: Entry[] = [];
+  private rawScripts: NpmScript[] = [];
   private readonly symbols = new Map<string, Entry[]>();
   private vocabulary = new Vocabulary();
 
@@ -118,11 +119,13 @@ export class SearchIndex {
 
   private rebuildScripts(): void {
     const scripts: Entry[] = [];
+    const raw: NpmScript[] = [];
     for (const file of this.ram.files()) {
       if (baseName(file.path) !== 'package.json') continue;
       const doc = this.ram.docSync(file.path);
       if (!doc) continue;
       for (const script of parseScripts(file.path, doc.text)) {
+        raw.push(script);
         const label = `npm::${script.id}`;
         scripts.push({
           kind: 'npm',
@@ -134,6 +137,19 @@ export class SearchIndex {
       }
     }
     this.scripts = scripts;
+    this.rawScripts = raw;
+  }
+
+  listScripts(): NpmScript[] {
+    if (this.staleTree) this.rebuild();
+    return [...this.rawScripts].sort(
+      (a, b) => a.packageName.localeCompare(b.packageName) || a.script.localeCompare(b.script),
+    );
+  }
+
+  findScript(id: string): NpmScript | undefined {
+    if (this.staleTree) this.rebuild();
+    return this.rawScripts.find((script) => script.id === id);
   }
 
   private enqueue(path: string): void {

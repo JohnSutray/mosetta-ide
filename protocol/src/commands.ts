@@ -5,6 +5,10 @@ export const COMMANDS = {
   'edit.redo': 'Повторить',
   'panel.tree': 'Панель: дерево проекта',
   'panel.problems': 'Панель: ошибки',
+  'panel.scripts': 'Панель: скрипты package.json',
+  'panel.terminal': 'Панель: терминал',
+
+  'terminal.manual': 'Новый ручной терминал',
 
   'search.everywhere': 'Найти всё',
   'search.next': 'Поиск: вниз',

@@ -14,6 +14,8 @@ import {
   openFile,
   problemsPanelVisible,
   rpc,
+  scriptsPanelVisible,
+  terminalPanelVisible,
   title,
   treePanelVisible,
   editDoc,
@@ -22,8 +24,12 @@ import { activeEditor } from '../state/editor.js';
 import { registerCommands, resolveContext, missingCommands } from '../commands.js';
 import { installDispatcher, humanizeKey } from '../keys/dispatcher.js';
 import { pendingReveal } from '../state/session.js';
+import { refreshScripts, refreshTerminals } from '../state/terminals.js';
 import { Editor } from '../editor/editor.js';
 import { SearchEverywhere } from './search-everywhere.js';
+import { Scripts } from './scripts.js';
+import { TerminalView } from './terminal.js';
+import { Toolbar } from './toolbar.js';
 import { Panel } from './panel.js';
 import { Problems } from './problems.js';
 import { Projects } from './projects.js';
@@ -55,31 +61,15 @@ export function App() {
     document.title = title.value;
   }, [title.value]);
 
-  const lsp = lspStatuses.value[0];
+  useEffect(() => {
+    if (!ws) return;
+    void refreshTerminals();
+    void refreshScripts();
+  }, [ws?.id]);
 
   return (
     <div class="app">
-      <div class="toolbar">
-        <span class="brand">new-ide</span>
-        <span class="toolbar-project">{ws ? ws.name : 'проект не открыт'}</span>
-        {lsp && (
-          <span class={`chip is-${lsp.state}`} title={lsp.detail ?? lsp.state}>
-            {lsp.server}: {lsp.state === 'ready' ? `${lsp.openDocs} док.` : lsp.state}
-          </span>
-        )}
-        {file && errorCount.value > 0 && (
-          <span
-            class="chip is-error"
-            onClick={() => (problemsPanelVisible.value = !problemsPanelVisible.value)}
-          >
-            ошибок: {errorCount.value}
-          </span>
-        )}
-        <span class="toolbar-spacer" />
-        {notice.value && <span class="toolbar-notice">{notice.value}</span>}
-        {error.value && <span class="toolbar-error">{error.value}</span>}
-        <span class={`dot ${connected.value ? 'is-on' : 'is-off'}`} title="Связь с бэкендом" />
-      </div>
+      <Toolbar />
 
       <div class="columns">
         {treePanelVisible.value && (
@@ -118,9 +108,21 @@ export function App() {
           )}
         </Panel>
 
+        {scriptsPanelVisible.value && (
+          <Panel class="column-scripts" title="Скрипты">
+            <Scripts />
+          </Panel>
+        )}
+
         {problemsPanelVisible.value && (
           <Panel class="column-problems" title="Ошибки">
             <Problems items={currentDiagnostics.value} />
+          </Panel>
+        )}
+
+        {terminalPanelVisible.value && (
+          <Panel class="column-terminal" title="Терминал">
+            <TerminalView />
           </Panel>
         )}
       </div>

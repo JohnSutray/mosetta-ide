@@ -7,8 +7,9 @@
     "dev:server": "pnpm --filter ./server dev",
     "dev:client": "pnpm --filter ./client dev",
     "build": "pnpm --filter ./protocol build && pnpm --filter ./server build && pnpm --filter ./client build",
-    "test": "pnpm --filter ./server test",
-    "typecheck": "tsc -b protocol server client"
+    "test": "pnpm --filter ./server test && pnpm --filter ./client test",
+    "typecheck": "tsc -b protocol server client",
+    "postinstall": "node scripts/ensure-pty-helper.mjs"
   },
   "devDependencies": {
     "typescript": "^5.7.2"
