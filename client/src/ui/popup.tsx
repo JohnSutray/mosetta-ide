@@ -1,6 +1,7 @@
 import type { ComponentChildren } from 'preact';
-import { useRef } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
 import { resetPopupSize, setPopupSize, sizeOf, type Size } from '../state/layout.js';
+import { enter, leave } from '../state/popups.js';
 import { t } from '../i18n/index.js';
 
 export function Popup({
@@ -23,6 +24,11 @@ export function Popup({
   const box = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
   const current = sizeOf(id, size);
+
+  useEffect(() => {
+    enter({ id, close: onClose });
+    return () => leave(id);
+  }, [id, onClose]);
 
   return (
     <div class="se-backdrop" onMouseDown={onClose}>

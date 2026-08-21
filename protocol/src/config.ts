@@ -47,7 +47,14 @@ export interface GitSettings {
   autoFetchMinutes: number;
 }
 
-export type KeyContext = 'global' | 'editor' | 'tree' | 'search' | 'projects' | 'branches';
+export type KeyContext =
+  | 'global'
+  | 'editor'
+  | 'tree'
+  | 'search'
+  | 'projects'
+  | 'branches'
+  | 'pick';
 
 export type KeyHost = 'browser' | 'electron';
 

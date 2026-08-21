@@ -9,11 +9,13 @@ import {
   searchOpen,
 } from './state/search.js';
 import { activeEditor, editorHasFocus } from './state/editor.js';
+import { closeTop } from './state/popups.js';
+import { activePick } from './state/pick.js';
+import { toggleScripts } from './state/scripts.js';
 import {
   problemsPanelVisible,
   reloadDoc,
   saveDoc,
-  scriptsPanelVisible,
   terminalPanelVisible,
   treePanelVisible,
 } from './state/session.js';
@@ -59,9 +61,7 @@ export function registerCommands(): void {
     problemsPanelVisible.value = !problemsPanelVisible.value;
   });
 
-  registerCommand('panel.scripts', () => {
-    scriptsPanelVisible.value = !scriptsPanelVisible.value;
-  });
+  registerCommand('scripts.open', () => toggleScripts());
   registerCommand('panel.terminal', () => {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });
@@ -81,10 +81,15 @@ export function registerCommands(): void {
   registerCommand('git.branches', () => openBranches());
   registerCommand('git.push', () => void openPush());
   registerCommand('git.fetch', () => void gitDo('fetch'));
-  registerCommand('git.next', () => moveBranch(1));
-  registerCommand('git.prev', () => moveBranch(-1));
-  registerCommand('git.checkout', () => void gitDo('checkout'));
   registerCommand('git.close', () => closeBranches());
+
+  registerCommand('pick.next', () => activePick.value?.next());
+  registerCommand('pick.prev', () => activePick.value?.prev());
+  registerCommand('pick.accept', () => activePick.value?.accept());
+
+  registerCommand('popup.close', () => {
+    closeTop();
+  });
 
   registerCommand('search.everywhere', () => openSearch());
   registerCommand('search.next', () => moveSelection(1));
@@ -98,6 +103,7 @@ export { missingCommands };
 export function resolveContext(): KeyContext {
   if (searchOpen.value) return 'search';
   if (branchesOpen.value && !branchPrompt.value) return 'branches';
+  if (activePick.value) return 'pick';
   if (editorHasFocus()) return 'editor';
   const active = document.activeElement;
   if (projectsVisible.value && active?.closest('.projects')) return 'projects';

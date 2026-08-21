@@ -49,8 +49,13 @@ describe('тулбар', () => {
     const side = (id: string) => PANELS.find((panel) => panel.id === id)?.side;
     expect(side('tree')).toBe('left');
     expect(side('terminal')).toBe('right');
-    expect(side('scripts')).toBe('right');
     expect(side('problems')).toBe('right');
+  });
+
+  it('кнопка тулбара — либо панель, либо попап, но всегда с состоянием', () => {
+    const panels = new Set(PANELS.map((panel) => panel.id));
+    const popups = TOOLBAR.filter((entry) => !panels.has(entry.id) && entry.active).map((e) => e.id);
+    expect(popups.sort()).toEqual(['git.branches', 'git.push', 'scripts', 'search']);
   });
 
   it('каждая кнопка зовёт существующую команду', () => {

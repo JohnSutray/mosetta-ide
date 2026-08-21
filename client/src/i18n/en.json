@@ -82,6 +82,8 @@
   "terminal.busy": "running {what}",
 
   "scripts.empty": "No package.json scripts",
+  "scripts.filter": "Filter scripts",
+  "pick.nothing": "Nothing matches",
   "problems.empty": "No problems",
 
   "git.done": "{action} — done",

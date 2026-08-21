@@ -45,7 +45,6 @@ export const diagnostics = signal<Map<string, Diagnostic[]>>(new Map());
 export const lspStatuses = signal<LspStatus[]>([]);
 export const treePanelVisible = signal(true);
 export const problemsPanelVisible = signal(false);
-export const scriptsPanelVisible = signal(false);
 export const terminalPanelVisible = signal(false);
 
 export const currentDiagnostics = computed<Diagnostic[]>(() => {
@@ -77,7 +76,6 @@ function resetProjectScope() {
     diagnostics.value = new Map();
     lspStatuses.value = [];
     problemsPanelVisible.value = false;
-    scriptsPanelVisible.value = false;
     terminalPanelVisible.value = false;
   });
 }

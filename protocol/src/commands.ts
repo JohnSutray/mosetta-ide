@@ -5,7 +5,7 @@ export const COMMANDS = {
   'edit.redo': 'Повторить',
   'panel.tree': 'Панель: дерево проекта',
   'panel.problems': 'Панель: ошибки',
-  'panel.scripts': 'Панель: скрипты package.json',
+  'scripts.open': 'Скрипты package.json',
   'panel.terminal': 'Панель: терминал',
 
   'terminal.create': 'Новый терминал',
@@ -21,10 +21,13 @@ export const COMMANDS = {
   'git.branches': 'Ветки git',
   'git.push': 'Push текущей ветки',
   'git.fetch': 'Забрать обновления удалёнки',
-  'git.next': 'Ветки: вниз',
-  'git.prev': 'Ветки: вверх',
-  'git.checkout': 'Ветки: переключиться',
   'git.close': 'Ветки: закрыть',
+
+  'pick.next': 'Список: вниз',
+  'pick.prev': 'Список: вверх',
+  'pick.accept': 'Список: выбрать',
+
+  'popup.close': 'Закрыть верхний попап',
 
   'search.everywhere': 'Найти всё',
   'search.next': 'Поиск: вниз',

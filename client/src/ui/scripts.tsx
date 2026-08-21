@@ -1,36 +1,38 @@
+import { scripts, runScript } from '../state/terminals.js';
+import { scriptsOpen, closeScripts } from '../state/scripts.js';
+import { PickPopup, highlight, type PickItem } from './pick-popup.js';
 import { t } from '../i18n/index.js';
-import { runScript, scripts, terminals } from '../state/terminals.js';
+import type { NpmScriptInfo } from '@ide/protocol';
 
-export function Scripts() {
-  const list = scripts.value;
-  if (list.length === 0) {
-    return <div class="placeholder">{t('scripts.empty')}</div>;
-  }
+export function ScriptsPopup() {
+  if (!scriptsOpen.value) return null;
 
-  const running = new Map(terminals.value.map((info) => [info.name, info]));
-  let previousPackage = '';
+  const items: Array<PickItem<NpmScriptInfo>> = scripts.value.map((script) => ({
+    key: script.id,
+    text: script.id,
+    value: script,
+  }));
 
   return (
-    <div class="scripts">
-      {list.map((script) => {
-        const header = script.packageName !== previousPackage ? script.packageName : null;
-        previousPackage = script.packageName;
-        const terminal = running.get(script.id);
-        const mark = terminal ? (terminal.alive ? 'has-terminal' : 'terminal-dead') : '';
-        return (
-          <div key={script.id}>
-            {header && <div class="scripts-package">{header}</div>}
-            <div
-              class={`script ${mark}`}
-              title={script.command}
-              onClick={() => void runScript(script.id)}
-            >
-              <span class="script-name">{script.script}</span>
-              <span class="script-command">{script.command}</span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
+    <PickPopup
+      id="scripts"
+      title={t('panel.scripts')}
+      items={items}
+      placeholder={t('scripts.filter')}
+      empty={t('scripts.empty')}
+      size={{ w: 620, h: 420 }}
+      min={{ w: 420, h: 240 }}
+      onClose={closeScripts}
+      onPick={(script) => {
+        closeScripts();
+        void runScript(script.id);
+      }}
+      row={(script, matches) => (
+        <>
+          <span class="pick-name">{highlight(script.id, matches)}</span>
+          <span class="pick-detail">{script.command}</span>
+        </>
+      )}
+    />
   );
 }

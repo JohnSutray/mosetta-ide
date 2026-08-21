@@ -2,10 +2,10 @@ import type { ReadonlySignal } from '@preact/signals';
 import type { CommandId } from '@ide/protocol';
 import {
   problemsPanelVisible,
-  scriptsPanelVisible,
   terminalPanelVisible,
   treePanelVisible,
 } from '../state/session.js';
+import { scriptsOpen } from '../state/scripts.js';
 import { searchOpen } from '../state/search.js';
 import { branchesOpen, pushOpen } from '../state/git.js';
 import type { IconName } from './icons.js';
@@ -39,18 +39,6 @@ export const PANELS: PanelSpec[] = [
     toolbar: 'button',
     defaultWidth: 260,
     minWidth: 150,
-  },
-  {
-    id: 'scripts',
-    title: 'panel.scripts',
-    tooltip: 'toolbar.scripts',
-    side: 'right',
-    icon: 'scripts',
-    command: 'panel.scripts',
-    open: scriptsPanelVisible,
-    toolbar: 'button',
-    defaultWidth: 300,
-    minWidth: 180,
   },
   {
     id: 'problems',
@@ -111,7 +99,13 @@ export const TOOLBAR: ToolbarEntry[] = [
     command: 'git.push',
     active: pushOpen,
   },
-  entryFor('scripts'),
+  {
+    id: 'scripts',
+    title: 'toolbar.scripts',
+    icon: 'scripts',
+    command: 'scripts.open',
+    active: scriptsOpen,
+  },
   entryFor('problems'),
   {
     id: 'terminal.create',

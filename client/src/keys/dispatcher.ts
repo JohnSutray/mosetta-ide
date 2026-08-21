@@ -13,6 +13,13 @@ const BY_CODE: Record<string, string> = {
   Backquote: 'backquote',
 };
 
+const BY_CHAR: Record<string, string> = {
+  '`': 'backquote',
+  '~': 'backquote',
+  ё: 'backquote',
+  Ё: 'backquote',
+};
+
 const BARE_MODIFIERS = new Set(['Shift', 'Control', 'Alt', 'Meta']);
 const DOUBLE_TAP_MS = 400;
 
@@ -93,7 +100,7 @@ export function installDispatcher(
 }
 
 export function eventToKey(event: KeyboardEvent): string | null {
-  const main = BY_CODE[event.code] ?? normalizeMainKey(event.key);
+  const main = BY_CODE[event.code] ?? BY_CHAR[event.key] ?? normalizeMainKey(event.key);
   if (!main) return null;
 
   const parts: string[] = [];

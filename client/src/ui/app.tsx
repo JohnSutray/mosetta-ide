@@ -15,7 +15,6 @@ import {
   problemsPanelVisible,
   rpc,
   say,
-  scriptsPanelVisible,
   terminalPanelVisible,
   title,
   treePanelVisible,
@@ -32,7 +31,7 @@ import { Branches } from './branches.js';
 import { Notifications } from './notifications.js';
 import { Push } from './push.js';
 import { refreshGit, resetGit } from '../state/git.js';
-import { Scripts } from './scripts.js';
+import { ScriptsPopup } from './scripts.js';
 import { TerminalView } from './terminal.js';
 import { Toolbar } from './toolbar.js';
 import { PANELS, type PanelSpec } from './panels.js';
@@ -152,6 +151,7 @@ export function App() {
       <SearchEverywhere />
       <Branches />
       <Push />
+      <ScriptsPopup />
       <Notifications />
     </div>
   );
@@ -188,8 +188,6 @@ function content(panel: PanelSpec) {
   switch (panel.id) {
     case 'tree':
       return showsProjects() ? <Projects /> : <Tree />;
-    case 'scripts':
-      return <Scripts />;
     case 'problems':
       return <Problems items={currentDiagnostics.value} />;
     case 'terminal':

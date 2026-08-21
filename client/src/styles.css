@@ -981,3 +981,37 @@ body {
 }
 .branch-prompt .field { flex: 1; }
 .branch-prompt-title { color: var(--muted); font: 12px var(--ui-font); flex: none; }
+
+.pick { display: flex; flex-direction: column; }
+
+.pick-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 0;
+  border-top: 1px solid var(--divider);
+}
+
+.pick-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  font: 13px/1.4 var(--ui-font);
+}
+.pick-row:not(.is-current):hover { background: #45494a; }
+.pick-row.is-current { background: var(--treesel); color: #dbe6ef; }
+
+.pick-name { flex: none; overflow: hidden; text-overflow: ellipsis; }
+.pick-name b { color: var(--accent); font-weight: 700; }
+.pick-row.is-current .pick-name b { color: #ffe9bd; }
+.pick-detail {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--muted);
+  font: 11px var(--font);
+}
+.pick-row.is-current .pick-detail { color: #c6d3dd; }
