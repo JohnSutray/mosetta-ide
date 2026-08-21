@@ -192,12 +192,94 @@ export class OsFs {
     return { path: fileKey, revision };
   }
 
+  async create(key: string, kind: 'file' | 'dir'): Promise<DirEntry> {
+    const fileKey = toKey(key);
+    const absolute = toAbsolute(this.root, fileKey);
+    if (await exists(absolute)) throw RpcError.invalidParams(`Уже есть: ${fileKey}`);
+
+    if (kind === 'dir') {
+      await fs.mkdir(absolute, { recursive: true });
+    } else {
+      await fs.mkdir(path.dirname(absolute), { recursive: true });
+      await fs.writeFile(absolute, '', { encoding: 'utf8', flag: 'wx' });
+    }
+    return this.describe(fileKey);
+  }
+
+  async move(from: string, to: string): Promise<DirEntry> {
+    const fromKey = toKey(from);
+    const toKey_ = toKey(to);
+    const source = toAbsolute(this.root, fromKey);
+    const target = toAbsolute(this.root, toKey_);
+    if (!(await exists(source))) throw RpcError.notFound(fromKey);
+    if (source !== target && (await exists(target))) {
+      throw RpcError.invalidParams(`Уже есть: ${toKey_}`);
+    }
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.rename(source, target);
+    return this.describe(toKey_);
+  }
+
+  async copy(from: string, to: string): Promise<DirEntry> {
+    const fromKey = toKey(from);
+    const toKey_ = toKey(to);
+    const source = toAbsolute(this.root, fromKey);
+    const target = toAbsolute(this.root, toKey_);
+    if (!(await exists(source))) throw RpcError.notFound(fromKey);
+    if (await exists(target)) throw RpcError.invalidParams(`Уже есть: ${toKey_}`);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.cp(source, target, { recursive: true, errorOnExist: true, force: false });
+    return this.describe(toKey_);
+  }
+
+  async remove(key: string): Promise<void> {
+    const fileKey = toKey(key);
+    if (fileKey === '') throw RpcError.invalidParams('Нельзя удалить корень проекта');
+    const absolute = toAbsolute(this.root, fileKey);
+    if (!(await exists(absolute))) throw RpcError.notFound(fileKey);
+    await fs.rm(absolute, { recursive: true, force: true });
+  }
+
+  async writeBytes(key: string, base64: string): Promise<DirEntry> {
+    const fileKey = toKey(key);
+    const absolute = toAbsolute(this.root, fileKey);
+    if (await exists(absolute)) throw RpcError.invalidParams(`Уже есть: ${fileKey}`);
+    await fs.mkdir(path.dirname(absolute), { recursive: true });
+    await fs.writeFile(absolute, Buffer.from(base64, 'base64'));
+    return this.describe(fileKey);
+  }
+
+  private async describe(key: string): Promise<DirEntry> {
+    const absolute = toAbsolute(this.root, key);
+    const stat = await fs.stat(absolute);
+    const isDir = stat.isDirectory();
+    const name = key.slice(key.lastIndexOf('/') + 1);
+    return {
+      path: key,
+      name,
+      kind: isDir ? 'dir' : 'file',
+      size: stat.size,
+      mtimeMs: stat.mtimeMs,
+      symlink: false,
+      ...(isDir && new Set(this.settings.noScan).has(name) ? { noScan: true } : {}),
+    };
+  }
+
   static revision(stat: Stats): string {
     return revisionOf(stat);
   }
 
   private emit(event: OsEvent): void {
     for (const listener of this.listeners) listener(event);
+  }
+}
+
+async function exists(absolute: string): Promise<boolean> {
+  try {
+    await fs.stat(absolute);
+    return true;
+  } catch {
+    return false;
   }
 }
 

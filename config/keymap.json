@@ -24,6 +24,14 @@
     { "command": "pick.accept", "key": "enter", "when": "pick" },
     { "command": "pick.expand", "key": "arrowright", "when": "pick" },
 
+    { "command": "tree.newFile", "key": "mod+n", "when": "tree" },
+    { "command": "tree.newFolder", "key": "mod+shift+n", "when": "tree" },
+    { "command": "tree.rename", "key": "f2", "when": "tree" },
+    { "command": "tree.delete", "key": "backspace", "when": "tree" },
+    { "command": "tree.copy", "key": "mod+c", "when": "tree" },
+    { "command": "tree.cut", "key": "mod+x", "when": "tree" },
+    { "command": "tree.paste", "key": "mod+v", "when": "tree" },
+
     { "command": "file.reload", "key": "mod+shift+r", "when": "global" },
 
     { "command": "edit.undo", "key": "mod+z", "when": "editor" },

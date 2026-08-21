@@ -13,6 +13,15 @@ import { closeTop } from './state/popups.js';
 import { activePick } from './state/pick.js';
 import { toggleScripts } from './state/scripts.js';
 import {
+  askCreate,
+  askRemove,
+  askRename,
+  copyToClipboard,
+  pasteInto,
+  treeFocus,
+} from './state/tree-ops.js';
+import { dirChildren } from './state/session.js';
+import {
   problemsPanelVisible,
   reloadDoc,
   saveDoc,
@@ -54,6 +63,14 @@ export function registerCommands(): void {
   });
 
   registerCommand('scripts.open', () => toggleScripts());
+
+  registerCommand('tree.newFile', () => onFocused((path, isDir) => askCreate(path, isDir, 'file')));
+  registerCommand('tree.newFolder', () => onFocused((path, isDir) => askCreate(path, isDir, 'dir')));
+  registerCommand('tree.rename', () => onFocused((path) => askRename(path)));
+  registerCommand('tree.delete', () => onFocused((path, isDir) => askRemove(path, isDir)));
+  registerCommand('tree.copy', () => onFocused((path) => copyToClipboard(path, false)));
+  registerCommand('tree.cut', () => onFocused((path) => copyToClipboard(path, true)));
+  registerCommand('tree.paste', () => onFocused((path, isDir) => void pasteInto(path, isDir)));
   registerCommand('panel.terminal', () => {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });
@@ -90,6 +107,13 @@ export function registerCommands(): void {
 }
 
 export { missingCommands };
+
+function onFocused(run: (path: string, isDir: boolean) => void): void {
+  const path = treeFocus.value ?? '';
+  const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
+  const entry = dirChildren.value.get(parent)?.find((item) => item.path === path);
+  run(path, path === '' ? true : entry?.kind === 'dir');
+}
 
 export function resolveContext(): KeyContext {
   if (searchOpen.value) return 'search';

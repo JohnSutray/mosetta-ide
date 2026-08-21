@@ -1,0 +1,222 @@
+import { batch, signal } from '@preact/signals';
+import type { EntryKind } from '@ide/protocol';
+import {
+  complain,
+  current,
+  ensureExpanded,
+  loadDir,
+  openFile,
+  openFileAt,
+  rpc,
+  say,
+} from './session.js';
+import { t } from '../i18n/index.js';
+
+export interface Ask {
+  id: number;
+  title: string;
+  text?: string;
+  field: boolean;
+  value?: string;
+  confirm: string;
+  danger?: boolean;
+  error?: string;
+  run: (value: string) => Promise<void>;
+}
+
+export const prompt = signal<Ask | null>(null);
+
+export const clipboard = signal<{ path: string; cut: boolean } | null>(null);
+
+export const treeFocus = signal<string | null>(null);
+
+let nextAsk = 1;
+
+function ask(spec: Omit<Ask, 'id'>): void {
+  prompt.value = { ...spec, id: nextAsk++ };
+}
+
+export function promptCancel(): void {
+  prompt.value = null;
+}
+
+export async function promptAnswer(value: string): Promise<void> {
+  const current_ = prompt.value;
+  if (!current_) return;
+  const answer = value.trim();
+  if (current_.field && answer === '') return;
+  try {
+    await current_.run(answer);
+    prompt.value = null;
+  } catch (err) {
+    prompt.value = { ...current_, error: describe(err) };
+  }
+}
+
+function parentOf(path: string, isDir: boolean): string {
+  if (isDir) return path;
+  const at = path.lastIndexOf('/');
+  return at === -1 ? '' : path.slice(0, at);
+}
+
+export function askCreate(at: string, isDir: boolean, kind: EntryKind): void {
+  const parent = parentOf(at, isDir);
+  ask({
+    title: kind === 'dir' ? t('tree.newFolder') : t('tree.newFile'),
+    text: parent === '' ? t('tree.inRoot') : parent,
+    field: true,
+    value: '',
+    confirm: t('tree.create'),
+    run: async (name) => {
+      const path = parent === '' ? name : `${parent}/${name}`;
+      await rpc.call('fs.create', { path, kind });
+      await loadDir(parent);
+      await ensureExpanded(parent);
+      if (kind === 'file') await openFileAt(path);
+    },
+  });
+}
+
+export function askRename(path: string): void {
+  const name = path.slice(path.lastIndexOf('/') + 1);
+  const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
+  ask({
+    title: t('tree.rename'),
+    text: path,
+    field: true,
+    value: name,
+    confirm: t('tree.rename.do'),
+    run: async (next) => {
+      if (next === name) return;
+      const to = parent === '' ? next : `${parent}/${next}`;
+      await rpc.call('fs.move', { from: path, to });
+      await loadDir(parent);
+      if (openFile.value?.path === path) await openFileAt(to);
+      say(t('tree.renamed', { name: next }));
+    },
+  });
+}
+
+export function askRemove(path: string, isDir: boolean): void {
+  ask({
+    title: isDir ? t('tree.deleteFolder') : t('tree.deleteFile'),
+    text: `${path}\n\n${t('tree.deleteWarn')}`,
+    field: false,
+    confirm: t('tree.delete.do'),
+    danger: true,
+    run: async () => {
+      const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
+      await rpc.call('fs.remove', { path });
+      await loadDir(parent);
+      say(t('tree.deleted', { path }));
+    },
+  });
+}
+
+export function copyToClipboard(path: string, cut: boolean): void {
+  clipboard.value = { path, cut };
+  say(cut ? t('tree.cut.done', { path }) : t('tree.copied', { path }));
+}
+
+export async function pasteInto(at: string, isDir: boolean): Promise<void> {
+  const parent = parentOf(at, isDir);
+  const own = clipboard.value;
+  if (own) {
+    const name = own.path.slice(own.path.lastIndexOf('/') + 1);
+    const to = parent === '' ? name : `${parent}/${name}`;
+    try {
+      if (own.cut) await rpc.call('fs.move', { from: own.path, to });
+      else await rpc.call('fs.copy', { from: own.path, to });
+      if (own.cut) clipboard.value = null;
+      await loadDir(parent);
+      await ensureExpanded(parent);
+      say(t('tree.pasted', { name }));
+    } catch (err) {
+      complain(describe(err));
+    }
+    return;
+  }
+  await pasteFromSystem(parent);
+}
+
+export async function pasteFromSystem(parent: string): Promise<void> {
+  if (!navigator.clipboard?.read) {
+    complain(t('tree.noClipboard'));
+    return;
+  }
+  let items: ClipboardItem[];
+  try {
+    items = await navigator.clipboard.read();
+  } catch (err) {
+    complain(describe(err));
+    return;
+  }
+
+  for (const item of items) {
+    const image = item.types.find((type) => type.startsWith('image/'));
+    if (image) {
+      const blob = await item.getType(image);
+      const extension = image.slice('image/'.length).replace('svg+xml', 'svg');
+      const name = await freeName(parent, 'image', extension);
+      await rpc.call('fs.writeBytes', { path: join(parent, name), base64: await toBase64(blob) });
+      await loadDir(parent);
+      await ensureExpanded(parent);
+      say(t('tree.pasted', { name }));
+      return;
+    }
+  }
+
+  const text = await navigator.clipboard.readText().catch(() => '');
+  if (text.trim() === '') {
+    complain(t('tree.clipboardEmpty'));
+    return;
+  }
+  ask({
+    title: t('tree.pasteText'),
+    text: text.slice(0, 200),
+    field: true,
+    value: '',
+    confirm: t('tree.create'),
+    run: async (name) => {
+      const path = join(parent, name);
+      await rpc.call('fs.create', { path, kind: 'file' });
+      await rpc.call('fs.write', { path, text });
+      await loadDir(parent);
+      await openFileAt(path);
+    },
+  });
+}
+
+async function freeName(parent: string, base: string, extension: string): Promise<string> {
+  const taken = new Set((await rpc.call('tree.list', { path: parent })).map((e) => e.name));
+  for (let n = 1; ; n += 1) {
+    const name = `${base}_${n}.${extension}`;
+    if (!taken.has(name)) return name;
+  }
+}
+
+function join(parent: string, name: string): string {
+  return parent === '' ? name : `${parent}/${name}`;
+}
+
+function toBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const url = String(reader.result);
+      resolve(url.slice(url.indexOf(',') + 1));
+    };
+    reader.readAsDataURL(blob);
+  });
+}
+
+function describe(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
+export function hasProject(): boolean {
+  return current.value !== null;
+}
+
+export { batch };

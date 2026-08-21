@@ -29,6 +29,9 @@ import { Editor } from '../editor/editor.js';
 import { SearchEverywhere } from './search-everywhere.js';
 import { Branches } from './branches.js';
 import { Notifications } from './notifications.js';
+import { TreeMenu } from './tree-menu.js';
+import { Prompt } from './prompt.js';
+import { closeTreeMenu } from '../state/tree-menu.js';
 import { Push } from './push.js';
 import { refreshGit, resetGit } from '../state/git.js';
 import { ScriptsPopup } from './scripts.js';
@@ -83,7 +86,12 @@ export function App() {
   }, [ws?.id]);
 
   return (
-    <div class="app">
+    <div
+      class="app"
+      onMouseDown={(event) => {
+        if (!(event.target as HTMLElement).closest('.tree-menu')) closeTreeMenu();
+      }}
+    >
       <Toolbar />
 
       <div class="columns">
@@ -152,6 +160,8 @@ export function App() {
       <Branches />
       <Push />
       <ScriptsPopup />
+      <TreeMenu />
+      <Prompt />
       <Notifications />
     </div>
   );

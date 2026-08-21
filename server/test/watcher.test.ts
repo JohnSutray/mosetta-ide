@@ -141,6 +141,13 @@ describe('слежение за диском', () => {
     expect((await c.call('tree.stats', null)).files).toBe(2);
   });
 
+  it('файл, созданный через fs.create, память видит сама', async () => {
+    await c.call('fs.create', { path: 'src/fresh.ts', kind: 'file' });
+    await treeChanged(c, 'src');
+    const tree = await c.call('tree.list', { path: 'src' });
+    expect(tree.map((entry) => entry.name)).toContain('fresh.ts');
+  }, 15_000);
+
   it('временные файлы редакторов не всплывают', async () => {
     await fs.writeFile(path.join(root, 'src', '.main.ts.tmp-123-abc'), 'мусор\n', 'utf8');
     await fs.writeFile(path.join(root, 'src', 'main.ts~'), 'мусор\n', 'utf8');

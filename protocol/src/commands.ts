@@ -28,6 +28,14 @@ export const COMMANDS = {
 
   'popup.close': 'Закрыть верхний попап',
 
+  'tree.newFile': 'Дерево: новый файл',
+  'tree.newFolder': 'Дерево: новая папка',
+  'tree.rename': 'Дерево: переименовать',
+  'tree.delete': 'Дерево: удалить',
+  'tree.copy': 'Дерево: копировать',
+  'tree.cut': 'Дерево: вырезать',
+  'tree.paste': 'Дерево: вставить',
+
   'search.everywhere': 'Найти всё',
   'search.next': 'Поиск: вниз',
   'search.prev': 'Поиск: вверх',

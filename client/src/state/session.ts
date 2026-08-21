@@ -115,6 +115,11 @@ export async function loadDir(path: string) {
   dirChildren.value = next;
 }
 
+export async function ensureExpanded(path: string): Promise<void> {
+  if (path === '' || expanded.value.has(path)) return;
+  await toggleDir(path);
+}
+
 export async function toggleDir(path: string) {
   const next = new Set(expanded.value);
   if (next.has(path)) {

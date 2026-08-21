@@ -2,6 +2,7 @@ import type { ConfigBundle } from './config.js';
 import type {
   DirEntry,
   DirSuggestion,
+  EntryKind,
   DocState,
   DocVersion,
   FileDiagnostics,
@@ -48,6 +49,12 @@ export interface Api {
     params: { path: string; text: string; expectedRevision?: string | null };
     result: WriteResult;
   };
+
+  'fs.create': { params: { path: string; kind: EntryKind }; result: DirEntry };
+  'fs.move': { params: { from: string; to: string }; result: DirEntry };
+  'fs.copy': { params: { from: string; to: string }; result: DirEntry };
+  'fs.remove': { params: { path: string }; result: null };
+  'fs.writeBytes': { params: { path: string; base64: string }; result: DirEntry };
 
   'tree.list': { params: { path: string }; result: DirEntry[] };
   'tree.stats': { params: null; result: IndexStats };

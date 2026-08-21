@@ -1038,3 +1038,30 @@ body {
   font: 11px var(--font);
 }
 .pick-row.is-current .pick-detail { color: #c6d3dd; }
+
+.prompt { display: flex; flex-direction: column; }
+
+.prompt-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.prompt-text {
+  color: var(--muted);
+  font: 12px/1.5 var(--ui-font);
+  white-space: pre-wrap;
+  overflow: auto;
+  max-height: 40%;
+}
+.prompt-error { color: var(--error); font: 12px/1.4 var(--ui-font); }
+.prompt-foot { margin-top: auto; display: flex; justify-content: flex-end; gap: 6px; }
+
+.button.is-danger { background: #6b3a39; color: #ffd7d6; }
+.button.is-danger:hover { background: #7d4443; }
+
+.tree-menu { min-width: 200px; }
+
+.tree-row.is-focused { outline: 1px solid var(--treesel); outline-offset: -1px; }

@@ -1,7 +1,16 @@
 import type { HandlerTable } from '../rpc/context.js';
 import { configGet } from './config.js';
 import { docClose, docEdit, docOpen, docReload, docSave, docState } from './doc.js';
-import { fsList, fsRead, fsWrite } from './fs.js';
+import {
+  fsCopy,
+  fsCreate,
+  fsList,
+  fsMove,
+  fsRead,
+  fsRemove,
+  fsWrite,
+  fsWriteBytes,
+} from './fs.js';
 import {
   gitBranches,
   gitChanges,
@@ -56,6 +65,11 @@ export const handlers: HandlerTable = {
   'fs.list': fsList,
   'fs.read': fsRead,
   'fs.write': fsWrite,
+  'fs.create': fsCreate,
+  'fs.move': fsMove,
+  'fs.copy': fsCopy,
+  'fs.remove': fsRemove,
+  'fs.writeBytes': fsWriteBytes,
 
   'tree.list': treeList,
   'tree.stats': treeStats,

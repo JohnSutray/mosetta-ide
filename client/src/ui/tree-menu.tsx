@@ -1,0 +1,46 @@
+import { treeMenu } from '../state/tree-menu.js';
+import {
+  askCreate,
+  askRemove,
+  askRename,
+  clipboard,
+  copyToClipboard,
+  pasteInto,
+} from '../state/tree-ops.js';
+import { t } from '../i18n/index.js';
+
+export function TreeMenu() {
+  const menu = treeMenu.value;
+  if (!menu) return null;
+
+  const { path, isDir } = menu;
+  const items: Array<{ label: string; danger?: boolean; run: () => void }> = [
+    { label: 'tree.newFile', run: () => askCreate(path, isDir, 'file') },
+    { label: 'tree.newFolder', run: () => askCreate(path, isDir, 'dir') },
+    { label: 'tree.rename', run: () => askRename(path) },
+    { label: 'tree.copy', run: () => copyToClipboard(path, false) },
+    { label: 'tree.cut', run: () => copyToClipboard(path, true) },
+    {
+      label: clipboard.value ? 'tree.paste' : 'tree.pasteExternal',
+      run: () => void pasteInto(path, isDir),
+    },
+    { label: 'tree.delete', danger: true, run: () => askRemove(path, isDir) },
+  ];
+
+  return (
+    <div class="branch-menu tree-menu" style={{ left: `${menu.x}px`, top: `${menu.y}px` }}>
+      {items.map((item) => (
+        <button
+          key={item.label}
+          class={`branch-action ${item.danger ? 'is-danger' : ''}`}
+          onClick={() => {
+            treeMenu.value = null;
+            item.run();
+          }}
+        >
+          {t(item.label)}
+        </button>
+      ))}
+    </div>
+  );
+}

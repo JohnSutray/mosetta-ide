@@ -10,6 +10,8 @@ import {
   toggleDir,
 } from '../state/session.js';
 import { gitTint } from '../state/git.js';
+import { openTreeMenu } from '../state/tree-menu.js';
+import { treeFocus } from '../state/tree-ops.js';
 import { t } from '../i18n/index.js';
 import { Chevron, DirIcon, FileIcon, RootIcon } from './file-icons.js';
 
@@ -23,6 +25,11 @@ export function Tree() {
       <div
         class="tree-row is-root"
         onClick={() => (rootExpanded.value = !rootExpanded.value)}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          treeFocus.value = '';
+          openTreeMenu('', true, event.clientX, event.clientY);
+        }}
         title={ws.root}
       >
         <span class={`chevron ${open ? 'is-open' : ''}`}>
@@ -60,9 +67,20 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
   return (
     <>
       <div
-        class={`tree-row ${isCurrent ? 'is-current' : ''} ${entry.noScan ? 'is-excluded' : ''}`}
+        class={`tree-row ${isCurrent ? 'is-current' : ''} ${entry.noScan ? 'is-excluded' : ''} ${
+          treeFocus.value === entry.path ? 'is-focused' : ''
+        }`}
         style={{ paddingLeft: `${6 + depth * 14}px` }}
-        onClick={() => (isDir ? toggleDir(entry.path) : openFileAt(entry.path))}
+        onClick={() => {
+          treeFocus.value = entry.path;
+          if (isDir) void toggleDir(entry.path);
+          else void openFileAt(entry.path);
+        }}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          treeFocus.value = entry.path;
+          openTreeMenu(entry.path, isDir, event.clientX, event.clientY);
+        }}
         title={entry.path}
       >
         <span class={`chevron ${isDir ? '' : 'is-hidden'} ${isOpen ? 'is-open' : ''}`}>

@@ -22,3 +22,36 @@ function pathOf(params: { path?: unknown } | null): string {
   }
   return params.path;
 }
+
+export const fsCreate: Handler<'fs.create'> = (params, ctx) => {
+  if (!params || typeof params.path !== 'string') throw RpcError.invalidParams('нужен path');
+  const kind = params.kind === 'dir' ? 'dir' : 'file';
+  return ctx.session.requireWorkspace().services.os.create(params.path, kind);
+};
+
+export const fsMove: Handler<'fs.move'> = (params, ctx) => {
+  if (!params || typeof params.from !== 'string' || typeof params.to !== 'string') {
+    throw RpcError.invalidParams('нужны from и to');
+  }
+  return ctx.session.requireWorkspace().services.os.move(params.from, params.to);
+};
+
+export const fsCopy: Handler<'fs.copy'> = (params, ctx) => {
+  if (!params || typeof params.from !== 'string' || typeof params.to !== 'string') {
+    throw RpcError.invalidParams('нужны from и to');
+  }
+  return ctx.session.requireWorkspace().services.os.copy(params.from, params.to);
+};
+
+export const fsRemove: Handler<'fs.remove'> = async (params, ctx) => {
+  if (!params || typeof params.path !== 'string') throw RpcError.invalidParams('нужен path');
+  await ctx.session.requireWorkspace().services.os.remove(params.path);
+  return null;
+};
+
+export const fsWriteBytes: Handler<'fs.writeBytes'> = (params, ctx) => {
+  if (!params || typeof params.path !== 'string' || typeof params.base64 !== 'string') {
+    throw RpcError.invalidParams('нужны path и base64');
+  }
+  return ctx.session.requireWorkspace().services.os.writeBytes(params.path, params.base64);
+};
