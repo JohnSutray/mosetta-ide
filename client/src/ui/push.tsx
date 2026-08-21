@@ -28,25 +28,28 @@ export function Push() {
 
         {preview ? (
           <div class="push-body">
+            <div class="push-fork">
+              <Lane
+                title={`твои · ${preview.local.length}`}
+                commits={preview.local}
+                kind="local"
+                empty="нечего отправлять"
+              />
+              {preview.remote.length > 0 && (
+                <Lane
+                  title={`в удалёнке · ${preview.remote.length}`}
+                  commits={preview.remote}
+                  kind={force ? 'doomed' : 'remote'}
+                  empty=""
+                />
+              )}
+            </div>
+
             <Lane
               title={`общее${preview.common.length ? ` · ${preview.common.length}` : ''}`}
               commits={preview.common}
               kind="common"
               empty="истории нет"
-            />
-            {preview.remote.length > 0 && (
-              <Lane
-                title={`в удалёнке · ${preview.remote.length}`}
-                commits={preview.remote}
-                kind={force ? 'doomed' : 'remote'}
-                empty=""
-              />
-            )}
-            <Lane
-              title={`твои · ${preview.local.length}`}
-              commits={preview.local}
-              kind="local"
-              empty="нечего отправлять"
             />
           </div>
         ) : (

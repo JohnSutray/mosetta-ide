@@ -753,11 +753,20 @@ body {
 
 .push-body {
   display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: auto;
+}
+
+.push-fork {
+  display: flex;
+  flex: none;
   gap: 1px;
   background: var(--divider);
+  border-bottom: 2px solid var(--divider);
 }
+.push-fork .push-lane { flex: 1 1 50%; background: var(--panel-bg); }
 
 .push-lane {
   display: flex;
@@ -765,10 +774,7 @@ body {
   min-width: 0;
   background: var(--panel-bg);
 }
-.push-lane.is-common { flex: 1 1 30%; }
-.push-lane.is-remote,
-.push-lane.is-doomed { flex: 1 1 30%; }
-.push-lane.is-local { flex: 1 1 40%; }
+.push-lane.is-common { flex: none; }
 
 .push-lane-title {
   flex: none;
@@ -783,7 +789,9 @@ body {
 .push-lane.is-remote .push-lane-title { color: var(--git-modified); }
 .push-lane.is-doomed .push-lane-title { color: var(--error); }
 
-.push-lane-body { flex: 1; min-height: 0; overflow: auto; padding: 3px 0; }
+.push-lane-body { flex: none; padding: 3px 0; }
+.push-fork .push-lane-body { max-height: 34vh; overflow: auto; }
+.push-lane.is-common .push-lane-body { max-height: 28vh; overflow: auto; }
 
 .push-commit {
   display: flex;

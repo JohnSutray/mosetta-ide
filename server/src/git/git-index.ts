@@ -192,7 +192,7 @@ export class GitIndex {
         subject: parts.slice(3).join('\t'),
       });
     }
-    return out.reverse();
+    return out;
   }
 
   async run(action: GitAction, args: string[]): Promise<string | null> {
