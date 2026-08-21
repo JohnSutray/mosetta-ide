@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { Popup } from './popup.js';
 import type { GitAction, GitBranch } from '@ide/protocol';
 import {
   askName,
@@ -36,8 +37,13 @@ export function Branches() {
   const state = gitState.value;
 
   return (
-    <div class="se-backdrop" onMouseDown={() => (branchesOpen.value = false)}>
-      <div class="branches" onMouseDown={(e) => e.stopPropagation()}>
+    <Popup
+      id="branches"
+      class="branches"
+      size={{ w: 760, h: 460 }}
+      min={{ w: 520, h: 260 }}
+      onClose={() => (branchesOpen.value = false)}
+    >
         <div class="branches-head">
           <span class="branches-title">Ветки</span>
           <span class="branches-meta">
@@ -127,8 +133,7 @@ export function Branches() {
             Закрыть
           </button>
         </div>
-      </div>
-    </div>
+    </Popup>
   );
 }
 

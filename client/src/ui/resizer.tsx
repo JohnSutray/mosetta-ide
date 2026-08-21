@@ -9,11 +9,13 @@ const PANEL_DEFAULTS: Record<string, number> = Object.fromEntries(
 export function Resizer({
   id,
   side,
+  axis = 'x',
   limits,
   defaultWidth,
 }: {
   id: string;
   side: PanelSide;
+  axis?: 'x' | 'y';
   limits?: () => { min: number; max: number };
   defaultWidth?: number;
 }) {
@@ -26,16 +28,19 @@ export function Resizer({
 
   return (
     <div
-      class="resizer"
+      class={`resizer ${axis === 'y' ? 'is-y' : ''}`}
       onPointerDown={(event) => {
         event.preventDefault();
-        drag.current = { startX: event.clientX, startWidth: widthOf(id, defaultWidth) };
+        drag.current = {
+          startX: axis === 'y' ? event.clientY : event.clientX,
+          startWidth: widthOf(id, defaultWidth),
+        };
         (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
       }}
       onPointerMove={(event) => {
         const started = drag.current;
         if (!started) return;
-        const delta = event.clientX - started.startX;
+        const delta = (axis === 'y' ? event.clientY : event.clientX) - started.startX;
         apply(started.startWidth + (side === 'left' ? delta : -delta));
       }}
       onPointerUp={(event) => {

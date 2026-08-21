@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { Popup } from './popup.js';
 import type { IndexHit } from '@ide/protocol';
 import {
   acceptSelected,
@@ -34,8 +35,13 @@ export function SearchEverywhere() {
   const preview = searchPreview.value;
 
   return (
-    <div class="se-backdrop" onMouseDown={closeSearch}>
-      <div class="se" onMouseDown={(e) => e.stopPropagation()}>
+    <Popup
+      id="search"
+      class="se"
+      size={{ w: 1100, h: 640 }}
+      min={{ w: 560, h: 300 }}
+      onClose={closeSearch}
+    >
         <div class="se-input-row">
           <span class="se-icon">⌕</span>
           <input
@@ -79,8 +85,7 @@ export function SearchEverywhere() {
             )}
           </div>
         </div>
-      </div>
-    </div>
+    </Popup>
   );
 }
 

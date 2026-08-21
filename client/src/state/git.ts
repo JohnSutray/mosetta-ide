@@ -115,6 +115,12 @@ export async function openPush(): Promise<void> {
   }
 }
 
+export function clearCommit(): void {
+  if (pushSelected.value === null) return;
+  pushSelected.value = null;
+  void loadChanges();
+}
+
 export function selectCommit(short: string): void {
   pushSelected.value = pushSelected.value === short ? null : short;
   void loadChanges();
@@ -158,6 +164,17 @@ export function moveBranch(delta: number): void {
   branchSelected.value = (branchSelected.value + delta + total) % total;
   branchPrompt.value = null;
 }
+
+export const selectedCommit = computed(() => {
+  const short = pushSelected.value;
+  const preview = pushPreview.value;
+  if (!short || !preview) return null;
+  return (
+    [...preview.local, ...preview.remote, ...preview.common].find(
+      (commit) => commit.short === short,
+    ) ?? null
+  );
+});
 
 export const selectedBranch = computed(() => gitBranches.value[branchSelected.value] ?? null);
 

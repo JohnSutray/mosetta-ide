@@ -202,6 +202,7 @@ export interface GitChange {
 export interface GitCommit {
   short: string;
   subject: string;
+  body?: string;
   author: string;
   date: string;
 }

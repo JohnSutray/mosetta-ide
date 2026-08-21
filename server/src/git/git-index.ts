@@ -216,20 +216,23 @@ export class GitIndex {
   private async commits(args: string[]): Promise<GitCommit[]> {
     const result = await git(this.root, [
       'log',
-      '--format=%h%x09%an%x09%ad%x09%s',
+      '--format=%h%x09%an%x09%ad%x09%s%x09%b%x00',
       '--date=short',
       ...args,
     ]);
     if (!result.ok) return [];
     const out: GitCommit[] = [];
-    for (const line of result.stdout.split('\n')) {
+    for (const record of result.stdout.split('\0')) {
+      const line = record.replace(/^\n+/, '');
       if (line.trim() === '') continue;
       const parts = line.split('\t');
+      const body = parts.slice(4).join('\t').trim();
       out.push({
         short: parts[0] ?? '',
         author: parts[1] ?? '',
         date: parts[2] ?? '',
-        subject: parts.slice(3).join('\t'),
+        subject: parts[3] ?? '',
+        ...(body ? { body } : {}),
       });
     }
     return out;

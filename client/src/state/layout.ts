@@ -42,3 +42,55 @@ export function setPanelWidth(id: string, px: number): void {
   const min = panel?.minWidth ?? 150;
   setWidth(id, px, { min, max: window.innerWidth - 320 });
 }
+
+const SIZE_KEY = 'web-ide.popup-sizes';
+
+export interface Size {
+  w: number;
+  h: number;
+}
+
+function initialSizes(): Record<string, Size> {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SIZE_KEY) ?? '{}') as Record<string, unknown>;
+    const out: Record<string, Size> = {};
+    for (const [id, value] of Object.entries(saved)) {
+      const size = value as Size;
+      if (size && Number.isFinite(size.w) && Number.isFinite(size.h)) out[id] = size;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export const popupSizes = signal<Record<string, Size>>(initialSizes());
+
+export function sizeOf(id: string, fallback: Size): Size {
+  const saved = popupSizes.value[id] ?? fallback;
+  return {
+    w: Math.max(240, Math.min(saved.w, window.innerWidth - 32)),
+    h: Math.max(160, Math.min(saved.h, window.innerHeight - 48)),
+  };
+}
+
+export function setPopupSize(id: string, size: Size, min: Size): void {
+  const next = {
+    w: Math.round(Math.min(Math.max(size.w, min.w), window.innerWidth - 32)),
+    h: Math.round(Math.min(Math.max(size.h, min.h), window.innerHeight - 48)),
+  };
+  const known = popupSizes.value[id];
+  if (known && known.w === next.w && known.h === next.h) return;
+  popupSizes.value = { ...popupSizes.value, [id]: next };
+  try {
+    localStorage.setItem(SIZE_KEY, JSON.stringify(popupSizes.value));
+  } catch {}
+}
+
+export function resetPopupSize(id: string): void {
+  const { [id]: _dropped, ...rest } = popupSizes.value;
+  popupSizes.value = rest;
+  try {
+    localStorage.setItem(SIZE_KEY, JSON.stringify(rest));
+  } catch {}
+}
