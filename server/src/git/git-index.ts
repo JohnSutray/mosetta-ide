@@ -1,6 +1,7 @@
 import type {
   GitAction,
   GitBranch,
+  GitChange,
   GitCommit,
   GitFileState,
   GitState,
@@ -14,6 +15,8 @@ const DEBOUNCE_MS = 400;
 const POLL_MS = 3000;
 
 const COMMON_SHOWN = 5;
+
+const EMPTY_TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
 
 const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {} };
 
@@ -173,6 +176,43 @@ export class GitIndex {
     return { branch, upstream, common, remote, local };
   }
 
+  async changes(commit?: string): Promise<GitChange[]> {
+    if (commit) {
+      return this.names(['show', '--name-status', '--format=', commit]);
+    }
+
+    const tracking = await git(this.root, [
+      'rev-parse',
+      '--abbrev-ref',
+      '--symbolic-full-name',
+      '@{upstream}',
+    ]);
+    if (tracking.ok && tracking.stdout.trim() !== '') {
+      return this.names(['diff', '--name-status', `${tracking.stdout.trim()}...HEAD`]);
+    }
+
+    const local = await this.commits(['--not', '--remotes', 'HEAD']);
+    const oldest = local[local.length - 1];
+    if (!oldest) return [];
+    const parent = await git(this.root, ['rev-parse', `${oldest.short}^`]);
+    const base = parent.ok ? parent.stdout.trim() : EMPTY_TREE;
+    return this.names(['diff', '--name-status', base, 'HEAD']);
+  }
+
+  private async names(args: string[]): Promise<GitChange[]> {
+    const result = await git(this.root, args);
+    if (!result.ok) return [];
+    const out: GitChange[] = [];
+    for (const line of result.stdout.split('\n')) {
+      if (line.trim() === '') continue;
+      const [mark = '', first = '', second = ''] = line.split('\t');
+      const path = mark.startsWith('R') || mark.startsWith('C') ? second : first;
+      if (!path) continue;
+      out.push({ path, state: byMark(mark[0] ?? 'M') });
+    }
+    return out;
+  }
+
   private async commits(args: string[]): Promise<GitCommit[]> {
     const result = await git(this.root, [
       'log',
@@ -236,6 +276,13 @@ export function parseStatus(raw: string): Record<string, GitFileState> {
     files[path] = classify(x, y);
   }
   return files;
+}
+
+function byMark(mark: string): GitFileState {
+  if (mark === 'A') return 'added';
+  if (mark === 'D') return 'deleted';
+  if (mark === 'U') return 'conflict';
+  return 'modified';
 }
 
 function classify(x: string, y: string): GitFileState {

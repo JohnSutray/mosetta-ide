@@ -8,6 +8,7 @@ import type {
   FileText,
   GitAction,
   GitBranch,
+  GitChange,
   GitState,
   PushPreview,
   HoverInfo,
@@ -74,6 +75,7 @@ export interface Api {
   'git.state': { params: null; result: GitState };
   'git.branches': { params: null; result: GitBranch[] };
   'git.outgoing': { params: null; result: PushPreview };
+  'git.changes': { params: { commit?: string }; result: GitChange[] };
   'git.refresh': { params: null; result: GitState };
   'git.run': {
     params: { action: GitAction; branch?: string; name?: string };

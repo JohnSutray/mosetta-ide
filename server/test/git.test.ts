@@ -146,6 +146,39 @@ describe('git', () => {
     await fs.rm(other, { recursive: true, force: true });
   }, 30_000);
 
+  it('файлы пуша: весь исходящий дифф и дифф одного коммита', async () => {
+    await waitForState(c, (s) => s.repo);
+    const bare = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-bare2-'));
+    await run('git', ['init', '--bare', bare]);
+    await git('remote', 'add', 'origin', bare);
+    await git('push', '-u', 'origin', 'main');
+
+    await fs.writeFile(path.join(root, 'src/one.ts'), 'export const one = 1;\n', 'utf8');
+    await git('add', '.');
+    await git('commit', '-m', 'первый мой');
+    await fs.writeFile(path.join(root, 'src/two.ts'), 'export const two = 2;\n', 'utf8');
+    await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 111;\n', 'utf8');
+    await git('add', '.');
+    await git('commit', '-m', 'второй мой');
+
+    const all = await c.call('git.changes', {});
+    expect(all.map((change) => change.path).sort()).toEqual([
+      'src/main.ts',
+      'src/one.ts',
+      'src/two.ts',
+    ]);
+    expect(all.find((change) => change.path === 'src/main.ts')?.state).toBe('modified');
+    expect(all.find((change) => change.path === 'src/one.ts')?.state).toBe('added');
+
+    const outgoing = await c.call('git.outgoing', null);
+    const older = outgoing.local[outgoing.local.length - 1]!;
+    expect(older.subject).toBe('первый мой');
+    const one = await c.call('git.changes', { commit: older.short });
+    expect(one.map((change) => change.path)).toEqual(['src/one.ts']);
+
+    await fs.rm(bare, { recursive: true, force: true });
+  }, 30_000);
+
   it('переименование в разборе статуса не съедает следующую запись', () => {
     const raw = 'R  new.ts\0old.ts\0 M src/main.ts\0?? src/fresh.ts\0';
     expect(parseStatus(raw)).toEqual({

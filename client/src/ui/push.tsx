@@ -1,12 +1,16 @@
 import type { GitCommit } from '@ide/protocol';
+import { ChangedTree } from './changed-tree.js';
 import {
   closePush,
   doPush,
   gitOutput,
   gitRunning,
   pushForce,
+  pushChanges,
   pushOpen,
   pushPreview,
+  pushSelected,
+  selectCommit,
 } from '../state/git.js';
 
 export function Push() {
@@ -27,30 +31,43 @@ export function Push() {
         </div>
 
         {preview ? (
-          <div class="push-body">
-            <div class="push-fork">
-              <Lane
-                title={`твои · ${preview.local.length}`}
-                commits={preview.local}
-                kind="local"
-                empty="нечего отправлять"
-              />
-              {preview.remote.length > 0 && (
-                <Lane
-                  title={`в удалёнке · ${preview.remote.length}`}
-                  commits={preview.remote}
-                  kind={force ? 'doomed' : 'remote'}
-                  empty=""
-                />
-              )}
+          <div class="push-split">
+            <div class="push-files">
+              <div class="push-lane-title">
+                {pushSelected.value ? `коммит ${pushSelected.value}` : 'все твои изменения'}
+                {pushChanges.value.length > 0 ? ` · ${pushChanges.value.length}` : ''}
+              </div>
+              <div class="push-files-body">
+                <ChangedTree changes={pushChanges.value} />
+              </div>
             </div>
 
-            <Lane
-              title={`общее${preview.common.length ? ` · ${preview.common.length}` : ''}`}
-              commits={preview.common}
-              kind="common"
-              empty="истории нет"
-            />
+            <div class="push-body">
+              <div class="push-fork">
+                <Lane
+                  title={`твои · ${preview.local.length}`}
+                  commits={preview.local}
+                  kind="local"
+                  empty="нечего отправлять"
+                  selectable
+                />
+                {preview.remote.length > 0 && (
+                  <Lane
+                    title={`в удалёнке · ${preview.remote.length}`}
+                    commits={preview.remote}
+                    kind={force ? 'doomed' : 'remote'}
+                    empty=""
+                  />
+                )}
+              </div>
+
+              <Lane
+                title={`общее${preview.common.length ? ` · ${preview.common.length}` : ''}`}
+                commits={preview.common}
+                kind="common"
+                empty="истории нет"
+              />
+            </div>
           </div>
         ) : (
           <div class="se-empty">Считаю…</div>
@@ -90,18 +107,27 @@ function Lane({
   commits,
   kind,
   empty,
+  selectable = false,
 }: {
   title: string;
   commits: GitCommit[];
   kind: 'common' | 'remote' | 'doomed' | 'local';
   empty: string;
+  selectable?: boolean;
 }) {
   return (
     <div class={`push-lane is-${kind}`}>
       <div class="push-lane-title">{title}</div>
       <div class="push-lane-body">
         {commits.map((commit) => (
-          <div key={commit.short} class="push-commit" title={`${commit.author}, ${commit.date}`}>
+          <div
+            key={commit.short}
+            class={`push-commit ${selectable ? 'is-pickable' : ''} ${
+              selectable && pushSelected.value === commit.short ? 'is-current' : ''
+            }`}
+            title={`${commit.author}, ${commit.date}`}
+            onClick={selectable ? () => selectCommit(commit.short) : undefined}
+          >
             <span class="push-sha">{commit.short}</span>
             <span class="push-subject">{commit.subject}</span>
           </div>

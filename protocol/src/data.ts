@@ -194,6 +194,11 @@ export type GitAction =
   | 'fetch'
   | 'merge';
 
+export interface GitChange {
+  path: string;
+  state: GitFileState;
+}
+
 export interface GitCommit {
   short: string;
   subject: string;

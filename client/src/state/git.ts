@@ -1,5 +1,12 @@
 import { batch, computed, signal } from '@preact/signals';
-import type { GitAction, GitBranch, GitFileState, GitState, PushPreview } from '@ide/protocol';
+import type {
+  GitAction,
+  GitBranch,
+  GitChange,
+  GitFileState,
+  GitState,
+  PushPreview,
+} from '@ide/protocol';
 import { complain, rpc, say } from './session.js';
 
 const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {} };
@@ -19,6 +26,11 @@ const OUTPUT_LIMIT = 64 * 1024;
 export const pushOpen = signal(false);
 export const pushPreview = signal<PushPreview | null>(null);
 export const pushForce = signal(false);
+
+export const pushSelected = signal<string | null>(null);
+export const pushChanges = signal<GitChange[]>([]);
+
+let changesToken = 0;
 
 export type TreeTint = 'modified' | 'added' | 'conflict';
 
@@ -91,12 +103,31 @@ export async function openPush(): Promise<void> {
     pushOpen.value = true;
     pushForce.value = false;
     pushPreview.value = null;
+    pushSelected.value = null;
+    pushChanges.value = [];
     gitOutput.value = '';
   });
   try {
     pushPreview.value = await rpc.call('git.outgoing', null);
+    await loadChanges();
   } catch (err) {
     complain(err instanceof Error ? err.message : String(err));
+  }
+}
+
+export function selectCommit(short: string): void {
+  pushSelected.value = pushSelected.value === short ? null : short;
+  void loadChanges();
+}
+
+async function loadChanges(): Promise<void> {
+  const commit = pushSelected.value;
+  const token = ++changesToken;
+  try {
+    const list = await rpc.call('git.changes', commit ? { commit } : {});
+    if (token === changesToken) pushChanges.value = list;
+  } catch {
+    if (token === changesToken) pushChanges.value = [];
   }
 }
 

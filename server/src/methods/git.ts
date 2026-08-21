@@ -11,6 +11,9 @@ export const gitBranches: Handler<'git.branches'> = (_params, ctx) =>
 export const gitOutgoing: Handler<'git.outgoing'> = (_params, ctx) =>
   ctx.session.requireWorkspace().services.git.outgoing();
 
+export const gitChanges: Handler<'git.changes'> = (params, ctx) =>
+  ctx.session.requireWorkspace().services.git.changes(params?.commit);
+
 export const gitRefresh: Handler<'git.refresh'> = async (_params, ctx) => {
   const git = ctx.session.requireWorkspace().services.git;
   await git.refresh();
