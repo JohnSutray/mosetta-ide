@@ -1,5 +1,5 @@
 import { batch, computed, signal } from '@preact/signals';
-import type { GitAction, GitBranch, GitFileState, GitState } from '@ide/protocol';
+import type { GitAction, GitBranch, GitFileState, GitState, PushPreview } from '@ide/protocol';
 import { complain, rpc, say } from './session.js';
 
 const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {} };
@@ -15,6 +15,10 @@ export const gitRunning = signal<GitAction | null>(null);
 export const gitOutput = signal('');
 
 const OUTPUT_LIMIT = 64 * 1024;
+
+export const pushOpen = signal(false);
+export const pushPreview = signal<PushPreview | null>(null);
+export const pushForce = signal(false);
 
 export type TreeTint = 'modified' | 'added' | 'conflict';
 
@@ -78,6 +82,37 @@ export function openBranches(): void {
   void refreshGit();
 }
 
+export async function openPush(): Promise<void> {
+  if (!gitState.value.repo) {
+    complain('Проект не под git');
+    return;
+  }
+  batch(() => {
+    pushOpen.value = true;
+    pushForce.value = false;
+    pushPreview.value = null;
+    gitOutput.value = '';
+  });
+  try {
+    pushPreview.value = await rpc.call('git.outgoing', null);
+  } catch (err) {
+    complain(err instanceof Error ? err.message : String(err));
+  }
+}
+
+export function closePush(): void {
+  batch(() => {
+    pushOpen.value = false;
+    pushPreview.value = null;
+  });
+}
+
+export async function doPush(): Promise<void> {
+  const branch = pushPreview.value?.branch ?? null;
+  const ok = await runGit(pushForce.value ? 'force-push' : 'push', branch ?? undefined);
+  if (ok) closePush();
+}
+
 export function closeBranches(): void {
   if (branchPrompt.value) {
     branchPrompt.value = null;
@@ -139,8 +174,12 @@ export function askName(action: GitAction): void {
 }
 
 export async function gitDo(action: GitAction, name?: string): Promise<void> {
-  if (gitRunning.value) return;
-  const branch = selectedBranch.value;
+  await runGit(action, selectedBranch.value?.name, name);
+}
+
+async function runGit(action: GitAction, branchName?: string, name?: string): Promise<boolean> {
+  if (gitRunning.value) return false;
+  const branch = branchName ?? null;
   batch(() => {
     gitRunning.value = action;
     gitOutput.value = '';
@@ -148,21 +187,23 @@ export async function gitDo(action: GitAction, name?: string): Promise<void> {
   try {
     const { error } = await rpc.call('git.run', {
       action,
-      ...(branch ? { branch: branch.name } : {}),
+      ...(branch ? { branch } : {}),
       ...(name ? { name } : {}),
     });
     if (error) {
       complain(error.split('\n')[0] ?? error);
-      return;
+      return false;
     }
-    say(`git ${action}${name ? ` ${name}` : branch ? ` ${branch.name}` : ''} — готово`);
+    say(`git ${action}${name ? ` ${name}` : branch ? ` ${branch}` : ''} — готово`);
     batch(() => {
       branchPrompt.value = null;
       if (action === 'checkout') branchesOpen.value = false;
     });
     await refreshGit();
+    return true;
   } catch (err) {
     complain(err instanceof Error ? err.message : String(err));
+    return false;
   } finally {
     gitRunning.value = null;
   }

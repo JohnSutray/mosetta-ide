@@ -30,6 +30,7 @@ import { refreshScripts, refreshTerminals } from '../state/terminals.js';
 import { Editor } from '../editor/editor.js';
 import { SearchEverywhere } from './search-everywhere.js';
 import { Branches } from './branches.js';
+import { Push } from './push.js';
 import { refreshGit, resetGit } from '../state/git.js';
 import { Scripts } from './scripts.js';
 import { TerminalView } from './terminal.js';
@@ -149,6 +150,7 @@ export function App() {
 
       <SearchEverywhere />
       <Branches />
+      <Push />
     </div>
   );
 }

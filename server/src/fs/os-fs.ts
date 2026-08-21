@@ -74,6 +74,7 @@ export class OsFs {
 
     for (const dirent of dirents) {
       if (hidden.has(dirent.name)) continue;
+      if (isTempFile(dirent.name)) continue;
       const childKey = joinKey(dirKey, dirent.name);
       let stat: Stats;
       try {
@@ -202,6 +203,12 @@ export class OsFs {
 
 function revisionOf(stat: Stats): string {
   return `${Math.round(stat.mtimeMs)}:${stat.size}`;
+}
+
+export const TEMP_FILE = /(^\.#)|(~$)|(\.sw[px]$)|(^\..*\.tmp-\d+-)/;
+
+export function isTempFile(name: string): boolean {
+  return TEMP_FILE.test(name);
 }
 
 export function sortEntries(entries: DirEntry[]): DirEntry[] {

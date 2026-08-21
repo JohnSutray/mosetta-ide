@@ -15,6 +15,8 @@ describe('файлы воркспейса', () => {
       'src/main.ts': 'const a = 1;\n',
       'src/util/helper.ts': 'export const h = 1;\n',
       'readme.md': '# hi\n',
+      'src/.main.ts.tmp-123-abc': 'мусор\n',
+      'src/main.ts~': 'мусор\n',
     });
     c = await connect(server);
     await c.call('workspace.open', { root });
@@ -24,6 +26,11 @@ describe('файлы воркспейса', () => {
     await c.close();
     await server.close();
     await removeProject(root);
+  });
+
+  it('временный файл, лежавший до открытия, в дерево не попадает', async () => {
+    const tree = await c.call('tree.list', { path: 'src' });
+    expect(tree.map((entry) => entry.name).sort()).toEqual(['main.ts', 'util']);
   });
 
   it('дерево отдаёт папки сверху, пути относительные', async () => {

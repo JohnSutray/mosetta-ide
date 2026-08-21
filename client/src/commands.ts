@@ -25,6 +25,7 @@ import {
   gitDo,
   moveBranch,
   openBranches,
+  openPush,
 } from './state/git.js';
 import {
   acceptPath,
@@ -78,6 +79,7 @@ export function registerCommands(): void {
   });
 
   registerCommand('git.branches', () => openBranches());
+  registerCommand('git.push', () => void openPush());
   registerCommand('git.next', () => moveBranch(1));
   registerCommand('git.prev', () => moveBranch(-1));
   registerCommand('git.checkout', () => void gitDo('checkout'));

@@ -189,6 +189,22 @@ export type GitAction =
   | 'delete'
   | 'force-delete'
   | 'push'
+  | 'force-push'
   | 'pull'
   | 'fetch'
   | 'merge';
+
+export interface GitCommit {
+  short: string;
+  subject: string;
+  author: string;
+  date: string;
+}
+
+export interface PushPreview {
+  branch: string | null;
+  upstream: string | null;
+  common: GitCommit[];
+  remote: GitCommit[];
+  local: GitCommit[];
+}

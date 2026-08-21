@@ -86,13 +86,7 @@ function Recent() {
               <Icon name="book" filled={!!open} />
             </span>
             <span class="recent-name">{item.name}</span>
-            <span class="recent-meta">
-              {open
-                ? `${open.sessions > 0 ? `${open.sessions} вкл.` : 'фоном'}${
-                    open.held.length ? ` · ${open.held.length} держат` : ''
-                  }`
-                : shortenHome(item.root)}
-            </span>
+            <span class="recent-meta">{shortenHome(item.root)}</span>
           </div>
         );
       })}

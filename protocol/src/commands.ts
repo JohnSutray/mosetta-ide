@@ -19,6 +19,7 @@ export const COMMANDS = {
   'projects.close': 'Проекты: вернуться к дереву',
 
   'git.branches': 'Ветки git',
+  'git.push': 'Push текущей ветки',
   'git.next': 'Ветки: вниз',
   'git.prev': 'Ветки: вверх',
   'git.checkout': 'Ветки: переключиться',

@@ -12,6 +12,7 @@ import {
   gitOutput,
   gitRunning,
   gitState,
+  openPush,
   selectedBranch,
 } from '../state/git.js';
 
@@ -119,7 +120,9 @@ export function Branches() {
         <div class="branches-foot">
           <Network action="fetch" title="Fetch" />
           <Network action="pull" title="Pull" />
-          <Network action="push" title="Push" />
+          <button class="button" disabled={gitRunning.value !== null} onClick={() => void openPush()}>
+            Push…
+          </button>
           <button class="button" onClick={closeBranches}>
             Закрыть
           </button>
@@ -177,8 +180,8 @@ function Actions({ branch }: { branch: GitBranch }) {
           <button class="branch-action" onClick={() => askName('rename')}>
             Переименовать
           </button>
-          <button class="branch-action" onClick={() => void gitDo('push')}>
-            Push
+          <button class="branch-action" onClick={() => void openPush()}>
+            Push…
           </button>
         </>
       )}

@@ -8,6 +8,7 @@ export type IconName =
   | 'terminal'
   | 'projects'
   | 'git'
+  | 'push'
   | 'book';
 
 interface Props {
@@ -55,6 +56,14 @@ export function Icon({ name, filled }: Props): JSX.Element {
           <path d="M8 2.3l6 10.4H2z" fill={filled ? 'currentColor' : 'none'} />
           <path d="M8 6.4v2.6" stroke={filled ? 'var(--panel-bg)' : 'currentColor'} />
           <path d="M8 10.9v.1" stroke={filled ? 'var(--panel-bg)' : 'currentColor'} />
+        </svg>
+      );
+    case 'push':
+      return (
+        <svg {...common}>
+          <path d="M8 12.6V3.4" />
+          <path d="M4.4 6.9 8 3.3l3.6 3.6" fill={filled ? 'currentColor' : 'none'} />
+          <path d="M2.6 13.6h10.8" />
         </svg>
       );
     case 'book':

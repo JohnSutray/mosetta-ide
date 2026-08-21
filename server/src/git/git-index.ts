@@ -1,10 +1,19 @@
-import type { GitAction, GitBranch, GitFileState, GitState } from '@ide/protocol';
+import type {
+  GitAction,
+  GitBranch,
+  GitCommit,
+  GitFileState,
+  GitState,
+  PushPreview,
+} from '@ide/protocol';
 import type { Logger } from '../log.js';
 import { git, gitStream } from './cli.js';
 
 const DEBOUNCE_MS = 400;
 
 const POLL_MS = 3000;
+
+const COMMON_SHOWN = 5;
 
 const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {} };
 
@@ -134,6 +143,58 @@ export class GitIndex {
     return out;
   }
 
+  async outgoing(): Promise<PushPreview> {
+    const head = await git(this.root, ['rev-parse', '--abbrev-ref', 'HEAD']);
+    const branch = head.ok ? head.stdout.trim() || null : null;
+
+    const tracking = await git(this.root, [
+      'rev-parse',
+      '--abbrev-ref',
+      '--symbolic-full-name',
+      '@{upstream}',
+    ]);
+    const upstream = tracking.ok ? tracking.stdout.trim() || null : null;
+
+    if (!upstream) {
+      const local = await this.commits(['--not', '--remotes', 'HEAD']);
+      const common = await this.commits([`-n`, `${COMMON_SHOWN}`, 'HEAD', '--not', ...ids(local)]);
+      return { branch, upstream: null, common, remote: [], local };
+    }
+
+    const [local, remote, base] = await Promise.all([
+      this.commits([`${upstream}..HEAD`]),
+      this.commits([`HEAD..${upstream}`]),
+      git(this.root, ['merge-base', 'HEAD', upstream]),
+    ]);
+    const common = base.ok
+      ? await this.commits(['-n', `${COMMON_SHOWN}`, base.stdout.trim()])
+      : [];
+
+    return { branch, upstream, common, remote, local };
+  }
+
+  private async commits(args: string[]): Promise<GitCommit[]> {
+    const result = await git(this.root, [
+      'log',
+      '--format=%h%x09%an%x09%ad%x09%s',
+      '--date=short',
+      ...args,
+    ]);
+    if (!result.ok) return [];
+    const out: GitCommit[] = [];
+    for (const line of result.stdout.split('\n')) {
+      if (line.trim() === '') continue;
+      const parts = line.split('\t');
+      out.push({
+        short: parts[0] ?? '',
+        author: parts[1] ?? '',
+        date: parts[2] ?? '',
+        subject: parts.slice(3).join('\t'),
+      });
+    }
+    return out.reverse();
+  }
+
   async run(action: GitAction, args: string[]): Promise<string | null> {
     this.onOutput(action, `$ git ${args.join(' ')}\n`);
     const result = await gitStream(this.root, args, (chunk) => this.onOutput(action, chunk));
@@ -185,6 +246,10 @@ function classify(x: string, y: string): GitFileState {
   if (x === 'D' || y === 'D') return 'deleted';
   if (x === 'A') return 'added';
   return 'modified';
+}
+
+function ids(commits: GitCommit[]): string[] {
+  return commits.map((commit) => commit.short);
 }
 
 function counts(raw: string): [number, number] {

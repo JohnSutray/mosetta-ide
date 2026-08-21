@@ -2,7 +2,7 @@ import type { HandlerTable } from '../rpc/context.js';
 import { configGet } from './config.js';
 import { docClose, docEdit, docOpen, docReload, docSave, docState } from './doc.js';
 import { fsList, fsRead, fsWrite } from './fs.js';
-import { gitBranches, gitRefresh, gitRun, gitState } from './git.js';
+import { gitBranches, gitOutgoing, gitRefresh, gitRun, gitState } from './git.js';
 import { lspDiagnostics, lspHover, lspStatus } from './lsp.js';
 import { npmList, npmRun } from './npm.js';
 import { indexSearch, indexStats } from './search.js';
@@ -71,6 +71,7 @@ export const handlers: HandlerTable = {
 
   'git.state': gitState,
   'git.branches': gitBranches,
+  'git.outgoing': gitOutgoing,
   'git.refresh': gitRefresh,
   'git.run': gitRun,
 

@@ -8,6 +8,9 @@ export const gitState: Handler<'git.state'> = (_params, ctx) =>
 export const gitBranches: Handler<'git.branches'> = (_params, ctx) =>
   ctx.session.requireWorkspace().services.git.branches();
 
+export const gitOutgoing: Handler<'git.outgoing'> = (_params, ctx) =>
+  ctx.session.requireWorkspace().services.git.outgoing();
+
 export const gitRefresh: Handler<'git.refresh'> = async (_params, ctx) => {
   const git = ctx.session.requireWorkspace().services.git;
   await git.refresh();
@@ -39,6 +42,10 @@ function argsFor(action: GitAction, branch?: string, name?: string): string[] {
       return branch
         ? ['push', '--progress', '-u', 'origin', ref(branch)]
         : ['push', '--progress'];
+    case 'force-push':
+      return branch
+        ? ['push', '--progress', '--force-with-lease', '-u', 'origin', ref(branch)]
+        : ['push', '--progress', '--force-with-lease'];
     case 'pull':
       return ['pull', '--progress', '--ff-only'];
     case 'fetch':

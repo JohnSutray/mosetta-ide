@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -107,6 +108,43 @@ describe('git', () => {
     const spaced = await c.expectError('git.run', { action: 'create', name: 'две ветки' });
     expect(spaced.message).toMatch(/недопустимое имя ветки/);
   });
+
+  it('окно пуша знает, что уедет и что затрётся', async () => {
+    await waitForState(c, (s) => s.repo);
+
+    const bare = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-bare-'));
+    await run('git', ['init', '--bare', bare]);
+    await git('remote', 'add', 'origin', bare);
+    await git('push', '-u', 'origin', 'main');
+
+    await fs.writeFile(path.join(root, 'src/mine.ts'), 'export const mine = 1;\n', 'utf8');
+    await git('add', '.');
+    await git('commit', '-m', 'моё');
+
+    let outgoing = await c.call('git.outgoing', null);
+    expect(outgoing.branch).toBe('main');
+    expect(outgoing.upstream).toBe('origin/main');
+    expect(outgoing.local.map((commit) => commit.subject)).toEqual(['моё']);
+    expect(outgoing.remote).toEqual([]);
+    expect(outgoing.common.map((commit) => commit.subject)).toEqual(['первый']);
+
+    const other = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-other-'));
+    await run('git', ['clone', bare, other]);
+    await run('git', ['-C', other, 'config', 'user.email', 'other@example.com']);
+    await run('git', ['-C', other, 'config', 'user.name', 'Другой']);
+    await fs.writeFile(path.join(other, 'theirs.ts'), 'export const theirs = 1;\n', 'utf8');
+    await run('git', ['-C', other, 'add', '.']);
+    await run('git', ['-C', other, 'commit', '-m', 'чужое']);
+    await run('git', ['-C', other, 'push']);
+
+    await c.call('git.run', { action: 'fetch' });
+    outgoing = await c.call('git.outgoing', null);
+    expect(outgoing.local.map((commit) => commit.subject)).toEqual(['моё']);
+    expect(outgoing.remote.map((commit) => commit.subject)).toEqual(['чужое']);
+
+    await fs.rm(bare, { recursive: true, force: true });
+    await fs.rm(other, { recursive: true, force: true });
+  }, 30_000);
 
   it('переименование в разборе статуса не съедает следующую запись', () => {
     const raw = 'R  new.ts\0old.ts\0 M src/main.ts\0?? src/fresh.ts\0';

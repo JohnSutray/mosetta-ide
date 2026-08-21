@@ -7,7 +7,7 @@ import {
   treePanelVisible,
 } from '../state/session.js';
 import { searchOpen } from '../state/search.js';
-import { branchesOpen } from '../state/git.js';
+import { branchesOpen, pushOpen } from '../state/git.js';
 import type { IconName } from './icons.js';
 
 export type PanelSide = 'left' | 'right';
@@ -98,6 +98,13 @@ export const TOOLBAR: ToolbarEntry[] = [
     icon: 'git',
     command: 'git.branches',
     active: branchesOpen,
+  },
+  {
+    id: 'git.push',
+    title: 'Push текущей ветки (Cmd+Shift+K)',
+    icon: 'push',
+    command: 'git.push',
+    active: pushOpen,
   },
   entryFor('scripts'),
   entryFor('problems'),

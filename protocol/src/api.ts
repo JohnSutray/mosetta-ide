@@ -9,6 +9,7 @@ import type {
   GitAction,
   GitBranch,
   GitState,
+  PushPreview,
   HoverInfo,
   IndexHit,
   IndexKind,
@@ -72,6 +73,7 @@ export interface Api {
 
   'git.state': { params: null; result: GitState };
   'git.branches': { params: null; result: GitBranch[] };
+  'git.outgoing': { params: null; result: PushPreview };
   'git.refresh': { params: null; result: GitState };
   'git.run': {
     params: { action: GitAction; branch?: string; name?: string };
