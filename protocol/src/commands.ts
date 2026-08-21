@@ -21,11 +21,10 @@ export const COMMANDS = {
   'git.branches': 'Ветки git',
   'git.push': 'Push текущей ветки',
   'git.fetch': 'Забрать обновления удалёнки',
-  'git.close': 'Ветки: закрыть',
-
   'pick.next': 'Список: вниз',
   'pick.prev': 'Список: вверх',
   'pick.accept': 'Список: выбрать',
+  'pick.expand': 'Список: раскрыть действия',
 
   'popup.close': 'Закрыть верхний попап',
 

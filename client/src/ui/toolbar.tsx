@@ -39,21 +39,17 @@ export function Toolbar() {
         {ws && (
           <>
             <button
-              class="tool is-fetch"
-              title={t('toolbar.fetch')}
-              onClick={() => runCommand('git.fetch')}
-            >
-              <Icon name="fetch" filled={false} />
-            </button>
-
-            <button
               class="branch-label"
               title={t('toolbar.branches')}
               onClick={() => runCommand('git.branches')}
             >
               {git.repo ? (git.branch ?? t('toolbar.noBranch')) : t('toolbar.noRepo')}
-              {git.ahead > 0 && <span class="branch-ahead">↑{git.ahead}</span>}
-              {git.behind > 0 && <span class="branch-behind">↓{git.behind}</span>}
+              {(git.ahead > 0 || git.behind > 0) && (
+                <span class="branch-track">
+                  <span class="branch-ahead">{git.ahead > 0 ? `↑${git.ahead}` : ''}</span>
+                  <span class="branch-behind">{git.behind > 0 ? `↓${git.behind}` : ''}</span>
+                </span>
+              )}
             </button>
           </>
         )}

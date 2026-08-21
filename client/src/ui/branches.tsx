@@ -13,13 +13,18 @@ import {
   gitDo,
   gitRunning,
   gitState,
+  moveBranch,
   openBranchMenu,
+  openMenuForSelected,
   openPush,
   selectedBranch,
   setBranchFilter,
 } from '../state/git.js';
 import { t } from '../i18n/index.js';
 import { Popup } from './popup.js';
+import { activePick } from '../state/pick.js';
+import { Chevron } from './file-icons.js';
+import { Icon } from './icons.js';
 
 export function Branches() {
   const list = useRef<HTMLDivElement>(null);
@@ -39,6 +44,19 @@ export function Branches() {
     if (prompt) nameField.current?.select();
   }, [prompt?.action]);
 
+  useEffect(() => {
+    if (!branchesOpen.value) return;
+    activePick.value = {
+      next: () => moveBranch(1),
+      prev: () => moveBranch(-1),
+      accept: () => openMenuForSelected(),
+      expand: () => openMenuForSelected(),
+    };
+    return () => {
+      activePick.value = null;
+    };
+  }, [branchesOpen.value]);
+
   if (!branchesOpen.value) return null;
 
   const state = gitState.value;
@@ -51,6 +69,7 @@ export function Branches() {
       size={{ w: 620, h: 460 }}
       min={{ w: 420, h: 260 }}
       onClose={() => (branchesOpen.value = false)}
+      onEscape={closeBranches}
       onMouseDown={(event) => {
         if (!(event.target as HTMLElement).closest('.branch-menu, .branch-row')) {
           branchMenu.value = null;
@@ -64,6 +83,14 @@ export function Branches() {
           {state.ahead > 0 ? ` ↑${state.ahead}` : ''}
           {state.behind > 0 ? ` ↓${state.behind}` : ''}
         </span>
+        <button
+          class="tool is-fetch branches-fetch"
+          title={t('toolbar.fetch')}
+          disabled={gitRunning.value !== null}
+          onClick={() => void gitDo('fetch')}
+        >
+          <Icon name="fetch" filled={false} />
+        </button>
       </div>
 
       <div class="branches-filter">
@@ -126,9 +153,6 @@ export function Branches() {
       )}
 
       <div class="branches-foot">
-        <button class="button" disabled={gitRunning.value !== null} onClick={() => void gitDo('fetch')}>
-          {t('branches.fetch')}
-        </button>
         <button class="button" disabled={gitRunning.value !== null} onClick={() => void gitDo('pull')}>
           {t('branches.pull')}
         </button>
@@ -160,9 +184,14 @@ function BranchRow({ branch, at, label }: { branch: GitBranch; at: number; label
     >
       <span class="branch-mark">{branch.current ? '●' : ''}</span>
       <span class="branch-name">{label}</span>
-      {branch.ahead > 0 && <span class="branch-ahead">↑{branch.ahead}</span>}
-      {branch.behind > 0 && <span class="branch-behind">↓{branch.behind}</span>}
+      <span class="branch-track">
+        <span class="branch-ahead">{branch.ahead > 0 ? `↑${branch.ahead}` : ''}</span>
+        <span class="branch-behind">{branch.behind > 0 ? `↓${branch.behind}` : ''}</span>
+      </span>
       <span class="branch-sha">{branch.head}</span>
+      <span class="branch-more">
+        <Chevron />
+      </span>
     </div>
   );
 }

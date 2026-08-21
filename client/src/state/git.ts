@@ -180,6 +180,14 @@ export function setBranchFilter(value: string): void {
 const MENU_W = 200;
 const MENU_H = 230;
 
+export function openMenuForSelected(): void {
+  const branch = selectedBranch.value;
+  if (!branch) return;
+  const row = document.querySelector('.branch-row.is-current');
+  if (!row) return;
+  openBranchMenu(branch.name, row.getBoundingClientRect());
+}
+
 export function openBranchMenu(name: string, rect: DOMRect): void {
   if (branchMenu.value?.name === name) {
     branchMenu.value = null;

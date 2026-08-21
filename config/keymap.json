@@ -19,11 +19,10 @@
     { "command": "projects.accept", "key": "enter", "when": "projects" },
     { "command": "projects.close", "key": "escape", "when": "projects" },
 
-    { "command": "git.close", "key": "escape", "when": "branches" },
-
     { "command": "pick.next", "key": "arrowdown", "when": "pick" },
     { "command": "pick.prev", "key": "arrowup", "when": "pick" },
     { "command": "pick.accept", "key": "enter", "when": "pick" },
+    { "command": "pick.expand", "key": "arrowright", "when": "pick" },
 
     { "command": "file.reload", "key": "mod+shift+r", "when": "global" },
 

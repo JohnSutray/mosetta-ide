@@ -10,6 +10,7 @@ export function Popup({
   size,
   min,
   onClose,
+  onEscape,
   onMouseDown,
   children,
 }: {
@@ -18,6 +19,7 @@ export function Popup({
   size: Size;
   min: Size;
   onClose: () => void;
+  onEscape?: () => void;
   onMouseDown?: (event: MouseEvent) => void;
   children: ComponentChildren;
 }) {
@@ -26,9 +28,9 @@ export function Popup({
   const current = sizeOf(id, size);
 
   useEffect(() => {
-    enter({ id, close: onClose });
+    enter({ id, close: onEscape ?? onClose });
     return () => leave(id);
-  }, [id, onClose]);
+  }, [id, onClose, onEscape]);
 
   return (
     <div class="se-backdrop" onMouseDown={onClose}>

@@ -20,15 +20,7 @@ import {
   treePanelVisible,
 } from './state/session.js';
 import { createTerminal } from './state/terminals.js';
-import {
-  branchesOpen,
-  branchPrompt,
-  closeBranches,
-  gitDo,
-  moveBranch,
-  openBranches,
-  openPush,
-} from './state/git.js';
+import { gitDo, openBranches, openPush } from './state/git.js';
 import {
   acceptPath,
   completeSuggestion,
@@ -81,11 +73,10 @@ export function registerCommands(): void {
   registerCommand('git.branches', () => openBranches());
   registerCommand('git.push', () => void openPush());
   registerCommand('git.fetch', () => void gitDo('fetch'));
-  registerCommand('git.close', () => closeBranches());
-
   registerCommand('pick.next', () => activePick.value?.next());
   registerCommand('pick.prev', () => activePick.value?.prev());
   registerCommand('pick.accept', () => activePick.value?.accept());
+  registerCommand('pick.expand', () => activePick.value?.expand?.());
 
   registerCommand('popup.close', () => {
     closeTop();
@@ -102,7 +93,6 @@ export { missingCommands };
 
 export function resolveContext(): KeyContext {
   if (searchOpen.value) return 'search';
-  if (branchesOpen.value && !branchPrompt.value) return 'branches';
   if (activePick.value) return 'pick';
   if (editorHasFocus()) return 'editor';
   const active = document.activeElement;

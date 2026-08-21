@@ -622,10 +622,11 @@ body {
 
 .branches-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
-  padding: 7px 12px;
+  padding: 5px 12px;
   border-bottom: 1px solid var(--divider);
+  flex: none;
 }
 .branches-title { font-size: 14px; }
 .branches-meta { color: var(--muted); font-size: 12px; }
@@ -661,14 +662,24 @@ body {
   letter-spacing: 0;
   color: #9aa4a8;
 }
-.branch-head.is-remote + .branch-row,
-.branch-head.is-remote ~ .branch-row { padding-left: 26px; }
 
 .branch-row.is-remote .branch-name { color: var(--muted); }
 .branch-row.is-remote.is-current .branch-name { color: #cfe0ee; }
 .branch-mark { width: 8px; flex: none; color: var(--git-added); }
 .branch-name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
 .branch-sha { flex: none; color: var(--muted); font: 11px var(--font); }
+
+.branch-more {
+  flex: none;
+  display: flex;
+  align-items: center;
+  width: 10px;
+  color: var(--muted);
+  opacity: 0.6;
+}
+.branch-row.is-current .branch-more { opacity: 1; color: #dbe6ef; }
+
+.branches-fetch { flex: none; margin-left: auto; }
 .branch-row.is-current .branch-sha { color: #c6d3dd; }
 
 .branch-action {
@@ -949,6 +960,18 @@ body {
 }
 .branch-label:hover { background: #4a4e50; border-color: var(--divider); }
 
+.branch-track {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  font: 11px var(--font);
+}
+.branch-ahead,
+.branch-behind {
+  display: inline-block;
+  width: 3.5ch;
+  text-align: right;
+}
 .branch-ahead { color: var(--git-added); }
 .branch-behind { color: var(--git-modified); }
 
