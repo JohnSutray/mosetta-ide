@@ -10,9 +10,21 @@
   --accent: #ffc66d;
   --error: #ff6b68;
   --font: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  --ui-font: 'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 * { box-sizing: border-box; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #565a5c;
+  border: 3px solid transparent;
+  border-radius: 6px;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: #6e7476; background-clip: content-box; }
+::-webkit-scrollbar-corner { background: transparent; }
 
 html, body, #root {
   height: 100%;
@@ -141,7 +153,12 @@ body {
 }
 .tag.is-dirty { color: var(--accent); border-color: var(--accent); }
 
-.tree { padding: 3px 0; }
+.tree {
+  padding: 3px 0;
+  width: max-content;
+  min-width: 100%;
+  font: 13px/1.35 var(--ui-font);
+}
 .tree-empty, .placeholder {
   padding: 12px;
   color: var(--muted);
@@ -150,16 +167,49 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  height: 20px;
+  height: 21px;
   padding-right: 8px;
   white-space: nowrap;
 }
 .tree-row:hover { background: #45494a; }
 .tree-row.is-current { background: var(--treesel); }
-.chevron { width: 10px; color: var(--muted); flex: none; }
+.tree-row.is-excluded { background: rgba(190, 120, 40, 0.09); }
+.tree-row.is-excluded:hover { background: rgba(190, 120, 40, 0.16); }
+.tree-row.is-excluded.is-current { background: var(--treesel); }
+
+.chevron {
+  flex: none;
+  width: 12px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8b9296;
+  transition: transform 90ms linear;
+}
+.chevron.is-open { transform: rotate(90deg); }
 .chevron.is-hidden { visibility: hidden; }
-.tree-name { overflow: hidden; text-overflow: ellipsis; }
-.tree-name.is-dir { color: var(--dir); }
+
+.tree-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.tree-name { flex: none; }
+.tree-name.is-root { font-weight: 700; }
+
+.tree-note {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .projects { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
 .open-form { display: flex; flex-direction: column; gap: 6px; }
@@ -251,7 +301,6 @@ body {
 }
 
 .tree-name.is-broken { color: var(--error); }
-.tree-badge { margin-left: auto; color: var(--muted); font-size: 11px; opacity: 0.6; }
 
 .se-backdrop {
   position: fixed;

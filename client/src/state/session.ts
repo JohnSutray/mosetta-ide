@@ -20,6 +20,7 @@ export const connected = rpc.connected;
 
 export const dirChildren = signal<Map<string, DirEntry[]>>(new Map());
 export const expanded = signal<Set<string>>(new Set());
+export const rootExpanded = signal(true);
 export const openFile = signal<DocState | null>(null);
 export const externalEpoch = signal(0);
 
@@ -76,6 +77,7 @@ function resetProjectScope() {
   batch(() => {
     dirChildren.value = new Map();
     expanded.value = new Set();
+    rootExpanded.value = true;
     openFile.value = null;
     dirty.value = false;
     error.value = null;

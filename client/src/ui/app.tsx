@@ -82,7 +82,7 @@ export function App() {
             <Panel
               class={`column-${panel.id}`}
               width={widthOf(panel.id)}
-              title={panel.id === 'tree' && ws ? ws.name : panel.title}
+              title={panel.title}
               onClose={() => runCommand(panel.command)}
             >
               {content(panel)}
