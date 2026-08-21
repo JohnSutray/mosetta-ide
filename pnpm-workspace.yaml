@@ -1,0 +1,7 @@
+packages:
+  - protocol
+  - server
+  - client
+
+allowBuilds:
+  esbuild: true
