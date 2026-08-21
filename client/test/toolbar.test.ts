@@ -3,18 +3,42 @@ import { COMMANDS, isCommandId, type CommandId } from '@ide/protocol';
 import { PANELS, TOOLBAR } from '../src/ui/panels.js';
 
 describe('тулбар', () => {
-  it('у каждой панели есть кнопка', () => {
+  it('каждая панель как-то представлена в тулбаре', () => {
     const inToolbar = new Set(TOOLBAR.map((entry) => entry.id));
-    const missing = PANELS.filter((panel) => !inToolbar.has(panel.id)).map((p) => p.id);
+    const missing = PANELS.filter(
+      (panel) => panel.toolbar === 'button' && !inToolbar.has(panel.id),
+    ).map((p) => p.id);
     expect(missing, `панели без кнопки в тулбаре: ${missing.join(', ')}`).toEqual([]);
   });
 
-  it('у каждой панели кнопка показывает её состояние', () => {
+  it('кнопка панели показывает ТОТ ЖЕ сигнал, а не копию', () => {
     for (const panel of PANELS) {
+      if (panel.toolbar !== 'button') continue;
       const entry = TOOLBAR.find((item) => item.id === panel.id)!;
       expect(entry.active, `${panel.id}: кнопка без состояния`).toBeDefined();
       expect(entry.active).toBe(panel.open);
     }
+  });
+
+  it('состояние без кнопки показывают чипы — и только у терминалов', () => {
+    const byChips = PANELS.filter((panel) => panel.toolbar === 'chips').map((p) => p.id);
+    expect(byChips).toEqual(['terminal']);
+  });
+
+  it('у каждой панели есть сторона и разумная ширина', () => {
+    for (const panel of PANELS) {
+      expect(['left', 'right']).toContain(panel.side);
+      expect(panel.defaultWidth).toBeGreaterThanOrEqual(panel.minWidth);
+      expect(panel.minWidth).toBeGreaterThan(80);
+    }
+  });
+
+  it('рабочие панели открываются справа, навигация — слева', () => {
+    const side = (id: string) => PANELS.find((panel) => panel.id === id)?.side;
+    expect(side('tree')).toBe('left');
+    expect(side('terminal')).toBe('right');
+    expect(side('scripts')).toBe('right');
+    expect(side('problems')).toBe('right');
   });
 
   it('каждая кнопка зовёт существующую команду', () => {
@@ -29,9 +53,9 @@ describe('тулбар', () => {
     }
   });
 
-  it('ручной терминал — единственная кнопка без состояния', () => {
+  it('единственная кнопка без состояния — заведение терминала', () => {
     const stateless = TOOLBAR.filter((entry) => !entry.active).map((entry) => entry.id);
-    expect(stateless).toEqual(['manual-terminal']);
+    expect(stateless).toEqual(['terminal.create']);
   });
 
   it('панельные команды объявлены в протоколе с человеческим именем', () => {
@@ -39,5 +63,10 @@ describe('тулбар', () => {
       const title = COMMANDS[panel.command as CommandId];
       expect(title, `${panel.command}: нет названия`).toBeTruthy();
     }
+  });
+
+  it('у каждой панели своя команда', () => {
+    const commands = PANELS.map((panel) => panel.command);
+    expect(new Set(commands).size, 'две панели на одной команде').toBe(commands.length);
   });
 });

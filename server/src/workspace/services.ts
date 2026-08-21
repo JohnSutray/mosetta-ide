@@ -163,6 +163,10 @@ export class Services {
     });
   }
 
+  createTerminal(options: { cols?: number; rows?: number }) {
+    return this.terminals.create({ ...options, cwd: this.ws.root });
+  }
+
   packageManager(): string {
     const top = this.ram.listSync('') ?? [];
     const names = new Set(top.map((entry) => entry.name));

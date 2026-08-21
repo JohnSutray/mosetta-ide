@@ -6,8 +6,6 @@ export const terminals = signal<TerminalInfo[]>([]);
 export const activeTerminal = signal<string | null>(null);
 export const scripts = signal<NpmScriptInfo[]>([]);
 
-export const MANUAL = 'manual-terminal';
-
 type DataSink = (data: string) => void;
 const sinks = new Map<string, Set<DataSink>>();
 
@@ -30,8 +28,8 @@ export async function refreshScripts(): Promise<void> {
   } catch {}
 }
 
-export async function openManualTerminal(): Promise<void> {
-  await showTerminal(() => rpc.call('term.open', { name: MANUAL, kind: 'manual' }));
+export async function createTerminal(): Promise<void> {
+  await showTerminal(() => rpc.call('term.create', {}));
 }
 
 export async function runScript(id: string): Promise<void> {
@@ -75,6 +73,7 @@ rpc.on('term.list', (list) => {
   if (activeTerminal.value && !list.some((info) => info.name === activeTerminal.value)) {
     activeTerminal.value = list[0]?.name ?? null;
   }
+  if (list.length === 0) terminalPanelVisible.value = false;
 });
 
 rpc.on('term.data', ({ name, data }) => {

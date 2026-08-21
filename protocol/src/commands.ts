@@ -8,7 +8,7 @@ export const COMMANDS = {
   'panel.scripts': 'Панель: скрипты package.json',
   'panel.terminal': 'Панель: терминал',
 
-  'terminal.manual': 'Новый ручной терминал',
+  'terminal.create': 'Новый терминал',
 
   'search.everywhere': 'Найти всё',
   'search.next': 'Поиск: вниз',

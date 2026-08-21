@@ -5,7 +5,15 @@ import { fsList, fsRead, fsWrite } from './fs.js';
 import { lspDiagnostics, lspHover, lspStatus } from './lsp.js';
 import { npmList, npmRun } from './npm.js';
 import { indexSearch, indexStats } from './search.js';
-import { termAttach, termClose, termList, termOpen, termResize, termWrite } from './term.js';
+import {
+  termAttach,
+  termClose,
+  termCreate,
+  termList,
+  termOpen,
+  termResize,
+  termWrite,
+} from './term.js';
 import { treeList, treeStats } from './tree.js';
 import {
   workspaceAttach,
@@ -55,6 +63,7 @@ export const handlers: HandlerTable = {
   'npm.run': npmRun,
 
   'term.list': termList,
+  'term.create': termCreate,
   'term.open': termOpen,
   'term.attach': termAttach,
   'term.write': termWrite,

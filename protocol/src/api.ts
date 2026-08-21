@@ -63,6 +63,7 @@ export interface Api {
   'npm.run': { params: { id: string; cols?: number; rows?: number }; result: TerminalInfo };
 
   'term.list': { params: null; result: TerminalInfo[] };
+  'term.create': { params: { cols?: number; rows?: number }; result: TerminalInfo };
   'term.open': {
     params: {
       name: string;

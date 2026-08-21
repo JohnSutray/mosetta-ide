@@ -17,7 +17,7 @@ import {
   terminalPanelVisible,
   treePanelVisible,
 } from './state/session.js';
-import { openManualTerminal } from './state/terminals.js';
+import { createTerminal } from './state/terminals.js';
 
 export function registerCommands(): void {
   registerCommand('file.save', () => saveDoc());
@@ -45,7 +45,7 @@ export function registerCommands(): void {
   registerCommand('panel.terminal', () => {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });
-  registerCommand('terminal.manual', () => openManualTerminal());
+  registerCommand('terminal.create', () => createTerminal());
 
   registerCommand('search.everywhere', () => openSearch());
   registerCommand('search.next', () => moveSelection(1));

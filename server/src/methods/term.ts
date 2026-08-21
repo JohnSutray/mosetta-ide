@@ -4,6 +4,14 @@ import { RpcError } from '../errors.js';
 export const termList: Handler<'term.list'> = (_params, ctx) =>
   ctx.session.requireWorkspace().services.terminals.list();
 
+export const termCreate: Handler<'term.create'> = (params, ctx) => {
+  const services = ctx.session.requireWorkspace().services;
+  return services.createTerminal({
+    ...(params?.cols ? { cols: params.cols } : {}),
+    ...(params?.rows ? { rows: params.rows } : {}),
+  });
+};
+
 export const termOpen: Handler<'term.open'> = (params, ctx) => {
   const name = nameOf(params);
   const services = ctx.session.requireWorkspace().services;

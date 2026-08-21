@@ -49,6 +49,18 @@ export class TerminalHost {
       .sort((a, b) => a.createdAt - b.createdAt);
   }
 
+  create(options: { cwd: string; cols?: number; rows?: number }): TerminalInfo {
+    return this.open({ ...options, name: this.freeManualName(), kind: 'manual' });
+  }
+
+  private freeManualName(): string {
+    if (!this.terminals.has('manual')) return 'manual';
+    for (let n = 2; ; n += 1) {
+      const name = `manual-${n}`;
+      if (!this.terminals.has(name)) return name;
+    }
+  }
+
   open(options: OpenOptions): TerminalInfo {
     const existing = this.terminals.get(options.name);
     if (existing?.info.alive) return existing.info;
@@ -177,7 +189,6 @@ export class TerminalHost {
 }
 
 export function titleOf(name: string): string {
-  if (name === 'manual-terminal') return 'manual';
   return name.replace(/^@[^/]+\//, '');
 }
 

@@ -1,3 +1,4 @@
+import { Fragment } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { DEFAULT_SETTINGS_FALLBACK } from '../state/fallback.js';
 import { keymap as keymapSignal, settings as settingsSignal } from '../state/config.js';
@@ -30,6 +31,10 @@ import { SearchEverywhere } from './search-everywhere.js';
 import { Scripts } from './scripts.js';
 import { TerminalView } from './terminal.js';
 import { Toolbar } from './toolbar.js';
+import { PANELS, type PanelSpec } from './panels.js';
+import { Resizer } from './resizer.js';
+import { widthOf } from '../state/layout.js';
+import { runCommand } from '../keys/commands.js';
 import { Panel } from './panel.js';
 import { Problems } from './problems.js';
 import { Projects } from './projects.js';
@@ -72,11 +77,19 @@ export function App() {
       <Toolbar />
 
       <div class="columns">
-        {treePanelVisible.value && (
-          <Panel class="column-tree" title={ws ? ws.name : 'Проекты'}>
-            {ws ? <Tree /> : <Projects />}
-          </Panel>
-        )}
+        {open('left').map((panel) => (
+          <Fragment key={panel.id}>
+            <Panel
+              class={`column-${panel.id}`}
+              width={widthOf(panel.id)}
+              title={panel.id === 'tree' && ws ? ws.name : panel.title}
+              onClose={() => runCommand(panel.command)}
+            >
+              {content(panel)}
+            </Panel>
+            <Resizer id={panel.id} side="left" />
+          </Fragment>
+        ))}
 
         <Panel
           class="column-editor"
@@ -108,26 +121,41 @@ export function App() {
           )}
         </Panel>
 
-        {scriptsPanelVisible.value && (
-          <Panel class="column-scripts" title="Скрипты">
-            <Scripts />
-          </Panel>
-        )}
-
-        {problemsPanelVisible.value && (
-          <Panel class="column-problems" title="Ошибки">
-            <Problems items={currentDiagnostics.value} />
-          </Panel>
-        )}
-
-        {terminalPanelVisible.value && (
-          <Panel class="column-terminal" title="Терминал">
-            <TerminalView />
-          </Panel>
-        )}
+        {open('right').map((panel) => (
+          <Fragment key={panel.id}>
+            <Resizer id={panel.id} side="right" />
+            <Panel
+              class={`column-${panel.id}`}
+              width={widthOf(panel.id)}
+              title={panel.title}
+              onClose={() => runCommand(panel.command)}
+            >
+              {content(panel)}
+            </Panel>
+          </Fragment>
+        ))}
       </div>
 
       <SearchEverywhere />
     </div>
   );
+}
+
+function open(side: 'left' | 'right'): PanelSpec[] {
+  return PANELS.filter((panel) => panel.side === side && panel.open.value);
+}
+
+function content(panel: PanelSpec) {
+  switch (panel.id) {
+    case 'tree':
+      return current.value ? <Tree /> : <Projects />;
+    case 'scripts':
+      return <Scripts />;
+    case 'problems':
+      return <Problems items={currentDiagnostics.value} />;
+    case 'terminal':
+      return <TerminalView />;
+    default:
+      return null;
+  }
 }

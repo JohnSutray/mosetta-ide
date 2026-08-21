@@ -29,18 +29,34 @@ describe('терминалы', () => {
   });
 
   it('под терминалом настоящая консоль', async () => {
-    await c.call('term.open', { name: 'manual-terminal' });
-    await c.call('term.write', { name: 'manual-terminal', data: 'echo живая-консоль\r' });
-    const output = await waitForOutput(c, 'manual-terminal', 'живая-консоль');
+    const info = await c.call('term.create', {});
+    await c.call('term.write', { name: info.name, data: 'echo живая-консоль\r' });
+    const output = await waitForOutput(c, info.name, 'живая-консоль');
     expect(output).toContain('живая-консоль');
   }, 20_000);
 
-  it('на имя приходится ровно один терминал', async () => {
-    const first = await c.call('term.open', { name: 'manual-terminal' });
-    const second = await c.call('term.open', { name: 'manual-terminal' });
-    expect(second.pid).toBe(first.pid);
-    expect((await c.call('term.list', null)).length).toBe(1);
-  }, 20_000);
+  it('каждый ручной терминал новый и получает своё имя', async () => {
+    const first = await c.call('term.create', {});
+    const second = await c.call('term.create', {});
+    const third = await c.call('term.create', {});
+
+    expect([first.name, second.name, third.name]).toEqual(['manual', 'manual-2', 'manual-3']);
+    expect(new Set([first.pid, second.pid, third.pid]).size).toBe(3);
+    expect((await c.call('term.list', null)).length).toBe(3);
+  }, 25_000);
+
+  it('освободившееся имя переиспользуется', async () => {
+    await c.call('term.create', {});
+    const second = await c.call('term.create', {});
+    await c.call('term.close', { name: 'manual' });
+
+    const next = await c.call('term.create', {});
+    expect(next.name).toBe('manual');
+    expect((await c.call('term.list', null)).map((i) => i.name).sort()).toEqual([
+      'manual',
+      second.name,
+    ]);
+  }, 25_000);
 
   it('скрипт запускается в терминале со своим именем', async () => {
     const info = await c.call('npm.run', { id: '@distrojs/core::dev' });
@@ -62,14 +78,14 @@ describe('терминалы', () => {
   it('чип показывает короткое имя, а не длинное', async () => {
     const info = await c.call('npm.run', { id: '@distrojs/core::dev' });
     expect(info.title).toBe('core::dev');
-    const manual = await c.call('term.open', { name: 'manual-terminal' });
+    const manual = await c.call('term.create', {});
     expect(manual.title).toBe('manual');
   }, 20_000);
 
   it('переживает уход вкладки и отдаёт накопленный вывод', async () => {
-    await c.call('term.open', { name: 'manual-terminal' });
-    await c.call('term.write', { name: 'manual-terminal', data: 'echo не-потеряйся\r' });
-    await waitForOutput(c, 'manual-terminal', 'не-потеряйся');
+    await c.call('term.create', {});
+    await c.call('term.write', { name: 'manual', data: 'echo не-потеряйся\r' });
+    await waitForOutput(c, 'manual', 'не-потеряйся');
 
     await c.close();
     await new Promise((r) => setTimeout(r, 60));
@@ -80,28 +96,28 @@ describe('терминалы', () => {
 
     c = await connect(server);
     await c.call('workspace.open', { root });
-    const attached = await c.call('term.attach', { name: 'manual-terminal' });
+    const attached = await c.call('term.attach', { name: 'manual' });
     expect(attached.buffer).toContain('не-потеряйся');
   }, 20_000);
 
   it('закрытие терминала отпускает воркспейс', async () => {
-    const info = await c.call('term.open', { name: 'manual-terminal' });
+    const info = await c.call('term.create', {});
     expect(info.alive).toBe(true);
 
-    await c.call('term.close', { name: 'manual-terminal' });
+    await c.call('term.close', { name: info.name });
     expect(await c.call('term.list', null)).toEqual([]);
     expect(server.registry.list()[0]!.held).toEqual([]);
   }, 20_000);
 
-  it('умерший терминал перезапускается под тем же именем', async () => {
-    const first = await c.call('term.open', { name: 'manual-terminal' });
-    await c.call('term.write', { name: 'manual-terminal', data: 'exit\r' });
+  it('умерший скрипт перезапускается под тем же именем', async () => {
+    const first = await c.call('npm.run', { id: 'root::hello' });
+    await c.call('term.write', { name: 'root::hello', data: 'exit\r' });
     await waitFor(async () => {
       const list = (await c.call('term.list', null)) as TerminalInfo[];
       return list[0]?.alive === false;
     });
 
-    const second = await c.call('term.open', { name: 'manual-terminal' });
+    const second = await c.call('npm.run', { id: 'root::hello' });
     expect(second.alive).toBe(true);
     expect(second.pid).not.toBe(first.pid);
     expect((await c.call('term.list', null)).length).toBe(1);

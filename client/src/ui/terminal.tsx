@@ -84,7 +84,7 @@ export function TerminalView() {
   }, [name]);
 
   if (!name) {
-    return <div class="placeholder">Терминалов нет. Откройте ручной иконкой в тулбаре.</div>;
+    return <div class="placeholder">Терминалов нет. Заведите новый иконкой в тулбаре.</div>;
   }
   return <div class="term-host" ref={host} />;
 }

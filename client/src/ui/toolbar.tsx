@@ -11,7 +11,7 @@ export function Toolbar() {
 
   return (
     <div class="toolbar">
-      <div class="toolbar-line">
+      <div class="toolbar-left">
         <span class="brand">new-ide</span>
         <span class="toolbar-project">{ws ? ws.name : 'проект не открыт'}</span>
 
@@ -31,7 +31,12 @@ export function Toolbar() {
           })}
         </div>
 
-        <span class="toolbar-spacer" />
+        {terminals.value.map((info) => (
+          <TerminalChip key={info.name} info={info} />
+        ))}
+      </div>
+
+      <div class="toolbar-right">
         {lsp && (
           <span class={`chip is-${lsp.state}`} title={lsp.detail ?? lsp.state}>
             {lsp.server}: {lsp.state === 'ready' ? `${lsp.openDocs} док.` : lsp.state}
@@ -41,14 +46,6 @@ export function Toolbar() {
         {error.value && <span class="toolbar-error">{error.value}</span>}
         <span class={`dot ${connected.value ? 'is-on' : 'is-off'}`} title="Связь с бэкендом" />
       </div>
-
-      {terminals.value.length > 0 && (
-        <div class="term-chips">
-          {terminals.value.map((info) => (
-            <TerminalChip key={info.name} info={info} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
