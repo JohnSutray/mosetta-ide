@@ -762,7 +762,7 @@ body {
 .push-files {
   display: flex;
   flex-direction: column;
-  flex: 0 0 40%;
+  flex: 0 0 46%;
   min-width: 0;
   background: var(--panel-bg);
 }

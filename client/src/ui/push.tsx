@@ -32,16 +32,6 @@ export function Push() {
 
         {preview ? (
           <div class="push-split">
-            <div class="push-files">
-              <div class="push-lane-title">
-                {pushSelected.value ? `коммит ${pushSelected.value}` : 'все твои изменения'}
-                {pushChanges.value.length > 0 ? ` · ${pushChanges.value.length}` : ''}
-              </div>
-              <div class="push-files-body">
-                <ChangedTree changes={pushChanges.value} />
-              </div>
-            </div>
-
             <div class="push-body">
               <div class="push-fork">
                 <Lane
@@ -67,6 +57,16 @@ export function Push() {
                 kind="common"
                 empty="истории нет"
               />
+            </div>
+
+            <div class="push-files">
+              <div class="push-lane-title">
+                {pushSelected.value ? `коммит ${pushSelected.value}` : 'все твои изменения'}
+                {pushChanges.value.length > 0 ? ` · ${pushChanges.value.length}` : ''}
+              </div>
+              <div class="push-files-body">
+                <ChangedTree changes={pushChanges.value} />
+              </div>
             </div>
           </div>
         ) : (
