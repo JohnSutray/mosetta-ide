@@ -8,7 +8,15 @@ export const DEFAULT_SETTINGS_FALLBACK: Settings = {
     lineNumbers: true,
     caretWidth: 2,
   },
-  fs: { hidden: [], noScan: [], maxFileMb: 8, preloadBudgetMb: 64, textExtensions: [] },
+  fs: {
+    hidden: [],
+    noScan: [],
+    maxFileMb: 8,
+    preloadBudgetMb: 64,
+    textExtensions: [],
+    watch: true,
+    watchDebounceMs: 60,
+  },
   index: { enabled: true, maxResults: 50 },
   lsp: { startOnOpen: true, servers: {} },
 };

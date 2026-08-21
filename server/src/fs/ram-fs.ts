@@ -2,7 +2,7 @@ import type { DirEntry, DocState, FsSettings, IndexStats } from '@ide/protocol';
 import { RpcErrorCode } from '@ide/protocol';
 import { RpcError } from '../errors.js';
 import type { Logger } from '../log.js';
-import { extensionOf } from '../workspace/paths.js';
+import { baseName, extensionOf } from '../workspace/paths.js';
 import type { OsFs } from './os-fs.js';
 
 export interface Doc {
@@ -24,6 +24,7 @@ export type RamEvent =
   | { type: 'doc.external'; path: string; revision: string }
   | { type: 'doc.conflict'; path: string }
   | { type: 'doc.closed'; path: string }
+  | { type: 'doc.removed'; path: string }
   | { type: 'tree.changed'; path: string };
 
 interface DirNode {
@@ -36,6 +37,7 @@ export class RamFs {
   private readonly docs = new Map<string, Doc>();
   private readonly listeners = new Set<(event: RamEvent) => void>();
   private readonly loading = new Map<string, Promise<Doc>>();
+  private readonly writing = new Set<string>();
   private bytesResident = 0;
   private builtMs = 0;
   private fileCount = 0;
@@ -220,10 +222,16 @@ export class RamFs {
 
   async saveDoc(key: string): Promise<Doc> {
     const doc = this.requireDoc(key);
-    const result = await this.os.write(doc.path, doc.text, doc.revision);
-    doc.revision = result.revision;
-    doc.dirty = false;
-    delete doc.savedText;
+    this.writing.add(doc.path);
+    let result;
+    try {
+      result = await this.os.write(doc.path, doc.text, doc.revision);
+      doc.revision = result.revision;
+      doc.dirty = false;
+      delete doc.savedText;
+    } finally {
+      this.writing.delete(doc.path);
+    }
     this.emit({ type: 'doc.saved', path: doc.path, revision: result.revision });
     this.emit({ type: 'doc.changed', path: doc.path, version: doc.version, dirty: false });
     return doc;
@@ -259,7 +267,97 @@ export class RamFs {
     return doc;
   }
 
+  async syncFromDisk(keys: string[]): Promise<void> {
+    if (this.disposed) return;
+    const ordered = [...new Set(keys)].sort((a, b) => depth(a) - depth(b) || a.localeCompare(b));
+
+    const dirsToRefresh = new Set<string>();
+
+    for (const key of ordered) {
+      if (this.disposed) return;
+      const stat = await this.os.stat(key);
+
+      if (!stat) {
+        if (this.forget(key)) dirsToRefresh.add(parentOf(key));
+        continue;
+      }
+
+      if (stat.kind === 'dir') {
+        dirsToRefresh.add(parentOf(key));
+        if (!this.dirs.has(key) && !this.isNoScan(key)) {
+          await this.scan(key);
+        }
+        continue;
+      }
+
+      dirsToRefresh.add(parentOf(key));
+      await this.syncFile(key, stat.revision);
+    }
+
+    for (const dir of dirsToRefresh) {
+      if (!this.dirs.has(dir)) continue;
+      try {
+        const entries = await this.os.list(dir);
+        this.dirs.set(dir, { entries, scanned: true });
+        this.emit({ type: 'tree.changed', path: dir });
+      } catch {}
+    }
+  }
+
+  private async syncFile(key: string, revision: string): Promise<void> {
+    if (this.writing.has(key)) return;
+    const doc = this.docs.get(key);
+    if (!doc) return;
+    if (doc.revision === revision) return;
+
+    if (doc.dirty) {
+      this.emit({ type: 'doc.conflict', path: key });
+      return;
+    }
+    try {
+      await this.reloadDoc(key);
+      this.emit({ type: 'doc.external', path: key, revision });
+    } catch {}
+  }
+
+  private forget(key: string): boolean {
+    let touched = false;
+
+    const doc = this.docs.get(key);
+    if (doc) {
+      this.bytesResident -= doc.text.length;
+      this.docs.delete(key);
+      this.emit({ type: 'doc.removed', path: key });
+      touched = true;
+    }
+
+    if (this.dirs.has(key)) {
+      const prefix = `${key}/`;
+      for (const dirKey of [...this.dirs.keys()]) {
+        if (dirKey === key || dirKey.startsWith(prefix)) this.dirs.delete(dirKey);
+      }
+      for (const docKey of [...this.docs.keys()]) {
+        if (!docKey.startsWith(prefix)) continue;
+        const gone = this.docs.get(docKey)!;
+        this.bytesResident -= gone.text.length;
+        this.docs.delete(docKey);
+        this.emit({ type: 'doc.removed', path: docKey });
+      }
+      touched = true;
+    }
+
+    const parent = this.dirs.get(parentOf(key));
+    if (parent?.entries.some((entry) => entry.path === key)) touched = true;
+
+    return touched;
+  }
+
+  private isNoScan(key: string): boolean {
+    return this.settings.noScan.includes(baseName(key));
+  }
+
   private onDiskWrite(key: string, revision: string): void {
+    if (this.writing.has(key)) return;
     const doc = this.docs.get(key);
     if (!doc) {
       this.emit({ type: 'tree.changed', path: parentOf(key) });
@@ -294,4 +392,8 @@ export function toDocState(doc: Doc): DocState {
 function parentOf(key: string): string {
   const at = key.lastIndexOf('/');
   return at === -1 ? '' : key.slice(0, at);
+}
+
+function depth(key: string): number {
+  return key === '' ? 0 : key.split('/').length;
 }

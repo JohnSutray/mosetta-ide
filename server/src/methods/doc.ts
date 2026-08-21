@@ -1,3 +1,4 @@
+import { RpcErrorCode } from '@ide/protocol';
 import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
 import { toDocState } from '../fs/ram-fs.js';
@@ -25,6 +26,14 @@ export const docSave: Handler<'doc.save'> = async (params, ctx) => {
 export const docReload: Handler<'doc.reload'> = async (params, ctx) => {
   const ram = ctx.session.requireWorkspace().services.ram;
   return toDocState(await ram.reloadDoc(pathOf(params)));
+};
+
+export const docState: Handler<'doc.state'> = (params, ctx) => {
+  const ram = ctx.session.requireWorkspace().services.ram;
+  const path = pathOf(params);
+  const doc = ram.docSync(path);
+  if (!doc) throw new RpcError(RpcErrorCode.DocNotOpen, `Документ не в памяти: ${path}`);
+  return toDocState(doc);
 };
 
 export const docClose: Handler<'doc.close'> = (params, ctx) => {

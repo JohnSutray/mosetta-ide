@@ -8,6 +8,7 @@ import {
   dirty,
   error,
   errorCount,
+  externalEpoch,
   lspStatuses,
   notice,
   openFile,
@@ -100,6 +101,7 @@ export function App() {
           {file ? (
             <Editor
               file={file}
+              externalEpoch={externalEpoch.value}
               settings={settings.editor}
               diagnostics={currentDiagnostics.value}
               onEdit={editDoc}

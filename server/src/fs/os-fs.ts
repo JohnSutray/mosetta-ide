@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Stats } from 'node:fs';
-import type { DirEntry, FsSettings } from '@ide/protocol';
+import type { DirEntry, EntryKind, FsSettings } from '@ide/protocol';
 import { RpcErrorCode } from '@ide/protocol';
 import { RpcError } from '../errors.js';
 import { expandRoot, joinKey, toAbsolute, toKey } from '../workspace/paths.js';
@@ -10,6 +10,13 @@ export interface OsEvent {
   type: 'wrote' | 'removed';
   path: string;
   revision?: string;
+}
+
+export interface OsStat {
+  kind: EntryKind;
+  size: number;
+  mtimeMs: number;
+  revision: string;
 }
 
 export interface OsFileText {
@@ -90,12 +97,20 @@ export class OsFs {
     return sortEntries(entries);
   }
 
-  async stat(key: string): Promise<Stats | null> {
+  async stat(key: string): Promise<OsStat | null> {
+    let stat: Stats;
     try {
-      return await fs.stat(toAbsolute(this.root, key));
+      stat = await fs.stat(toAbsolute(this.root, key));
     } catch {
       return null;
     }
+    if (!stat.isDirectory() && !stat.isFile()) return null;
+    return {
+      kind: stat.isDirectory() ? 'dir' : 'file',
+      size: stat.size,
+      mtimeMs: stat.mtimeMs,
+      revision: revisionOf(stat),
+    };
   }
 
   async read(key: string): Promise<OsFileText> {

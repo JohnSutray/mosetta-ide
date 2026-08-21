@@ -10,6 +10,10 @@ interface Entry {
   lowerName: string;
 }
 
+function fold(value: string): string {
+  return value.normalize('NFC').toLowerCase();
+}
+
 export class FileIndex {
   private entries: Entry[] = [];
   private dirtyList = true;
@@ -44,8 +48,8 @@ export class FileIndex {
       entries.push({
         path: file.path,
         name,
-        lowerPath: file.path.toLowerCase(),
-        lowerName: name.toLowerCase(),
+        lowerPath: fold(file.path),
+        lowerName: fold(name),
       });
     }
     this.entries = entries;
@@ -55,7 +59,7 @@ export class FileIndex {
 
   search(query: string, limit = this.settings.maxResults): IndexHit[] {
     if (this.dirtyList) this.rebuild();
-    const needle = query.trim().toLowerCase();
+    const needle = fold(query.trim());
     if (needle === '') return [];
 
     const hits: IndexHit[] = [];

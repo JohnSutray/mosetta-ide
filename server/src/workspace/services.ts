@@ -1,6 +1,7 @@
 import type { LspStatus } from '@ide/protocol';
 import type { ConfigStore } from '../config/store.js';
 import { OsFs } from '../fs/os-fs.js';
+import { OsWatcher } from '../fs/watcher.js';
 import { RamFs } from '../fs/ram-fs.js';
 import { FileIndex } from '../search/file-index.js';
 import { LspServer } from '../lsp/server.js';
@@ -11,6 +12,7 @@ export class Services {
   readonly os: OsFs;
   readonly ram: RamFs;
   readonly index: FileIndex;
+  readonly watcher: OsWatcher;
   readonly lsp: LspServer[] = [];
 
   private readonly offs: Array<() => void> = [];
@@ -25,6 +27,13 @@ export class Services {
     this.os = new OsFs(ws.root, settings.fs);
     this.ram = new RamFs(this.os, settings.fs, log);
     this.index = new FileIndex(this.ram, settings.index, log);
+    this.watcher = new OsWatcher(
+      ws.root,
+      settings.fs,
+      (keys) => void this.ram.syncFromDisk(keys),
+      log,
+      { debounceMs: settings.fs.watchDebounceMs },
+    );
 
     this.offs.push(
       this.ram.on((event) => {
@@ -45,6 +54,9 @@ export class Services {
           case 'tree.changed':
             ws.broadcast('tree.changed', { path: event.path });
             break;
+          case 'doc.removed':
+            ws.broadcast('doc.removed', { path: event.path });
+            break;
           default:
             break;
         }
@@ -56,6 +68,7 @@ export class Services {
         this.os.applySettings(bundle.settings.fs);
         this.ram.applySettings(bundle.settings.fs);
         this.index.applySettings(bundle.settings.index);
+        this.watcher.applySettings(bundle.settings.fs);
       }),
     );
   }
@@ -64,8 +77,13 @@ export class Services {
     if (this.booted) return;
     this.booted = true;
 
+    const watching = this.config.settings.fs.watch;
+    if (watching) this.watcher.start();
+
     await this.ram.prime();
     if (this.config.settings.index.enabled) this.index.rebuild();
+
+    if (watching) this.watcher.release();
 
     void this.ram.preload();
 
@@ -105,6 +123,7 @@ export class Services {
 
   dispose(): void {
     for (const off of this.offs.splice(0)) off();
+    this.watcher.dispose();
     for (const server of this.lsp.splice(0)) server.dispose();
     this.index.dispose();
     this.ram.dispose();

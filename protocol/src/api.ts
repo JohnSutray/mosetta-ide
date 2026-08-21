@@ -41,6 +41,7 @@ export interface Api {
   'doc.edit': { params: { path: string; text: string; baseVersion: number }; result: DocVersion };
   'doc.save': { params: { path: string }; result: DocState };
   'doc.reload': { params: { path: string }; result: DocState };
+  'doc.state': { params: { path: string }; result: DocState };
   'doc.close': { params: { path: string }; result: null };
 
   'index.search': { params: { query: string; limit?: number }; result: IndexHit[] };
@@ -65,6 +66,7 @@ export interface Events {
   'doc.external': { path: string; revision: string };
   'doc.conflict': { path: string };
   'tree.changed': { path: string };
+  'doc.removed': { path: string };
 
   'lsp.status': LspStatus;
   'lsp.diagnostics': FileDiagnostics;

@@ -10,7 +10,11 @@ export interface TestClient {
   call<M extends ApiMethod>(method: M, params: Params<M>): Promise<Result<M>>;
   expectError<M extends ApiMethod>(method: M, params: Params<M>): Promise<{ code: number; message: string }>;
   events(name: string): unknown[];
-  nextEvent(name: string, timeoutMs?: number): Promise<unknown>;
+  nextEvent(
+    name: string,
+    timeoutMs?: number,
+    match?: (payload: any) => boolean,
+  ): Promise<any>;
   close(): Promise<void>;
 }
 
@@ -70,14 +74,23 @@ export async function connect(server: RunningServer): Promise<TestClient> {
       throw new Error(`${method} должен был упасть, но вернул результат`);
     },
     events: (name) => received.get(name) ?? [],
-    nextEvent(name, timeoutMs = 2000) {
+    nextEvent(name, timeoutMs = 2000, match) {
       return new Promise((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error(`не дождались ${name}`)), timeoutMs);
+        const timer = setTimeout(
+          () => reject(new Error(`не дождались ${name}`)),
+          timeoutMs,
+        );
         const list = waiters.get(name) ?? [];
-        list.push((payload) => {
+        const waiter = (payload: unknown) => {
+          if (match && !match(payload)) {
+            (waiters.get(name) ?? []).push(waiter);
+            waiters.set(name, waiters.get(name) ?? [waiter]);
+            return;
+          }
           clearTimeout(timer);
           resolve(payload);
-        });
+        };
+        list.push(waiter);
         waiters.set(name, list);
       });
     },

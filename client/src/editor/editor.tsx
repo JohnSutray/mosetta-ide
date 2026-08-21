@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { EditorState, type Extension } from '@codemirror/state';
+import { Annotation, EditorState, type Extension } from '@codemirror/state';
 import {
   EditorView,
   keymap,
@@ -20,8 +20,11 @@ import { languageFor } from './languages.js';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
 import { lspHover } from './hover.js';
 
+const externalUpdate = Annotation.define<boolean>();
+
 interface Props {
   file: DocState;
+  externalEpoch: number;
   settings: EditorSettings;
   diagnostics: Diagnostic[];
   onEdit: (text: string) => void;
@@ -29,7 +32,15 @@ interface Props {
   onMount: (view: EditorView | null) => void;
 }
 
-export function Editor({ file, settings, diagnostics, onEdit, onHover, onMount }: Props) {
+export function Editor({
+  file,
+  externalEpoch,
+  settings,
+  diagnostics,
+  onEdit,
+  onHover,
+  onMount,
+}: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const handlers = useRef({ onEdit, onHover });
@@ -53,7 +64,9 @@ export function Editor({ file, settings, diagnostics, onEdit, onHover, onMount }
       highlightSelectionMatches(),
       keymap.of([...defaultKeymap, indentWithTab]),
       EditorView.updateListener.of((update) => {
-        if (update.docChanged) handlers.current.onEdit(update.state.doc.toString());
+        if (!update.docChanged) return;
+        if (update.transactions.some((tr) => tr.annotation(externalUpdate))) return;
+        handlers.current.onEdit(update.state.doc.toString());
       }),
       darcula,
       diagnosticsExtension,
@@ -89,6 +102,19 @@ export function Editor({ file, settings, diagnostics, onEdit, onHover, onMount }
   useEffect(() => {
     view.current?.dispatch({ effects: setDiagnostics.of(diagnostics) });
   }, [diagnostics]);
+
+  useEffect(() => {
+    const instance = view.current;
+    if (!instance || externalEpoch === 0) return;
+    const current = instance.state.doc.toString();
+    if (current === file.text) return;
+    const head = instance.state.selection.main.head;
+    instance.dispatch({
+      changes: { from: 0, to: instance.state.doc.length, insert: file.text },
+      selection: { anchor: Math.min(head, file.text.length) },
+      annotations: externalUpdate.of(true),
+    });
+  }, [externalEpoch]);
 
   return <div class="editor" ref={host} />;
 }

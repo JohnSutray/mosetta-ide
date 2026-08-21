@@ -7,6 +7,7 @@ const SRC = fileURLToPath(new URL('../src', import.meta.url));
 
 const MAY_TOUCH_DISK = [
   'fs/os-fs.ts',
+  'fs/watcher.ts',
   'config/store.ts',
   'env/toolchain.ts',
 ];

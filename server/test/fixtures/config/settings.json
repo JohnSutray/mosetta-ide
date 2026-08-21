@@ -1,7 +1,8 @@
 {
   "fs": {
     "noScan": ["node_modules", ".git"],
-    "preloadBudgetMb": 4
+    "preloadBudgetMb": 4,
+    "watch": false
   },
   "lsp": {
     "startOnOpen": false,

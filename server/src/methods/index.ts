@@ -1,6 +1,6 @@
 import type { HandlerTable } from '../rpc/context.js';
 import { configGet } from './config.js';
-import { docClose, docEdit, docOpen, docReload, docSave } from './doc.js';
+import { docClose, docEdit, docOpen, docReload, docSave, docState } from './doc.js';
 import { fsList, fsRead, fsWrite } from './fs.js';
 import { lspDiagnostics, lspHover, lspStatus } from './lsp.js';
 import { indexSearch } from './search.js';
@@ -39,6 +39,7 @@ export const handlers: HandlerTable = {
   'doc.edit': docEdit,
   'doc.save': docSave,
   'doc.reload': docReload,
+  'doc.state': docState,
   'doc.close': docClose,
 
   'index.search': indexSearch,

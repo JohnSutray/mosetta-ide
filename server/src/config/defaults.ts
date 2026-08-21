@@ -18,6 +18,8 @@ export const DEFAULT_SETTINGS: Settings = {
       'json', 'jsonc', 'css', 'scss', 'html', 'htm', 'vue', 'svelte',
       'md', 'markdown', 'txt', 'yml', 'yaml', 'toml', 'el', 'sh', 'ps1',
     ],
+    watch: true,
+    watchDebounceMs: 60,
   },
   index: {
     enabled: true,

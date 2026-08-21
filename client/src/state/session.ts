@@ -21,9 +21,24 @@ export const connected = rpc.connected;
 export const dirChildren = signal<Map<string, DirEntry[]>>(new Map());
 export const expanded = signal<Set<string>>(new Set());
 export const openFile = signal<DocState | null>(null);
+export const externalEpoch = signal(0);
 export const dirty = signal(false);
 export const error = signal<string | null>(null);
 export const notice = signal<string | null>(null);
+
+export function say(message: string): void {
+  batch(() => {
+    notice.value = message;
+    error.value = null;
+  });
+}
+
+export function complain(message: string): void {
+  batch(() => {
+    error.value = message;
+    notice.value = null;
+  });
+}
 export const diagnostics = signal<Map<string, Diagnostic[]>>(new Map());
 export const lspStatuses = signal<LspStatus[]>([]);
 export const treePanelVisible = signal(true);
@@ -166,8 +181,9 @@ export async function reloadDoc() {
     batch(() => {
       openFile.value = doc;
       dirty.value = false;
-      notice.value = `${doc.path} перечитан с диска`;
+      externalEpoch.value += 1;
     });
+    say(`${doc.path} перечитан с диска`);
   } catch (err) {
     error.value = describe(err);
   }
@@ -210,13 +226,36 @@ rpc.on('doc.changed', (event) => {
 
 rpc.on('doc.external', (event) => {
   if (openFile.value?.path !== event.path) return;
-  notice.value = `${event.path} изменился на диске — перечитан`;
-  void openFileAt(event.path);
+  void rpc
+    .call('doc.state', { path: event.path })
+    .then((doc) => {
+      docSync.attach(doc);
+      batch(() => {
+        openFile.value = doc;
+        dirty.value = false;
+        externalEpoch.value += 1;
+      });
+      say(`${event.path} изменился на диске — перечитан`);
+    })
+    .catch((err) => (error.value = describe(err)));
 });
 
 rpc.on('doc.conflict', (event) => {
   if (openFile.value?.path !== event.path) return;
-  error.value = `${event.path} изменился на диске, а у вас несохранённые правки`;
+  complain(
+    `${event.path} изменился на диске, а у вас несохранённые правки. ` +
+      'Перечитать — file.reload.',
+  );
+});
+
+rpc.on('doc.removed', (event) => {
+  if (openFile.value?.path !== event.path) return;
+  complain(`${event.path} удалён с диска. Cmd+S создаст его заново.`);
+});
+
+rpc.on('tree.changed', (event) => {
+  if (!dirChildren.value.has(event.path)) return;
+  void loadDir(event.path).catch(() => {});
 });
 
 rpc.on('lsp.diagnostics', (event) => setDiagnostics(event.path, event.diagnostics));

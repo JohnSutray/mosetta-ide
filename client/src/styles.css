@@ -44,8 +44,15 @@ body {
   border-bottom: 1px solid var(--divider);
   flex: none;
 }
-.brand { color: var(--muted); }
-.toolbar-project { color: var(--accent); }
+.brand { color: var(--muted); flex: none; white-space: nowrap; }
+.toolbar-project {
+  color: var(--accent);
+  flex: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 24ch;
+}
 .toolbar-spacer { flex: 1; }
 .toolbar-error {
   color: var(--error);
@@ -159,6 +166,7 @@ body {
 .editor .cm-content { user-select: text; cursor: text; }
 
 .chip {
+  flex: none;
   padding: 0 6px;
   border-radius: 2px;
   border: 1px solid var(--divider);

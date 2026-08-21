@@ -14,6 +14,8 @@ export interface FsSettings {
   maxFileMb: number;
   preloadBudgetMb: number;
   textExtensions: string[];
+  watch: boolean;
+  watchDebounceMs: number;
 }
 
 export interface IndexSettings {
