@@ -1,6 +1,7 @@
 import type { WorkspaceInfo } from '@ide/protocol';
 import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
+import { suggestDirectories } from '../env/browse.js';
 
 export const workspaceOpen: Handler<'workspace.open'> = async (params, ctx) => {
   if (!params || typeof params.root !== 'string') {
@@ -44,4 +45,11 @@ export const workspaceClose: Handler<'workspace.close'> = async (params, ctx) =>
   ws.broadcast('workspace.closed', { id: ws.id });
   await ctx.registry.close(params.id);
   return null;
+};
+
+export const workspaceBrowse: Handler<'workspace.browse'> = (params) => {
+  if (!params || typeof params.prefix !== 'string') {
+    throw RpcError.invalidParams('нужен prefix: string');
+  }
+  return suggestDirectories(params.prefix);
 };

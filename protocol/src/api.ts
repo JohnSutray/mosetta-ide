@@ -1,10 +1,14 @@
 import type { ConfigBundle } from './config.js';
 import type {
   DirEntry,
+  DirSuggestion,
   DocState,
   DocVersion,
   FileDiagnostics,
   FileText,
+  GitAction,
+  GitBranch,
+  GitState,
   HoverInfo,
   IndexHit,
   IndexKind,
@@ -31,6 +35,7 @@ export interface Api {
   'workspace.list': { params: null; result: WorkspaceInfo[] };
   'workspace.current': { params: null; result: WorkspaceInfo | null };
   'workspace.close': { params: { id: WorkspaceId }; result: null };
+  'workspace.browse': { params: { prefix: string }; result: DirSuggestion[] };
 
   'fs.list': { params: { path: string }; result: DirEntry[] };
   'fs.read': { params: { path: string }; result: FileText };
@@ -61,6 +66,14 @@ export interface Api {
 
   'npm.list': { params: null; result: NpmScriptInfo[] };
   'npm.run': { params: { id: string; cols?: number; rows?: number }; result: TerminalInfo };
+
+  'git.state': { params: null; result: GitState };
+  'git.branches': { params: null; result: GitBranch[] };
+  'git.refresh': { params: null; result: GitState };
+  'git.run': {
+    params: { action: GitAction; branch?: string; name?: string };
+    result: { error: string | null };
+  };
 
   'term.list': { params: null; result: TerminalInfo[] };
   'term.create': { params: { cols?: number; rows?: number }; result: TerminalInfo };
@@ -104,6 +117,8 @@ export interface Events {
   'term.list': TerminalInfo[];
   'term.data': { name: string; data: string };
   'term.exit': { name: string; exitCode: number };
+
+  'git.state': GitState;
 
   log: LogLine;
 }

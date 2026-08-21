@@ -7,6 +7,7 @@ import {
   treePanelVisible,
 } from '../state/session.js';
 import { searchOpen } from '../state/search.js';
+import { branchesOpen } from '../state/git.js';
 import type { IconName } from './icons.js';
 
 export type PanelSide = 'left' | 'right';
@@ -90,6 +91,13 @@ export const TOOLBAR: ToolbarEntry[] = [
     icon: 'search',
     command: 'search.everywhere',
     active: searchOpen,
+  },
+  {
+    id: 'git.branches',
+    title: 'Ветки git',
+    icon: 'git',
+    command: 'git.branches',
+    active: branchesOpen,
   },
   entryFor('scripts'),
   entryFor('problems'),

@@ -2,6 +2,7 @@ import type { HandlerTable } from '../rpc/context.js';
 import { configGet } from './config.js';
 import { docClose, docEdit, docOpen, docReload, docSave, docState } from './doc.js';
 import { fsList, fsRead, fsWrite } from './fs.js';
+import { gitBranches, gitRefresh, gitRun, gitState } from './git.js';
 import { lspDiagnostics, lspHover, lspStatus } from './lsp.js';
 import { npmList, npmRun } from './npm.js';
 import { indexSearch, indexStats } from './search.js';
@@ -17,6 +18,7 @@ import {
 import { treeList, treeStats } from './tree.js';
 import {
   workspaceAttach,
+  workspaceBrowse,
   workspaceClose,
   workspaceCurrent,
   workspaceDetach,
@@ -38,6 +40,7 @@ export const handlers: HandlerTable = {
   'workspace.list': workspaceList,
   'workspace.current': workspaceCurrent,
   'workspace.close': workspaceClose,
+  'workspace.browse': workspaceBrowse,
 
   'fs.list': fsList,
   'fs.read': fsRead,
@@ -61,6 +64,11 @@ export const handlers: HandlerTable = {
 
   'npm.list': npmList,
   'npm.run': npmRun,
+
+  'git.state': gitState,
+  'git.branches': gitBranches,
+  'git.refresh': gitRefresh,
+  'git.run': gitRun,
 
   'term.list': termList,
   'term.create': termCreate,

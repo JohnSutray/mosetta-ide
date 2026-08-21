@@ -9,6 +9,7 @@ import {
   rootExpanded,
   toggleDir,
 } from '../state/session.js';
+import { gitTint } from '../state/git.js';
 import { Chevron, DirIcon, FileIcon, RootIcon } from './file-icons.js';
 
 export function Tree() {
@@ -53,6 +54,7 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
   const isCurrent = openFile.value?.path === entry.path;
   const kids = isOpen ? dirChildren.value.get(entry.path) : undefined;
   const broken = (diagnostics.value.get(entry.path) ?? []).some((d) => d.severity === 'error');
+  const tint = gitTint.value.get(entry.path);
 
   return (
     <>
@@ -68,7 +70,9 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
         <span class="tree-icon">
           {isDir ? <DirIcon excluded={entry.noScan} /> : <FileIcon name={entry.name} />}
         </span>
-        <span class={`tree-name ${broken ? 'is-broken' : ''}`}>{entry.name}</span>
+        <span class={`tree-name ${broken ? 'is-broken' : ''} ${tint ? `git-${tint}` : ''}`}>
+          {entry.name}
+        </span>
         {entry.noScan && <span class="tree-note">не индексируется</span>}
       </div>
       {kids ? <Level entries={kids} depth={depth + 1} /> : null}

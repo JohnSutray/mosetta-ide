@@ -10,6 +10,11 @@ export interface WorkspaceInfo {
   openedAt: number;
 }
 
+export interface DirSuggestion {
+  path: string;
+  name: string;
+}
+
 export type EntryKind = 'file' | 'dir';
 
 export interface DirEntry {
@@ -57,6 +62,7 @@ export interface IndexHit {
   path: string;
   line?: number;
   detail?: string;
+  id?: string;
   score: number;
   matches: number[];
 }
@@ -135,6 +141,8 @@ export interface TerminalInfo {
   alive: boolean;
   exitCode?: number;
   command?: string;
+  busy: boolean;
+  running?: string;
   createdAt: number;
 }
 
@@ -146,3 +154,34 @@ export interface LogLine {
   message: string;
   at: number;
 }
+
+export type GitFileState = 'modified' | 'added' | 'untracked' | 'deleted' | 'conflict';
+
+export interface GitState {
+  repo: boolean;
+  branch: string | null;
+  ahead: number;
+  behind: number;
+  files: Record<string, GitFileState>;
+  error?: string;
+}
+
+export interface GitBranch {
+  name: string;
+  current: boolean;
+  remote: boolean;
+  upstream?: string;
+  head: string;
+  subject?: string;
+}
+
+export type GitAction =
+  | 'checkout'
+  | 'create'
+  | 'rename'
+  | 'delete'
+  | 'force-delete'
+  | 'push'
+  | 'pull'
+  | 'fetch'
+  | 'merge';

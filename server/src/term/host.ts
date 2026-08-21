@@ -21,16 +21,20 @@ export interface OpenOptions {
 
 const SCROLLBACK_BYTES = 256 * 1024;
 
+const BUSY_POLL_MS = 500;
+
 interface Terminal {
   info: TerminalInfo;
   pty: IPty | null;
   buffer: string;
   release: () => void;
+  shell: string;
 }
 
 export class TerminalHost {
   private readonly terminals = new Map<string, Terminal>();
   private readonly listeners = new Set<(event: TerminalEvent) => void>();
+  private busyTimer: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
 
   constructor(
@@ -95,6 +99,7 @@ export class TerminalHost {
       rows,
       alive: true,
       ...(options.command ? { command: options.command } : {}),
+      busy: false,
       createdAt: Date.now(),
     };
 
@@ -103,6 +108,7 @@ export class TerminalHost {
       pty,
       buffer: '',
       release: this.hold(`terminal:${options.name}`),
+      shell: baseName(shell.file),
     };
     this.terminals.set(options.name, terminal);
 
@@ -113,7 +119,8 @@ export class TerminalHost {
 
     pty.onExit(({ exitCode }) => {
       terminal.pty = null;
-      terminal.info = { ...terminal.info, alive: false, exitCode };
+      terminal.info = { ...terminal.info, alive: false, exitCode, busy: false };
+      delete terminal.info.running;
       terminal.release();
       this.log.info(`терминал ${options.name} завершился (${exitCode})`);
       this.emit({ type: 'exit', name: options.name, exitCode });
@@ -125,8 +132,46 @@ export class TerminalHost {
     }
 
     this.log.info(`терминал ${options.name} открыт (pid ${pty.pid})`);
+    this.watchBusy();
     this.emit({ type: 'list' });
     return info;
+  }
+
+  private watchBusy(): void {
+    if (this.busyTimer || this.disposed) return;
+    this.busyTimer = setInterval(() => this.pollBusy(), BUSY_POLL_MS);
+    this.busyTimer.unref?.();
+  }
+
+  private pollBusy(): void {
+    let changed = false;
+    let alive = 0;
+
+    for (const terminal of this.terminals.values()) {
+      if (!terminal.pty || !terminal.info.alive) continue;
+      alive += 1;
+
+      let front: string;
+      try {
+        front = baseName(terminal.pty.process);
+      } catch {
+        continue;
+      }
+      const busy = front !== '' && front !== terminal.shell;
+      if (busy === terminal.info.busy && (!busy || terminal.info.running === front)) continue;
+
+      const info: TerminalInfo = { ...terminal.info, busy };
+      if (busy) info.running = front;
+      else delete info.running;
+      terminal.info = info;
+      changed = true;
+    }
+
+    if (alive === 0 && this.busyTimer) {
+      clearInterval(this.busyTimer);
+      this.busyTimer = null;
+    }
+    if (changed) this.emit({ type: 'list' });
   }
 
   attach(name: string): { info: TerminalInfo; buffer: string } {
@@ -160,6 +205,10 @@ export class TerminalHost {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    if (this.busyTimer) {
+      clearInterval(this.busyTimer);
+      this.busyTimer = null;
+    }
     if (this.terminals.size > 0) {
       this.log.info(`гашу терминалы вместе с воркспейсом: ${this.terminals.size}`);
     }
@@ -190,6 +239,11 @@ export class TerminalHost {
 
 export function titleOf(name: string): string {
   return name.replace(/^@[^/]+\//, '');
+}
+
+function baseName(command: string): string {
+  const tail = command.split(/[\\/]/).pop() ?? command;
+  return tail.replace(/^-/, '');
 }
 
 function trim(buffer: string): string {

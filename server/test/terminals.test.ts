@@ -109,6 +109,24 @@ describe('терминалы', () => {
     expect(server.registry.list()[0]!.held).toEqual([]);
   }, 20_000);
 
+  it('терминал занят, только пока в нём работает чужой процесс', async () => {
+    const info = await c.call('term.create', {});
+    expect(info.busy).toBe(false);
+
+    await c.call('term.write', { name: info.name, data: 'sleep 3\r' });
+    await waitFor(async () => {
+      const list = await c.call('term.list', null);
+      return list[0]?.busy === true;
+    });
+    expect((await c.call('term.list', null))[0]!.running).toBe('sleep');
+
+    await waitFor(async () => {
+      const list = await c.call('term.list', null);
+      return list[0]?.busy === false;
+    });
+    expect((await c.call('term.list', null))[0]!.running).toBeUndefined();
+  }, 25_000);
+
   it('умерший скрипт перезапускается под тем же именем', async () => {
     const first = await c.call('npm.run', { id: 'root::hello' });
     await c.call('term.write', { name: 'root::hello', data: 'exit\r' });

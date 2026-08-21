@@ -9,6 +9,7 @@ import {
   dirty,
   error,
   errorCount,
+  closeFile,
   externalEpoch,
   lspStatuses,
   notice,
@@ -28,6 +29,8 @@ import { pendingReveal } from '../state/session.js';
 import { refreshScripts, refreshTerminals } from '../state/terminals.js';
 import { Editor } from '../editor/editor.js';
 import { SearchEverywhere } from './search-everywhere.js';
+import { Branches } from './branches.js';
+import { refreshGit, resetGit } from '../state/git.js';
 import { Scripts } from './scripts.js';
 import { TerminalView } from './terminal.js';
 import { Toolbar } from './toolbar.js';
@@ -39,6 +42,8 @@ import { Panel } from './panel.js';
 import { Problems } from './problems.js';
 import { Projects } from './projects.js';
 import { Tree } from './tree.js';
+import { Icon } from './icons.js';
+import { projectsVisible } from '../state/projects.js';
 
 export function App() {
   const ws = current.value;
@@ -67,9 +72,13 @@ export function App() {
   }, [title.value]);
 
   useEffect(() => {
-    if (!ws) return;
+    if (!ws) {
+      resetGit();
+      return;
+    }
     void refreshTerminals();
     void refreshScripts();
+    void refreshGit();
   }, [ws?.id]);
 
   return (
@@ -82,7 +91,8 @@ export function App() {
             <Panel
               class={`column-${panel.id}`}
               width={widthOf(panel.id)}
-              title={panel.title}
+              title={titleOf(panel)}
+              actions={actionsOf(panel)}
               onClose={() => runCommand(panel.command)}
             >
               {content(panel)}
@@ -94,6 +104,7 @@ export function App() {
         <Panel
           class="column-editor"
           title={file ? file.path : 'Ничего не открыто'}
+          onClose={file ? () => void closeFile() : undefined}
           actions={
             file ? (
               <>
@@ -137,8 +148,32 @@ export function App() {
       </div>
 
       <SearchEverywhere />
+      <Branches />
     </div>
   );
+}
+
+function titleOf(panel: PanelSpec): string {
+  if (panel.id === 'tree' && showsProjects()) return 'Проекты';
+  return panel.title;
+}
+
+function actionsOf(panel: PanelSpec) {
+  if (panel.id !== 'tree' || !current.value) return null;
+  const shown = projectsVisible.value;
+  return (
+    <span
+      class={`panel-action ${shown ? 'is-active' : ''}`}
+      title={shown ? 'Вернуться к дереву' : 'Открыть другой проект'}
+      onClick={() => runCommand(shown ? 'projects.close' : 'projects.show')}
+    >
+      <Icon name="projects" filled={shown} />
+    </span>
+  );
+}
+
+function showsProjects(): boolean {
+  return !current.value || projectsVisible.value;
 }
 
 function open(side: 'left' | 'right'): PanelSpec[] {
@@ -148,7 +183,7 @@ function open(side: 'left' | 'right'): PanelSpec[] {
 function content(panel: PanelSpec) {
   switch (panel.id) {
     case 'tree':
-      return current.value ? <Tree /> : <Projects />;
+      return showsProjects() ? <Projects /> : <Tree />;
     case 'scripts':
       return <Scripts />;
     case 'problems':

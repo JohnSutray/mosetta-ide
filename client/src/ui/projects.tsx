@@ -1,10 +1,23 @@
-import { useState } from 'preact/hooks';
-import { current, openProject, switchProject, workspaces } from '../state/session.js';
+import { useEffect, useRef } from 'preact/hooks';
+import { current, switchProject, workspaces } from '../state/session.js';
+import {
+  acceptPath,
+  pathDraft,
+  pathSelected,
+  pathSuggestions,
+  setPathDraft,
+} from '../state/projects.js';
 
 export function Projects() {
-  const [root, setRoot] = useState('');
+  const input = useRef<HTMLInputElement>(null);
   const list = workspaces.value;
   const active = current.value;
+  const suggestions = pathSuggestions.value;
+  const selected = pathSelected.value;
+
+  useEffect(() => {
+    input.current?.focus();
+  }, []);
 
   return (
     <div class="projects">
@@ -12,19 +25,40 @@ export function Projects() {
         class="open-form"
         onSubmit={(e) => {
           e.preventDefault();
-          if (root.trim()) void openProject(root.trim());
+          acceptPath();
         }}
       >
         <input
+          ref={input}
           class="field"
-          placeholder="Путь к проекту, например ~/WebstormProjects/new-ide"
-          value={root}
+          placeholder="Путь к проекту, например ~/WebstormProjects"
+          value={pathDraft.value}
           spellcheck={false}
-          onInput={(e) => setRoot((e.target as HTMLInputElement).value)}
+          autocomplete="off"
+          onInput={(e) => setPathDraft((e.target as HTMLInputElement).value)}
         />
+
         <button class="button" type="submit">
           Открыть
         </button>
+
+        {suggestions.length > 0 && (
+          <div class="suggest">
+            {suggestions.map((item, at) => (
+              <div
+                key={item.path}
+                class={`suggest-row ${at === selected ? 'is-current' : ''}`}
+                title={item.path}
+                onClick={() => {
+                  pathSelected.value = at;
+                  acceptPath();
+                }}
+              >
+                {item.name}
+              </div>
+            ))}
+          </div>
+        )}
       </form>
 
       {list.length > 0 && (

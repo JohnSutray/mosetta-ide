@@ -6,6 +6,7 @@ import { RamFs } from '../fs/ram-fs.js';
 import { SearchIndex } from '../search/search-index.js';
 import { LspServer } from '../lsp/server.js';
 import { TerminalHost } from '../term/host.js';
+import { GitIndex } from '../git/git-index.js';
 import { packageManager } from '../env/shell.js';
 import type { Logger } from '../log.js';
 import type { Workspace } from './workspace.js';
@@ -16,6 +17,7 @@ export class Services {
   readonly index: SearchIndex;
   readonly watcher: OsWatcher;
   readonly terminals: TerminalHost;
+  readonly git: GitIndex;
   readonly lsp: LspServer[] = [];
 
   private readonly offs: Array<() => void> = [];
@@ -48,6 +50,9 @@ export class Services {
               dirty: event.dirty,
             });
             break;
+          case 'doc.saved':
+            this.git.touch();
+            break;
           case 'doc.external':
             ws.broadcast('doc.external', { path: event.path, revision: event.revision });
             break;
@@ -56,6 +61,7 @@ export class Services {
             break;
           case 'tree.changed':
             ws.broadcast('tree.changed', { path: event.path });
+            this.git.touch();
             break;
           case 'doc.removed':
             ws.broadcast('doc.removed', { path: event.path });
@@ -65,6 +71,8 @@ export class Services {
         }
       }),
     );
+
+    this.git = new GitIndex(ws.root, log, (state) => ws.broadcast('git.state', state));
 
     this.terminals = new TerminalHost((reason) => ws.hold(reason), log);
     this.offs.push(
@@ -114,6 +122,8 @@ export class Services {
       if (this.config.settings.index.enabled) return this.index.indexSymbols();
       return undefined;
     });
+
+    this.git.start();
 
     if (this.config.settings.lsp.startOnOpen) this.startLanguageServers();
   }
@@ -184,6 +194,7 @@ export class Services {
   dispose(): void {
     for (const off of this.offs.splice(0)) off();
     this.terminals.dispose();
+    this.git.dispose();
     this.watcher.dispose();
     for (const server of this.lsp.splice(0)) server.dispose();
     this.index.dispose();

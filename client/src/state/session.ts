@@ -163,6 +163,21 @@ export async function openFileAt(path: string) {
   }
 }
 
+export async function closeFile(): Promise<void> {
+  const file = openFile.value;
+  if (!file) return;
+  try {
+    await docSync.flush();
+  } finally {
+    docSync.detach();
+    void rpc.call('doc.close', { path: file.path });
+    batch(() => {
+      openFile.value = null;
+      dirty.value = false;
+    });
+  }
+}
+
 export function editDoc(text: string) {
   dirty.value = true;
   docSync.edit(text);

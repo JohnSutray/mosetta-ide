@@ -10,6 +10,7 @@ const MAY_TOUCH_DISK = [
   'fs/watcher.ts',
   'config/store.ts',
   'env/toolchain.ts',
+  'env/browse.ts',
 ];
 
 const FORBIDDEN: Array<{ from: RegExp; importing: RegExp; why: string }> = [
@@ -37,6 +38,11 @@ const FORBIDDEN: Array<{ from: RegExp; importing: RegExp; why: string }> = [
     from: /^(fs|search|lsp)\//,
     importing: /(\.\.\/rpc\/|\.\.\/methods\/)/,
     why: 'слои не знают ни про сессии, ни про транспорт',
+  },
+  {
+    from: /^git\//,
+    importing: /(node:fs|ram-fs|os-fs|\.\.\/search\/|\.\.\/lsp\/|\.\.\/rpc\/|\.\.\/methods\/)/,
+    why: 'git — своя ось: у него собственный источник правды (.git) и собственный процесс, наши слои он не читает',
   },
   {
     from: /^env\//,

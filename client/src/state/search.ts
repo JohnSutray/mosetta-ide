@@ -1,6 +1,7 @@
 import { batch, computed, signal } from '@preact/signals';
 import type { IndexHit, IndexKind } from '@ide/protocol';
-import { openFileAt, reveal, rpc, say } from './session.js';
+import { openFileAt, reveal, rpc } from './session.js';
+import { runScript } from './terminals.js';
 
 export const searchOpen = signal(false);
 export const searchQuery = signal('');
@@ -102,9 +103,11 @@ export function acceptSelected(): void {
   if (!hit) return;
   closeSearch();
 
-  if (hit.kind === 'npm') {
-    say(`${hit.label} — ${hit.detail ?? ''}. Запуск появится вместе с терминалами.`);
+  if (hit.kind === 'npm' && hit.id) {
+    void runScript(hit.id);
+    return;
   }
+
   void openFileAt(hit.path).then(() => {
     if (hit.line !== undefined) reveal(hit.path, hit.line);
   });

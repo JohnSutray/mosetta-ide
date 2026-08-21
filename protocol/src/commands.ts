@@ -10,6 +10,19 @@ export const COMMANDS = {
 
   'terminal.create': 'Новый терминал',
 
+  'projects.show': 'Открывашка проектов',
+  'projects.next': 'Проекты: вниз по подсказкам',
+  'projects.prev': 'Проекты: вверх по подсказкам',
+  'projects.complete': 'Проекты: дописать путь',
+  'projects.accept': 'Проекты: открыть',
+  'projects.close': 'Проекты: вернуться к дереву',
+
+  'git.branches': 'Ветки git',
+  'git.next': 'Ветки: вниз',
+  'git.prev': 'Ветки: вверх',
+  'git.checkout': 'Ветки: переключиться',
+  'git.close': 'Ветки: закрыть',
+
   'search.everywhere': 'Найти всё',
   'search.next': 'Поиск: вниз',
   'search.prev': 'Поиск: вверх',
