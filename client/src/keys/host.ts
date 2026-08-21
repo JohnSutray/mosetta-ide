@@ -18,6 +18,7 @@ export function humanizeKey(key: string): string {
       if (part === 'shift') return 'Shift';
       if (part === 'alt') return IS_MAC ? 'Option' : 'Alt';
       if (part === 'ctrl') return 'Control';
+      if (part === 'backquote') return '`';
       return part.length === 1 ? part.toUpperCase() : part;
     })
     .join('+');

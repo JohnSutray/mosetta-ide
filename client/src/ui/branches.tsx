@@ -1,13 +1,16 @@
 import { useEffect, useRef } from 'preact/hooks';
-import type { GitBranch } from '@ide/protocol';
+import type { GitAction, GitBranch } from '@ide/protocol';
 import {
   askName,
   branchPrompt,
+  branchRows,
   branchSelected,
   branchesOpen,
   closeBranches,
   gitBranches,
   gitDo,
+  gitOutput,
+  gitRunning,
   gitState,
   selectedBranch,
 } from '../state/git.js';
@@ -45,24 +48,30 @@ export function Branches() {
 
         <div class="branches-body">
           <div class="branch-list" ref={list}>
-            {branches.map((branch, at) => (
-              <div
-                key={branch.name}
-                class={`branch-row ${at === branchSelected.value ? 'is-current' : ''} ${
-                  branch.remote ? 'is-remote' : ''
-                }`}
-                title={branch.subject ?? branch.name}
-                onClick={() => {
-                  branchSelected.value = at;
-                  branchPrompt.value = null;
-                }}
-                onDblClick={() => void gitDo('checkout')}
-              >
-                <span class="branch-mark">{branch.current ? '●' : ''}</span>
-                <span class="branch-name">{branch.name}</span>
-                <span class="branch-sha">{branch.head}</span>
-              </div>
-            ))}
+            {branchRows.value.map((row, i) =>
+              row.kind === 'branch' ? (
+                <div
+                  key={row.branch.name}
+                  class={`branch-row ${row.at === branchSelected.value ? 'is-current' : ''} ${
+                    row.branch.remote ? 'is-remote' : ''
+                  }`}
+                  title={`${row.branch.name}${row.branch.subject ? ` — ${row.branch.subject}` : ''}`}
+                  onClick={() => {
+                    branchSelected.value = row.at;
+                    branchPrompt.value = null;
+                  }}
+                  onDblClick={() => void gitDo('checkout')}
+                >
+                  <span class="branch-mark">{row.branch.current ? '●' : ''}</span>
+                  <span class="branch-name">{row.label}</span>
+                  <span class="branch-sha">{row.branch.head}</span>
+                </div>
+              ) : (
+                <div key={`${row.kind}${i}`} class={`branch-head is-${row.kind}`}>
+                  {row.title}
+                </div>
+              ),
+            )}
             {branches.length === 0 && <div class="se-empty">Веток нет</div>}
           </div>
 
@@ -105,22 +114,46 @@ export function Branches() {
           </div>
         </div>
 
+        {gitOutput.value !== '' && <Log text={gitOutput.value} />}
+
         <div class="branches-foot">
-          <button class="button" onClick={() => void gitDo('fetch')}>
-            Fetch
-          </button>
-          <button class="button" onClick={() => void gitDo('pull')}>
-            Pull
-          </button>
-          <button class="button" onClick={() => void gitDo('push')}>
-            Push
-          </button>
+          <Network action="fetch" title="Fetch" />
+          <Network action="pull" title="Pull" />
+          <Network action="push" title="Push" />
           <button class="button" onClick={closeBranches}>
             Закрыть
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+function Network({ action, title }: { action: GitAction; title: string }) {
+  const running = gitRunning.value;
+  const mine = running === action;
+  return (
+    <button
+      class={`button ${mine ? 'is-running' : ''}`}
+      disabled={running !== null}
+      onClick={() => void gitDo(action)}
+    >
+      {mine && <span class="spinner" />}
+      {title}
+    </button>
+  );
+}
+
+function Log({ text }: { text: string }) {
+  const box = useRef<HTMLPreElement>(null);
+  useEffect(() => {
+    const node = box.current;
+    if (node) node.scrollTop = node.scrollHeight;
+  }, [text]);
+  return (
+    <pre class="git-log" ref={box}>
+      {text}
+    </pre>
   );
 }
 

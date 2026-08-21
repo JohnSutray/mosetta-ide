@@ -119,6 +119,7 @@ export interface Events {
   'term.exit': { name: string; exitCode: number };
 
   'git.state': GitState;
+  'git.output': { action: GitAction; chunk: string };
 
   log: LogLine;
 }

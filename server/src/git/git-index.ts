@@ -1,6 +1,6 @@
-import type { GitBranch, GitFileState, GitState } from '@ide/protocol';
+import type { GitAction, GitBranch, GitFileState, GitState } from '@ide/protocol';
 import type { Logger } from '../log.js';
-import { git } from './cli.js';
+import { git, gitStream } from './cli.js';
 
 const DEBOUNCE_MS = 400;
 
@@ -21,6 +21,7 @@ export class GitIndex {
     private readonly root: string,
     private readonly log: Logger,
     private readonly onChange: (state: GitState) => void,
+    private readonly onOutput: (action: GitAction, chunk: string) => void = () => {},
   ) {}
 
   snapshot(): GitState {
@@ -133,11 +134,16 @@ export class GitIndex {
     return out;
   }
 
-  async run(args: string[]): Promise<string | null> {
-    const result = await git(this.root, args, 60_000);
+  async run(action: GitAction, args: string[]): Promise<string | null> {
+    this.onOutput(action, `$ git ${args.join(' ')}\n`);
+    const result = await gitStream(this.root, args, (chunk) => this.onOutput(action, chunk));
     await this.refresh();
-    if (result.ok) return null;
+    if (result.ok) {
+      this.onOutput(action, '\n[готово]\n');
+      return null;
+    }
     this.log.warn(`git ${args.join(' ')}: ${result.stderr}`);
+    this.onOutput(action, `\n[git отказался: ${result.stderr}]\n`);
     return result.stderr || 'git отказался';
   }
 

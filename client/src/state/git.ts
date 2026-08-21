@@ -11,26 +11,34 @@ export const branchesOpen = signal(false);
 export const branchSelected = signal(0);
 export const branchPrompt = signal<{ action: GitAction; value: string } | null>(null);
 
-const STRENGTH: GitFileState[] = ['conflict', 'modified', 'added', 'deleted', 'untracked'];
+export const gitRunning = signal<GitAction | null>(null);
+export const gitOutput = signal('');
 
-export const gitTint = computed<Map<string, GitFileState>>(() => {
-  const out = new Map<string, GitFileState>();
+const OUTPUT_LIMIT = 64 * 1024;
+
+export type TreeTint = 'modified' | 'added' | 'conflict';
+
+const FILE_TINT: Partial<Record<GitFileState, TreeTint>> = {
+  modified: 'modified',
+  added: 'added',
+  untracked: 'added',
+  conflict: 'conflict',
+};
+
+export const gitTint = computed<Map<string, TreeTint>>(() => {
+  const out = new Map<string, TreeTint>();
   for (const [path, state] of Object.entries(gitState.value.files)) {
-    bump(out, path, state);
+    const tint = FILE_TINT[state];
+    if (!tint) continue;
+    out.set(path, tint);
     let at = path.lastIndexOf('/');
     while (at > 0) {
-      bump(out, path.slice(0, at), state);
+      out.set(path.slice(0, at), 'modified');
       at = path.lastIndexOf('/', at - 1);
     }
   }
   return out;
 });
-
-function bump(map: Map<string, GitFileState>, key: string, state: GitFileState): void {
-  const known = map.get(key);
-  if (known && STRENGTH.indexOf(known) <= STRENGTH.indexOf(state)) return;
-  map.set(key, state);
-}
 
 export function resetGit(): void {
   batch(() => {
@@ -87,6 +95,43 @@ export function moveBranch(delta: number): void {
 
 export const selectedBranch = computed(() => gitBranches.value[branchSelected.value] ?? null);
 
+export type BranchRow =
+  | { kind: 'head'; title: string }
+  | { kind: 'remote'; title: string }
+  | { kind: 'branch'; branch: GitBranch; at: number; label: string };
+
+export const branchRows = computed<BranchRow[]>(() => {
+  const rows: BranchRow[] = [];
+  let seenLocal = false;
+  let seenRemote = false;
+  let currentRemote = '';
+
+  gitBranches.value.forEach((branch, at) => {
+    if (!branch.remote) {
+      if (!seenLocal) {
+        rows.push({ kind: 'head', title: 'local' });
+        seenLocal = true;
+      }
+      rows.push({ kind: 'branch', branch, at, label: branch.name });
+      return;
+    }
+    if (!seenRemote) {
+      rows.push({ kind: 'head', title: 'remote' });
+      seenRemote = true;
+    }
+    const slash = branch.name.indexOf('/');
+    const remote = slash === -1 ? branch.name : branch.name.slice(0, slash);
+    const label = slash === -1 ? branch.name : branch.name.slice(slash + 1);
+    if (remote !== currentRemote) {
+      rows.push({ kind: 'remote', title: remote });
+      currentRemote = remote;
+    }
+    rows.push({ kind: 'branch', branch, at, label });
+  });
+
+  return rows;
+});
+
 export function askName(action: GitAction): void {
   const branch = selectedBranch.value;
   if (!branch) return;
@@ -94,7 +139,12 @@ export function askName(action: GitAction): void {
 }
 
 export async function gitDo(action: GitAction, name?: string): Promise<void> {
+  if (gitRunning.value) return;
   const branch = selectedBranch.value;
+  batch(() => {
+    gitRunning.value = action;
+    gitOutput.value = '';
+  });
   try {
     const { error } = await rpc.call('git.run', {
       action,
@@ -108,13 +158,20 @@ export async function gitDo(action: GitAction, name?: string): Promise<void> {
     say(`git ${action}${name ? ` ${name}` : branch ? ` ${branch.name}` : ''} — готово`);
     batch(() => {
       branchPrompt.value = null;
-      if (action === 'checkout' || action === 'merge') branchesOpen.value = false;
+      if (action === 'checkout') branchesOpen.value = false;
     });
     await refreshGit();
   } catch (err) {
     complain(err instanceof Error ? err.message : String(err));
+  } finally {
+    gitRunning.value = null;
   }
 }
+
+rpc.on('git.output', ({ chunk }) => {
+  const text = (gitOutput.value + chunk.replace(/\r(?!\n)/g, '\n')).slice(-OUTPUT_LIMIT);
+  gitOutput.value = text;
+});
 
 rpc.on('git.state', (state) => {
   gitState.value = state;

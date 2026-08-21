@@ -83,6 +83,17 @@ describe('git', () => {
     expect((await c.call('git.branches', null)).map((b) => b.name)).not.toContain('renamed');
   }, 20_000);
 
+  it('действие печатает свой вывод, а не молчит до конца', async () => {
+    await waitForState(c, (s) => s.repo);
+    await c.call('git.run', { action: 'create', name: 'streamed' });
+
+    const chunks = c.events('git.output') as Array<{ action: string; chunk: string }>;
+    const text = chunks.map((chunk) => chunk.chunk).join('');
+    expect(text).toContain('$ git checkout -b streamed');
+    expect(text).toContain('[готово]');
+    expect(chunks.every((chunk) => chunk.action === 'create')).toBe(true);
+  }, 15_000);
+
   it('отказ git приходит его словами, а не нашим пересказом', async () => {
     await waitForState(c, (s) => s.repo);
     const { error } = await c.call('git.run', { action: 'checkout', branch: 'нет-такой' });

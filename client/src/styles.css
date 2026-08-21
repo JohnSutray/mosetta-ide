@@ -11,9 +11,8 @@
   --error: #ff6b68;
   --git-modified: #6897bb;
   --git-added: #629755;
-  --git-untracked: #a3924a;
-  --git-deleted: #7a7a7a;
   --git-conflict: #e0655f;
+  --noscan: #a3924a;
   --font: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
   --ui-font: 'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
@@ -73,13 +72,14 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
   min-height: 24px;
 }
 .toolbar-spacer { flex: 1; }
 .toolbar-error {
   color: var(--error);
-  max-width: 50%;
+  max-width: 42ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -223,9 +223,9 @@ body {
 
 .tree-name.git-modified { color: var(--git-modified); }
 .tree-name.git-added { color: var(--git-added); }
-.tree-name.git-untracked { color: var(--git-untracked); }
-.tree-name.git-deleted { color: var(--git-deleted); }
 .tree-name.git-conflict { color: var(--git-conflict); }
+
+.tree-row.is-excluded .tree-name { color: var(--noscan); }
 
 .tree-note {
   flex: 0 1 auto;
@@ -307,7 +307,7 @@ body {
 
 .toolbar-notice {
   color: var(--accent);
-  max-width: 60%;
+  max-width: 46ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -581,6 +581,22 @@ body {
 }
 .branch-row:hover { background: #45494a; }
 .branch-row.is-current { background: var(--treesel); color: #dbe6ef; }
+.branch-head {
+  padding: 6px 10px 2px;
+  color: var(--muted);
+  font: 11px/1.4 var(--ui-font);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.branch-head.is-remote {
+  padding-left: 20px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #9aa4a8;
+}
+.branch-head.is-remote + .branch-row,
+.branch-head.is-remote ~ .branch-row { padding-left: 26px; }
+
 .branch-row.is-remote .branch-name { color: var(--muted); }
 .branch-row.is-remote.is-current .branch-name { color: #cfe0ee; }
 .branch-mark { width: 8px; flex: none; color: var(--git-added); }
@@ -631,3 +647,34 @@ body {
   border-top: 1px solid var(--divider);
 }
 .branches-foot .button { padding: 3px 10px; }
+
+.git-log {
+  margin: 0;
+  max-height: 30vh;
+  overflow: auto;
+  padding: 6px 10px;
+  border-top: 1px solid var(--divider);
+  background: var(--bg);
+  color: var(--fg);
+  font: 12px/1.45 var(--font);
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+}
+
+.button:disabled { opacity: 0.5; }
+.button.is-running { display: inline-flex; align-items: center; gap: 6px; }
+
+.spinner {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border: 2px solid rgba(219, 230, 239, 0.25);
+  border-top-color: #dbe6ef;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

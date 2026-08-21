@@ -1,6 +1,17 @@
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { COMMANDS, isCommandId, type CommandId } from '@ide/protocol';
+import { COMMANDS, isCommandId, type CommandId, type Keymap } from '@ide/protocol';
 import { PANELS, TOOLBAR } from '../src/ui/panels.js';
+
+function keymap(): Keymap {
+  const raw = fs.readFileSync(fileURLToPath(new URL('../../config/keymap.json', import.meta.url)), 'utf8');
+  const clean = raw
+    .replace(/^\s*\/\/.*$/gm, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/,(\s*[}\]])/g, '$1');
+  return JSON.parse(clean) as Keymap;
+}
 
 describe('тулбар', () => {
   it('каждая панель как-то представлена в тулбаре', () => {
@@ -56,6 +67,29 @@ describe('тулбар', () => {
   it('единственная кнопка без состояния — заведение терминала', () => {
     const stateless = TOOLBAR.filter((entry) => !entry.active).map((entry) => entry.id);
     expect(stateless).toEqual(['terminal.create']);
+  });
+
+  it('Cmd+цифра — это порядковый номер в тулбаре, слева направо', () => {
+    const bindings = keymap().bindings;
+    TOOLBAR.forEach((entry, at) => {
+      const key = `mod+${at + 1}`;
+      const bound = bindings.find((b) => b.key === key && (b.when ?? 'global') === 'global');
+      expect(bound, `${key}: нет биндинга на ${at + 1}-ю кнопку тулбара`).toBeDefined();
+      expect(bound!.command, `${key} зовёт не ту кнопку`).toBe(entry.command);
+    });
+  });
+
+  it('номера объясняют, почему они не работают в браузере', () => {
+    const numbered = keymap().bindings.filter((b) => /^mod\+\d$/.test(b.key));
+    expect(numbered.length).toBe(TOOLBAR.length);
+    for (const binding of numbered) {
+      expect(binding.unavailable?.browser, `${binding.key}: молчит про браузер`).toBeTruthy();
+    }
+  });
+
+  it('ветки git висят на клавише под Escape, а не на символе', () => {
+    const bound = keymap().bindings.find((b) => b.key === 'mod+backquote');
+    expect(bound?.command).toBe('git.branches');
   });
 
   it('панельные команды объявлены в протоколе с человеческим именем', () => {

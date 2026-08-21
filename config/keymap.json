@@ -26,6 +26,8 @@
     { "command": "edit.undo", "key": "mod+z", "when": "editor" },
     { "command": "edit.redo", "key": "mod+shift+z", "when": "editor" },
 
+    { "command": "git.branches", "key": "mod+backquote", "when": "global" },
+
     {
       "command": "panel.tree",
       "key": "mod+1",
@@ -35,11 +37,43 @@
       }
     },
     {
-      "command": "panel.problems",
+      "command": "search.everywhere",
       "key": "mod+2",
       "when": "global",
       "unavailable": {
         "browser": "Chrome переключает вкладки по Cmd+2. Запусти в app-режиме или дождись Электрона."
+      }
+    },
+    {
+      "command": "git.branches",
+      "key": "mod+3",
+      "when": "global",
+      "unavailable": {
+        "browser": "Chrome переключает вкладки по Cmd+3. Запусти в app-режиме или дождись Электрона."
+      }
+    },
+    {
+      "command": "panel.scripts",
+      "key": "mod+4",
+      "when": "global",
+      "unavailable": {
+        "browser": "Chrome переключает вкладки по Cmd+4. Запусти в app-режиме или дождись Электрона."
+      }
+    },
+    {
+      "command": "panel.problems",
+      "key": "mod+5",
+      "when": "global",
+      "unavailable": {
+        "browser": "Chrome переключает вкладки по Cmd+5. Запусти в app-режиме или дождись Электрона."
+      }
+    },
+    {
+      "command": "terminal.create",
+      "key": "mod+6",
+      "when": "global",
+      "unavailable": {
+        "browser": "Chrome переключает вкладки по Cmd+6. Запусти в app-режиме или дождись Электрона."
       }
     }
   ]

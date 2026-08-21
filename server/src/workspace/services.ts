@@ -72,7 +72,12 @@ export class Services {
       }),
     );
 
-    this.git = new GitIndex(ws.root, log, (state) => ws.broadcast('git.state', state));
+    this.git = new GitIndex(
+      ws.root,
+      log,
+      (state) => ws.broadcast('git.state', state),
+      (action, chunk) => ws.broadcast('git.output', { action, chunk }),
+    );
 
     this.terminals = new TerminalHost((reason) => ws.hold(reason), log);
     this.offs.push(

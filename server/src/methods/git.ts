@@ -20,7 +20,7 @@ export const gitRun: Handler<'git.run'> = async (params, ctx) => {
   }
   const git = ctx.session.requireWorkspace().services.git;
   const args = argsFor(params.action, params.branch, params.name);
-  return { error: await git.run(args) };
+  return { error: await git.run(params.action, args) };
 };
 
 function argsFor(action: GitAction, branch?: string, name?: string): string[] {
@@ -36,11 +36,13 @@ function argsFor(action: GitAction, branch?: string, name?: string): string[] {
     case 'force-delete':
       return ['branch', '-D', ref(branch)];
     case 'push':
-      return branch ? ['push', '-u', 'origin', ref(branch)] : ['push'];
+      return branch
+        ? ['push', '--progress', '-u', 'origin', ref(branch)]
+        : ['push', '--progress'];
     case 'pull':
-      return ['pull', '--ff-only'];
+      return ['pull', '--progress', '--ff-only'];
     case 'fetch':
-      return ['fetch', '--all', '--prune'];
+      return ['fetch', '--progress', '--all', '--prune'];
     case 'merge':
       return ['merge', ref(branch)];
     default:

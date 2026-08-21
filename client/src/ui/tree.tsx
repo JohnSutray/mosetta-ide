@@ -54,7 +54,7 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
   const isCurrent = openFile.value?.path === entry.path;
   const kids = isOpen ? dirChildren.value.get(entry.path) : undefined;
   const broken = (diagnostics.value.get(entry.path) ?? []).some((d) => d.severity === 'error');
-  const tint = gitTint.value.get(entry.path);
+  const tint = entry.noScan ? undefined : gitTint.value.get(entry.path);
 
   return (
     <>
