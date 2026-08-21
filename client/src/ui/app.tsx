@@ -49,7 +49,7 @@ export function App() {
     registerCommands();
     const dead = missingCommands();
     if (dead.length) {
-      console.warn('[new-ide] команды без реализации:', dead.join(', '));
+      console.warn('[web-ide] команды без реализации:', dead.join(', '));
     }
     const dispatcher = installDispatcher(resolveContext, (binding, reason) => {
       notice.value = `${humanizeKey(binding.key)} — ${reason}`;

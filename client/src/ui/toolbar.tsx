@@ -12,7 +12,7 @@ export function Toolbar() {
   return (
     <div class="toolbar">
       <div class="toolbar-left">
-        <span class="brand">new-ide</span>
+        <span class="brand">web-ide</span>
         <span class="toolbar-project">{ws ? ws.name : 'проект не открыт'}</span>
 
         <div class="toolbar-icons">

@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { PANELS } from '../ui/panels.js';
 
-const STORAGE_KEY = 'new-ide.panel-widths';
+const STORAGE_KEY = 'web-ide.panel-widths';
 
 function initial(): Record<string, number> {
   const widths: Record<string, number> = {};

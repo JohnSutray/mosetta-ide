@@ -66,7 +66,7 @@ export const errorCount = computed(
 export const title = computed(() => {
   const ws = current.value;
   const file = openFile.value;
-  if (!ws) return 'new-ide';
+  if (!ws) return 'web-ide';
   return file ? `${file.path} — ${ws.name}` : ws.name;
 });
 

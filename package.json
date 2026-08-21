@@ -1,5 +1,5 @@
 {
-  "name": "new-ide",
+  "name": "web-ide",
   "private": true,
   "type": "module",
   "scripts": {
