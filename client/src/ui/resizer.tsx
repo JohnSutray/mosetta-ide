@@ -1,35 +1,50 @@
 import { useRef } from 'preact/hooks';
-import { setPanelWidth, widthOf } from '../state/layout.js';
+import { setPanelWidth, setWidth, widthOf } from '../state/layout.js';
 import { PANELS, type PanelSide } from './panels.js';
 
 const PANEL_DEFAULTS: Record<string, number> = Object.fromEntries(
   PANELS.map((panel) => [panel.id, panel.defaultWidth]),
 );
 
-export function Resizer({ id, side }: { id: string; side: PanelSide }) {
+export function Resizer({
+  id,
+  side,
+  limits,
+  defaultWidth,
+}: {
+  id: string;
+  side: PanelSide;
+  limits?: () => { min: number; max: number };
+  defaultWidth?: number;
+}) {
   const drag = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  const apply = (px: number) => {
+    if (limits) setWidth(id, px, limits());
+    else setPanelWidth(id, px);
+  };
 
   return (
     <div
       class="resizer"
       onPointerDown={(event) => {
         event.preventDefault();
-        drag.current = { startX: event.clientX, startWidth: widthOf(id) };
+        drag.current = { startX: event.clientX, startWidth: widthOf(id, defaultWidth) };
         (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
       }}
       onPointerMove={(event) => {
         const started = drag.current;
         if (!started) return;
         const delta = event.clientX - started.startX;
-        setPanelWidth(id, started.startWidth + (side === 'left' ? delta : -delta));
+        apply(started.startWidth + (side === 'left' ? delta : -delta));
       }}
       onPointerUp={(event) => {
         drag.current = null;
         (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
       }}
       onDblClick={() => {
-        const panel = PANEL_DEFAULTS[id];
-        if (panel !== undefined) setPanelWidth(id, panel);
+        const back = defaultWidth ?? PANEL_DEFAULTS[id];
+        if (back !== undefined) apply(back);
       }}
     />
   );

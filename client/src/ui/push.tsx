@@ -1,5 +1,8 @@
+import { useRef } from 'preact/hooks';
 import type { GitCommit } from '@ide/protocol';
 import { ChangedTree } from './changed-tree.js';
+import { Resizer } from './resizer.js';
+import { widthOf } from '../state/layout.js';
 import {
   closePush,
   doPush,
@@ -13,7 +16,19 @@ import {
   selectCommit,
 } from '../state/git.js';
 
+const FILES_ID = 'push.files';
+const FILES_DEFAULT = 460;
+const FILES_MIN = 220;
+const COMMITS_MIN = 300;
+
 export function Push() {
+  const split = useRef<HTMLDivElement>(null);
+
+  const limits = () => {
+    const full = split.current?.getBoundingClientRect().width ?? window.innerWidth;
+    return { min: FILES_MIN, max: Math.max(FILES_MIN, full - COMMITS_MIN) };
+  };
+
   if (!pushOpen.value) return null;
 
   const preview = pushPreview.value;
@@ -31,7 +46,7 @@ export function Push() {
         </div>
 
         {preview ? (
-          <div class="push-split">
+          <div class="push-split" ref={split}>
             <div class="push-body">
               <div class="push-fork">
                 <Lane
@@ -59,7 +74,9 @@ export function Push() {
               />
             </div>
 
-            <div class="push-files">
+            <Resizer id={FILES_ID} side="right" limits={limits} defaultWidth={FILES_DEFAULT} />
+
+            <div class="push-files" style={{ width: `${widthOf(FILES_ID, FILES_DEFAULT)}px` }}>
               <div class="push-lane-title">
                 {pushSelected.value ? `коммит ${pushSelected.value}` : 'все твои изменения'}
                 {pushChanges.value.length > 0 ? ` · ${pushChanges.value.length}` : ''}
