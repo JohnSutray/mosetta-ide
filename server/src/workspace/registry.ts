@@ -1,9 +1,8 @@
-import fs from 'node:fs/promises';
 import type { WorkspaceInfo } from '@ide/protocol';
-import { RpcErrorCode } from '@ide/protocol';
+import type { ConfigStore } from '../config/store.js';
+import { probeRoot } from '../fs/os-fs.js';
 import { RpcError } from '../errors.js';
 import { logger } from '../log.js';
-import { expandRoot } from './paths.js';
 import { Workspace } from './workspace.js';
 
 const log = logger('workspaces');
@@ -20,22 +19,15 @@ export class WorkspaceRegistry {
   private readonly listeners = new Set<(list: WorkspaceInfo[]) => void>();
   private readonly idleMs: number;
 
-  constructor(options: RegistryOptions = {}) {
+  constructor(
+    private readonly config: ConfigStore,
+    options: RegistryOptions = {},
+  ) {
     this.idleMs = options.idleMs ?? 15 * 60_000;
   }
 
   async open(rootInput: string): Promise<Workspace> {
-    const expanded = expandRoot(rootInput);
-    let real: string;
-    try {
-      real = await fs.realpath(expanded);
-    } catch {
-      throw new RpcError(RpcErrorCode.BadRoot, `Путь не существует: ${expanded}`);
-    }
-    const stat = await fs.stat(real);
-    if (!stat.isDirectory()) {
-      throw new RpcError(RpcErrorCode.BadRoot, `Не директория: ${real}`);
-    }
+    const real = await probeRoot(rootInput);
 
     const existing = this.byRoot.get(real);
     if (existing) {
@@ -43,10 +35,11 @@ export class WorkspaceRegistry {
       return existing;
     }
 
-    const ws = new Workspace(real);
+    const ws = new Workspace(real, this.config);
     this.byRoot.set(real, ws);
     this.byId.set(ws.id, ws);
     log.info(`открыт ${real} (${ws.id})`);
+    await ws.boot();
     this.announce();
     return ws;
   }

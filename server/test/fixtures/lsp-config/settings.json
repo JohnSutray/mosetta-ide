@@ -1,0 +1,14 @@
+{
+  "fs": { "noScan": ["node_modules", ".git"], "preloadBudgetMb": 4 },
+  "lsp": {
+    "startOnOpen": true,
+    "servers": {
+      "typescript": {
+        "enabled": true,
+        "command": "typescript-language-server",
+        "args": ["--stdio"],
+        "extensions": ["ts", "tsx"]
+      }
+    }
+  }
+}

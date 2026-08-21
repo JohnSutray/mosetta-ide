@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { WebSocketServer } from 'ws';
 import { DEFAULT_PORT, WS_PATH } from '@ide/protocol';
+import { ConfigStore } from './config/store.js';
 import { logger } from './log.js';
 import { Session } from './rpc/session.js';
 import { WorkspaceRegistry } from './workspace/registry.js';
@@ -11,11 +12,14 @@ export interface ServerOptions {
   port?: number;
   host?: string;
   idleMs?: number;
+  configDir?: string;
+  watchConfig?: boolean;
 }
 
 export interface RunningServer {
   port: number;
   registry: WorkspaceRegistry;
+  config: ConfigStore;
   close(): Promise<void>;
 }
 
@@ -23,7 +27,9 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   const host = options.host ?? '127.0.0.1';
   const port = options.port ?? DEFAULT_PORT;
   const startedAt = Date.now();
-  const registry = new WorkspaceRegistry({ idleMs: options.idleMs });
+  const config = await ConfigStore.load(options.configDir);
+  if (options.watchConfig ?? true) config.watch();
+  const registry = new WorkspaceRegistry(config, { idleMs: options.idleMs });
 
   const http_ = http.createServer((req, res) => {
     if (req.url === '/health') {
@@ -48,7 +54,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       return;
     }
     wss.handleUpgrade(req, socket, head, (ws) => {
-      const session = new Session(ws, registry, startedAt);
+      const session = new Session(ws, registry, config, startedAt);
       log.debug(`подключилась вкладка ${session.id}`);
     });
   });
@@ -67,7 +73,9 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   return {
     port: actual,
     registry,
+    config,
     async close() {
+      config.dispose();
       await registry.closeAll();
       for (const client of wss.clients) client.terminate();
       wss.close();

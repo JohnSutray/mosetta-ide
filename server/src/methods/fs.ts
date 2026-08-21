@@ -1,21 +1,19 @@
 import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
-import { listDir, readFile, writeFile } from '../workspace/files.js';
 
-export const fsList: Handler<'fs.list'> = (params, ctx) => {
-  const ws = ctx.session.requireWorkspace();
-  return listDir(ws, pathOf(params));
-};
+export const fsList: Handler<'fs.list'> = (params, ctx) =>
+  ctx.session.requireWorkspace().services.os.list(pathOf(params));
 
-export const fsRead: Handler<'fs.read'> = (params, ctx) => {
-  const ws = ctx.session.requireWorkspace();
-  return readFile(ws, pathOf(params));
+export const fsRead: Handler<'fs.read'> = async (params, ctx) => {
+  const file = await ctx.session.requireWorkspace().services.os.read(pathOf(params));
+  return file;
 };
 
 export const fsWrite: Handler<'fs.write'> = (params, ctx) => {
-  const ws = ctx.session.requireWorkspace();
   if (typeof params?.text !== 'string') throw RpcError.invalidParams('нужен text: string');
-  return writeFile(ws, pathOf(params), params.text, params.expectedRevision);
+  return ctx.session
+    .requireWorkspace()
+    .services.os.write(pathOf(params), params.text, params.expectedRevision);
 };
 
 function pathOf(params: { path?: unknown } | null): string {

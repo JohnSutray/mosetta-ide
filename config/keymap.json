@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "bindings": [
+    { "command": "file.save", "key": "mod+s", "when": "global" },
+    { "command": "file.reload", "key": "mod+shift+r", "when": "global" },
+
+    { "command": "edit.undo", "key": "mod+z", "when": "editor" },
+    { "command": "edit.redo", "key": "mod+shift+z", "when": "editor" },
+
+    {
+      "command": "panel.tree",
+      "key": "mod+1",
+      "when": "global",
+      "unavailable": {
+        "browser": "Chrome переключает вкладки по Cmd+1. Запусти в app-режиме или дождись Электрона."
+      }
+    },
+    {
+      "command": "panel.problems",
+      "key": "mod+2",
+      "when": "global",
+      "unavailable": {
+        "browser": "Chrome переключает вкладки по Cmd+2. Запусти в app-режиме или дождись Электрона."
+      }
+    }
+  ]
+}

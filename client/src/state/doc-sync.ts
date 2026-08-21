@@ -1,0 +1,71 @@
+import type { DocState } from '@ide/protocol';
+import type { RpcClient } from '../rpc/client.js';
+
+export class DocSync {
+  private path: string | null = null;
+  private version = 0;
+  private pending: string | null = null;
+  private inFlight = false;
+  private timer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(
+    private readonly rpc: RpcClient,
+    private readonly onError: (message: string) => void,
+    private readonly debounceMs = 150,
+  ) {}
+
+  attach(doc: DocState): void {
+    this.cancel();
+    this.path = doc.path;
+    this.version = doc.version;
+  }
+
+  detach(): void {
+    this.cancel();
+    this.path = null;
+  }
+
+  edit(text: string): void {
+    if (!this.path) return;
+    this.pending = text;
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      void this.push();
+    }, this.debounceMs);
+  }
+
+  async flush(): Promise<void> {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+    await this.push();
+  }
+
+  private async push(): Promise<void> {
+    if (this.inFlight || this.pending === null || !this.path) return;
+    const text = this.pending;
+    this.pending = null;
+    this.inFlight = true;
+    try {
+      const result = await this.rpc.call('doc.edit', {
+        path: this.path,
+        text,
+        baseVersion: this.version,
+      });
+      this.version = result.version;
+    } catch (err) {
+      this.onError(err instanceof Error ? err.message : String(err));
+    } finally {
+      this.inFlight = false;
+      if (this.pending !== null) await this.push();
+    }
+  }
+
+  private cancel(): void {
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    this.pending = null;
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "bindings": [
+    { "command": "file.save", "key": "mod+s", "when": "global" }
+  ]
+}

@@ -1,5 +1,5 @@
 import type { DirEntry } from '@ide/protocol';
-import { dirChildren, expanded, openFile, openFileAt, toggleDir } from '../state/session.js';
+import { diagnostics, dirChildren, expanded, openFile, openFileAt, toggleDir } from '../state/session.js';
 
 export function Tree() {
   const children = dirChildren.value.get('');
@@ -25,6 +25,7 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
   const isOpen = expanded.value.has(entry.path);
   const isCurrent = openFile.value?.path === entry.path;
   const kids = isOpen ? dirChildren.value.get(entry.path) : undefined;
+  const broken = (diagnostics.value.get(entry.path) ?? []).some((d) => d.severity === 'error');
 
   return (
     <>
@@ -36,7 +37,12 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
         <span class={`chevron ${entry.kind === 'dir' ? '' : 'is-hidden'}`}>
           {isOpen ? '▾' : '▸'}
         </span>
-        <span class={`tree-name ${entry.kind === 'dir' ? 'is-dir' : ''}`}>{entry.name}</span>
+        <span
+          class={`tree-name ${entry.kind === 'dir' ? 'is-dir' : ''} ${broken ? 'is-broken' : ''}`}
+        >
+          {entry.name}
+        </span>
+        {entry.noScan && <span class="tree-badge">не индексируется</span>}
       </div>
       {kids ? <Level entries={kids} depth={depth + 1} /> : null}
     </>

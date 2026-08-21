@@ -157,3 +157,56 @@ body {
 .editor .cm-editor { height: 100%; }
 .editor .cm-editor.cm-focused { outline: none; }
 .editor .cm-content { user-select: text; cursor: text; }
+
+.chip {
+  padding: 0 6px;
+  border-radius: 2px;
+  border: 1px solid var(--divider);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.chip.is-ready { color: #6a8759; border-color: #4a5a44; }
+.chip.is-starting { color: var(--accent); border-color: #6b5a37; }
+.chip.is-failed { color: var(--error); border-color: #6b3a39; }
+.chip.is-error { color: var(--error); border-color: #6b3a39; }
+
+.toolbar-notice {
+  color: var(--accent);
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.column-problems { width: 380px; flex: none; background: var(--panel-bg); }
+
+.problems { list-style: none; margin: 0; padding: 4px 0; }
+.problem {
+  display: flex;
+  gap: 8px;
+  padding: 3px 8px;
+  align-items: baseline;
+}
+.problem:hover { background: #45494a; }
+.problem-where { color: var(--muted); flex: none; }
+.problem-what { flex: 1; white-space: pre-wrap; }
+.problem.is-error .problem-where { color: var(--error); }
+.problem.is-warning .problem-where { color: #be9117; }
+.problem-code { color: var(--muted); flex: none; }
+
+.cm-tooltip.cm-tooltip-hover {
+  background: #3b3e40;
+  border: 1px solid var(--divider);
+  border-radius: 3px;
+  max-width: 640px;
+}
+.cm-hover-card {
+  padding: 6px 8px;
+  white-space: pre-wrap;
+  font: 12px/1.4 var(--font);
+  color: var(--fg);
+  user-select: text;
+}
+
+.tree-name.is-broken { color: var(--error); }
+.tree-badge { margin-left: auto; color: var(--muted); font-size: 11px; opacity: 0.6; }

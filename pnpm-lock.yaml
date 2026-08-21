@@ -71,6 +71,9 @@ importers:
       '@ide/protocol':
         specifier: workspace:*
         version: link:../protocol
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
       ws:
         specifier: ^8.18.0
         version: 8.21.3

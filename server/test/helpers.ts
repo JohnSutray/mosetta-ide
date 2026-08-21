@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 import { WS_PATH, type ApiMethod, type Params, type Result } from '@ide/protocol';
 import { startServer, type RunningServer } from '../src/server.js';
@@ -13,8 +14,13 @@ export interface TestClient {
   close(): Promise<void>;
 }
 
-export async function withServer(idleMs = 60_000): Promise<RunningServer> {
-  return startServer({ port: 0, idleMs });
+export const TEST_CONFIG_DIR = fileURLToPath(new URL('./fixtures/config', import.meta.url));
+
+export async function withServer(
+  idleMs = 60_000,
+  configDir = TEST_CONFIG_DIR,
+): Promise<RunningServer> {
+  return startServer({ port: 0, idleMs, configDir, watchConfig: false });
 }
 
 export async function connect(server: RunningServer): Promise<TestClient> {

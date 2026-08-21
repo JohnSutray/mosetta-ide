@@ -1,0 +1,62 @@
+import { StateEffect, StateField, type Extension } from '@codemirror/state';
+import { Decoration, EditorView, type DecorationSet } from '@codemirror/view';
+import type { Diagnostic } from '@ide/protocol';
+import { dc } from './darcula.js';
+
+export const setDiagnostics = StateEffect.define<Diagnostic[]>();
+
+const marks = {
+  error: Decoration.mark({ class: 'cm-diag cm-diag-error' }),
+  warning: Decoration.mark({ class: 'cm-diag cm-diag-warning' }),
+  info: Decoration.mark({ class: 'cm-diag cm-diag-info' }),
+  hint: Decoration.mark({ class: 'cm-diag cm-diag-hint' }),
+};
+
+export const diagnosticsField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(value, tr) {
+    let next = value.map(tr.changes);
+    for (const effect of tr.effects) {
+      if (!effect.is(setDiagnostics)) continue;
+      next = build(effect.value, tr.state.doc);
+    }
+    return next;
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
+
+function build(list: Diagnostic[], doc: { lines: number; line(n: number): { from: number; to: number } }) {
+  const ranges = [];
+  for (const item of list) {
+    const from = offsetOf(doc, item.range.start.line, item.range.start.character);
+    const to = offsetOf(doc, item.range.end.line, item.range.end.character);
+    if (from === null || to === null) continue;
+    const end = to > from ? to : Math.min(from + 1, doc.line(doc.lines).to);
+    if (end <= from) continue;
+    ranges.push(marks[item.severity].range(from, end));
+  }
+  ranges.sort((a, b) => a.from - b.from || a.to - b.to);
+  return Decoration.set(ranges, true);
+}
+
+export function offsetOf(
+  doc: { lines: number; line(n: number): { from: number; to: number } },
+  line: number,
+  character: number,
+): number | null {
+  if (line < 0 || line >= doc.lines) return null;
+  const target = doc.line(line + 1);
+  return Math.min(target.from + character, target.to);
+}
+
+export const diagnosticsTheme = EditorView.theme({
+  '.cm-diag': { textDecoration: `underline wavy ${dc.errorFg}`, textUnderlineOffset: '3px' },
+  '.cm-diag-error': { textDecorationColor: dc.errorFg },
+  '.cm-diag-warning': { textDecorationColor: dc.warnFg },
+  '.cm-diag-info': { textDecorationColor: dc.number },
+  '.cm-diag-hint': { textDecorationColor: dc.comment },
+});
+
+export const diagnosticsExtension: Extension = [diagnosticsField, diagnosticsTheme];

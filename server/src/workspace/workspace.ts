@@ -2,7 +2,9 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import type { EventName, EventPayload, WorkspaceInfo } from '@ide/protocol';
 import { logger, type Logger } from '../log.js';
-import { resolveInRoot, toRelative } from './paths.js';
+import type { ConfigStore } from '../config/store.js';
+import { toAbsolute, toRelative } from './paths.js';
+import { Services } from './services.js';
 
 export interface WorkspaceResource {
   dispose(): void | Promise<void>;
@@ -25,7 +27,10 @@ export class Workspace {
   private readonly holds = new Map<symbol, string>();
   private disposed = false;
 
-  constructor(root: string) {
+  constructor(
+    root: string,
+    private readonly config: ConfigStore,
+  ) {
     this.root = root;
     this.name = path.basename(root) || root;
     this.id = createHash('sha256').update(root).digest('hex').slice(0, 12);
@@ -33,7 +38,15 @@ export class Workspace {
   }
 
   resolve(relative: string): string {
-    return resolveInRoot(this.root, relative);
+    return toAbsolute(this.root, relative);
+  }
+
+  get services(): Services {
+    return this.use('services', (ws) => new Services(ws, this.config, this.log));
+  }
+
+  async boot(): Promise<void> {
+    await this.services.boot();
   }
 
   relative(absolute: string): string {

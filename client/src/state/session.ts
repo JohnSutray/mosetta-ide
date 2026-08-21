@@ -1,6 +1,15 @@
 import { batch, computed, signal } from '@preact/signals';
-import type { DirEntry, FileText, LogLine, WorkspaceInfo } from '@ide/protocol';
+import type {
+  Diagnostic,
+  DirEntry,
+  DocState,
+  LogLine,
+  LspStatus,
+  WorkspaceInfo,
+} from '@ide/protocol';
 import { RpcClient, RpcFailure } from '../rpc/client.js';
+import { applyConfig } from './config.js';
+import { DocSync } from './doc-sync.js';
 
 export const rpc = new RpcClient();
 
@@ -11,9 +20,23 @@ export const connected = rpc.connected;
 
 export const dirChildren = signal<Map<string, DirEntry[]>>(new Map());
 export const expanded = signal<Set<string>>(new Set());
-export const openFile = signal<FileText | null>(null);
+export const openFile = signal<DocState | null>(null);
 export const dirty = signal(false);
 export const error = signal<string | null>(null);
+export const notice = signal<string | null>(null);
+export const diagnostics = signal<Map<string, Diagnostic[]>>(new Map());
+export const lspStatuses = signal<LspStatus[]>([]);
+export const treePanelVisible = signal(true);
+export const problemsPanelVisible = signal(false);
+
+export const currentDiagnostics = computed<Diagnostic[]>(() => {
+  const path = openFile.value?.path;
+  return path ? (diagnostics.value.get(path) ?? []) : [];
+});
+
+export const errorCount = computed(
+  () => currentDiagnostics.value.filter((d) => d.severity === 'error').length,
+);
 
 export const title = computed(() => {
   const ws = current.value;
@@ -22,13 +45,19 @@ export const title = computed(() => {
   return file ? `${file.path} — ${ws.name}` : ws.name;
 });
 
+export const docSync = new DocSync(rpc, (message) => (error.value = message));
+
 function resetProjectScope() {
+  docSync.detach();
   batch(() => {
     dirChildren.value = new Map();
     expanded.value = new Set();
     openFile.value = null;
     dirty.value = false;
     error.value = null;
+    diagnostics.value = new Map();
+    lspStatuses.value = [];
+    problemsPanelVisible.value = false;
   });
 }
 
@@ -37,7 +66,7 @@ export async function openProject(root: string) {
     const info = await rpc.call('workspace.open', { root });
     resetProjectScope();
     current.value = info;
-    await loadDir('');
+    await afterAttach();
   } catch (err) {
     error.value = describe(err);
   }
@@ -49,14 +78,19 @@ export async function switchProject(id: string) {
     const info = await rpc.call('workspace.attach', { id });
     resetProjectScope();
     current.value = info;
-    await loadDir('');
+    await afterAttach();
   } catch (err) {
     error.value = describe(err);
   }
 }
 
+async function afterAttach() {
+  await loadDir('');
+  lspStatuses.value = await rpc.call('lsp.status', null);
+}
+
 export async function loadDir(path: string) {
-  const entries = await rpc.call('fs.list', { path });
+  const entries = await rpc.call('tree.list', { path });
   const next = new Map(dirChildren.value);
   next.set(path, entries);
   dirChildren.value = next;
@@ -82,9 +116,39 @@ export async function toggleDir(path: string) {
 
 export async function openFileAt(path: string) {
   try {
-    const file = await rpc.call('fs.read', { path });
+    const previous = openFile.value;
+    if (previous && previous.path !== path) {
+      await docSync.flush();
+      void rpc.call('doc.close', { path: previous.path });
+    }
+    const doc = await rpc.call('doc.open', { path });
+    docSync.attach(doc);
     batch(() => {
-      openFile.value = file;
+      openFile.value = doc;
+      dirty.value = doc.dirty;
+      error.value = null;
+    });
+    const known = await rpc.call('lsp.diagnostics', { path }).catch(() => null);
+    if (known) setDiagnostics(known.path, known.diagnostics);
+  } catch (err) {
+    error.value = describe(err);
+  }
+}
+
+export function editDoc(text: string) {
+  dirty.value = true;
+  docSync.edit(text);
+}
+
+export async function saveDoc() {
+  const file = openFile.value;
+  if (!file) return;
+  try {
+    await docSync.flush();
+    const saved = await rpc.call('doc.save', { path: file.path });
+    docSync.attach(saved);
+    batch(() => {
+      openFile.value = saved;
       dirty.value = false;
       error.value = null;
     });
@@ -93,29 +157,34 @@ export async function openFileAt(path: string) {
   }
 }
 
-export async function saveFile(text: string) {
+export async function reloadDoc() {
   const file = openFile.value;
   if (!file) return;
   try {
-    const result = await rpc.call('fs.write', {
-      path: file.path,
-      text,
-      expectedRevision: file.revision,
-    });
+    const doc = await rpc.call('doc.reload', { path: file.path });
+    docSync.attach(doc);
     batch(() => {
-      openFile.value = { ...file, text, revision: result.revision };
+      openFile.value = doc;
       dirty.value = false;
-      error.value = null;
+      notice.value = `${doc.path} перечитан с диска`;
     });
   } catch (err) {
     error.value = describe(err);
   }
+}
+
+function setDiagnostics(path: string, list: Diagnostic[]) {
+  const next = new Map(diagnostics.value);
+  next.set(path, list);
+  diagnostics.value = next;
 }
 
 function describe(err: unknown): string {
   if (err instanceof RpcFailure) return err.message;
   return err instanceof Error ? err.message : String(err);
 }
+
+rpc.on('config.changed', (bundle) => applyConfig(bundle));
 
 rpc.on('workspace.list', (list) => {
   workspaces.value = list;
@@ -132,6 +201,29 @@ rpc.on('workspace.closed', ({ id }) => {
   if (current.value?.id !== id) return;
   resetProjectScope();
   current.value = null;
+});
+
+rpc.on('doc.changed', (event) => {
+  if (openFile.value?.path !== event.path) return;
+  dirty.value = event.dirty;
+});
+
+rpc.on('doc.external', (event) => {
+  if (openFile.value?.path !== event.path) return;
+  notice.value = `${event.path} изменился на диске — перечитан`;
+  void openFileAt(event.path);
+});
+
+rpc.on('doc.conflict', (event) => {
+  if (openFile.value?.path !== event.path) return;
+  error.value = `${event.path} изменился на диске, а у вас несохранённые правки`;
+});
+
+rpc.on('lsp.diagnostics', (event) => setDiagnostics(event.path, event.diagnostics));
+
+rpc.on('lsp.status', (status) => {
+  const next = lspStatuses.value.filter((s) => s.server !== status.server);
+  lspStatuses.value = [...next, status];
 });
 
 rpc.on('log', (line) => {

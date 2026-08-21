@@ -27,6 +27,9 @@ export const dc = {
   gutterBg: '#313335',
   gutterFg: '#606366',
   gutterHl: '#A4A3A3',
+  errorFg: '#FF6B68',
+  warnFg: '#BE9117',
+  tooltipBg: '#3B3E40',
 } as const;
 
 export const FONT = "'JetBrains Mono', 'SF Mono', Menlo, monospace";

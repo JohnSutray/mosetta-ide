@@ -11,6 +11,7 @@ import {
 import { RpcError } from '../errors.js';
 import { describeError, logger, onLog } from '../log.js';
 import { handlers } from '../methods/index.js';
+import type { ConfigStore } from '../config/store.js';
 import type { WorkspaceRegistry } from '../workspace/registry.js';
 import type { Workspace } from '../workspace/workspace.js';
 import type { RpcContext, SessionContext } from './context.js';
@@ -25,6 +26,7 @@ export class Session implements SessionContext {
   constructor(
     private readonly socket: WebSocket,
     private readonly registry: WorkspaceRegistry,
+    private readonly config: ConfigStore,
     private readonly startedAt: number,
   ) {
     socket.on('message', (data) => void this.onMessage(String(data)));
@@ -33,8 +35,10 @@ export class Session implements SessionContext {
 
     this.unsubscribe.push(this.registry.onChange((list) => this.notify('workspace.list', list)));
     this.unsubscribe.push(onLog((line) => this.notify('log', line)));
+    this.unsubscribe.push(this.config.onChange((bundle) => this.notify('config.changed', bundle)));
 
     this.notify('workspace.list', this.registry.list());
+    this.notify('config.changed', this.config.current);
   }
 
   get workspace(): Workspace | null {
@@ -115,6 +119,7 @@ export class Session implements SessionContext {
     const ctx: RpcContext = {
       session: this,
       registry: this.registry,
+      config: this.config,
       startedAt: this.startedAt,
     };
 

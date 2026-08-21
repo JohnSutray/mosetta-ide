@@ -1,0 +1,10 @@
+{
+  "fs": {
+    "noScan": ["node_modules", ".git"],
+    "preloadBudgetMb": 4
+  },
+  "lsp": {
+    "startOnOpen": false,
+    "servers": {}
+  }
+}
