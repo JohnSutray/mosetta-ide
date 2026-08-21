@@ -5,9 +5,27 @@ import type { DirSuggestion } from '@ide/protocol';
 
 const LIMIT = 24;
 
-export async function suggestDirectories(prefix: string, limit = LIMIT): Promise<DirSuggestion[]> {
+export async function browseRoots(): Promise<DirSuggestion[]> {
+  const home = os.homedir();
+  const [homeKids, diskKids] = await Promise.all([
+    suggestDirectories(`${home}${path.sep}`, LIMIT, 2),
+    suggestDirectories(path.sep, LIMIT, 1),
+  ]);
+  return [
+    { path: home, name: '~', children: homeKids },
+    { path: path.sep, name: path.sep, children: diskKids },
+  ];
+}
+
+export async function suggestDirectories(
+  prefix: string,
+  limit = LIMIT,
+  depth = 1,
+): Promise<DirSuggestion[]> {
   const raw = expandHome(prefix.trim());
-  const { dir, partial } = split(raw === '' ? `${os.homedir()}${path.sep}` : raw);
+  const { dir, partial } = await resolve(
+    split(raw === '' ? `${os.homedir()}${path.sep}` : raw),
+  );
 
   let entries;
   try {
@@ -26,7 +44,16 @@ export async function suggestDirectories(prefix: string, limit = LIMIT): Promise
   }
 
   out.sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' }));
-  return out.slice(0, limit);
+  const page = out.slice(0, limit);
+
+  if (depth > 1) {
+    await Promise.all(
+      page.map(async (item) => {
+        item.children = await suggestDirectories(`${item.path}${path.sep}`, limit, depth - 1);
+      }),
+    );
+  }
+  return page;
 }
 
 export function expandHome(value: string): string {
@@ -35,6 +62,15 @@ export function expandHome(value: string): string {
     return path.join(os.homedir(), value.slice(2));
   }
   return value;
+}
+
+async function resolve(at: { dir: string; partial: string }): Promise<{ dir: string; partial: string }> {
+  if (at.partial === '') return at;
+  const full = path.join(at.dir, at.partial);
+  try {
+    if ((await fs.stat(full)).isDirectory()) return { dir: full, partial: '' };
+  } catch {}
+  return at;
 }
 
 function split(value: string): { dir: string; partial: string } {

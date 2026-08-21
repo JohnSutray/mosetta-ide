@@ -13,6 +13,13 @@ export interface WorkspaceInfo {
 export interface DirSuggestion {
   path: string;
   name: string;
+  children?: DirSuggestion[];
+}
+
+export interface RecentProject {
+  root: string;
+  name: string;
+  openedAt: number;
 }
 
 export type EntryKind = 'file' | 'dir';

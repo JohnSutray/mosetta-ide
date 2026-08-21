@@ -20,6 +20,8 @@ import {
   workspaceAttach,
   workspaceBrowse,
   workspaceClose,
+  workspaceRecent,
+  workspaceRoots,
   workspaceCurrent,
   workspaceDetach,
   workspaceList,
@@ -41,6 +43,8 @@ export const handlers: HandlerTable = {
   'workspace.current': workspaceCurrent,
   'workspace.close': workspaceClose,
   'workspace.browse': workspaceBrowse,
+  'workspace.roots': workspaceRoots,
+  'workspace.recent': workspaceRecent,
 
   'fs.list': fsList,
   'fs.read': fsRead,

@@ -12,6 +12,7 @@
 
     { "command": "projects.next", "key": "arrowdown", "when": "projects" },
     { "command": "projects.prev", "key": "arrowup", "when": "projects" },
+    { "command": "projects.suggest", "key": "mod+space", "when": "projects" },
     { "command": "projects.complete", "key": "tab", "when": "projects" },
     { "command": "projects.accept", "key": "enter", "when": "projects" },
     { "command": "projects.close", "key": "escape", "when": "projects" },

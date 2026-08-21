@@ -2,6 +2,7 @@ import http from 'node:http';
 import { WebSocketServer } from 'ws';
 import { DEFAULT_PORT, WS_PATH } from '@ide/protocol';
 import { ConfigStore } from './config/store.js';
+import { DEFAULT_STATE_DIR } from './env/recent.js';
 import { logger } from './log.js';
 import { Session } from './rpc/session.js';
 import { WorkspaceRegistry } from './workspace/registry.js';
@@ -13,6 +14,7 @@ export interface ServerOptions {
   host?: string;
   idleMs?: number;
   configDir?: string;
+  stateDir?: string;
   watchConfig?: boolean;
 }
 
@@ -27,6 +29,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   const host = options.host ?? '127.0.0.1';
   const port = options.port ?? DEFAULT_PORT;
   const startedAt = Date.now();
+  const stateDir = options.stateDir ?? DEFAULT_STATE_DIR;
   const config = await ConfigStore.load(options.configDir);
   if (options.watchConfig ?? true) config.watch();
   const registry = new WorkspaceRegistry(config, { idleMs: options.idleMs });
@@ -54,7 +57,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       return;
     }
     wss.handleUpgrade(req, socket, head, (ws) => {
-      const session = new Session(ws, registry, config, startedAt);
+      const session = new Session(ws, registry, config, stateDir, startedAt);
       log.debug(`подключилась вкладка ${session.id}`);
     });
   });

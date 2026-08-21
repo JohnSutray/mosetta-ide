@@ -1,6 +1,14 @@
 import type { JSX } from 'preact';
 
-export type IconName = 'tree' | 'search' | 'scripts' | 'problems' | 'terminal' | 'projects' | 'git';
+export type IconName =
+  | 'tree'
+  | 'search'
+  | 'scripts'
+  | 'problems'
+  | 'terminal'
+  | 'projects'
+  | 'git'
+  | 'book';
 
 interface Props {
   name: IconName;
@@ -47,6 +55,13 @@ export function Icon({ name, filled }: Props): JSX.Element {
           <path d="M8 2.3l6 10.4H2z" fill={filled ? 'currentColor' : 'none'} />
           <path d="M8 6.4v2.6" stroke={filled ? 'var(--panel-bg)' : 'currentColor'} />
           <path d="M8 10.9v.1" stroke={filled ? 'var(--panel-bg)' : 'currentColor'} />
+        </svg>
+      );
+    case 'book':
+      return (
+        <svg {...common}>
+          <path d="M2.4 3.2h3.9c1 0 1.7.5 1.7 1.2v8.2c0-.6-.7-1-1.7-1H2.4z" fill={filled ? 'currentColor' : 'none'} />
+          <path d="M13.6 3.2H9.7c-1 0-1.7.5-1.7 1.2v8.2c0-.6.7-1 1.7-1h3.9z" fill={filled ? 'currentColor' : 'none'} />
         </svg>
       );
     case 'projects':

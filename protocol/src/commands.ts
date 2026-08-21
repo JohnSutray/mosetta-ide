@@ -13,6 +13,7 @@ export const COMMANDS = {
   'projects.show': 'Открывашка проектов',
   'projects.next': 'Проекты: вниз по подсказкам',
   'projects.prev': 'Проекты: вверх по подсказкам',
+  'projects.suggest': 'Проекты: показать папки текущей папки',
   'projects.complete': 'Проекты: дописать путь',
   'projects.accept': 'Проекты: открыть',
   'projects.close': 'Проекты: вернуться к дереву',

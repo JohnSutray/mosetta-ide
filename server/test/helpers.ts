@@ -24,7 +24,8 @@ export async function withServer(
   idleMs = 60_000,
   configDir = TEST_CONFIG_DIR,
 ): Promise<RunningServer> {
-  return startServer({ port: 0, idleMs, configDir, watchConfig: false });
+  const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-state-'));
+  return startServer({ port: 0, idleMs, configDir, stateDir, watchConfig: false });
 }
 
 export async function connect(server: RunningServer): Promise<TestClient> {

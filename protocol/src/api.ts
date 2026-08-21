@@ -17,6 +17,7 @@ import type {
   LogLine,
   LspStatus,
   NpmScriptInfo,
+  RecentProject,
   TerminalInfo,
   TerminalKind,
   WorkspaceId,
@@ -35,7 +36,9 @@ export interface Api {
   'workspace.list': { params: null; result: WorkspaceInfo[] };
   'workspace.current': { params: null; result: WorkspaceInfo | null };
   'workspace.close': { params: { id: WorkspaceId }; result: null };
-  'workspace.browse': { params: { prefix: string }; result: DirSuggestion[] };
+  'workspace.browse': { params: { prefix: string; depth?: number }; result: DirSuggestion[] };
+  'workspace.roots': { params: null; result: DirSuggestion[] };
+  'workspace.recent': { params: null; result: RecentProject[] };
 
   'fs.list': { params: { path: string }; result: DirEntry[] };
   'fs.read': { params: { path: string }; result: FileText };

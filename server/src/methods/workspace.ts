@@ -1,7 +1,8 @@
 import type { WorkspaceInfo } from '@ide/protocol';
 import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
-import { suggestDirectories } from '../env/browse.js';
+import { browseRoots, suggestDirectories } from '../env/browse.js';
+import { listRecent, remember } from '../env/recent.js';
 
 export const workspaceOpen: Handler<'workspace.open'> = async (params, ctx) => {
   if (!params || typeof params.root !== 'string') {
@@ -10,6 +11,7 @@ export const workspaceOpen: Handler<'workspace.open'> = async (params, ctx) => {
   const ws = await ctx.registry.open(params.root);
   ctx.session.attachTo(ws);
   ctx.registry.announce();
+  await remember(ctx.stateDir, ws.root, ws.name);
   return ws.info();
 };
 
@@ -51,5 +53,11 @@ export const workspaceBrowse: Handler<'workspace.browse'> = (params) => {
   if (!params || typeof params.prefix !== 'string') {
     throw RpcError.invalidParams('нужен prefix: string');
   }
-  return suggestDirectories(params.prefix);
+  const depth = Math.min(2, Math.max(1, params.depth ?? 1));
+  return suggestDirectories(params.prefix, undefined, depth);
 };
+
+export const workspaceRoots: Handler<'workspace.roots'> = () => browseRoots();
+
+export const workspaceRecent: Handler<'workspace.recent'> = (_params, ctx) =>
+  listRecent(ctx.stateDir);

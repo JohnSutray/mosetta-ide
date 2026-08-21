@@ -16,6 +16,7 @@ export interface RpcContext {
   session: SessionContext;
   registry: WorkspaceRegistry;
   config: ConfigStore;
+  stateDir: string;
   startedAt: number;
 }
 

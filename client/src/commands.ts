@@ -31,8 +31,11 @@ import {
   completeSuggestion,
   hideProjects,
   moveSuggestion,
+  openSuggest,
   projectsVisible,
   showProjects,
+  closeSuggest,
+  suggestOpen,
 } from './state/projects.js';
 
 export function registerCommands(): void {
@@ -66,9 +69,13 @@ export function registerCommands(): void {
   registerCommand('projects.show', () => showProjects());
   registerCommand('projects.next', () => moveSuggestion(1));
   registerCommand('projects.prev', () => moveSuggestion(-1));
+  registerCommand('projects.suggest', () => openSuggest());
   registerCommand('projects.complete', () => completeSuggestion());
   registerCommand('projects.accept', () => acceptPath());
-  registerCommand('projects.close', () => hideProjects());
+  registerCommand('projects.close', () => {
+    if (suggestOpen.peek()) closeSuggest();
+    else hideProjects();
+  });
 
   registerCommand('git.branches', () => openBranches());
   registerCommand('git.next', () => moveBranch(1));

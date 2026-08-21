@@ -27,6 +27,7 @@ export class Session implements SessionContext {
     private readonly socket: WebSocket,
     private readonly registry: WorkspaceRegistry,
     private readonly config: ConfigStore,
+    private readonly stateDir: string,
     private readonly startedAt: number,
   ) {
     socket.on('message', (data) => void this.onMessage(String(data)));
@@ -120,6 +121,7 @@ export class Session implements SessionContext {
       session: this,
       registry: this.registry,
       config: this.config,
+      stateDir: this.stateDir,
       startedAt: this.startedAt,
     };
 
