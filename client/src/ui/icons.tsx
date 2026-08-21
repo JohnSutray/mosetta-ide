@@ -9,6 +9,7 @@ export type IconName =
   | 'projects'
   | 'git'
   | 'push'
+  | 'fetch'
   | 'book';
 
 interface Props {
@@ -64,6 +65,13 @@ export function Icon({ name, filled }: Props): JSX.Element {
           <path d="M8 12.6V3.4" />
           <path d="M4.4 6.9 8 3.3l3.6 3.6" fill={filled ? 'currentColor' : 'none'} />
           <path d="M2.6 13.6h10.8" />
+        </svg>
+      );
+    case 'fetch':
+      return (
+        <svg {...common} stroke="#6897bb">
+          <path d="M12.6 3.4 4.2 11.8" />
+          <path d="M4 7.4v4.6h4.6" fill={filled ? '#6897bb' : 'none'} />
         </svg>
       );
     case 'book':

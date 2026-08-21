@@ -10,6 +10,7 @@ import {
   toggleDir,
 } from '../state/session.js';
 import { gitTint } from '../state/git.js';
+import { t } from '../i18n/index.js';
 import { Chevron, DirIcon, FileIcon, RootIcon } from './file-icons.js';
 
 export function Tree() {
@@ -73,7 +74,7 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
         <span class={`tree-name ${broken ? 'is-broken' : ''} ${tint ? `git-${tint}` : ''}`}>
           {entry.name}
         </span>
-        {entry.noScan && <span class="tree-note">не индексируется</span>}
+        {entry.noScan && <span class="tree-note">{t('tree.noScan')}</span>}
       </div>
       {kids ? <Level entries={kids} depth={depth + 1} /> : null}
     </>

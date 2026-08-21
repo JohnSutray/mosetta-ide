@@ -4,6 +4,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { dc, FONT } from '../editor/darcula.js';
 import { rpc } from '../state/session.js';
 import { activeTerminal, onTerminalData } from '../state/terminals.js';
+import { t } from '../i18n/index.js';
 
 export function TerminalView() {
   const host = useRef<HTMLDivElement>(null);
@@ -84,7 +85,7 @@ export function TerminalView() {
   }, [name]);
 
   if (!name) {
-    return <div class="placeholder">Терминалов нет. Заведите новый иконкой в тулбаре.</div>;
+    return <div class="placeholder">{t('terminal.empty')}</div>;
   }
   return <div class="term-host" ref={host} />;
 }

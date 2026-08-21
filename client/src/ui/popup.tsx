@@ -1,6 +1,7 @@
 import type { ComponentChildren } from 'preact';
 import { useRef } from 'preact/hooks';
 import { resetPopupSize, setPopupSize, sizeOf, type Size } from '../state/layout.js';
+import { t } from '../i18n/index.js';
 
 export function Popup({
   id,
@@ -38,7 +39,7 @@ export function Popup({
 
         <span
           class="popup-grip"
-          title="Потяни за угол"
+          title={t('popup.resize')}
           onPointerDown={(event) => {
             event.preventDefault();
             const rect = box.current?.getBoundingClientRect();

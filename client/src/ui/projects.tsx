@@ -18,6 +18,7 @@ import {
 } from '../state/projects.js';
 import { Chevron, DirIcon } from './file-icons.js';
 import { Icon } from './icons.js';
+import { t } from '../i18n/index.js';
 
 export function Projects() {
   const input = useRef<HTMLInputElement>(null);
@@ -42,14 +43,14 @@ export function Projects() {
           <input
             ref={input}
             class="field"
-            placeholder="Путь к проекту"
+            placeholder={t('projects.placeholder')}
             value={pathDraft.value}
             spellcheck={false}
             autocomplete="off"
             onInput={(e) => setPathDraft((e.target as HTMLInputElement).value)}
           />
           <button class="button" type="submit">
-            Открыть
+            {t('projects.open')}
           </button>
 
           {suggestOpen.value && <Suggestions />}
@@ -102,7 +103,7 @@ function shortenHome(root: string): string {
 
 function Suggestions() {
   const list = pathSuggestions.value;
-  if (list.length === 0) return <div class="suggest is-empty">Пусто</div>;
+  if (list.length === 0) return <div class="suggest is-empty">{t('projects.empty')}</div>;
   return (
     <div class="suggest">
       {list.map((item, at) => (

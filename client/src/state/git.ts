@@ -7,7 +7,10 @@ import type {
   GitState,
   PushPreview,
 } from '@ide/protocol';
-import { complain, rpc, say } from './session.js';
+import { complain, rpc } from './session.js';
+import { notify, settle } from './notifications.js';
+import { fuzzy, type FuzzyHit } from '../ui/fuzzy.js';
+import { t } from '../i18n/index.js';
 
 const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {} };
 
@@ -16,6 +19,8 @@ export const gitBranches = signal<GitBranch[]>([]);
 
 export const branchesOpen = signal(false);
 export const branchSelected = signal(0);
+export const branchFilter = signal('');
+export const branchMenu = signal<{ name: string; x: number; y: number } | null>(null);
 export const branchPrompt = signal<{ action: GitAction; value: string } | null>(null);
 
 export const gitRunning = signal<GitAction | null>(null);
@@ -80,11 +85,13 @@ export async function refreshGit(): Promise<void> {
 
 export function openBranches(): void {
   if (!gitState.value.repo) {
-    complain('Проект не под git');
+    complain(t('branches.notRepo'));
     return;
   }
   batch(() => {
     branchesOpen.value = true;
+    branchFilter.value = '';
+    branchMenu.value = null;
     branchSelected.value = Math.max(
       0,
       gitBranches.value.findIndex((branch) => branch.current),
@@ -96,7 +103,7 @@ export function openBranches(): void {
 
 export async function openPush(): Promise<void> {
   if (!gitState.value.repo) {
-    complain('Проект не под git');
+    complain(t('branches.notRepo'));
     return;
   }
   batch(() => {
@@ -151,6 +158,10 @@ export async function doPush(): Promise<void> {
 }
 
 export function closeBranches(): void {
+  if (branchMenu.value) {
+    branchMenu.value = null;
+    return;
+  }
   if (branchPrompt.value) {
     branchPrompt.value = null;
     return;
@@ -158,11 +169,38 @@ export function closeBranches(): void {
   branchesOpen.value = false;
 }
 
+export function setBranchFilter(value: string): void {
+  batch(() => {
+    branchFilter.value = value;
+    branchMenu.value = null;
+    branchSelected.value = 0;
+  });
+}
+
+const MENU_W = 200;
+const MENU_H = 230;
+
+export function openBranchMenu(name: string, rect: DOMRect): void {
+  if (branchMenu.value?.name === name) {
+    branchMenu.value = null;
+    return;
+  }
+  const fitsRight = rect.right + MENU_W < window.innerWidth;
+  branchMenu.value = {
+    name,
+    x: fitsRight ? rect.right - 8 : Math.max(8, rect.right - MENU_W),
+    y: Math.min(rect.top, Math.max(8, window.innerHeight - MENU_H)),
+  };
+}
+
 export function moveBranch(delta: number): void {
-  const total = gitBranches.value.length;
+  const total = shownBranches.value.length;
   if (total === 0) return;
   branchSelected.value = (branchSelected.value + delta + total) % total;
-  branchPrompt.value = null;
+  batch(() => {
+    branchPrompt.value = null;
+    branchMenu.value = null;
+  });
 }
 
 export const selectedCommit = computed(() => {
@@ -176,7 +214,17 @@ export const selectedCommit = computed(() => {
   );
 });
 
-export const selectedBranch = computed(() => gitBranches.value[branchSelected.value] ?? null);
+export const shownBranches = computed<GitBranch[]>(() => {
+  const query = branchFilter.value.trim();
+  if (query === '') return gitBranches.value;
+  return gitBranches.value
+    .map((branch) => ({ branch, hit: fuzzy(branch.name, query) }))
+    .filter((row): row is { branch: GitBranch; hit: FuzzyHit } => row.hit !== null)
+    .sort((a, b) => b.hit.score - a.hit.score)
+    .map((row) => row.branch);
+});
+
+export const selectedBranch = computed(() => shownBranches.value[branchSelected.value] ?? null);
 
 export type BranchRow =
   | { kind: 'head'; title: string }
@@ -189,7 +237,7 @@ export const branchRows = computed<BranchRow[]>(() => {
   let seenRemote = false;
   let currentRemote = '';
 
-  gitBranches.value.forEach((branch, at) => {
+  shownBranches.value.forEach((branch, at) => {
     if (!branch.remote) {
       if (!seenLocal) {
         rows.push({ kind: 'head', title: 'local' });
@@ -225,9 +273,36 @@ export async function gitDo(action: GitAction, name?: string): Promise<void> {
   await runGit(action, selectedBranch.value?.name, name);
 }
 
+function doneText(action: GitAction, branch: string | null, name?: string): string {
+  const of = name ?? branch ?? '';
+  switch (action) {
+    case 'fetch':
+      return t('git.fetched');
+    case 'pull':
+      return t('git.pulled', { branch: branch ?? '' });
+    case 'push':
+    case 'force-push':
+      return t('git.pushed', { branch: of });
+    case 'checkout':
+      return t('git.checkedOut', { branch: of });
+    case 'merge':
+      return t('git.merged', { branch: of });
+    case 'create':
+      return t('git.created', { branch: of });
+    case 'rename':
+      return t('git.renamed', { branch: of });
+    case 'delete':
+    case 'force-delete':
+      return t('git.deleted', { branch: of });
+    default:
+      return t('git.done', { action });
+  }
+}
+
 async function runGit(action: GitAction, branchName?: string, name?: string): Promise<boolean> {
   if (gitRunning.value) return false;
   const branch = branchName ?? null;
+  const note = notify(t(`branches.${action === 'force-push' ? 'push' : action}`) + '…', 'work');
   batch(() => {
     gitRunning.value = action;
     gitOutput.value = '';
@@ -239,10 +314,10 @@ async function runGit(action: GitAction, branchName?: string, name?: string): Pr
       ...(name ? { name } : {}),
     });
     if (error) {
-      complain(error.split('\n')[0] ?? error);
+      settle(note, error.split('\n')[0] ?? error, 'error');
       return false;
     }
-    say(`git ${action}${name ? ` ${name}` : branch ? ` ${branch}` : ''} — готово`);
+    settle(note, doneText(action, branch, name));
     batch(() => {
       branchPrompt.value = null;
       if (action === 'checkout') branchesOpen.value = false;
@@ -250,7 +325,7 @@ async function runGit(action: GitAction, branchName?: string, name?: string): Pr
     await refreshGit();
     return true;
   } catch (err) {
-    complain(err instanceof Error ? err.message : String(err));
+    settle(note, err instanceof Error ? err.message : String(err), 'error');
     return false;
   } finally {
     gitRunning.value = null;

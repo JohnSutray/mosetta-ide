@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { COMMANDS, isCommandId, type CommandId, type Keymap } from '@ide/protocol';
 import { PANELS, TOOLBAR } from '../src/ui/panels.js';
+import en from '../src/i18n/en.json';
 
 function keymap(): Keymap {
   const raw = fs.readFileSync(fileURLToPath(new URL('../../config/keymap.json', import.meta.url)), 'utf8');
@@ -62,6 +63,20 @@ describe('тулбар', () => {
       expect(entry.title.trim(), `${entry.id}: пустая подсказка`).not.toBe('');
       expect(entry.icon, `${entry.id}: нет иконки`).toBeTruthy();
     }
+  });
+
+  it('надписи реестра — ключи словаря, и все они в словаре есть', () => {
+    const dictionary = en as Record<string, string>;
+    const keys = [...PANELS.flatMap((p) => [p.title, p.tooltip]), ...TOOLBAR.map((e) => e.title)];
+    const missing = keys.filter((key) => dictionary[key] === undefined);
+    expect(missing, `нет в en.json: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('словарь не содержит пустых строк', () => {
+    const empty = Object.entries(en as Record<string, string>)
+      .filter(([, value]) => value.trim() === '')
+      .map(([key]) => key);
+    expect(empty, `пустые надписи: ${empty.join(', ')}`).toEqual([]);
   });
 
   it('единственная кнопка без состояния — заведение терминала', () => {

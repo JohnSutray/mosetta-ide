@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact';
+import { t } from '../i18n/index.js';
 
 interface Props {
   title: string;
@@ -27,7 +28,7 @@ export function Panel({
         <span class="panel-actions">
           {actions}
           {onClose && (
-            <span class="panel-close" title="Закрыть панель" onClick={onClose}>
+            <span class="panel-close" title={t('panel.close')} onClick={onClose}>
               ×
             </span>
           )}

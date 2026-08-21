@@ -1,10 +1,11 @@
 import type { Diagnostic } from '@ide/protocol';
+import { t } from '../i18n/index.js';
 import { activeEditor } from '../state/editor.js';
 import { offsetOf } from '../editor/diagnostics.js';
 
 export function Problems({ items }: { items: Diagnostic[] }) {
   if (items.length === 0) {
-    return <div class="placeholder">Ошибок нет</div>;
+    return <div class="placeholder">{t('problems.empty')}</div>;
   }
   return (
     <ul class="problems">

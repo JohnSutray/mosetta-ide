@@ -10,9 +10,9 @@ export const searchSelected = signal(0);
 export const searchPreview = signal<{ path: string; text: string; line: number } | null>(null);
 
 export const KIND_TITLE: Record<IndexKind, string> = {
-  ts: 'Символы',
-  npm: 'Скрипты',
-  file: 'Файлы',
+  ts: 'search.kind.ts',
+  npm: 'search.kind.npm',
+  file: 'search.kind.file',
 };
 
 export const searchRows = computed(() => {

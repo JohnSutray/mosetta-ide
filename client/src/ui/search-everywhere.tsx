@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Popup } from './popup.js';
+import { t } from '../i18n/index.js';
 import type { IndexHit } from '@ide/protocol';
 import {
   acceptSelected,
@@ -49,7 +50,7 @@ export function SearchEverywhere() {
             class="se-input"
             value={searchQuery.value}
             spellcheck={false}
-            placeholder="Файлы, ts::символы, npm::скрипты"
+            placeholder={t('search.placeholder')}
             onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
           />
           <span class="se-count">{searchHits.value.length}</span>
@@ -60,7 +61,7 @@ export function SearchEverywhere() {
             {searchRows.value.map((row, i) =>
               'header' in row ? (
                 <div class="se-section" key={`h${i}`}>
-                  {row.header}
+                  {t(row.header)}
                 </div>
               ) : (
                 <Row
@@ -73,7 +74,7 @@ export function SearchEverywhere() {
               ),
             )}
             {searchHits.value.length === 0 && searchQuery.value.trim() !== '' && (
-              <div class="se-empty">Ничего не нашлось</div>
+              <div class="se-empty">{t('search.empty')}</div>
             )}
           </div>
 
@@ -81,7 +82,7 @@ export function SearchEverywhere() {
             {preview ? (
               <Preview text={preview.text} line={preview.line} />
             ) : (
-              <div class="se-empty">Предпросмотр</div>
+              <div class="se-empty">{t('search.preview')}</div>
             )}
           </div>
         </div>

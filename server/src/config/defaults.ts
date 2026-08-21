@@ -29,6 +29,9 @@ export const DEFAULT_SETTINGS: Settings = {
     startOnOpen: true,
     servers: {},
   },
+  git: {
+    autoFetchMinutes: 10,
+  },
 };
 
 export const EMPTY_KEYMAP: Keymap = { version: 1, bindings: [] };

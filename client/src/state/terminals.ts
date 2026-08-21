@@ -1,6 +1,7 @@
 import { batch, signal } from '@preact/signals';
 import type { NpmScriptInfo, TerminalInfo } from '@ide/protocol';
 import { complain, rpc, terminalPanelVisible } from './session.js';
+import { t } from '../i18n/index.js';
 
 export const terminals = signal<TerminalInfo[]>([]);
 export const activeTerminal = signal<string | null>(null);
@@ -82,6 +83,6 @@ rpc.on('term.data', ({ name, data }) => {
 
 rpc.on('term.exit', ({ name }) => {
   void refreshTerminals();
-  const note = '\r\n\x1b[38;5;245m[процесс завершён]\x1b[0m\r\n';
+  const note = `\r\n\x1b[38;5;245m${t('terminal.finished')}\x1b[0m\r\n`;
   for (const sink of sinks.get(name) ?? []) sink(note);
 });

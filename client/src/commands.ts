@@ -80,6 +80,7 @@ export function registerCommands(): void {
 
   registerCommand('git.branches', () => openBranches());
   registerCommand('git.push', () => void openPush());
+  registerCommand('git.fetch', () => void gitDo('fetch'));
   registerCommand('git.next', () => moveBranch(1));
   registerCommand('git.prev', () => moveBranch(-1));
   registerCommand('git.checkout', () => void gitDo('checkout'));

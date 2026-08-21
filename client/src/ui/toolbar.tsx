@@ -1,12 +1,15 @@
 import type { TerminalInfo } from '@ide/protocol';
 import { runCommand } from '../keys/commands.js';
 import { activeTerminal, closeTerminal, focusTerminal, terminals } from '../state/terminals.js';
-import { connected, error, lspStatuses, notice } from '../state/session.js';
+import { connected, current } from '../state/session.js';
+import { gitState } from '../state/git.js';
+import { t } from '../i18n/index.js';
 import { Icon } from './icons.js';
 import { TOOLBAR } from './panels.js';
 
 export function Toolbar() {
-  const lsp = lspStatuses.value[0];
+  const ws = current.value;
+  const git = gitState.value;
 
   return (
     <div class="toolbar">
@@ -18,7 +21,7 @@ export function Toolbar() {
               <button
                 key={entry.id}
                 class={`tool ${active ? 'is-active' : ''}`}
-                title={entry.title}
+                title={t(entry.title)}
                 onClick={() => runCommand(entry.command)}
               >
                 <Icon name={entry.icon} filled={active} />
@@ -33,14 +36,28 @@ export function Toolbar() {
       </div>
 
       <div class="toolbar-right">
-        {lsp && (
-          <span class={`chip is-${lsp.state}`} title={lsp.detail ?? lsp.state}>
-            {lsp.server}: {lsp.state === 'ready' ? `${lsp.openDocs} док.` : lsp.state}
-          </span>
+        {ws && (
+          <>
+            <button
+              class="tool is-fetch"
+              title={t('toolbar.fetch')}
+              onClick={() => runCommand('git.fetch')}
+            >
+              <Icon name="fetch" filled={false} />
+            </button>
+
+            <button
+              class="branch-label"
+              title={t('toolbar.branches')}
+              onClick={() => runCommand('git.branches')}
+            >
+              {git.repo ? (git.branch ?? t('toolbar.noBranch')) : t('toolbar.noRepo')}
+              {git.ahead > 0 && <span class="branch-ahead">↑{git.ahead}</span>}
+              {git.behind > 0 && <span class="branch-behind">↓{git.behind}</span>}
+            </button>
+          </>
         )}
-        {notice.value && <span class="toolbar-notice">{notice.value}</span>}
-        {error.value && <span class="toolbar-error">{error.value}</span>}
-        <span class={`dot ${connected.value ? 'is-on' : 'is-off'}`} title="Связь с бэкендом" />
+        <span class={`dot ${connected.value ? 'is-on' : 'is-off'}`} title={t('toolbar.connection')} />
       </div>
     </div>
   );
@@ -59,14 +76,14 @@ function TerminalChip({ info }: { info: TerminalInfo }) {
     <span
       class={classes}
       title={`${info.name}${info.command ? ` — ${info.command}` : ''}${
-        info.busy ? ` · работает ${info.running ?? ''}`.trimEnd() : ''
-      }${info.alive ? '' : ` (завершён, код ${info.exitCode ?? '?'})`}`}
+        info.busy ? ` · ${t('terminal.busy', { what: info.running ?? '' })}` : ''
+      }${info.alive ? '' : ` (${t('terminal.dead', { code: info.exitCode ?? '?' })})`}`}
       onClick={() => focusTerminal(info.name)}
     >
       <span class="term-chip-name">{info.title}</span>
       <span
         class="term-chip-close"
-        title="Закрыть терминал"
+        title={t('terminal.close')}
         onClick={(event) => {
           event.stopPropagation();
           void closeTerminal(info.name);

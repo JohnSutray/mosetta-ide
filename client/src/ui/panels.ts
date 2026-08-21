@@ -17,6 +17,7 @@ export type PanelToolbar = 'button' | 'chips';
 export interface PanelSpec {
   id: string;
   title: string;
+  tooltip: string;
   side: PanelSide;
   icon: IconName;
   command: CommandId;
@@ -29,7 +30,8 @@ export interface PanelSpec {
 export const PANELS: PanelSpec[] = [
   {
     id: 'tree',
-    title: 'Дерево проекта',
+    title: 'panel.tree',
+    tooltip: 'toolbar.tree',
     side: 'left',
     icon: 'tree',
     command: 'panel.tree',
@@ -40,7 +42,8 @@ export const PANELS: PanelSpec[] = [
   },
   {
     id: 'scripts',
-    title: 'Скрипты package.json',
+    title: 'panel.scripts',
+    tooltip: 'toolbar.scripts',
     side: 'right',
     icon: 'scripts',
     command: 'panel.scripts',
@@ -51,7 +54,8 @@ export const PANELS: PanelSpec[] = [
   },
   {
     id: 'problems',
-    title: 'Ошибки',
+    title: 'panel.problems',
+    tooltip: 'toolbar.problems',
     side: 'right',
     icon: 'problems',
     command: 'panel.problems',
@@ -62,7 +66,8 @@ export const PANELS: PanelSpec[] = [
   },
   {
     id: 'terminal',
-    title: 'Терминал',
+    title: 'panel.terminal',
+    tooltip: 'toolbar.terminal',
     side: 'right',
     icon: 'terminal',
     command: 'panel.terminal',
@@ -87,21 +92,21 @@ export const TOOLBAR: ToolbarEntry[] = [
   entryFor('tree'),
   {
     id: 'search',
-    title: 'Найти всё (двойной Shift)',
+    title: 'toolbar.search',
     icon: 'search',
     command: 'search.everywhere',
     active: searchOpen,
   },
   {
     id: 'git.branches',
-    title: 'Ветки git',
+    title: 'toolbar.branches',
     icon: 'git',
     command: 'git.branches',
     active: branchesOpen,
   },
   {
     id: 'git.push',
-    title: 'Push текущей ветки (Cmd+Shift+K)',
+    title: 'toolbar.push',
     icon: 'push',
     command: 'git.push',
     active: pushOpen,
@@ -110,7 +115,7 @@ export const TOOLBAR: ToolbarEntry[] = [
   entryFor('problems'),
   {
     id: 'terminal.create',
-    title: 'Новый терминал',
+    title: 'toolbar.terminal.create',
     icon: 'terminal',
     command: 'terminal.create',
   },
@@ -121,7 +126,7 @@ function entryFor(id: string): ToolbarEntry {
   if (!panel) throw new Error(`нет панели ${id} с кнопкой`);
   return {
     id: panel.id,
-    title: panel.title,
+    title: panel.tooltip,
     icon: panel.icon,
     command: panel.command,
     active: panel.open,

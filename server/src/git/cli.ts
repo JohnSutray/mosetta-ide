@@ -49,16 +49,18 @@ export function gitStream(
     });
     child.on('close', (code) => {
       clearTimeout(timer);
-      resolve({ ok: code === 0, stdout: '', stderr: code === 0 ? '' : lastLine(tail) });
+      resolve({ ok: code === 0, stdout: '', stderr: code === 0 ? '' : complaint(tail) });
     });
   });
 }
 
-function lastLine(text: string): string {
+function complaint(text: string): string {
   const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line !== '');
+  const marked = lines.find((line) => /^(error|fatal|hint):/i.test(line));
+  if (marked) return marked.replace(/^(error|fatal|hint):\s*/i, '');
   return lines[lines.length - 1] ?? 'git отказался';
 }
 

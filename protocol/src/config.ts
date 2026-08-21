@@ -40,6 +40,11 @@ export interface Settings {
   fs: FsSettings;
   index: IndexSettings;
   lsp: LspSettings;
+  git: GitSettings;
+}
+
+export interface GitSettings {
+  autoFetchMinutes: number;
 }
 
 export type KeyContext = 'global' | 'editor' | 'tree' | 'search' | 'projects' | 'branches';

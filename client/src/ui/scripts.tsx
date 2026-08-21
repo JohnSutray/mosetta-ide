@@ -1,9 +1,10 @@
+import { t } from '../i18n/index.js';
 import { runScript, scripts, terminals } from '../state/terminals.js';
 
 export function Scripts() {
   const list = scripts.value;
   if (list.length === 0) {
-    return <div class="placeholder">В проекте нет package.json со скриптами</div>;
+    return <div class="placeholder">{t('scripts.empty')}</div>;
   }
 
   const running = new Map(terminals.value.map((info) => [info.name, info]));

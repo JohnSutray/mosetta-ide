@@ -29,12 +29,35 @@ export class GitIndex {
   private again = false;
   private disposed = false;
 
+  private autoFetch: ReturnType<typeof setInterval> | null = null;
+
   constructor(
     private readonly root: string,
     private readonly log: Logger,
     private readonly onChange: (state: GitState) => void,
     private readonly onOutput: (action: GitAction, chunk: string) => void = () => {},
   ) {}
+
+  startAutoFetch(minutes: number): void {
+    if (this.autoFetch) {
+      clearInterval(this.autoFetch);
+      this.autoFetch = null;
+    }
+    if (this.disposed || minutes <= 0) return;
+    this.autoFetch = setInterval(
+      () => {
+        void git(this.root, ['fetch', '--all', '--prune'], 60_000).then((result) => {
+          if (!result.ok) {
+            this.log.debug(`автофетч не удался: ${result.stderr}`);
+            return;
+          }
+          return this.refresh();
+        });
+      },
+      minutes * 60_000,
+    );
+    this.autoFetch.unref?.();
+  }
 
   snapshot(): GitState {
     return this.state;
@@ -114,7 +137,7 @@ export class GitIndex {
     const result = await git(this.root, [
       'branch',
       '--all',
-      '--format=%(refname)\t%(refname:short)\t%(upstream:short)\t%(HEAD)\t%(objectname:short)\t%(contents:subject)',
+      '--format=%(refname)\t%(refname:short)\t%(upstream:short)\t%(HEAD)\t%(objectname:short)\t%(upstream:track)\t%(contents:subject)',
     ]);
     if (!result.ok) return [];
 
@@ -127,7 +150,8 @@ export class GitIndex {
       const upstream = parts[2] ?? '';
       const head = parts[3] ?? '';
       const sha = parts[4] ?? '';
-      const subject = parts.slice(5).join('\t');
+      const track = parts[5] ?? '';
+      const subject = parts.slice(6).join('\t');
       if (refname.endsWith('/HEAD')) continue;
       out.push({
         name,
@@ -135,6 +159,8 @@ export class GitIndex {
         remote: refname.startsWith('refs/remotes/'),
         ...(upstream ? { upstream } : {}),
         head: sha,
+        ahead: Number(/ahead (\d+)/.exec(track)?.[1] ?? 0),
+        behind: Number(/behind (\d+)/.exec(track)?.[1] ?? 0),
         ...(subject ? { subject } : {}),
       });
     }
@@ -261,8 +287,10 @@ export class GitIndex {
     this.disposed = true;
     if (this.debounce) clearTimeout(this.debounce);
     if (this.poll) clearInterval(this.poll);
+    if (this.autoFetch) clearInterval(this.autoFetch);
     this.debounce = null;
     this.poll = null;
+    this.autoFetch = null;
   }
 }
 

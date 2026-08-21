@@ -178,6 +178,8 @@ export interface GitBranch {
   current: boolean;
   remote: boolean;
   upstream?: string;
+  ahead: number;
+  behind: number;
   head: string;
   subject?: string;
 }

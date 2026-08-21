@@ -20,6 +20,7 @@ export const COMMANDS = {
 
   'git.branches': 'Ветки git',
   'git.push': 'Push текущей ветки',
+  'git.fetch': 'Забрать обновления удалёнки',
   'git.next': 'Ветки: вниз',
   'git.prev': 'Ветки: вверх',
   'git.checkout': 'Ветки: переключиться',

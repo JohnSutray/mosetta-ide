@@ -8,6 +8,8 @@ import type {
   WorkspaceInfo,
 } from '@ide/protocol';
 import { RpcClient, RpcFailure } from '../rpc/client.js';
+import { notify } from './notifications.js';
+import { t } from '../i18n/index.js';
 import { applyConfig } from './config.js';
 import { DocSync } from './doc-sync.js';
 
@@ -31,22 +33,14 @@ export function reveal(path: string, line: number): void {
   pendingReveal.value = { path, line, epoch };
 }
 export const dirty = signal(false);
-export const error = signal<string | null>(null);
-export const notice = signal<string | null>(null);
-
 export function say(message: string): void {
-  batch(() => {
-    notice.value = message;
-    error.value = null;
-  });
+  notify(message, 'info');
 }
 
 export function complain(message: string): void {
-  batch(() => {
-    error.value = message;
-    notice.value = null;
-  });
+  notify(message, 'error');
 }
+
 export const diagnostics = signal<Map<string, Diagnostic[]>>(new Map());
 export const lspStatuses = signal<LspStatus[]>([]);
 export const treePanelVisible = signal(true);
@@ -70,7 +64,7 @@ export const title = computed(() => {
   return file ? `${file.path} — ${ws.name}` : ws.name;
 });
 
-export const docSync = new DocSync(rpc, (message) => (error.value = message));
+export const docSync = new DocSync(rpc, (message) => complain(message));
 
 function resetProjectScope() {
   docSync.detach();
@@ -80,7 +74,6 @@ function resetProjectScope() {
     rootExpanded.value = true;
     openFile.value = null;
     dirty.value = false;
-    error.value = null;
     diagnostics.value = new Map();
     lspStatuses.value = [];
     problemsPanelVisible.value = false;
@@ -96,7 +89,7 @@ export async function openProject(root: string) {
     current.value = info;
     await afterAttach();
   } catch (err) {
-    error.value = describe(err);
+    complain(describe(err));
   }
 }
 
@@ -108,7 +101,7 @@ export async function switchProject(id: string) {
     current.value = info;
     await afterAttach();
   } catch (err) {
-    error.value = describe(err);
+    complain(describe(err));
   }
 }
 
@@ -137,7 +130,7 @@ export async function toggleDir(path: string) {
     try {
       await loadDir(path);
     } catch (err) {
-      error.value = describe(err);
+      complain(describe(err));
     }
   }
 }
@@ -154,12 +147,11 @@ export async function openFileAt(path: string) {
     batch(() => {
       openFile.value = doc;
       dirty.value = doc.dirty;
-      error.value = null;
     });
     const known = await rpc.call('lsp.diagnostics', { path }).catch(() => null);
     if (known) setDiagnostics(known.path, known.diagnostics);
   } catch (err) {
-    error.value = describe(err);
+    complain(describe(err));
   }
 }
 
@@ -193,10 +185,9 @@ export async function saveDoc() {
     batch(() => {
       openFile.value = saved;
       dirty.value = false;
-      error.value = null;
     });
   } catch (err) {
-    error.value = describe(err);
+    complain(describe(err));
   }
 }
 
@@ -211,9 +202,9 @@ export async function reloadDoc() {
       dirty.value = false;
       externalEpoch.value += 1;
     });
-    say(`${doc.path} перечитан с диска`);
+    say(t('file.reloaded', { path: doc.path }));
   } catch (err) {
-    error.value = describe(err);
+    complain(describe(err));
   }
 }
 
@@ -263,22 +254,21 @@ rpc.on('doc.external', (event) => {
         dirty.value = false;
         externalEpoch.value += 1;
       });
-      say(`${event.path} изменился на диске — перечитан`);
+      say(t('file.external', { path: event.path }));
     })
-    .catch((err) => (error.value = describe(err)));
+    .catch((err) => complain(describe(err)));
 });
 
 rpc.on('doc.conflict', (event) => {
   if (openFile.value?.path !== event.path) return;
   complain(
-    `${event.path} изменился на диске, а у вас несохранённые правки. ` +
-      'Перечитать — file.reload.',
+    t('file.dirtyConflict', { path: event.path }),
   );
 });
 
 rpc.on('doc.removed', (event) => {
   if (openFile.value?.path !== event.path) return;
-  complain(`${event.path} удалён с диска. Cmd+S создаст его заново.`);
+  complain(t('file.gone', { path: event.path }));
 });
 
 rpc.on('tree.changed', (event) => {

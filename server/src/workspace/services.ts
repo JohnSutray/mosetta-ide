@@ -104,6 +104,7 @@ export class Services {
         this.ram.applySettings(bundle.settings.fs);
         this.index.applySettings(bundle.settings.index);
         this.watcher.applySettings(bundle.settings.fs);
+        this.git.startAutoFetch(bundle.settings.git.autoFetchMinutes);
       }),
     );
   }
@@ -129,6 +130,7 @@ export class Services {
     });
 
     this.git.start();
+    this.git.startAutoFetch(this.config.settings.git.autoFetchMinutes);
 
     if (this.config.settings.lsp.startOnOpen) this.startLanguageServers();
   }

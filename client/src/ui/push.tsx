@@ -4,6 +4,7 @@ import { ChangedTree } from './changed-tree.js';
 import { Resizer } from './resizer.js';
 import { Popup } from './popup.js';
 import { widthOf } from '../state/layout.js';
+import { t } from '../i18n/index.js';
 import {
   clearCommit,
   closePush,
@@ -63,9 +64,11 @@ export function Push() {
       }}
     >
         <div class="branches-head">
-          <span class="branches-title">Push</span>
+          <span class="branches-title">{t('push.title')}</span>
           <span class="branches-meta">
-            {preview ? `${preview.branch ?? '—'} → ${preview.upstream ?? 'origin (новая ветка)'}` : '…'}
+            {preview
+              ? `${preview.branch ?? '—'} → ${preview.upstream ?? t('push.newBranch')}`
+              : '…'}
           </span>
         </div>
 
@@ -74,14 +77,14 @@ export function Push() {
             <div class="push-body">
               <div class="push-fork">
                 <Lane
-                  title={`твои · ${preview.local.length}`}
+                  title={`${t('push.local')} · ${preview.local.length}`}
                   commits={preview.local}
                   kind="local"
-                  empty="нечего отправлять"
+                  empty={t('push.nothing')}
                 />
                 {preview.remote.length > 0 && (
                   <Lane
-                    title={`в удалёнке · ${preview.remote.length}`}
+                    title={`${t('push.remote')} · ${preview.remote.length}`}
                     commits={preview.remote}
                     kind={force ? 'doomed' : 'remote'}
                     empty=""
@@ -90,10 +93,12 @@ export function Push() {
               </div>
 
               <Lane
-                title={`общее${preview.common.length ? ` · ${preview.common.length}` : ''}`}
+                title={`${t('push.common')}${
+                  preview.common.length ? ` · ${preview.common.length}` : ''
+                }`}
                 commits={preview.common}
                 kind="common"
-                empty="истории нет"
+                empty={t('push.noHistory')}
               />
             </div>
 
@@ -105,7 +110,9 @@ export function Push() {
               style={{ width: `${widthOf(FILES_ID, FILES_DEFAULT)}px` }}
             >
               <div class="push-lane-title">
-                {pushSelected.value ? `коммит ${pushSelected.value}` : 'все твои изменения'}
+                {pushSelected.value
+                  ? t('push.commitFiles', { sha: pushSelected.value })
+                  : t('push.allChanges')}
                 {pushChanges.value.length > 0 ? ` · ${pushChanges.value.length}` : ''}
               </div>
               <div class="push-files-body">
@@ -128,7 +135,7 @@ export function Push() {
             </div>
           </div>
         ) : (
-          <div class="se-empty">Считаю…</div>
+          <div class="se-empty">{t('push.counting')}</div>
         )}
 
         {gitOutput.value !== '' && <pre class="git-log">{gitOutput.value}</pre>}
@@ -141,18 +148,19 @@ export function Push() {
               disabled={busy}
               onChange={(e) => (pushForce.value = (e.target as HTMLInputElement).checked)}
             />
-            Форсировать
-            {preview?.remote.length ? ` — затрёт ${preview.remote.length} в удалёнке` : ''}
+            {preview?.remote.length
+              ? t('push.forceWarn', { count: preview.remote.length })
+              : t('push.force')}
           </label>
 
           <span class="push-spacer" />
 
           <button class={`button ${busy ? 'is-running' : ''}`} disabled={busy} onClick={() => void doPush()}>
             {busy && <span class="spinner" />}
-            {force ? 'Force push' : 'Push'}
+            {force ? t('push.doForce') : t('push.do')}
           </button>
           <button class="button" disabled={busy} onClick={closePush}>
-            Отмена
+            {t('push.cancel')}
           </button>
         </div>
     </Popup>
@@ -161,7 +169,7 @@ export function Push() {
 
 function Message() {
   const commit = selectedCommit.value;
-  if (!commit) return <div class="push-empty">Выбери коммит — покажу сообщение целиком</div>;
+  if (!commit) return <div class="push-empty">{t('push.pickCommit')}</div>;
   return (
     <>
       <div class="push-message-head">

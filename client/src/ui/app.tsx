@@ -7,15 +7,14 @@ import {
   current,
   currentDiagnostics,
   dirty,
-  error,
   errorCount,
   closeFile,
   externalEpoch,
   lspStatuses,
-  notice,
   openFile,
   problemsPanelVisible,
   rpc,
+  say,
   scriptsPanelVisible,
   terminalPanelVisible,
   title,
@@ -30,6 +29,7 @@ import { refreshScripts, refreshTerminals } from '../state/terminals.js';
 import { Editor } from '../editor/editor.js';
 import { SearchEverywhere } from './search-everywhere.js';
 import { Branches } from './branches.js';
+import { Notifications } from './notifications.js';
 import { Push } from './push.js';
 import { refreshGit, resetGit } from '../state/git.js';
 import { Scripts } from './scripts.js';
@@ -43,6 +43,7 @@ import { Panel } from './panel.js';
 import { Problems } from './problems.js';
 import { Projects } from './projects.js';
 import { Tree } from './tree.js';
+import { t } from '../i18n/index.js';
 import { Icon } from './icons.js';
 import { projectsVisible } from '../state/projects.js';
 
@@ -58,7 +59,7 @@ export function App() {
       console.warn('[web-ide] команды без реализации:', dead.join(', '));
     }
     const dispatcher = installDispatcher(resolveContext, (binding, reason) => {
-      notice.value = `${humanizeKey(binding.key)} — ${reason}`;
+      say(`${humanizeKey(binding.key)} — ${reason}`);
     });
     dispatcher.setKeymap(keymapSignal.peek());
     const stop = keymapSignal.subscribe((value) => dispatcher.setKeymap(value));
@@ -104,13 +105,13 @@ export function App() {
 
         <Panel
           class="column-editor"
-          title={file ? file.path : 'Ничего не открыто'}
+          title={file ? file.path : t('panel.editor.empty')}
           onClose={file ? () => void closeFile() : undefined}
           actions={
             file ? (
               <>
-                {file.truncated && <span class="tag">только чтение</span>}
-                {dirty.value && <span class="tag is-dirty">изменён</span>}
+                {file.truncated && <span class="tag">read-only</span>}
+                {dirty.value && <span class="tag is-dirty">modified</span>}
               </>
             ) : null
           }
@@ -128,7 +129,7 @@ export function App() {
             />
           ) : (
             <div class="placeholder">
-              {ws ? 'Выберите файл в дереве' : 'Откройте проект слева'}
+              {ws ? t('tree.pick') : t('tree.openProject')}
             </div>
           )}
         </Panel>
@@ -151,13 +152,14 @@ export function App() {
       <SearchEverywhere />
       <Branches />
       <Push />
+      <Notifications />
     </div>
   );
 }
 
 function titleOf(panel: PanelSpec): string {
-  if (panel.id === 'tree' && showsProjects()) return 'Проекты';
-  return panel.title;
+  if (panel.id === 'tree' && showsProjects()) return t('panel.projects');
+  return t(panel.title);
 }
 
 function actionsOf(panel: PanelSpec) {
@@ -166,7 +168,7 @@ function actionsOf(panel: PanelSpec) {
   return (
     <span
       class={`panel-action ${shown ? 'is-active' : ''}`}
-      title={shown ? 'Вернуться к дереву' : 'Открыть другой проект'}
+      title={shown ? t('tree.showTree') : t('tree.showProjects')}
       onClick={() => runCommand(shown ? 'projects.close' : 'projects.show')}
     >
       <Icon name="projects" filled={shown} />
