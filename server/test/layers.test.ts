@@ -95,6 +95,6 @@ describe('слои не растекаются', () => {
     const files = await sources();
     expect(files.length).toBeGreaterThan(10);
     expect(files.some((f) => f.rel === 'fs/os-fs.ts')).toBe(true);
-    expect(files.some((f) => f.rel === 'search/file-index.ts')).toBe(true);
+    expect(files.some((f) => f.rel === 'search/search-index.ts')).toBe(true);
   });
 });

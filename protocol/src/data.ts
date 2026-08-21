@@ -49,9 +49,14 @@ export interface DocVersion {
   dirty: boolean;
 }
 
+export type IndexKind = 'file' | 'npm' | 'ts';
+
 export interface IndexHit {
+  kind: IndexKind;
+  label: string;
   path: string;
-  name: string;
+  line?: number;
+  detail?: string;
   score: number;
   matches: number[];
 }
@@ -61,6 +66,14 @@ export interface IndexStats {
   dirs: number;
   bytesResident: number;
   builtMs: number;
+}
+
+export interface SearchStats {
+  files: number;
+  scripts: number;
+  symbols: number;
+  vocabulary: number;
+  pending: number;
 }
 
 export interface Position {

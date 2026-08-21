@@ -25,6 +25,7 @@ const externalUpdate = Annotation.define<boolean>();
 interface Props {
   file: DocState;
   externalEpoch: number;
+  reveal: { path: string; line: number; epoch: number } | null;
   settings: EditorSettings;
   diagnostics: Diagnostic[];
   onEdit: (text: string) => void;
@@ -35,6 +36,7 @@ interface Props {
 export function Editor({
   file,
   externalEpoch,
+  reveal,
   settings,
   diagnostics,
   onEdit,
@@ -115,6 +117,19 @@ export function Editor({
       annotations: externalUpdate.of(true),
     });
   }, [externalEpoch]);
+
+  useEffect(() => {
+    const instance = view.current;
+    if (!instance || !reveal || reveal.path !== file.path) return;
+    const line = Math.min(reveal.line + 1, instance.state.doc.lines);
+    const at = instance.state.doc.line(line).from;
+    instance.dispatch({
+      selection: { anchor: at },
+      scrollIntoView: true,
+      effects: EditorView.scrollIntoView(at, { y: 'center' }),
+    });
+    instance.focus();
+  }, [reveal?.epoch, file.path]);
 
   return <div class="editor" ref={host} />;
 }

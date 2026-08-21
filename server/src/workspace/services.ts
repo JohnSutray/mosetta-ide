@@ -3,7 +3,7 @@ import type { ConfigStore } from '../config/store.js';
 import { OsFs } from '../fs/os-fs.js';
 import { OsWatcher } from '../fs/watcher.js';
 import { RamFs } from '../fs/ram-fs.js';
-import { FileIndex } from '../search/file-index.js';
+import { SearchIndex } from '../search/search-index.js';
 import { LspServer } from '../lsp/server.js';
 import type { Logger } from '../log.js';
 import type { Workspace } from './workspace.js';
@@ -11,7 +11,7 @@ import type { Workspace } from './workspace.js';
 export class Services {
   readonly os: OsFs;
   readonly ram: RamFs;
-  readonly index: FileIndex;
+  readonly index: SearchIndex;
   readonly watcher: OsWatcher;
   readonly lsp: LspServer[] = [];
 
@@ -26,7 +26,7 @@ export class Services {
     const settings = config.settings;
     this.os = new OsFs(ws.root, settings.fs);
     this.ram = new RamFs(this.os, settings.fs, log);
-    this.index = new FileIndex(this.ram, settings.index, log);
+    this.index = new SearchIndex(this.ram, settings.index, log);
     this.watcher = new OsWatcher(
       ws.root,
       settings.fs,
@@ -85,7 +85,10 @@ export class Services {
 
     if (watching) this.watcher.release();
 
-    void this.ram.preload();
+    void this.ram.preload().then(() => {
+      if (this.config.settings.index.enabled) return this.index.indexSymbols();
+      return undefined;
+    });
 
     if (this.config.settings.lsp.startOnOpen) this.startLanguageServers();
   }

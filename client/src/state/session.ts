@@ -22,6 +22,13 @@ export const dirChildren = signal<Map<string, DirEntry[]>>(new Map());
 export const expanded = signal<Set<string>>(new Set());
 export const openFile = signal<DocState | null>(null);
 export const externalEpoch = signal(0);
+
+export const pendingReveal = signal<{ path: string; line: number; epoch: number } | null>(null);
+
+export function reveal(path: string, line: number): void {
+  const epoch = (pendingReveal.value?.epoch ?? 0) + 1;
+  pendingReveal.value = { path, line, epoch };
+}
 export const dirty = signal(false);
 export const error = signal<string | null>(null);
 export const notice = signal<string | null>(null);

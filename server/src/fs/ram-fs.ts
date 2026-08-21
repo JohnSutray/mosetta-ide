@@ -191,6 +191,10 @@ export class RamFs {
     return this.docs.get(key);
   }
 
+  peekDoc(key: string): Promise<Doc> {
+    return this.residentize(key);
+  }
+
   async openDoc(key: string): Promise<Doc> {
     const doc = this.docs.get(key) ?? (await this.residentize(key));
     doc.openCount += 1;

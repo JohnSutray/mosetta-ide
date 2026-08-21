@@ -21,7 +21,9 @@ import {
 import { activeEditor } from '../state/editor.js';
 import { registerCommands, resolveContext, missingCommands } from '../commands.js';
 import { installDispatcher, humanizeKey } from '../keys/dispatcher.js';
+import { pendingReveal } from '../state/session.js';
 import { Editor } from '../editor/editor.js';
+import { SearchEverywhere } from './search-everywhere.js';
 import { Panel } from './panel.js';
 import { Problems } from './problems.js';
 import { Projects } from './projects.js';
@@ -102,6 +104,7 @@ export function App() {
             <Editor
               file={file}
               externalEpoch={externalEpoch.value}
+              reveal={pendingReveal.value}
               settings={settings.editor}
               diagnostics={currentDiagnostics.value}
               onEdit={editDoc}
@@ -121,6 +124,8 @@ export function App() {
           </Panel>
         )}
       </div>
+
+      <SearchEverywhere />
     </div>
   );
 }

@@ -6,5 +6,8 @@ export const indexSearch: Handler<'index.search'> = (params, ctx) => {
     throw RpcError.invalidParams('нужен query: string');
   }
   const services = ctx.session.requireWorkspace().services;
-  return services.index.search(params.query, params.limit);
+  return services.index.search(params.query, params.limit, params.kinds);
 };
+
+export const indexStats: Handler<'index.stats'> = (_params, ctx) =>
+  ctx.session.requireWorkspace().services.index.stats();

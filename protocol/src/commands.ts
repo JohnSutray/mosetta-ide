@@ -5,6 +5,12 @@ export const COMMANDS = {
   'edit.redo': 'Повторить',
   'panel.tree': 'Панель: дерево проекта',
   'panel.problems': 'Панель: ошибки',
+
+  'search.everywhere': 'Найти всё',
+  'search.next': 'Поиск: вниз',
+  'search.prev': 'Поиск: вверх',
+  'search.accept': 'Поиск: открыть',
+  'search.close': 'Поиск: закрыть',
 } as const;
 
 export type CommandId = keyof typeof COMMANDS;

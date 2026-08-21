@@ -2,6 +2,14 @@
   "version": 1,
   "bindings": [
     { "command": "file.save", "key": "mod+s", "when": "global" },
+
+    { "command": "search.everywhere", "key": "double:shift", "when": "global" },
+    { "command": "search.everywhere", "key": "mod+p", "when": "global" },
+    { "command": "search.next", "key": "arrowdown", "when": "search" },
+    { "command": "search.prev", "key": "arrowup", "when": "search" },
+    { "command": "search.accept", "key": "enter", "when": "search" },
+    { "command": "search.close", "key": "escape", "when": "search" },
+
     { "command": "file.reload", "key": "mod+shift+r", "when": "global" },
 
     { "command": "edit.undo", "key": "mod+z", "when": "editor" },

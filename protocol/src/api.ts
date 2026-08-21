@@ -7,7 +7,9 @@ import type {
   FileText,
   HoverInfo,
   IndexHit,
+  IndexKind,
   IndexStats,
+  SearchStats,
   LogLine,
   LspStatus,
   WorkspaceId,
@@ -44,7 +46,11 @@ export interface Api {
   'doc.state': { params: { path: string }; result: DocState };
   'doc.close': { params: { path: string }; result: null };
 
-  'index.search': { params: { query: string; limit?: number }; result: IndexHit[] };
+  'index.search': {
+    params: { query: string; limit?: number; kinds?: IndexKind[] };
+    result: IndexHit[];
+  };
+  'index.stats': { params: null; result: SearchStats };
 
   'lsp.status': { params: null; result: LspStatus[] };
   'lsp.hover': { params: { path: string; line: number; character: number }; result: HoverInfo | null };

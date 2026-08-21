@@ -42,7 +42,7 @@ export interface Settings {
   lsp: LspSettings;
 }
 
-export type KeyContext = 'global' | 'editor' | 'tree';
+export type KeyContext = 'global' | 'editor' | 'tree' | 'search';
 
 export type KeyHost = 'browser' | 'electron';
 
