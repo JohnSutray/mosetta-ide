@@ -26,6 +26,10 @@
 
     { "command": "prompt.confirm", "key": "enter", "when": "prompt" },
 
+    { "command": "menu.next", "key": "arrowdown", "when": "menu" },
+    { "command": "menu.prev", "key": "arrowup", "when": "menu" },
+    { "command": "menu.accept", "key": "enter", "when": "menu" },
+
     { "command": "tree.newFile", "key": "mod+n", "when": "tree" },
     { "command": "tree.newFolder", "key": "mod+shift+n", "when": "tree" },
     { "command": "tree.open", "key": "enter", "when": "tree" },

@@ -5,6 +5,7 @@ import { acceptSelected, closeSearch, moveSelection, openSearch } from './state/
 import { activeEditor, focusEditor } from './state/editor.js';
 import { closeTop } from './state/popups.js';
 import { activePick } from './state/pick.js';
+import { activeMenu } from './state/menu.js';
 import { toggleScripts } from './state/scripts.js';
 import {
   askCreate,
@@ -104,6 +105,10 @@ export function registerCommands(): void {
   registerCommand('pick.expand', () => activePick.value?.expand?.());
 
   registerCommand('prompt.confirm', () => void promptAnswer());
+
+  registerCommand('menu.next', () => activeMenu.value?.next());
+  registerCommand('menu.prev', () => activeMenu.value?.prev());
+  registerCommand('menu.accept', () => activeMenu.value?.accept());
 
   registerCommand('popup.close', () => {
     closeTop();

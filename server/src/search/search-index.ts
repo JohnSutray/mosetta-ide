@@ -3,6 +3,7 @@ import type { Logger } from '../log.js';
 import { baseName, extensionOf } from '../workspace/paths.js';
 import type { RamFs } from '../fs/ram-fs.js';
 import { match } from './matcher.js';
+import { retype } from './layout.js';
 import { fold, indexString, Vocabulary, type Indexed } from './text.js';
 import { parseScripts, type NpmScript } from './npm-scripts.js';
 import { canParse, loadTypeScript, parseSymbols, type SymbolKind } from './ts-symbols.js';
@@ -240,6 +241,7 @@ export class SearchIndex {
     }
 
     const folded = fold(term);
+    const other = folded === '' ? null : retype(folded);
     const hits: IndexHit[] = [];
 
     for (const entry of this.everything()) {
@@ -248,7 +250,11 @@ export class SearchIndex {
         hits.push(toHit(entry, 0, []));
         continue;
       }
-      const found = match(entry.indexed, folded);
+      let found = match(entry.indexed, folded);
+      if (other !== null) {
+        const alt = match(entry.indexed, other);
+        if (alt && (!found || alt.score > found.score)) found = alt;
+      }
       if (!found) continue;
       hits.push(toHit(entry, found.score, found.positions));
     }

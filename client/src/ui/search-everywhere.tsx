@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Popup } from './popup.js';
+import { CodeView } from '../editor/code-view.js';
+import { editorSettings } from '../state/config.js';
 import { t } from '../i18n/index.js';
 import type { IndexHit } from '@ide/protocol';
 import {
@@ -81,7 +83,13 @@ export function SearchEverywhere() {
 
           <div class="se-preview">
             {preview ? (
-              <Preview text={preview.text} line={preview.line} />
+              <CodeView
+                key={preview.path}
+                path={preview.path}
+                text={preview.text}
+                line={preview.line}
+                settings={editorSettings()}
+              />
             ) : (
               <div class="se-empty">{t('search.preview')}</div>
             )}
@@ -131,23 +139,4 @@ function highlight(label: string, matches: number[]) {
   }
   parts.push(runHot ? <b key="last">{run}</b> : run);
   return parts;
-}
-
-function Preview({ text, line }: { text: string; line: number }) {
-  const lines = text.split('\n');
-  const from = Math.max(0, line - 8);
-  const to = Math.min(lines.length, from + 40);
-  return (
-    <pre class="se-code">
-      {lines.slice(from, to).map((content, i) => {
-        const at = from + i;
-        return (
-          <div key={at} class={`se-code-line ${at === line ? 'is-hit' : ''}`}>
-            <span class="se-code-no">{at + 1}</span>
-            {content || ' '}
-          </div>
-        );
-      })}
-    </pre>
-  );
 }

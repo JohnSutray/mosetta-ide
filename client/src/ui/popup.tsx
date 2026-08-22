@@ -30,10 +30,12 @@ export function Popup({
   const drag = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
   const current = sizeOf(id, size);
 
+  const closing = useRef(onEscape ?? onClose);
+  closing.current = onEscape ?? onClose;
   useEffect(() => {
-    enter({ id, close: onEscape ?? onClose });
+    enter({ id, close: () => closing.current() });
     return () => leave(id);
-  }, [id, onClose, onEscape]);
+  }, [id]);
 
   useEffect(() => {
     if (box.current?.contains(document.activeElement)) return;

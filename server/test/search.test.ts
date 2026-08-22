@@ -101,6 +101,15 @@ describe('поиск всего', () => {
     expect(found).toContain('ts::Desktop.creditCardForm()');
   });
 
+  it('русская раскладка находит то же, что английская', async () => {
+    const wrong = labels(await c.call('index.search', { query: 'всса' }));
+    expect(wrong).toContain('ts::DesktopCreditCardForm()');
+
+    const narrowed = await c.call('index.search', { query: 'ts::всса' });
+    expect(narrowed.every((h) => h.kind === 'ts')).toBe(true);
+    expect(labels(narrowed)[0]).toBe('ts::DesktopCreditCardForm()');
+  });
+
   it('ts::dccf сужает до символов', async () => {
     const hits = await c.call('index.search', { query: 'ts::dccf' });
     expect(hits.every((h) => h.kind === 'ts')).toBe(true);

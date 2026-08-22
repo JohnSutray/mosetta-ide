@@ -8,6 +8,8 @@ export interface OpenPopup {
 export const stack = signal<OpenPopup[]>([]);
 
 export function enter(popup: OpenPopup): void {
+  const top = stack.value[stack.value.length - 1];
+  if (top && top.id === popup.id && top.close === popup.close) return;
   stack.value = [...stack.value.filter((item) => item.id !== popup.id), popup];
 }
 

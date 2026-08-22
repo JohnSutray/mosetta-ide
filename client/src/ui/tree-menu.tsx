@@ -11,6 +11,7 @@ import {
   revealInOs,
   targets,
 } from '../state/tree-ops.js';
+import { Menu, type MenuItem } from './menu.js';
 import { t } from '../i18n/index.js';
 
 export function TreeMenu() {
@@ -19,7 +20,7 @@ export function TreeMenu() {
 
   const { path, isDir } = menu;
   const many = targets(path).length > 1;
-  const items: Array<{ label: string; danger?: boolean; run: () => void }> = [
+  const items: MenuItem[] = [
     { label: 'tree.newFile', run: () => askCreate(path, isDir, 'file') },
     { label: 'tree.newFolder', run: () => askCreate(path, isDir, 'dir') },
     ...(many ? [] : [{ label: 'tree.rename', run: () => askRename(path) }]),
@@ -39,20 +40,15 @@ export function TreeMenu() {
   ];
 
   return (
-    <div class="branch-menu tree-menu" style={{ left: `${menu.x}px`, top: `${menu.y}px` }}>
-      {items.map((item) => (
-        <button
-          key={item.label}
-          class={`branch-action ${item.danger ? 'is-danger' : ''}`}
-          onClick={() => {
-            treeMenu.value = null;
-            item.run();
-            focusTree();
-          }}
-        >
-          {t(item.label)}
-        </button>
-      ))}
-    </div>
+    <Menu
+      class="tree-menu"
+      x={menu.x}
+      y={menu.y}
+      items={items}
+      onClose={() => {
+        treeMenu.value = null;
+        focusTree();
+      }}
+    />
   );
 }

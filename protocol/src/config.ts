@@ -56,6 +56,7 @@ export type KeyContext =
   | 'pick'
   | 'prompt'
   | 'branch-name'
+  | 'menu'
   | 'push'
   | 'terminal';
 

@@ -25,6 +25,7 @@ import { Popup } from './popup.js';
 import { activePick } from '../state/pick.js';
 import { Chevron } from './file-icons.js';
 import { Icon } from './icons.js';
+import { Menu, type MenuItem } from './menu.js';
 
 export function Branches() {
   const list = useRef<HTMLDivElement>(null);
@@ -166,7 +167,7 @@ export function Branches() {
         </button>
       </div>
 
-      <Menu />
+      <BranchActions />
     </Popup>
   );
 }
@@ -198,12 +199,12 @@ function BranchRow({ branch, at, label }: { branch: GitBranch; at: number; label
   );
 }
 
-function Menu() {
+function BranchActions() {
   const menu = branchMenu.value;
   const branch = selectedBranch.value;
   if (!menu || !branch) return null;
 
-  const items: Array<{ label: string; danger?: boolean; run: () => void }> = [];
+  const items: MenuItem[] = [];
   if (!branch.current) items.push({ label: 'branches.checkout', run: () => void gitDo('checkout') });
   items.push({ label: 'branches.newFrom', run: () => askName('create') });
   if (!branch.remote) {
@@ -221,19 +222,11 @@ function Menu() {
   }
 
   return (
-    <div class="branch-menu" style={{ left: `${menu.x}px`, top: `${menu.y}px` }}>
-      {items.map((item) => (
-        <button
-          key={item.label}
-          class={`branch-action ${item.danger ? 'is-danger' : ''}`}
-          onClick={() => {
-            branchMenu.value = null;
-            item.run();
-          }}
-        >
-          {t(item.label)}
-        </button>
-      ))}
-    </div>
+    <Menu
+      x={menu.x}
+      y={menu.y}
+      items={items}
+      onClose={() => (branchMenu.value = null)}
+    />
   );
 }

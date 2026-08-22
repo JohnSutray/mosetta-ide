@@ -27,6 +27,10 @@ export const COMMANDS = {
   'pick.accept': 'Список: выбрать',
   'pick.expand': 'Список: раскрыть действия',
 
+  'menu.next': 'Меню: вниз',
+  'menu.prev': 'Меню: вверх',
+  'menu.accept': 'Меню: выбрать',
+
   'popup.close': 'Закрыть верхний попап',
 
   'prompt.confirm': 'Модалка: подтвердить',
