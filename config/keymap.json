@@ -4,6 +4,10 @@
     { "command": "file.save", "key": "mod+s", "when": "global" },
 
     { "command": "search.everywhere", "key": "double:shift", "when": "global" },
+
+    { "command": "scripts.open", "key": "double:meta", "when": "global" },
+    { "command": "projects.show", "key": "double:control", "when": "global" },
+    { "command": "git.branches", "key": "double:alt", "when": "global" },
     { "command": "search.everywhere", "key": "mod+p", "when": "global" },
     { "command": "search.next", "key": "arrowdown", "when": "search" },
     { "command": "search.prev", "key": "arrowup", "when": "search" },

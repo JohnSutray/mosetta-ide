@@ -1,5 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import type { Keymap } from '@ide/protocol';
 import { complains, eventToKey, resolveClip, typedIntoField } from '../src/keys/dispatcher.js';
+
+function keymap(): Keymap {
+  const raw = fs.readFileSync(
+    fileURLToPath(new URL('../../config/keymap.json', import.meta.url)),
+    'utf8',
+  );
+  const clean = raw
+    .replace(/^\s*\/\/.*$/gm, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/,(\s*[}\]])/g, '$1');
+  return JSON.parse(clean) as Keymap;
+}
 import { CLIP } from '../src/keys/host.js';
 
 function press(key: string, target: unknown, mods: Record<string, boolean> = {}) {
@@ -159,5 +174,30 @@ describe('жалоба на клавишу без команды', () => {
 
   it('буфер обмена этой раскладки молчит, даже если он на `mod`', () => {
     expect(complains('mod+c', { repeat: false, clip: new Set(['mod+c']) })).toBe(false);
+  });
+});
+
+describe('двойные модификаторы', () => {
+  it('раскладка и человек называют клавишу одинаково', async () => {
+    vi.resetModules();
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 Chrome/130', platform: 'MacIntel' });
+    const { humanizeKey: human } = await import('../src/keys/host.js');
+    expect(human('double:meta')).toBe('Cmd Cmd');
+    expect(human('double:control')).toBe('Control Control');
+    expect(human('double:alt')).toBe('Option Option');
+    expect(human('double:shift')).toBe('Shift Shift');
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('все четыре модификатора заняты и заняты разным', () => {
+    const doubles = keymap().bindings.filter((b) => b.key.startsWith('double:'));
+    expect(doubles.map((b) => b.key).sort()).toEqual([
+      'double:alt',
+      'double:control',
+      'double:meta',
+      'double:shift',
+    ]);
+    expect(new Set(doubles.map((b) => b.command)).size).toBe(doubles.length);
   });
 });

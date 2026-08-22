@@ -43,8 +43,9 @@ export function humanizeKey(key: string): string {
       if (part === 'clip') return CLIP_LABEL;
       if (part === 'shift') return 'Shift';
       if (part === 'alt') return IS_MAC ? 'Option' : 'Alt';
-      if (part === 'ctrl') return 'Control';
+      if (part === 'ctrl' || part === 'control') return 'Control';
       if (part === 'cmd') return 'Cmd';
+      if (part === 'meta') return IS_MAC ? 'Cmd' : 'Win';
       if (NAMES[part]) return NAMES[part];
       return part.length === 1 ? part.toUpperCase() : part;
     })
