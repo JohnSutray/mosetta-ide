@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { startServer, type RunningServer } from '../src/server.js';
-import { connect, makeProject, removeProject, type TestClient } from './helpers.js';
+import type { RunningServer } from '../src/server.js';
+import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
 const CONFIG = fileURLToPath(new URL('./fixtures/config-watch', import.meta.url));
 
@@ -13,7 +13,7 @@ describe('слежение за диском', () => {
   let c: TestClient;
 
   beforeEach(async () => {
-    server = await startServer({ port: 0, idleMs: 60_000, configDir: CONFIG, watchConfig: false });
+    server = await withServer(60_000, CONFIG);
     root = await makeProject('watch', {
       'src/main.ts': 'const a = 1;\n',
       'readme.md': '# hi\n',

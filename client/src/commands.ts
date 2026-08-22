@@ -33,7 +33,7 @@ import {
   hideProjects,
   moveSuggestion,
   openSuggest,
-  showProjects,
+  toggleProjects,
   closeSuggest,
   suggestOpen,
 } from './state/projects.js';
@@ -80,7 +80,7 @@ export function registerCommands(): void {
   });
   registerCommand('terminal.create', () => createTerminal());
 
-  registerCommand('projects.show', () => showProjects());
+  registerCommand('projects.show', () => toggleProjects());
   registerCommand('projects.next', () => moveSuggestion(1));
   registerCommand('projects.prev', () => moveSuggestion(-1));
   registerCommand('projects.suggest', () => openSuggest());

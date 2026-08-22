@@ -44,12 +44,8 @@ export function Toolbar() {
               onClick={() => runCommand('git.branches')}
             >
               {git.repo ? (git.branch ?? t('toolbar.noBranch')) : t('toolbar.noRepo')}
-              {(git.ahead > 0 || git.behind > 0) && (
-                <span class="branch-track">
-                  <span class="branch-ahead">{git.ahead > 0 ? `↑${git.ahead}` : ''}</span>
-                  <span class="branch-behind">{git.behind > 0 ? `↓${git.behind}` : ''}</span>
-                </span>
-              )}
+              {git.ahead > 0 && <span class="branch-ahead">↑{git.ahead}</span>}
+              {git.behind > 0 && <span class="branch-behind">↓{git.behind}</span>}
             </button>
           </>
         )}

@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'preact/hooks';
 import type { DirSuggestion } from '@ide/protocol';
-import { current, switchProject, workspaces } from '../state/session.js';
+import { current, workspaces } from '../state/session.js';
 import {
   acceptPath,
+  chooseProject,
+  hideProjects,
   loadPicker,
-  openRecent,
   pathDraft,
+  projectsVisible,
   pathSelected,
   pathSuggestions,
   pickDir,
@@ -17,52 +19,70 @@ import {
   suggestOpen,
 } from '../state/projects.js';
 import { Chevron, DirIcon } from './file-icons.js';
+import { Popup } from './popup.js';
 import { Icon } from './icons.js';
 import { t } from '../i18n/index.js';
 
 export function Projects() {
   const input = useRef<HTMLInputElement>(null);
+  const shown = projectsVisible.value;
 
   useEffect(() => {
+    if (!shown) return;
     input.current?.focus();
     void loadPicker();
-  }, []);
+  }, [shown]);
+
+  if (!shown) return null;
 
   return (
-    <div class="projects" data-keys="projects">
-      <Recent />
-
-      <form
-        class="open-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          acceptPath();
-        }}
-      >
-        <div class="open-row">
-          <input
-            ref={input}
-            class="field"
-            placeholder={t('projects.placeholder')}
-            value={pathDraft.value}
-            spellcheck={false}
-            autocomplete="off"
-            onInput={(e) => setPathDraft((e.target as HTMLInputElement).value)}
-          />
-          <button class="button" type="submit">
-            {t('projects.open')}
-          </button>
-
-          {suggestOpen.value && <Suggestions />}
-        </div>
-      </form>
-
-      <div class="picker">
-        {pickerRoots.value.map((root) => (
-          <PickerNode key={root.path} item={root} depth={0} />
-        ))}
+    <Popup
+      id="projects"
+      keys="projects"
+      class="projects-popup"
+      size={{ w: 720, h: 560 }}
+      min={{ w: 460, h: 320 }}
+      onClose={hideProjects}
+    >
+      <div class="branches-head">
+        <span class="branches-title">{t('panel.projects')}</span>
       </div>
-    </div>
+
+      <div class="projects" data-keys="projects">
+        <Recent />
+
+        <form
+          class="open-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            acceptPath();
+          }}
+        >
+          <div class="open-row">
+            <input
+              ref={input}
+              class="field"
+              placeholder={t('projects.placeholder')}
+              value={pathDraft.value}
+              spellcheck={false}
+              autocomplete="off"
+              onInput={(e) => setPathDraft((e.target as HTMLInputElement).value)}
+            />
+            <button class="button" type="submit">
+              {t('projects.open')}
+            </button>
+
+            {suggestOpen.value && <Suggestions />}
+          </div>
+        </form>
+
+        <div class="picker">
+          {pickerRoots.value.map((root) => (
+            <PickerNode key={root.path} item={root} depth={0} />
+          ))}
+        </div>
+      </div>
+    </Popup>
   );
 }
 
@@ -81,7 +101,7 @@ function Recent() {
             key={item.root}
             class={`recent-row ${open && open.id === active?.id ? 'is-current' : ''}`}
             title={item.root}
-            onClick={() => (open ? void switchProject(open.id) : openRecent(item.root))}
+            onClick={() => chooseProject(item.root, open?.id)}
           >
             <span class="recent-icon">
               <Icon name="book" filled={!!open} />

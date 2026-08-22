@@ -8,6 +8,7 @@ import {
 import { scriptsOpen } from '../state/scripts.js';
 import { searchOpen } from '../state/search.js';
 import { branchesOpen, pushOpen } from '../state/git.js';
+import { projectsVisible } from '../state/projects.js';
 import type { IconName } from './icons.js';
 
 export type PanelSide = 'left' | 'right';
@@ -112,6 +113,13 @@ export const TOOLBAR: ToolbarEntry[] = [
     title: 'toolbar.terminal.create',
     icon: 'terminal',
     command: 'terminal.create',
+  },
+  {
+    id: 'projects',
+    title: 'toolbar.projects',
+    icon: 'projects',
+    command: 'projects.show',
+    active: projectsVisible,
   },
 ];
 

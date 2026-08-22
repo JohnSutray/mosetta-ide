@@ -66,18 +66,33 @@ function initialSizes(): Record<string, Size> {
 
 export const popupSizes = signal<Record<string, Size>>(initialSizes());
 
+export const viewport = signal(measure());
+
+function measure(): Size {
+  if (typeof window === 'undefined') return { w: 1280, h: 720 };
+  return { w: window.innerWidth, h: window.innerHeight };
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', () => {
+    const now = measure();
+    if (now.w !== viewport.value.w || now.h !== viewport.value.h) viewport.value = now;
+  });
+}
+
 export function sizeOf(id: string, fallback: Size): Size {
   const saved = popupSizes.value[id] ?? fallback;
+  const box = viewport.value;
   return {
-    w: Math.max(240, Math.min(saved.w, window.innerWidth - 32)),
-    h: Math.max(160, Math.min(saved.h, window.innerHeight - 48)),
+    w: Math.max(240, Math.min(saved.w, box.w - 32)),
+    h: Math.max(160, Math.min(saved.h, box.h - 48)),
   };
 }
 
 export function setPopupSize(id: string, size: Size, min: Size): void {
   const next = {
-    w: Math.round(Math.min(Math.max(size.w, min.w), window.innerWidth - 32)),
-    h: Math.round(Math.min(Math.max(size.h, min.h), window.innerHeight - 48)),
+    w: Math.round(Math.min(Math.max(size.w, min.w), viewport.value.w - 32)),
+    h: Math.round(Math.min(Math.max(size.h, min.h), viewport.value.h - 48)),
   };
   const known = popupSizes.value[id];
   if (known && known.w === next.w && known.h === next.h) return;

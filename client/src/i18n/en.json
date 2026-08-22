@@ -1,6 +1,7 @@
 {
   "panel.tree": "Project",
   "panel.projects": "Projects",
+  "toolbar.projects": "Open project",
   "panel.scripts": "npm scripts",
   "panel.problems": "Problems",
   "panel.terminal": "Terminal",
@@ -23,8 +24,6 @@
   "tree.pick": "Pick a file in the tree",
   "tree.openProject": "Open a project on the left",
   "tree.noScan": "not indexed",
-  "tree.showProjects": "Open another project",
-  "tree.showTree": "Back to the tree",
   "tree.newFile": "New file",
   "tree.newFolder": "New folder",
   "tree.rename": "Rename",

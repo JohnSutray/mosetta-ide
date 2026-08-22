@@ -6,6 +6,8 @@
   --selection: #214283;
   --treesel: #2f5c8f;
   --muted: #808080;
+  --control-bg: #45494b;
+  --control-bg-hover: #53585a;
   --dir: #a9b7c6;
   --accent: #ffc66d;
   --error: #ff6b68;
@@ -128,7 +130,7 @@ body {
   height: 16px;
   flex: none;
   border-radius: 4px;
-  background: #4a4e50;
+  background: var(--control-bg);
   color: #b9c2c6;
   font-size: 12px;
   line-height: 1;
@@ -144,11 +146,11 @@ body {
   height: 18px;
   flex: none;
   border-radius: 4px;
-  background: #4a4e50;
+  background: var(--control-bg);
   color: #b9c2c6;
   transition: background-color 90ms linear, color 90ms linear;
 }
-.panel-action:hover { background: #5a6063; color: var(--fg); }
+.panel-action:hover { background: var(--control-bg-hover); color: var(--fg); }
 .panel-action.is-active { background: var(--treesel); color: #dbe6ef; }
 .panel-action.is-active:hover { background: #36699e; }
 
@@ -238,9 +240,11 @@ body {
   text-overflow: ellipsis;
 }
 
+.projects-popup { display: flex; flex-direction: column; }
 .projects {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
   height: 100%;
 }
@@ -536,12 +540,12 @@ body {
   height: 24px;
   padding: 0;
   border: none;
-  background: transparent;
+  background: var(--control-bg);
   color: var(--muted);
   border-radius: 5px;
   transition: background-color 90ms linear, color 90ms linear;
 }
-.tool:hover { background: #4a4e50; color: var(--fg); }
+.tool:hover { background: var(--control-bg-hover); color: var(--fg); }
 .tool.is-active { background: var(--treesel); color: #dbe6ef; }
 .tool.is-active:hover { background: #36699e; }
 
@@ -952,14 +956,14 @@ body {
   padding: 2px 8px;
   border: 1px solid transparent;
   border-radius: 4px;
-  background: transparent;
+  background: var(--control-bg);
   color: var(--fg);
   font: 12px var(--ui-font);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.branch-label:hover { background: #4a4e50; border-color: var(--divider); }
+.branch-label:hover { background: var(--control-bg-hover); border-color: var(--divider); }
 
 .branch-track {
   flex: none;
@@ -967,8 +971,8 @@ body {
   gap: 4px;
   font: 11px var(--font);
 }
-.branch-ahead,
-.branch-behind {
+.branch-row .branch-ahead,
+.branch-row .branch-behind {
   display: inline-block;
   width: 3.5ch;
   text-align: right;
@@ -976,7 +980,7 @@ body {
 .branch-ahead { color: var(--git-added); }
 .branch-behind { color: var(--git-modified); }
 
-.tool.is-fetch:hover { background: #4a4e50; }
+.tool.is-fetch:hover { background: var(--control-bg-hover); }
 
 .branches-filter { flex: none; padding: 6px 8px; }
 .branches-filter .field { width: 100%; }

@@ -82,11 +82,38 @@ function resetProjectScope() {
   });
 }
 
+const WS_PARAM = 'ws';
+
+function projectFromUrl(): string | null {
+  if (typeof location === 'undefined') return null;
+  return new URLSearchParams(location.search).get(WS_PARAM);
+}
+
+function rememberInUrl(root: string): void {
+  if (typeof location === 'undefined') return;
+  const url = new URL(location.href);
+  if (url.searchParams.get(WS_PARAM) === root) return;
+  url.searchParams.set(WS_PARAM, root);
+  history.replaceState(null, '', url);
+}
+
+let restored = false;
+
+function restoreFromUrl(list: WorkspaceInfo[]): void {
+  if (restored) return;
+  restored = true;
+  const wanted = projectFromUrl();
+  if (!wanted || current.value) return;
+  const alive = list.find((ws) => ws.root === wanted);
+  void (alive ? switchProject(alive.id) : openProject(wanted));
+}
+
 export async function openProject(root: string) {
   try {
     const info = await rpc.call('workspace.open', { root });
     resetProjectScope();
     current.value = info;
+    rememberInUrl(info.root);
     await afterAttach();
   } catch (err) {
     complain(describe(err));
@@ -99,6 +126,7 @@ export async function switchProject(id: string) {
     const info = await rpc.call('workspace.attach', { id });
     resetProjectScope();
     current.value = info;
+    rememberInUrl(info.root);
     await afterAttach();
   } catch (err) {
     complain(describe(err));
@@ -231,11 +259,13 @@ rpc.on('workspace.list', (list) => {
   workspaces.value = list;
   const mine = current.value;
   if (mine) current.value = list.find((w) => w.id === mine.id) ?? mine;
+  restoreFromUrl(list);
 });
 
 rpc.on('workspace.attached', (info) => {
   if (info?.id !== current.value?.id) resetProjectScope();
   current.value = info;
+  if (info) rememberInUrl(info.root);
 });
 
 rpc.on('workspace.closed', ({ id }) => {

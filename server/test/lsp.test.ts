@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import type { FileDiagnostics } from '@ide/protocol';
-import { startServer, type RunningServer } from '../src/server.js';
-import { connect, makeProject, removeProject, type TestClient } from './helpers.js';
+import type { RunningServer } from '../src/server.js';
+import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
 const CONFIG = fileURLToPath(new URL('./fixtures/lsp-config', import.meta.url));
 
@@ -21,7 +21,7 @@ describe('языковой сервер', () => {
       'src/bad.ts': 'export const answer: number = "сорок два";\n',
       'src/good.ts': 'export function twice(x: number): number {\n  return x * 2;\n}\n',
     });
-    server = await startServer({ port: 0, idleMs: 60_000, configDir: CONFIG, watchConfig: false });
+    server = await withServer(60_000, CONFIG);
     c = await connect(server);
     await c.call('workspace.open', { root });
   }, 60_000);

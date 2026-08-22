@@ -1,6 +1,6 @@
 import { batch, signal } from '@preact/signals';
 import type { DirSuggestion, RecentProject } from '@ide/protocol';
-import { current, openProject, rpc } from './session.js';
+import { current, openProject, rpc, switchProject } from './session.js';
 
 export const projectsVisible = signal(false);
 
@@ -22,6 +22,11 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 export function showProjects(): void {
   projectsVisible.value = true;
   void loadPicker();
+}
+
+export function toggleProjects(): void {
+  if (projectsVisible.value) hideProjects();
+  else showProjects();
 }
 
 export function hideProjects(): void {
@@ -133,19 +138,22 @@ export function acceptPath(): void {
   open(pathDraft.value.trim());
 }
 
-export function openRecent(root: string): void {
-  open(root);
+export function chooseProject(root: string, liveId?: string): void {
+  if (root === '' && !liveId) return;
+  if (liveId && current.value?.id === liveId) {
+    hideProjects();
+    return;
+  }
+  const going = liveId ? switchProject(liveId) : openProject(root);
+  void going.then(() => {
+    if (!current.value) return;
+    hideProjects();
+    void loadPicker();
+  });
 }
 
 function open(root: string): void {
-  if (root === '') return;
-  void openProject(root).then(() => {
-    if (current.value) {
-      closeSuggest();
-      hideProjects();
-      void loadPicker();
-    }
-  });
+  chooseProject(root);
 }
 
 async function refreshSuggestions(prefix: string): Promise<void> {

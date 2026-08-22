@@ -79,6 +79,11 @@
       "command": "terminal.create",
       "key": "mod+7",
       "when": "global"
+    },
+    {
+      "command": "projects.show",
+      "key": "mod+8",
+      "when": "global"
     }
   ]
 }

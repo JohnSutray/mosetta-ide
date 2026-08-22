@@ -5,11 +5,15 @@ import type { DirSuggestion } from '@ide/protocol';
 
 const LIMIT = 24;
 
+const PREFETCH = 24;
+
+const ALL = Number.POSITIVE_INFINITY;
+
 export async function browseRoots(): Promise<DirSuggestion[]> {
   const home = os.homedir();
   const [homeKids, diskKids] = await Promise.all([
-    suggestDirectories(`${home}${path.sep}`, LIMIT, 2),
-    suggestDirectories(path.sep, LIMIT, 1),
+    suggestDirectories(`${home}${path.sep}`, ALL, 2),
+    suggestDirectories(path.sep, ALL, 1),
   ]);
   return [
     { path: home, name: '~', children: homeKids },
@@ -44,11 +48,11 @@ export async function suggestDirectories(
   }
 
   out.sort((a, b) => a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' }));
-  const page = out.slice(0, limit);
+  const page = Number.isFinite(limit) ? out.slice(0, limit) : out;
 
   if (depth > 1) {
     await Promise.all(
-      page.map(async (item) => {
+      page.slice(0, PREFETCH).map(async (item) => {
         item.children = await suggestDirectories(`${item.path}${path.sep}`, limit, depth - 1);
       }),
     );

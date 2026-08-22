@@ -46,8 +46,7 @@ import { Problems } from './problems.js';
 import { Projects } from './projects.js';
 import { Tree } from './tree.js';
 import { t } from '../i18n/index.js';
-import { Icon } from './icons.js';
-import { projectsVisible } from '../state/projects.js';
+import { hideProjects, showProjects } from '../state/projects.js';
 
 export function App() {
   const ws = current.value;
@@ -76,6 +75,11 @@ export function App() {
   }, [title.value]);
 
   useEffect(() => {
+    if (ws) hideProjects();
+    else showProjects();
+  }, [ws?.id]);
+
+  useEffect(() => {
     if (!ws) {
       resetGit();
       return;
@@ -100,8 +104,7 @@ export function App() {
             <Panel
               class={`column-${panel.id}`}
               width={widthOf(panel.id)}
-              title={titleOf(panel)}
-              actions={actionsOf(panel)}
+              title={t(panel.title)}
               onClose={() => runCommand(panel.command)}
             >
               {content(panel)}
@@ -156,6 +159,7 @@ export function App() {
         ))}
       </div>
 
+      <Projects />
       <SearchEverywhere />
       <Branches />
       <Push />
@@ -167,29 +171,6 @@ export function App() {
   );
 }
 
-function titleOf(panel: PanelSpec): string {
-  if (panel.id === 'tree' && showsProjects()) return t('panel.projects');
-  return t(panel.title);
-}
-
-function actionsOf(panel: PanelSpec) {
-  if (panel.id !== 'tree' || !current.value) return null;
-  const shown = projectsVisible.value;
-  return (
-    <span
-      class={`panel-action ${shown ? 'is-active' : ''}`}
-      title={shown ? t('tree.showTree') : t('tree.showProjects')}
-      onClick={() => runCommand(shown ? 'projects.close' : 'projects.show')}
-    >
-      <Icon name="projects" filled={shown} />
-    </span>
-  );
-}
-
-function showsProjects(): boolean {
-  return !current.value || projectsVisible.value;
-}
-
 function open(side: 'left' | 'right'): PanelSpec[] {
   return PANELS.filter((panel) => panel.side === side && panel.open.value);
 }
@@ -197,7 +178,7 @@ function open(side: 'left' | 'right'): PanelSpec[] {
 function content(panel: PanelSpec) {
   switch (panel.id) {
     case 'tree':
-      return showsProjects() ? <Projects /> : <Tree />;
+      return <Tree />;
     case 'problems':
       return <Problems items={currentDiagnostics.value} />;
     case 'terminal':

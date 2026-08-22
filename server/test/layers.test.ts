@@ -105,3 +105,16 @@ describe('слои не растекаются', () => {
     expect(files.some((f) => f.rel === 'search/search-index.ts')).toBe(true);
   });
 });
+
+describe('состояние машины', () => {
+  it('тесты поднимают сервер только через helpers', async () => {
+    const dir = fileURLToPath(new URL('.', import.meta.url));
+    const guilty: string[] = [];
+    for (const name of await fs.readdir(dir)) {
+      if (!name.endsWith('.test.ts')) continue;
+      const text = await fs.readFile(path.join(dir, name), 'utf8');
+      if (/\bstartServer\s*\(/.test(text)) guilty.push(name);
+    }
+    expect(guilty, 'startServer напрямую — история поедет в дом пользователя').toEqual([]);
+  });
+});
