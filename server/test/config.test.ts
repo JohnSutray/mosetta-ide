@@ -151,3 +151,26 @@ describe('сломанный конфиг', () => {
     await fs.rm(dir, { recursive: true, force: true });
   });
 });
+
+describe('запись настройки', () => {
+  it('доезжает до бандла и не сносит комментарии', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-set-'));
+    await fs.writeFile(
+      path.join(dir, 'settings.json'),
+      '{\n  // шрифт руками\n  "editor": { "fontSize": 15 }\n}\n',
+      'utf8',
+    );
+    const store = await ConfigStore.load(dir);
+
+    const { rewritten } = await store.set('terminal', 'shell', '/bin/zsh');
+    expect(rewritten).toBe(false);
+    expect(store.settings.terminal.shell).toBe('/bin/zsh');
+    expect(store.settings.editor.fontSize).toBe(15);
+    expect(store.settings.terminal.args).toEqual([]);
+    const raw = await fs.readFile(path.join(dir, 'settings.json'), 'utf8');
+    expect(raw).toContain('// шрифт руками');
+
+    store.dispose();
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+});

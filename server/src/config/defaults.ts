@@ -32,6 +32,10 @@ export const DEFAULT_SETTINGS: Settings = {
   git: {
     autoFetchMinutes: 10,
   },
+  terminal: {
+    shell: '',
+    args: [],
+  },
 };
 
 export const EMPTY_KEYMAP: Keymap = { version: 1, bindings: [] };

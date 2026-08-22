@@ -12,6 +12,7 @@ import {
 import { logger } from '../log.js';
 import { DEFAULT_SETTINGS, EMPTY_KEYMAP } from './defaults.js';
 import { parseJsonc } from './jsonc.js';
+import { patchSetting } from './patch.js';
 
 const log = logger('config');
 
@@ -57,6 +58,20 @@ export class ConfigStore {
       watcher.unref?.();
       this.watchers.push(watcher);
     } catch {}
+  }
+
+  async set(section: string, key: string, value: string): Promise<{ rewritten: boolean }> {
+    const file = path.join(this.dir, 'settings.json');
+    let raw = '';
+    try {
+      raw = await fsp.readFile(file, 'utf8');
+    } catch {}
+    const patched = patchSetting(raw, section, key, value);
+    await fsp.mkdir(this.dir, { recursive: true });
+    await fsp.writeFile(file, patched.text, 'utf8');
+    if (patched.rewritten) log.warn('settings.json пересобран — комментарии в нём не сохранились');
+    await this.reload();
+    return { rewritten: patched.rewritten };
   }
 
   dispose(): void {

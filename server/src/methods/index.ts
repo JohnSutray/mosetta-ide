@@ -1,5 +1,5 @@
 import type { HandlerTable } from '../rpc/context.js';
-import { configGet } from './config.js';
+import { configGet, configSetShell } from './config.js';
 import { docClose, docEdit, docOpen, docReload, docSave, docState } from './doc.js';
 import {
   fsAbsolute,
@@ -41,6 +41,7 @@ import {
   workspaceClose,
   workspaceRecent,
   workspaceRoots,
+  envShells,
   workspaceCurrent,
   workspaceDetach,
   workspaceList,
@@ -54,6 +55,7 @@ export const handlers: HandlerTable = {
   }),
 
   'config.get': configGet,
+  'config.setShell': configSetShell,
 
   'workspace.open': workspaceOpen,
   'workspace.attach': workspaceAttach,
@@ -62,6 +64,7 @@ export const handlers: HandlerTable = {
   'workspace.current': workspaceCurrent,
   'workspace.close': workspaceClose,
   'workspace.browse': workspaceBrowse,
+  'env.shells': envShells,
   'workspace.roots': workspaceRoots,
   'workspace.recent': workspaceRecent,
 

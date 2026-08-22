@@ -19,7 +19,6 @@ const MECHANICS = new Set([
   'Enter', 'Mod-a',
   'Backspace', 'Delete',
   'Alt-Backspace', 'Alt-Delete', 'Mod-Backspace', 'Mod-Delete',
-  'Tab',
 ]);
 
 function keymap(): Keymap {
@@ -51,7 +50,7 @@ describe('редактор не приносит чужих клавиш', () =>
 
   it('механика на месте: без неё редактор перестанет быть редактором', () => {
     const keys = new Set(inputKeymap.map(macKey));
-    for (const must of ['ArrowLeft', 'Backspace', 'Enter', 'Mod-a', 'Tab']) {
+    for (const must of ['ArrowLeft', 'Backspace', 'Enter', 'Mod-a']) {
       expect(keys.has(must), `пропала механика ${must}`).toBe(true);
     }
   });

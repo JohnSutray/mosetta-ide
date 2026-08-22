@@ -3,7 +3,7 @@ import type { TerminalInfo, TerminalKind } from '@ide/protocol';
 import { RpcErrorCode } from '@ide/protocol';
 import { RpcError } from '../errors.js';
 import type { Logger } from '../log.js';
-import { loginShell, terminalEnv } from '../env/shell.js';
+import { loginShell, terminalEnv, type ShellChoice } from '../env/shell.js';
 
 export type TerminalEvent =
   | { type: 'data'; name: string; data: string }
@@ -40,6 +40,7 @@ export class TerminalHost {
   constructor(
     private readonly hold: (reason: string) => () => void,
     private readonly log: Logger,
+    private readonly shellOf: () => ShellChoice = () => loginShell(),
   ) {}
 
   on(listener: (event: TerminalEvent) => void): () => void {
@@ -70,7 +71,7 @@ export class TerminalHost {
     if (existing?.info.alive) return existing.info;
     if (existing) this.forget(options.name);
 
-    const shell = loginShell();
+    const shell = this.shellOf();
     const cols = options.cols ?? 80;
     const rows = options.rows ?? 24;
 

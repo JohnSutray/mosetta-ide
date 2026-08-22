@@ -17,6 +17,7 @@ import {
   type Sheep,
 } from './sheep-world.js';
 import { GLYPH_H, measure, write } from './pixel-font.js';
+import { cell, setPixelRatio } from './pixel-grid.js';
 import { t } from '../i18n/index.js';
 
 const DIGIT_FONT = "'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif";
@@ -100,7 +101,7 @@ function paint(
       const key = swap?.[raw] ?? raw;
       ctx.fillStyle = COLORS[key] ?? '#fff';
       const cx = flip ? row.length - 1 - rx : rx;
-      ctx.fillRect(Math.round(x + cx * px), Math.round(y + ry * px), px, px);
+      cell(ctx, x + cx * px, y + ry * px, px, px);
     }
   });
 }
@@ -153,7 +154,7 @@ function drawSign(
 function drawShadow(ctx: CanvasRenderingContext2D, s: Sheep): void {
   const px = PX * s.level;
   ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
-  ctx.fillRect(Math.round(s.x + px), Math.round(s.y + 6 * px), 6 * px, Math.max(2, px / 2));
+  cell(ctx, s.x + px, s.y + 6 * px, 6 * px, Math.max(2, px / 2));
 }
 
 function drawSwitch(
@@ -169,11 +170,11 @@ function drawSwitch(
   const box = { x: Math.round(w / 2 - text / 2 - pad), y: Math.round(h - 46), w: text + pad * 2, h: GLYPH_H * px + pad };
 
   ctx.fillStyle = paused ? '#3a3d3f' : '#57472f';
-  ctx.fillRect(box.x, box.y, box.w, box.h);
+  cell(ctx, box.x, box.y, box.w, box.h);
   ctx.fillStyle = paused ? '#4a4e50' : '#6b5638';
-  ctx.fillRect(box.x, box.y, box.w, 2);
+  cell(ctx, box.x, box.y, box.w, 2);
   ctx.fillStyle = '#4a3a26';
-  ctx.fillRect(Math.round(w / 2 - 2), box.y + box.h, 4, 12);
+  cell(ctx, w / 2 - 2, box.y + box.h, 4, 12);
   write(ctx, label, box.x + pad, box.y + pad / 2, px, paused ? '#9aa2a8' : '#e8dcc4');
   return box;
 }
@@ -233,6 +234,7 @@ export function SheepField() {
       el.height = Math.max(1, Math.floor(h * ratio));
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       ctx.imageSmoothingEnabled = false;
+      setPixelRatio(ratio);
     };
     resize();
 
@@ -268,9 +270,9 @@ export function SheepField() {
       }
       for (const bale of world.bales) {
         ctx.fillStyle = COLORS.w!;
-        ctx.fillRect(bale.x, bale.y, PX * 5, PX * 4);
+        cell(ctx, bale.x, bale.y, PX * 5, PX * 4);
         ctx.fillStyle = '#c9c3b8';
-        ctx.fillRect(bale.x, bale.y + PX * 2, PX * 5, PX);
+        cell(ctx, bale.x, bale.y + PX * 2, PX * 5, PX);
       }
       for (const s of world.flock) drawShadow(ctx, s);
       for (const s of world.flock) drawSheep(ctx, s);
@@ -285,14 +287,28 @@ export function SheepField() {
     });
     watcher.observe(el);
 
-    const tick = () => {
+    const STEP_MS = 1000 / 60;
+    const MAX_DEBT = STEP_MS * 5;
+    let clock = performance.now();
+    let debt = 0;
+
+    const tick = (now: number) => {
       if (!alive) return;
-      const { w, h } = size();
-      if (!world.paused) {
-        step(world, w, h);
-        draw();
-      }
       requestAnimationFrame(tick);
+      if (world.paused) {
+        clock = now;
+        return;
+      }
+      debt = Math.min(debt + (now - clock), MAX_DEBT);
+      clock = now;
+      const { w, h } = size();
+      let moved = false;
+      while (debt >= STEP_MS) {
+        step(world, w, h);
+        debt -= STEP_MS;
+        moved = true;
+      }
+      if (moved) draw();
     };
     requestAnimationFrame(tick);
 

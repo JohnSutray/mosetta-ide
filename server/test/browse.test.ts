@@ -38,4 +38,9 @@ describe('дерево выбора проекта', () => {
     const page = await suggestDirectories(`${home}${path.sep}`, 24, 1);
     expect(page).toHaveLength(24);
   });
+
+  it('по умолчанию НЕ режет — резать просят явно', async () => {
+    const all = await suggestDirectories(`${home}${path.sep}`);
+    expect(all).toHaveLength(COUNT + 1);
+  });
 });

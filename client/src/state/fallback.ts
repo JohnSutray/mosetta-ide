@@ -20,4 +20,5 @@ export const DEFAULT_SETTINGS_FALLBACK: Settings = {
   index: { enabled: true, maxResults: 50 },
   lsp: { startOnOpen: true, servers: {} },
   git: { autoFetchMinutes: 10 },
+  terminal: { shell: '', args: [] },
 };

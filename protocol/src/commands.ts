@@ -10,6 +10,8 @@ export const COMMANDS = {
   'edit.moveLineDown': 'Опустить строку',
   'edit.addCursorAbove': 'Курсор выше',
   'edit.addCursorBelow': 'Курсор ниже',
+  'edit.indent': 'Отступ вправо',
+  'edit.unindent': 'Отступ влево',
   'panel.tree': 'Панель: дерево проекта',
   'panel.editor': 'Панель редактора',
   'panel.problems': 'Панель: ошибки',
@@ -17,6 +19,7 @@ export const COMMANDS = {
   'panel.terminal': 'Панель: терминал',
 
   'terminal.create': 'Новый терминал',
+  'terminal.shell': 'Чем запускать терминал',
 
   'projects.show': 'Открывашка проектов',
   'projects.next': 'Проекты: вниз по подсказкам',
@@ -65,6 +68,8 @@ export const COMMANDS = {
   'search.close': 'Поиск: закрыть',
 
   'keys.show': 'Все клавиши',
+
+  'key.reserved': 'Занято: пока ничего не делает',
 } as const;
 
 export type CommandId = keyof typeof COMMANDS;

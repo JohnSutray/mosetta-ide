@@ -41,6 +41,12 @@ export interface Settings {
   index: IndexSettings;
   lsp: LspSettings;
   git: GitSettings;
+  terminal: TerminalSettings;
+}
+
+export interface TerminalSettings {
+  shell: string;
+  args: string[];
 }
 
 export interface GitSettings {

@@ -16,6 +16,12 @@ export interface DirSuggestion {
   children?: DirSuggestion[];
 }
 
+export interface ShellInfo {
+  path: string;
+  name: string;
+  current: boolean;
+}
+
 export interface RecentProject {
   root: string;
   name: string;

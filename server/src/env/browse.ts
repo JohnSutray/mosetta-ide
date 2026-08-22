@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import type { DirSuggestion } from '@ide/protocol';
 
-const LIMIT = 24;
+export const SUGGEST_LIMIT = 24;
 
 const PREFETCH = 24;
 
@@ -23,7 +23,7 @@ export async function browseRoots(): Promise<DirSuggestion[]> {
 
 export async function suggestDirectories(
   prefix: string,
-  limit = LIMIT,
+  limit = ALL,
   depth = 1,
 ): Promise<DirSuggestion[]> {
   const raw = expandHome(prefix.trim());

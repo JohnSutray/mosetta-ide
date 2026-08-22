@@ -21,6 +21,7 @@ import type {
   LspStatus,
   NpmScriptInfo,
   RecentProject,
+  ShellInfo,
   TerminalInfo,
   TerminalKind,
   WorkspaceId,
@@ -39,7 +40,12 @@ export interface Api {
   'workspace.list': { params: null; result: WorkspaceInfo[] };
   'workspace.current': { params: null; result: WorkspaceInfo | null };
   'workspace.close': { params: { id: WorkspaceId }; result: null };
-  'workspace.browse': { params: { prefix: string; depth?: number }; result: DirSuggestion[] };
+  'workspace.browse': {
+    params: { prefix: string; depth?: number; limit?: number };
+    result: DirSuggestion[];
+  };
+  'env.shells': { params: null; result: ShellInfo[] };
+  'config.setShell': { params: { path: string }; result: { path: string } };
   'workspace.roots': { params: null; result: DirSuggestion[] };
   'workspace.recent': { params: null; result: RecentProject[] };
 

@@ -51,6 +51,7 @@ import { hideProjects, showProjects } from '../state/projects.js';
 import { headText, loadHead, showHunk } from '../state/git-marks.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
+import { ShellPicker } from './shell-picker.js';
 import { noteUnbound } from '../state/keys-help.js';
 import { SheepField } from './sheep.js';
 
@@ -166,8 +167,19 @@ export function App() {
             <Panel
               class={`column-${panel.id}`}
               width={widthOf(panel.id)}
-              title={panel.title}
+              title={t(panel.title)}
               onClose={() => runCommand(panel.command)}
+              actions={
+                panel.id === 'terminal' ? (
+                  <span
+                    class="panel-action"
+                    title={t('shell.title')}
+                    onClick={() => runCommand('terminal.shell')}
+                  >
+                    {t('shell.button')}
+                  </span>
+                ) : null
+              }
             >
               {content(panel)}
             </Panel>
@@ -182,6 +194,7 @@ export function App() {
       <Push />
       <ScriptsPopup />
       <KeysHelp />
+      <ShellPicker />
       <TreeMenu />
       <Prompt />
       <Notifications />

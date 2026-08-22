@@ -7,7 +7,7 @@ import { SearchIndex } from '../search/search-index.js';
 import { LspServer } from '../lsp/server.js';
 import { TerminalHost } from '../term/host.js';
 import { GitIndex } from '../git/git-index.js';
-import { packageManager } from '../env/shell.js';
+import { loginShell, packageManager } from '../env/shell.js';
 import type { Logger } from '../log.js';
 import type { Workspace } from './workspace.js';
 
@@ -82,7 +82,9 @@ export class Services {
       (action, chunk) => ws.broadcast('git.output', { action, chunk }),
     );
 
-    this.terminals = new TerminalHost((reason) => ws.hold(reason), log);
+    this.terminals = new TerminalHost((reason) => ws.hold(reason), log, () =>
+      loginShell(config.settings.terminal),
+    );
     this.offs.push(
       this.terminals.on((event) => {
         switch (event.type) {

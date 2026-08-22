@@ -1,3 +1,4 @@
+import { cell } from './pixel-grid.js';
 
 const G: Record<string, string[]> = {
   A: ['.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
@@ -81,7 +82,7 @@ export function write(
       glyph.forEach((row, ry) => {
         for (let rx = 0; rx < row.length; rx += 1) {
           if (row[rx] !== '#') continue;
-          ctx.fillRect(Math.round(at + rx * px), Math.round(y + ry * px), px, px);
+          cell(ctx, at + rx * px, y + ry * px, px, px);
         }
       });
     }

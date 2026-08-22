@@ -3,6 +3,8 @@ import {
   addCursorBelow,
   copyLineDown,
   deleteLine,
+  indentLess,
+  indentMore,
   moveLineDown,
   moveLineUp,
   redo,
@@ -43,6 +45,7 @@ import {
   treePanelVisible,
 } from './state/session.js';
 import { createTerminal } from './state/terminals.js';
+import { openShellPicker } from './state/shells.js';
 import { gitDo, openBranches, openPush } from './state/git.js';
 import {
   acceptPath,
@@ -75,6 +78,10 @@ export function registerCommands(): void {
   registerCommand('edit.moveLineDown', () => inEditor(moveLineDown));
   registerCommand('edit.addCursorAbove', () => inEditor(addCursorAbove));
   registerCommand('edit.addCursorBelow', () => inEditor(addCursorBelow));
+  registerCommand('edit.indent', () => inEditor(indentMore));
+  registerCommand('edit.unindent', () => inEditor(indentLess));
+
+  registerCommand('key.reserved', () => {});
 
   registerCommand('keys.show', () => toggleKeysHelp());
 
@@ -113,6 +120,7 @@ export function registerCommands(): void {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });
   registerCommand('terminal.create', () => createTerminal());
+  registerCommand('terminal.shell', () => openShellPicker());
 
   registerCommand('projects.show', () => toggleProjects());
   registerCommand('projects.next', () => moveSuggestion(1));

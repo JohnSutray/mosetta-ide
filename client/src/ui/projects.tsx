@@ -11,8 +11,11 @@ import {
   pathSelected,
   pathSuggestions,
   pickDir,
+  pickerAll,
   pickerChildren,
   pickerOpen,
+  PICKER_PAGE,
+  showAllIn,
   pickerRoots,
   recent,
   setPathDraft,
@@ -146,6 +149,8 @@ function Suggestions() {
 function PickerNode({ item, depth }: { item: DirSuggestion; depth: number }) {
   const isOpen = pickerOpen.value.has(item.path);
   const kids = pickerChildren.value.get(item.path);
+  const shown = pickerAll.value.has(item.path) ? kids : kids?.slice(0, PICKER_PAGE);
+  const hidden = (kids?.length ?? 0) - (shown?.length ?? 0);
   const picked = pathDraft.value.replace(/\/$/, '') === item.path;
   const hasKids = kids === undefined || kids.length > 0;
 
@@ -166,7 +171,16 @@ function PickerNode({ item, depth }: { item: DirSuggestion; depth: number }) {
         <span class="picker-name">{item.name}</span>
       </div>
       {isOpen &&
-        kids?.map((child) => <PickerNode key={child.path} item={child} depth={depth + 1} />)}
+        shown?.map((child) => <PickerNode key={child.path} item={child} depth={depth + 1} />)}
+      {isOpen && hidden > 0 && (
+        <div
+          class="picker-more"
+          style={{ paddingLeft: `${6 + (depth + 1) * 14}px` }}
+          onClick={() => showAllIn(item.path)}
+        >
+          {t('projects.more', { count: hidden })}
+        </div>
+      )}
     </>
   );
 }

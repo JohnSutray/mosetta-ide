@@ -8,6 +8,15 @@ export const pathDraft = signal('');
 
 export const pickerRoots = signal<DirSuggestion[]>([]);
 export const pickerChildren = signal<Map<string, DirSuggestion[]>>(new Map());
+export const pickerAll = signal<Set<string>>(new Set());
+
+export const PICKER_PAGE = 100;
+
+export function showAllIn(dir: string): void {
+  const next = new Set(pickerAll.value);
+  next.add(dir);
+  pickerAll.value = next;
+}
 export const pickerOpen = signal<Set<string>>(new Set());
 
 export const suggestOpen = signal(false);
@@ -159,7 +168,7 @@ function open(root: string): void {
 async function refreshSuggestions(prefix: string): Promise<void> {
   const token = ++queryToken;
   try {
-    const list = await rpc.call('workspace.browse', { prefix });
+    const list = await rpc.call('workspace.browse', { prefix, limit: 24 });
     if (token !== queryToken) return;
     pathSuggestions.value = list;
   } catch {

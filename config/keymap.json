@@ -46,6 +46,11 @@
 
     { "command": "file.reload", "key": "mod+shift+r", "when": "global" },
 
+    { "command": "terminal.shell", "key": "mod+shift+t", "when": "global" },
+
+    { "command": "key.reserved", "key": "tab", "when": "global" },
+    { "command": "key.reserved", "key": "shift+tab", "when": "global" },
+
     { "command": "edit.undo", "key": "mod+z", "when": "editor" },
     { "command": "edit.redo", "key": "mod+shift+z", "when": "editor" },
 
@@ -56,6 +61,8 @@
     { "command": "edit.moveLineDown", "key": "alt+shift+arrowdown", "when": "editor" },
     { "command": "edit.addCursorAbove", "key": "alt+arrowup", "when": "editor" },
     { "command": "edit.addCursorBelow", "key": "alt+arrowdown", "when": "editor" },
+    { "command": "edit.indent", "key": "tab", "when": "editor" },
+    { "command": "edit.unindent", "key": "shift+tab", "when": "editor" },
 
     { "command": "git.branches", "key": "mod+backquote", "when": "global" },
 

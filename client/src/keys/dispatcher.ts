@@ -8,6 +8,8 @@ export type ContextResolver = () => KeyContext;
 
 const CAPTURING = new Set<KeyContext>(['keys']);
 
+const OWNING = new Set<KeyContext>(['terminal']);
+
 const MECHANICS = mechanicsKeys(MOD_IS_META, IS_MAC);
 
 export function complains(
@@ -62,9 +64,12 @@ export function installDispatcher(
 
   const fire = (key: string, event: KeyboardEvent): void => {
     const context = resolveContext();
+    const own = bindings.find((b) => (b.when ?? 'global') === context && b.key === key);
     const binding =
-      bindings.find((b) => (b.when ?? 'global') === context && b.key === key) ??
-      bindings.find((b) => (b.when ?? 'global') === 'global' && b.key === key);
+      own ??
+      (OWNING.has(context)
+        ? undefined
+        : bindings.find((b) => (b.when ?? 'global') === 'global' && b.key === key));
 
     echoKey(key, context, binding?.command ?? null);
     if (!binding) {

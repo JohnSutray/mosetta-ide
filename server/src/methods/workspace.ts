@@ -3,6 +3,7 @@ import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
 import { browseRoots, suggestDirectories } from '../env/browse.js';
 import { listRecent, remember } from '../env/recent.js';
+import { detectShells, loginShell } from '../env/shell.js';
 
 export const workspaceOpen: Handler<'workspace.open'> = async (params, ctx) => {
   if (!params || typeof params.root !== 'string') {
@@ -54,10 +55,15 @@ export const workspaceBrowse: Handler<'workspace.browse'> = (params) => {
     throw RpcError.invalidParams('нужен prefix: string');
   }
   const depth = Math.min(2, Math.max(1, params.depth ?? 1));
-  return suggestDirectories(params.prefix, undefined, depth);
+  const limit =
+    typeof params.limit === 'number' && params.limit > 0 ? params.limit : Number.POSITIVE_INFINITY;
+  return suggestDirectories(params.prefix, limit, depth);
 };
 
 export const workspaceRoots: Handler<'workspace.roots'> = () => browseRoots();
 
 export const workspaceRecent: Handler<'workspace.recent'> = (_params, ctx) =>
   listRecent(ctx.stateDir);
+
+export const envShells: Handler<'env.shells'> = (_params, ctx) =>
+  detectShells(loginShell(ctx.config.settings.terminal).file);
