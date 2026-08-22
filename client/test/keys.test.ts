@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { resolveClip, typedIntoField } from '../src/keys/dispatcher.js';
+import { eventToKey, resolveClip, typedIntoField } from '../src/keys/dispatcher.js';
 import { CLIP } from '../src/keys/host.js';
 
 function press(key: string, target: unknown, mods: Record<string, boolean> = {}) {
   return {
     key,
+    code: '',
     target,
     metaKey: false,
     ctrlKey: false,
@@ -74,5 +75,55 @@ describe('браузер на маке: Cmd+C доходит до дерева',
     expect(eventToKey(press('n', ROW, { ctrlKey: true }))).toBe('mod+n');
     vi.unstubAllGlobals();
     vi.resetModules();
+  });
+});
+
+describe('клавиша от клетки, а не от символа', () => {
+  function stroke(code: string, key: string, mods: Record<string, boolean> = {}) {
+    return {
+      code,
+      key,
+      metaKey: false,
+      ctrlKey: false,
+      altKey: false,
+      shiftKey: false,
+      ...mods,
+    } as unknown as KeyboardEvent;
+  }
+
+  it('кириллица не отменяет сохранение', async () => {
+    vi.resetModules();
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 Chrome/130', platform: 'MacIntel' });
+    const { eventToKey } = await import('../src/keys/dispatcher.js');
+    expect(eventToKey(stroke('KeyS', 'ы', { ctrlKey: true }))).toBe('mod+s');
+    expect(eventToKey(stroke('KeyS', 's', { ctrlKey: true }))).toBe('mod+s');
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('Option приходит собранным символом, а клетка остаётся прежней', () => {
+    expect(eventToKey(stroke('Digit2', '™', { altKey: true }))).toBe('alt+2');
+    expect(eventToKey(stroke('Digit3', '£', { altKey: true }))).toBe('alt+3');
+  });
+
+  it('клавиша под Escape одна в обеих раскладках', () => {
+    expect(eventToKey(stroke('Backquote', '`'))).toBe('backquote');
+    expect(eventToKey(stroke('Backquote', 'ё'))).toBe('backquote');
+  });
+
+  it('имена клавиш берутся из кода как есть', () => {
+    expect(eventToKey(stroke('ArrowDown', 'ArrowDown'))).toBe('arrowdown');
+    expect(eventToKey(stroke('Escape', 'Escape'))).toBe('escape');
+    expect(eventToKey(stroke('Space', ' '))).toBe('space');
+    expect(eventToKey(stroke('Slash', '.'))).toBe('slash');
+  });
+
+  it('голый модификатор клавишей не считается', () => {
+    expect(eventToKey(stroke('ShiftLeft', 'Shift', { shiftKey: true }))).toBe(null);
+  });
+
+  it('без кода остаётся запасной путь по символу', () => {
+    expect(eventToKey(stroke('', 'ё'))).toBe('backquote');
+    expect(eventToKey(stroke('', 'k', { ctrlKey: true }))).toBe('mod+k');
   });
 });

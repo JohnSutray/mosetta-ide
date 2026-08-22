@@ -10,10 +10,15 @@ interface Installed {
   dispose(): void;
 }
 
-const BY_CODE: Record<string, string> = {
-  Backquote: 'backquote',
-  Slash: 'slash',
-};
+function mainFromCode(code: string): string | null {
+  const letter = /^Key([A-Z])$/.exec(code);
+  if (letter) return letter[1]!.toLowerCase();
+  const digit = /^Digit(\d)$/.exec(code);
+  if (digit) return digit[1]!;
+  if (code === 'NumpadEnter') return 'enter';
+  if (/^(Control|Shift|Alt|Meta)(Left|Right)$/.test(code)) return null;
+  return code.toLowerCase();
+}
 
 const BY_CHAR: Record<string, string> = {
   '`': 'backquote',
@@ -130,7 +135,9 @@ function isTextField(target: EventTarget | null): boolean {
 }
 
 export function eventToKey(event: KeyboardEvent): string | null {
-  const main = BY_CODE[event.code] ?? BY_CHAR[event.key] ?? normalizeMainKey(event.key);
+  const main = event.code
+    ? mainFromCode(event.code)
+    : (BY_CHAR[event.key] ?? normalizeMainKey(event.key));
   if (!main) return null;
 
   const parts: string[] = [];
