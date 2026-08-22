@@ -7,8 +7,6 @@ import {
   highlightActiveLine,
   highlightActiveLineGutter,
   drawSelection,
-  rectangularSelection,
-  crosshairCursor,
   highlightSpecialChars,
 } from '@codemirror/view';
 import { history } from '@codemirror/commands';
@@ -71,8 +69,6 @@ export function Editor({
       highlightSpecialChars(),
       history(),
       drawSelection(),
-      rectangularSelection(),
-      crosshairCursor(),
       indentOnInput(),
       bracketMatching(),
       highlightActiveLine(),

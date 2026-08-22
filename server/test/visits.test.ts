@@ -49,8 +49,10 @@ describe('история посещений', () => {
   });
 
   it('битый файл не роняет чтение', async () => {
-    const [file] = await fs.readdir(path.join(state, 'visits'));
-    await fs.writeFile(path.join(state, 'visits', file!), 'не json', 'utf8');
+    const dir = path.join(state, 'visits');
+    for (const file of await fs.readdir(dir)) {
+      await fs.writeFile(path.join(dir, file), 'не json', 'utf8');
+    }
     expect(await loadVisits(state, root)).toEqual([]);
   });
 });

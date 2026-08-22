@@ -2,12 +2,16 @@ import {
   addCursorAbove,
   addCursorBelow,
   copyLineDown,
+  cursorGroupLeft,
+  cursorGroupRight,
   deleteLine,
   indentLess,
   indentMore,
   moveLineDown,
   moveLineUp,
   redo,
+  selectGroupLeft,
+  selectGroupRight,
   toggleComment,
   undo,
 } from '@codemirror/commands';
@@ -84,6 +88,11 @@ export function registerCommands(): void {
 
   registerCommand('nav.back', () => goBack());
   registerCommand('nav.forward', () => goForward());
+
+  registerCommand('edit.wordLeft', () => inEditor(cursorGroupLeft));
+  registerCommand('edit.wordRight', () => inEditor(cursorGroupRight));
+  registerCommand('edit.selectWordLeft', () => inEditor(selectGroupLeft));
+  registerCommand('edit.selectWordRight', () => inEditor(selectGroupRight));
 
   registerCommand('edit.indent', () => inEditor(indentMore));
   registerCommand('edit.unindent', () => inEditor(indentLess));
