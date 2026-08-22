@@ -126,6 +126,7 @@ export interface Events {
   'doc.conflict': { path: string };
   'tree.changed': { path: string };
   'doc.removed': { path: string };
+  'doc.moved': { from: string; path: string };
 
   'lsp.status': LspStatus;
   'lsp.diagnostics': FileDiagnostics;

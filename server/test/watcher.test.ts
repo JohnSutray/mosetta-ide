@@ -148,6 +148,25 @@ describe('слежение за диском', () => {
     expect(tree.map((entry) => entry.name)).toContain('fresh.ts');
   }, 15_000);
 
+  it('переезд открытого файла не убивает документ', async () => {
+    const doc = await c.call('doc.open', { path: 'src/main.ts' });
+    await c.call('doc.edit', {
+      path: 'src/main.ts',
+      text: 'const a = 2;\n',
+      baseVersion: doc.version,
+    });
+
+    const moved = c.nextEvent('doc.moved');
+    await c.call('fs.move', { from: 'src/main.ts', to: 'moved.ts' });
+    expect(await moved).toMatchObject({ from: 'src/main.ts', path: 'moved.ts' });
+
+    await settle(300);
+    const state = await c.call('doc.state', { path: 'moved.ts' });
+    expect(state.text).toContain('a = 2');
+    expect(state.dirty).toBe(true);
+    expect(c.events('doc.removed')).toEqual([]);
+  }, 15_000);
+
   it('временные файлы редакторов не всплывают', async () => {
     await fs.writeFile(path.join(root, 'src', '.main.ts.tmp-123-abc'), 'мусор\n', 'utf8');
     await fs.writeFile(path.join(root, 'src', 'main.ts~'), 'мусор\n', 'utf8');

@@ -25,6 +25,7 @@ export type RamEvent =
   | { type: 'doc.conflict'; path: string }
   | { type: 'doc.closed'; path: string }
   | { type: 'doc.removed'; path: string }
+  | { type: 'doc.moved'; path: string; from: string }
   | { type: 'tree.changed'; path: string };
 
 interface DirNode {
@@ -51,6 +52,10 @@ export class RamFs {
     private readonly log: Logger,
   ) {
     this.offOs = os.on((event) => {
+      if (event.type === 'moved' && event.from !== undefined) {
+        void this.onDiskMove(event.from, event.path);
+        return;
+      }
       if (event.type !== 'wrote' || !event.revision) return;
       this.onDiskWrite(event.path, event.revision);
     });
@@ -298,7 +303,11 @@ export class RamFs {
       await this.syncFile(key, stat.revision);
     }
 
-    for (const dir of dirsToRefresh) {
+    await this.refreshDirs(dirsToRefresh);
+  }
+
+  private async refreshDirs(dirs: Iterable<string>): Promise<void> {
+    for (const dir of dirs) {
       if (!this.dirs.has(dir)) continue;
       try {
         const entries = await this.os.list(dir);
@@ -306,6 +315,29 @@ export class RamFs {
         this.emit({ type: 'tree.changed', path: dir });
       } catch {}
     }
+  }
+
+  private async onDiskMove(from: string, to: string): Promise<void> {
+    if (this.disposed) return;
+
+    const prefix = `${from}/`;
+    const moved: Array<{ from: string; to: string }> = [];
+    for (const key of [...this.docs.keys()]) {
+      if (key !== from && !key.startsWith(prefix)) continue;
+      const doc = this.docs.get(key)!;
+      const next = key === from ? to : `${to}/${key.slice(prefix.length)}`;
+      this.docs.delete(key);
+      doc.path = next;
+      this.docs.set(next, doc);
+      moved.push({ from: key, to: next });
+    }
+
+    for (const dirKey of [...this.dirs.keys()]) {
+      if (dirKey === from || dirKey.startsWith(prefix)) this.dirs.delete(dirKey);
+    }
+
+    for (const item of moved) this.emit({ type: 'doc.moved', path: item.to, from: item.from });
+    await this.refreshDirs(new Set([parentOf(from), parentOf(to)]));
   }
 
   private async syncFile(key: string, revision: string): Promise<void> {

@@ -272,6 +272,21 @@ rpc.on('doc.conflict', (event) => {
   );
 });
 
+rpc.on('doc.moved', (event) => {
+  fileHistory.value = fileHistory.value.map((path) => (path === event.from ? event.path : path));
+  if (openFile.value?.path !== event.from) return;
+  void rpc
+    .call('doc.state', { path: event.path })
+    .then((doc) => {
+      docSync.attach(doc);
+      batch(() => {
+        openFile.value = doc;
+        dirty.value = doc.dirty;
+      });
+    })
+    .catch((err) => complain(describe(err)));
+});
+
 rpc.on('doc.removed', (event) => {
   if (openFile.value?.path !== event.path) return;
   const back = fileHistory.value.find((path) => path !== event.path);

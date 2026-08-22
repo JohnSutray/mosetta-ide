@@ -26,7 +26,7 @@ export class GitIndex {
   private debounce: ReturnType<typeof setTimeout> | null = null;
   private poll: ReturnType<typeof setInterval> | null = null;
   private running: Promise<void> | null = null;
-  private again = false;
+  private queued: Promise<void> | null = null;
   private disposed = false;
 
   private autoFetch: ReturnType<typeof setInterval> | null = null;
@@ -86,15 +86,14 @@ export class GitIndex {
   async refresh(): Promise<void> {
     if (this.disposed) return;
     if (this.running) {
-      this.again = true;
-      return this.running;
+      this.queued ??= this.running.then(() => {
+        this.queued = null;
+        return this.refresh();
+      });
+      return this.queued;
     }
     this.running = this.doRefresh().finally(() => {
       this.running = null;
-      if (this.again && !this.disposed) {
-        this.again = false;
-        void this.refresh();
-      }
     });
     return this.running;
   }

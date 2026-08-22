@@ -8,7 +8,7 @@ import {
   openSearch,
   searchOpen,
 } from './state/search.js';
-import { activeEditor, editorHasFocus } from './state/editor.js';
+import { activeEditor, editorHasFocus, focusEditor } from './state/editor.js';
 import { closeTop } from './state/popups.js';
 import { activePick } from './state/pick.js';
 import { toggleScripts } from './state/scripts.js';
@@ -22,7 +22,7 @@ import {
   pasteInto,
   treeFocus,
 } from './state/tree-ops.js';
-import { dirChildren } from './state/session.js';
+import { dirChildren, openFileAt, toggleDir } from './state/session.js';
 import {
   problemsPanelVisible,
   reloadDoc,
@@ -38,7 +38,6 @@ import {
   hideProjects,
   moveSuggestion,
   openSuggest,
-  projectsVisible,
   showProjects,
   closeSuggest,
   suggestOpen,
@@ -68,13 +67,19 @@ export function registerCommands(): void {
 
   registerCommand('tree.newFile', () => onFocused((path, isDir) => askCreate(path, isDir, 'file')));
   registerCommand('tree.newFolder', () => onFocused((path, isDir) => askCreate(path, isDir, 'dir')));
-  registerCommand('tree.rename', () => onFocused((path) => askRename(path)));
-  registerCommand('tree.delete', () => onFocused((path, isDir) => askRemove(path, isDir)));
-  registerCommand('tree.copy', () => onFocused((path) => copyToClipboard(path, false)));
-  registerCommand('tree.cut', () => onFocused((path) => copyToClipboard(path, true)));
+  registerCommand('tree.open', () =>
+    onPicked((path, isDir) => {
+      if (isDir) void toggleDir(path);
+      else void openFileAt(path).then(focusEditor);
+    }),
+  );
+  registerCommand('tree.rename', () => onPicked((path) => askRename(path)));
+  registerCommand('tree.delete', () => onPicked((path, isDir) => askRemove(path, isDir)));
+  registerCommand('tree.copy', () => onPicked((path) => copyToClipboard(path, false)));
+  registerCommand('tree.cut', () => onPicked((path) => copyToClipboard(path, true)));
   registerCommand('tree.paste', () => onFocused((path, isDir) => void pasteInto(path, isDir)));
-  registerCommand('tree.copyPath', () => onFocused((path) => void copyAbsolutePath(path)));
-  registerCommand('tree.reveal', () => onFocused((path) => void revealInOs(path)));
+  registerCommand('tree.copyPath', () => onPicked((path) => void copyAbsolutePath(path)));
+  registerCommand('tree.reveal', () => onPicked((path) => void revealInOs(path)));
   registerCommand('panel.terminal', () => {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });
@@ -119,12 +124,18 @@ function onFocused(run: (path: string, isDir: boolean) => void): void {
   run(path, path === '' ? true : entry?.kind === 'dir');
 }
 
+function onPicked(run: (path: string, isDir: boolean) => void): void {
+  const path = treeFocus.value;
+  if (!path) return;
+  onFocused(run);
+}
+
 export function resolveContext(): KeyContext {
   if (searchOpen.value) return 'search';
   if (activePick.value) return 'pick';
   if (editorHasFocus()) return 'editor';
   const active = document.activeElement;
-  if (projectsVisible.value && active?.closest('.projects')) return 'projects';
+  if (active?.closest('.projects')) return 'projects';
   if (active?.closest('.column-tree')) return 'tree';
   return 'global';
 }

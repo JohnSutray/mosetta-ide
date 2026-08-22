@@ -26,6 +26,7 @@
 
     { "command": "tree.newFile", "key": "mod+n", "when": "tree" },
     { "command": "tree.newFolder", "key": "mod+shift+n", "when": "tree" },
+    { "command": "tree.open", "key": "enter", "when": "tree" },
     { "command": "tree.rename", "key": "f2", "when": "tree" },
     { "command": "tree.delete", "key": "backspace", "when": "tree" },
     { "command": "tree.copy", "key": "mod+c", "when": "tree" },

@@ -30,6 +30,7 @@ export const COMMANDS = {
 
   'tree.newFile': 'Дерево: новый файл',
   'tree.newFolder': 'Дерево: новая папка',
+  'tree.open': 'Дерево: открыть и уйти в редактор',
   'tree.rename': 'Дерево: переименовать',
   'tree.delete': 'Дерево: удалить',
   'tree.copy': 'Дерево: копировать',

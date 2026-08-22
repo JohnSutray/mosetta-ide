@@ -19,6 +19,7 @@ import { darcula } from './darcula.js';
 import { languageFor } from './languages.js';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
 import { lspHover } from './hover.js';
+import { takeFocusOnMount } from '../state/editor.js';
 
 const externalUpdate = Annotation.define<boolean>();
 
@@ -92,7 +93,7 @@ export function Editor({
     });
     view.current = instance;
     onMount(instance);
-    instance.focus();
+    if (takeFocusOnMount()) instance.focus();
 
     return () => {
       onMount(null);

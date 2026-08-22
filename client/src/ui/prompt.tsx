@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { prompt, promptAnswer, promptCancel } from '../state/tree-ops.js';
+import { focusTree, prompt, promptAnswer, promptCancel } from '../state/tree-ops.js';
 import { t } from '../i18n/index.js';
 import { Popup } from './popup.js';
 
@@ -14,6 +14,10 @@ export function Prompt() {
     const dot = value.lastIndexOf('.');
     field.current?.setSelectionRange(0, dot > 0 ? dot : value.length);
   }, [ask?.id]);
+
+  useEffect(() => {
+    if (!ask) focusTree();
+  }, [ask === null]);
 
   if (!ask) return null;
 

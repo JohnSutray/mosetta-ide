@@ -7,9 +7,10 @@ import { RpcError } from '../errors.js';
 import { expandRoot, joinKey, toAbsolute, toKey } from '../workspace/paths.js';
 
 export interface OsEvent {
-  type: 'wrote' | 'removed';
+  type: 'wrote' | 'removed' | 'moved';
   path: string;
   revision?: string;
+  from?: string;
 }
 
 export interface OsStat {
@@ -217,6 +218,7 @@ export class OsFs {
     }
     await fs.mkdir(path.dirname(target), { recursive: true });
     await fs.rename(source, target);
+    this.emit({ type: 'moved', path: toKey_, from: fromKey });
     return this.describe(toKey_);
   }
 

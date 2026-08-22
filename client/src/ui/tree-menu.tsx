@@ -7,6 +7,7 @@ import {
   copyAbsolutePath,
   copyToClipboard,
   pasteInto,
+  focusTree,
   revealInOs,
   targets,
 } from '../state/tree-ops.js';
@@ -46,6 +47,7 @@ export function TreeMenu() {
           onClick={() => {
             treeMenu.value = null;
             item.run();
+            focusTree();
           }}
         >
           {t(item.label)}

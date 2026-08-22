@@ -64,6 +64,12 @@ export class SearchIndex {
           this.pending.delete(event.path);
           this.staleTree = true;
           break;
+        case 'doc.moved':
+          this.symbols.delete(event.from);
+          this.pending.delete(event.from);
+          this.staleTree = true;
+          this.enqueue(event.path);
+          break;
         default:
           break;
       }

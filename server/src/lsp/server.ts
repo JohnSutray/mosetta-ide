@@ -12,7 +12,7 @@ import type {
 import { RpcErrorCode } from '@ide/protocol';
 import { RpcError } from '../errors.js';
 import type { Logger } from '../log.js';
-import type { RamFs } from '../fs/ram-fs.js';
+import type { RamEvent, RamFs } from '../fs/ram-fs.js';
 import { extensionOf } from '../workspace/paths.js';
 import { encodeFrame, FrameDecoder } from './codec.js';
 import { initOptionsFor } from '../env/toolchain.js';
@@ -96,7 +96,7 @@ export class LspServer {
     this.notify('initialized', {});
     this.setState('ready');
 
-    this.offRam = this.ram.on((event) => this.onRam(event.type, event.path));
+    this.offRam = this.ram.on((event) => this.onRam(event));
     for (const doc of this.ram.files()) {
       const resident = this.ram.docSync(doc.path);
       if (resident && resident.openCount > 0) this.didOpen(doc.path);
@@ -159,9 +159,15 @@ export class LspServer {
     return result.range ? { markdown, range: result.range } : { markdown };
   }
 
-  private onRam(type: string, key: string): void {
+  private onRam(event: RamEvent): void {
+    const key = event.path;
+    if (event.type === 'doc.moved') {
+      this.didClose(event.from);
+      this.didOpen(key);
+      return;
+    }
     if (this.state !== 'ready' || !this.handles(key)) return;
-    switch (type) {
+    switch (event.type) {
       case 'doc.opened':
         this.didOpen(key);
         break;
@@ -192,6 +198,12 @@ export class LspServer {
         text: doc.text,
       },
     });
+    this.emitStatus();
+  }
+
+  private didClose(key: string): void {
+    if (!this.openDocs.delete(key)) return;
+    this.notify('textDocument/didClose', { textDocument: { uri: this.uri(key) } });
     this.emitStatus();
   }
 

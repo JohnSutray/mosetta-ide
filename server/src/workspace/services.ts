@@ -66,6 +66,9 @@ export class Services {
           case 'doc.removed':
             ws.broadcast('doc.removed', { path: event.path });
             break;
+          case 'doc.moved':
+            ws.broadcast('doc.moved', { from: event.from, path: event.path });
+            break;
           default:
             break;
         }

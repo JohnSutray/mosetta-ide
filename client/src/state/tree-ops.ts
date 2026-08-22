@@ -3,9 +3,9 @@ import type { EntryKind } from '@ide/protocol';
 import {
   complain,
   current,
+  docSync,
   ensureExpanded,
   loadDir,
-  openFile,
   openFileAt,
   rpc,
   say,
@@ -132,9 +132,9 @@ export function askRename(path: string): void {
     run: async (next) => {
       if (next === name) return;
       const to = parent === '' ? next : `${parent}/${next}`;
+      await docSync.flush();
       await rpc.call('fs.move', { from: path, to });
       await loadDir(parent);
-      if (openFile.value?.path === path) await openFileAt(to);
       say(t('tree.renamed', { name: next }));
     },
   });
@@ -186,6 +186,7 @@ export async function revealInOs(path: string): Promise<void> {
 }
 
 export async function dropInto(paths: string[], folder: string, copy: boolean): Promise<void> {
+  if (!copy) await docSync.flush();
   for (const from of paths) {
     const name = from.slice(from.lastIndexOf('/') + 1);
     const to = join(folder, name);
@@ -294,6 +295,11 @@ function toBase64(blob: Blob): Promise<string> {
 
 function describe(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+export function focusTree(): void {
+  if (document.activeElement !== document.body) return;
+  (document.querySelector('.tree') as HTMLElement | null)?.focus();
 }
 
 export function hasProject(): boolean {

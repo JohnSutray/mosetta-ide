@@ -19,6 +19,7 @@ import {
   treeFocus,
   treeSelection,
 } from '../state/tree-ops.js';
+import { focusEditor, openWithoutFocus } from '../state/editor.js';
 import { MOD_IS_META } from '../keys/host.js';
 import { t } from '../i18n/index.js';
 import { Chevron, DirIcon, FileIcon, RootIcon } from './file-icons.js';
@@ -29,9 +30,10 @@ export function Tree() {
   if (!ws || !children) return <div class="tree-empty">…</div>;
   const open = rootExpanded.value;
   return (
-    <div class="tree">
+    <div class="tree" tabIndex={-1} onMouseDown={(event) => event.currentTarget.focus()}>
       <div
         class="tree-row is-root"
+        data-path=""
         onClick={() => (rootExpanded.value = !rootExpanded.value)}
         onContextMenu={(event) => {
           event.preventDefault();
@@ -41,9 +43,12 @@ export function Tree() {
         onDragOver={(event) => {
           event.preventDefault();
           if (event.dataTransfer) event.dataTransfer.dropEffect = event.altKey ? 'copy' : 'move';
+          markDrop('');
         }}
+        onDragLeave={() => clearDrop()}
         onDrop={(event) => {
           event.preventDefault();
+          clearDrop();
           const raw = event.dataTransfer?.getData('application/x-ide-paths');
           if (raw) void dropInto(JSON.parse(raw) as string[], '', event.altKey);
         }}
@@ -100,6 +105,7 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
           treeSelection.value.has(entry.path) ? 'is-picked' : ''
         } ${treeFocus.value === entry.path ? 'is-focused' : ''}`}
         style={{ paddingLeft: `${6 + depth * 14}px` }}
+        data-path={entry.path}
         draggable
         onDragStart={(event) => {
           const paths = treeSelection.value.has(entry.path)
@@ -109,21 +115,19 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
           if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copyMove';
         }}
         onDragOver={(event) => {
-          if (!isDir) return;
           event.preventDefault();
           if (event.dataTransfer) {
             event.dataTransfer.dropEffect = event.altKey ? 'copy' : 'move';
           }
-          (event.currentTarget as HTMLElement).classList.add('is-drop');
+          markDrop(folderFor(entry));
         }}
-        onDragLeave={(event) => (event.currentTarget as HTMLElement).classList.remove('is-drop')}
+        onDragLeave={() => clearDrop()}
         onDrop={(event) => {
-          (event.currentTarget as HTMLElement).classList.remove('is-drop');
-          if (!isDir) return;
           event.preventDefault();
+          clearDrop();
           const raw = event.dataTransfer?.getData('application/x-ide-paths');
           if (!raw) return;
-          void dropInto(JSON.parse(raw) as string[], entry.path, event.altKey);
+          void dropInto(JSON.parse(raw) as string[], folderFor(entry), event.altKey);
         }}
         onClick={(event) => {
           const additive = MOD_IS_META ? event.metaKey : event.ctrlKey;
@@ -136,8 +140,15 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
             return;
           }
           selectOnly(entry.path);
-          if (isDir) void toggleDir(entry.path);
-          else void openFileAt(entry.path);
+          if (isDir) {
+            void toggleDir(entry.path);
+            return;
+          }
+          openWithoutFocus();
+          void openFileAt(entry.path);
+        }}
+        onDblClick={() => {
+          if (!isDir) void openFileAt(entry.path).then(focusEditor);
         }}
         onContextMenu={(event) => {
           event.preventDefault();
@@ -161,6 +172,27 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
       {kids ? <Level entries={kids} depth={depth + 1} /> : null}
     </>
   );
+}
+
+function folderFor(entry: DirEntry): string {
+  if (entry.kind === 'dir') return entry.path;
+  const at = entry.path.lastIndexOf('/');
+  return at === -1 ? '' : entry.path.slice(0, at);
+}
+
+let marked: Element | null = null;
+
+function markDrop(folder: string): void {
+  const next = document.querySelector(`.tree-row[data-path="${CSS.escape(folder)}"]`);
+  if (next === marked) return;
+  marked?.classList.remove('is-drop');
+  marked = next;
+  marked?.classList.add('is-drop');
+}
+
+function clearDrop(): void {
+  marked?.classList.remove('is-drop');
+  marked = null;
 }
 
 function shortenHome(root: string): string {

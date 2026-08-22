@@ -62,7 +62,7 @@ export function installDispatcher(
     }
 
     const key = eventToKey(event);
-    if (key) fire(key, event);
+    if (key && !typedIntoField(event)) fire(key, event);
   };
 
   const onKeyUp = (event: KeyboardEvent) => {
@@ -97,6 +97,22 @@ export function installDispatcher(
       window.removeEventListener('keyup', onKeyUp, { capture: true });
     },
   };
+}
+
+export function typedIntoField(event: KeyboardEvent): boolean {
+  if (event.metaKey || event.ctrlKey || event.altKey) return false;
+  const edits =
+    event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete';
+  if (!edits) return false;
+  return isTextField(event.target);
+}
+
+function isTextField(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  if (!el) return false;
+  if (el.isContentEditable) return true;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA';
 }
 
 export function eventToKey(event: KeyboardEvent): string | null {
