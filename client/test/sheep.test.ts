@@ -33,6 +33,18 @@ function put(world: World, x: number, y: number): void {
 }
 
 describe('овцы', () => {
+  it('появляются, когда у поля появился размер, а не при создании мира', () => {
+    const world = createWorld();
+    step(world, 0, 0, steady);
+    expect(world.flock).toHaveLength(0);
+    step(world, W, H, steady);
+    expect(world.flock.length).toBeGreaterThan(0);
+    for (const s of world.flock) {
+      expect(s.x).toBeGreaterThan(0);
+      expect(s.x).toBeLessThan(W);
+    }
+  });
+
   it('приходят из-за края и заходят внутрь', () => {
     const world = createWorld();
     spawn(world, W, H, () => 0.1);

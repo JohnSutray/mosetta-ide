@@ -11,7 +11,6 @@ import {
   salonAt,
   SHEEP_H,
   SHEEP_W,
-  spawn,
   step,
 } from './sheep-world.js';
 import { t } from '../i18n/index.js';
@@ -181,10 +180,6 @@ export function SheepField() {
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
 
-    const { w, h } = size();
-    spawn(world, w, h, Math.random, true);
-    spawn(world, w, h, Math.random, true);
-    spawn(world, w, h, Math.random, true);
     draw();
 
     return () => {

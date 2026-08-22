@@ -19,6 +19,7 @@ export interface Bale {
 export interface World {
   flock: Sheep[];
   bales: Bale[];
+  seeded: boolean;
   waiting: boolean;
   held: Sheep | null;
   merged: number;
@@ -37,7 +38,7 @@ const SPEED = 0.5;
 export const SPAWN_EVERY = 180;
 
 export function createWorld(): World {
-  return { flock: [], bales: [], waiting: false, held: null, merged: 0, shorn: 0, frame: 0 };
+  return { flock: [], bales: [], seeded: false, waiting: false, held: null, merged: 0, shorn: 0, frame: 0 };
 }
 
 export function barnAt(w: number, h: number) {
@@ -70,6 +71,12 @@ export function spawn(world: World, w: number, h: number, roll = Math.random, in
 
 export function step(world: World, w: number, h: number, roll = Math.random): void {
   world.frame += 1;
+  if (!world.seeded && w >= 80 && h >= 60) {
+    world.seeded = true;
+    spawn(world, w, h, roll, true);
+    spawn(world, w, h, roll, true);
+    spawn(world, w, h, roll, true);
+  }
   if (world.frame % SPAWN_EVERY === 0) spawn(world, w, h, roll);
 
   for (const s of world.flock) {
