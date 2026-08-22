@@ -51,6 +51,7 @@ import { hideProjects, showProjects } from '../state/projects.js';
 import { headText, loadHead, showHunk } from '../state/git-marks.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
+import { noteUnbound } from '../state/keys-help.js';
 import { SheepField } from './sheep.js';
 
 export function App() {
@@ -64,9 +65,11 @@ export function App() {
     if (dead.length) {
       console.warn('[web-ide] команды без реализации:', dead.join(', '));
     }
-    const dispatcher = installDispatcher(resolveContext, (binding, reason) => {
-      say(`${humanizeKey(binding.key)} — ${reason}`);
-    });
+    const dispatcher = installDispatcher(
+      resolveContext,
+      (binding, reason) => say(`${humanizeKey(binding.key)} — ${reason}`),
+      (key) => noteUnbound(key),
+    );
     dispatcher.setKeymap(keymapSignal.peek());
     const stop = keymapSignal.subscribe((value) => dispatcher.setKeymap(value));
     return () => {

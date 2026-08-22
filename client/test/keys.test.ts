@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { eventToKey, resolveClip, typedIntoField } from '../src/keys/dispatcher.js';
+import { complains, eventToKey, resolveClip, typedIntoField } from '../src/keys/dispatcher.js';
 import { CLIP } from '../src/keys/host.js';
 
 function press(key: string, target: unknown, mods: Record<string, boolean> = {}) {
@@ -125,5 +125,39 @@ describe('клавиша от клетки, а не от символа', () => 
   it('без кода остаётся запасной путь по символу', () => {
     expect(eventToKey(stroke('', 'ё'))).toBe('backquote');
     expect(eventToKey(stroke('', 'k', { ctrlKey: true }))).toBe('mod+k');
+  });
+});
+
+describe('жалоба на клавишу без команды', () => {
+  const clip = new Set(['cmd+c', 'cmd+x', 'cmd+v', 'cmd+shift+c']);
+  const once = { repeat: false, clip };
+
+  it('свой модификатор без команды — говорим', () => {
+    expect(complains('mod+j', once)).toBe(true);
+    expect(complains('mod+shift+j', once)).toBe(true);
+  });
+
+  it('чужие модификаторы молчат', () => {
+    expect(complains('alt+space', once)).toBe(false);
+    expect(complains('cmd+c', once)).toBe(false);
+    expect(complains('alt+shift+arrowup', once)).toBe(false);
+  });
+
+  it('голая клавиша это ввод, а не промах', () => {
+    expect(complains('k', once)).toBe(false);
+    expect(complains('escape', once)).toBe(false);
+  });
+
+  it('механика ввода редактора молчит', () => {
+    expect(complains('mod+arrowup', once)).toBe(false);
+    expect(complains('mod+arrowdown', once)).toBe(false);
+  });
+
+  it('зажатая клавиша не бубнит', () => {
+    expect(complains('mod+j', { repeat: true, clip })).toBe(false);
+  });
+
+  it('буфер обмена этой раскладки молчит, даже если он на `mod`', () => {
+    expect(complains('mod+c', { repeat: false, clip: new Set(['mod+c']) })).toBe(false);
   });
 });

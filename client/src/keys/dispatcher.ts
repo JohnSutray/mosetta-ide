@@ -1,9 +1,25 @@
 import type { KeyBinding, KeyContext, Keymap } from '@ide/protocol';
 import { runCommand } from './commands.js';
 import { echoKey } from '../state/keys-help.js';
+import { mechanicsKeys } from '../editor/input-keymap.js';
 import { CLIP, HOST, humanizeKey, IS_MAC, MOD_IS_META } from './host.js';
 
 export type ContextResolver = () => KeyContext;
+
+const CAPTURING = new Set<KeyContext>(['keys']);
+
+const MECHANICS = mechanicsKeys(MOD_IS_META, IS_MAC);
+
+export function complains(
+  key: string,
+  opts: { repeat: boolean; clip: ReadonlySet<string> },
+): boolean {
+  if (opts.repeat) return false;
+  if (!key.split('+').includes('mod')) return false;
+  if (opts.clip.has(key)) return false;
+  if (MECHANICS.has(key)) return false;
+  return true;
+}
 
 interface Installed {
   setKeymap(keymap: Keymap): void;
@@ -35,8 +51,10 @@ const DOUBLE_TAP_MS = 400;
 export function installDispatcher(
   resolveContext: ContextResolver,
   onBlocked: (binding: KeyBinding, reason: string) => void,
+  onUnbound: (key: string) => void,
 ): Installed {
   let bindings: KeyBinding[] = [];
+  let clipKeys: ReadonlySet<string> = new Set<string>();
 
   let holding: { key: string; clean: boolean } | null = null;
   let lastTapKey = '';
@@ -49,7 +67,18 @@ export function installDispatcher(
       bindings.find((b) => (b.when ?? 'global') === 'global' && b.key === key);
 
     echoKey(key, context, binding?.command ?? null);
-    if (!binding) return;
+    if (!binding) {
+      if (!CAPTURING.has(context) && complains(key, { repeat: event.repeat, clip: clipKeys })) {
+        onUnbound(key);
+      }
+      return;
+    }
+
+    if (CAPTURING.has(context) && (binding.when ?? 'global') !== context) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
 
     const blocked = binding.unavailable?.[HOST];
     if (blocked) {
@@ -102,6 +131,11 @@ export function installDispatcher(
   return {
     setKeymap(keymap) {
       bindings = keymap.bindings.map((binding) => ({ ...binding, key: resolveClip(binding.key) }));
+      clipKeys = new Set(
+        keymap.bindings
+          .filter((binding) => binding.key.includes('clip+'))
+          .map((binding) => resolveClip(binding.key)),
+      );
     },
     dispose() {
       window.removeEventListener('keydown', onKeyDown, { capture: true });

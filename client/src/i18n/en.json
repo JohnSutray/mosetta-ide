@@ -26,6 +26,7 @@
   "toolbar.noBranch": "no branch",
   "toolbar.noRepo": "not a git repository",
   "toolbar.keys": "All keys",
+  "keys.unbound": "{key} does nothing. {help} lists every key.",
 
   "command.file.save": "Save file",
   "command.file.reload": "Reload file from disk",
@@ -88,6 +89,7 @@
   "keys.mod.browser": "Main key here is {mod}. In a browser Cmd belongs to the browser — it switches tabs and opens windows, so it cannot be ours. The desktop app gets Cmd back.",
   "keys.mod.electron": "Main key here is {mod}. Nothing else claims it in the desktop app.",
   "keys.clip": "Copy and paste stay on {clip} — that habit comes from the system, not from this file.",
+  "keys.captured": "While this window is open, keys are shown but not run — nothing behind it moves. Escape is caught too, so close with the × in the corner.",
   "keys.echo": "Last press",
   "keys.echo.none": "press any shortcut — it will show up here",
   "keys.echo.free": "no command",

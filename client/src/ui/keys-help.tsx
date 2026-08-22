@@ -28,13 +28,18 @@ export function KeysHelp() {
       size={{ w: 720, h: 560 }}
       min={{ w: 460, h: 320 }}
       onClose={closeKeysHelp}
+      onEscape={() => {}}
     >
+      <span class="keys-close panel-close" title={t('note.close')} onClick={closeKeysHelp}>
+        ×
+      </span>
       <div class="keys-head">
         <div class="keys-title">{t('keys.title')}</div>
         <div class="keys-note">
           {t(HOST === 'browser' ? 'keys.mod.browser' : 'keys.mod.electron')}
         </div>
         <div class="keys-note">{t('keys.clip')}</div>
+        <div class="keys-note is-loud">{t('keys.captured')}</div>
       </div>
 
       <div class="keys-echo">

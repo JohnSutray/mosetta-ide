@@ -1,5 +1,9 @@
 import { signal } from '@preact/signals';
 import type { CommandId, KeyContext } from '@ide/protocol';
+import { settle } from './notifications.js';
+import { keymap } from './config.js';
+import { humanizeKey } from '../keys/host.js';
+import { t } from '../i18n/index.js';
 
 export interface KeyEcho {
   key: string;
@@ -16,6 +20,17 @@ let seq = 0;
 export function echoKey(key: string, context: KeyContext, command: CommandId | null): void {
   seq += 1;
   lastKey.value = { key, context, command, seq };
+}
+
+let missNote = 0;
+
+export function noteUnbound(key: string): void {
+  missNote = settle(missNote, t('keys.unbound', { key: humanizeKey(key), help: helpKey() }));
+}
+
+function helpKey(): string {
+  const bound = keymap.peek().bindings.find((binding) => binding.command === 'keys.show');
+  return bound ? humanizeKey(bound.key) : t('keys.title');
 }
 
 export function toggleKeysHelp(): void {

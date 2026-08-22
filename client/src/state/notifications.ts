@@ -26,16 +26,14 @@ export function notify(text: string, kind: NoteKind = 'info'): number {
   return id;
 }
 
-export function settle(id: number, text: string, kind: NoteKind = 'info'): void {
+export function settle(id: number, text: string, kind: NoteKind = 'info'): number {
   const at = notes.value.findIndex((note) => note.id === id);
-  if (at === -1) {
-    notify(text, kind);
-    return;
-  }
+  if (at === -1) return notify(text, kind);
   const next = [...notes.value];
   next[at] = { ...next[at]!, text, kind };
   notes.value = next;
   arm(id);
+  return id;
 }
 
 export function dismiss(id: number): void {
