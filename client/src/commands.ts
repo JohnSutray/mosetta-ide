@@ -16,7 +16,9 @@ import {
   askCreate,
   askRemove,
   askRename,
+  copyAbsolutePath,
   copyToClipboard,
+  revealInOs,
   pasteInto,
   treeFocus,
 } from './state/tree-ops.js';
@@ -71,6 +73,8 @@ export function registerCommands(): void {
   registerCommand('tree.copy', () => onFocused((path) => copyToClipboard(path, false)));
   registerCommand('tree.cut', () => onFocused((path) => copyToClipboard(path, true)));
   registerCommand('tree.paste', () => onFocused((path, isDir) => void pasteInto(path, isDir)));
+  registerCommand('tree.copyPath', () => onFocused((path) => void copyAbsolutePath(path)));
+  registerCommand('tree.reveal', () => onFocused((path) => void revealInOs(path)));
   registerCommand('panel.terminal', () => {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });

@@ -4,8 +4,11 @@ import {
   askRemove,
   askRename,
   clipboard,
+  copyAbsolutePath,
   copyToClipboard,
   pasteInto,
+  revealInOs,
+  targets,
 } from '../state/tree-ops.js';
 import { t } from '../i18n/index.js';
 
@@ -14,16 +17,23 @@ export function TreeMenu() {
   if (!menu) return null;
 
   const { path, isDir } = menu;
+  const many = targets(path).length > 1;
   const items: Array<{ label: string; danger?: boolean; run: () => void }> = [
     { label: 'tree.newFile', run: () => askCreate(path, isDir, 'file') },
     { label: 'tree.newFolder', run: () => askCreate(path, isDir, 'dir') },
-    { label: 'tree.rename', run: () => askRename(path) },
+    ...(many ? [] : [{ label: 'tree.rename', run: () => askRename(path) }]),
     { label: 'tree.copy', run: () => copyToClipboard(path, false) },
     { label: 'tree.cut', run: () => copyToClipboard(path, true) },
     {
       label: clipboard.value ? 'tree.paste' : 'tree.pasteExternal',
       run: () => void pasteInto(path, isDir),
     },
+    ...(many
+      ? []
+      : [
+          { label: 'tree.copyPath', run: () => void copyAbsolutePath(path) },
+          { label: 'tree.reveal', run: () => void revealInOs(path) },
+        ]),
     { label: 'tree.delete', danger: true, run: () => askRemove(path, isDir) },
   ];
 

@@ -26,9 +26,52 @@ export interface Ask {
 
 export const prompt = signal<Ask | null>(null);
 
-export const clipboard = signal<{ path: string; cut: boolean } | null>(null);
+export const clipboard = signal<{ paths: string[]; cut: boolean } | null>(null);
 
 export const treeFocus = signal<string | null>(null);
+
+export const treeSelection = signal<Set<string>>(new Set());
+
+export const treeAnchor = signal<string | null>(null);
+
+export function targets(path: string): string[] {
+  const selection = treeSelection.value;
+  return selection.has(path) && selection.size > 1 ? [...selection] : [path];
+}
+
+export function selectOnly(path: string): void {
+  batch(() => {
+    treeSelection.value = new Set([path]);
+    treeAnchor.value = path;
+    treeFocus.value = path;
+  });
+}
+
+export function toggleSelected(path: string): void {
+  const next = new Set(treeSelection.value);
+  if (next.has(path)) next.delete(path);
+  else next.add(path);
+  batch(() => {
+    treeSelection.value = next;
+    treeAnchor.value = path;
+    treeFocus.value = path;
+  });
+}
+
+export function selectRange(path: string, visible: string[]): void {
+  const anchor = treeAnchor.value ?? path;
+  const from = visible.indexOf(anchor);
+  const to = visible.indexOf(path);
+  if (from === -1 || to === -1) {
+    selectOnly(path);
+    return;
+  }
+  const [start, end] = from <= to ? [from, to] : [to, from];
+  batch(() => {
+    treeSelection.value = new Set(visible.slice(start, end + 1));
+    treeFocus.value = path;
+  });
+}
 
 let nextAsk = 1;
 
@@ -98,42 +141,80 @@ export function askRename(path: string): void {
 }
 
 export function askRemove(path: string, isDir: boolean): void {
+  const paths = targets(path);
+  const many = paths.length > 1;
   ask({
-    title: isDir ? t('tree.deleteFolder') : t('tree.deleteFile'),
-    text: `${path}\n\n${t('tree.deleteWarn')}`,
+    title: many ? t('tree.deleteMany', { count: paths.length }) : isDir ? t('tree.deleteFolder') : t('tree.deleteFile'),
+    text: `${paths.join('\n')}\n\n${t('tree.deleteWarn')}`,
     field: false,
     confirm: t('tree.delete.do'),
     danger: true,
     run: async () => {
-      const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
-      await rpc.call('fs.remove', { path });
-      await loadDir(parent);
-      say(t('tree.deleted', { path }));
+      for (const item of paths) {
+        await rpc.call('fs.remove', { path: item });
+        await loadDir(item.slice(0, Math.max(0, item.lastIndexOf('/'))));
+      }
+      treeSelection.value = new Set();
+      say(many ? t('tree.deletedMany', { count: paths.length }) : t('tree.deleted', { path }));
     },
   });
 }
 
 export function copyToClipboard(path: string, cut: boolean): void {
-  clipboard.value = { path, cut };
-  say(cut ? t('tree.cut.done', { path }) : t('tree.copied', { path }));
+  const paths = targets(path);
+  clipboard.value = { paths, cut };
+  const what = paths.length > 1 ? t('tree.items', { count: paths.length }) : paths[0]!;
+  say(cut ? t('tree.cut.done', { path: what }) : t('tree.copied', { path: what }));
+}
+
+export async function copyAbsolutePath(path: string): Promise<void> {
+  try {
+    const { path: absolute } = await rpc.call('fs.absolute', { path });
+    await navigator.clipboard.writeText(absolute);
+    say(t('tree.pathCopied', { path: absolute }));
+  } catch (err) {
+    complain(describe(err));
+  }
+}
+
+export async function revealInOs(path: string): Promise<void> {
+  try {
+    await rpc.call('fs.reveal', { path });
+  } catch (err) {
+    complain(describe(err));
+  }
+}
+
+export async function dropInto(paths: string[], folder: string, copy: boolean): Promise<void> {
+  for (const from of paths) {
+    const name = from.slice(from.lastIndexOf('/') + 1);
+    const to = join(folder, name);
+    if (to === from) continue;
+    if (folder === from || folder.startsWith(`${from}/`)) {
+      complain(t('tree.intoItself'));
+      return;
+    }
+    try {
+      if (copy) await rpc.call('fs.copy', { from, to });
+      else await rpc.call('fs.move', { from, to });
+    } catch (err) {
+      complain(describe(err));
+      return;
+    }
+    await loadDir(from.slice(0, Math.max(0, from.lastIndexOf('/'))));
+  }
+  await loadDir(folder);
+  await ensureExpanded(folder);
+  treeSelection.value = new Set();
+  say(copy ? t('tree.copiedInto', { folder: folder || '/' }) : t('tree.movedInto', { folder: folder || '/' }));
 }
 
 export async function pasteInto(at: string, isDir: boolean): Promise<void> {
   const parent = parentOf(at, isDir);
   const own = clipboard.value;
   if (own) {
-    const name = own.path.slice(own.path.lastIndexOf('/') + 1);
-    const to = parent === '' ? name : `${parent}/${name}`;
-    try {
-      if (own.cut) await rpc.call('fs.move', { from: own.path, to });
-      else await rpc.call('fs.copy', { from: own.path, to });
-      if (own.cut) clipboard.value = null;
-      await loadDir(parent);
-      await ensureExpanded(parent);
-      say(t('tree.pasted', { name }));
-    } catch (err) {
-      complain(describe(err));
-    }
+    await dropInto(own.paths, parent, !own.cut);
+    if (own.cut) clipboard.value = null;
     return;
   }
   await pasteFromSystem(parent);

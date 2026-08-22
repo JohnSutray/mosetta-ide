@@ -1,6 +1,6 @@
 import type { KeyBinding, KeyContext, Keymap } from '@ide/protocol';
 import { runCommand } from './commands.js';
-import { HOST, humanizeKey, IS_MAC } from './host.js';
+import { HOST, humanizeKey, IS_MAC, MOD_IS_META } from './host.js';
 
 export type ContextResolver = () => KeyContext;
 
@@ -104,9 +104,10 @@ export function eventToKey(event: KeyboardEvent): string | null {
   if (!main) return null;
 
   const parts: string[] = [];
-  const modPressed = IS_MAC ? event.metaKey : event.ctrlKey;
+  const modPressed = MOD_IS_META ? event.metaKey : event.ctrlKey;
   if (modPressed) parts.push('mod');
-  if (event.ctrlKey && IS_MAC) parts.push('ctrl');
+  if (MOD_IS_META && event.ctrlKey) parts.push('ctrl');
+  if (!MOD_IS_META && IS_MAC && event.metaKey) parts.push('cmd');
   if (event.altKey) parts.push('alt');
   if (event.shiftKey) parts.push('shift');
   parts.push(main);

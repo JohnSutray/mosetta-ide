@@ -1,4 +1,5 @@
 import type { Handler } from '../rpc/context.js';
+import { revealInFileManager } from '../env/reveal.js';
 import { RpcError } from '../errors.js';
 
 export const fsList: Handler<'fs.list'> = (params, ctx) =>
@@ -54,4 +55,16 @@ export const fsWriteBytes: Handler<'fs.writeBytes'> = (params, ctx) => {
     throw RpcError.invalidParams('нужны path и base64');
   }
   return ctx.session.requireWorkspace().services.os.writeBytes(params.path, params.base64);
+};
+
+export const fsReveal: Handler<'fs.reveal'> = async (params, ctx) => {
+  if (!params || typeof params.path !== 'string') throw RpcError.invalidParams('нужен path');
+  const ws = ctx.session.requireWorkspace();
+  await revealInFileManager(ws.resolve(params.path));
+  return null;
+};
+
+export const fsAbsolute: Handler<'fs.absolute'> = (params, ctx) => {
+  if (!params || typeof params.path !== 'string') throw RpcError.invalidParams('нужен path');
+  return { path: ctx.session.requireWorkspace().resolve(params.path) };
 };

@@ -24,6 +24,7 @@ export const dirChildren = signal<Map<string, DirEntry[]>>(new Map());
 export const expanded = signal<Set<string>>(new Set());
 export const rootExpanded = signal(true);
 export const openFile = signal<DocState | null>(null);
+export const fileHistory = signal<string[]>([]);
 export const externalEpoch = signal(0);
 
 export const pendingReveal = signal<{ path: string; line: number; epoch: number } | null>(null);
@@ -69,6 +70,7 @@ function resetProjectScope() {
   docSync.detach();
   batch(() => {
     dirChildren.value = new Map();
+    fileHistory.value = [];
     expanded.value = new Set();
     rootExpanded.value = true;
     openFile.value = null;
@@ -148,6 +150,7 @@ export async function openFileAt(path: string) {
     const doc = await rpc.call('doc.open', { path });
     docSync.attach(doc);
     batch(() => {
+      fileHistory.value = [path, ...fileHistory.value.filter((item) => item !== path)].slice(0, 20);
       openFile.value = doc;
       dirty.value = doc.dirty;
     });
@@ -271,7 +274,15 @@ rpc.on('doc.conflict', (event) => {
 
 rpc.on('doc.removed', (event) => {
   if (openFile.value?.path !== event.path) return;
+  const back = fileHistory.value.find((path) => path !== event.path);
+  batch(() => {
+    fileHistory.value = fileHistory.value.filter((path) => path !== event.path);
+    openFile.value = null;
+    dirty.value = false;
+  });
+  docSync.detach();
   complain(t('file.gone', { path: event.path }));
+  if (back) void openFileAt(back);
 });
 
 rpc.on('tree.changed', (event) => {

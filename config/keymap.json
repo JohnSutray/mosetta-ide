@@ -31,6 +31,7 @@
     { "command": "tree.copy", "key": "mod+c", "when": "tree" },
     { "command": "tree.cut", "key": "mod+x", "when": "tree" },
     { "command": "tree.paste", "key": "mod+v", "when": "tree" },
+    { "command": "tree.copyPath", "key": "mod+shift+c", "when": "tree" },
 
     { "command": "file.reload", "key": "mod+shift+r", "when": "global" },
 
@@ -44,58 +45,37 @@
     {
       "command": "panel.tree",
       "key": "mod+1",
-      "when": "global",
-      "unavailable": {
-        "browser": "Chrome переключает вкладки по Cmd+1. Запусти в app-режиме или дождись Электрона."
-      }
+      "when": "global"
     },
     {
       "command": "search.everywhere",
       "key": "mod+2",
-      "when": "global",
-      "unavailable": {
-        "browser": "Chrome переключает вкладки по Cmd+2. Запусти в app-режиме или дождись Электрона."
-      }
+      "when": "global"
     },
     {
       "command": "git.branches",
       "key": "mod+3",
-      "when": "global",
-      "unavailable": {
-        "browser": "Chrome переключает вкладки по Cmd+3. Запусти в app-режиме или дождись Электрона."
-      }
+      "when": "global"
     },
     {
       "command": "git.push",
       "key": "mod+4",
-      "when": "global",
-      "unavailable": {
-        "browser": "Chrome переключает вкладки по Cmd+4. Запусти в app-режиме или дождись Электрона."
-      }
+      "when": "global"
     },
     {
       "command": "scripts.open",
       "key": "mod+5",
-      "when": "global",
-      "unavailable": {
-        "browser": "Chrome переключает вкладки по Cmd+5. Запусти в app-режиме или дождись Электрона."
-      }
+      "when": "global"
     },
     {
       "command": "panel.problems",
       "key": "mod+6",
-      "when": "global",
-      "unavailable": {
-        "browser": "Chrome переключает вкладки по Cmd+6. Запусти в app-режиме или дождись Электрона."
-      }
+      "when": "global"
     },
     {
       "command": "terminal.create",
       "key": "mod+7",
-      "when": "global",
-      "unavailable": {
-        "browser": "Chrome переключает вкладки по Cmd+7. Запусти в app-режиме или дождись Электрона."
-      }
+      "when": "global"
     }
   ]
 }

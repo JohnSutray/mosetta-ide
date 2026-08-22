@@ -99,12 +99,9 @@ describe('тулбар', () => {
     });
   });
 
-  it('номера объясняют, почему они не работают в браузере', () => {
+  it('номер есть у каждой кнопки тулбара', () => {
     const numbered = keymap().bindings.filter((b) => /^mod\+\d$/.test(b.key));
     expect(numbered.length).toBe(TOOLBAR.length);
-    for (const binding of numbered) {
-      expect(binding.unavailable?.browser, `${binding.key}: молчит про браузер`).toBeTruthy();
-    }
   });
 
   it('ветки git висят на клавише под Escape, а не на символе', () => {

@@ -1064,4 +1064,8 @@ body {
 
 .tree-menu { min-width: 200px; }
 
+.tree-row.is-picked { background: #3c4f63; }
+.tree-row.is-picked.is-current { background: var(--treesel); }
 .tree-row.is-focused { outline: 1px solid var(--treesel); outline-offset: -1px; }
+
+.tree-row.is-drop { background: #40566b; outline: 1px dashed #7ba7d0; outline-offset: -1px; }

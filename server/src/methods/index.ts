@@ -2,12 +2,14 @@ import type { HandlerTable } from '../rpc/context.js';
 import { configGet } from './config.js';
 import { docClose, docEdit, docOpen, docReload, docSave, docState } from './doc.js';
 import {
+  fsAbsolute,
   fsCopy,
   fsCreate,
   fsList,
   fsMove,
   fsRead,
   fsRemove,
+  fsReveal,
   fsWrite,
   fsWriteBytes,
 } from './fs.js';
@@ -70,6 +72,8 @@ export const handlers: HandlerTable = {
   'fs.copy': fsCopy,
   'fs.remove': fsRemove,
   'fs.writeBytes': fsWriteBytes,
+  'fs.reveal': fsReveal,
+  'fs.absolute': fsAbsolute,
 
   'tree.list': treeList,
   'tree.stats': treeStats,

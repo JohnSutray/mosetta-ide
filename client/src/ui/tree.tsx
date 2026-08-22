@@ -11,7 +11,15 @@ import {
 } from '../state/session.js';
 import { gitTint } from '../state/git.js';
 import { openTreeMenu } from '../state/tree-menu.js';
-import { treeFocus } from '../state/tree-ops.js';
+import {
+  dropInto,
+  selectOnly,
+  selectRange,
+  toggleSelected,
+  treeFocus,
+  treeSelection,
+} from '../state/tree-ops.js';
+import { MOD_IS_META } from '../keys/host.js';
 import { t } from '../i18n/index.js';
 import { Chevron, DirIcon, FileIcon, RootIcon } from './file-icons.js';
 
@@ -29,6 +37,15 @@ export function Tree() {
           event.preventDefault();
           treeFocus.value = '';
           openTreeMenu('', true, event.clientX, event.clientY);
+        }}
+        onDragOver={(event) => {
+          event.preventDefault();
+          if (event.dataTransfer) event.dataTransfer.dropEffect = event.altKey ? 'copy' : 'move';
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          const raw = event.dataTransfer?.getData('application/x-ide-paths');
+          if (raw) void dropInto(JSON.parse(raw) as string[], '', event.altKey);
         }}
         title={ws.root}
       >
@@ -56,6 +73,18 @@ function Level({ entries, depth }: { entries: DirEntry[]; depth: number }) {
   );
 }
 
+function visibleOrder(): string[] {
+  const out: string[] = [];
+  const walk = (path: string) => {
+    for (const entry of dirChildren.value.get(path) ?? []) {
+      out.push(entry.path);
+      if (entry.kind === 'dir' && expanded.value.has(entry.path)) walk(entry.path);
+    }
+  };
+  walk('');
+  return out;
+}
+
 function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
   const isDir = entry.kind === 'dir';
   const isOpen = expanded.value.has(entry.path);
@@ -68,17 +97,52 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
     <>
       <div
         class={`tree-row ${isCurrent ? 'is-current' : ''} ${entry.noScan ? 'is-excluded' : ''} ${
-          treeFocus.value === entry.path ? 'is-focused' : ''
-        }`}
+          treeSelection.value.has(entry.path) ? 'is-picked' : ''
+        } ${treeFocus.value === entry.path ? 'is-focused' : ''}`}
         style={{ paddingLeft: `${6 + depth * 14}px` }}
-        onClick={() => {
-          treeFocus.value = entry.path;
+        draggable
+        onDragStart={(event) => {
+          const paths = treeSelection.value.has(entry.path)
+            ? [...treeSelection.value]
+            : [entry.path];
+          event.dataTransfer?.setData('application/x-ide-paths', JSON.stringify(paths));
+          if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copyMove';
+        }}
+        onDragOver={(event) => {
+          if (!isDir) return;
+          event.preventDefault();
+          if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = event.altKey ? 'copy' : 'move';
+          }
+          (event.currentTarget as HTMLElement).classList.add('is-drop');
+        }}
+        onDragLeave={(event) => (event.currentTarget as HTMLElement).classList.remove('is-drop')}
+        onDrop={(event) => {
+          (event.currentTarget as HTMLElement).classList.remove('is-drop');
+          if (!isDir) return;
+          event.preventDefault();
+          const raw = event.dataTransfer?.getData('application/x-ide-paths');
+          if (!raw) return;
+          void dropInto(JSON.parse(raw) as string[], entry.path, event.altKey);
+        }}
+        onClick={(event) => {
+          const additive = MOD_IS_META ? event.metaKey : event.ctrlKey;
+          if (event.shiftKey) {
+            selectRange(entry.path, visibleOrder());
+            return;
+          }
+          if (additive) {
+            toggleSelected(entry.path);
+            return;
+          }
+          selectOnly(entry.path);
           if (isDir) void toggleDir(entry.path);
           else void openFileAt(entry.path);
         }}
         onContextMenu={(event) => {
           event.preventDefault();
-          treeFocus.value = entry.path;
+          if (!treeSelection.value.has(entry.path)) selectOnly(entry.path);
+          else treeFocus.value = entry.path;
           openTreeMenu(entry.path, isDir, event.clientX, event.clientY);
         }}
         title={entry.path}

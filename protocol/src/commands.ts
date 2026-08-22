@@ -35,6 +35,8 @@ export const COMMANDS = {
   'tree.copy': 'Дерево: копировать',
   'tree.cut': 'Дерево: вырезать',
   'tree.paste': 'Дерево: вставить',
+  'tree.copyPath': 'Дерево: скопировать путь',
+  'tree.reveal': 'Дерево: показать в файловом менеджере',
 
   'search.everywhere': 'Найти всё',
   'search.next': 'Поиск: вниз',
