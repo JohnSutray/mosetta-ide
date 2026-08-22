@@ -21,6 +21,7 @@ export interface World {
   flock: Sheep[];
   bales: Bale[];
   seeded: boolean;
+  paused: boolean;
   waiting: Sheep | null;
   held: Sheep | null;
   merged: number;
@@ -42,15 +43,19 @@ const SPEED = 0.5;
 export const SPAWN_EVERY = 180;
 
 export function createWorld(): World {
-  return { flock: [], bales: [], seeded: false, waiting: null, held: null, merged: 0, shorn: 0, frame: 0 };
+  return { flock: [], bales: [], seeded: false, paused: false, waiting: null, held: null, merged: 0, shorn: 0, frame: 0 };
+}
+
+function gap(w: number): number {
+  return Math.max(140, Math.round(w * 0.22));
 }
 
 export function barnAt(w: number, h: number) {
-  return { x: w / 2 - HOUSE_W - 24, y: h / 2 - HOUSE_H / 2 };
+  return { x: w / 2 - HOUSE_W - gap(w) / 2, y: h / 2 - HOUSE_H / 2 };
 }
 
 export function salonAt(w: number, h: number) {
-  return { x: w / 2 + 24, y: h / 2 - HOUSE_H / 2 };
+  return { x: w / 2 + gap(w) / 2, y: h / 2 - HOUSE_H / 2 };
 }
 
 export function spawn(world: World, w: number, h: number, roll = Math.random, inside = false): void {
@@ -116,6 +121,29 @@ export function step(world: World, w: number, h: number, roll = Math.random): vo
   for (let i = 0; i < world.flock.length; i += 1) {
     for (let j = i + 1; j < world.flock.length; j += 1) bump(world.flock[i]!, world.flock[j]!);
   }
+  for (const s of world.flock) {
+    if (s.held) continue;
+    keepOut(s, barnAt(w, h));
+    keepOut(s, salonAt(w, h));
+  }
+}
+
+function keepOut(s: Sheep, house: { x: number; y: number }): void {
+  const w = SHEEP_W * s.level;
+  const h = SHEEP_H * s.level;
+  const left = house.x - (s.x + w);
+  const right = house.x + HOUSE_W - s.x;
+  const top = house.y - (s.y + h);
+  const bottom = house.y + HOUSE_H - s.y;
+  if (left > 0 || right < 0 || top > 0 || bottom < 0) return;
+
+  const out = [
+    { d: -left, fix: () => { s.x = house.x - w; s.vx = -Math.abs(s.vx); } },
+    { d: right, fix: () => { s.x = house.x + HOUSE_W; s.vx = Math.abs(s.vx); } },
+    { d: -top, fix: () => { s.y = house.y - h; s.vy = -Math.abs(s.vy); } },
+    { d: bottom, fix: () => { s.y = house.y + HOUSE_H; s.vy = Math.abs(s.vy); } },
+  ].sort((a, b) => a.d - b.d)[0]!;
+  out.fix();
 }
 
 function bump(a: Sheep, b: Sheep): void {
@@ -184,7 +212,7 @@ export function release(world: World, w: number, h: number): Drop {
     const barn = barnAt(w, h);
     world.flock.push({
       x: barn.x + HOUSE_W / 2,
-      y: barn.y + HOUSE_H,
+      y: barn.y + HOUSE_H + 2,
       vx: SPEED,
       vy: SPEED * 0.4,
       level: together,
@@ -202,7 +230,7 @@ export function release(world: World, w: number, h: number): Drop {
     const salon = salonAt(w, h);
     s.shorn = true;
     s.x = salon.x + HOUSE_W / 2;
-    s.y = salon.y + HOUSE_H;
+    s.y = salon.y + HOUSE_H + 2;
     s.vx = -SPEED;
     world.bales.push({ x: salon.x + HOUSE_W + 4, y: salon.y + HOUSE_H - PX * 4 });
     world.shorn += 1;

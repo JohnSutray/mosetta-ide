@@ -138,6 +138,37 @@ describe('овцы', () => {
     expect(grab(world, 100 - GRAB_PAD * 3, 100)).toBe(false);
   });
 
+  it('сквозь домик не ходят, а обходят', () => {
+    const world = createWorld();
+    const barn = barnAt(W, H);
+    spawn(world, W, H, steady);
+    const sheep = world.flock[0]!;
+    sheep.x = barn.x + 4;
+    sheep.y = barn.y + HOUSE_H / 2;
+    sheep.vx = 1;
+    sheep.vy = 0;
+    walk(world, 40);
+    const inside =
+      sheep.x + SHEEP_W > barn.x &&
+      sheep.x < barn.x + HOUSE_W &&
+      sheep.y + SHEEP_H > barn.y &&
+      sheep.y < barn.y + HOUSE_H;
+    expect(inside).toBe(false);
+  });
+
+  it('на руках домик не отбивает: несут — значит несут', () => {
+    const world = createWorld();
+    const barn = barnAt(W, H);
+    spawn(world, W, H, steady);
+    const sheep = world.flock[0]!;
+    sheep.x = barn.x + HOUSE_W / 2 - SHEEP_W / 2;
+    sheep.y = barn.y + HOUSE_H / 2 - SHEEP_H / 2;
+    grab(world, sheep.x + 1, sheep.y + 1);
+    walk(world, 10);
+    expect(sheep.x).toBe(barn.x + HOUSE_W / 2 - SHEEP_W / 2);
+    expect(release(world, W, H)).toBe('waiting');
+  });
+
   it('в парикмахерской стригут и роняют брикет шерсти', () => {
     const world = createWorld();
     const salon = salonAt(W, H);

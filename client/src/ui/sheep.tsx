@@ -16,12 +16,14 @@ import {
   step,
   type Sheep,
 } from './sheep-world.js';
+import { GLYPH_H, measure, write } from './pixel-font.js';
 import { t } from '../i18n/index.js';
 
 const DIGIT_FONT = "'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif";
 
 const MERGED_KEY = 'sheep.merged';
 const SHORN_KEY = 'sheep.shorn';
+const PAUSED_KEY = 'sheep.paused';
 
 const BODY = [
   '..wwww..',
@@ -32,6 +34,14 @@ const BODY = [
 ];
 
 const LEGS = ['.l...l..', '..l.l...'];
+
+const MINI = ['.mmm.', 'mmmmm', 'kmmmm', '.k.k.'];
+const MINI_BALD = ['.nnn.', 'nnnnn', 'knnnn', '.k.k.'];
+const PLUS = ['..k..', '.kkk.', '..k..'];
+const EQUALS = ['kkk', '...', 'kkk'];
+const SCISSORS = ['k...k', '.k.k.', '..k..', '.k.k.', 'k...k'];
+const WOOL = ['mmmm', 'mmmm'];
+const BIG = MINI;
 
 const BARN = [
   '...rrrr...',
@@ -65,6 +75,9 @@ const COLORS: Record<string, string> = {
   d: '#191919',
   p: '#6a8fb5',
   g: '#7e8a93',
+  m: '#b3afa7',
+  n: '#c79a96',
+  k: '#7e8a93',
   barnReady: '#4a3520',
   barnOver: '#c98a3a',
   salonReady: '#26333f',
@@ -111,10 +124,94 @@ function drawSheep(ctx: CanvasRenderingContext2D, s: Sheep): void {
   }
 }
 
+function drawSign(
+  ctx: CanvasRenderingContext2D,
+  house: { x: number; y: number },
+  parts: string[][],
+): void {
+  const px = 2;
+  const gap = 4;
+  const scale = (art: string[], at: number) =>
+    art === BIG && at === parts.length - 1 ? px * 1.6 : px;
+
+  let width = 0;
+  parts.forEach((art, at) => {
+    width += art[0]!.length * scale(art, at) + gap;
+  });
+  width -= gap;
+
+  let x = house.x + HOUSE_W / 2 - width / 2;
+  const bottom = house.y - 10;
+  for (let at = 0; at < parts.length; at += 1) {
+    const art = parts[at]!;
+    const px2 = scale(art, at);
+    paint(ctx, art, x, bottom - art.length * px2, px2);
+    x += art[0]!.length * px2 + gap;
+  }
+}
+
+function drawShadow(ctx: CanvasRenderingContext2D, s: Sheep): void {
+  const px = PX * s.level;
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+  ctx.fillRect(Math.round(s.x + px), Math.round(s.y + 6 * px), 6 * px, Math.max(2, px / 2));
+}
+
+function drawSwitch(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  paused: boolean,
+): { x: number; y: number; w: number; h: number } {
+  const px = 2;
+  const label = paused ? 'PASTURE CLOSED' : 'PASTURE OPEN';
+  const text = measure(label, px);
+  const pad = 8;
+  const box = { x: Math.round(w / 2 - text / 2 - pad), y: Math.round(h - 46), w: text + pad * 2, h: GLYPH_H * px + pad };
+
+  ctx.fillStyle = paused ? '#3a3d3f' : '#57472f';
+  ctx.fillRect(box.x, box.y, box.w, box.h);
+  ctx.fillStyle = paused ? '#4a4e50' : '#6b5638';
+  ctx.fillRect(box.x, box.y, box.w, 2);
+  ctx.fillStyle = '#4a3a26';
+  ctx.fillRect(Math.round(w / 2 - 2), box.y + box.h, 4, 12);
+  write(ctx, label, box.x + pad, box.y + pad / 2, px, paused ? '#9aa2a8' : '#e8dcc4');
+  return box;
+}
+
+function drawScore(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  merged: number,
+  shorn: number,
+): void {
+  const px = 2;
+  const line = `MERGED ${merged} · SHORN ${shorn}`;
+  write(ctx, line, w - measure(line, px) - 12, h - 8 - GLYPH_H * px, px, '#5f6871');
+}
+
+function drawWords(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  const title = t('editor.empty.title');
+  const hint = t('editor.empty.hint');
+  const titlePx = Math.max(1, Math.min(4, Math.floor((w * 0.82) / (measure(title, 1) || 1))));
+  const hintPx = Math.max(1, Math.min(2, Math.floor((w * 0.7) / (measure(hint, 1) || 1))));
+
+  write(ctx, title, w / 2 - measure(title, titlePx) / 2, h * 0.12, titlePx, '#9aa4ad');
+  write(
+    ctx,
+    hint,
+    w / 2 - measure(hint, hintPx) / 2,
+    h * 0.12 + GLYPH_H * titlePx + 14,
+    hintPx,
+    '#6d757c',
+  );
+}
+
 export function SheepField() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [merged, setMerged] = useState(() => Number(localStorage.getItem(MERGED_KEY) ?? '0'));
   const [shorn, setShorn] = useState(() => Number(localStorage.getItem(SHORN_KEY) ?? '0'));
+  const [, setPaused] = useState(() => localStorage.getItem(PAUSED_KEY) === '1');
 
   useEffect(() => {
     const el = canvas.current;
@@ -124,6 +221,7 @@ export function SheepField() {
     const world = createWorld();
     world.merged = Number(localStorage.getItem(MERGED_KEY) ?? '0');
     world.shorn = Number(localStorage.getItem(SHORN_KEY) ?? '0');
+    world.paused = localStorage.getItem(PAUSED_KEY) === '1';
     let alive = true;
 
     const size = () => ({ w: el.clientWidth, h: el.clientHeight });
@@ -137,12 +235,13 @@ export function SheepField() {
       ctx.imageSmoothingEnabled = false;
     };
     resize();
-    const watcher = new ResizeObserver(resize);
-    watcher.observe(el);
+
+    let switchBox = { x: 0, y: 0, w: 0, h: 0 };
 
     const draw = () => {
       const { w, h } = size();
       ctx.clearRect(0, 0, w, h);
+      drawWords(ctx, w, h);
       const barn = barnAt(w, h);
       const salon = salonAt(w, h);
       const held = world.held;
@@ -156,6 +255,8 @@ export function SheepField() {
         held === null ? undefined : { d: over(house) ? `${kind}Over` : `${kind}Ready` };
       paint(ctx, BARN, barn.x, barn.y, PX * HOUSE_SCALE, false, door('barn', barn));
       paint(ctx, SALON, salon.x, salon.y, PX * HOUSE_SCALE, false, door('salon', salon));
+      drawSign(ctx, barn, [MINI, PLUS, MINI, EQUALS, BIG]);
+      drawSign(ctx, salon, [MINI, PLUS, SCISSORS, EQUALS, MINI_BALD, PLUS, WOOL]);
       const guest = world.waiting;
       if (guest) {
         drawSheep(ctx, {
@@ -171,14 +272,26 @@ export function SheepField() {
         ctx.fillStyle = '#c9c3b8';
         ctx.fillRect(bale.x, bale.y + PX * 2, PX * 5, PX);
       }
+      for (const s of world.flock) drawShadow(ctx, s);
       for (const s of world.flock) drawSheep(ctx, s);
+
+      switchBox = drawSwitch(ctx, w, h, world.paused);
+      drawScore(ctx, w, h, world.merged, world.shorn);
     };
+
+    const watcher = new ResizeObserver(() => {
+      resize();
+      draw();
+    });
+    watcher.observe(el);
 
     const tick = () => {
       if (!alive) return;
       const { w, h } = size();
-      step(world, w, h);
-      draw();
+      if (!world.paused) {
+        step(world, w, h);
+        draw();
+      }
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -190,7 +303,30 @@ export function SheepField() {
 
     const down = (event: PointerEvent) => {
       const p = at(event);
+      if (
+        p.x >= switchBox.x &&
+        p.x <= switchBox.x + switchBox.w &&
+        p.y >= switchBox.y &&
+        p.y <= switchBox.y + switchBox.h
+      ) {
+        toggle();
+        return;
+      }
+      if (world.paused) return;
       if (grab(world, p.x, p.y)) el.setPointerCapture(event.pointerId);
+    };
+
+    const toggle = () => {
+      world.paused = !world.paused;
+      localStorage.setItem(PAUSED_KEY, world.paused ? '1' : '0');
+      if (world.paused) {
+        world.flock.length = 0;
+        world.waiting = null;
+      } else {
+        world.seeded = false;
+      }
+      setPaused(world.paused);
+      draw();
     };
 
     const move = (event: PointerEvent) => {
@@ -209,6 +345,8 @@ export function SheepField() {
         localStorage.setItem(SHORN_KEY, String(world.shorn));
         setShorn(world.shorn);
       }
+      void merged;
+      void shorn;
     };
 
     el.addEventListener('pointerdown', down);
@@ -231,14 +369,7 @@ export function SheepField() {
 
   return (
     <div class="empty-editor">
-      <div class="empty-words">
-        <div class="empty-title">{t('editor.empty.title')}</div>
-        <div class="empty-hint">{t('editor.empty.hint')}</div>
-      </div>
       <canvas class="sheep-field" ref={canvas} />
-      <div class="empty-score">
-        {t('editor.empty.score', { merged: String(merged), shorn: String(shorn) })}
-      </div>
     </div>
   );
 }
