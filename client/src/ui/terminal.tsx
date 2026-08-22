@@ -87,5 +87,5 @@ export function TerminalView() {
   if (!name) {
     return <div class="placeholder">{t('terminal.empty')}</div>;
   }
-  return <div class="term-host" ref={host} />;
+  return <div class="term-host" data-keys="terminal" ref={host} />;
 }

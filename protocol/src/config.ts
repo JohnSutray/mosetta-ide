@@ -53,7 +53,11 @@ export type KeyContext =
   | 'tree'
   | 'search'
   | 'projects'
-  | 'pick';
+  | 'pick'
+  | 'prompt'
+  | 'branch-name'
+  | 'push'
+  | 'terminal';
 
 export type KeyHost = 'browser' | 'electron';
 

@@ -15,6 +15,8 @@ import { parseJsonc } from './jsonc.js';
 
 const log = logger('config');
 
+const WATCHED = new Set(['settings.json', 'keymap.json']);
+
 export class ConfigStore {
   private bundle: ConfigBundle;
   private readonly listeners = new Set<(bundle: ConfigBundle) => void>();
@@ -48,14 +50,13 @@ export class ConfigStore {
   }
 
   watch(): void {
-    for (const name of ['settings.json', 'keymap.json']) {
-      const target = path.join(this.dir, name);
-      try {
-        const watcher = fs.watch(target, () => this.scheduleReload());
-        watcher.unref?.();
-        this.watchers.push(watcher);
-      } catch {}
-    }
+    try {
+      const watcher = fs.watch(this.dir, (_event, name) => {
+        if (name === null || WATCHED.has(String(name))) this.scheduleReload();
+      });
+      watcher.unref?.();
+      this.watchers.push(watcher);
+    } catch {}
   }
 
   dispose(): void {

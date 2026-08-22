@@ -28,6 +28,8 @@ export const COMMANDS = {
 
   'popup.close': 'Закрыть верхний попап',
 
+  'prompt.confirm': 'Модалка: подтвердить',
+
   'tree.newFile': 'Дерево: новый файл',
   'tree.newFolder': 'Дерево: новая папка',
   'tree.open': 'Дерево: открыть и уйти в редактор',

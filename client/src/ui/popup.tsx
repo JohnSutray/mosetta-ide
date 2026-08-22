@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact';
+import type { KeyContext } from '@ide/protocol';
 import { useEffect, useRef } from 'preact/hooks';
 import { resetPopupSize, setPopupSize, sizeOf, type Size } from '../state/layout.js';
 import { enter, leave } from '../state/popups.js';
@@ -6,6 +7,7 @@ import { t } from '../i18n/index.js';
 
 export function Popup({
   id,
+  keys,
   class: extra = '',
   size,
   min,
@@ -15,6 +17,7 @@ export function Popup({
   children,
 }: {
   id: string;
+  keys: KeyContext;
   class?: string;
   size: Size;
   min: Size;
@@ -32,11 +35,18 @@ export function Popup({
     return () => leave(id);
   }, [id, onClose, onEscape]);
 
+  useEffect(() => {
+    if (box.current?.contains(document.activeElement)) return;
+    box.current?.focus({ preventScroll: true });
+  }, []);
+
   return (
     <div class="se-backdrop" onMouseDown={onClose}>
       <div
         ref={box}
         class={`popup ${extra}`}
+        data-keys={keys}
+        tabIndex={-1}
         style={{ width: `${current.w}px`, height: `${current.h}px` }}
         onMouseDown={(event) => {
           event.stopPropagation();

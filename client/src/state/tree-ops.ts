@@ -26,6 +26,8 @@ export interface Ask {
 
 export const prompt = signal<Ask | null>(null);
 
+export const promptDraft = signal('');
+
 export const clipboard = signal<{ paths: string[]; cut: boolean } | null>(null);
 
 export const treeFocus = signal<string | null>(null);
@@ -76,17 +78,20 @@ export function selectRange(path: string, visible: string[]): void {
 let nextAsk = 1;
 
 function ask(spec: Omit<Ask, 'id'>): void {
-  prompt.value = { ...spec, id: nextAsk++ };
+  batch(() => {
+    promptDraft.value = spec.value ?? '';
+    prompt.value = { ...spec, id: nextAsk++ };
+  });
 }
 
 export function promptCancel(): void {
   prompt.value = null;
 }
 
-export async function promptAnswer(value: string): Promise<void> {
+export async function promptAnswer(): Promise<void> {
   const current_ = prompt.value;
   if (!current_) return;
-  const answer = value.trim();
+  const answer = promptDraft.value.trim();
   if (current_.field && answer === '') return;
   try {
     await current_.run(answer);

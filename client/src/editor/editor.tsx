@@ -132,5 +132,5 @@ export function Editor({
     instance.focus();
   }, [reveal?.epoch, file.path]);
 
-  return <div class="editor" ref={host} />;
+  return <div class="editor" data-keys="editor" ref={host} />;
 }

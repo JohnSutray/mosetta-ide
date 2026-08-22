@@ -103,6 +103,43 @@ describe('боевой конфиг в app/config', () => {
   });
 });
 
+describe('слежение за конфигом', () => {
+  it('переживает атомарное сохранение (временный файл + переименование)', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-'));
+    const target = path.join(dir, 'settings.json');
+    await fs.writeFile(target, JSON.stringify({ editor: { fontSize: 13 } }), 'utf8');
+
+    const store = await ConfigStore.load(dir);
+    store.watch();
+
+    const save = async (size: number) => {
+      const waiting = new Promise<void>((resolve) => {
+        const off = store.onChange(() => {
+          off();
+          resolve();
+        });
+      });
+      const temp = path.join(dir, '.settings.json.tmp');
+      await fs.writeFile(temp, JSON.stringify({ editor: { fontSize: size } }), 'utf8');
+      await fs.rename(temp, target);
+      await Promise.race([
+        waiting,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error(`конфиг не перечитан после сохранения ${size}`)), 3000),
+        ),
+      ]);
+    };
+
+    await save(21);
+    expect(store.settings.editor.fontSize).toBe(21);
+    await save(19);
+    expect(store.settings.editor.fontSize).toBe(19);
+
+    store.dispose();
+    await fs.rm(dir, { recursive: true, force: true });
+  }, 10_000);
+});
+
 describe('сломанный конфиг', () => {
   it('не роняет сервер, а откатывается на дефолты', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-'));

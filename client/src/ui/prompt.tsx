@@ -1,5 +1,12 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { focusTree, prompt, promptAnswer, promptCancel, type Ask } from '../state/tree-ops.js';
+import {
+  focusTree,
+  prompt,
+  promptAnswer,
+  promptCancel,
+  promptDraft,
+  type Ask,
+} from '../state/tree-ops.js';
 import { t } from '../i18n/index.js';
 import { Popup } from './popup.js';
 
@@ -38,6 +45,7 @@ export function Prompt() {
   return (
     <Popup
       id={ask.field ? 'prompt-name' : 'prompt-confirm'}
+      keys="prompt"
       class="prompt"
       size={{ w: 460, h: heightFor(ask) }}
       min={{ w: 320, h: 140 }}
@@ -51,7 +59,7 @@ export function Prompt() {
         class="prompt-body"
         onSubmit={(event) => {
           event.preventDefault();
-          promptAnswer(field.current?.value ?? '');
+          void promptAnswer();
         }}
       >
         {ask.text && <div class="prompt-text">{ask.text}</div>}
@@ -59,9 +67,10 @@ export function Prompt() {
           <input
             ref={field}
             class="field"
-            value={ask.value ?? ''}
+            value={promptDraft.value}
             spellcheck={false}
             autocomplete="off"
+            onInput={(event) => (promptDraft.value = (event.target as HTMLInputElement).value)}
           />
         )}
         {ask.error && <div class="prompt-error">{ask.error}</div>}

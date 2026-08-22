@@ -1,14 +1,8 @@
 import { redo, undo } from '@codemirror/commands';
-import type { KeyContext } from '@ide/protocol';
 import { registerCommand, missingCommands } from './keys/commands.js';
-import {
-  acceptSelected,
-  closeSearch,
-  moveSelection,
-  openSearch,
-  searchOpen,
-} from './state/search.js';
-import { activeEditor, editorHasFocus, focusEditor } from './state/editor.js';
+import { resolveContext } from './keys/context.js';
+import { acceptSelected, closeSearch, moveSelection, openSearch } from './state/search.js';
+import { activeEditor, focusEditor } from './state/editor.js';
 import { closeTop } from './state/popups.js';
 import { activePick } from './state/pick.js';
 import { toggleScripts } from './state/scripts.js';
@@ -18,6 +12,7 @@ import {
   askRename,
   copyAbsolutePath,
   copyToClipboard,
+  promptAnswer,
   revealInOs,
   pasteInto,
   treeFocus,
@@ -104,6 +99,8 @@ export function registerCommands(): void {
   registerCommand('pick.accept', () => activePick.value?.accept());
   registerCommand('pick.expand', () => activePick.value?.expand?.());
 
+  registerCommand('prompt.confirm', () => void promptAnswer());
+
   registerCommand('popup.close', () => {
     closeTop();
   });
@@ -130,12 +127,4 @@ function onPicked(run: (path: string, isDir: boolean) => void): void {
   onFocused(run);
 }
 
-export function resolveContext(): KeyContext {
-  if (searchOpen.value) return 'search';
-  if (activePick.value) return 'pick';
-  if (editorHasFocus()) return 'editor';
-  const active = document.activeElement;
-  if (active?.closest('.projects')) return 'projects';
-  if (active?.closest('.column-tree')) return 'tree';
-  return 'global';
-}
+export { resolveContext };

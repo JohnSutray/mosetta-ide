@@ -30,7 +30,12 @@ export function Tree() {
   if (!ws || !children) return <div class="tree-empty">…</div>;
   const open = rootExpanded.value;
   return (
-    <div class="tree" tabIndex={-1} onMouseDown={(event) => event.currentTarget.focus()}>
+    <div
+      class="tree"
+      data-keys="tree"
+      tabIndex={-1}
+      onMouseDown={(event) => event.currentTarget.focus()}
+    >
       <div
         class="tree-row is-root"
         data-path=""

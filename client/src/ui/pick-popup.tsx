@@ -83,7 +83,7 @@ export function PickPopup<T>({
   }, [shown, at, onPick]);
 
   return (
-    <Popup id={id} class="pick" size={size} min={min} onClose={onClose} onMouseDown={onMouseDown}>
+    <Popup id={id} keys="pick" class="pick" size={size} min={min} onClose={onClose} onMouseDown={onMouseDown}>
       <div class="branches-head">
         <span class="branches-title">{title}</span>
         {meta && <span class="branches-meta">{meta}</span>}

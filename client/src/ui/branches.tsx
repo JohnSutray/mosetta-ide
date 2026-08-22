@@ -65,6 +65,7 @@ export function Branches() {
   return (
     <Popup
       id="branches"
+      keys="pick"
       class="branches"
       size={{ w: 620, h: 460 }}
       min={{ w: 420, h: 260 }}
@@ -125,6 +126,7 @@ export function Branches() {
       {prompt && (
         <form
           class="branch-prompt"
+          data-keys="branch-name"
           onSubmit={(e) => {
             e.preventDefault();
             void gitDo(prompt.action, prompt.value.trim());

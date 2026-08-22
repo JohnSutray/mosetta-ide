@@ -38,6 +38,7 @@ export function SearchEverywhere() {
   return (
     <Popup
       id="search"
+      keys="search"
       class="se"
       size={{ w: 1100, h: 640 }}
       min={{ w: 560, h: 300 }}

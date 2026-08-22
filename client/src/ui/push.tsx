@@ -53,6 +53,7 @@ export function Push() {
   return (
     <Popup
       id="push"
+      keys="push"
       class="push"
       size={{ w: 1080, h: 560 }}
       min={{ w: 620, h: 320 }}

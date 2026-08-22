@@ -24,6 +24,8 @@
     { "command": "pick.accept", "key": "enter", "when": "pick" },
     { "command": "pick.expand", "key": "arrowright", "when": "pick" },
 
+    { "command": "prompt.confirm", "key": "enter", "when": "prompt" },
+
     { "command": "tree.newFile", "key": "mod+n", "when": "tree" },
     { "command": "tree.newFolder", "key": "mod+shift+n", "when": "tree" },
     { "command": "tree.open", "key": "enter", "when": "tree" },
