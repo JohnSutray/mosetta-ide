@@ -22,7 +22,7 @@ import {
   gitRun,
   gitState,
 } from './git.js';
-import { lspDiagnostics, lspHover, lspStatus } from './lsp.js';
+import { lspDefinition, lspDiagnostics, lspHover, lspReferences, lspStatus } from './lsp.js';
 import { npmList, npmRun } from './npm.js';
 import { indexSearch, indexStats } from './search.js';
 import {
@@ -43,6 +43,8 @@ import {
   workspaceRoots,
   envPackageManagers,
   envShells,
+  visitsGet,
+  visitsSet,
   workspaceCurrent,
   workspaceDetach,
   workspaceList,
@@ -67,6 +69,8 @@ export const handlers: HandlerTable = {
   'workspace.browse': workspaceBrowse,
   'env.shells': envShells,
   'env.packageManagers': envPackageManagers,
+  'visits.get': visitsGet,
+  'visits.set': visitsSet,
   'workspace.roots': workspaceRoots,
   'workspace.recent': workspaceRecent,
 
@@ -96,6 +100,8 @@ export const handlers: HandlerTable = {
   'lsp.status': lspStatus,
   'lsp.hover': lspHover,
   'lsp.diagnostics': lspDiagnostics,
+  'lsp.definition': lspDefinition,
+  'lsp.references': lspReferences,
 
   'npm.list': npmList,
   'npm.run': npmRun,

@@ -14,6 +14,7 @@ const MAY_TOUCH_DISK = [
   'env/recent.ts',
   'env/shell.ts',
   'env/tools.ts',
+  'env/visits.ts',
 ];
 
 const FORBIDDEN: Array<{ from: RegExp; importing: RegExp; why: string }> = [

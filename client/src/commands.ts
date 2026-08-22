@@ -21,6 +21,8 @@ import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
 import { toggleScripts } from './state/scripts.js';
 import { toggleKeysHelp } from './state/keys-help.js';
+import { goBack, goForward } from './state/visits.js';
+import { askSymbol, accept as acceptSymbol, step as stepSymbol, symbolList } from './state/symbols.js';
 import {
   askCreate,
   askRemove,
@@ -78,6 +80,11 @@ export function registerCommands(): void {
   registerCommand('edit.moveLineDown', () => inEditor(moveLineDown));
   registerCommand('edit.addCursorAbove', () => inEditor(addCursorAbove));
   registerCommand('edit.addCursorBelow', () => inEditor(addCursorBelow));
+  registerCommand('symbol.goto', () => void askSymbol());
+
+  registerCommand('nav.back', () => goBack());
+  registerCommand('nav.forward', () => goForward());
+
   registerCommand('edit.indent', () => inEditor(indentMore));
   registerCommand('edit.unindent', () => inEditor(indentLess));
 
@@ -137,9 +144,9 @@ export function registerCommands(): void {
   registerCommand('git.branches', () => openBranches());
   registerCommand('git.push', () => void openPush());
   registerCommand('git.fetch', () => void gitDo('fetch'));
-  registerCommand('pick.next', () => activePick.value?.next());
-  registerCommand('pick.prev', () => activePick.value?.prev());
-  registerCommand('pick.accept', () => activePick.value?.accept());
+  registerCommand('pick.next', () => (symbolList.value ? stepSymbol(1) : activePick.value?.next()));
+  registerCommand('pick.prev', () => (symbolList.value ? stepSymbol(-1) : activePick.value?.prev()));
+  registerCommand('pick.accept', () => (symbolList.value ? acceptSymbol() : activePick.value?.accept()));
   registerCommand('pick.expand', () => activePick.value?.expand?.());
 
   registerCommand('prompt.confirm', () => void promptAnswer());

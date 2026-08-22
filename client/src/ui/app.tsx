@@ -27,6 +27,7 @@ import { installDispatcher, humanizeKey } from '../keys/dispatcher.js';
 import { pendingReveal } from '../state/session.js';
 import { refreshScripts, refreshTerminals } from '../state/terminals.js';
 import { refreshTools } from '../state/tools.js';
+import { forgetVisits, installMouseNav, loadVisits, visit } from '../state/visits.js';
 import { Editor } from '../editor/editor.js';
 import { SearchEverywhere } from './search-everywhere.js';
 import { Branches } from './branches.js';
@@ -54,6 +55,8 @@ import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
 import { ToolPicker } from './tool-picker.js';
 import { Tip } from './tip.js';
+import { Symbols } from './symbols.js';
+import { askSymbol } from '../state/symbols.js';
 import { noteUnbound } from '../state/keys-help.js';
 import { SheepField } from './sheep.js';
 
@@ -75,15 +78,23 @@ export function App() {
     );
     dispatcher.setKeymap(keymapSignal.peek());
     const stop = keymapSignal.subscribe((value) => dispatcher.setKeymap(value));
+    const mouse = installMouseNav();
     return () => {
       stop();
       dispatcher.dispose();
+      mouse();
     };
   }, []);
 
   useEffect(() => {
     document.title = title.value;
   }, [title.value]);
+
+  useEffect(() => {
+    if (!file) return;
+    const at = pendingReveal.value;
+    visit(file.path, at?.path === file.path ? at.line : 0);
+  }, [file?.path]);
 
   useEffect(() => {
     if (ws) hideProjects();
@@ -98,11 +109,13 @@ export function App() {
     void refreshTools();
     if (!ws) {
       resetGit();
+      forgetVisits();
       return;
     }
     void refreshTerminals();
     void refreshScripts();
     void refreshGit();
+    void loadVisits();
   }, [ws?.id]);
 
   return (
@@ -155,6 +168,8 @@ export function App() {
               settings={settings.editor}
               diagnostics={currentDiagnostics.value}
               onEdit={editDoc}
+              onCaret={(line) => visit(file.path, line)}
+              onModClick={(pos) => void askSymbol(pos)}
               onHover={(path, line, character) => rpc.call('lsp.hover', { path, line, character })}
               onMount={(view) => (activeEditor.value = view)}
             />
@@ -190,6 +205,7 @@ export function App() {
       <TreeMenu />
       <Prompt />
       <Notifications />
+      <Symbols />
       <Tip />
     </div>
   );

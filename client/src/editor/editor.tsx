@@ -13,6 +13,7 @@ import {
 } from '@codemirror/view';
 import { history } from '@codemirror/commands';
 import { inputKeymap } from './input-keymap.js';
+import { MOD_IS_META } from '../keys/host.js';
 import { bracketMatching, indentOnInput, foldGutter } from '@codemirror/language';
 import { highlightSelectionMatches } from '@codemirror/search';
 import type { Diagnostic, DocState, EditorSettings, HoverInfo } from '@ide/protocol';
@@ -35,6 +36,8 @@ interface Props {
   settings: EditorSettings;
   diagnostics: Diagnostic[];
   onEdit: (text: string) => void;
+  onCaret: (line: number) => void;
+  onModClick: (pos: number) => void;
   onHover: (path: string, line: number, character: number) => Promise<HoverInfo | null>;
   onMount: (view: EditorView | null) => void;
 }
@@ -48,13 +51,15 @@ export function Editor({
   settings,
   diagnostics,
   onEdit,
+  onCaret,
+  onModClick,
   onHover,
   onMount,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
-  const handlers = useRef({ onEdit, onHover, onHunk });
-  handlers.current = { onEdit, onHover, onHunk };
+  const handlers = useRef({ onEdit, onHover, onHunk, onCaret, onModClick });
+  handlers.current = { onEdit, onHover, onHunk, onCaret, onModClick };
   const pathRef = useRef(file.path);
   pathRef.current = file.path;
 
@@ -74,9 +79,24 @@ export function Editor({
       highlightSelectionMatches(),
       keymap.of([...inputKeymap]),
       EditorView.updateListener.of((update) => {
+        if (update.selectionSet || update.docChanged) {
+          const at = update.state.selection.main.head;
+          handlers.current.onCaret(update.state.doc.lineAt(at).number - 1);
+        }
         if (!update.docChanged) return;
         if (update.transactions.some((tr) => tr.annotation(externalUpdate))) return;
         handlers.current.onEdit(update.state.doc.toString());
+      }),
+      EditorView.domEventHandlers({
+        mousedown(event, view) {
+          const held = MOD_IS_META ? event.metaKey : event.ctrlKey;
+          if (!held || event.button !== 0) return false;
+          const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+          if (pos === null) return false;
+          event.preventDefault();
+          handlers.current.onModClick(pos);
+          return true;
+        },
       }),
       darcula,
       gitGutter((hunk, box) => handlers.current.onHunk(hunk, box)),

@@ -8,6 +8,7 @@ import type {
   LspState,
   LspStatus,
   Severity,
+  SymbolSite,
 } from '@ide/protocol';
 import { RpcErrorCode } from '@ide/protocol';
 import { RpcError } from '../errors.js';
@@ -88,6 +89,8 @@ export class LspServer {
           synchronization: { dynamicRegistration: false, didSave: true },
           publishDiagnostics: { relatedInformation: false },
           hover: { contentFormat: ['markdown', 'plaintext'] },
+          definition: { linkSupport: true },
+          references: {},
         },
         workspace: { workspaceFolders: true, configuration: false },
       },
@@ -157,6 +160,54 @@ export class LspServer {
     const markdown = renderHover(result.contents);
     if (!markdown.trim()) return null;
     return result.range ? { markdown, range: result.range } : { markdown };
+  }
+
+  async definition(key: string, line: number, character: number): Promise<SymbolSite[]> {
+    return this.sites('textDocument/definition', key, line, character);
+  }
+
+  async references(key: string, line: number, character: number): Promise<SymbolSite[]> {
+    return this.sites('textDocument/references', key, line, character, {
+      context: { includeDeclaration: true },
+    });
+  }
+
+  private async sites(
+    method: string,
+    key: string,
+    line: number,
+    character: number,
+    extra: Record<string, unknown> = {},
+  ): Promise<SymbolSite[]> {
+    if (this.state !== 'ready') {
+      throw new RpcError(RpcErrorCode.LspUnavailable, `${this.name} не готов (${this.state})`);
+    }
+    this.didOpen(key);
+    const result = await this.request(method, {
+      textDocument: { uri: this.uri(key) },
+      position: { line, character },
+      ...extra,
+    });
+
+    const raw = Array.isArray(result) ? result : result ? [result] : [];
+    const out: SymbolSite[] = [];
+    for (const item of raw) {
+      const place = asLocation(item);
+      if (!place) continue;
+      let path: string;
+      try {
+        path = this.keyOf(place.uri);
+      } catch {
+        continue;
+      }
+      out.push({
+        path,
+        line: place.line,
+        character: place.character,
+        ...describe(this.ram.docSync(path)?.text ?? '', place.line),
+      });
+    }
+    return out;
   }
 
   private onRam(event: RamEvent): void {
@@ -348,4 +399,21 @@ function renderHover(contents: unknown): string {
     return obj.value;
   }
   return '';
+}
+
+function asLocation(item: unknown): { uri: string; line: number; character: number } | null {
+  if (typeof item !== 'object' || item === null) return null;
+  const any = item as Record<string, unknown>;
+  const uri = typeof any.uri === 'string' ? any.uri : typeof any.targetUri === 'string' ? any.targetUri : null;
+  const range = (any.range ?? any.targetSelectionRange ?? any.targetRange) as
+    | { start?: { line?: number; character?: number } }
+    | undefined;
+  if (!uri || !range?.start || typeof range.start.line !== 'number') return null;
+  return { uri, line: range.start.line, character: range.start.character ?? 0 };
+}
+
+function describe(text: string, line: number): { preview: string; isImport: boolean } {
+  const raw = text.split(/\r?\n/)[line] ?? '';
+  const preview = raw.trim().slice(0, 200);
+  return { preview, isImport: /^\s*(import|export)\b/.test(raw) || /\bfrom\s+['"]/.test(raw) };
 }

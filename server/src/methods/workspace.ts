@@ -5,6 +5,7 @@ import { browseRoots, suggestDirectories } from '../env/browse.js';
 import { listRecent, remember } from '../env/recent.js';
 import { detectShells, loginShell } from '../env/shell.js';
 import { detectPackageManagers } from '../env/tools.js';
+import { loadVisits, saveVisits, VISIT_LIMIT } from '../env/visits.js';
 
 export const workspaceOpen: Handler<'workspace.open'> = async (params, ctx) => {
   if (!params || typeof params.root !== 'string') {
@@ -76,4 +77,19 @@ export const envPackageManagers: Handler<'env.packageManagers'> = (_params, ctx)
     ctx.config.settings.tools.packageManager,
     ws.root,
   );
+};
+
+export const visitsGet: Handler<'visits.get'> = (_params, ctx) => {
+  const ws = ctx.session.requireWorkspace();
+  return loadVisits(ctx.stateDir, ws.root);
+};
+
+export const visitsSet: Handler<'visits.set'> = async (params, ctx) => {
+  if (!params || !Array.isArray(params.visits)) {
+    throw RpcError.invalidParams('нужен visits: Visit[]');
+  }
+  const ws = ctx.session.requireWorkspace();
+  const visits = params.visits.slice(-VISIT_LIMIT);
+  await saveVisits(ctx.stateDir, ws.root, visits);
+  return { saved: visits.length };
 };

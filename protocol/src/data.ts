@@ -16,6 +16,19 @@ export interface DirSuggestion {
   children?: DirSuggestion[];
 }
 
+export interface SymbolSite {
+  path: string;
+  line: number;
+  character: number;
+  preview: string;
+  isImport: boolean;
+}
+
+export interface Visit {
+  path: string;
+  line: number;
+}
+
 export interface ShellInfo {
   path: string;
   name: string;

@@ -23,7 +23,9 @@ import type {
   PackageManagerInfo,
   RecentProject,
   ShellInfo,
+  SymbolSite,
   TerminalInfo,
+  Visit,
   TerminalKind,
   WorkspaceId,
   WorkspaceInfo,
@@ -51,6 +53,8 @@ export interface Api {
     params: { section: string; key: string; value: string };
     result: { section: string; key: string; value: string };
   };
+  'visits.get': { params: null; result: Visit[] };
+  'visits.set': { params: { visits: Visit[] }; result: { saved: number } };
   'workspace.roots': { params: null; result: DirSuggestion[] };
   'workspace.recent': { params: null; result: RecentProject[] };
 
@@ -88,6 +92,14 @@ export interface Api {
   'lsp.status': { params: null; result: LspStatus[] };
   'lsp.hover': { params: { path: string; line: number; character: number }; result: HoverInfo | null };
   'lsp.diagnostics': { params: { path: string }; result: FileDiagnostics };
+  'lsp.definition': {
+    params: { path: string; line: number; character: number };
+    result: SymbolSite[];
+  };
+  'lsp.references': {
+    params: { path: string; line: number; character: number };
+    result: SymbolSite[];
+  };
 
   'npm.list': { params: null; result: NpmScriptInfo[] };
   'npm.run': { params: { id: string; cols?: number; rows?: number }; result: TerminalInfo };
