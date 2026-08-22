@@ -10,6 +10,7 @@ import { scriptsOpen } from '../state/scripts.js';
 import { searchOpen } from '../state/search.js';
 import { branchesOpen, pushOpen } from '../state/git.js';
 import { projectsVisible } from '../state/projects.js';
+import { keysHelpOpen } from '../state/keys-help.js';
 import type { IconName } from './icons.js';
 
 export type PanelSide = 'left' | 'right';
@@ -128,6 +129,13 @@ export const TOOLBAR: ToolbarEntry[] = [
     icon: 'editor',
     command: 'panel.editor',
     active: editorPanelVisible,
+  },
+  {
+    id: 'keys',
+    title: 'toolbar.keys',
+    icon: 'keys',
+    command: 'keys.show',
+    active: keysHelpOpen,
   },
 ];
 

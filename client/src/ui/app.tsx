@@ -50,6 +50,7 @@ import { t } from '../i18n/index.js';
 import { hideProjects, showProjects } from '../state/projects.js';
 import { headText, loadHead, showHunk } from '../state/git-marks.js';
 import { HunkPopup } from './hunk-popup.js';
+import { KeysHelp } from './keys-help.js';
 import { SheepField } from './sheep.js';
 
 export function App() {
@@ -177,6 +178,7 @@ export function App() {
       <Branches />
       <Push />
       <ScriptsPopup />
+      <KeysHelp />
       <TreeMenu />
       <Prompt />
       <Notifications />

@@ -16,7 +16,26 @@ export const CLIP = IS_MAC && !MOD_IS_META ? 'cmd' : 'mod';
 
 export const CLIP_LABEL = IS_MAC ? 'Cmd' : 'Ctrl';
 
+const NAMES: Record<string, string> = {
+  backquote: '`',
+  slash: '/',
+  arrowup: '↑',
+  arrowdown: '↓',
+  arrowleft: '←',
+  arrowright: '→',
+  enter: 'Enter',
+  escape: 'Esc',
+  backspace: 'Backspace',
+  delete: 'Delete',
+  space: 'Space',
+  tab: 'Tab',
+};
+
 export function humanizeKey(key: string): string {
+  if (key.startsWith('double:')) {
+    const name = humanizeKey(key.slice('double:'.length));
+    return `${name} ${name}`;
+  }
   return key
     .split('+')
     .map((part) => {
@@ -26,7 +45,7 @@ export function humanizeKey(key: string): string {
       if (part === 'alt') return IS_MAC ? 'Option' : 'Alt';
       if (part === 'ctrl') return 'Control';
       if (part === 'cmd') return 'Cmd';
-      if (part === 'backquote') return '`';
+      if (NAMES[part]) return NAMES[part];
       return part.length === 1 ? part.toUpperCase() : part;
     })
     .join('+');

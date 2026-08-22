@@ -11,7 +11,8 @@ import {
   crosshairCursor,
   highlightSpecialChars,
 } from '@codemirror/view';
-import { defaultKeymap, history, indentWithTab } from '@codemirror/commands';
+import { history } from '@codemirror/commands';
+import { inputKeymap } from './input-keymap.js';
 import { bracketMatching, indentOnInput, foldGutter } from '@codemirror/language';
 import { highlightSelectionMatches } from '@codemirror/search';
 import type { Diagnostic, DocState, EditorSettings, HoverInfo } from '@ide/protocol';
@@ -71,7 +72,7 @@ export function Editor({
       bracketMatching(),
       highlightActiveLine(),
       highlightSelectionMatches(),
-      keymap.of([...defaultKeymap, indentWithTab]),
+      keymap.of([...inputKeymap]),
       EditorView.updateListener.of((update) => {
         if (!update.docChanged) return;
         if (update.transactions.some((tr) => tr.annotation(externalUpdate))) return;

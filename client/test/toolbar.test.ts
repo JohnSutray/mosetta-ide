@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { COMMANDS, isCommandId, type CommandId, type Keymap } from '@ide/protocol';
+import { COMMAND_IDS, COMMANDS, isCommandId, type CommandId, type Keymap } from '@ide/protocol';
 import { PANELS, TOOLBAR } from '../src/ui/panels.js';
 import en from '../src/i18n/en.json';
 
@@ -59,6 +59,7 @@ describe('тулбар', () => {
       'editor',
       'git.branches',
       'git.push',
+      'keys',
       'projects',
       'scripts',
       'search',
@@ -84,6 +85,12 @@ describe('тулбар', () => {
     expect(missing, `нет в en.json: ${missing.join(', ')}`).toEqual([]);
   });
 
+  it('у каждой команды есть английское имя в словаре', () => {
+    const dictionary = en as Record<string, string>;
+    const missing = COMMAND_IDS.filter((id) => dictionary[`command.${id}`] === undefined);
+    expect(missing, `нет command.* в en.json: ${missing.join(', ')}`).toEqual([]);
+  });
+
   it('словарь не содержит пустых строк', () => {
     const empty = Object.entries(en as Record<string, string>)
       .filter(([, value]) => value.trim() === '')
@@ -98,8 +105,11 @@ describe('тулбар', () => {
 
   it('Cmd+цифра — это порядковый номер в тулбаре, слева направо', () => {
     const bindings = keymap().bindings;
+    expect(TOOLBAR.length, 'цифр всего десять, больше кнопок не пронумеровать').toBeLessThanOrEqual(
+      10,
+    );
     TOOLBAR.forEach((entry, at) => {
-      const key = `mod+${at + 1}`;
+      const key = `mod+${(at + 1) % 10}`;
       const bound = bindings.find((b) => b.key === key && (b.when ?? 'global') === 'global');
       expect(bound, `${key}: нет биндинга на ${at + 1}-ю кнопку тулбара`).toBeDefined();
       expect(bound!.command, `${key} зовёт не ту кнопку`).toBe(entry.command);

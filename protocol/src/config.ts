@@ -58,7 +58,8 @@ export type KeyContext =
   | 'branch-name'
   | 'menu'
   | 'push'
-  | 'terminal';
+  | 'terminal'
+  | 'keys';
 
 export type KeyHost = 'browser' | 'electron';
 

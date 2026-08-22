@@ -1,5 +1,8 @@
-import type { TerminalInfo } from '@ide/protocol';
+import type { CommandId, TerminalInfo } from '@ide/protocol';
 import { runCommand } from '../keys/commands.js';
+import { keymap as keymapSignal } from '../state/config.js';
+import { humanizeKey } from '../keys/host.js';
+import { resolveClip } from '../keys/dispatcher.js';
 import { activeTerminal, closeTerminal, focusTerminal, terminals } from '../state/terminals.js';
 import { connected, current } from '../state/session.js';
 import { gitState } from '../state/git.js';
@@ -21,7 +24,7 @@ export function Toolbar() {
               <button
                 key={entry.id}
                 class={`tool ${active ? 'is-active' : ''}`}
-                title={t(entry.title)}
+                title={withKeys(t(entry.title), entry.command)}
                 onClick={() => runCommand(entry.command)}
               >
                 <Icon name={entry.icon} filled={active} />
@@ -40,7 +43,7 @@ export function Toolbar() {
           <>
             <button
               class="branch-label"
-              title={t('toolbar.branches')}
+              title={withKeys(t('toolbar.branches'), 'git.branches')}
               onClick={() => runCommand('git.branches')}
             >
               {git.repo ? (git.branch ?? t('toolbar.noBranch')) : t('toolbar.noRepo')}
@@ -53,6 +56,19 @@ export function Toolbar() {
       </div>
     </div>
   );
+}
+
+function withKeys(title: string, command: CommandId): string {
+  const keys = keymapSignal.value.bindings
+    .filter((binding) => binding.command === command && (binding.when ?? 'global') === 'global')
+    .map((binding) => humanizeKey(resolveClip(binding.key)))
+    .sort((a, b) => rank(a) - rank(b))
+    .slice(0, 2);
+  return keys.length ? `${title} · ${keys.join(' · ')}` : title;
+}
+
+function rank(key: string): number {
+  return /\d$/.test(key) ? 0 : 1;
 }
 
 function TerminalChip({ info }: { info: TerminalInfo }) {

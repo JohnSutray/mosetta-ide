@@ -3,6 +3,13 @@ export const COMMANDS = {
   'file.reload': 'Перечитать файл с диска',
   'edit.undo': 'Отменить',
   'edit.redo': 'Повторить',
+  'edit.deleteLine': 'Удалить строку',
+  'edit.duplicateLine': 'Продублировать строку',
+  'edit.toggleComment': 'Закомментировать',
+  'edit.moveLineUp': 'Поднять строку',
+  'edit.moveLineDown': 'Опустить строку',
+  'edit.addCursorAbove': 'Курсор выше',
+  'edit.addCursorBelow': 'Курсор ниже',
   'panel.tree': 'Панель: дерево проекта',
   'panel.editor': 'Панель редактора',
   'panel.problems': 'Панель: ошибки',
@@ -56,6 +63,8 @@ export const COMMANDS = {
   'search.prev': 'Поиск: вверх',
   'search.accept': 'Поиск: открыть',
   'search.close': 'Поиск: закрыть',
+
+  'keys.show': 'Все клавиши',
 } as const;
 
 export type CommandId = keyof typeof COMMANDS;

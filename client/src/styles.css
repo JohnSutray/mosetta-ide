@@ -1159,3 +1159,52 @@ body {
   cursor: default;
 }
 .sheep-field { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.keys-help { padding: 10px 12px; gap: 8px; }
+
+.keys-head { display: flex; flex-direction: column; gap: 4px; flex: none; }
+.keys-title { font-size: 13px; color: var(--fg); }
+.keys-note { color: var(--muted); font-size: 11px; line-height: 1.45; }
+
+.keys-echo {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--control-bg);
+  border-radius: 4px;
+}
+.keys-echo-label { color: var(--muted); font-size: 11px; flex: none; }
+.keys-echo-arrow { color: var(--muted); flex: none; }
+.keys-echo-command { color: var(--fg); font-size: 12px; }
+.keys-echo-command.is-free { color: var(--muted); font-style: italic; }
+.keys-echo-context { margin-left: auto; color: var(--muted); font-size: 11px; flex: none; }
+.keys-hint { flex: none; color: var(--muted); font-size: 11px; }
+
+.keys-list { flex: 1; min-height: 0; overflow: auto; padding-right: 4px; }
+.keys-group { margin-bottom: 10px; }
+.keys-group-title {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 0 4px;
+  border-bottom: 1px solid var(--divider);
+  margin-bottom: 2px;
+}
+.keys-row { display: flex; align-items: baseline; gap: 8px; padding: 2px 0; }
+.keys-command { color: var(--fg); font-size: 12px; }
+.keys-blocked { margin-left: auto; color: var(--error); font-size: 11px; }
+
+.keys-kbd {
+  flex: none;
+  min-width: 96px;
+  padding: 1px 6px;
+  background: var(--control-bg);
+  border-radius: 3px;
+  color: var(--accent);
+  font-family: var(--mono, monospace);
+  font-size: 11px;
+  white-space: nowrap;
+}

@@ -1,12 +1,24 @@
-import { redo, undo } from '@codemirror/commands';
+import {
+  addCursorAbove,
+  addCursorBelow,
+  copyLineDown,
+  deleteLine,
+  moveLineDown,
+  moveLineUp,
+  redo,
+  toggleComment,
+  undo,
+} from '@codemirror/commands';
 import { registerCommand, missingCommands } from './keys/commands.js';
 import { resolveContext } from './keys/context.js';
 import { acceptSelected, closeSearch, moveSelection, openSearch } from './state/search.js';
+import type { EditorView } from '@codemirror/view';
 import { activeEditor, focusEditor } from './state/editor.js';
 import { closeTop } from './state/popups.js';
 import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
 import { toggleScripts } from './state/scripts.js';
+import { toggleKeysHelp } from './state/keys-help.js';
 import {
   askCreate,
   askRemove,
@@ -55,6 +67,16 @@ export function registerCommands(): void {
     const view = activeEditor.value;
     if (view) redo(view);
   });
+
+  registerCommand('edit.deleteLine', () => inEditor(deleteLine));
+  registerCommand('edit.duplicateLine', () => inEditor(copyLineDown));
+  registerCommand('edit.toggleComment', () => inEditor(toggleComment));
+  registerCommand('edit.moveLineUp', () => inEditor(moveLineUp));
+  registerCommand('edit.moveLineDown', () => inEditor(moveLineDown));
+  registerCommand('edit.addCursorAbove', () => inEditor(addCursorAbove));
+  registerCommand('edit.addCursorBelow', () => inEditor(addCursorBelow));
+
+  registerCommand('keys.show', () => toggleKeysHelp());
 
   registerCommand('panel.tree', () => {
     treePanelVisible.value = !treePanelVisible.value;
@@ -129,6 +151,11 @@ export function registerCommands(): void {
 }
 
 export { missingCommands };
+
+function inEditor(run: (view: EditorView) => boolean): void {
+  const view = activeEditor.value;
+  if (view) run(view);
+}
 
 function onFocused(run: (path: string, isDir: boolean) => void): void {
   const path = treeFocus.value ?? '';

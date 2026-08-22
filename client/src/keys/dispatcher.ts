@@ -1,5 +1,6 @@
 import type { KeyBinding, KeyContext, Keymap } from '@ide/protocol';
 import { runCommand } from './commands.js';
+import { echoKey } from '../state/keys-help.js';
 import { CLIP, HOST, humanizeKey, IS_MAC, MOD_IS_META } from './host.js';
 
 export type ContextResolver = () => KeyContext;
@@ -11,6 +12,7 @@ interface Installed {
 
 const BY_CODE: Record<string, string> = {
   Backquote: 'backquote',
+  Slash: 'slash',
 };
 
 const BY_CHAR: Record<string, string> = {
@@ -18,6 +20,8 @@ const BY_CHAR: Record<string, string> = {
   '~': 'backquote',
   ё: 'backquote',
   Ё: 'backquote',
+  '/': 'slash',
+  '?': 'slash',
 };
 
 const BARE_MODIFIERS = new Set(['Shift', 'Control', 'Alt', 'Meta']);
@@ -38,6 +42,8 @@ export function installDispatcher(
     const binding =
       bindings.find((b) => (b.when ?? 'global') === context && b.key === key) ??
       bindings.find((b) => (b.when ?? 'global') === 'global' && b.key === key);
+
+    echoKey(key, context, binding?.command ?? null);
     if (!binding) return;
 
     const blocked = binding.unavailable?.[HOST];
