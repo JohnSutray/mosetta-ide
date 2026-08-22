@@ -11,6 +11,9 @@ import {
   askCreate,
   askRemove,
   askRename,
+  closeTreeBranch,
+  openTreeBranch,
+  stepTree,
   copyAbsolutePath,
   copyToClipboard,
   promptAnswer,
@@ -65,6 +68,10 @@ export function registerCommands(): void {
 
   registerCommand('scripts.open', () => toggleScripts());
 
+  registerCommand('tree.next', () => stepTree(1));
+  registerCommand('tree.prev', () => stepTree(-1));
+  registerCommand('tree.expand', () => openTreeBranch());
+  registerCommand('tree.collapse', () => closeTreeBranch());
   registerCommand('tree.newFile', () => onFocused((path, isDir) => askCreate(path, isDir, 'file')));
   registerCommand('tree.newFolder', () => onFocused((path, isDir) => askCreate(path, isDir, 'dir')));
   registerCommand('tree.open', () =>

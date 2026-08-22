@@ -58,7 +58,13 @@ const MARKS = {
   removed: new Mark('removed'),
 };
 
-export function gitGutter(onClick: (hunk: Hunk, at: { x: number; y: number }) => void): Extension {
+export interface HunkBox {
+  left: number;
+  top: number;
+  bottom: number;
+}
+
+export function gitGutter(onClick: (hunk: Hunk, at: HunkBox) => void): Extension {
   return [
     gitField,
     gutter({
@@ -79,17 +85,21 @@ export function gitGutter(onClick: (hunk: Hunk, at: { x: number; y: number }) =>
           const line = view.state.doc.lineAt(block.from).number;
           const hunk = hunkAt(hunks, line);
           if (!hunk) return false;
-          const mouse = event as MouseEvent;
-          onClick(hunk, { x: mouse.clientX, y: mouse.clientY });
+          onClick(hunk, boxOf(view, hunk, event as MouseEvent));
           return true;
         },
       },
     }),
-    EditorView.baseTheme({
-      '.cm-gitgutter': { width: '6px', paddingLeft: '2px' },
-      '.cm-gitmark': { width: '4px', height: '100%' },
-    }),
+
   ];
+}
+
+function boxOf(view: EditorView, hunk: Hunk, event: MouseEvent): HunkBox {
+  const doc = view.state.doc;
+  const first = view.coordsAtPos(doc.line(Math.min(hunk.from, doc.lines)).from);
+  const last = view.coordsAtPos(doc.line(Math.min(hunk.to, doc.lines)).to);
+  if (!first || !last) return { left: event.clientX, top: event.clientY, bottom: event.clientY };
+  return { left: view.dom.getBoundingClientRect().left, top: first.top, bottom: last.bottom };
 }
 
 export function revertHunk(view: EditorView, hunk: Hunk): void {

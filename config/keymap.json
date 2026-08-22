@@ -30,6 +30,10 @@
     { "command": "menu.prev", "key": "arrowup", "when": "menu" },
     { "command": "menu.accept", "key": "enter", "when": "menu" },
 
+    { "command": "tree.next", "key": "arrowdown", "when": "tree" },
+    { "command": "tree.prev", "key": "arrowup", "when": "tree" },
+    { "command": "tree.expand", "key": "arrowright", "when": "tree" },
+    { "command": "tree.collapse", "key": "arrowleft", "when": "tree" },
     { "command": "tree.newFile", "key": "mod+n", "when": "tree" },
     { "command": "tree.newFolder", "key": "mod+shift+n", "when": "tree" },
     { "command": "tree.open", "key": "enter", "when": "tree" },

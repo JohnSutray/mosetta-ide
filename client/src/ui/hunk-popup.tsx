@@ -1,4 +1,4 @@
-import { useEffect } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { activeEditor } from '../state/editor.js';
 import { closeHunk, hunkPopup, revertOpenHunk } from '../state/git-marks.js';
 import { enter, leave } from '../state/popups.js';
@@ -6,7 +6,17 @@ import { t } from '../i18n/index.js';
 
 export function HunkPopup() {
   const open = hunkPopup.value;
+  const self = useRef<HTMLDivElement>(null);
+  const [top, setTop] = useState(open ? open.box.bottom + 4 : 0);
   const alive = activeEditor.value !== null;
+
+  useLayoutEffect(() => {
+    if (!open || !self.current) return;
+    const height = self.current.getBoundingClientRect().height;
+    const below = open.box.bottom + 4;
+    const above = open.box.top - height - 4;
+    setTop(below + height <= window.innerHeight - 8 || above < 8 ? below : above);
+  }, [open]);
 
   useEffect(() => {
     if (!open || !alive) return;
@@ -23,7 +33,7 @@ export function HunkPopup() {
 
   if (!open || !alive) return null;
 
-  const { hunk, x, y } = open;
+  const { hunk, box } = open;
   const title =
     hunk.kind === 'added'
       ? t('git.hunk.added')
@@ -33,8 +43,9 @@ export function HunkPopup() {
 
   return (
     <div
+      ref={self}
       class="hunk-popup"
-      style={{ left: `${Math.round(x)}px`, top: `${Math.round(y)}px` }}
+      style={{ left: `${Math.round(box.left)}px`, top: `${Math.round(top)}px` }}
     >
       <div class="hunk-head">
         <span class="hunk-title">{title}</span>

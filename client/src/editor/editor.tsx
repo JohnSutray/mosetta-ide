@@ -18,7 +18,7 @@ import type { Diagnostic, DocState, EditorSettings, HoverInfo } from '@ide/proto
 import { darcula } from './darcula.js';
 import { languageFor } from './languages.js';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
-import { gitGutter, setHeadText } from './git-marks.js';
+import { gitGutter, setHeadText, type HunkBox } from './git-marks.js';
 import type { Hunk } from './line-diff.js';
 import { lspHover } from './hover.js';
 import { takeFocusOnMount } from '../state/editor.js';
@@ -28,7 +28,7 @@ const externalUpdate = Annotation.define<boolean>();
 interface Props {
   file: DocState;
   head: string | null;
-  onHunk: (hunk: Hunk, at: { x: number; y: number }) => void;
+  onHunk: (hunk: Hunk, box: HunkBox) => void;
   externalEpoch: number;
   reveal: { path: string; line: number; epoch: number } | null;
   settings: EditorSettings;
@@ -78,7 +78,7 @@ export function Editor({
         handlers.current.onEdit(update.state.doc.toString());
       }),
       darcula,
-      gitGutter((hunk, at) => handlers.current.onHunk(hunk, at)),
+      gitGutter((hunk, box) => handlers.current.onHunk(hunk, box)),
       diagnosticsExtension,
       lspHover(
         () => pathRef.current,

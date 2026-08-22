@@ -35,6 +35,11 @@ export const COMMANDS = {
 
   'prompt.confirm': 'Модалка: подтвердить',
 
+  'tree.next': 'Дерево: вниз',
+  'tree.prev': 'Дерево: вверх',
+  'tree.expand': 'Дерево: раскрыть или войти',
+  'tree.collapse': 'Дерево: свернуть или выйти',
+
   'tree.newFile': 'Дерево: новый файл',
   'tree.newFolder': 'Дерево: новая папка',
   'tree.open': 'Дерево: открыть и уйти в редактор',

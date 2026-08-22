@@ -1,15 +1,15 @@
 import { signal } from '@preact/signals';
 import type { Hunk } from '../editor/line-diff.js';
 import { activeEditor } from './editor.js';
-import { revertHunk } from '../editor/git-marks.js';
+import { revertHunk, type HunkBox } from '../editor/git-marks.js';
 import { rpc } from './session.js';
 
-export const hunkPopup = signal<{ hunk: Hunk; x: number; y: number } | null>(null);
+export const hunkPopup = signal<{ hunk: Hunk; box: HunkBox } | null>(null);
 
 export const headText = signal<string | null>(null);
 
-export function showHunk(hunk: Hunk, at: { x: number; y: number }): void {
-  hunkPopup.value = { hunk, ...at };
+export function showHunk(hunk: Hunk, box: HunkBox): void {
+  hunkPopup.value = { hunk, box };
 }
 
 export function closeHunk(): void {

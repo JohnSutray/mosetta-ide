@@ -3,12 +3,15 @@ import type { EntryKind } from '@ide/protocol';
 import {
   complain,
   current,
+  dirChildren,
   docSync,
   ensureExpanded,
+  expanded,
   loadDir,
   openFileAt,
   rpc,
   say,
+  toggleDir,
 } from './session.js';
 import { t } from '../i18n/index.js';
 
@@ -58,6 +61,53 @@ export function toggleSelected(path: string): void {
     treeAnchor.value = path;
     treeFocus.value = path;
   });
+}
+
+export function visibleOrder(): string[] {
+  const out: string[] = [];
+  const walk = (path: string) => {
+    for (const entry of dirChildren.value.get(path) ?? []) {
+      out.push(entry.path);
+      if (entry.kind === 'dir' && expanded.value.has(entry.path)) walk(entry.path);
+    }
+  };
+  walk('');
+  return out;
+}
+
+export function isDir(path: string): boolean {
+  const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
+  return dirChildren.value.get(parent)?.find((item) => item.path === path)?.kind === 'dir';
+}
+
+export function stepTree(delta: number): void {
+  const order = visibleOrder();
+  if (order.length === 0) return;
+  const at = order.indexOf(treeFocus.value ?? '');
+  const next = at === -1 ? (delta > 0 ? 0 : order.length - 1) : at + delta;
+  const path = order[Math.max(0, Math.min(order.length - 1, next))];
+  if (path !== undefined) selectOnly(path);
+}
+
+export function openTreeBranch(): void {
+  const path = treeFocus.value;
+  if (!path) return;
+  if (isDir(path) && !expanded.value.has(path)) {
+    void toggleDir(path);
+    return;
+  }
+  stepTree(1);
+}
+
+export function closeTreeBranch(): void {
+  const path = treeFocus.value;
+  if (!path) return;
+  if (isDir(path) && expanded.value.has(path)) {
+    void toggleDir(path);
+    return;
+  }
+  const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
+  if (parent !== '') selectOnly(parent);
 }
 
 export function selectRange(path: string, visible: string[]): void {

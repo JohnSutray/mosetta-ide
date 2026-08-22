@@ -16,6 +16,7 @@ import {
   selectOnly,
   selectRange,
   toggleSelected,
+  visibleOrder,
   treeFocus,
   treeSelection,
 } from '../state/tree-ops.js';
@@ -81,18 +82,6 @@ function Level({ entries, depth }: { entries: DirEntry[]; depth: number }) {
       ))}
     </>
   );
-}
-
-function visibleOrder(): string[] {
-  const out: string[] = [];
-  const walk = (path: string) => {
-    for (const entry of dirChildren.value.get(path) ?? []) {
-      out.push(entry.path);
-      if (entry.kind === 'dir' && expanded.value.has(entry.path)) walk(entry.path);
-    }
-  };
-  walk('');
-  return out;
 }
 
 function Row({ entry, depth }: { entry: DirEntry; depth: number }) {

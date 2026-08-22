@@ -424,6 +424,7 @@ body {
   z-index: 50;
 }
 
+.popup:focus, .popup:focus-visible { outline: none; }
 .popup {
   position: relative;
   display: flex;
@@ -682,16 +683,19 @@ body {
 
 .branch-action {
   text-align: left;
-  padding: 4px 8px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background: #43484a;
+  padding: 3px 12px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: var(--fg);
-  font: 13px var(--ui-font);
+  font: 13px/1.5 var(--ui-font);
+  white-space: nowrap;
 }
 .branch-action:hover,
-.branch-action.is-current { background: #4f5558; border-color: var(--divider); }
-.branch-action.is-danger:hover { background: #6b3a39; color: #ffd7d6; }
+.branch-action.is-current { background: var(--treesel); color: #dbe6ef; }
+.branch-action.is-danger { color: #e0a0a0; }
+.branch-action.is-danger:hover,
+.branch-action.is-danger.is-current { background: #6b3a39; color: #ffd7d6; }
 
 .branch-prompt { display: flex; flex-direction: column; gap: 6px; }
 
@@ -893,7 +897,31 @@ body {
   color: var(--muted);
   font: 12px var(--ui-font);
 }
-.push-force input { margin: 0; }
+.push-force input {
+  appearance: none;
+  margin: 0;
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--divider);
+  background: var(--control-bg);
+  cursor: pointer;
+}
+.push-force input:hover { background: var(--control-bg-hover); }
+.push-force input:checked {
+  background: var(--treesel);
+  border-color: #4c7db3;
+}
+.push-force input:checked::after {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 7px;
+  margin: 0 auto;
+  transform: translateY(-1px) rotate(45deg);
+  border: solid #dbe6ef;
+  border-width: 0 2px 2px 0;
+}
+.push-force.is-armed input:checked { background: #6b3a39; border-color: #8a4a49; }
 .push-force.is-armed { color: var(--error); }
 
 .push-spacer { flex: 1; }
@@ -985,11 +1013,9 @@ body {
   z-index: 90;
   display: flex;
   flex-direction: column;
-  gap: 2px;
   min-width: 190px;
-  padding: 4px;
+  padding: 2px 0;
   border: 1px solid var(--divider);
-  border-radius: 5px;
   background: var(--panel-bg);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
@@ -1073,14 +1099,16 @@ body {
 .tree-row.is-drop { background: #40566b; outline: 1px dashed #7ba7d0; outline-offset: -1px; }
 
 .cm-gitgutter {
-  width: 6px;
-  padding: 0 1px;
+  width: 9px;
+  padding: 0;
   cursor: pointer;
 }
+.cm-gitgutter .cm-gutterElement { padding: 0; }
 .cm-gitmark {
-  width: 4px;
+  width: 6px;
   height: 100%;
-  border-radius: 1px;
+  margin-left: 1px;
+  border-radius: 0;
 }
 .cm-gitmark.is-added { background: var(--git-added); }
 .cm-gitmark.is-modified { background: var(--git-modified); }
@@ -1088,15 +1116,16 @@ body {
   width: 0;
   height: 0;
   margin-top: 1px;
-  border-left: 5px solid var(--git-modified);
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
+  border-left: 7px solid var(--git-modified);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
   border-radius: 0;
 }
 
 .hunk-popup {
   position: fixed;
   z-index: 60;
+  border-radius: 0;
   max-width: min(70vw, 720px);
   max-height: 50vh;
   overflow: auto;
@@ -1104,7 +1133,6 @@ body {
   flex-direction: column;
   background: var(--panel-bg);
   border: 1px solid var(--divider);
-  border-radius: 6px;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
 }
 .hunk-head {
@@ -1122,4 +1150,32 @@ body {
   white-space: pre;
   color: #c9a9a7;
   background: rgba(107, 58, 57, 0.28);
+}
+
+.empty-editor {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  cursor: default;
+}
+.empty-words {
+  position: absolute;
+  top: 18%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 0 24px;
+  pointer-events: none;
+  z-index: 1;
+}
+.empty-title { font: 17px/1.4 var(--ui-font); color: #8f9ba5; }
+.empty-hint { margin-top: 6px; font: 13px/1.5 var(--ui-font); color: var(--muted); }
+.sheep-field { position: absolute; inset: 0; width: 100%; height: 100%; }
+.empty-score {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  font: 11px var(--font);
+  color: #5f6871;
+  pointer-events: none;
 }

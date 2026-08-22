@@ -50,6 +50,7 @@ import { t } from '../i18n/index.js';
 import { hideProjects, showProjects } from '../state/projects.js';
 import { headText, loadHead, showHunk } from '../state/git-marks.js';
 import { HunkPopup } from './hunk-popup.js';
+import { SheepField } from './sheep.js';
 
 export function App() {
   const ws = current.value;
@@ -150,9 +151,7 @@ export function App() {
               onMount={(view) => (activeEditor.value = view)}
             />
           ) : (
-            <div class="placeholder">
-              {ws ? t('tree.pick') : t('tree.openProject')}
-            </div>
+            <SheepField />
           )}
         </Panel>
         )}
