@@ -58,6 +58,19 @@ describe('git', () => {
     expect(state.files['src/util.ts']).toBeUndefined();
   });
 
+  it('отдаёт файл таким, каким он был в коммите', async () => {
+    await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 999;\n', 'utf8');
+    const head = await c.call('git.head', { path: 'src/main.ts' });
+    expect(head.path).toBe('src/main.ts');
+    expect(head.text).toBe('export const one = 1;\n');
+  });
+
+  it('файла нет в истории — это ответ, а не ошибка', async () => {
+    await fs.writeFile(path.join(root, 'src/fresh.ts'), 'export const three = 3;\n', 'utf8');
+    const head = await c.call('git.head', { path: 'src/fresh.ts' });
+    expect(head.text).toBeNull();
+  });
+
   it('состояние отдаётся из памяти, а не считается на запрос', async () => {
     await waitForState(c, (s) => s.repo);
     const started = Date.now();

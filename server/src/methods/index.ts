@@ -17,6 +17,7 @@ import {
   gitBranches,
   gitChanges,
   gitOutgoing,
+  gitHead,
   gitRefresh,
   gitRun,
   gitState,
@@ -99,6 +100,7 @@ export const handlers: HandlerTable = {
   'git.outgoing': gitOutgoing,
   'git.changes': gitChanges,
   'git.refresh': gitRefresh,
+  'git.head': gitHead,
   'git.run': gitRun,
 
   'term.list': termList,

@@ -1,0 +1,120 @@
+import { StateEffect, StateField, type Extension } from '@codemirror/state';
+import { EditorView, gutter, GutterMarker } from '@codemirror/view';
+import { diffLines, type Hunk } from './line-diff.js';
+
+export const setHeadText = StateEffect.define<string | null>();
+
+interface GitLines {
+  head: string | null;
+  hunks: Hunk[];
+}
+
+const EMPTY: GitLines = { head: null, hunks: [] };
+
+export const gitField = StateField.define<GitLines>({
+  create() {
+    return EMPTY;
+  },
+  update(value, tr) {
+    let head = value.head;
+    let changed = false;
+    for (const effect of tr.effects) {
+      if (!effect.is(setHeadText)) continue;
+      head = effect.value;
+      changed = true;
+    }
+    if (!changed && !tr.docChanged) return value;
+    if (head === null) return value.hunks.length === 0 && value.head === null ? value : { head, hunks: [] };
+    return { head, hunks: diffLines(head, tr.state.doc.toString()) };
+  },
+});
+
+export function hunkAt(hunks: Hunk[], line: number): Hunk | null {
+  for (const hunk of hunks) {
+    if (line >= hunk.from && line <= hunk.to) return hunk;
+  }
+  return null;
+}
+
+class Mark extends GutterMarker {
+  constructor(private readonly kind: Hunk['kind']) {
+    super();
+  }
+
+  override eq(other: Mark): boolean {
+    return other.kind === this.kind;
+  }
+
+  override toDOM(): Node {
+    const el = document.createElement('div');
+    el.className = `cm-gitmark is-${this.kind}`;
+    return el;
+  }
+}
+
+const MARKS = {
+  added: new Mark('added'),
+  modified: new Mark('modified'),
+  removed: new Mark('removed'),
+};
+
+export function gitGutter(onClick: (hunk: Hunk, at: { x: number; y: number }) => void): Extension {
+  return [
+    gitField,
+    gutter({
+      class: 'cm-gitgutter',
+      lineMarker(view, block) {
+        const { hunks } = view.state.field(gitField);
+        if (hunks.length === 0) return null;
+        const line = view.state.doc.lineAt(block.from).number;
+        const hunk = hunkAt(hunks, line);
+        return hunk ? MARKS[hunk.kind] : null;
+      },
+      lineMarkerChange(update) {
+        return update.docChanged || update.startState.field(gitField) !== update.state.field(gitField);
+      },
+      domEventHandlers: {
+        mousedown(view, block, event) {
+          const { hunks } = view.state.field(gitField);
+          const line = view.state.doc.lineAt(block.from).number;
+          const hunk = hunkAt(hunks, line);
+          if (!hunk) return false;
+          const mouse = event as MouseEvent;
+          onClick(hunk, { x: mouse.clientX, y: mouse.clientY });
+          return true;
+        },
+      },
+    }),
+    EditorView.baseTheme({
+      '.cm-gitgutter': { width: '6px', paddingLeft: '2px' },
+      '.cm-gitmark': { width: '4px', height: '100%' },
+    }),
+  ];
+}
+
+export function revertHunk(view: EditorView, hunk: Hunk): void {
+  const doc = view.state.doc;
+  const restored = hunk.before.join('\n');
+
+  if (hunk.kind === 'added') {
+    const from = doc.line(Math.min(hunk.from, doc.lines)).from;
+    const last = doc.line(Math.min(hunk.to, doc.lines));
+    const to = Math.min(last.to + 1, doc.length);
+    view.dispatch({ changes: { from, to, insert: '' } });
+    return;
+  }
+
+  if (hunk.kind === 'modified') {
+    const from = doc.line(Math.min(hunk.from, doc.lines)).from;
+    const to = doc.line(Math.min(hunk.to, doc.lines)).to;
+    view.dispatch({ changes: { from, to, insert: restored } });
+    return;
+  }
+
+  if (hunk.from > doc.lines) {
+    view.dispatch({ changes: { from: doc.length, to: doc.length, insert: `\n${restored}` } });
+    return;
+  }
+  const at = doc.line(hunk.from).from;
+  view.dispatch({ changes: { from: at, to: at, insert: `${restored}\n` } });
+}

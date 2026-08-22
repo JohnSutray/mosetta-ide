@@ -45,6 +45,7 @@ export function complain(message: string): void {
 export const diagnostics = signal<Map<string, Diagnostic[]>>(new Map());
 export const lspStatuses = signal<LspStatus[]>([]);
 export const treePanelVisible = signal(true);
+export const editorPanelVisible = signal(true);
 export const problemsPanelVisible = signal(false);
 export const terminalPanelVisible = signal(false);
 
@@ -178,6 +179,7 @@ export async function openFileAt(path: string) {
     const doc = await rpc.call('doc.open', { path });
     docSync.attach(doc);
     batch(() => {
+      editorPanelVisible.value = true;
       fileHistory.value = [path, ...fileHistory.value.filter((item) => item !== path)].slice(0, 20);
       openFile.value = doc;
       dirty.value = doc.dirty;

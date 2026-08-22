@@ -86,6 +86,7 @@ export interface Api {
   'git.outgoing': { params: null; result: PushPreview };
   'git.changes': { params: { commit?: string }; result: GitChange[] };
   'git.refresh': { params: null; result: GitState };
+  'git.head': { params: { path: string }; result: { path: string; text: string | null } };
   'git.run': {
     params: { action: GitAction; branch?: string; name?: string };
     result: { error: string | null };

@@ -19,6 +19,7 @@ import {
 } from './state/tree-ops.js';
 import { dirChildren, openFileAt, toggleDir } from './state/session.js';
 import {
+  editorPanelVisible,
   problemsPanelVisible,
   reloadDoc,
   saveDoc,
@@ -53,6 +54,9 @@ export function registerCommands(): void {
 
   registerCommand('panel.tree', () => {
     treePanelVisible.value = !treePanelVisible.value;
+  });
+  registerCommand('panel.editor', () => {
+    editorPanelVisible.value = !editorPanelVisible.value;
   });
   registerCommand('panel.problems', () => {
     problemsPanelVisible.value = !problemsPanelVisible.value;

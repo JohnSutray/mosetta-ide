@@ -14,6 +14,12 @@ export const gitOutgoing: Handler<'git.outgoing'> = (_params, ctx) =>
 export const gitChanges: Handler<'git.changes'> = (params, ctx) =>
   ctx.session.requireWorkspace().services.git.changes(params?.commit);
 
+export const gitHead: Handler<'git.head'> = async (params, ctx) => {
+  if (!params || typeof params.path !== 'string') throw RpcError.invalidParams('нужен path');
+  const git = ctx.session.requireWorkspace().services.git;
+  return { path: params.path, text: await git.headText(params.path) };
+};
+
 export const gitRefresh: Handler<'git.refresh'> = async (_params, ctx) => {
   const git = ctx.session.requireWorkspace().services.git;
   await git.refresh();

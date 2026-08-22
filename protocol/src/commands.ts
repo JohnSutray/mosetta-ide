@@ -4,6 +4,7 @@ export const COMMANDS = {
   'edit.undo': 'Отменить',
   'edit.redo': 'Повторить',
   'panel.tree': 'Панель: дерево проекта',
+  'panel.editor': 'Панель редактора',
   'panel.problems': 'Панель: ошибки',
   'scripts.open': 'Скрипты package.json',
   'panel.terminal': 'Панель: терминал',

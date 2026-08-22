@@ -9,6 +9,7 @@ import {
   dirty,
   errorCount,
   closeFile,
+  editorPanelVisible,
   externalEpoch,
   lspStatuses,
   openFile,
@@ -33,7 +34,7 @@ import { TreeMenu } from './tree-menu.js';
 import { Prompt } from './prompt.js';
 import { closeTreeMenu } from '../state/tree-menu.js';
 import { Push } from './push.js';
-import { refreshGit, resetGit } from '../state/git.js';
+import { gitState, refreshGit, resetGit } from '../state/git.js';
 import { ScriptsPopup } from './scripts.js';
 import { TerminalView } from './terminal.js';
 import { Toolbar } from './toolbar.js';
@@ -47,6 +48,8 @@ import { Projects } from './projects.js';
 import { Tree } from './tree.js';
 import { t } from '../i18n/index.js';
 import { hideProjects, showProjects } from '../state/projects.js';
+import { headText, loadHead, showHunk } from '../state/git-marks.js';
+import { HunkPopup } from './hunk-popup.js';
 
 export function App() {
   const ws = current.value;
@@ -78,6 +81,10 @@ export function App() {
     if (ws) hideProjects();
     else showProjects();
   }, [ws?.id]);
+
+  useEffect(() => {
+    void loadHead(file?.path ?? null);
+  }, [file?.path, gitState.value]);
 
   useEffect(() => {
     if (!ws) {
@@ -113,10 +120,13 @@ export function App() {
           </Fragment>
         ))}
 
+        {editorPanelVisible.value && (
         <Panel
           class="column-editor"
           title={file ? file.path : t('panel.editor.empty')}
-          onClose={file ? () => void closeFile() : undefined}
+          onClose={
+            file ? () => void closeFile() : () => (editorPanelVisible.value = false)
+          }
           actions={
             file ? (
               <>
@@ -129,6 +139,8 @@ export function App() {
           {file ? (
             <Editor
               file={file}
+              head={headText.value}
+              onHunk={showHunk}
               externalEpoch={externalEpoch.value}
               reveal={pendingReveal.value}
               settings={settings.editor}
@@ -143,6 +155,7 @@ export function App() {
             </div>
           )}
         </Panel>
+        )}
 
         {open('right').map((panel) => (
           <Fragment key={panel.id}>
@@ -159,6 +172,7 @@ export function App() {
         ))}
       </div>
 
+      <HunkPopup />
       <Projects />
       <SearchEverywhere />
       <Branches />

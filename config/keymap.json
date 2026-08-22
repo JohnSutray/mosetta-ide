@@ -84,6 +84,11 @@
       "command": "projects.show",
       "key": "mod+8",
       "when": "global"
+    },
+    {
+      "command": "panel.editor",
+      "key": "mod+9",
+      "when": "global"
     }
   ]
 }

@@ -18,6 +18,8 @@ import type { Diagnostic, DocState, EditorSettings, HoverInfo } from '@ide/proto
 import { darcula } from './darcula.js';
 import { languageFor } from './languages.js';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
+import { gitGutter, setHeadText } from './git-marks.js';
+import type { Hunk } from './line-diff.js';
 import { lspHover } from './hover.js';
 import { takeFocusOnMount } from '../state/editor.js';
 
@@ -25,6 +27,8 @@ const externalUpdate = Annotation.define<boolean>();
 
 interface Props {
   file: DocState;
+  head: string | null;
+  onHunk: (hunk: Hunk, at: { x: number; y: number }) => void;
   externalEpoch: number;
   reveal: { path: string; line: number; epoch: number } | null;
   settings: EditorSettings;
@@ -36,6 +40,8 @@ interface Props {
 
 export function Editor({
   file,
+  head,
+  onHunk,
   externalEpoch,
   reveal,
   settings,
@@ -46,8 +52,8 @@ export function Editor({
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
-  const handlers = useRef({ onEdit, onHover });
-  handlers.current = { onEdit, onHover };
+  const handlers = useRef({ onEdit, onHover, onHunk });
+  handlers.current = { onEdit, onHover, onHunk };
   const pathRef = useRef(file.path);
   pathRef.current = file.path;
 
@@ -72,6 +78,7 @@ export function Editor({
         handlers.current.onEdit(update.state.doc.toString());
       }),
       darcula,
+      gitGutter((hunk, at) => handlers.current.onHunk(hunk, at)),
       diagnosticsExtension,
       lspHover(
         () => pathRef.current,
@@ -91,6 +98,7 @@ export function Editor({
       state: EditorState.create({ doc: file.text, extensions }),
       parent: host.current,
     });
+    instance.dispatch({ effects: setHeadText.of(head) });
     view.current = instance;
     onMount(instance);
     if (takeFocusOnMount()) instance.focus();
@@ -105,6 +113,10 @@ export function Editor({
   useEffect(() => {
     view.current?.dispatch({ effects: setDiagnostics.of(diagnostics) });
   }, [diagnostics]);
+
+  useEffect(() => {
+    view.current?.dispatch({ effects: setHeadText.of(head) });
+  }, [head]);
 
   useEffect(() => {
     const instance = view.current;

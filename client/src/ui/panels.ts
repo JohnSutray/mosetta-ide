@@ -1,6 +1,7 @@
 import type { ReadonlySignal } from '@preact/signals';
 import type { CommandId } from '@ide/protocol';
 import {
+  editorPanelVisible,
   problemsPanelVisible,
   terminalPanelVisible,
   treePanelVisible,
@@ -103,7 +104,7 @@ export const TOOLBAR: ToolbarEntry[] = [
   {
     id: 'scripts',
     title: 'toolbar.scripts',
-    icon: 'scripts',
+    icon: 'npm',
     command: 'scripts.open',
     active: scriptsOpen,
   },
@@ -120,6 +121,13 @@ export const TOOLBAR: ToolbarEntry[] = [
     icon: 'projects',
     command: 'projects.show',
     active: projectsVisible,
+  },
+  {
+    id: 'editor',
+    title: 'toolbar.editor',
+    icon: 'editor',
+    command: 'panel.editor',
+    active: editorPanelVisible,
   },
 ];
 

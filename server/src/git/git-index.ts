@@ -83,6 +83,11 @@ export class GitIndex {
     }, DEBOUNCE_MS);
   }
 
+  async headText(key: string): Promise<string | null> {
+    const shown = await git(this.root, ['show', `HEAD:./${key}`]);
+    return shown.ok ? shown.stdout : null;
+  }
+
   async refresh(): Promise<void> {
     if (this.disposed) return;
     if (this.running) {
