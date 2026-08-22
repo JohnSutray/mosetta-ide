@@ -4,10 +4,11 @@ export interface Sheep {
   y: number;
   vx: number;
   vy: number;
-  big: number;
+  level: number;
   shorn: boolean;
   face: number;
   step: number;
+  panic: number;
   held: boolean;
 }
 
@@ -20,25 +21,28 @@ export interface World {
   flock: Sheep[];
   bales: Bale[];
   seeded: boolean;
-  waiting: boolean;
+  waiting: Sheep | null;
   held: Sheep | null;
   merged: number;
   shorn: number;
   frame: number;
 }
 
-export const PX = 3;
+export const PX = 4;
 export const SHEEP_W = 8 * PX;
-export const SHEEP_H = 5 * PX;
-export const HOUSE_W = 10 * PX * 2;
-export const HOUSE_H = 7 * PX * 2;
+export const SHEEP_H = 6 * PX;
+export const HOUSE_SCALE = 3;
+export const HOUSE_W = 10 * PX * HOUSE_SCALE;
+export const HOUSE_H = 7 * PX * HOUSE_SCALE;
+export const MAX_LEVEL = 5;
+export const GRAB_PAD = 10;
 
 const CAP = 7;
 const SPEED = 0.5;
 export const SPAWN_EVERY = 180;
 
 export function createWorld(): World {
-  return { flock: [], bales: [], seeded: false, waiting: false, held: null, merged: 0, shorn: 0, frame: 0 };
+  return { flock: [], bales: [], seeded: false, waiting: null, held: null, merged: 0, shorn: 0, frame: 0 };
 }
 
 export function barnAt(w: number, h: number) {
@@ -61,10 +65,11 @@ export function spawn(world: World, w: number, h: number, roll = Math.random, in
     y: 20 + roll() * Math.max(1, h - 60),
     vx: (fromLeft ? 1 : -1) * SPEED,
     vy: (roll() - 0.5) * SPEED,
-    big: 1,
+    level: 1,
     shorn: false,
     face: fromLeft ? 1 : -1,
     step: roll() * 10,
+    panic: 0,
     held: false,
   });
 }
@@ -80,13 +85,16 @@ export function step(world: World, w: number, h: number, roll = Math.random): vo
   if (world.frame % SPAWN_EVERY === 0) spawn(world, w, h, roll);
 
   for (const s of world.flock) {
-    if (s.held) continue;
+    if (s.held) {
+      s.panic += 0.5;
+      continue;
+    }
     if (roll() < 0.01) {
       s.vx += (roll() - 0.5) * 0.1;
       s.vy += (roll() - 0.5) * 0.1;
     }
     const speed = Math.hypot(s.vx, s.vy);
-    const want = SPEED * (s.big > 1 ? 0.7 : 1);
+    const want = SPEED / (1 + (s.level - 1) * 0.35);
     if (speed > 0) {
       s.vx = (s.vx / speed) * want;
       s.vy = (s.vy / speed) * want;
@@ -100,9 +108,9 @@ export function step(world: World, w: number, h: number, roll = Math.random): vo
     s.step += 0.08;
     if (Math.abs(s.vx) > 0.02) s.face = s.vx > 0 ? 1 : -1;
     if (s.x < 0 && s.vx < 0) s.vx = Math.abs(s.vx);
-    if (s.x + SHEEP_W * s.big > w && s.vx > 0) s.vx = -Math.abs(s.vx);
+    if (s.x + SHEEP_W * s.level > w && s.vx > 0) s.vx = -Math.abs(s.vx);
     if (s.y < 0 && s.vy < 0) s.vy = Math.abs(s.vy);
-    if (s.y + SHEEP_H * s.big > h && s.vy > 0) s.vy = -Math.abs(s.vy);
+    if (s.y + SHEEP_H * s.level > h && s.vy > 0) s.vy = -Math.abs(s.vy);
   }
 
   for (let i = 0; i < world.flock.length; i += 1) {
@@ -113,7 +121,7 @@ export function step(world: World, w: number, h: number, roll = Math.random): vo
 function bump(a: Sheep, b: Sheep): void {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
-  const near = (SHEEP_W * (a.big + b.big)) / 2.6;
+  const near = (SHEEP_W * (a.level + b.level)) / 2.6;
   const far = Math.hypot(dx, dy);
   if (far > near || far === 0) return;
   const nx = dx / far;
@@ -134,9 +142,15 @@ function bump(a: Sheep, b: Sheep): void {
 export function grab(world: World, x: number, y: number): boolean {
   for (let i = world.flock.length - 1; i >= 0; i -= 1) {
     const s = world.flock[i]!;
-    if (x >= s.x && x <= s.x + SHEEP_W * s.big && y >= s.y && y <= s.y + SHEEP_H * s.big) {
+    if (
+      x >= s.x - GRAB_PAD &&
+      x <= s.x + SHEEP_W * s.level + GRAB_PAD &&
+      y >= s.y - GRAB_PAD &&
+      y <= s.y + SHEEP_H * s.level + GRAB_PAD
+    ) {
       world.held = s;
       s.held = true;
+      s.panic = 0;
       return true;
     }
   }
@@ -146,8 +160,8 @@ export function grab(world: World, x: number, y: number): boolean {
 export function moveHeld(world: World, x: number, y: number): void {
   const s = world.held;
   if (!s) return;
-  s.x = x - (SHEEP_W * s.big) / 2;
-  s.y = y - (SHEEP_H * s.big) / 2;
+  s.x = x - (SHEEP_W * s.level) / 2;
+  s.y = y - (SHEEP_H * s.level) / 2;
 }
 
 export type Drop = 'none' | 'waiting' | 'merged' | 'shorn';
@@ -161,20 +175,23 @@ export function release(world: World, w: number, h: number): Drop {
   if (within(barnAt(w, h), s)) {
     world.flock.splice(world.flock.indexOf(s), 1);
     if (!world.waiting) {
-      world.waiting = true;
+      world.waiting = s;
       return 'waiting';
     }
-    world.waiting = false;
+    const together = Math.min(MAX_LEVEL, Math.max(world.waiting.level, s.level) + 1);
+    const shorn = world.waiting.shorn && s.shorn;
+    world.waiting = null;
     const barn = barnAt(w, h);
     world.flock.push({
       x: barn.x + HOUSE_W / 2,
       y: barn.y + HOUSE_H,
       vx: SPEED,
       vy: SPEED * 0.4,
-      big: 2,
-      shorn: s.shorn,
+      level: together,
+      shorn,
       face: 1,
       step: 0,
+      panic: 0,
       held: false,
     });
     world.merged += 1;
@@ -196,7 +213,7 @@ export function release(world: World, w: number, h: number): Drop {
 }
 
 function within(house: { x: number; y: number }, s: Sheep): boolean {
-  const cx = s.x + (SHEEP_W * s.big) / 2;
-  const cy = s.y + (SHEEP_H * s.big) / 2;
+  const cx = s.x + (SHEEP_W * s.level) / 2;
+  const cy = s.y + (SHEEP_H * s.level) / 2;
   return cx > house.x && cx < house.x + HOUSE_W && cy > house.y && cy < house.y + HOUSE_H;
 }

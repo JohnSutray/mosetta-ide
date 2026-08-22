@@ -3,6 +3,7 @@ import {
   barnAt,
   createWorld,
   grab,
+  GRAB_PAD,
   HOUSE_H,
   HOUSE_W,
   moveHeld,
@@ -94,7 +95,47 @@ describe('овцы', () => {
     expect(release(world, W, H)).toBe('merged');
     expect(world.merged).toBe(1);
     expect(world.flock).toHaveLength(1);
-    expect(world.flock[0]!.big).toBe(2);
+    expect(world.flock[0]!.level).toBe(2);
+  });
+
+  it('слияние поднимает на ступень, но не выше пятой', () => {
+    const barn = barnAt(W, H);
+
+    const bring = (world: World, level: number) => {
+      spawn(world, W, H, steady);
+      const fresh = world.flock[world.flock.length - 1]!;
+      fresh.level = level;
+      fresh.x = barn.x + HOUSE_W / 2 - (SHEEP_W * level) / 2;
+      fresh.y = barn.y + HOUSE_H / 2 - (SHEEP_H * level) / 2;
+      grab(world, fresh.x + 1, fresh.y + 1);
+      return release(world, W, H);
+    };
+
+    for (const [waiting, coming, want] of [
+      [1, 1, 2],
+      [2, 1, 3],
+      [3, 3, 4],
+      [4, 2, 5],
+      [5, 5, 5],
+      [5, 1, 5],
+    ] as Array<[number, number, number]>) {
+      const world = createWorld();
+      expect(bring(world, waiting)).toBe('waiting');
+      expect(bring(world, coming)).toBe('merged');
+      expect(world.flock[0]!.level, `${waiting}+${coming}`).toBe(want);
+    }
+  });
+
+  it('схватить можно и рядом с овцой, не только точно по ней', () => {
+    const world = createWorld();
+    spawn(world, W, H, steady);
+    const sheep = world.flock[0]!;
+    sheep.x = 100;
+    sheep.y = 100;
+    expect(grab(world, 100 - GRAB_PAD + 2, 100 - GRAB_PAD + 2)).toBe(true);
+    world.held = null;
+    sheep.held = false;
+    expect(grab(world, 100 - GRAB_PAD * 3, 100)).toBe(false);
   });
 
   it('в парикмахерской стригут и роняют брикет шерсти', () => {

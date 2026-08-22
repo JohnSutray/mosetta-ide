@@ -4,7 +4,9 @@ import {
   createWorld,
   grab,
   HOUSE_H,
+  HOUSE_SCALE,
   HOUSE_W,
+  MAX_LEVEL,
   moveHeld,
   PX,
   release,
@@ -12,19 +14,30 @@ import {
   SHEEP_H,
   SHEEP_W,
   step,
+  type Sheep,
 } from './sheep-world.js';
 import { t } from '../i18n/index.js';
 
 const MERGED_KEY = 'sheep.merged';
 const SHORN_KEY = 'sheep.shorn';
 
-const SHEEP = [
+const BODY = [
   '..wwww..',
   '.wwwwww.',
-  'hwwwwwww',
-  'hwwwwwww',
-  '.l.ll.l.',
+  'hhwwwwww',
+  'hewwwwww',
+  '.wwwwww.',
 ];
+
+const LEGS = ['.l...l..', '..l.l...'];
+
+const DIGITS: Record<number, string[]> = {
+  1: ['.#.', '##.', '.#.', '###'],
+  2: ['###', '..#', '#..', '###'],
+  3: ['###', '.##', '..#', '###'],
+  4: ['#.#', '###', '..#', '..#'],
+  5: ['###', '#..', '..#', '###'],
+};
 
 const BARN = [
   '...rrrr...',
@@ -49,13 +62,19 @@ const SALON = [
 const COLORS: Record<string, string> = {
   w: '#e8e4dc',
   s: '#e0a9a4',
-  h: '#3b3b3b',
+  h: '#4a4a4a',
+  e: '#0b0b0b',
   l: '#3b3b3b',
+  '#': '#8d8880',
   r: '#8a4b3c',
   b: '#a86b4f',
   d: '#191919',
   p: '#6a8fb5',
   g: '#7e8a93',
+  barnReady: '#4a3520',
+  barnOver: '#c98a3a',
+  salonReady: '#26333f',
+  salonOver: '#5fa0e0',
 };
 
 function paint(
@@ -77,6 +96,21 @@ function paint(
       ctx.fillRect(Math.round(x + cx * px), Math.round(y + ry * px), px, px);
     }
   });
+}
+
+function drawSheep(ctx: CanvasRenderingContext2D, s: Sheep): void {
+  const px = PX * s.level;
+  const flip = s.face < 0;
+  const swap = s.shorn ? { w: 's' } : undefined;
+  paint(ctx, BODY, s.x, s.y, px, flip, swap);
+
+  const phase = s.held ? Math.floor(s.panic) : Math.floor(s.step);
+  paint(ctx, [LEGS[phase % LEGS.length]!], s.x, s.y + 5 * px, px, flip);
+
+  const digit = s.level > 1 ? DIGITS[Math.min(s.level, MAX_LEVEL)] : undefined;
+  if (digit) {
+    paint(ctx, digit, s.x + (flip ? px : 4 * px), s.y + px, px);
+  }
 }
 
 export function SheepField() {
@@ -113,10 +147,25 @@ export function SheepField() {
       ctx.clearRect(0, 0, w, h);
       const barn = barnAt(w, h);
       const salon = salonAt(w, h);
-      paint(ctx, BARN, barn.x, barn.y, PX * 2);
-      paint(ctx, SALON, salon.x, salon.y, PX * 2);
-      if (world.waiting) {
-        paint(ctx, SHEEP, barn.x + HOUSE_W / 2 - SHEEP_W / 2, barn.y + HOUSE_H - SHEEP_H, PX);
+      const held = world.held;
+      const over = (house: { x: number; y: number }) =>
+        held !== null &&
+        held.x + (SHEEP_W * held.level) / 2 > house.x &&
+        held.x + (SHEEP_W * held.level) / 2 < house.x + HOUSE_W &&
+        held.y + (SHEEP_H * held.level) / 2 > house.y &&
+        held.y + (SHEEP_H * held.level) / 2 < house.y + HOUSE_H;
+      const door = (kind: 'barn' | 'salon', house: { x: number; y: number }) =>
+        held === null ? undefined : { d: over(house) ? `${kind}Over` : `${kind}Ready` };
+      paint(ctx, BARN, barn.x, barn.y, PX * HOUSE_SCALE, false, door('barn', barn));
+      paint(ctx, SALON, salon.x, salon.y, PX * HOUSE_SCALE, false, door('salon', salon));
+      const guest = world.waiting;
+      if (guest) {
+        drawSheep(ctx, {
+          ...guest,
+          x: barn.x + HOUSE_W / 2 - (SHEEP_W * guest.level) / 2,
+          y: barn.y + HOUSE_H - SHEEP_H * guest.level,
+          held: false,
+        });
       }
       for (const bale of world.bales) {
         ctx.fillStyle = COLORS.w!;
@@ -124,18 +173,7 @@ export function SheepField() {
         ctx.fillStyle = '#c9c3b8';
         ctx.fillRect(bale.x, bale.y + PX * 2, PX * 5, PX);
       }
-      for (const s of world.flock) {
-        const hop = Math.sin(s.step) > 0.6 ? -PX : 0;
-        paint(
-          ctx,
-          SHEEP,
-          s.x,
-          s.y + (s.held ? -PX : hop),
-          PX * s.big,
-          s.face < 0,
-          s.shorn ? { w: 's' } : undefined,
-        );
-      }
+      for (const s of world.flock) drawSheep(ctx, s);
     };
 
     const tick = () => {
@@ -180,6 +218,7 @@ export function SheepField() {
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
 
+    step(world, size().w, size().h);
     draw();
 
     return () => {
