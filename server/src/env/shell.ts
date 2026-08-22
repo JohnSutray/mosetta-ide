@@ -125,10 +125,3 @@ export function terminalEnv(extra: Record<string, string> = {}): Record<string, 
 export function homeDirectory(): string {
   return os.homedir();
 }
-
-export function packageManager(has: (file: string) => boolean): string {
-  if (has('pnpm-lock.yaml')) return 'pnpm';
-  if (has('yarn.lock')) return 'yarn';
-  if (has('bun.lockb')) return 'bun';
-  return 'npm';
-}

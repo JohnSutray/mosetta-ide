@@ -20,6 +20,7 @@ import type {
   LogLine,
   LspStatus,
   NpmScriptInfo,
+  PackageManagerInfo,
   RecentProject,
   ShellInfo,
   TerminalInfo,
@@ -45,7 +46,11 @@ export interface Api {
     result: DirSuggestion[];
   };
   'env.shells': { params: null; result: ShellInfo[] };
-  'config.setShell': { params: { path: string }; result: { path: string } };
+  'env.packageManagers': { params: null; result: PackageManagerInfo[] };
+  'config.set': {
+    params: { section: string; key: string; value: string };
+    result: { section: string; key: string; value: string };
+  };
   'workspace.roots': { params: null; result: DirSuggestion[] };
   'workspace.recent': { params: null; result: RecentProject[] };
 

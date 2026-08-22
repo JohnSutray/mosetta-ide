@@ -26,6 +26,7 @@ import { registerCommands, resolveContext, missingCommands } from '../commands.j
 import { installDispatcher, humanizeKey } from '../keys/dispatcher.js';
 import { pendingReveal } from '../state/session.js';
 import { refreshScripts, refreshTerminals } from '../state/terminals.js';
+import { refreshTools } from '../state/tools.js';
 import { Editor } from '../editor/editor.js';
 import { SearchEverywhere } from './search-everywhere.js';
 import { Branches } from './branches.js';
@@ -51,7 +52,7 @@ import { hideProjects, showProjects } from '../state/projects.js';
 import { headText, loadHead, showHunk } from '../state/git-marks.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
-import { ShellPicker } from './shell-picker.js';
+import { ToolPicker } from './tool-picker.js';
 import { noteUnbound } from '../state/keys-help.js';
 import { SheepField } from './sheep.js';
 
@@ -93,6 +94,7 @@ export function App() {
   }, [file?.path, gitState.value]);
 
   useEffect(() => {
+    void refreshTools();
     if (!ws) {
       resetGit();
       return;
@@ -169,17 +171,6 @@ export function App() {
               width={widthOf(panel.id)}
               title={t(panel.title)}
               onClose={() => runCommand(panel.command)}
-              actions={
-                panel.id === 'terminal' ? (
-                  <span
-                    class="panel-action"
-                    title={t('shell.title')}
-                    onClick={() => runCommand('terminal.shell')}
-                  >
-                    {t('shell.button')}
-                  </span>
-                ) : null
-              }
             >
               {content(panel)}
             </Panel>
@@ -194,7 +185,7 @@ export function App() {
       <Push />
       <ScriptsPopup />
       <KeysHelp />
-      <ShellPicker />
+      <ToolPicker />
       <TreeMenu />
       <Prompt />
       <Notifications />

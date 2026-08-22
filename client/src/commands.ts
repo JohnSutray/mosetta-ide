@@ -45,7 +45,7 @@ import {
   treePanelVisible,
 } from './state/session.js';
 import { createTerminal } from './state/terminals.js';
-import { openShellPicker } from './state/shells.js';
+import { openToolPicker } from './state/tools.js';
 import { gitDo, openBranches, openPush } from './state/git.js';
 import {
   acceptPath,
@@ -120,7 +120,8 @@ export function registerCommands(): void {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });
   registerCommand('terminal.create', () => createTerminal());
-  registerCommand('terminal.shell', () => openShellPicker());
+  registerCommand('terminal.shell', () => openToolPicker('shell'));
+  registerCommand('tools.packageManager', () => openToolPicker('manager'));
 
   registerCommand('projects.show', () => toggleProjects());
   registerCommand('projects.next', () => moveSuggestion(1));

@@ -4,6 +4,7 @@ import { RpcError } from '../errors.js';
 import { browseRoots, suggestDirectories } from '../env/browse.js';
 import { listRecent, remember } from '../env/recent.js';
 import { detectShells, loginShell } from '../env/shell.js';
+import { detectPackageManagers } from '../env/tools.js';
 
 export const workspaceOpen: Handler<'workspace.open'> = async (params, ctx) => {
   if (!params || typeof params.root !== 'string') {
@@ -67,3 +68,12 @@ export const workspaceRecent: Handler<'workspace.recent'> = (_params, ctx) =>
 
 export const envShells: Handler<'env.shells'> = (_params, ctx) =>
   detectShells(loginShell(ctx.config.settings.terminal).file);
+
+export const envPackageManagers: Handler<'env.packageManagers'> = (_params, ctx) => {
+  const ws = ctx.session.requireWorkspace();
+  return detectPackageManagers(
+    ws.services.suggestedManager(),
+    ctx.config.settings.tools.packageManager,
+    ws.root,
+  );
+};

@@ -22,6 +22,14 @@ export interface ShellInfo {
   current: boolean;
 }
 
+export interface PackageManagerInfo {
+  path: string;
+  name: string;
+  version: string;
+  suggested: boolean;
+  current: boolean;
+}
+
 export interface RecentProject {
   root: string;
   name: string;

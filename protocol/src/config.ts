@@ -42,6 +42,11 @@ export interface Settings {
   lsp: LspSettings;
   git: GitSettings;
   terminal: TerminalSettings;
+  tools: ToolSettings;
+}
+
+export interface ToolSettings {
+  packageManager: string;
 }
 
 export interface TerminalSettings {

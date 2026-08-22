@@ -50,14 +50,14 @@ export function Icon({ name, filled }: Props): JSX.Element {
       return (
         <svg {...common} stroke="none">
           <rect
-            x="0.8"
-            y="4.2"
-            width="14.4"
-            height="7.6"
-            rx="1.2"
+            x="1.5"
+            y="5"
+            width="13"
+            height="6.4"
+            rx="1"
             fill={filled ? '#e0524f' : '#cb3837'}
           />
-          <path d="M3.4 5.9h9.2v5.9h-2.3V7.7H8.7v4.1H3.4z" fill="#fff" />
+          <path d="M3.7 6.4h8.6v5h-2.1V7.8H8.4v3.6H3.7z" fill="#fff" />
         </svg>
       );
     case 'editor':

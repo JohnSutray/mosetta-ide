@@ -32,6 +32,9 @@ export const DEFAULT_SETTINGS: Settings = {
   git: {
     autoFetchMinutes: 10,
   },
+  tools: {
+    packageManager: '',
+  },
   terminal: {
     shell: '',
     args: [],

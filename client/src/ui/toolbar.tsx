@@ -7,6 +7,7 @@ import { activeTerminal, closeTerminal, focusTerminal, terminals } from '../stat
 import { connected, current } from '../state/session.js';
 import { gitState } from '../state/git.js';
 import { t } from '../i18n/index.js';
+import { currentManager, currentShell, openToolPicker } from '../state/tools.js';
 import { Icon } from './icons.js';
 import { TOOLBAR } from './panels.js';
 
@@ -39,6 +40,18 @@ export function Toolbar() {
       </div>
 
       <div class="toolbar-right">
+        <ToolButton
+          label={currentShell()}
+          hint={t('tool.shell.title')}
+          onClick={() => openToolPicker('shell')}
+        />
+        {ws && (
+          <ToolButton
+            label={currentManager()}
+            hint={t('tool.manager.title')}
+            onClick={() => openToolPicker('manager')}
+          />
+        )}
         {ws && (
           <>
             <button
@@ -55,6 +68,23 @@ export function Toolbar() {
         <span class={`dot ${connected.value ? 'is-on' : 'is-off'}`} title={t('toolbar.connection')} />
       </div>
     </div>
+  );
+}
+
+function ToolButton({
+  label,
+  hint,
+  onClick,
+}: {
+  label: string;
+  hint: string;
+  onClick: () => void;
+}) {
+  if (label === '') return null;
+  return (
+    <button class="tool-label" title={hint} onClick={onClick}>
+      {label}
+    </button>
   );
 }
 

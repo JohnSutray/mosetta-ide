@@ -7,7 +7,8 @@ import { SearchIndex } from '../search/search-index.js';
 import { LspServer } from '../lsp/server.js';
 import { TerminalHost } from '../term/host.js';
 import { GitIndex } from '../git/git-index.js';
-import { loginShell, packageManager } from '../env/shell.js';
+import { loginShell } from '../env/shell.js';
+import { packageManager } from '../env/tools.js';
 import type { Logger } from '../log.js';
 import type { Workspace } from './workspace.js';
 
@@ -190,6 +191,11 @@ export class Services {
   }
 
   packageManager(): string {
+    const chosen = this.config.settings.tools.packageManager.trim();
+    return chosen === '' ? this.suggestedManager() : chosen;
+  }
+
+  suggestedManager(): string {
     const top = this.ram.listSync('') ?? [];
     const names = new Set(top.map((entry) => entry.name));
     return packageManager((file) => names.has(file));

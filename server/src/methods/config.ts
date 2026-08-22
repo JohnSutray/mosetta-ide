@@ -4,14 +4,29 @@ import type { Handler } from '../rpc/context.js';
 
 export const configGet: Handler<'config.get'> = (_params, ctx) => ctx.config.current;
 
-export const configSetShell: Handler<'config.setShell'> = async (params, ctx) => {
-  if (!params || typeof params.path !== 'string') {
-    throw RpcError.invalidParams('нужен path: string');
+const WRITABLE: Record<string, (value: string) => string | null> = {
+  'terminal.shell': (value) =>
+    value === '' || shellExists(value) ? null : `нет такого файла: ${value}`,
+  'tools.packageManager': () => null,
+};
+
+export const configSet: Handler<'config.set'> = async (params, ctx) => {
+  if (
+    !params ||
+    typeof params.section !== 'string' ||
+    typeof params.key !== 'string' ||
+    typeof params.value !== 'string'
+  ) {
+    throw RpcError.invalidParams('нужны section, key и value: string');
   }
-  const chosen = params.path.trim();
-  if (chosen !== '' && !shellExists(chosen)) {
-    throw RpcError.invalidParams(`нет такого файла: ${chosen}`);
-  }
-  await ctx.config.set('terminal', 'shell', chosen);
-  return { path: chosen };
+  const full = `${params.section}.${params.key}`;
+  const check = WRITABLE[full];
+  if (!check) throw RpcError.invalidParams(`эту настройку правят руками: ${full}`);
+
+  const value = params.value.trim();
+  const complaint = check(value);
+  if (complaint) throw RpcError.invalidParams(complaint);
+
+  await ctx.config.set(params.section, params.key, value);
+  return { section: params.section, key: params.key, value };
 };

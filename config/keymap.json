@@ -47,6 +47,7 @@
     { "command": "file.reload", "key": "mod+shift+r", "when": "global" },
 
     { "command": "terminal.shell", "key": "mod+shift+t", "when": "global" },
+    { "command": "tools.packageManager", "key": "mod+shift+p", "when": "global" },
 
     { "command": "key.reserved", "key": "tab", "when": "global" },
     { "command": "key.reserved", "key": "shift+tab", "when": "global" },

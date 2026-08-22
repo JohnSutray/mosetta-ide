@@ -20,6 +20,7 @@ export const COMMANDS = {
 
   'terminal.create': 'Новый терминал',
   'terminal.shell': 'Чем запускать терминал',
+  'tools.packageManager': 'Чем запускать скрипты',
 
   'projects.show': 'Открывашка проектов',
   'projects.next': 'Проекты: вниз по подсказкам',

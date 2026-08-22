@@ -1,0 +1,87 @@
+import {
+  chooseTool,
+  closeToolPicker,
+  managers,
+  shells,
+  toolDraft,
+  toolPicker,
+  type ToolKind,
+} from '../state/tools.js';
+import { t } from '../i18n/index.js';
+import { Popup } from './popup.js';
+
+interface Row {
+  path: string;
+  name: string;
+  current: boolean;
+  mark?: string;
+}
+
+export function ToolPicker() {
+  const kind = toolPicker.value;
+  if (!kind) return null;
+
+  return (
+    <Popup
+      id={`tool-${kind}`}
+      keys="prompt"
+      class="tools"
+      size={{ w: 560, h: 380 }}
+      min={{ w: 380, h: 240 }}
+      onClose={closeToolPicker}
+    >
+      <div class="tools-title">{t(`tool.${kind}.title`)}</div>
+      <div class="tools-note">{t(`tool.${kind}.note`)}</div>
+
+      <div class="tools-list">
+        {rows(kind).map((row) => (
+          <div
+            key={row.path}
+            class={`tools-row ${row.current ? 'is-current' : ''}`}
+            title={row.path}
+            onClick={() => void chooseTool(kind, row.path)}
+          >
+            <span class="tools-name">{row.name}</span>
+            <span class="tools-path">{row.path}</span>
+            {row.mark && <span class="tools-mark">{row.mark}</span>}
+          </div>
+        ))}
+        {rows(kind).length === 0 && <div class="tools-empty">{t('tool.empty')}</div>}
+      </div>
+
+      <div class="tools-custom">
+        <input
+          class="tools-input"
+          value={toolDraft.value}
+          placeholder={t(`tool.${kind}.custom`)}
+          onInput={(event) => {
+            toolDraft.value = (event.target as HTMLInputElement).value;
+          }}
+        />
+        <button class="tools-apply" onClick={() => void chooseTool(kind, toolDraft.value.trim())}>
+          {t('tool.apply')}
+        </button>
+      </div>
+      <div class="tools-reset" onClick={() => void chooseTool(kind, '')}>
+        {t(`tool.${kind}.default`)}
+      </div>
+    </Popup>
+  );
+}
+
+function rows(kind: ToolKind): Row[] {
+  if (kind === 'shell') {
+    return shells.value.map((item) => ({
+      path: item.path,
+      name: item.name,
+      current: item.current,
+      mark: item.current ? t('tool.inUse') : undefined,
+    }));
+  }
+  return managers.value.map((item) => ({
+    path: item.path,
+    name: item.name,
+    current: item.current,
+    mark: item.suggested ? t('tool.byProject') : item.current ? t('tool.inUse') : undefined,
+  }));
+}

@@ -1,3 +1,4 @@
+import { Fragment } from 'preact';
 import type { ComponentChildren, JSX } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { activePick } from '../state/pick.js';
@@ -24,6 +25,7 @@ export function PickPopup<T>({
   onClose,
   onPick,
   row,
+  section,
   footer,
   extra,
   onMouseDown,
@@ -39,6 +41,7 @@ export function PickPopup<T>({
   onClose: () => void;
   onPick: (value: T) => void;
   row: (value: T, matches: number[], picked: boolean) => JSX.Element;
+  section?: (value: T) => string;
   footer?: ComponentChildren;
   extra?: ComponentChildren;
   onMouseDown?: (event: MouseEvent) => void;
@@ -50,15 +53,19 @@ export function PickPopup<T>({
 
   const shown = useMemo(() => {
     const query = filter.trim();
-    if (query === '') return items.map((item) => ({ item, matches: [] as number[] }));
-    return items
-      .map((item) => ({ item, hit: fuzzy(item.text, query) }))
-      .filter((found): found is { item: PickItem<T>; hit: { score: number; matches: number[] } } =>
-        found.hit !== null,
-      )
-      .sort((a, b) => b.hit.score - a.hit.score)
-      .map((found) => ({ item: found.item, matches: found.hit.matches }));
-  }, [items, filter]);
+    const found =
+      query === ''
+        ? items.map((item) => ({ item, matches: [] as number[] }))
+        : items
+            .map((item) => ({ item, hit: fuzzy(item.text, query) }))
+            .filter(
+              (hit): hit is { item: PickItem<T>; hit: { score: number; matches: number[] } } =>
+                hit.hit !== null,
+            )
+            .sort((a, b) => b.hit.score - a.hit.score)
+            .map((hit) => ({ item: hit.item, matches: hit.hit.matches }));
+    return section ? grouped(found, section) : found;
+  }, [items, filter, section]);
 
   useEffect(() => {
     field.current?.focus();
@@ -104,17 +111,24 @@ export function PickPopup<T>({
         />
       </div>
 
-      <div class="pick-list" ref={list}>
-        {shown.map((found, index) => (
-          <div
-            key={found.item.key}
-            class={`pick-row ${index === at ? 'is-current' : ''}`}
-            onMouseMove={index === at ? undefined : () => setAt(index)}
-            onClick={() => onPick(found.item.value)}
-          >
-            {row(found.item.value, found.matches, index === at)}
-          </div>
-        ))}
+      <div class={`pick-list ${section ? 'is-sectioned' : ''}`} ref={list}>
+        {shown.map((found, index) => {
+          const head = section?.(found.item.value);
+          const before = shown[index - 1];
+          const first = head !== undefined && (!before || head !== section?.(before.item.value));
+          return (
+            <Fragment key={found.item.key}>
+              {first && <div class="pick-head">{head}</div>}
+              <div
+                class={`pick-row ${index === at ? 'is-current' : ''}`}
+                onMouseMove={index === at ? undefined : () => setAt(index)}
+                onClick={() => onPick(found.item.value)}
+              >
+                {row(found.item.value, found.matches, index === at)}
+              </div>
+            </Fragment>
+          );
+        })}
         {shown.length === 0 && (
           <div class="se-empty">{items.length === 0 ? empty : t('pick.nothing')}</div>
         )}
@@ -124,6 +138,27 @@ export function PickPopup<T>({
       {extra}
     </Popup>
   );
+}
+
+export function grouped<T>(
+  found: Array<{ item: PickItem<T>; matches: number[] }>,
+  section: (value: T) => string,
+): Array<{ item: PickItem<T>; matches: number[] }> {
+  const order = new Map<string, number>();
+  for (const row of found) {
+    const name = section(row.item.value);
+    if (!order.has(name)) order.set(name, order.size);
+  }
+  return found
+    .map((row, index) => ({ row, index, rank: order.get(section(row.item.value)) ?? 0 }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map((entry) => entry.row);
+}
+
+export function shiftMatches(matches: number[], from: number, length: number): number[] {
+  return matches
+    .map((at) => at - from)
+    .filter((at) => at >= 0 && at < length);
 }
 
 export function highlight(text: string, matches: number[]): ComponentChildren {

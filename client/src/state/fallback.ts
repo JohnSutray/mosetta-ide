@@ -21,4 +21,5 @@ export const DEFAULT_SETTINGS_FALLBACK: Settings = {
   lsp: { startOnOpen: true, servers: {} },
   git: { autoFetchMinutes: 10 },
   terminal: { shell: '', args: [] },
+  tools: { packageManager: '' },
 };
