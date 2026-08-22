@@ -18,6 +18,8 @@ import {
 } from './sheep-world.js';
 import { t } from '../i18n/index.js';
 
+const DIGIT_FONT = "'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif";
+
 const MERGED_KEY = 'sheep.merged';
 const SHORN_KEY = 'sheep.shorn';
 
@@ -30,14 +32,6 @@ const BODY = [
 ];
 
 const LEGS = ['.l...l..', '..l.l...'];
-
-const DIGITS: Record<number, string[]> = {
-  1: ['.#.', '##.', '.#.', '###'],
-  2: ['###', '..#', '#..', '###'],
-  3: ['###', '.##', '..#', '###'],
-  4: ['#.#', '###', '..#', '..#'],
-  5: ['###', '#..', '..#', '###'],
-};
 
 const BARN = [
   '...rrrr...',
@@ -107,9 +101,13 @@ function drawSheep(ctx: CanvasRenderingContext2D, s: Sheep): void {
   const phase = s.held ? Math.floor(s.panic) : Math.floor(s.step);
   paint(ctx, [LEGS[phase % LEGS.length]!], s.x, s.y + 5 * px, px, flip);
 
-  const digit = s.level > 1 ? DIGITS[Math.min(s.level, MAX_LEVEL)] : undefined;
-  if (digit) {
-    paint(ctx, digit, s.x + (flip ? px : 4 * px), s.y + px, px);
+  if (s.level > 1) {
+    const level = Math.min(s.level, MAX_LEVEL);
+    ctx.fillStyle = s.shorn ? '#8a5a58' : '#8d8880';
+    ctx.font = `600 ${Math.round(px * 2.4)}px ${DIGIT_FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(level), s.x + (flip ? 2.2 : 5.8) * px, s.y + 2.6 * px);
   }
 }
 
