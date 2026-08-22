@@ -1,7 +1,21 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { focusTree, prompt, promptAnswer, promptCancel } from '../state/tree-ops.js';
+import { focusTree, prompt, promptAnswer, promptCancel, type Ask } from '../state/tree-ops.js';
 import { t } from '../i18n/index.js';
 import { Popup } from './popup.js';
+
+const LINE = 18;
+const CHROME = 86;
+const FIELD = 36;
+const CEILING = 420;
+
+const COLUMNS = 60;
+
+function heightFor(ask: Ask): number {
+  const lines = (ask.text ?? '')
+    .split('\n')
+    .reduce((count, line) => count + Math.max(1, Math.ceil(line.length / COLUMNS)), 0);
+  return Math.min(CEILING, CHROME + (ask.field ? FIELD : 0) + lines * LINE);
+}
 
 export function Prompt() {
   const field = useRef<HTMLInputElement>(null);
@@ -23,9 +37,9 @@ export function Prompt() {
 
   return (
     <Popup
-      id="prompt"
+      id={ask.field ? 'prompt-name' : 'prompt-confirm'}
       class="prompt"
-      size={{ w: 460, h: ask.field ? 190 : 160 }}
+      size={{ w: 460, h: heightFor(ask) }}
       min={{ w: 320, h: 140 }}
       onClose={promptCancel}
     >

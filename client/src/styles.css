@@ -1055,10 +1055,12 @@ body {
   font: 12px/1.5 var(--ui-font);
   white-space: pre-wrap;
   overflow: auto;
-  max-height: 40%;
+  flex: 0 1 auto;
+  min-height: 0;
 }
-.prompt-error { color: var(--error); font: 12px/1.4 var(--ui-font); }
-.prompt-foot { margin-top: auto; display: flex; justify-content: flex-end; gap: 6px; }
+.prompt .field { flex: none; }
+.prompt-error { color: var(--error); font: 12px/1.4 var(--ui-font); flex: none; }
+.prompt-foot { flex: none; margin-top: auto; display: flex; justify-content: flex-end; gap: 6px; }
 
 .button.is-danger { background: #6b3a39; color: #ffd7d6; }
 .button.is-danger:hover { background: #7d4443; }
