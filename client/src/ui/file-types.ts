@@ -1,8 +1,19 @@
 
+export type GlyphName =
+  | 'lock'
+  | 'git'
+  | 'npm'
+  | 'image'
+  | 'terminal'
+  | 'gear'
+  | 'text'
+  | 'archive';
+
 export interface FileType {
   label: string;
   color: string;
   ink: string;
+  glyph?: GlyphName;
 }
 
 const LIGHT = '#e8eef2';
@@ -14,12 +25,21 @@ function type(label: string, color: string, ink = LIGHT): FileType {
   return { label, color, ink };
 }
 
+function drawn(label: string, color: string, glyph: GlyphName): FileType {
+  return { label, color, ink: LIGHT, glyph };
+}
+
 const TS = type('TS', '#3178c6');
 const JS = type('JS', '#d5b04b', DARK);
 const JSON_ = type('{}', '#b5893a', DARK);
-const LOCK = type('LK', '#6f7679');
-const CONF = type('CF', '#7c8f9e', DARK);
+const LOCK = drawn('LK', '#8a8f92', 'lock');
+const CONF = drawn('CF', '#8fa2b0', 'gear');
 const GENERATED = type('··', '#5a5f61');
+const IMAGE = drawn('IM', '#7aa05a', 'image');
+const SHELL = drawn('SH', '#7fa06a', 'terminal');
+const GIT = drawn('git', '#e0603a', 'git');
+const NPM = drawn('npm', '#cb3837', 'npm');
+const TEXT = drawn('TXT', '#8a8f92', 'text');
 
 export const BY_EXTENSION: Record<string, FileType> = {
   ts: TS,
@@ -45,16 +65,16 @@ export const BY_EXTENSION: Record<string, FileType> = {
   svg: type('SVG', '#8fbc5a', DARK),
   vue: type('V', '#41b883', DARK),
   svelte: type('S', '#ff3e00'),
-  yml: type('YM', '#9876aa'),
-  yaml: type('YM', '#9876aa'),
+  yml: drawn('YM', '#a08ac0', 'gear'),
+  yaml: drawn('YM', '#a08ac0', 'gear'),
   toml: CONF,
   ini: CONF,
   env: CONF,
   lock: LOCK,
-  sh: type('$', '#6a8759', DARK),
-  zsh: type('$', '#6a8759', DARK),
-  bash: type('$', '#6a8759', DARK),
-  ps1: type('$', '#4f7fbf'),
+  sh: SHELL,
+  zsh: SHELL,
+  bash: SHELL,
+  ps1: drawn('PS', '#6f9ad4', 'terminal'),
   py: type('PY', '#4b8bbe'),
   go: type('GO', '#00add8', DARK),
   rs: type('RS', '#c9713c'),
@@ -63,32 +83,34 @@ export const BY_EXTENSION: Record<string, FileType> = {
   rb: type('RB', '#cc3f33'),
   php: type('PHP', '#787cb5'),
   sql: type('SQL', '#7f9fb0', DARK),
-  txt: type('TXT', '#6f7679'),
-  log: type('LOG', '#6f7679'),
+  txt: TEXT,
+  log: drawn('LOG', '#8a8f92', 'text'),
   map: GENERATED,
-  png: type('IM', '#6a8759'),
-  jpg: type('IM', '#6a8759'),
-  jpeg: type('IM', '#6a8759'),
-  gif: type('IM', '#6a8759'),
-  webp: type('IM', '#6a8759'),
-  avif: type('IM', '#6a8759'),
-  ico: type('IM', '#6a8759'),
+  png: IMAGE,
+  jpg: IMAGE,
+  jpeg: IMAGE,
+  gif: IMAGE,
+  webp: IMAGE,
+  avif: IMAGE,
+  ico: IMAGE,
   woff: type('AA', '#a37acc'),
   woff2: type('AA', '#a37acc'),
   ttf: type('AA', '#a37acc'),
   pdf: type('PDF', '#cc3f33'),
-  zip: type('ZIP', '#8a7f6f'),
+  zip: drawn('ZIP', '#a08f75', 'archive'),
+  tar: drawn('TAR', '#a08f75', 'archive'),
+  gz: drawn('GZ', '#a08f75', 'archive'),
 };
 
 export const BY_NAME: Record<string, FileType> = {
-  'package.json': type('npm', '#cb3837'),
+  'package.json': NPM,
   'package-lock.json': LOCK,
   'pnpm-lock.yaml': LOCK,
   'yarn.lock': LOCK,
-  'pnpm-workspace.yaml': type('npm', '#8a6a6a'),
-  '.gitignore': type('git', '#e0603a'),
-  '.gitattributes': type('git', '#e0603a'),
-  '.gitmodules': type('git', '#e0603a'),
+  'pnpm-workspace.yaml': drawn('npm', '#9a6a6a', 'npm'),
+  '.gitignore': GIT,
+  '.gitattributes': GIT,
+  '.gitmodules': GIT,
   '.npmrc': CONF,
   '.nvmrc': CONF,
   '.editorconfig': CONF,

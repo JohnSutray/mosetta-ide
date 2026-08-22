@@ -30,9 +30,6 @@ export function KeysHelp() {
       onClose={closeKeysHelp}
       onEscape={() => {}}
     >
-      <span class="keys-close panel-close" title={t('note.close')} onClick={closeKeysHelp}>
-        ×
-      </span>
       <div class="keys-head">
         <div class="keys-title">{t('keys.title')}</div>
         <div class="keys-note">

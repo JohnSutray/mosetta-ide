@@ -20,7 +20,7 @@ export function HunkPopup() {
 
   useEffect(() => {
     if (!open || !alive) return;
-    enter({ id: 'hunk', close: closeHunk });
+    enter({ id: 'hunk', close: closeHunk, layer: true });
     const away = (event: MouseEvent) => {
       if (!(event.target as HTMLElement).closest('.hunk-popup')) closeHunk();
     };

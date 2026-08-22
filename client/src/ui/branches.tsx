@@ -156,9 +156,6 @@ export function Branches() {
       )}
 
       <div class="branches-foot">
-        <button class="button" disabled={gitRunning.value !== null} onClick={() => void gitDo('pull')}>
-          {t('branches.pull')}
-        </button>
         <button class="button" disabled={gitRunning.value !== null} onClick={() => void openPush()}>
           {t('branches.push')}
         </button>
@@ -209,6 +206,7 @@ function BranchActions() {
   items.push({ label: 'branches.newFrom', run: () => askName('create') });
   if (!branch.remote) {
     items.push({ label: 'branches.rename', run: () => askName('rename') });
+    if (branch.current) items.push({ label: 'branches.update', run: () => void gitDo('pull') });
     items.push({ label: 'branches.push', run: () => void openPush() });
   }
   if (!branch.current) items.push({ label: 'branches.merge', run: () => void gitDo('merge') });

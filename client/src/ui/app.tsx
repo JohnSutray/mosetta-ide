@@ -53,6 +53,7 @@ import { headText, loadHead, showHunk } from '../state/git-marks.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
 import { ToolPicker } from './tool-picker.js';
+import { Tip } from './tip.js';
 import { noteUnbound } from '../state/keys-help.js';
 import { SheepField } from './sheep.js';
 
@@ -189,6 +190,7 @@ export function App() {
       <TreeMenu />
       <Prompt />
       <Notifications />
+      <Tip />
     </div>
   );
 }

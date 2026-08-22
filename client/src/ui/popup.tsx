@@ -3,6 +3,7 @@ import type { KeyContext } from '@ide/protocol';
 import { useEffect, useRef } from 'preact/hooks';
 import { resetPopupSize, setPopupSize, sizeOf, type Size } from '../state/layout.js';
 import { enter, leave } from '../state/popups.js';
+import { catchesKeys } from '../keys/dispatcher.js';
 import { t } from '../i18n/index.js';
 
 export function Popup({
@@ -11,6 +12,7 @@ export function Popup({
   class: extra = '',
   size,
   min,
+  over,
   onClose,
   onEscape,
   onMouseDown,
@@ -21,6 +23,7 @@ export function Popup({
   class?: string;
   size: Size;
   min: Size;
+  over?: string;
   onClose: () => void;
   onEscape?: () => void;
   onMouseDown?: (event: MouseEvent) => void;
@@ -33,9 +36,9 @@ export function Popup({
   const closing = useRef(onEscape ?? onClose);
   closing.current = onEscape ?? onClose;
   useEffect(() => {
-    enter({ id, close: () => closing.current() });
+    enter({ id, close: () => closing.current(), over });
     return () => leave(id);
-  }, [id]);
+  }, [id, over]);
 
   useEffect(() => {
     if (box.current?.contains(document.activeElement)) return;
@@ -55,6 +58,17 @@ export function Popup({
           onMouseDown?.(event as unknown as MouseEvent);
         }}
       >
+        <span class="popup-exit">
+          {!catchesKeys(keys) && (
+            <span class="popup-esc" title={t('popup.escape')}>
+              {t('popup.esc')}
+            </span>
+          )}
+          <span class="popup-close" title={t('popup.close')} onClick={onClose}>
+            ×
+          </span>
+        </span>
+
         {children}
 
         <span

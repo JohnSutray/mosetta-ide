@@ -176,6 +176,19 @@ function drawSwitch(
   ctx.fillStyle = '#4a3a26';
   cell(ctx, w / 2 - 2, box.y + box.h, 4, 12);
   write(ctx, label, box.x + pad, box.y + pad / 2, px, paused ? '#9aa2a8' : '#e8dcc4');
+
+  if (paused) {
+    const hint = 'CLICK TO OPEN';
+    const hintPx = 2;
+    write(
+      ctx,
+      hint,
+      Math.round(w / 2 - measure(hint, hintPx) / 2),
+      box.y - GLYPH_H * hintPx - 10,
+      hintPx,
+      '#79817f',
+    );
+  }
   return box;
 }
 
@@ -212,7 +225,7 @@ export function SheepField() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [merged, setMerged] = useState(() => Number(localStorage.getItem(MERGED_KEY) ?? '0'));
   const [shorn, setShorn] = useState(() => Number(localStorage.getItem(SHORN_KEY) ?? '0'));
-  const [, setPaused] = useState(() => localStorage.getItem(PAUSED_KEY) === '1');
+  const [, setPaused] = useState(() => localStorage.getItem(PAUSED_KEY) !== '0');
 
   useEffect(() => {
     const el = canvas.current;
@@ -222,7 +235,7 @@ export function SheepField() {
     const world = createWorld();
     world.merged = Number(localStorage.getItem(MERGED_KEY) ?? '0');
     world.shorn = Number(localStorage.getItem(SHORN_KEY) ?? '0');
-    world.paused = localStorage.getItem(PAUSED_KEY) === '1';
+    world.paused = localStorage.getItem(PAUSED_KEY) !== '0';
     let alive = true;
 
     const size = () => ({ w: el.clientWidth, h: el.clientHeight });

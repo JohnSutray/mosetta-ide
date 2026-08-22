@@ -190,7 +190,7 @@
   "branches.delete": "delete",
   "branches.forceDelete": "force delete",
   "branches.fetch": "fetch",
-  "branches.pull": "pull",
+  "branches.update": "update",
   "branches.close": "close",
   "branches.newName": "New name",
   "branches.branchName": "New branch name",
@@ -236,6 +236,9 @@
   "git.renamed": "renamed to {branch}",
   "git.deleted": "deleted {branch}",
 
+  "popup.esc": "Esc",
+  "popup.escape": "Escape closes this window",
+  "popup.close": "Close",
   "popup.resize": "Drag to resize",
   "note.close": "Dismiss",
   "note.closeAll": "Dismiss all",

@@ -28,7 +28,7 @@ export function Menu({
   useEffect(() => {
     const came = document.activeElement as HTMLElement | null;
     box.current?.focus({ preventScroll: true });
-    enter({ id: 'menu', close: onClose });
+    enter({ id: 'menu', close: onClose, layer: true });
     return () => {
       leave('menu');
       const here = document.activeElement;

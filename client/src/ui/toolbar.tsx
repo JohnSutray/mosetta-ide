@@ -8,6 +8,7 @@ import { connected, current } from '../state/session.js';
 import { gitState } from '../state/git.js';
 import { t } from '../i18n/index.js';
 import { currentManager, currentShell, openToolPicker } from '../state/tools.js';
+import { hideTip, showTip } from '../state/tip.js';
 import { Icon } from './icons.js';
 import { TOOLBAR } from './panels.js';
 
@@ -25,8 +26,14 @@ export function Toolbar() {
               <button
                 key={entry.id}
                 class={`tool ${active ? 'is-active' : ''}`}
-                title={withKeys(t(entry.title), entry.command)}
-                onClick={() => runCommand(entry.command)}
+                onMouseEnter={(event) =>
+                  showTip(event.currentTarget as Element, t(entry.title), keysFor(entry.command))
+                }
+                onMouseLeave={hideTip}
+                onClick={() => {
+                  hideTip();
+                  runCommand(entry.command);
+                }}
               >
                 <Icon name={entry.icon} filled={active} />
               </button>
@@ -56,8 +63,18 @@ export function Toolbar() {
           <>
             <button
               class="branch-label"
-              title={withKeys(t('toolbar.branches'), 'git.branches')}
-              onClick={() => runCommand('git.branches')}
+              onMouseEnter={(event) =>
+                showTip(
+                  event.currentTarget as Element,
+                  t('toolbar.branches'),
+                  keysFor('git.branches'),
+                )
+              }
+              onMouseLeave={hideTip}
+              onClick={() => {
+                hideTip();
+                runCommand('git.branches');
+              }}
             >
               {git.repo ? (git.branch ?? t('toolbar.noBranch')) : t('toolbar.noRepo')}
               {git.ahead > 0 && <span class="branch-ahead">↑{git.ahead}</span>}
@@ -82,19 +99,26 @@ function ToolButton({
 }) {
   if (label === '') return null;
   return (
-    <button class="tool-label" title={hint} onClick={onClick}>
+    <button
+      class="tool-label"
+      onMouseEnter={(event) => showTip(event.currentTarget as Element, hint)}
+      onMouseLeave={hideTip}
+      onClick={() => {
+        hideTip();
+        onClick();
+      }}
+    >
       {label}
     </button>
   );
 }
 
-function withKeys(title: string, command: CommandId): string {
-  const keys = keymapSignal.value.bindings
+function keysFor(command: CommandId): string[] {
+  return keymapSignal.value.bindings
     .filter((binding) => binding.command === command && (binding.when ?? 'global') === 'global')
     .map((binding) => humanizeKey(resolveClip(binding.key)))
     .sort((a, b) => rank(a) - rank(b))
     .slice(0, 2);
-  return keys.length ? `${title} · ${keys.join(' · ')}` : title;
 }
 
 function rank(key: string): number {

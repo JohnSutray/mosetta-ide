@@ -445,6 +445,29 @@ body {
   overflow: hidden;
 }
 
+.popup-exit {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.popup-esc {
+  color: var(--muted);
+  font: 10px var(--ui-font);
+  letter-spacing: 0.04em;
+  padding: 1px 4px;
+  border: 1px solid var(--divider);
+  border-radius: 3px;
+  cursor: default;
+  user-select: none;
+}
+
+.popup > .popup-exit + * { padding-right: 62px; }
+
 .popup-grip {
   position: absolute;
   right: 0;
@@ -1186,14 +1209,6 @@ body {
 
 .keys-help { padding: 10px 12px; gap: 8px; }
 
-.keys-close {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  z-index: 2;
-  cursor: pointer;
-}
-
 .keys-head { display: flex; flex-direction: column; gap: 4px; flex: none; }
 .keys-title { font-size: 13px; color: var(--fg); }
 .keys-note { color: var(--muted); font-size: 11px; line-height: 1.45; }
@@ -1303,4 +1318,34 @@ body {
 .pick-list.is-sectioned .pick-name {
   flex: none;
   min-width: 16ch;
+}
+
+.tip {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 42ch;
+  padding: 5px 9px;
+  background: #1f2224;
+  border: 1px solid var(--divider);
+  border-radius: 5px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  color: var(--fg);
+  font: 12px var(--ui-font);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tip-title { color: var(--fg); }
+
+.tip-key {
+  flex: none;
+  padding: 1px 5px;
+  background: var(--control-bg);
+  border-radius: 3px;
+  color: var(--accent);
+  font-family: var(--mono, monospace);
+  font-size: 11px;
 }

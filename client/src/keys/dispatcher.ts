@@ -8,6 +8,10 @@ export type ContextResolver = () => KeyContext;
 
 const CAPTURING = new Set<KeyContext>(['keys']);
 
+export function catchesKeys(context: KeyContext): boolean {
+  return CAPTURING.has(context);
+}
+
 const OWNING = new Set<KeyContext>(['terminal']);
 
 const MECHANICS = mechanicsKeys(MOD_IS_META, IS_MAC);
