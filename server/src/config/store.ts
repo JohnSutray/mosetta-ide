@@ -164,7 +164,7 @@ export function normalizeKey(key: string): string {
     .map((p) => p.trim())
     .filter(Boolean);
   const main = parts.pop() ?? '';
-  const order = ['mod', 'ctrl', 'alt', 'shift'];
+  const order = ['mod', 'clip', 'ctrl', 'alt', 'shift'];
   const mods = order.filter((m) => parts.includes(m));
   return [...mods, main].join('+');
 }

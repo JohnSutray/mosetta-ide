@@ -38,6 +38,17 @@ describe('клавиши', () => {
     expect(normalizeKey('MOD+1')).toBe('mod+1');
   });
 
+  it('модификатор буфера обмена доживает до клиента', () => {
+    expect(normalizeKey('Clip+Shift+C')).toBe('clip+shift+c');
+    expect(normalizeKey('shift+clip+c')).toBe('clip+shift+c');
+
+    const raw: Keymap = {
+      version: 1,
+      bindings: [{ command: 'tree.copy', key: 'clip+c', when: 'tree' }],
+    };
+    expect(validateKeymap(raw).bindings[0]!.key).toBe('clip+c');
+  });
+
   it('клавиша на несуществующую команду выбрасывается, а не молчит', () => {
     const raw = {
       version: 1,

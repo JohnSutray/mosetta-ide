@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { typedIntoField } from '../src/keys/dispatcher.js';
+import { describe, expect, it, vi } from 'vitest';
+import { resolveClip, typedIntoField } from '../src/keys/dispatcher.js';
+import { CLIP } from '../src/keys/host.js';
 
 function press(key: string, target: unknown, mods: Record<string, boolean> = {}) {
   return {
@@ -39,5 +40,39 @@ describe('раскладка и поля ввода', () => {
     expect(typedIntoField(press('Enter', INPUT))).toBe(false);
     expect(typedIntoField(press('Escape', INPUT))).toBe(false);
     expect(typedIntoField(press('ArrowDown', INPUT))).toBe(false);
+  });
+});
+
+describe('модификатор буфера обмена', () => {
+  it('переписывается в тот модификатор, что есть в этом окружении', () => {
+    expect(resolveClip('clip+c')).toBe(`${CLIP}+c`);
+    expect(resolveClip('clip+shift+c')).toBe(`${CLIP}+shift+c`);
+  });
+
+  it('чужие биндинги не трогает', () => {
+    expect(resolveClip('mod+s')).toBe('mod+s');
+    expect(resolveClip('backspace')).toBe('backspace');
+    expect(resolveClip('mod+clipboard')).toBe('mod+clipboard');
+  });
+});
+
+describe('браузер на маке: Cmd+C доходит до дерева', () => {
+  it('событие и биндинг сходятся в одной строке', async () => {
+    vi.resetModules();
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 Chrome/130', platform: 'MacIntel' });
+    const { eventToKey, resolveClip: resolve } = await import('../src/keys/dispatcher.js');
+    const { MOD_IS_META } = await import('../src/keys/host.js');
+    expect(MOD_IS_META, 'в браузере ведущая клавиша — Control (ADR-0098)').toBe(false);
+
+    const copy = press('c', ROW, { metaKey: true });
+    expect(resolve('clip+c')).toBe('cmd+c');
+    expect(eventToKey(copy)).toBe('cmd+c');
+
+    const path = press('c', ROW, { metaKey: true, shiftKey: true });
+    expect(eventToKey(path)).toBe(resolve('clip+shift+c'));
+
+    expect(eventToKey(press('n', ROW, { ctrlKey: true }))).toBe('mod+n');
+    vi.unstubAllGlobals();
+    vi.resetModules();
   });
 });

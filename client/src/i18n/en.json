@@ -10,7 +10,7 @@
   "toolbar.tree": "Project tree",
   "toolbar.search": "Search everywhere (double Shift)",
   "toolbar.branches": "Git branches",
-  "toolbar.push": "Push current branch (Cmd+Shift+K)",
+  "toolbar.push": "Push current branch ({mod}+Shift+K)",
   "toolbar.scripts": "npm scripts",
   "toolbar.problems": "TypeScript problems",
   "toolbar.terminal": "Terminal panel",
@@ -140,7 +140,7 @@
   "file.saved": "{path} saved",
   "file.external": "{path} changed on disk — reloaded",
   "file.dirtyConflict": "{path} changed on disk while you have unsaved edits. Reload — file.reload.",
-  "file.gone": "{path} is gone from disk. Cmd+S will recreate it.",
+  "file.gone": "{path} is gone from disk. {mod}+S will recreate it.",
   "terminal.finished": "[process finished]",
   "rpc.closed": "Connection closed"
 }

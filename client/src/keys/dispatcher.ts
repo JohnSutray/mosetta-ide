@@ -1,6 +1,6 @@
 import type { KeyBinding, KeyContext, Keymap } from '@ide/protocol';
 import { runCommand } from './commands.js';
-import { HOST, humanizeKey, IS_MAC, MOD_IS_META } from './host.js';
+import { CLIP, HOST, humanizeKey, IS_MAC, MOD_IS_META } from './host.js';
 
 export type ContextResolver = () => KeyContext;
 
@@ -90,13 +90,21 @@ export function installDispatcher(
 
   return {
     setKeymap(keymap) {
-      bindings = keymap.bindings;
+      bindings = keymap.bindings.map((binding) => ({ ...binding, key: resolveClip(binding.key) }));
     },
     dispose() {
       window.removeEventListener('keydown', onKeyDown, { capture: true });
       window.removeEventListener('keyup', onKeyUp, { capture: true });
     },
   };
+}
+
+export function resolveClip(key: string): string {
+  if (!key.includes('clip+')) return key;
+  return key
+    .split('+')
+    .map((part) => (part === 'clip' ? CLIP : part))
+    .join('+');
 }
 
 export function typedIntoField(event: KeyboardEvent): boolean {
