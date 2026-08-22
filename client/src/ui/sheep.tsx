@@ -100,7 +100,7 @@ function paint(
 
 function drawSheep(ctx: CanvasRenderingContext2D, s: Sheep): void {
   const px = PX * s.level;
-  const flip = s.face < 0;
+  const flip = s.face > 0;
   const swap = s.shorn ? { w: 's' } : undefined;
   paint(ctx, BODY, s.x, s.y, px, flip, swap);
 
