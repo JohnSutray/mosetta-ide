@@ -6,7 +6,12 @@ import { rpc } from './session.js';
 
 export const hunkPopup = signal<{ hunk: Hunk; box: HunkBox } | null>(null);
 
-export const headText = signal<string | null>(null);
+export const headText = signal<{ path: string; text: string | null } | null>(null);
+
+export function headFor(path: string | null): string | null {
+  const known = headText.value;
+  return known && known.path === path ? known.text : null;
+}
 
 export function showHunk(hunk: Hunk, box: HunkBox): void {
   hunkPopup.value = { hunk, box };
@@ -32,7 +37,7 @@ export async function loadHead(path: string | null): Promise<void> {
   }
   try {
     const head = await rpc.call('git.head', { path });
-    if (head.path === path) headText.value = head.text;
+    if (head.path === path) headText.value = { path, text: head.text };
   } catch (err) {
     headText.value = null;
     void err;

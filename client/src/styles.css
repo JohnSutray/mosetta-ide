@@ -1335,8 +1335,9 @@ body {
   z-index: 60;
   display: flex;
   align-items: center;
-  gap: 8px;
-  max-width: 42ch;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  max-width: min(42ch, calc(100vw - 24px));
   padding: 5px 9px;
   background: #1f2224;
   border: 1px solid var(--divider);
@@ -1344,7 +1345,6 @@ body {
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
   color: var(--fg);
   font: 12px var(--ui-font);
-  white-space: nowrap;
   pointer-events: none;
 }
 
@@ -1352,6 +1352,7 @@ body {
 
 .tip-key {
   flex: none;
+  white-space: nowrap;
   padding: 1px 5px;
   background: var(--control-bg);
   border-radius: 3px;

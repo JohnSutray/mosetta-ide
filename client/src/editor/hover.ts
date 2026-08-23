@@ -1,5 +1,6 @@
 import { hoverTooltip, type Tooltip } from '@codemirror/view';
 import type { HoverInfo } from '@ide/protocol';
+import { paintCode } from './paint-line.js';
 
 export function lspHover(
   pathOf: () => string | null,
@@ -19,7 +20,16 @@ export function lspHover(
       create() {
         const dom = document.createElement('div');
         dom.className = 'cm-hover-card';
-        dom.textContent = stripFences(info.markdown);
+        for (const chunk of paintCode(stripFences(info.markdown), path)) {
+          if (!chunk.color) {
+            dom.append(chunk.text);
+            continue;
+          }
+          const span = document.createElement('span');
+          span.style.color = chunk.color;
+          span.textContent = chunk.text;
+          dom.append(span);
+        }
         return { dom };
       },
     };

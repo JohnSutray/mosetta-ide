@@ -50,7 +50,7 @@ import { Projects } from './projects.js';
 import { Tree } from './tree.js';
 import { t } from '../i18n/index.js';
 import { hideProjects, showProjects } from '../state/projects.js';
-import { headText, loadHead, showHunk } from '../state/git-marks.js';
+import { headFor, loadHead, showHunk } from '../state/git-marks.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
 import { ToolPicker } from './tool-picker.js';
@@ -157,7 +157,7 @@ export function App() {
           {file ? (
             <Editor
               file={file}
-              head={headText.value}
+              head={headFor(file.path)}
               onHunk={showHunk}
               externalEpoch={externalEpoch.value}
               reveal={pendingReveal.value}

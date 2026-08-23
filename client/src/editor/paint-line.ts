@@ -11,7 +11,7 @@ export interface Chunk {
 const CACHE = new Map<string, Chunk[]>();
 const CACHE_MAX = 4000;
 
-export function paintLine(text: string, path: string): Chunk[] {
+export function paintCode(text: string, path: string): Chunk[] {
   const key = `${path} ${text}`;
   const known = CACHE.get(key);
   if (known) return known;
@@ -34,7 +34,7 @@ function paint(text: string, path: string): Chunk[] {
       tree,
       inkHighlighter,
       (code, color) => out.push({ text: code, color: color || null }),
-      () => out.push({ text: ' ', color: null }),
+      () => out.push({ text: '\n', color: null }),
     );
   } catch {
     return [{ text, color: null }];
