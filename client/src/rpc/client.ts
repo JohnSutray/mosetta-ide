@@ -36,12 +36,46 @@ export class RpcClient {
   private readonly listeners = new Map<string, Set<(payload: never) => void>>();
   private retry = 0;
   private closed = false;
+  private reopenTimer: ReturnType<typeof setTimeout> | null = null;
+  private watching = false;
 
   constructor(private readonly url = defaultUrl()) {}
 
   connect(): void {
     if (this.socket) return;
+    this.watchPage();
     this.open();
+  }
+
+  revive(): void {
+    if (this.closed || this.alive()) return;
+    if (this.reopenTimer) {
+      clearTimeout(this.reopenTimer);
+      this.reopenTimer = null;
+    }
+    this.retry = 0;
+    this.open();
+  }
+
+  private alive(): boolean {
+    const socket = this.socket;
+    if (!socket) return false;
+    return socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING;
+  }
+
+  private watchPage(): void {
+    if (this.watching || typeof window === 'undefined') return;
+    this.watching = true;
+    window.addEventListener('pageshow', (event) => {
+      if ((event as PageTransitionEvent).persisted) this.revive();
+    });
+    window.addEventListener('online', () => this.revive());
+    window.addEventListener('focus', () => this.revive());
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') this.revive();
+      });
+    }
   }
 
   call<M extends ApiMethod>(method: M, params: Params<M>): Promise<Result<M>> {
@@ -69,8 +103,10 @@ export class RpcClient {
   private open(): void {
     const socket = new WebSocket(this.url);
     this.socket = socket;
+    const mine = () => this.socket === socket;
 
     socket.addEventListener('open', () => {
+      if (!mine()) return socket.close();
       this.retry = 0;
       this.connected.value = true;
       for (const frame of this.queue.splice(0)) socket.send(frame);
@@ -87,6 +123,7 @@ export class RpcClient {
     });
 
     socket.addEventListener('close', () => {
+      if (!mine()) return;
       this.connected.value = false;
       for (const [, slot] of this.pending) {
         slot.reject(new RpcFailure({ code: RpcErrorCode.ConnectionLost, message: 'Соединение закрыто' }));
@@ -97,8 +134,12 @@ export class RpcClient {
   }
 
   private scheduleReopen(): void {
+    if (this.reopenTimer) return;
     const delay = Math.min(1000 * 2 ** this.retry++, 5000);
-    setTimeout(() => this.open(), delay);
+    this.reopenTimer = setTimeout(() => {
+      this.reopenTimer = null;
+      this.open();
+    }, delay);
   }
 
   private dispatch(frame: ServerFrame): void {

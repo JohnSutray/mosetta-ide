@@ -260,6 +260,28 @@ function describe(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+let everConnected = false;
+connected.subscribe((now) => {
+  if (!now) return;
+  if (everConnected) void resume();
+  everConnected = true;
+});
+
+async function resume(): Promise<void> {
+  const ws = current.peek();
+  if (!ws) return;
+  const path = openFile.peek()?.path ?? null;
+  try {
+    const info = await rpc.call('workspace.open', { root: ws.root });
+    current.value = info;
+    await afterAttach();
+    if (path) await openFileAt(path);
+    say(t('session.resumed'));
+  } catch (err) {
+    complain(describe(err));
+  }
+}
+
 rpc.on('config.changed', (bundle) => applyConfig(bundle));
 
 rpc.on('workspace.list', (list) => {

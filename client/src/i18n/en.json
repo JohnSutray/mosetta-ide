@@ -39,6 +39,7 @@
   "tool.byProject": "by project",
   "tool.apply": "use",
   "tool.empty": "Nothing found — type a path below",
+  "session.resumed": "Reconnected — the project is attached again",
   "keys.unbound": "{key} does nothing. {help} lists every key.",
 
   "command.file.save": "Save file",
