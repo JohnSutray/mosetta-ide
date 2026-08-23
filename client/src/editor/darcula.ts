@@ -1,6 +1,6 @@
 import { EditorView } from '@codemirror/view';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
-import { tags as t } from '@lezer/highlight';
+import { tagHighlighter, tags as t } from '@lezer/highlight';
 
 export const dc = {
   fg: '#A9B7C6',
@@ -83,7 +83,7 @@ export const darculaTheme = EditorView.theme(
   { dark: true },
 );
 
-export const darculaHighlight = HighlightStyle.define([
+const INK = [
   { tag: [t.keyword, t.modifier, t.controlKeyword, t.operatorKeyword], color: dc.keyword },
   { tag: [t.bool, t.null, t.self, t.atom], color: dc.keyword },
   { tag: [t.string, t.special(t.string), t.regexp], color: dc.string },
@@ -103,6 +103,12 @@ export const darculaHighlight = HighlightStyle.define([
   { tag: t.link, color: dc.number, textDecoration: 'underline' },
   { tag: t.heading, color: dc.fg, fontWeight: 'bold' },
   { tag: t.invalid, color: '#FF6B68' },
-]);
+];
+
+export const darculaHighlight = HighlightStyle.define(INK);
+
+export const inkHighlighter = tagHighlighter(
+  INK.map((item) => ({ tag: item.tag, class: item.color })),
+);
 
 export const darcula = [darculaTheme, syntaxHighlighting(darculaHighlight)];

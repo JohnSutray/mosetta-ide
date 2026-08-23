@@ -1,5 +1,9 @@
+import { useEffect, useRef } from 'preact/hooks';
 import { editorSettings } from '../state/config.js';
+import { widthOf } from '../state/layout.js';
+import { paintLine } from '../editor/paint-line.js';
 import { Popup } from './popup.js';
+import { Resizer } from './resizer.js';
 import {
   accept,
   closeSymbols,
@@ -17,9 +21,26 @@ import { t } from '../i18n/index.js';
 const SIZE = { w: 620, h: 420 };
 const MIN = { w: 320, h: 220 };
 
+const LIST_ID = 'symbols.list';
+const LIST_DEFAULT = 150;
+const LIST_MIN = 60;
+const PREVIEW_MIN = 120;
+
 export function Symbols() {
   const list = symbolList.value;
   const preview = symbolPreview.value;
+  const body = useRef<HTMLDivElement>(null);
+
+  const limits = () => {
+    const full = body.current?.parentElement?.getBoundingClientRect().height ?? 400;
+    return { min: LIST_MIN, max: Math.max(LIST_MIN, full - PREVIEW_MIN) };
+  };
+
+  useEffect(() => {
+    body.current?.querySelector('.symbols-row.is-current > *')?.scrollIntoView({
+      block: 'nearest',
+    });
+  }, [list?.at, list?.sites.length, hideImports.value]);
 
   if (!list) return null;
   const sites = shownSites(list);
@@ -55,7 +76,11 @@ export function Symbols() {
         </span>
       </div>
 
-      <div class="symbols-list">
+      <div
+        class="symbols-list"
+        ref={body}
+        style={{ height: `${widthOf(LIST_ID, LIST_DEFAULT)}px` }}
+      >
         {sites.map((site, at) => (
           <div
             key={`${site.path}:${site.line}:${site.character}`}
@@ -71,11 +96,23 @@ export function Symbols() {
               {site.path}
               <span class="symbols-line">:{site.line + 1}</span>
             </span>
-            <span class="symbols-text">{site.preview}</span>
+            <span class="symbols-text">
+              {paintLine(site.preview, site.path).map((chunk, i) =>
+                chunk.color ? (
+                  <span key={i} style={{ color: chunk.color }}>
+                    {chunk.text}
+                  </span>
+                ) : (
+                  chunk.text
+                ),
+              )}
+            </span>
           </div>
         ))}
         {cut > 0 && <div class="symbols-more">{t('symbols.more', { count: cut })}</div>}
       </div>
+
+      <Resizer id={LIST_ID} side="left" axis="y" limits={limits} defaultWidth={LIST_DEFAULT} />
 
       <div class="symbols-preview">
         {preview ? (
