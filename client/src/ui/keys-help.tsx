@@ -1,3 +1,4 @@
+import { Fragment } from 'preact';
 import type { CommandId, KeyBinding, KeyContext } from '@ide/protocol';
 import { keymap as keymapSignal } from '../state/config.js';
 import { closeKeysHelp, keysHelpOpen, lastKey, viewHost } from '../state/keys-help.js';
@@ -14,7 +15,8 @@ export function KeysHelp() {
   const host = viewHost.value ?? HOST;
   const elsewhere = host !== HOST;
   const taken = reservedIn([host, `${host}:${OS}`]);
-  const hard = taken.filter((item) => !item.soft).length;
+  const gone = taken.filter((item) => !item.soft);
+  const ours = taken.filter((item) => item.soft);
 
   const groups = new Map<KeyContext, KeyBinding[]>();
   for (const binding of bindings) {
@@ -78,33 +80,49 @@ export function KeysHelp() {
       <div class="keys-hint">{t('keys.echo.hint')}</div>
 
       <div class="keys-list">
-        {taken.length > 0 && (
+        {gone.length > 0 && (
           <details class="keys-taken" open>
-            <summary>{t('keys.taken', { count: hard })}</summary>
-            {taken.map((item) => (
-              <div class="keys-row" key={`${item.scopes[0]}:${item.key}`}>
-                <kbd class={item.soft ? 'keys-kbd is-soft' : 'keys-kbd is-dead'}>
-                  {humanizeKey(item.key)}
-                </kbd>
-                <span class="keys-command">{item.what}</span>
-                <span class="keys-who">{item.who}</span>
-              </div>
-            ))}
+            <summary>{t('keys.taken', { count: gone.length })}</summary>
+            <div class="keys-grid has-who">
+              {gone.map((item) => (
+                <div class="keys-row" key={`${item.scopes[0]}:${item.key}`}>
+                  <kbd class="keys-kbd is-dead">{humanizeKey(item.key)}</kbd>
+                  <span class="keys-command">{item.what}</span>
+                  <span class="keys-who">{item.who}</span>
+                </div>
+              ))}
+            </div>
           </details>
         )}
 
-        {[...groups.entries()].map(([context, list]) => (
-          <div class="keys-group" key={context}>
-            <div class="keys-group-title">{contextName(context)}</div>
-            {list.map((binding) => (
-              <div class="keys-row" key={`${binding.command}:${binding.key}`}>
-                <kbd class="keys-kbd">{humanizeKey(binding.key)}</kbd>
-                <span class="keys-command">{commandName(binding.command)}</span>
+        {ours.length > 0 && (
+          <details class="keys-taken is-ours" open>
+            <summary>{t('keys.soft', { count: ours.length })}</summary>
+            <div class="keys-grid has-who">
+              {ours.map((item) => (
+                <div class="keys-row" key={`${item.scopes[0]}:${item.key}`}>
+                  <kbd class="keys-kbd is-soft">{humanizeKey(item.key)}</kbd>
+                  <span class="keys-command">{item.what}</span>
+                  <span class="keys-who">{item.who}</span>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
 
-              </div>
-            ))}
-          </div>
-        ))}
+        <div class="keys-grid">
+          {[...groups.entries()].map(([context, list]) => (
+            <Fragment key={context}>
+              <div class="keys-group-title">{contextName(context)}</div>
+              {list.map((binding) => (
+                <div class="keys-row" key={`${binding.command}:${binding.key}`}>
+                  <kbd class="keys-kbd">{humanizeKey(binding.key)}</kbd>
+                  <span class="keys-command">{commandName(binding.command)}</span>
+                </div>
+              ))}
+            </Fragment>
+          ))}
+        </div>
       </div>
     </Popup>
   );
