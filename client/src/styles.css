@@ -1414,7 +1414,7 @@ body {
 .symbols-preview .cm-editor { height: 100%; }
 .symbols-more { padding: 3px 8px; color: var(--muted); font-size: 11px; font-style: italic; }
 
-.keys-taken { flex: none; }
+.keys-taken { margin-bottom: 10px; }
 .keys-taken > summary {
   cursor: pointer;
   color: var(--muted);
@@ -1426,7 +1426,6 @@ body {
 .keys-taken > summary::before { content: '▸ '; }
 .keys-taken[open] > summary::before { content: '▾ '; }
 .keys-taken > summary:hover { color: var(--fg); }
-.keys-taken-list { max-height: 220px; overflow: auto; padding-bottom: 6px; }
 .keys-kbd.is-dead {
   color: #c98a83;
   background: #3f3536;

@@ -76,10 +76,10 @@ export function KeysHelp() {
       </div>
       <div class="keys-hint">{t('keys.echo.hint')}</div>
 
-      {taken.length > 0 && (
-        <details class="keys-taken" open>
-          <summary>{t('keys.taken', { count: taken.length })}</summary>
-          <div class="keys-taken-list">
+      <div class="keys-list">
+        {taken.length > 0 && (
+          <details class="keys-taken" open>
+            <summary>{t('keys.taken', { count: taken.length })}</summary>
             {taken.map((item) => (
               <div class="keys-row" key={`${item.scopes[0]}:${item.key}`}>
                 <kbd class="keys-kbd is-dead">{humanizeKey(item.key)}</kbd>
@@ -87,11 +87,9 @@ export function KeysHelp() {
                 <span class="keys-who">{item.who}</span>
               </div>
             ))}
-          </div>
-        </details>
-      )}
+          </details>
+        )}
 
-      <div class="keys-list">
         {[...groups.entries()].map(([context, list]) => (
           <div class="keys-group" key={context}>
             <div class="keys-group-title">{contextName(context)}</div>

@@ -174,12 +174,30 @@ export function validateKeymap(raw: Keymap | null): Keymap {
   return { version: raw.version ?? 1, bindings };
 }
 
+const ALIASES: Record<string, string> = {
+  cmd: 'meta',
+  command: 'meta',
+  win: 'meta',
+  windows: 'meta',
+  super: 'meta',
+  ctrl: 'control',
+  option: 'alt',
+  opt: 'alt',
+  esc: 'escape',
+  return: 'enter',
+};
+
 export function normalizeKey(key: string): string {
+  if (key.toLowerCase().startsWith('double:')) {
+    const name = key.slice('double:'.length).trim().toLowerCase();
+    return `double:${ALIASES[name] ?? name}`;
+  }
   const parts = key
     .toLowerCase()
     .split('+')
     .map((p) => p.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((p) => ALIASES[p] ?? p);
   const main = parts.pop() ?? '';
   const order = ['meta', 'control', 'alt', 'shift'];
   const mods = order.filter((m) => parts.includes(m));

@@ -44,6 +44,15 @@ describe('клавиши', () => {
     expect(normalizeKey('control+alt+1')).toBe('control+alt+1');
   });
 
+  it('клавиша зовётся и тем именем, что написано на ней', () => {
+    expect(normalizeKey('Cmd+S')).toBe('meta+s');
+    expect(normalizeKey('Command+Shift+S')).toBe('meta+shift+s');
+    expect(normalizeKey('Win+1')).toBe('meta+1');
+    expect(normalizeKey('Ctrl+Option+T')).toBe('control+alt+t');
+    expect(normalizeKey('double:cmd')).toBe('double:meta');
+    expect(normalizeKey('Esc')).toBe('escape');
+  });
+
   it('одна клавиша в разных окружениях — не дубль, а вторая раскладка', () => {
     const raw: Keymap = {
       version: 2,
