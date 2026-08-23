@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import type { CommandId, KeyContext } from '@ide/protocol';
+import type { CommandId, KeyContext, KeyHost } from '@ide/protocol';
 import { settle } from './notifications.js';
 import { keymap } from './config.js';
 import { humanizeKey } from '../keys/host.js';
@@ -13,6 +13,8 @@ export interface KeyEcho {
 }
 
 export const keysHelpOpen = signal(false);
+
+export const viewHost = signal<KeyHost | null>(null);
 export const lastKey = signal<KeyEcho | null>(null);
 
 let seq = 0;

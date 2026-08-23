@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { KeyScope, Keymap } from '@ide/protocol';
 import { RESERVED, physicalOf } from '../src/keys/reserved.js';
+import { keyHere } from '../src/keys/dispatcher.js';
 
 function keymap(): Keymap {
   const raw = fs.readFileSync(
@@ -35,14 +36,15 @@ describe('раскладка не лезет на отнятые клавиши'
         ]),
       );
       for (const binding of bindings) {
-        const physical = physicalOf(binding.key, world.modIsMeta, world.isMac);
+        const here = keyHere(binding, [world.scope, world.scope.split(':')[0] as KeyScope]);
+        const physical = physicalOf(here, world.modIsMeta, world.isMac);
         const who = taken.get(physical);
         if (!who) continue;
         const named =
           binding.unavailable?.[world.scope] ??
           binding.unavailable?.[world.scope.split(':')[0] as KeyScope];
         if (named) continue;
-        clashes.push(`${world.scope}: ${binding.key} (${physical}) — ${who}`);
+        clashes.push(`${world.scope}: ${here} (${physical}) — ${who}`);
       }
     }
 

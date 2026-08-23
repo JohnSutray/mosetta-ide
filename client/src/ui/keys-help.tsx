@@ -1,10 +1,9 @@
 import type { CommandId, KeyBinding, KeyContext } from '@ide/protocol';
 import { keymap as keymapSignal } from '../state/config.js';
-import { closeKeysHelp, keysHelpOpen, lastKey } from '../state/keys-help.js';
-import { HOST, SCOPES, humanizeKey } from '../keys/host.js';
-import { blockedHere, resolveClip } from '../keys/dispatcher.js';
+import { closeKeysHelp, keysHelpOpen, lastKey, viewHost } from '../state/keys-help.js';
+import { HOST, OS, humanizeKey } from '../keys/host.js';
+import { keyIn, reservedIn } from '../keys/reserved.js';
 import { t } from '../i18n/index.js';
-import { reservedIn } from '../keys/reserved.js';
 import { Popup } from './popup.js';
 
 export function KeysHelp() {
@@ -12,7 +11,9 @@ export function KeysHelp() {
 
   const bindings = keymapSignal.value.bindings;
   const echo = lastKey.value;
-  const taken = reservedIn(SCOPES);
+  const host = viewHost.value ?? HOST;
+  const elsewhere = host !== HOST;
+  const taken = reservedIn([host, `${host}:${OS}`]);
 
   const groups = new Map<KeyContext, KeyBinding[]>();
   for (const binding of bindings) {
@@ -33,10 +34,24 @@ export function KeysHelp() {
       onEscape={() => {}}
     >
       <div class="keys-head">
-        <div class="keys-title">{t('keys.title')}</div>
-        <div class="keys-note">
-          {t(HOST === 'browser' ? 'keys.mod.browser' : 'keys.mod.electron')}
+        <div class="keys-title">
+          {t('keys.title')}
+          <span class="keys-hosts">
+            {(['browser', 'electron'] as const).map((one) => (
+              <span
+                key={one}
+                class={`keys-host ${one === host ? 'is-on' : ''}`}
+                onClick={() => (viewHost.value = one === HOST ? null : one)}
+              >
+                {t(`keys.host.${one}`)}
+              </span>
+            ))}
+          </span>
         </div>
+        <div class="keys-note">
+          {t(host === 'browser' ? 'keys.mod.browser' : 'keys.mod.electron')}
+        </div>
+        {elsewhere && <div class="keys-note is-loud">{t('keys.elsewhere')}</div>}
         <div class="keys-note">{t('keys.clip')}</div>
         <div class="keys-note is-loud">{t('keys.captured')}</div>
       </div>
@@ -59,7 +74,7 @@ export function KeysHelp() {
       <div class="keys-hint">{t('keys.echo.hint')}</div>
 
       {taken.length > 0 && (
-        <details class="keys-taken">
+        <details class="keys-taken" open>
           <summary>{t('keys.taken', { count: taken.length })}</summary>
           <div class="keys-taken-list">
             {taken.map((item) => (
@@ -79,11 +94,11 @@ export function KeysHelp() {
             <div class="keys-group-title">{contextName(context)}</div>
             {list.map((binding) => (
               <div class="keys-row" key={`${binding.command}:${binding.key}`}>
-                <kbd class="keys-kbd">{humanizeKey(resolveClip(binding.key))}</kbd>
+                <kbd class="keys-kbd">{humanizeKey(keyIn(binding, host, OS))}</kbd>
                 <span class="keys-command">{commandName(binding.command)}</span>
-                {blockedHere(binding) && (
+                {blocked(binding, host) && (
                   <span class="keys-blocked">
-                    {t('keys.unavailable', { reason: blockedHere(binding) ?? '' })}
+                    {t('keys.unavailable', { reason: blocked(binding, host) ?? '' })}
                   </span>
                 )}
               </div>
@@ -93,6 +108,10 @@ export function KeysHelp() {
       </div>
     </Popup>
   );
+}
+
+function blocked(binding: KeyBinding, host: typeof HOST): string | undefined {
+  return binding.unavailable?.[`${host}:${OS}`] ?? binding.unavailable?.[host];
 }
 
 function commandName(id: CommandId): string {

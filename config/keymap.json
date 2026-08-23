@@ -41,16 +41,14 @@
     {
       "command": "tree.newFile",
       "key": "mod+n",
-      "when": "tree",
-      "unavailable": { "browser:win": "Chrome opens a new window with Ctrl+N. Use the tree menu." }
+      "keys": { "browser:win": "mod+alt+n" },
+      "when": "tree"
     },
     {
       "command": "tree.newFolder",
       "key": "mod+shift+n",
-      "when": "tree",
-      "unavailable": {
-        "browser:win": "Chrome opens an incognito window with Ctrl+Shift+N. Use the tree menu."
-      }
+      "keys": { "browser:win": "mod+alt+shift+n" },
+      "when": "tree"
     },
     { "command": "tree.open", "key": "enter", "when": "tree" },
     { "command": "tree.rename", "key": "f2", "when": "tree" },
@@ -85,22 +83,27 @@
     {
       "command": "edit.wordLeft",
       "key": "mod+arrowleft",
-      "when": "editor",
-      "unavailable": {
-        "browser:mac": "macOS switches desktops with Control+arrows. Option+arrows already jump by word here."
-      }
+      "keys": { "browser:mac": "alt+arrowleft" },
+      "when": "editor"
     },
     {
       "command": "edit.wordRight",
       "key": "mod+arrowright",
-      "when": "editor",
-      "unavailable": {
-        "browser:mac": "macOS switches desktops with Control+arrows. Option+arrows already jump by word here."
-      }
+      "keys": { "browser:mac": "alt+arrowright" },
+      "when": "editor"
     },
-    { "command": "edit.selectWordLeft", "key": "mod+shift+arrowleft", "when": "editor" },
-    { "command": "edit.selectWordRight", "key": "mod+shift+arrowright", "when": "editor" },
-
+    {
+      "command": "edit.selectWordLeft",
+      "key": "mod+shift+arrowleft",
+      "keys": { "browser:mac": "alt+shift+arrowleft" },
+      "when": "editor"
+    },
+    {
+      "command": "edit.selectWordRight",
+      "key": "mod+shift+arrowright",
+      "keys": { "browser:mac": "alt+shift+arrowright" },
+      "when": "editor"
+    },
     { "command": "nav.back", "key": "mod+alt+arrowleft", "when": "global" },
     { "command": "nav.forward", "key": "mod+alt+arrowright", "when": "global" },
     { "command": "nav.back", "key": "mod+bracketleft", "when": "global" },
@@ -121,56 +124,56 @@
     {
       "command": "panel.tree",
       "key": "mod+1",
-      "when": "global",
-      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
+      "keys": { "browser:win": "mod+alt+1" },
+      "when": "global"
     },
     {
       "command": "search.everywhere",
       "key": "mod+2",
-      "when": "global",
-      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
+      "keys": { "browser:win": "mod+alt+2" },
+      "when": "global"
     },
     {
       "command": "git.branches",
       "key": "mod+3",
-      "when": "global",
-      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
+      "keys": { "browser:win": "mod+alt+3" },
+      "when": "global"
     },
     {
       "command": "git.push",
       "key": "mod+4",
-      "when": "global",
-      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
+      "keys": { "browser:win": "mod+alt+4" },
+      "when": "global"
     },
     {
       "command": "scripts.open",
       "key": "mod+5",
-      "when": "global",
-      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
+      "keys": { "browser:win": "mod+alt+5" },
+      "when": "global"
     },
     {
       "command": "panel.problems",
       "key": "mod+6",
-      "when": "global",
-      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
+      "keys": { "browser:win": "mod+alt+6" },
+      "when": "global"
     },
     {
       "command": "terminal.create",
       "key": "mod+7",
-      "when": "global",
-      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
+      "keys": { "browser:win": "mod+alt+7" },
+      "when": "global"
     },
     {
       "command": "projects.show",
       "key": "mod+8",
-      "when": "global",
-      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
+      "keys": { "browser:win": "mod+alt+8" },
+      "when": "global"
     },
     {
       "command": "panel.editor",
       "key": "mod+9",
-      "when": "global",
-      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
+      "keys": { "browser:win": "mod+alt+9" },
+      "when": "global"
     },
     {
       "command": "keys.show",

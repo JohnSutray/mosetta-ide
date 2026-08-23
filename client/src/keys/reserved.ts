@@ -1,4 +1,4 @@
-import type { KeyScope } from '@ide/protocol';
+import type { KeyHost, KeyOs, KeyScope } from '@ide/protocol';
 
 export interface ReservedKey {
   key: string;
@@ -61,6 +61,9 @@ export const RESERVED: ReservedKey[] = [
   { key: 'meta+shift+n', scopes: CHROME_MAC, who: 'Chrome', what: 'incognito window' },
   { key: 'meta+shift+t', scopes: CHROME_MAC, who: 'Chrome', what: 'reopen the closed tab' },
   { key: 'meta+l', scopes: CHROME_MAC, who: 'Chrome', what: 'focus the address bar' },
+  { key: 'meta+s', scopes: CHROME_MAC, who: 'Chrome', what: 'save the page' },
+  { key: 'meta+p', scopes: CHROME_MAC, who: 'Chrome', what: 'print the page' },
+  { key: 'meta+f', scopes: CHROME_MAC, who: 'Chrome', what: 'find on the page' },
   { key: 'meta+alt+i', scopes: CHROME_MAC, who: 'Chrome', what: 'DevTools' },
   { key: 'meta+alt+j', scopes: CHROME_MAC, who: 'Chrome', what: 'DevTools console' },
   { key: 'meta+shift+c', scopes: CHROME_MAC, who: 'Chrome', what: 'DevTools element picker' },
@@ -105,4 +108,17 @@ export function physicalOf(key: string, modIsMeta: boolean, isMac: boolean): str
   if (mods.has('shift')) out.push('shift');
   out.push(main);
   return out.join('+');
+}
+
+export function modIsMetaIn(host: KeyHost, os: KeyOs): boolean {
+  return os === 'mac' && host === 'electron';
+}
+
+export function keyIn(
+  binding: { key: string; keys?: Partial<Record<KeyScope, string>> },
+  host: KeyHost,
+  os: KeyOs,
+): string {
+  const own = binding.keys?.[`${host}:${os}`] ?? binding.keys?.[host] ?? binding.key;
+  return physicalOf(own, modIsMetaIn(host, os), os === 'mac');
 }

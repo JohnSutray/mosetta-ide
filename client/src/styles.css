@@ -1427,5 +1427,22 @@ body {
 .keys-taken[open] > summary::before { content: '▾ '; }
 .keys-taken > summary:hover { color: var(--fg); }
 .keys-taken-list { max-height: 220px; overflow: auto; padding-bottom: 6px; }
-.keys-kbd.is-dead { color: var(--muted); text-decoration: line-through; }
+.keys-kbd.is-dead {
+  color: #c98a83;
+  background: #3f3536;
+  text-decoration: line-through;
+  text-decoration-color: #8f6a66;
+}
 .keys-who { margin-left: auto; color: var(--muted); font-size: 11px; flex: none; }
+
+.keys-hosts { display: inline-flex; gap: 4px; margin-left: 10px; vertical-align: middle; }
+.keys-host {
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: var(--control-bg);
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+.keys-host:hover { background: var(--control-bg-hover); color: var(--fg); }
+.keys-host.is-on { background: var(--treesel); color: #dbe6ef; }

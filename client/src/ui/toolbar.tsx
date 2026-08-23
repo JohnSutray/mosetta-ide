@@ -2,7 +2,7 @@ import type { CommandId, TerminalInfo } from '@ide/protocol';
 import { runCommand } from '../keys/commands.js';
 import { keymap as keymapSignal } from '../state/config.js';
 import { humanizeKey } from '../keys/host.js';
-import { resolveClip } from '../keys/dispatcher.js';
+import { keyHere, resolveClip } from '../keys/dispatcher.js';
 import { activeTerminal, closeTerminal, focusTerminal, terminals } from '../state/terminals.js';
 import { connected, current } from '../state/session.js';
 import { gitState } from '../state/git.js';
@@ -116,7 +116,7 @@ function ToolButton({
 function keysFor(command: CommandId): string[] {
   return keymapSignal.value.bindings
     .filter((binding) => binding.command === command && (binding.when ?? 'global') === 'global')
-    .map((binding) => humanizeKey(resolveClip(binding.key)))
+    .map((binding) => humanizeKey(resolveClip(keyHere(binding))))
     .sort((a, b) => rank(a) - rank(b))
     .slice(0, 2);
 }

@@ -2,7 +2,7 @@ import type { KeyBinding, KeyContext, Keymap } from '@ide/protocol';
 import { runCommand } from './commands.js';
 import { echoKey } from '../state/keys-help.js';
 import { mechanicsKeys } from '../editor/input-keymap.js';
-import { CLIP, humanizeKey, IS_MAC, MOD_IS_META, SCOPES } from './host.js';
+import { CLIP, humanizeKey, IS_MAC, MOD_IS_META, SCOPES, SCOPES_EXACT_FIRST } from './host.js';
 
 export type ContextResolver = () => KeyContext;
 
@@ -147,7 +147,10 @@ export function installDispatcher(
 
   return {
     setKeymap(keymap) {
-      bindings = keymap.bindings.map((binding) => ({ ...binding, key: resolveClip(binding.key) }));
+      bindings = keymap.bindings.map((binding) => ({
+        ...binding,
+        key: resolveClip(keyHere(binding)),
+      }));
       clipKeys = new Set(
         keymap.bindings
           .filter((binding) => binding.key.includes('clip+'))
@@ -159,6 +162,14 @@ export function installDispatcher(
       window.removeEventListener('keyup', onKeyUp, { capture: true });
     },
   };
+}
+
+export function keyHere(binding: KeyBinding, scopes = SCOPES_EXACT_FIRST): string {
+  for (const scope of scopes) {
+    const own = binding.keys?.[scope];
+    if (own) return own;
+  }
+  return binding.key;
 }
 
 export function resolveClip(key: string): string {

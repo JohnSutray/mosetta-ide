@@ -16,6 +16,8 @@ export const OS: KeyOs = IS_MAC
 
 export const SCOPES: KeyScope[] = [HOST, `${HOST}:${OS}`];
 
+export const SCOPES_EXACT_FIRST: KeyScope[] = [`${HOST}:${OS}`, HOST];
+
 export const MOD_IS_META = IS_MAC && HOST === 'electron';
 
 export const MOD_LABEL = MOD_IS_META ? 'Cmd' : 'Ctrl';
