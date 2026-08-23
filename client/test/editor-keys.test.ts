@@ -1,9 +1,7 @@
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { KeyBinding as CmBinding } from '@codemirror/view';
-import type { Keymap } from '@ide/protocol';
-import { droppedEmacsKeys, inputKeymap } from '../src/editor/input-keymap.js';
+import { WORLDS, inWorld, keymap } from './keymap-shared.js';
+import { droppedEmacsKeys, inputKeymap, mechanicsKeys } from '../src/editor/input-keymap.js';
 
 function macKey(binding: CmBinding): string {
   return binding.mac ?? binding.key ?? '';
@@ -20,18 +18,6 @@ const MECHANICS = new Set([
   'Backspace', 'Delete',
   'Alt-Backspace', 'Alt-Delete', 'Mod-Backspace', 'Mod-Delete',
 ]);
-
-function keymap(): Keymap {
-  const raw = fs.readFileSync(
-    fileURLToPath(new URL('../../config/keymap.json', import.meta.url)),
-    'utf8',
-  );
-  const clean = raw
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/,(\s*[}\]])/g, '$1');
-  return JSON.parse(clean) as Keymap;
-}
 
 describe('редактор не приносит чужих клавиш', () => {
   it('у редактора только механика ввода — и ничего сверх списка', () => {
@@ -55,56 +41,23 @@ describe('редактор не приносит чужих клавиш', () =>
     }
   });
 
-  const KNOWN: Record<string, string[]> = {
-    electron: ['Cmd-ArrowLeft', 'Cmd-ArrowRight'],
-    browser: [],
-  };
-
   it('ни одна клавиша редактора не спорит с объявленной раскладкой', () => {
-    const ours = keymap().bindings.filter((b) => (b.when ?? 'global') !== 'tree');
-    for (const host of ['browser', 'electron'] as const) {
-      const declared = new Map(
-        ours
-          .filter((b) => ['global', 'editor'].includes(b.when ?? 'global'))
-          .map((b) => [ourForm(b.key, host), b.command]),
+    const SAME = new Set(['edit.wordLeft', 'edit.wordRight']);
+    const bindings = keymap().bindings;
+    for (const world of WORLDS) {
+      const mechanics = mechanicsKeys(world.isMac);
+      const ours = new Map(
+        inWorld(bindings, world)
+          .filter((binding) => ['global', 'editor'].includes(binding.when ?? 'global'))
+          .filter((binding) => binding.key.includes('+'))
+          .map((binding) => [binding.key, binding.command]),
       );
-      const clashes = inputKeymap
-        .map((binding) => ({ cm: macKey(binding), ours: ourForm(fromCm(macKey(binding)), host) }))
-        .filter((pair) => declared.has(pair.ours) && !KNOWN[host]!.includes(pair.cm))
-        .map((pair) => `${pair.cm} = ${declared.get(pair.ours)}`);
-      expect(clashes, `${host}: чужая клавиша поверх нашей — ${clashes.join(', ')}`).toEqual([]);
+      const clashes = [...mechanics]
+        .filter((key) => ours.has(key) && !SAME.has(ours.get(key)!))
+        .map((key) => `${key} = ${ours.get(key)}`);
+      expect(clashes, `${world.scope}: чужая клавиша поверх нашей — ${clashes.join(', ')}`).toEqual(
+        [],
+      );
     }
   });
 });
-
-function fromCm(key: string): string {
-  const parts = key.split('-');
-  const main = parts.pop() ?? '';
-  const mods = new Set(parts.map((part) => part.toLowerCase()));
-  const out: string[] = [];
-  if (mods.has('mod') || mods.has('cmd') || mods.has('meta')) out.push('cmd');
-  if (mods.has('ctrl') || mods.has('control')) out.push('ctrl');
-  if (mods.has('alt')) out.push('alt');
-  if (mods.has('shift')) out.push('shift');
-  out.push(main.toLowerCase());
-  return out.join('+');
-}
-
-function ourForm(key: string, host: 'browser' | 'electron'): string {
-  const lead = host === 'browser' ? 'ctrl' : 'cmd';
-  const clip = 'cmd';
-  const parts = key.split('+').map((part) => {
-    if (part === 'mod') return lead;
-    if (part === 'clip') return clip;
-    return part;
-  });
-  const main = parts.pop() ?? '';
-  const mods = new Set(parts);
-  const out: string[] = [];
-  if (mods.has('cmd')) out.push('cmd');
-  if (mods.has('ctrl')) out.push('ctrl');
-  if (mods.has('alt')) out.push('alt');
-  if (mods.has('shift')) out.push('shift');
-  out.push(main);
-  return out.join('+');
-}

@@ -1,10 +1,17 @@
-import type { KeyBinding, KeyContext, Keymap } from '@ide/protocol';
+import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
 import { runCommand } from './commands.js';
 import { echoKey } from '../state/keys-help.js';
 import { mechanicsKeys } from '../editor/input-keymap.js';
-import { CLIP, humanizeKey, IS_MAC, MOD_IS_META, SCOPES, SCOPES_EXACT_FIRST } from './host.js';
+import { humanizeKey, IS_MAC, PRIMARY, SCOPES } from './host.js';
 
 export type ContextResolver = () => KeyContext;
+
+export function appliesHere(binding: KeyBinding, scopes: KeyScope[] = SCOPES): boolean {
+  if (!binding.where || binding.where.length === 0) return true;
+  return binding.where.some((scope) => scopes.includes(scope));
+}
+
+const CLIPBOARD = new Set<string>(['tree.copy', 'tree.cut', 'tree.paste']);
 
 const CAPTURING = new Set<KeyContext>(['keys']);
 
@@ -14,14 +21,12 @@ export function catchesKeys(context: KeyContext): boolean {
 
 const OWNING = new Set<KeyContext>(['terminal']);
 
-const MECHANICS = mechanicsKeys(MOD_IS_META, IS_MAC);
+const MECHANICS = mechanicsKeys(IS_MAC);
 
-export function blockedHere(binding: KeyBinding): string | undefined {
-  for (const scope of SCOPES) {
-    const reason = binding.unavailable?.[scope];
-    if (reason) return reason;
-  }
-  return undefined;
+export function swallows(key: string, clip: ReadonlySet<string>): boolean {
+  if (!key.split('+').includes(PRIMARY)) return false;
+  if (clip.has(key)) return false;
+  return !MECHANICS.has(key);
 }
 
 export function complains(
@@ -29,7 +34,7 @@ export function complains(
   opts: { repeat: boolean; clip: ReadonlySet<string> },
 ): boolean {
   if (opts.repeat) return false;
-  if (!key.split('+').includes('mod')) return false;
+  if (!key.split('+').includes(PRIMARY)) return false;
   if (opts.clip.has(key)) return false;
   if (MECHANICS.has(key)) return false;
   return true;
@@ -64,7 +69,6 @@ const DOUBLE_TAP_MS = 400;
 
 export function installDispatcher(
   resolveContext: ContextResolver,
-  onBlocked: (binding: KeyBinding, reason: string) => void,
   onUnbound: (key: string) => void,
 ): Installed {
   let bindings: KeyBinding[] = [];
@@ -97,12 +101,6 @@ export function installDispatcher(
       return;
     }
 
-    const blocked = blockedHere(binding);
-    if (blocked) {
-      onBlocked(binding, blocked);
-      return;
-    }
-
     if (runCommand(binding.command)) {
       event.preventDefault();
       event.stopPropagation();
@@ -119,7 +117,9 @@ export function installDispatcher(
     }
 
     const key = eventToKey(event);
-    if (key && !typedIntoField(event)) fire(key, event);
+    if (!key || typedIntoField(event)) return;
+    fire(key, event);
+    if (!event.defaultPrevented && swallows(key, clipKeys)) event.preventDefault();
   };
 
   const onKeyUp = (event: KeyboardEvent) => {
@@ -147,14 +147,9 @@ export function installDispatcher(
 
   return {
     setKeymap(keymap) {
-      bindings = keymap.bindings.map((binding) => ({
-        ...binding,
-        key: resolveClip(keyHere(binding)),
-      }));
+      bindings = keymap.bindings.filter((binding) => appliesHere(binding));
       clipKeys = new Set(
-        keymap.bindings
-          .filter((binding) => binding.key.includes('clip+'))
-          .map((binding) => resolveClip(binding.key)),
+        bindings.filter((binding) => CLIPBOARD.has(binding.command)).map((b) => b.key),
       );
     },
     dispose() {
@@ -162,22 +157,6 @@ export function installDispatcher(
       window.removeEventListener('keyup', onKeyUp, { capture: true });
     },
   };
-}
-
-export function keyHere(binding: KeyBinding, scopes = SCOPES_EXACT_FIRST): string {
-  for (const scope of scopes) {
-    const own = binding.keys?.[scope];
-    if (own) return own;
-  }
-  return binding.key;
-}
-
-export function resolveClip(key: string): string {
-  if (!key.includes('clip+')) return key;
-  return key
-    .split('+')
-    .map((part) => (part === 'clip' ? CLIP : part))
-    .join('+');
 }
 
 export function typedIntoField(event: KeyboardEvent): boolean {
@@ -203,10 +182,8 @@ export function eventToKey(event: KeyboardEvent): string | null {
   if (!main) return null;
 
   const parts: string[] = [];
-  const modPressed = MOD_IS_META ? event.metaKey : event.ctrlKey;
-  if (modPressed) parts.push('mod');
-  if (MOD_IS_META && event.ctrlKey) parts.push('ctrl');
-  if (!MOD_IS_META && IS_MAC && event.metaKey) parts.push('cmd');
+  if (event.metaKey) parts.push('meta');
+  if (event.ctrlKey) parts.push('control');
   if (event.altKey) parts.push('alt');
   if (event.shiftKey) parts.push('shift');
   parts.push(main);

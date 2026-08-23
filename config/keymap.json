@@ -1,184 +1,172 @@
 {
-  "version": 1,
+  "version": 2,
   "bindings": [
-    { "command": "file.save", "key": "mod+s", "when": "global" },
 
-    { "command": "search.everywhere", "key": "double:shift", "when": "global" },
-
-    { "command": "scripts.open", "key": "double:meta", "when": "global" },
-    { "command": "projects.show", "key": "double:control", "when": "global" },
-    { "command": "git.branches", "key": "double:alt", "when": "global" },
-    { "command": "search.everywhere", "key": "mod+p", "when": "global" },
+    { "command": "search.everywhere", "key": "double:shift" },
+    { "command": "scripts.open", "key": "double:meta" },
+    { "command": "projects.show", "key": "double:control" },
+    { "command": "git.branches", "key": "double:alt" },
+    { "command": "popup.close", "key": "escape" },
+    { "command": "prompt.confirm", "key": "enter", "when": "prompt" },
     { "command": "search.next", "key": "arrowdown", "when": "search" },
     { "command": "search.prev", "key": "arrowup", "when": "search" },
     { "command": "search.accept", "key": "enter", "when": "search" },
     { "command": "search.close", "key": "escape", "when": "search" },
-
-    { "command": "popup.close", "key": "escape", "when": "global" },
-
-    { "command": "projects.next", "key": "arrowdown", "when": "projects" },
-    { "command": "projects.prev", "key": "arrowup", "when": "projects" },
-    { "command": "projects.suggest", "key": "mod+shift+space", "when": "projects" },
-    { "command": "projects.complete", "key": "tab", "when": "projects" },
-    { "command": "projects.accept", "key": "enter", "when": "projects" },
-    { "command": "projects.close", "key": "escape", "when": "projects" },
-
     { "command": "pick.next", "key": "arrowdown", "when": "pick" },
     { "command": "pick.prev", "key": "arrowup", "when": "pick" },
     { "command": "pick.accept", "key": "enter", "when": "pick" },
     { "command": "pick.expand", "key": "arrowright", "when": "pick" },
-
-    { "command": "prompt.confirm", "key": "enter", "when": "prompt" },
-
     { "command": "menu.next", "key": "arrowdown", "when": "menu" },
     { "command": "menu.prev", "key": "arrowup", "when": "menu" },
     { "command": "menu.accept", "key": "enter", "when": "menu" },
+    { "command": "projects.next", "key": "arrowdown", "when": "projects" },
+    { "command": "projects.prev", "key": "arrowup", "when": "projects" },
+    { "command": "projects.complete", "key": "tab", "when": "projects" },
+    { "command": "projects.accept", "key": "enter", "when": "projects" },
+    { "command": "projects.close", "key": "escape", "when": "projects" },
+    { "command": "projects.suggest", "key": "alt+shift+space", "when": "projects", "where": ["browser:mac"] },
+    { "command": "projects.suggest", "key": "control+shift+space", "when": "projects", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "projects.suggest", "key": "meta+shift+space", "when": "projects", "where": ["electron:mac"] },
+
+    { "command": "key.reserved", "key": "tab" },
+    { "command": "key.reserved", "key": "shift+tab" },
+
+    { "command": "file.save", "key": "alt+s", "where": ["browser:mac"] },
+    { "command": "file.save", "key": "control+s", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "file.save", "key": "meta+s", "where": ["electron:mac"] },
+    { "command": "file.reload", "key": "alt+shift+r", "where": ["browser:mac"] },
+    { "command": "file.reload", "key": "control+shift+r", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "file.reload", "key": "meta+shift+r", "where": ["electron:mac"] },
+
+    { "command": "panel.tree", "key": "alt+1", "where": ["browser:mac"] },
+    { "command": "panel.tree", "key": "control+alt+1", "where": ["browser:win", "browser:linux"] },
+    { "command": "panel.tree", "key": "meta+1", "where": ["electron:mac"] },
+    { "command": "panel.tree", "key": "control+1", "where": ["electron:win", "electron:linux"] },
+    { "command": "search.everywhere", "key": "alt+2", "where": ["browser:mac"] },
+    { "command": "search.everywhere", "key": "control+alt+2", "where": ["browser:win", "browser:linux"] },
+    { "command": "search.everywhere", "key": "meta+2", "where": ["electron:mac"] },
+    { "command": "search.everywhere", "key": "control+2", "where": ["electron:win", "electron:linux"] },
+    { "command": "git.branches", "key": "alt+3", "where": ["browser:mac"] },
+    { "command": "git.branches", "key": "control+alt+3", "where": ["browser:win", "browser:linux"] },
+    { "command": "git.branches", "key": "meta+3", "where": ["electron:mac"] },
+    { "command": "git.branches", "key": "control+3", "where": ["electron:win", "electron:linux"] },
+    { "command": "git.push", "key": "alt+4", "where": ["browser:mac"] },
+    { "command": "git.push", "key": "control+alt+4", "where": ["browser:win", "browser:linux"] },
+    { "command": "git.push", "key": "meta+4", "where": ["electron:mac"] },
+    { "command": "git.push", "key": "control+4", "where": ["electron:win", "electron:linux"] },
+    { "command": "scripts.open", "key": "alt+5", "where": ["browser:mac"] },
+    { "command": "scripts.open", "key": "control+alt+5", "where": ["browser:win", "browser:linux"] },
+    { "command": "scripts.open", "key": "meta+5", "where": ["electron:mac"] },
+    { "command": "scripts.open", "key": "control+5", "where": ["electron:win", "electron:linux"] },
+    { "command": "panel.problems", "key": "alt+6", "where": ["browser:mac"] },
+    { "command": "panel.problems", "key": "control+alt+6", "where": ["browser:win", "browser:linux"] },
+    { "command": "panel.problems", "key": "meta+6", "where": ["electron:mac"] },
+    { "command": "panel.problems", "key": "control+6", "where": ["electron:win", "electron:linux"] },
+    { "command": "terminal.create", "key": "alt+7", "where": ["browser:mac"] },
+    { "command": "terminal.create", "key": "control+alt+7", "where": ["browser:win", "browser:linux"] },
+    { "command": "terminal.create", "key": "meta+7", "where": ["electron:mac"] },
+    { "command": "terminal.create", "key": "control+7", "where": ["electron:win", "electron:linux"] },
+    { "command": "projects.show", "key": "alt+8", "where": ["browser:mac"] },
+    { "command": "projects.show", "key": "control+alt+8", "where": ["browser:win", "browser:linux"] },
+    { "command": "projects.show", "key": "meta+8", "where": ["electron:mac"] },
+    { "command": "projects.show", "key": "control+8", "where": ["electron:win", "electron:linux"] },
+    { "command": "panel.editor", "key": "alt+9", "where": ["browser:mac"] },
+    { "command": "panel.editor", "key": "control+alt+9", "where": ["browser:win", "browser:linux"] },
+    { "command": "panel.editor", "key": "meta+9", "where": ["electron:mac"] },
+    { "command": "panel.editor", "key": "control+9", "where": ["electron:win", "electron:linux"] },
+    { "command": "keys.show", "key": "alt+0", "where": ["browser:mac"] },
+    { "command": "keys.show", "key": "control+alt+0", "where": ["browser:win", "browser:linux"] },
+    { "command": "keys.show", "key": "meta+0", "where": ["electron:mac"] },
+    { "command": "keys.show", "key": "control+0", "where": ["electron:win", "electron:linux"] },
+
+    { "command": "git.branches", "key": "alt+backquote", "where": ["browser:mac"] },
+    { "command": "git.branches", "key": "control+backquote", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "git.push", "key": "alt+shift+k", "where": ["browser:mac"] },
+    { "command": "git.push", "key": "control+shift+k", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "git.push", "key": "meta+shift+k", "where": ["electron:mac"] },
+
+    { "command": "terminal.shell", "key": "alt+control+t", "where": ["browser:mac"] },
+    { "command": "terminal.shell", "key": "control+alt+t", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "terminal.shell", "key": "meta+alt+t", "where": ["electron:mac"] },
+    { "command": "tools.packageManager", "key": "alt+shift+p", "where": ["browser:mac"] },
+    { "command": "tools.packageManager", "key": "control+shift+p", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "tools.packageManager", "key": "meta+shift+p", "where": ["electron:mac"] },
+    { "command": "search.everywhere", "key": "alt+p", "where": ["browser:mac"] },
+    { "command": "search.everywhere", "key": "control+p", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "search.everywhere", "key": "meta+p", "where": ["electron:mac"] },
+
+    { "command": "nav.back", "key": "alt+control+arrowleft", "where": ["browser:mac"] },
+    { "command": "nav.back", "key": "control+alt+arrowleft", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "nav.back", "key": "meta+alt+arrowleft", "where": ["electron:mac"] },
+    { "command": "nav.forward", "key": "alt+control+arrowright", "where": ["browser:mac"] },
+    { "command": "nav.forward", "key": "control+alt+arrowright", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "nav.forward", "key": "meta+alt+arrowright", "where": ["electron:mac"] },
+    { "command": "nav.back", "key": "alt+bracketleft", "where": ["browser:mac"] },
+    { "command": "nav.back", "key": "control+bracketleft", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "nav.back", "key": "meta+bracketleft", "where": ["electron:mac"] },
+    { "command": "nav.forward", "key": "alt+bracketright", "where": ["browser:mac"] },
+    { "command": "nav.forward", "key": "control+bracketright", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "nav.forward", "key": "meta+bracketright", "where": ["electron:mac"] },
 
     { "command": "tree.next", "key": "arrowdown", "when": "tree" },
     { "command": "tree.prev", "key": "arrowup", "when": "tree" },
     { "command": "tree.expand", "key": "arrowright", "when": "tree" },
     { "command": "tree.collapse", "key": "arrowleft", "when": "tree" },
-    {
-      "command": "tree.newFile",
-      "key": "mod+n",
-      "keys": { "browser:win": "mod+alt+n" },
-      "when": "tree"
-    },
-    {
-      "command": "tree.newFolder",
-      "key": "mod+shift+n",
-      "keys": { "browser:win": "mod+alt+shift+n" },
-      "when": "tree"
-    },
     { "command": "tree.open", "key": "enter", "when": "tree" },
     { "command": "tree.rename", "key": "f2", "when": "tree" },
     { "command": "tree.delete", "key": "backspace", "when": "tree" },
-    { "command": "tree.copy", "key": "clip+c", "when": "tree" },
-    { "command": "tree.cut", "key": "clip+x", "when": "tree" },
-    { "command": "tree.paste", "key": "clip+v", "when": "tree" },
-    { "command": "tree.copyPath", "key": "clip+alt+shift+c", "when": "tree" },
+    { "command": "tree.newFile", "key": "alt+n", "when": "tree", "where": ["browser:mac"] },
+    { "command": "tree.newFile", "key": "control+alt+n", "when": "tree", "where": ["browser:win", "browser:linux"] },
+    { "command": "tree.newFile", "key": "meta+n", "when": "tree", "where": ["electron:mac"] },
+    { "command": "tree.newFile", "key": "control+n", "when": "tree", "where": ["electron:win", "electron:linux"] },
+    { "command": "tree.newFolder", "key": "alt+shift+n", "when": "tree", "where": ["browser:mac"] },
+    { "command": "tree.newFolder", "key": "control+alt+shift+n", "when": "tree", "where": ["browser:win", "browser:linux"] },
+    { "command": "tree.newFolder", "key": "meta+shift+n", "when": "tree", "where": ["electron:mac"] },
+    { "command": "tree.newFolder", "key": "control+shift+n", "when": "tree", "where": ["electron:win", "electron:linux"] },
+    { "command": "tree.copy", "key": "meta+c", "when": "tree", "where": ["browser:mac", "electron:mac"] },
+    { "command": "tree.copy", "key": "control+c", "when": "tree", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "tree.cut", "key": "meta+x", "when": "tree", "where": ["browser:mac", "electron:mac"] },
+    { "command": "tree.cut", "key": "control+x", "when": "tree", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "tree.paste", "key": "meta+v", "when": "tree", "where": ["browser:mac", "electron:mac"] },
+    { "command": "tree.paste", "key": "control+v", "when": "tree", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "tree.copyPath", "key": "meta+alt+shift+c", "when": "tree", "where": ["browser:mac", "electron:mac"] },
+    { "command": "tree.copyPath", "key": "control+alt+shift+c", "when": "tree", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
 
-    { "command": "file.reload", "key": "mod+shift+r", "when": "global" },
-
-    { "command": "terminal.shell", "key": "mod+alt+t", "when": "global" },
-    { "command": "tools.packageManager", "key": "mod+shift+p", "when": "global" },
-
-    { "command": "key.reserved", "key": "tab", "when": "global" },
-    { "command": "key.reserved", "key": "shift+tab", "when": "global" },
-
-    { "command": "edit.undo", "key": "mod+z", "when": "editor" },
-    { "command": "edit.redo", "key": "mod+shift+z", "when": "editor" },
-
-    { "command": "edit.deleteLine", "key": "mod+y", "when": "editor" },
-    { "command": "edit.duplicateLine", "key": "mod+d", "when": "editor" },
-    { "command": "edit.toggleComment", "key": "mod+slash", "when": "editor" },
-    { "command": "edit.moveLineUp", "key": "alt+shift+arrowup", "when": "editor" },
-    { "command": "edit.moveLineDown", "key": "alt+shift+arrowdown", "when": "editor" },
-    { "command": "edit.addCursorAbove", "key": "alt+arrowup", "when": "editor" },
-    { "command": "edit.addCursorBelow", "key": "alt+arrowdown", "when": "editor" },
+    { "command": "edit.undo", "key": "alt+z", "when": "editor", "where": ["browser:mac"] },
+    { "command": "edit.undo", "key": "control+z", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.undo", "key": "meta+z", "when": "editor", "where": ["electron:mac"] },
+    { "command": "edit.redo", "key": "alt+shift+z", "when": "editor", "where": ["browser:mac"] },
+    { "command": "edit.redo", "key": "control+shift+z", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.redo", "key": "meta+shift+z", "when": "editor", "where": ["electron:mac"] },
+    { "command": "edit.deleteLine", "key": "alt+y", "when": "editor", "where": ["browser:mac"] },
+    { "command": "edit.deleteLine", "key": "control+y", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.deleteLine", "key": "meta+y", "when": "editor", "where": ["electron:mac"] },
+    { "command": "edit.duplicateLine", "key": "alt+d", "when": "editor", "where": ["browser:mac"] },
+    { "command": "edit.duplicateLine", "key": "control+d", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.duplicateLine", "key": "meta+d", "when": "editor", "where": ["electron:mac"] },
+    { "command": "edit.toggleComment", "key": "alt+slash", "when": "editor", "where": ["browser:mac"] },
+    { "command": "edit.toggleComment", "key": "control+slash", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.toggleComment", "key": "meta+slash", "when": "editor", "where": ["electron:mac"] },
     { "command": "edit.indent", "key": "tab", "when": "editor" },
-
-    { "command": "symbol.goto", "key": "mod+b", "when": "editor" },
-
-    {
-      "command": "edit.wordLeft",
-      "key": "mod+arrowleft",
-      "keys": { "browser:mac": "alt+arrowleft" },
-      "when": "editor"
-    },
-    {
-      "command": "edit.wordRight",
-      "key": "mod+arrowright",
-      "keys": { "browser:mac": "alt+arrowright" },
-      "when": "editor"
-    },
-    {
-      "command": "edit.selectWordLeft",
-      "key": "mod+shift+arrowleft",
-      "keys": { "browser:mac": "alt+shift+arrowleft" },
-      "when": "editor"
-    },
-    {
-      "command": "edit.selectWordRight",
-      "key": "mod+shift+arrowright",
-      "keys": { "browser:mac": "alt+shift+arrowright" },
-      "when": "editor"
-    },
-    { "command": "nav.back", "key": "mod+alt+arrowleft", "when": "global" },
-    { "command": "nav.forward", "key": "mod+alt+arrowright", "when": "global" },
-    { "command": "nav.back", "key": "mod+bracketleft", "when": "global" },
-    { "command": "nav.forward", "key": "mod+bracketright", "when": "global" },
     { "command": "edit.unindent", "key": "shift+tab", "when": "editor" },
-
-    {
-      "command": "git.branches",
-      "key": "mod+backquote",
-      "when": "global",
-      "unavailable": {
-        "electron:mac": "macOS cycles windows of the app with Cmd+`. The toolbar number still works."
-      }
-    },
-
-    { "command": "git.push", "key": "mod+shift+k", "when": "global" },
-
-    {
-      "command": "panel.tree",
-      "key": "mod+1",
-      "keys": { "browser:win": "mod+alt+1" },
-      "when": "global"
-    },
-    {
-      "command": "search.everywhere",
-      "key": "mod+2",
-      "keys": { "browser:win": "mod+alt+2" },
-      "when": "global"
-    },
-    {
-      "command": "git.branches",
-      "key": "mod+3",
-      "keys": { "browser:win": "mod+alt+3" },
-      "when": "global"
-    },
-    {
-      "command": "git.push",
-      "key": "mod+4",
-      "keys": { "browser:win": "mod+alt+4" },
-      "when": "global"
-    },
-    {
-      "command": "scripts.open",
-      "key": "mod+5",
-      "keys": { "browser:win": "mod+alt+5" },
-      "when": "global"
-    },
-    {
-      "command": "panel.problems",
-      "key": "mod+6",
-      "keys": { "browser:win": "mod+alt+6" },
-      "when": "global"
-    },
-    {
-      "command": "terminal.create",
-      "key": "mod+7",
-      "keys": { "browser:win": "mod+alt+7" },
-      "when": "global"
-    },
-    {
-      "command": "projects.show",
-      "key": "mod+8",
-      "keys": { "browser:win": "mod+alt+8" },
-      "when": "global"
-    },
-    {
-      "command": "panel.editor",
-      "key": "mod+9",
-      "keys": { "browser:win": "mod+alt+9" },
-      "when": "global"
-    },
-    {
-      "command": "keys.show",
-      "key": "mod+0",
-      "when": "global"
-    }
+    { "command": "symbol.goto", "key": "alt+b", "when": "editor", "where": ["browser:mac"] },
+    { "command": "symbol.goto", "key": "control+b", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "symbol.goto", "key": "meta+b", "when": "editor", "where": ["electron:mac"] },
+    { "command": "edit.wordLeft", "key": "alt+arrowleft", "when": "editor", "where": ["browser:mac", "electron:mac"] },
+    { "command": "edit.wordLeft", "key": "control+arrowleft", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.wordRight", "key": "alt+arrowright", "when": "editor", "where": ["browser:mac", "electron:mac"] },
+    { "command": "edit.wordRight", "key": "control+arrowright", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.selectWordLeft", "key": "alt+shift+arrowleft", "when": "editor", "where": ["browser:mac", "electron:mac"] },
+    { "command": "edit.selectWordLeft", "key": "control+shift+arrowleft", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.selectWordRight", "key": "alt+shift+arrowright", "when": "editor", "where": ["browser:mac", "electron:mac"] },
+    { "command": "edit.selectWordRight", "key": "control+shift+arrowright", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.moveLineUp", "key": "alt+shift+arrowup", "when": "editor", "where": ["browser:mac", "electron:mac"] },
+    { "command": "edit.moveLineUp", "key": "control+shift+arrowup", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.moveLineDown", "key": "alt+shift+arrowdown", "when": "editor", "where": ["browser:mac", "electron:mac"] },
+    { "command": "edit.moveLineDown", "key": "control+shift+arrowdown", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.addCursorAbove", "key": "alt+arrowup", "when": "editor", "where": ["browser:mac", "electron:mac"] },
+    { "command": "edit.addCursorAbove", "key": "control+arrowup", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "edit.addCursorBelow", "key": "alt+arrowdown", "when": "editor", "where": ["browser:mac", "electron:mac"] },
+    { "command": "edit.addCursorBelow", "key": "control+arrowdown", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] }
   ]
 }

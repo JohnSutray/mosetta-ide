@@ -111,9 +111,9 @@
   "command.keys.show": "All keys",
 
   "keys.title": "Keys",
-  "keys.mod.browser": "Main key here is {mod}. In a browser Cmd belongs to the browser — it switches tabs and opens windows, so it cannot be ours. The desktop app gets Cmd back.",
-  "keys.mod.electron": "Main key here is {mod}. Nothing else claims it in the desktop app.",
-  "keys.clip": "Copy and paste stay on {clip} — that habit comes from the system, not from this file.",
+  "keys.mod.browser": "In a browser the main modifier is Option on macOS and Control elsewhere. Cmd belongs to the browser — it switches tabs and opens windows, so it cannot be ours.",
+  "keys.mod.electron": "In the desktop app the main modifier is Cmd on macOS and Control elsewhere. Nothing else claims it there.",
+  "keys.clip": "Copy and paste stay on the system key — Cmd on macOS, Control elsewhere. That habit comes from the system, not from this file.",
   "keys.captured": "While this window is open, keys are shown but not run — nothing behind it moves. Escape is caught too, so close with the × in the corner.",
   "keys.echo": "Last press",
   "keys.echo.none": "press any shortcut — it will show up here",
@@ -265,7 +265,7 @@
   "file.saved": "{path} saved",
   "file.external": "{path} changed on disk — reloaded",
   "file.dirtyConflict": "{path} changed on disk while you have unsaved edits. Reload — file.reload.",
-  "file.gone": "{path} is gone from disk. {mod}+S will recreate it.",
+  "file.gone": "{path} is gone from disk. Saving will recreate it.",
   "terminal.finished": "[process finished]",
   "rpc.closed": "Connection closed"
 }

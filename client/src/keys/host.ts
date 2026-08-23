@@ -18,13 +18,17 @@ export const SCOPES: KeyScope[] = [HOST, `${HOST}:${OS}`];
 
 export const SCOPES_EXACT_FIRST: KeyScope[] = [`${HOST}:${OS}`, HOST];
 
-export const MOD_IS_META = IS_MAC && HOST === 'electron';
+export const PRIMARY: 'meta' | 'control' | 'alt' = IS_MAC
+  ? HOST === 'browser'
+    ? 'alt'
+    : 'meta'
+  : 'control';
 
-export const MOD_LABEL = MOD_IS_META ? 'Cmd' : 'Ctrl';
-
-export const CLIP = IS_MAC && !MOD_IS_META ? 'cmd' : 'mod';
-
-export const CLIP_LABEL = IS_MAC ? 'Cmd' : 'Ctrl';
+export function primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
+  if (PRIMARY === 'meta') return event.metaKey;
+  if (PRIMARY === 'alt') return event.altKey;
+  return event.ctrlKey;
+}
 
 const NAMES: Record<string, string> = {
   backquote: '`',
@@ -51,12 +55,9 @@ export function humanizeKey(key: string): string {
   return key
     .split('+')
     .map((part) => {
-      if (part === 'mod') return MOD_LABEL;
-      if (part === 'clip') return CLIP_LABEL;
       if (part === 'shift') return 'Shift';
       if (part === 'alt') return IS_MAC ? 'Option' : 'Alt';
-      if (part === 'ctrl' || part === 'control') return 'Control';
-      if (part === 'cmd') return 'Cmd';
+      if (part === 'control') return 'Control';
       if (part === 'meta') return IS_MAC ? 'Cmd' : 'Win';
       if (NAMES[part]) return NAMES[part];
       return part.length === 1 ? part.toUpperCase() : part;

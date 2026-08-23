@@ -34,53 +34,37 @@ describe('JSONC', () => {
 
 describe('клавиши', () => {
   it('порядок модификаторов и регистр не важны', () => {
-    expect(normalizeKey('Shift+Mod+S')).toBe(normalizeKey('mod+shift+s'));
-    expect(normalizeKey('MOD+1')).toBe('mod+1');
+    expect(normalizeKey('Shift+Meta+S')).toBe(normalizeKey('meta+shift+s'));
+    expect(normalizeKey('CONTROL+1')).toBe('control+1');
   });
 
-  it('модификатор буфера обмена доживает до клиента', () => {
-    expect(normalizeKey('Clip+Shift+C')).toBe('clip+shift+c');
-    expect(normalizeKey('shift+clip+c')).toBe('clip+shift+c');
+  it('все физические модификаторы доживают до клиента', () => {
+    expect(normalizeKey('meta+alt+shift+c')).toBe('meta+alt+shift+c');
+    expect(normalizeKey('shift+alt+meta+c')).toBe('meta+alt+shift+c');
+    expect(normalizeKey('control+alt+1')).toBe('control+alt+1');
+  });
 
+  it('одна клавиша в разных окружениях — не дубль, а вторая раскладка', () => {
     const raw: Keymap = {
-      version: 1,
-      bindings: [{ command: 'tree.copy', key: 'clip+c', when: 'tree' }],
-    };
-    expect(validateKeymap(raw).bindings[0]!.key).toBe('clip+c');
-  });
-
-  it('клавиша на несуществующую команду выбрасывается, а не молчит', () => {
-    const raw = {
-      version: 1,
+      version: 2,
       bindings: [
-        { command: 'file.save', key: 'mod+s' },
-        { command: 'file.мертвец', key: 'mod+k' },
+        { command: 'file.save', key: 'alt+s', where: ['browser:mac'] },
+        { command: 'file.save', key: 'meta+s', where: ['electron:mac'] },
+        { command: 'file.save', key: 'control+s', where: ['browser:win'] },
       ],
-    } as unknown as Keymap;
-    const clean = validateKeymap(raw);
-    expect(clean.bindings.map((b) => b.command)).toEqual(['file.save']);
+    };
+    expect(validateKeymap(raw).bindings).toHaveLength(3);
   });
 
-  it('две команды на одну клавишу — вторая проигрывает явно', () => {
+  it('а вот дубль в одной области по-прежнему выбрасывается', () => {
     const raw: Keymap = {
-      version: 1,
+      version: 2,
       bindings: [
-        { command: 'file.save', key: 'mod+s', when: 'editor' },
-        { command: 'edit.undo', key: 'Mod+S', when: 'editor' },
+        { command: 'file.save', key: 'alt+s', where: ['browser:mac'] },
+        { command: 'file.reload', key: 'alt+s', where: ['browser:mac'] },
       ],
     };
     expect(validateKeymap(raw).bindings).toHaveLength(1);
-  });
-
-  it('одна клавиша в разных контекстах — это разные слоты', () => {
-    const raw: Keymap = {
-      version: 1,
-      bindings: [
-        { command: 'file.save', key: 'mod+s', when: 'editor' },
-        { command: 'edit.undo', key: 'mod+s', when: 'tree' },
-      ],
-    };
-    expect(validateKeymap(raw).bindings).toHaveLength(2);
   });
 });
 

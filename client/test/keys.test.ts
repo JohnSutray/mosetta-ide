@@ -1,27 +1,26 @@
-import { describe, expect, it, vi } from 'vitest';
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import type { Keymap } from '@ide/protocol';
-import { complains, eventToKey, resolveClip, typedIntoField } from '../src/keys/dispatcher.js';
-
-function keymap(): Keymap {
-  const raw = fs.readFileSync(
-    fileURLToPath(new URL('../../config/keymap.json', import.meta.url)),
-    'utf8',
-  );
-  const clean = raw
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/,(\s*[}\]])/g, '$1');
-  return JSON.parse(clean) as Keymap;
-}
-import { CLIP } from '../src/keys/host.js';
+import { describe, expect, it } from 'vitest';
+import { complains, eventToKey, swallows, typedIntoField } from '../src/keys/dispatcher.js';
+import { IS_MAC, PRIMARY, humanizeKey } from '../src/keys/host.js';
+import { mechanicsKeys } from '../src/editor/input-keymap.js';
+import { WORLDS, inWorld, keymap } from './keymap-shared.js';
 
 function press(key: string, target: unknown, mods: Record<string, boolean> = {}) {
   return {
     key,
     code: '',
     target,
+    metaKey: false,
+    ctrlKey: false,
+    altKey: false,
+    shiftKey: false,
+    ...mods,
+  } as unknown as KeyboardEvent;
+}
+
+function stroke(code: string, key: string, mods: Record<string, boolean> = {}) {
+  return {
+    code,
+    key,
     metaKey: false,
     ctrlKey: false,
     altKey: false,
@@ -59,61 +58,29 @@ describe('раскладка и поля ввода', () => {
   });
 });
 
-describe('модификатор буфера обмена', () => {
-  it('переписывается в тот модификатор, что есть в этом окружении', () => {
-    expect(resolveClip('clip+c')).toBe(`${CLIP}+c`);
-    expect(resolveClip('clip+shift+c')).toBe(`${CLIP}+shift+c`);
+describe('строка нажатия', () => {
+  it('модификаторы называются физически и всегда в одном порядке', () => {
+    expect(eventToKey(stroke('KeyS', 's', { metaKey: true }))).toBe('meta+s');
+    expect(eventToKey(stroke('KeyS', 's', { ctrlKey: true }))).toBe('control+s');
+    expect(eventToKey(stroke('KeyS', 's', { altKey: true }))).toBe('alt+s');
+    expect(
+      eventToKey(
+        stroke('KeyK', 'k', { metaKey: true, ctrlKey: true, altKey: true, shiftKey: true }),
+      ),
+    ).toBe('meta+control+alt+shift+k');
   });
 
-  it('чужие биндинги не трогает', () => {
-    expect(resolveClip('mod+s')).toBe('mod+s');
-    expect(resolveClip('backspace')).toBe('backspace');
-    expect(resolveClip('mod+clipboard')).toBe('mod+clipboard');
-  });
-});
-
-describe('браузер на маке: Cmd+C доходит до дерева', () => {
-  it('событие и биндинг сходятся в одной строке', async () => {
-    vi.resetModules();
-    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 Chrome/130', platform: 'MacIntel' });
-    const { eventToKey, resolveClip: resolve } = await import('../src/keys/dispatcher.js');
-    const { MOD_IS_META } = await import('../src/keys/host.js');
-    expect(MOD_IS_META, 'в браузере ведущая клавиша — Control (ADR-0098)').toBe(false);
-
-    const copy = press('c', ROW, { metaKey: true });
-    expect(resolve('clip+c')).toBe('cmd+c');
-    expect(eventToKey(copy)).toBe('cmd+c');
-
-    const path = press('c', ROW, { metaKey: true, shiftKey: true });
-    expect(eventToKey(path)).toBe(resolve('clip+shift+c'));
-
-    expect(eventToKey(press('n', ROW, { ctrlKey: true }))).toBe('mod+n');
-    vi.unstubAllGlobals();
-    vi.resetModules();
+  it('ролей в строке события не бывает', () => {
+    for (const mods of [{ metaKey: true }, { ctrlKey: true }, { altKey: true }]) {
+      expect(eventToKey(stroke('Digit1', '1', mods))).not.toMatch(/\b(mod|clip|cmd|ctrl)\b/);
+    }
   });
 });
 
 describe('клавиша от клетки, а не от символа', () => {
-  function stroke(code: string, key: string, mods: Record<string, boolean> = {}) {
-    return {
-      code,
-      key,
-      metaKey: false,
-      ctrlKey: false,
-      altKey: false,
-      shiftKey: false,
-      ...mods,
-    } as unknown as KeyboardEvent;
-  }
-
-  it('кириллица не отменяет сохранение', async () => {
-    vi.resetModules();
-    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 Chrome/130', platform: 'MacIntel' });
-    const { eventToKey } = await import('../src/keys/dispatcher.js');
-    expect(eventToKey(stroke('KeyS', 'ы', { ctrlKey: true }))).toBe('mod+s');
-    expect(eventToKey(stroke('KeyS', 's', { ctrlKey: true }))).toBe('mod+s');
-    vi.unstubAllGlobals();
-    vi.resetModules();
+  it('кириллица не отменяет сохранение', () => {
+    expect(eventToKey(stroke('KeyS', 'ы', { ctrlKey: true }))).toBe('control+s');
+    expect(eventToKey(stroke('KeyS', 's', { ctrlKey: true }))).toBe('control+s');
   });
 
   it('Option приходит собранным символом, а клетка остаётся прежней', () => {
@@ -139,23 +106,22 @@ describe('клавиша от клетки, а не от символа', () => 
 
   it('без кода остаётся запасной путь по символу', () => {
     expect(eventToKey(stroke('', 'ё'))).toBe('backquote');
-    expect(eventToKey(stroke('', 'k', { ctrlKey: true }))).toBe('mod+k');
+    expect(eventToKey(stroke('', 'k', { ctrlKey: true }))).toBe('control+k');
   });
 });
 
 describe('жалоба на клавишу без команды', () => {
-  const clip = new Set(['cmd+c', 'cmd+x', 'cmd+v', 'cmd+shift+c']);
+  const clip = new Set([`${PRIMARY}+c`, `${PRIMARY}+x`, `${PRIMARY}+v`]);
   const once = { repeat: false, clip };
 
   it('свой модификатор без команды — говорим', () => {
-    expect(complains('mod+j', once)).toBe(true);
-    expect(complains('mod+shift+j', once)).toBe(true);
+    expect(complains(`${PRIMARY}+j`, once)).toBe(true);
+    expect(complains(`${PRIMARY}+shift+j`, once)).toBe(true);
   });
 
-  it('чужие модификаторы молчат', () => {
-    expect(complains('alt+space', once)).toBe(false);
-    expect(complains('cmd+c', once)).toBe(false);
-    expect(complains('alt+shift+arrowup', once)).toBe(false);
+  it('чужой модификатор молчит', () => {
+    const other = PRIMARY === 'control' ? 'meta' : 'control';
+    expect(complains(`${other}+j`, once)).toBe(false);
   });
 
   it('голая клавиша это ввод, а не промах', () => {
@@ -164,30 +130,51 @@ describe('жалоба на клавишу без команды', () => {
   });
 
   it('механика ввода редактора молчит', () => {
-    expect(complains('mod+arrowup', once)).toBe(false);
-    expect(complains('mod+arrowdown', once)).toBe(false);
+    for (const key of mechanicsKeys(IS_MAC)) {
+      if (!key.split('+').includes(PRIMARY)) continue;
+      expect(complains(key, once), key).toBe(false);
+    }
   });
 
   it('зажатая клавиша не бубнит', () => {
-    expect(complains('mod+j', { repeat: true, clip })).toBe(false);
+    expect(complains(`${PRIMARY}+j`, { repeat: true, clip })).toBe(false);
   });
 
-  it('буфер обмена этой раскладки молчит, даже если он на `mod`', () => {
-    expect(complains('mod+c', { repeat: false, clip: new Set(['mod+c']) })).toBe(false);
+  it('буфер обмена молчит, даже когда он на главном модификаторе', () => {
+    expect(complains(`${PRIMARY}+c`, once)).toBe(false);
+  });
+});
+
+describe('перехват чужих эффектов', () => {
+  const clip = new Set([`${PRIMARY}+c`, `${PRIMARY}+v`]);
+
+  it('аккорд с главным модификатором гасится, даже если не назначен', () => {
+    expect(swallows(`${PRIMARY}+s`, clip)).toBe(true);
+    expect(swallows(`${PRIMARY}+p`, clip)).toBe(true);
+    expect(swallows(`${PRIMARY}+j`, clip)).toBe(true);
+  });
+
+  it('буфер обмена и механика ввода не гасятся', () => {
+    expect(swallows(`${PRIMARY}+c`, clip)).toBe(false);
+    for (const key of mechanicsKeys(IS_MAC)) {
+      if (!key.split('+').includes(PRIMARY)) continue;
+      expect(swallows(key, clip), key).toBe(false);
+    }
+  });
+
+  it('чужой модификатор и голая клавиша не наши', () => {
+    const other = PRIMARY === 'control' ? 'meta' : 'control';
+    expect(swallows(`${other}+s`, clip)).toBe(false);
+    expect(swallows('enter', clip)).toBe(false);
   });
 });
 
 describe('двойные модификаторы', () => {
-  it('раскладка и человек называют клавишу одинаково', async () => {
-    vi.resetModules();
-    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 Chrome/130', platform: 'MacIntel' });
-    const { humanizeKey: human } = await import('../src/keys/host.js');
-    expect(human('double:meta')).toBe('Cmd Cmd');
-    expect(human('double:control')).toBe('Control Control');
-    expect(human('double:alt')).toBe('Option Option');
-    expect(human('double:shift')).toBe('Shift Shift');
-    vi.unstubAllGlobals();
-    vi.resetModules();
+  it('раскладка и человек называют клавишу одинаково', () => {
+    expect(humanizeKey('double:meta')).toBe(IS_MAC ? 'Cmd Cmd' : 'Win Win');
+    expect(humanizeKey('double:control')).toBe('Control Control');
+    expect(humanizeKey('double:alt')).toBe(IS_MAC ? 'Option Option' : 'Alt Alt');
+    expect(humanizeKey('double:shift')).toBe('Shift Shift');
   });
 
   it('все четыре модификатора заняты и заняты разным', () => {
@@ -199,5 +186,12 @@ describe('двойные модификаторы', () => {
       'double:shift',
     ]);
     expect(new Set(doubles.map((b) => b.command)).size).toBe(doubles.length);
+  });
+
+  it('двойные нажатия одинаковы во всех окружениях', () => {
+    for (const world of WORLDS) {
+      const doubles = inWorld(keymap().bindings, world).filter((b) => b.key.startsWith('double:'));
+      expect(doubles.length, world.scope).toBe(4);
+    }
   });
 });

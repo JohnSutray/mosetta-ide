@@ -2,7 +2,7 @@ import type { CommandId, KeyBinding, KeyContext } from '@ide/protocol';
 import { keymap as keymapSignal } from '../state/config.js';
 import { closeKeysHelp, keysHelpOpen, lastKey, viewHost } from '../state/keys-help.js';
 import { HOST, OS, humanizeKey } from '../keys/host.js';
-import { keyIn, reservedIn } from '../keys/reserved.js';
+import { reservedIn } from '../keys/reserved.js';
 import { t } from '../i18n/index.js';
 import { Popup } from './popup.js';
 
@@ -17,6 +17,9 @@ export function KeysHelp() {
 
   const groups = new Map<KeyContext, KeyBinding[]>();
   for (const binding of bindings) {
+    if (binding.where && !binding.where.includes(host) && !binding.where.includes(`${host}:${OS}`)) {
+      continue;
+    }
     const context = (binding.when ?? 'global') as KeyContext;
     const list = groups.get(context) ?? [];
     list.push(binding);
@@ -94,13 +97,9 @@ export function KeysHelp() {
             <div class="keys-group-title">{contextName(context)}</div>
             {list.map((binding) => (
               <div class="keys-row" key={`${binding.command}:${binding.key}`}>
-                <kbd class="keys-kbd">{humanizeKey(keyIn(binding, host, OS))}</kbd>
+                <kbd class="keys-kbd">{humanizeKey(binding.key)}</kbd>
                 <span class="keys-command">{commandName(binding.command)}</span>
-                {blocked(binding, host) && (
-                  <span class="keys-blocked">
-                    {t('keys.unavailable', { reason: blocked(binding, host) ?? '' })}
-                  </span>
-                )}
+
               </div>
             ))}
           </div>
@@ -108,10 +107,6 @@ export function KeysHelp() {
       </div>
     </Popup>
   );
-}
-
-function blocked(binding: KeyBinding, host: typeof HOST): string | undefined {
-  return binding.unavailable?.[`${host}:${OS}`] ?? binding.unavailable?.[host];
 }
 
 function commandName(id: CommandId): string {

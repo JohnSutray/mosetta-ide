@@ -71,11 +71,7 @@ export function App() {
     if (dead.length) {
       console.warn('[web-ide] команды без реализации:', dead.join(', '));
     }
-    const dispatcher = installDispatcher(
-      resolveContext,
-      (binding, reason) => say(`${humanizeKey(binding.key)} — ${reason}`),
-      (key) => noteUnbound(key),
-    );
+    const dispatcher = installDispatcher(resolveContext, (key) => noteUnbound(key));
     dispatcher.setKeymap(keymapSignal.peek());
     const stop = keymapSignal.subscribe((value) => dispatcher.setKeymap(value));
     const mouse = installMouseNav();

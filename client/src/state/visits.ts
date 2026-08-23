@@ -99,6 +99,9 @@ function schedule(): void {
 }
 
 export function installMouseNav(): () => void {
+  const noMenu = (event: Event) => event.preventDefault();
+  window.addEventListener('contextmenu', noMenu, { capture: true });
+
   const onDown = (event: MouseEvent) => {
     if (event.button !== 3 && event.button !== 4) return;
     event.preventDefault();
@@ -113,6 +116,7 @@ export function installMouseNav(): () => void {
   window.addEventListener('auxclick', swallow, { capture: true });
   window.addEventListener('mouseup', swallow, { capture: true });
   return () => {
+    window.removeEventListener('contextmenu', noMenu, { capture: true });
     window.removeEventListener('mousedown', onDown, { capture: true });
     window.removeEventListener('auxclick', swallow, { capture: true });
     window.removeEventListener('mouseup', swallow, { capture: true });

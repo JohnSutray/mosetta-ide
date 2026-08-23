@@ -157,7 +157,8 @@ export function validateKeymap(raw: Keymap | null): Keymap {
       log.error(`keymap.json: нет команды ${binding.command} — клавиша ${binding.key} мертва`);
       continue;
     }
-    const slot = `${binding.when ?? 'global'}:${normalizeKey(binding.key)}`;
+    const where = [...(binding.where ?? [])].sort().join(',');
+    const slot = `${where}|${binding.when ?? 'global'}:${normalizeKey(binding.key)}`;
     const previous = seen.get(slot);
     if (previous) {
       log.error(
@@ -180,7 +181,7 @@ export function normalizeKey(key: string): string {
     .map((p) => p.trim())
     .filter(Boolean);
   const main = parts.pop() ?? '';
-  const order = ['mod', 'clip', 'ctrl', 'alt', 'shift'];
+  const order = ['meta', 'control', 'alt', 'shift'];
   const mods = order.filter((m) => parts.includes(m));
   return [...mods, main].join('+');
 }

@@ -1,18 +1,10 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { COMMAND_IDS, COMMANDS, isCommandId, type CommandId, type Keymap } from '@ide/protocol';
+import { COMMAND_IDS, COMMANDS, isCommandId, type CommandId } from '@ide/protocol';
 import { PANELS, TOOLBAR } from '../src/ui/panels.js';
+import { WORLDS, inWorld, keymap } from './keymap-shared.js';
 import en from '../src/i18n/en.json';
-
-function keymap(): Keymap {
-  const raw = fs.readFileSync(fileURLToPath(new URL('../../config/keymap.json', import.meta.url)), 'utf8');
-  const clean = raw
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/,(\s*[}\]])/g, '$1');
-  return JSON.parse(clean) as Keymap;
-}
 
 describe('тулбар', () => {
   it('каждая панель как-то представлена в тулбаре', () => {
@@ -103,27 +95,37 @@ describe('тулбар', () => {
     expect(stateless).toEqual(['terminal.create']);
   });
 
-  it('Cmd+цифра — это порядковый номер в тулбаре, слева направо', () => {
+  it('цифра — это порядковый номер кнопки в тулбаре, слева направо', () => {
+    expect(TOOLBAR.length, 'цифр всего десять').toBeLessThanOrEqual(10);
     const bindings = keymap().bindings;
-    expect(TOOLBAR.length, 'цифр всего десять, больше кнопок не пронумеровать').toBeLessThanOrEqual(
-      10,
-    );
-    TOOLBAR.forEach((entry, at) => {
-      const key = `mod+${(at + 1) % 10}`;
-      const bound = bindings.find((b) => b.key === key && (b.when ?? 'global') === 'global');
-      expect(bound, `${key}: нет биндинга на ${at + 1}-ю кнопку тулбара`).toBeDefined();
-      expect(bound!.command, `${key} зовёт не ту кнопку`).toBe(entry.command);
-    });
+    for (const world of WORLDS) {
+      const numbered = new Map<string, CommandId>();
+      for (const binding of inWorld(bindings, world)) {
+        if ((binding.when ?? 'global') !== 'global') continue;
+        const digit = /(?:^|\+)(\d)$/.exec(binding.key)?.[1];
+        if (digit) numbered.set(digit, binding.command);
+      }
+      TOOLBAR.forEach((entry, at) => {
+        const digit = String((at + 1) % 10);
+        expect(numbered.get(digit), `${world.scope}: цифра ${digit} зовёт не ту кнопку`).toBe(
+          entry.command,
+        );
+      });
+    }
   });
 
-  it('номер есть у каждой кнопки тулбара', () => {
-    const numbered = keymap().bindings.filter((b) => /^mod\+\d$/.test(b.key));
-    expect(numbered.length).toBe(TOOLBAR.length);
+  it('у каждой кнопки тулбара есть номер в каждом окружении', () => {
+    const bindings = keymap().bindings;
+    for (const world of WORLDS) {
+      const numbered = inWorld(bindings, world).filter((b) => /(?:^|\+)\d$/.test(b.key));
+      expect(numbered.length, world.scope).toBe(TOOLBAR.length);
+    }
   });
 
   it('ветки git висят на клавише под Escape, а не на символе', () => {
-    const bound = keymap().bindings.find((b) => b.key === 'mod+backquote');
-    expect(bound?.command).toBe('git.branches');
+    const bound = keymap().bindings.filter((b) => b.key.endsWith('+backquote'));
+    expect(bound.length, 'клавиша под Escape потерялась').toBeGreaterThan(0);
+    for (const binding of bound) expect(binding.command).toBe('git.branches');
   });
 
   it('панельные команды объявлены в протоколе с человеческим именем', () => {

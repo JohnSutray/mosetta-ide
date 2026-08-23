@@ -81,9 +81,8 @@ export type KeyScope = KeyHost | `${KeyHost}:${KeyOs}`;
 export interface KeyBinding {
   command: CommandId;
   key: string;
-  keys?: Partial<Record<KeyScope, string>>;
   when?: KeyContext;
-  unavailable?: Partial<Record<KeyScope, string>>;
+  where?: KeyScope[];
 }
 
 export interface Keymap {

@@ -3,6 +3,7 @@ import type { CommandId, KeyContext, KeyHost } from '@ide/protocol';
 import { settle } from './notifications.js';
 import { keymap } from './config.js';
 import { humanizeKey } from '../keys/host.js';
+import { appliesHere } from '../keys/dispatcher.js';
 import { t } from '../i18n/index.js';
 
 export interface KeyEcho {
@@ -31,7 +32,9 @@ export function noteUnbound(key: string): void {
 }
 
 function helpKey(): string {
-  const bound = keymap.peek().bindings.find((binding) => binding.command === 'keys.show');
+  const bound = keymap
+    .peek()
+    .bindings.find((binding) => binding.command === 'keys.show' && appliesHere(binding));
   return bound ? humanizeKey(bound.key) : t('keys.title');
 }
 

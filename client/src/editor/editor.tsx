@@ -11,7 +11,7 @@ import {
 } from '@codemirror/view';
 import { history } from '@codemirror/commands';
 import { inputKeymap } from './input-keymap.js';
-import { MOD_IS_META } from '../keys/host.js';
+import { primaryHeld } from '../keys/host.js';
 import { bracketMatching, indentOnInput, foldGutter } from '@codemirror/language';
 import { highlightSelectionMatches } from '@codemirror/search';
 import type { Diagnostic, DocState, EditorSettings, HoverInfo } from '@ide/protocol';
@@ -85,7 +85,7 @@ export function Editor({
       }),
       EditorView.domEventHandlers({
         mousedown(event, view) {
-          const held = MOD_IS_META ? event.metaKey : event.ctrlKey;
+          const held = primaryHeld(event);
           if (!held || event.button !== 0) return false;
           const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
           if (pos === null) return false;
