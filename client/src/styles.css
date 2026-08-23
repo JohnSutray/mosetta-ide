@@ -1413,3 +1413,19 @@ body {
 .symbols-preview { flex: 1 1 auto; min-height: 0; border-top: 1px solid var(--divider); overflow: hidden; }
 .symbols-preview .cm-editor { height: 100%; }
 .symbols-more { padding: 3px 8px; color: var(--muted); font-size: 11px; font-style: italic; }
+
+.keys-taken { flex: none; }
+.keys-taken > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 4px 0;
+  list-style: none;
+}
+.keys-taken > summary::-webkit-details-marker { display: none; }
+.keys-taken > summary::before { content: '▸ '; }
+.keys-taken[open] > summary::before { content: '▾ '; }
+.keys-taken > summary:hover { color: var(--fg); }
+.keys-taken-list { max-height: 220px; overflow: auto; padding-bottom: 6px; }
+.keys-kbd.is-dead { color: var(--muted); text-decoration: line-through; }
+.keys-who { margin-left: auto; color: var(--muted); font-size: 11px; flex: none; }

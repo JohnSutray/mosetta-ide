@@ -1,9 +1,10 @@
 import type { CommandId, KeyBinding, KeyContext } from '@ide/protocol';
 import { keymap as keymapSignal } from '../state/config.js';
 import { closeKeysHelp, keysHelpOpen, lastKey } from '../state/keys-help.js';
-import { HOST, humanizeKey } from '../keys/host.js';
-import { resolveClip } from '../keys/dispatcher.js';
+import { HOST, SCOPES, humanizeKey } from '../keys/host.js';
+import { blockedHere, resolveClip } from '../keys/dispatcher.js';
 import { t } from '../i18n/index.js';
+import { reservedIn } from '../keys/reserved.js';
 import { Popup } from './popup.js';
 
 export function KeysHelp() {
@@ -11,6 +12,7 @@ export function KeysHelp() {
 
   const bindings = keymapSignal.value.bindings;
   const echo = lastKey.value;
+  const taken = reservedIn(SCOPES);
 
   const groups = new Map<KeyContext, KeyBinding[]>();
   for (const binding of bindings) {
@@ -56,6 +58,21 @@ export function KeysHelp() {
       </div>
       <div class="keys-hint">{t('keys.echo.hint')}</div>
 
+      {taken.length > 0 && (
+        <details class="keys-taken">
+          <summary>{t('keys.taken', { count: taken.length })}</summary>
+          <div class="keys-taken-list">
+            {taken.map((item) => (
+              <div class="keys-row" key={`${item.scopes[0]}:${item.key}`}>
+                <kbd class="keys-kbd is-dead">{humanizeKey(item.key)}</kbd>
+                <span class="keys-command">{item.what}</span>
+                <span class="keys-who">{item.who}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+
       <div class="keys-list">
         {[...groups.entries()].map(([context, list]) => (
           <div class="keys-group" key={context}>
@@ -80,10 +97,6 @@ export function KeysHelp() {
 
 function commandName(id: CommandId): string {
   return t(`command.${id}`);
-}
-
-function blockedHere(binding: KeyBinding): string | undefined {
-  return binding.unavailable?.[HOST];
 }
 
 function contextName(context: KeyContext): string {

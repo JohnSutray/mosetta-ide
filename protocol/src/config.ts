@@ -74,11 +74,15 @@ export type KeyContext =
 
 export type KeyHost = 'browser' | 'electron';
 
+export type KeyOs = 'mac' | 'win' | 'linux';
+
+export type KeyScope = KeyHost | `${KeyHost}:${KeyOs}`;
+
 export interface KeyBinding {
   command: CommandId;
   key: string;
   when?: KeyContext;
-  unavailable?: Partial<Record<KeyHost, string>>;
+  unavailable?: Partial<Record<KeyScope, string>>;
 }
 
 export interface Keymap {

@@ -1,4 +1,4 @@
-import type { KeyHost } from '@ide/protocol';
+import type { KeyHost, KeyOs, KeyScope } from '@ide/protocol';
 
 export const HOST: KeyHost =
   typeof navigator !== 'undefined' && /Electron\//.test(navigator.userAgent)
@@ -7,6 +7,14 @@ export const HOST: KeyHost =
 
 export const IS_MAC =
   typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform ?? '');
+
+export const OS: KeyOs = IS_MAC
+  ? 'mac'
+  : typeof navigator !== 'undefined' && /Win/.test(navigator.platform ?? '')
+    ? 'win'
+    : 'linux';
+
+export const SCOPES: KeyScope[] = [HOST, `${HOST}:${OS}`];
 
 export const MOD_IS_META = IS_MAC && HOST === 'electron';
 
@@ -19,6 +27,8 @@ export const CLIP_LABEL = IS_MAC ? 'Cmd' : 'Ctrl';
 const NAMES: Record<string, string> = {
   backquote: '`',
   slash: '/',
+  bracketleft: '[',
+  bracketright: ']',
   arrowup: '↑',
   arrowdown: '↓',
   arrowleft: '←',

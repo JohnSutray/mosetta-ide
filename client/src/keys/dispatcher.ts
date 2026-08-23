@@ -2,7 +2,7 @@ import type { KeyBinding, KeyContext, Keymap } from '@ide/protocol';
 import { runCommand } from './commands.js';
 import { echoKey } from '../state/keys-help.js';
 import { mechanicsKeys } from '../editor/input-keymap.js';
-import { CLIP, HOST, humanizeKey, IS_MAC, MOD_IS_META } from './host.js';
+import { CLIP, humanizeKey, IS_MAC, MOD_IS_META, SCOPES } from './host.js';
 
 export type ContextResolver = () => KeyContext;
 
@@ -15,6 +15,14 @@ export function catchesKeys(context: KeyContext): boolean {
 const OWNING = new Set<KeyContext>(['terminal']);
 
 const MECHANICS = mechanicsKeys(MOD_IS_META, IS_MAC);
+
+export function blockedHere(binding: KeyBinding): string | undefined {
+  for (const scope of SCOPES) {
+    const reason = binding.unavailable?.[scope];
+    if (reason) return reason;
+  }
+  return undefined;
+}
 
 export function complains(
   key: string,
@@ -89,7 +97,7 @@ export function installDispatcher(
       return;
     }
 
-    const blocked = binding.unavailable?.[HOST];
+    const blocked = blockedHere(binding);
     if (blocked) {
       onBlocked(binding, blocked);
       return;

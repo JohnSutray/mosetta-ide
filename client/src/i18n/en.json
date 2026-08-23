@@ -119,6 +119,7 @@
   "keys.echo.none": "press any shortcut — it will show up here",
   "keys.echo.free": "no command",
   "keys.echo.hint": "Nothing shows up at all? The system took the key before us — on macOS Ctrl+1…9 switch Spaces when more than one desktop exists. Shows up as a different key? Then your modifiers are remapped.",
+  "keys.taken": "Taken by the system and the browser — {count} shortcuts we cannot have",
   "keys.unavailable": "not here: {reason}",
   "keys.context.global": "Anywhere",
   "keys.context.editor": "Editor",

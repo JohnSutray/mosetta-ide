@@ -18,7 +18,7 @@
 
     { "command": "projects.next", "key": "arrowdown", "when": "projects" },
     { "command": "projects.prev", "key": "arrowup", "when": "projects" },
-    { "command": "projects.suggest", "key": "mod+space", "when": "projects" },
+    { "command": "projects.suggest", "key": "mod+shift+space", "when": "projects" },
     { "command": "projects.complete", "key": "tab", "when": "projects" },
     { "command": "projects.accept", "key": "enter", "when": "projects" },
     { "command": "projects.close", "key": "escape", "when": "projects" },
@@ -38,19 +38,31 @@
     { "command": "tree.prev", "key": "arrowup", "when": "tree" },
     { "command": "tree.expand", "key": "arrowright", "when": "tree" },
     { "command": "tree.collapse", "key": "arrowleft", "when": "tree" },
-    { "command": "tree.newFile", "key": "mod+n", "when": "tree" },
-    { "command": "tree.newFolder", "key": "mod+shift+n", "when": "tree" },
+    {
+      "command": "tree.newFile",
+      "key": "mod+n",
+      "when": "tree",
+      "unavailable": { "browser:win": "Chrome opens a new window with Ctrl+N. Use the tree menu." }
+    },
+    {
+      "command": "tree.newFolder",
+      "key": "mod+shift+n",
+      "when": "tree",
+      "unavailable": {
+        "browser:win": "Chrome opens an incognito window with Ctrl+Shift+N. Use the tree menu."
+      }
+    },
     { "command": "tree.open", "key": "enter", "when": "tree" },
     { "command": "tree.rename", "key": "f2", "when": "tree" },
     { "command": "tree.delete", "key": "backspace", "when": "tree" },
     { "command": "tree.copy", "key": "clip+c", "when": "tree" },
     { "command": "tree.cut", "key": "clip+x", "when": "tree" },
     { "command": "tree.paste", "key": "clip+v", "when": "tree" },
-    { "command": "tree.copyPath", "key": "clip+shift+c", "when": "tree" },
+    { "command": "tree.copyPath", "key": "clip+alt+shift+c", "when": "tree" },
 
     { "command": "file.reload", "key": "mod+shift+r", "when": "global" },
 
-    { "command": "terminal.shell", "key": "mod+shift+t", "when": "global" },
+    { "command": "terminal.shell", "key": "mod+alt+t", "when": "global" },
     { "command": "tools.packageManager", "key": "mod+shift+p", "when": "global" },
 
     { "command": "key.reserved", "key": "tab", "when": "global" },
@@ -70,8 +82,22 @@
 
     { "command": "symbol.goto", "key": "mod+b", "when": "editor" },
 
-    { "command": "edit.wordLeft", "key": "mod+arrowleft", "when": "editor" },
-    { "command": "edit.wordRight", "key": "mod+arrowright", "when": "editor" },
+    {
+      "command": "edit.wordLeft",
+      "key": "mod+arrowleft",
+      "when": "editor",
+      "unavailable": {
+        "browser:mac": "macOS switches desktops with Control+arrows. Option+arrows already jump by word here."
+      }
+    },
+    {
+      "command": "edit.wordRight",
+      "key": "mod+arrowright",
+      "when": "editor",
+      "unavailable": {
+        "browser:mac": "macOS switches desktops with Control+arrows. Option+arrows already jump by word here."
+      }
+    },
     { "command": "edit.selectWordLeft", "key": "mod+shift+arrowleft", "when": "editor" },
     { "command": "edit.selectWordRight", "key": "mod+shift+arrowright", "when": "editor" },
 
@@ -81,54 +107,70 @@
     { "command": "nav.forward", "key": "mod+bracketright", "when": "global" },
     { "command": "edit.unindent", "key": "shift+tab", "when": "editor" },
 
-    { "command": "git.branches", "key": "mod+backquote", "when": "global" },
+    {
+      "command": "git.branches",
+      "key": "mod+backquote",
+      "when": "global",
+      "unavailable": {
+        "electron:mac": "macOS cycles windows of the app with Cmd+`. The toolbar number still works."
+      }
+    },
 
     { "command": "git.push", "key": "mod+shift+k", "when": "global" },
 
     {
       "command": "panel.tree",
       "key": "mod+1",
-      "when": "global"
+      "when": "global",
+      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
     },
     {
       "command": "search.everywhere",
       "key": "mod+2",
-      "when": "global"
+      "when": "global",
+      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
     },
     {
       "command": "git.branches",
       "key": "mod+3",
-      "when": "global"
+      "when": "global",
+      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
     },
     {
       "command": "git.push",
       "key": "mod+4",
-      "when": "global"
+      "when": "global",
+      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
     },
     {
       "command": "scripts.open",
       "key": "mod+5",
-      "when": "global"
+      "when": "global",
+      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
     },
     {
       "command": "panel.problems",
       "key": "mod+6",
-      "when": "global"
+      "when": "global",
+      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
     },
     {
       "command": "terminal.create",
       "key": "mod+7",
-      "when": "global"
+      "when": "global",
+      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
     },
     {
       "command": "projects.show",
       "key": "mod+8",
-      "when": "global"
+      "when": "global",
+      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
     },
     {
       "command": "panel.editor",
       "key": "mod+9",
-      "when": "global"
+      "when": "global",
+      "unavailable": { "browser:win": "Chrome switches tabs with Ctrl+1…9." }
     },
     {
       "command": "keys.show",
