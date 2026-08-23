@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RESERVED } from '../src/keys/reserved.js';
+import { RESERVED, hardIn } from '../src/keys/reserved.js';
 import { WORLDS, inWorld, keymap } from './keymap-shared.js';
 
 describe('раскладка не лезет на отнятые клавиши', () => {
@@ -9,10 +9,7 @@ describe('раскладка не лезет на отнятые клавиши'
 
     for (const world of WORLDS) {
       const taken = new Map(
-        RESERVED.filter((item) => item.scopes.includes(world.scope)).map((item) => [
-          item.key,
-          `${item.who}: ${item.what}`,
-        ]),
+        hardIn([world.scope]).map((item) => [item.key, `${item.who}: ${item.what}`]),
       );
       for (const binding of inWorld(bindings, world)) {
         const who = taken.get(binding.key);

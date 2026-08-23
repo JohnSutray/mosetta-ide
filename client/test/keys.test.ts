@@ -167,6 +167,13 @@ describe('перехват чужих эффектов', () => {
     expect(swallows(`${other}+s`, clip)).toBe(false);
     expect(swallows('enter', clip)).toBe(false);
   });
+
+  it('мягко отнятое гасится везде, даже без главного модификатора', () => {
+    const other = PRIMARY === 'control' ? 'meta' : 'control';
+    const soft = new Set([`${other}+arrowleft`]);
+    expect(swallows(`${other}+arrowleft`, clip, soft)).toBe(true);
+    expect(swallows(`${other}+arrowright`, clip, soft)).toBe(false);
+  });
 });
 
 describe('двойные модификаторы', () => {

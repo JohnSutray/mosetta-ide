@@ -3,6 +3,7 @@ import { runCommand } from './commands.js';
 import { echoKey } from '../state/keys-help.js';
 import { mechanicsKeys } from '../editor/input-keymap.js';
 import { humanizeKey, IS_MAC, PRIMARY, SCOPES } from './host.js';
+import { reservedIn } from './reserved.js';
 
 export type ContextResolver = () => KeyContext;
 
@@ -23,7 +24,14 @@ const OWNING = new Set<KeyContext>(['terminal']);
 
 const MECHANICS = mechanicsKeys(IS_MAC);
 
-export function swallows(key: string, clip: ReadonlySet<string>): boolean {
+const SOFT_TAKEN = new Set(reservedIn(SCOPES).filter((item) => item.soft).map((item) => item.key));
+
+export function swallows(
+  key: string,
+  clip: ReadonlySet<string>,
+  soft: ReadonlySet<string> = SOFT_TAKEN,
+): boolean {
+  if (soft.has(key)) return true;
   if (!key.split('+').includes(PRIMARY)) return false;
   if (clip.has(key)) return false;
   return !MECHANICS.has(key);

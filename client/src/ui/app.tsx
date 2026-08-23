@@ -89,7 +89,7 @@ export function App() {
   useEffect(() => {
     if (!file) return;
     const at = pendingReveal.value;
-    visit(file.path, at?.path === file.path ? at.line : 0);
+    visit(file.path, at?.path === file.path ? at.line : 0, at?.character ?? 0);
   }, [file?.path]);
 
   useEffect(() => {
@@ -164,7 +164,7 @@ export function App() {
               settings={settings.editor}
               diagnostics={currentDiagnostics.value}
               onEdit={editDoc}
-              onCaret={(line) => visit(file.path, line)}
+              onCaret={(line, character) => visit(file.path, line, character)}
               onModClick={(pos) => void askSymbol(pos)}
               onHover={(path, line, character) => rpc.call('lsp.hover', { path, line, character })}
               onMount={(view) => (activeEditor.value = view)}

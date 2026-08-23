@@ -42,7 +42,12 @@ describe('редактор не приносит чужих клавиш', () =>
   });
 
   it('ни одна клавиша редактора не спорит с объявленной раскладкой', () => {
-    const SAME = new Set(['edit.wordLeft', 'edit.wordRight']);
+    const SAME = new Set([
+      'edit.wordLeft',
+      'edit.wordRight',
+      'edit.selectWordLeft',
+      'edit.selectWordRight',
+    ]);
     const bindings = keymap().bindings;
     for (const world of WORLDS) {
       const mechanics = mechanicsKeys(world.isMac);

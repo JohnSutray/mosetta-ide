@@ -27,11 +27,16 @@ export const openFile = signal<DocState | null>(null);
 export const fileHistory = signal<string[]>([]);
 export const externalEpoch = signal(0);
 
-export const pendingReveal = signal<{ path: string; line: number; epoch: number } | null>(null);
+export const pendingReveal = signal<{
+  path: string;
+  line: number;
+  character?: number;
+  epoch: number;
+} | null>(null);
 
-export function reveal(path: string, line: number): void {
+export function reveal(path: string, line: number, character?: number): void {
   const epoch = (pendingReveal.value?.epoch ?? 0) + 1;
-  pendingReveal.value = { path, line, epoch };
+  pendingReveal.value = { path, line, character, epoch };
 }
 export const dirty = signal(false);
 export function say(message: string): void {

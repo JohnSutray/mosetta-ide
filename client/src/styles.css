@@ -1432,6 +1432,10 @@ body {
   text-decoration: line-through;
   text-decoration-color: #8f6a66;
 }
+.keys-kbd.is-soft {
+  color: #b3ae86;
+  background: #3c3a2f;
+}
 .keys-who { margin-left: auto; color: var(--muted); font-size: 11px; flex: none; }
 
 .keys-hosts { display: inline-flex; gap: 4px; margin-left: 10px; vertical-align: middle; }

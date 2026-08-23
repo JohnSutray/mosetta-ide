@@ -27,6 +27,7 @@ export interface SymbolSite {
 export interface Visit {
   path: string;
   line: number;
+  character?: number;
 }
 
 export interface ShellInfo {

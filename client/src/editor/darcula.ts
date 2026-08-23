@@ -55,7 +55,7 @@ export const darculaTheme = EditorView.theme(
       marginLeft: '-1px',
     },
 
-    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection':
+    '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection':
       { backgroundColor: dc.selection },
     '.cm-activeLine': { backgroundColor: dc.curline },
 

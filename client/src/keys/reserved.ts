@@ -5,6 +5,7 @@ export interface ReservedKey {
   scopes: KeyScope[];
   who: string;
   what: string;
+  soft?: boolean;
 }
 
 function digits(scopes: KeyScope[], who: string, what: string, lead: string): ReservedKey[] {
@@ -52,6 +53,20 @@ export const RESERVED: ReservedKey[] = [
   },
   { key: 'control+f2', scopes: MAC, who: 'macOS', what: 'focus the menu bar' },
 
+  {
+    key: 'meta+arrowleft',
+    scopes: CHROME_MAC,
+    who: 'Chrome',
+    what: 'back in tab history — taken back by preventDefault',
+    soft: true,
+  },
+  {
+    key: 'meta+arrowright',
+    scopes: CHROME_MAC,
+    who: 'Chrome',
+    what: 'forward in tab history — taken back by preventDefault',
+    soft: true,
+  },
   { key: 'meta+alt+arrowleft', scopes: CHROME_MAC, who: 'Chrome', what: 'previous tab' },
   { key: 'meta+alt+arrowright', scopes: CHROME_MAC, who: 'Chrome', what: 'next tab' },
   ...digits(CHROME_MAC, 'Chrome', 'switch to tab N', 'meta'),
@@ -84,6 +99,10 @@ export const RESERVED: ReservedKey[] = [
 export function reservedIn(scopes: KeyScope[]): ReservedKey[] {
   const here = new Set(scopes);
   return RESERVED.filter((item) => item.scopes.some((scope) => here.has(scope)));
+}
+
+export function hardIn(scopes: KeyScope[]): ReservedKey[] {
+  return reservedIn(scopes).filter((item) => !item.soft);
 }
 
 export function physicalOf(key: string, modIsMeta: boolean, isMac: boolean): string {

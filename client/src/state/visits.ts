@@ -36,9 +36,9 @@ export function forgetVisits(): void {
   visitAt.value = -1;
 }
 
-export function visit(path: string, line: number): void {
+export function visit(path: string, line: number, character = 0): void {
   if (walking) return;
-  const next = nextVisits(visits.value, visitAt.value, path, line);
+  const next = nextVisits(visits.value, visitAt.value, path, line, character);
   if (!next) return;
   visits.value = next.list;
   visitAt.value = next.at;
@@ -50,18 +50,19 @@ export function nextVisits(
   at: number,
   path: string,
   line: number,
+  character = 0,
   far = FAR,
   limit = LIMIT,
 ): { list: Visit[]; at: number } | null {
   const here = list[at];
   if (here && here.path === path && Math.abs(here.line - line) < far) {
-    if (here.line === line) return null;
+    if (here.line === line && (here.character ?? 0) === character) return null;
     const updated = [...list];
-    updated[at] = { path, line };
+    updated[at] = { path, line, character };
     return { list: updated, at };
   }
   const kept = list.slice(0, at + 1).slice(-(limit - 1));
-  const next = [...kept, { path, line }];
+  const next = [...kept, { path, line, character }];
   return { list: next, at: next.length - 1 };
 }
 
@@ -82,7 +83,7 @@ async function jump(to: number): Promise<void> {
   visitAt.value = to;
   try {
     if (openFile.peek()?.path !== target.path) await openFileAt(target.path);
-    reveal(target.path, target.line);
+    reveal(target.path, target.line, target.character);
   } finally {
     setTimeout(() => {
       walking = false;

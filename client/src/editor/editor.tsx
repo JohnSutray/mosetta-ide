@@ -4,14 +4,14 @@ import {
   EditorView,
   keymap,
   lineNumbers,
-  highlightActiveLine,
   highlightActiveLineGutter,
   drawSelection,
   highlightSpecialChars,
 } from '@codemirror/view';
 import { history } from '@codemirror/commands';
 import { inputKeymap } from './input-keymap.js';
-import { primaryHeld } from '../keys/host.js';
+import { activeLine } from './active-line.js';
+import { chordHeld } from '../keys/chords.js';
 import { bracketMatching, indentOnInput, foldGutter } from '@codemirror/language';
 import { highlightSelectionMatches } from '@codemirror/search';
 import type { Diagnostic, DocState, EditorSettings, HoverInfo } from '@ide/protocol';
@@ -30,11 +30,11 @@ interface Props {
   head: string | null;
   onHunk: (hunk: Hunk, box: HunkBox) => void;
   externalEpoch: number;
-  reveal: { path: string; line: number; epoch: number } | null;
+  reveal: { path: string; line: number; character?: number; epoch: number } | null;
   settings: EditorSettings;
   diagnostics: Diagnostic[];
   onEdit: (text: string) => void;
-  onCaret: (line: number) => void;
+  onCaret: (line: number, character: number) => void;
   onModClick: (pos: number) => void;
   onHover: (path: string, line: number, character: number) => Promise<HoverInfo | null>;
   onMount: (view: EditorView | null) => void;
@@ -71,13 +71,14 @@ export function Editor({
       drawSelection(),
       indentOnInput(),
       bracketMatching(),
-      highlightActiveLine(),
+      activeLine,
       highlightSelectionMatches(),
       keymap.of([...inputKeymap]),
       EditorView.updateListener.of((update) => {
         if (update.selectionSet || update.docChanged) {
           const at = update.state.selection.main.head;
-          handlers.current.onCaret(update.state.doc.lineAt(at).number - 1);
+          const line = update.state.doc.lineAt(at);
+          handlers.current.onCaret(line.number - 1, at - line.from);
         }
         if (!update.docChanged) return;
         if (update.transactions.some((tr) => tr.annotation(externalUpdate))) return;
@@ -85,8 +86,7 @@ export function Editor({
       }),
       EditorView.domEventHandlers({
         mousedown(event, view) {
-          const held = primaryHeld(event);
-          if (!held || event.button !== 0) return false;
+          if (event.button !== 0 || !chordHeld('symbol.goto', event)) return false;
           const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
           if (pos === null) return false;
           event.preventDefault();
@@ -151,8 +151,8 @@ export function Editor({
   useEffect(() => {
     const instance = view.current;
     if (!instance || !reveal || reveal.path !== file.path) return;
-    const line = Math.min(reveal.line + 1, instance.state.doc.lines);
-    const at = instance.state.doc.line(line).from;
+    const line = instance.state.doc.line(Math.min(reveal.line + 1, instance.state.doc.lines));
+    const at = Math.min(line.from + (reveal.character ?? 0), line.to);
     instance.dispatch({
       selection: { anchor: at },
       scrollIntoView: true,

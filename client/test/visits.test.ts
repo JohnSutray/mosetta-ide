@@ -5,22 +5,29 @@ import { nextVisits } from '../src/state/visits.js';
 const FAR = 12;
 const LIMIT = 30;
 
-function push(list: Visit[], at: number, path: string, line: number) {
-  return nextVisits(list, at, path, line, FAR, LIMIT);
+function push(list: Visit[], at: number, path: string, line: number, character = 0) {
+  return nextVisits(list, at, path, line, character, FAR, LIMIT);
 }
 
 describe('список посещений', () => {
   it('первое место записывается', () => {
-    const out = push([], -1, 'a.ts', 10)!;
-    expect(out.list).toEqual([{ path: 'a.ts', line: 10 }]);
+    const out = push([], -1, 'a.ts', 10, 4)!;
+    expect(out.list).toEqual([{ path: 'a.ts', line: 10, character: 4 }]);
     expect(out.at).toBe(0);
   });
 
   it('движение по тексту рядом визитом не считается', () => {
-    const list = [{ path: 'a.ts', line: 10 }];
+    const list = [{ path: 'a.ts', line: 10, character: 0 }];
     expect(push(list, 0, 'a.ts', 10)).toBe(null);
-    const out = push(list, 0, 'a.ts', 14)!;
-    expect(out.list).toEqual([{ path: 'a.ts', line: 14 }]);
+    const out = push(list, 0, 'a.ts', 14, 7)!;
+    expect(out.list).toEqual([{ path: 'a.ts', line: 14, character: 7 }]);
+    expect(out.at).toBe(0);
+  });
+
+  it('колонка уточняется, не заводя нового визита (ADR-0121)', () => {
+    const list = [{ path: 'a.ts', line: 10, character: 0 }];
+    const out = push(list, 0, 'a.ts', 10, 12)!;
+    expect(out.list).toEqual([{ path: 'a.ts', line: 10, character: 12 }]);
     expect(out.at).toBe(0);
   });
 

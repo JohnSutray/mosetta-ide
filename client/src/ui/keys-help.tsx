@@ -14,6 +14,7 @@ export function KeysHelp() {
   const host = viewHost.value ?? HOST;
   const elsewhere = host !== HOST;
   const taken = reservedIn([host, `${host}:${OS}`]);
+  const hard = taken.filter((item) => !item.soft).length;
 
   const groups = new Map<KeyContext, KeyBinding[]>();
   for (const binding of bindings) {
@@ -79,10 +80,12 @@ export function KeysHelp() {
       <div class="keys-list">
         {taken.length > 0 && (
           <details class="keys-taken" open>
-            <summary>{t('keys.taken', { count: taken.length })}</summary>
+            <summary>{t('keys.taken', { count: hard })}</summary>
             {taken.map((item) => (
               <div class="keys-row" key={`${item.scopes[0]}:${item.key}`}>
-                <kbd class="keys-kbd is-dead">{humanizeKey(item.key)}</kbd>
+                <kbd class={item.soft ? 'keys-kbd is-soft' : 'keys-kbd is-dead'}>
+                  {humanizeKey(item.key)}
+                </kbd>
                 <span class="keys-command">{item.what}</span>
                 <span class="keys-who">{item.who}</span>
               </div>

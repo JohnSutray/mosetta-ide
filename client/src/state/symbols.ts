@@ -135,7 +135,7 @@ export function accept(): void {
 
 function jumpTo(site: SymbolSite): void {
   closeSymbols();
-  void openFileAt(site.path).then(() => reveal(site.path, site.line));
+  void openFileAt(site.path).then(() => reveal(site.path, site.line, site.character));
 }
 
 function samePlace(site: SymbolSite, spot: { path: string; line: number }): boolean {

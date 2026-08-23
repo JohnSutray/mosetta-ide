@@ -43,7 +43,9 @@ function fileFor(stateDir: string, root: string): string {
 function valid(item: unknown): item is Visit {
   if (typeof item !== 'object' || item === null) return false;
   const visit = item as Partial<Visit>;
-  return typeof visit.path === 'string' && visit.path !== '' && typeof visit.line === 'number';
+  if (typeof visit.path !== 'string' || visit.path === '') return false;
+  if (typeof visit.line !== 'number') return false;
+  return visit.character === undefined || typeof visit.character === 'number';
 }
 
 async function exists(root: string, key: string): Promise<boolean> {
