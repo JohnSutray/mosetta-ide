@@ -92,10 +92,8 @@ export function Symbols() {
               accept();
             }}
           >
-            <span class="symbols-where">
-              {site.path}
-              <span class="symbols-line">:{site.line + 1}</span>
-            </span>
+            <span class="symbols-where">{site.path}</span>
+            <span class="symbols-line">{site.line + 1}</span>
             <span class="symbols-text">
               {paintLine(site.preview, site.path).map((chunk, i) =>
                 chunk.color ? (
