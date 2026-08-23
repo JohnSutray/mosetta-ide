@@ -106,7 +106,13 @@ export const RESERVED: ReservedKey[] = [
   },
   { key: 'meta+alt+i', scopes: CHROME_MAC, who: 'Chrome', what: 'DevTools' },
   { key: 'meta+alt+j', scopes: CHROME_MAC, who: 'Chrome', what: 'DevTools console' },
-  { key: 'meta+shift+c', scopes: CHROME_MAC, who: 'Chrome', what: 'DevTools element picker' },
+  {
+    key: 'meta+shift+c',
+    scopes: CHROME_MAC,
+    who: 'Chrome',
+    what: 'DevTools element picker',
+    soft: true,
+  },
 
   ...digits(CHROME_WIN, 'Chrome', 'switch to tab N', 'control'),
   { key: 'control+t', scopes: CHROME_WIN, who: 'Chrome', what: 'new tab' },

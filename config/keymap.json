@@ -133,6 +133,7 @@
     { "command": "tree.cut", "key": "control+x", "when": "tree", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "tree.paste", "key": "meta+v", "when": "tree", "where": ["browser:mac", "electron:mac"] },
     { "command": "tree.paste", "key": "control+v", "when": "tree", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "tree.copyPath", "key": "meta+shift+c", "when": "tree", "where": ["browser:mac", "electron:mac"] },
     { "command": "tree.copyPath", "key": "meta+alt+shift+c", "when": "tree", "where": ["browser:mac", "electron:mac"] },
     { "command": "tree.copyPath", "key": "control+alt+shift+c", "when": "tree", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
 
