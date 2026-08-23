@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'preact/hooks';
 import { editorSettings } from '../state/config.js';
-import { enter, leave } from '../state/popups.js';
+import { Popup } from './popup.js';
 import {
   accept,
   closeSymbols,
@@ -15,26 +14,12 @@ import {
 import { CodeView } from '../editor/code-view.js';
 import { t } from '../i18n/index.js';
 
+const SIZE = { w: 620, h: 420 };
+const MIN = { w: 320, h: 220 };
+
 export function Symbols() {
   const list = symbolList.value;
   const preview = symbolPreview.value;
-  const box = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!list) return;
-    enter({ id: 'symbols', close: closeSymbols, layer: true });
-    box.current?.focus({ preventScroll: true });
-    return () => leave('symbols');
-  }, [list !== null]);
-
-  useEffect(() => {
-    const el = box.current;
-    if (!el || !list) return;
-    el.style.left = `${Math.max(8, Math.min(list.x, window.innerWidth - el.offsetWidth - 8))}px`;
-    const below = list.y + 6;
-    const fits = below + el.offsetHeight < window.innerHeight - 8;
-    el.style.top = fits ? `${below}px` : `${Math.max(8, list.y - el.offsetHeight - 22)}px`;
-  }, [list?.x, list?.y, list?.sites.length, hideImports.value]);
 
   if (!list) return null;
   const sites = shownSites(list);
@@ -43,7 +28,17 @@ export function Symbols() {
   const cut = passed.length - sites.length;
 
   return (
-    <div class="symbols" ref={box} data-keys="pick" tabIndex={-1}>
+    <Popup
+      id="symbols"
+      keys="pick"
+      class="symbols"
+      size={SIZE}
+      min={MIN}
+      layer
+      clear
+      anchor={{ x: list.x, y: list.y }}
+      onClose={closeSymbols}
+    >
       <div class="symbols-head">
         <span class="symbols-title">
           {t(list.kind === 'usages' ? 'symbols.usages' : 'symbols.definition', {
@@ -57,9 +52,6 @@ export function Symbols() {
           onClick={toggleImports}
         >
           {t('symbols.imports', { count: hidden })}
-        </span>
-        <span class="symbols-close panel-close" title={t('popup.close')} onClick={closeSymbols}>
-          ×
         </span>
       </div>
 
@@ -96,6 +88,6 @@ export function Symbols() {
           />
         ) : null}
       </div>
-    </div>
+    </Popup>
   );
 }

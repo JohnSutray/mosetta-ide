@@ -80,19 +80,43 @@ if (typeof window !== 'undefined') {
   });
 }
 
+export const EDGE = 20;
+
 export function sizeOf(id: string, fallback: Size): Size {
   const saved = popupSizes.value[id] ?? fallback;
   const box = viewport.value;
   return {
-    w: Math.max(240, Math.min(saved.w, box.w - 32)),
-    h: Math.max(160, Math.min(saved.h, box.h - 48)),
+    w: Math.max(240, Math.min(saved.w, box.w - EDGE * 2)),
+    h: Math.max(160, Math.min(saved.h, box.h - EDGE * 2)),
+  };
+}
+
+export function fitAnchored(
+  want: Size,
+  anchor: { x: number; y: number },
+  box: Size,
+  min: Size,
+  gap = 6,
+): { w: number; h: number; left: number; top: number } {
+  const w = Math.min(want.w, box.w - EDGE * 2);
+  const below = box.h - (anchor.y + gap) - EDGE;
+  const above = anchor.y - gap - EDGE;
+  const under = want.h <= below || below >= above;
+  const room = Math.max(min.h, under ? below : above);
+  const h = Math.max(min.h, Math.min(want.h, room));
+  const top = Math.max(EDGE, under ? anchor.y + gap : anchor.y - gap - h);
+  return {
+    w: Math.round(w),
+    h: Math.round(h),
+    left: Math.round(Math.max(EDGE, Math.min(anchor.x, box.w - w - EDGE))),
+    top: Math.round(Math.min(top, box.h - h - EDGE)),
   };
 }
 
 export function setPopupSize(id: string, size: Size, min: Size): void {
   const next = {
-    w: Math.round(Math.min(Math.max(size.w, min.w), viewport.value.w - 32)),
-    h: Math.round(Math.min(Math.max(size.h, min.h), viewport.value.h - 48)),
+    w: Math.round(Math.min(Math.max(size.w, min.w), viewport.value.w - EDGE * 2)),
+    h: Math.round(Math.min(Math.max(size.h, min.h), viewport.value.h - EDGE * 2)),
   };
   const known = popupSizes.value[id];
   if (known && known.w === next.w && known.h === next.h) return;

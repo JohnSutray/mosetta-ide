@@ -1,7 +1,14 @@
 import type { ComponentChildren } from 'preact';
 import type { KeyContext } from '@ide/protocol';
 import { useEffect, useRef } from 'preact/hooks';
-import { resetPopupSize, setPopupSize, sizeOf, type Size } from '../state/layout.js';
+import {
+  fitAnchored,
+  resetPopupSize,
+  setPopupSize,
+  sizeOf,
+  viewport,
+  type Size,
+} from '../state/layout.js';
 import { enter, leave } from '../state/popups.js';
 import { catchesKeys } from '../keys/dispatcher.js';
 import { t } from '../i18n/index.js';
@@ -13,6 +20,9 @@ export function Popup({
   size,
   min,
   over,
+  layer,
+  clear,
+  anchor,
   onClose,
   onEscape,
   onMouseDown,
@@ -24,6 +34,9 @@ export function Popup({
   size: Size;
   min: Size;
   over?: string;
+  layer?: boolean;
+  clear?: boolean;
+  anchor?: { x: number; y: number };
   onClose: () => void;
   onEscape?: () => void;
   onMouseDown?: (event: MouseEvent) => void;
@@ -31,14 +44,16 @@ export function Popup({
 }) {
   const box = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
-  const current = sizeOf(id, size);
+  const want = sizeOf(id, size);
+  const at = anchor ? fitAnchored(want, anchor, viewport.value, min) : null;
+  const current = at ? { w: at.w, h: at.h } : want;
 
   const closing = useRef(onEscape ?? onClose);
   closing.current = onEscape ?? onClose;
   useEffect(() => {
-    enter({ id, close: () => closing.current(), over });
+    enter({ id, close: () => closing.current(), over, layer, el: box.current });
     return () => leave(id);
-  }, [id, over]);
+  }, [id, over, layer]);
 
   useEffect(() => {
     if (box.current?.contains(document.activeElement)) return;
@@ -46,13 +61,17 @@ export function Popup({
   }, []);
 
   return (
-    <div class="se-backdrop" onMouseDown={onClose}>
+    <div class={`se-backdrop ${clear ? 'is-clear' : ''}`} onMouseDown={onClose}>
       <div
         ref={box}
-        class={`popup ${extra}`}
+        class={`popup ${at ? 'is-anchored' : ''} ${extra}`}
         data-keys={keys}
         tabIndex={-1}
-        style={{ width: `${current.w}px`, height: `${current.h}px` }}
+        style={{
+          width: `${current.w}px`,
+          height: `${current.h}px`,
+          ...(at ? { left: `${at.left}px`, top: `${at.top}px` } : {}),
+        }}
         onMouseDown={(event) => {
           event.stopPropagation();
           onMouseDown?.(event as unknown as MouseEvent);

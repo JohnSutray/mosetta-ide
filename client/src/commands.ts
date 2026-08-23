@@ -26,7 +26,13 @@ import { activeMenu } from './state/menu.js';
 import { toggleScripts } from './state/scripts.js';
 import { toggleKeysHelp } from './state/keys-help.js';
 import { goBack, goForward } from './state/visits.js';
-import { askSymbol, accept as acceptSymbol, step as stepSymbol, symbolList } from './state/symbols.js';
+import {
+  askSymbol,
+  accept as acceptSymbol,
+  closeSymbols,
+  step as stepSymbol,
+  symbolList,
+} from './state/symbols.js';
 import {
   askCreate,
   askRemove,
@@ -84,7 +90,10 @@ export function registerCommands(): void {
   registerCommand('edit.moveLineDown', () => inEditor(moveLineDown));
   registerCommand('edit.addCursorAbove', () => inEditor(addCursorAbove));
   registerCommand('edit.addCursorBelow', () => inEditor(addCursorBelow));
-  registerCommand('symbol.goto', () => void askSymbol());
+  registerCommand('symbol.goto', () => {
+    if (symbolList.peek()) closeSymbols();
+    else void askSymbol();
+  });
 
   registerCommand('nav.back', () => goBack());
   registerCommand('nav.forward', () => goForward());
