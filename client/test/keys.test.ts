@@ -114,14 +114,19 @@ describe('жалоба на клавишу без команды', () => {
   const clip = new Set([`${PRIMARY}+c`, `${PRIMARY}+x`, `${PRIMARY}+v`]);
   const once = { repeat: false, clip };
 
-  it('свой модификатор без команды — говорим', () => {
+  it('аккорд без команды — говорим', () => {
     expect(complains(`${PRIMARY}+j`, once)).toBe(true);
     expect(complains(`${PRIMARY}+shift+j`, once)).toBe(true);
   });
 
-  it('чужой модификатор молчит', () => {
+  it('другой наш модификатор тоже говорит: мы и его забрали', () => {
     const other = PRIMARY === 'control' ? 'meta' : 'control';
-    expect(complains(`${other}+j`, once)).toBe(false);
+    expect(complains(`${other}+j`, once)).toBe(true);
+  });
+
+  it('Shift сам по себе аккорда не делает', () => {
+    expect(complains('shift+arrowleft', once)).toBe(false);
+    expect(complains('shift+k', once)).toBe(false);
   });
 
   it('голая клавиша это ввод, а не промах', () => {
@@ -154,6 +159,17 @@ describe('перехват чужих эффектов', () => {
     expect(swallows(`${PRIMARY}+j`, clip)).toBe(true);
   });
 
+  it('любой наш модификатор гасится, а не только главный', () => {
+    for (const mod of ['meta', 'control', 'alt']) {
+      expect(swallows(`${mod}+j`, clip), mod).toBe(true);
+    }
+  });
+
+  it('Shift сам по себе не аккорд: выделение остаётся выделением', () => {
+    expect(swallows('shift+arrowleft', clip)).toBe(false);
+    expect(swallows('shift+home', clip)).toBe(false);
+  });
+
   it('буфер обмена и механика ввода не гасятся', () => {
     expect(swallows(`${PRIMARY}+c`, clip)).toBe(false);
     for (const key of mechanicsKeys(IS_MAC)) {
@@ -162,17 +178,21 @@ describe('перехват чужих эффектов', () => {
     }
   });
 
-  it('чужой модификатор и голая клавиша не наши', () => {
-    const other = PRIMARY === 'control' ? 'meta' : 'control';
-    expect(swallows(`${other}+s`, clip)).toBe(false);
+  it('голая клавиша это ввод, а не аккорд', () => {
     expect(swallows('enter', clip)).toBe(false);
+    expect(swallows('k', clip)).toBe(false);
   });
 
-  it('мягко отнятое гасится везде, даже без главного модификатора', () => {
-    const other = PRIMARY === 'control' ? 'meta' : 'control';
-    const soft = new Set([`${other}+arrowleft`]);
-    expect(swallows(`${other}+arrowleft`, clip, soft)).toBe(true);
-    expect(swallows(`${other}+arrowright`, clip, soft)).toBe(false);
+  it('мягко отнятое гасится везде, даже мимо всех прочих правил', () => {
+    const key = [...mechanicsKeys(IS_MAC)][0]!;
+    expect(swallows(key, clip)).toBe(false);
+    expect(swallows(key, clip, { soft: new Set([key]) })).toBe(true);
+  });
+
+  it('оставленное браузеру не гасится: это клавиша выхода', () => {
+    const left = new Set([`${PRIMARY}+r`]);
+    expect(swallows(`${PRIMARY}+r`, clip)).toBe(true);
+    expect(swallows(`${PRIMARY}+r`, clip, { left })).toBe(false);
   });
 });
 

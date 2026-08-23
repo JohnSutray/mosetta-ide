@@ -32,6 +32,7 @@
     { "command": "key.reserved", "key": "shift+tab" },
 
     { "command": "file.save", "key": "alt+s", "where": ["browser:mac"] },
+    { "command": "file.save", "key": "meta+s", "where": ["browser:mac"] },
     { "command": "file.save", "key": "control+s", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "file.save", "key": "meta+s", "where": ["electron:mac"] },
     { "command": "file.reload", "key": "alt+shift+r", "where": ["browser:mac"] },
@@ -92,6 +93,7 @@
     { "command": "tools.packageManager", "key": "control+shift+p", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "tools.packageManager", "key": "meta+shift+p", "where": ["electron:mac"] },
     { "command": "search.everywhere", "key": "alt+p", "where": ["browser:mac"] },
+    { "command": "search.everywhere", "key": "meta+p", "where": ["browser:mac"] },
     { "command": "search.everywhere", "key": "control+p", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "search.everywhere", "key": "meta+p", "where": ["electron:mac"] },
 

@@ -2,7 +2,7 @@ import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
 import { runCommand } from './commands.js';
 import { echoKey } from '../state/keys-help.js';
 import { mechanicsKeys } from '../editor/input-keymap.js';
-import { humanizeKey, IS_MAC, PRIMARY, SCOPES } from './host.js';
+import { humanizeKey, IS_MAC, SCOPES } from './host.js';
 import { reservedIn } from './reserved.js';
 
 export type ContextResolver = () => KeyContext;
@@ -24,17 +24,27 @@ const OWNING = new Set<KeyContext>(['terminal']);
 
 const MECHANICS = mechanicsKeys(IS_MAC);
 
-const SOFT_TAKEN = new Set(reservedIn(SCOPES).filter((item) => item.soft).map((item) => item.key));
+const TAKEN = reservedIn(SCOPES);
 
-export function swallows(
-  key: string,
-  clip: ReadonlySet<string>,
-  soft: ReadonlySet<string> = SOFT_TAKEN,
-): boolean {
+const SOFT_TAKEN = new Set(TAKEN.filter((item) => item.soft).map((item) => item.key));
+
+const LEFT_ALONE = new Set(TAKEN.filter((item) => !item.soft).map((item) => item.key));
+
+const OURS = ['meta', 'control', 'alt'];
+
+interface Foreign {
+  soft?: ReadonlySet<string>;
+  left?: ReadonlySet<string>;
+}
+
+export function swallows(key: string, clip: ReadonlySet<string>, foreign: Foreign = {}): boolean {
+  const soft = foreign.soft ?? SOFT_TAKEN;
+  const left = foreign.left ?? LEFT_ALONE;
   if (soft.has(key)) return true;
-  if (!key.split('+').includes(PRIMARY)) return false;
+  if (left.has(key)) return false;
   if (clip.has(key)) return false;
-  return !MECHANICS.has(key);
+  if (MECHANICS.has(key)) return false;
+  return key.split('+').some((part) => OURS.includes(part));
 }
 
 export function complains(
@@ -42,10 +52,7 @@ export function complains(
   opts: { repeat: boolean; clip: ReadonlySet<string> },
 ): boolean {
   if (opts.repeat) return false;
-  if (!key.split('+').includes(PRIMARY)) return false;
-  if (opts.clip.has(key)) return false;
-  if (MECHANICS.has(key)) return false;
-  return true;
+  return swallows(key, opts.clip);
 }
 
 interface Installed {
