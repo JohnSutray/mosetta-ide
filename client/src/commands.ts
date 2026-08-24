@@ -29,7 +29,6 @@ import { goBack, goForward } from './state/visits.js';
 import {
   askSymbol,
   accept as acceptSymbol,
-  closeSymbols,
   step as stepSymbol,
   symbolList,
 } from './state/symbols.js';
@@ -90,10 +89,7 @@ export function registerCommands(): void {
   registerCommand('edit.moveLineDown', () => inEditor(moveLineDown));
   registerCommand('edit.addCursorAbove', () => inEditor(addCursorAbove));
   registerCommand('edit.addCursorBelow', () => inEditor(addCursorBelow));
-  registerCommand('symbol.goto', () => {
-    if (symbolList.peek()) closeSymbols();
-    else void askSymbol();
-  });
+  registerCommand('symbol.goto', () => void askSymbol());
 
   registerCommand('nav.back', () => goBack());
   registerCommand('nav.forward', () => goForward());
