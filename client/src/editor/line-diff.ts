@@ -12,9 +12,17 @@ const MAX_EDITS = 1000;
 
 export function diffLines(before: string, after: string): Hunk[] {
   if (before === after) return [];
-  const a = split(before);
-  const b = split(after);
+  const a = splitLines(before);
+  const b = splitLines(after);
+  return toHunks(diffSteps(a, b), a);
+}
 
+export interface Step {
+  kind: 'same' | 'del' | 'ins';
+  count: number;
+}
+
+export function diffSteps(a: string[], b: string[]): Step[] {
   let head = 0;
   while (head < a.length && head < b.length && a[head] === b[head]) head += 1;
   let tail = 0;
@@ -26,15 +34,19 @@ export function diffLines(before: string, after: string): Hunk[] {
     tail += 1;
   }
 
-  const oldMiddle = a.slice(head, a.length - tail);
-  const newMiddle = b.slice(head, b.length - tail);
-  const script = diffMiddle(oldMiddle, newMiddle);
-  return toHunks(script, head, oldMiddle, newMiddle);
+  const steps: Step[] = [];
+  if (head > 0) steps.push({ kind: 'same', count: head });
+  for (const step of diffMiddle(a.slice(head, a.length - tail), b.slice(head, b.length - tail))) {
+    add(steps, step);
+  }
+  if (tail > 0) add(steps, { kind: 'same', count: tail });
+  return steps;
 }
 
-interface Step {
-  kind: 'same' | 'del' | 'ins';
-  count: number;
+function add(steps: Step[], step: Step): void {
+  const last = steps[steps.length - 1];
+  if (last && last.kind === step.kind) last.count += step.count;
+  else steps.push({ ...step });
 }
 
 function diffMiddle(a: string[], b: string[]): Step[] {
@@ -131,7 +143,7 @@ function push(steps: Step[], kind: Step['kind']): void {
   else steps.push({ kind, count: 1 });
 }
 
-function toHunks(steps: Step[], head: number, oldMiddle: string[], newMiddle: string[]): Hunk[] {
+function toHunks(steps: Step[], before: string[]): Hunk[] {
   const hunks: Hunk[] = [];
   let oldAt = 0;
   let newAt = 0;
@@ -146,20 +158,20 @@ function toHunks(steps: Step[], head: number, oldMiddle: string[], newMiddle: st
     if (step.kind === 'ins') {
       hunks.push({
         kind: 'added',
-        from: head + newAt + 1,
-        to: head + newAt + step.count,
+        from: newAt + 1,
+        to: newAt + step.count,
         before: [],
       });
       newAt += step.count;
       continue;
     }
     const next = steps[i + 1];
-    const removed = oldMiddle.slice(oldAt, oldAt + step.count);
+    const removed = before.slice(oldAt, oldAt + step.count);
     if (next?.kind === 'ins') {
       hunks.push({
         kind: 'modified',
-        from: head + newAt + 1,
-        to: head + newAt + next.count,
+        from: newAt + 1,
+        to: newAt + next.count,
         before: removed,
       });
       oldAt += step.count;
@@ -167,16 +179,15 @@ function toHunks(steps: Step[], head: number, oldMiddle: string[], newMiddle: st
       i += 1;
       continue;
     }
-    const anchor = head + newAt + 1;
+    const anchor = newAt + 1;
     hunks.push({ kind: 'removed', from: anchor, to: anchor, before: removed });
     oldAt += step.count;
   }
 
-  void newMiddle;
   return hunks;
 }
 
-function split(text: string): string[] {
+export function splitLines(text: string): string[] {
   if (text === '') return [];
   const lines = text.split('\n');
   if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop();
