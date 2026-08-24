@@ -414,6 +414,16 @@ body {
   color: var(--fg);
   user-select: text;
 }
+.cm-hover-problem {
+  border-left: 2px solid var(--error);
+  padding-left: 7px;
+  margin-bottom: 6px;
+}
+.cm-hover-problem:last-child { margin-bottom: 0; }
+.cm-hover-problem + .cm-hover-code {
+  border-top: 1px solid var(--divider);
+  padding-top: 6px;
+}
 
 .tree-name.is-broken {
   text-decoration: underline wavy var(--error);

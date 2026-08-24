@@ -1,16 +1,29 @@
-import { StateEffect, StateField, type Extension } from '@codemirror/state';
+import { StateEffect, StateField, type EditorState, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, type DecorationSet } from '@codemirror/view';
-import type { Diagnostic } from '@ide/protocol';
+import type { Diagnostic, Severity } from '@ide/protocol';
 import { dc } from './darcula.js';
 
 export const setDiagnostics = StateEffect.define<Diagnostic[]>();
 
-const marks = {
-  error: Decoration.mark({ class: 'cm-diag cm-diag-error' }),
-  warning: Decoration.mark({ class: 'cm-diag cm-diag-warning' }),
-  info: Decoration.mark({ class: 'cm-diag cm-diag-info' }),
-  hint: Decoration.mark({ class: 'cm-diag cm-diag-hint' }),
-};
+function mark(item: Diagnostic) {
+  return Decoration.mark({
+    class: `cm-diag cm-diag-${item.severity}`,
+    message: item.message,
+    severity: item.severity,
+  });
+}
+
+export function diagnosticsAt(
+  state: EditorState,
+  pos: number,
+): Array<{ message: string; severity: Severity }> {
+  const found: Array<{ message: string; severity: Severity }> = [];
+  state.field(diagnosticsField).between(pos, pos, (_from, _to, value) => {
+    const spec = value.spec as { message?: string; severity?: Severity };
+    if (spec.message) found.push({ message: spec.message, severity: spec.severity ?? 'error' });
+  });
+  return found;
+}
 
 export const diagnosticsField = StateField.define<DecorationSet>({
   create() {
@@ -35,7 +48,7 @@ function build(list: Diagnostic[], doc: { lines: number; line(n: number): { from
     if (from === null || to === null) continue;
     const end = to > from ? to : Math.min(from + 1, doc.line(doc.lines).to);
     if (end <= from) continue;
-    ranges.push(marks[item.severity].range(from, end));
+    ranges.push(mark(item).range(from, end));
   }
   ranges.sort((a, b) => a.from - b.from || a.to - b.to);
   return Decoration.set(ranges, true);
