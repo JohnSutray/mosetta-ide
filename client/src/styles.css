@@ -402,16 +402,22 @@ body {
 .problem-code { color: var(--muted); flex: none; }
 
 .cm-tooltip.cm-tooltip-hover {
-  background: #3b3e40;
-  border: 1px solid var(--divider);
-  border-radius: 3px;
-  max-width: 640px;
+  background: transparent;
+  border: none;
+  padding: 6px;
+  max-width: 652px;
 }
 .cm-hover-card {
   padding: 6px 8px;
+  max-width: 640px;
+  background: #3b3e40;
+  border: 1px solid var(--divider);
+  border-radius: 3px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
   white-space: pre-wrap;
   font: 12px/1.4 var(--font);
   color: var(--fg);
+  cursor: text;
   user-select: text;
 }
 .cm-hover-problem {
