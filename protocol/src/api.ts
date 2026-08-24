@@ -50,8 +50,8 @@ export interface Api {
   'env.shells': { params: null; result: ShellInfo[] };
   'env.packageManagers': { params: null; result: PackageManagerInfo[] };
   'config.set': {
-    params: { section: string; key: string; value: string };
-    result: { section: string; key: string; value: string };
+    params: { section: string; key: string; value: string | boolean };
+    result: { section: string; key: string; value: string | boolean };
   };
   'visits.get': { params: null; result: Visit[] };
   'visits.set': { params: { visits: Visit[] }; result: { saved: number } };

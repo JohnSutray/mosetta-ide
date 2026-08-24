@@ -28,6 +28,7 @@ import { pendingReveal } from '../state/session.js';
 import { refreshScripts, refreshTerminals } from '../state/terminals.js';
 import { refreshTools } from '../state/tools.js';
 import { forgetVisits, installMouseNav, loadVisits, visit } from '../state/visits.js';
+import { follow, following } from '../state/tree-follow.js';
 import { Editor } from '../editor/editor.js';
 import { SearchEverywhere } from './search-everywhere.js';
 import { Branches } from './branches.js';
@@ -91,6 +92,10 @@ export function App() {
     const at = pendingReveal.value;
     visit(file.path, at?.path === file.path ? at.line : 0, at?.character ?? 0);
   }, [file?.path]);
+
+  useEffect(() => {
+    void follow();
+  }, [file?.path, following.value]);
 
   useEffect(() => {
     if (ws) hideProjects();

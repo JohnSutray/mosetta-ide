@@ -60,7 +60,11 @@ export class ConfigStore {
     } catch {}
   }
 
-  async set(section: string, key: string, value: string): Promise<{ rewritten: boolean }> {
+  async set(
+    section: string,
+    key: string,
+    value: string | boolean,
+  ): Promise<{ rewritten: boolean }> {
     const file = path.join(this.dir, 'settings.json');
     let raw = '';
     try {

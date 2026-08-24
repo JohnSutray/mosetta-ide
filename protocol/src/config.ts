@@ -35,8 +35,13 @@ export interface LspSettings {
   servers: Record<string, LspServerSettings>;
 }
 
+export interface TreeSettings {
+  followEditor: boolean;
+}
+
 export interface Settings {
   editor: EditorSettings;
+  tree: TreeSettings;
   fs: FsSettings;
   index: IndexSettings;
   lsp: LspSettings;

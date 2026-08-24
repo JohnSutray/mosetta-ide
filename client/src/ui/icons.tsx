@@ -12,7 +12,8 @@ export type IconName =
   | 'push'
   | 'fetch'
   | 'book'
-  | 'keys';
+  | 'keys'
+  | 'follow';
 
 interface Props {
   name: IconName;
@@ -37,6 +38,13 @@ export function Icon({ name, filled }: Props): JSX.Element {
       return (
         <svg {...common}>
           <path d="M1.8 3.4h4l1.2 1.6h7.2v7.6H1.8z" fill={filled ? 'currentColor' : 'none'} />
+        </svg>
+      );
+    case 'follow':
+      return (
+        <svg {...common}>
+          <circle cx="8" cy="8" r="3.2" fill={filled ? 'currentColor' : 'none'} />
+          <path d="M8 1.4v2.2M8 12.4v2.2M1.4 8h2.2M12.4 8h2.2" />
         </svg>
       );
     case 'search':

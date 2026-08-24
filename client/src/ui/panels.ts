@@ -11,6 +11,7 @@ import { searchOpen } from '../state/search.js';
 import { branchesOpen, pushOpen } from '../state/git.js';
 import { projectsVisible } from '../state/projects.js';
 import { keysHelpOpen } from '../state/keys-help.js';
+import { following } from '../state/tree-follow.js';
 import type { IconName } from './icons.js';
 
 export type PanelSide = 'left' | 'right';
@@ -136,6 +137,13 @@ export const TOOLBAR: ToolbarEntry[] = [
     icon: 'keys',
     command: 'keys.show',
     active: keysHelpOpen,
+  },
+  {
+    id: 'tree.follow',
+    title: 'toolbar.follow',
+    icon: 'follow',
+    command: 'tree.follow',
+    active: following,
   },
 ];
 

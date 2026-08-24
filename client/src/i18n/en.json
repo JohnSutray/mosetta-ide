@@ -110,6 +110,8 @@
   "command.search.accept": "Search: open",
   "command.search.close": "Search: close",
   "command.keys.show": "All keys",
+  "command.tree.follow": "Tree follows the editor",
+  "toolbar.follow": "Select the open file in the tree",
 
   "keys.title": "Keys",
   "keys.mod.browser": "In a browser the main modifier is Option on macOS and Control elsewhere — that is the one the browser never takes. Cmd is mostly the browser's: tabs and windows are beyond reach, but everything it merely does by default we take back.",

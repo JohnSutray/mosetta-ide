@@ -1,3 +1,4 @@
+import { useEffect } from 'preact/hooks';
 import type { DirEntry } from '@ide/protocol';
 import {
   current,
@@ -28,6 +29,14 @@ import { Chevron, DirIcon, FileIcon, RootIcon } from './file-icons.js';
 export function Tree() {
   const ws = current.value;
   const children = dirChildren.value.get('');
+  const focused = treeFocus.value;
+
+  useEffect(() => {
+    if (!focused) return;
+    const row = document.querySelector(`.tree-row[data-path="${cssEscape(focused)}"]`);
+    row?.scrollIntoView({ block: 'nearest' });
+  }, [focused]);
+
   if (!ws || !children) return <div class="tree-empty">…</div>;
   const open = rootExpanded.value;
   return (
@@ -195,4 +204,8 @@ function shortenHome(root: string): string {
   const win = /^[A-Za-z]:\\Users\\[^\\]+(\\.*)?$/.exec(root);
   if (win) return `~${win[1] ?? ''}`;
   return root;
+}
+
+function cssEscape(path: string): string {
+  return typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(path) : path.replace(/"/g, '\\"');
 }

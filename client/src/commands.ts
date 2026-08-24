@@ -16,6 +16,7 @@ import {
   undo,
 } from '@codemirror/commands';
 import { registerCommand, missingCommands } from './keys/commands.js';
+import { toggleFollow } from './state/tree-follow.js';
 import { resolveContext } from './keys/context.js';
 import { acceptSelected, closeSearch, moveSelection, openSearch } from './state/search.js';
 import type { EditorView } from '@codemirror/view';
@@ -137,6 +138,7 @@ export function registerCommands(): void {
   registerCommand('tree.paste', () => onFocused((path, isDir) => void pasteInto(path, isDir)));
   registerCommand('tree.copyPath', () => onPicked((path) => void copyAbsolutePath(path)));
   registerCommand('tree.reveal', () => onPicked((path) => void revealInOs(path)));
+  registerCommand('tree.follow', () => void toggleFollow());
   registerCommand('panel.terminal', () => {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });

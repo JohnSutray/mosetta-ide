@@ -10,6 +10,10 @@ export function editorSettings(): EditorSettings {
   return settings.value?.editor ?? DEFAULT_SETTINGS_FALLBACK.editor;
 }
 
+export function followEditor(): boolean {
+  return settings.value?.tree.followEditor ?? DEFAULT_SETTINGS_FALLBACK.tree.followEditor;
+}
+
 export function applyConfig(bundle: ConfigBundle): void {
   settings.value = bundle.settings;
   keymap.value = bundle.keymap;

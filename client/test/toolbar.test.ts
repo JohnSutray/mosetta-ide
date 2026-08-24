@@ -44,7 +44,7 @@ describe('тулбар', () => {
     expect(side('problems')).toBe('right');
   });
 
-  it('кнопка тулбара — либо панель, либо попап, но всегда с состоянием', () => {
+  it('кнопка тулбара показывает панель, попап или настройку — но всегда состояние', () => {
     const panels = new Set(PANELS.map((panel) => panel.id));
     const popups = TOOLBAR.filter((entry) => !panels.has(entry.id) && entry.active).map((e) => e.id);
     expect(popups.sort()).toEqual([
@@ -55,6 +55,7 @@ describe('тулбар', () => {
       'projects',
       'scripts',
       'search',
+      'tree.follow',
     ]);
   });
 
@@ -96,7 +97,7 @@ describe('тулбар', () => {
   });
 
   it('цифра — это порядковый номер кнопки в тулбаре, слева направо', () => {
-    expect(TOOLBAR.length, 'цифр всего десять').toBeLessThanOrEqual(10);
+    const NUMBERED = TOOLBAR.slice(0, 10);
     const bindings = keymap().bindings;
     for (const world of WORLDS) {
       const numbered = new Map<string, CommandId>();
@@ -105,20 +106,26 @@ describe('тулбар', () => {
         const digit = /(?:^|\+)(\d)$/.exec(binding.key)?.[1];
         if (digit) numbered.set(digit, binding.command);
       }
-      TOOLBAR.forEach((entry, at) => {
+      NUMBERED.forEach((entry, at) => {
         const digit = String((at + 1) % 10);
         expect(numbered.get(digit), `${world.scope}: цифра ${digit} зовёт не ту кнопку`).toBe(
           entry.command,
         );
       });
+      expect(numbered.size, `${world.scope}: лишние цифры`).toBe(NUMBERED.length);
     }
   });
 
-  it('у каждой кнопки тулбара есть номер в каждом окружении', () => {
+  it('до каждой кнопки тулбара можно дотянуться клавишей в каждом окружении', () => {
     const bindings = keymap().bindings;
     for (const world of WORLDS) {
-      const numbered = inWorld(bindings, world).filter((b) => /(?:^|\+)\d$/.test(b.key));
-      expect(numbered.length, world.scope).toBe(TOOLBAR.length);
+      const reachable = new Set(
+        inWorld(bindings, world)
+          .filter((binding) => (binding.when ?? 'global') === 'global')
+          .map((binding) => binding.command),
+      );
+      const lost = TOOLBAR.filter((entry) => !reachable.has(entry.command)).map((e) => e.id);
+      expect(lost, `${world.scope}: кнопки без клавиши — ${lost.join(', ')}`).toEqual([]);
     }
   });
 

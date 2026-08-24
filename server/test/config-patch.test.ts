@@ -68,4 +68,26 @@ describe('точечная правка настроек', () => {
     expect(rewritten, 'звавший обязан узнать, что комментарии потеряны').toBe(true);
     expect(read(text).terminal!.shell).toBe('/bin/sh');
   });
+
+  it('булев тумблер правится на месте, комментарии целы (ADR-0130)', () => {
+    const before = [
+      '// Настройки. Комментарии тут половина ценности.',
+      '{',
+      '  // дерево следует за кареткой',
+      '  "tree": { "followEditor": true },',
+      '  "terminal": { "shell": "" }',
+      '}',
+      '',
+    ].join('\n');
+    const { text, rewritten } = patchSetting(before, 'tree', 'followEditor', false);
+    expect(rewritten, 'файл пересобрали, комментарии потеряны').toBe(false);
+    expect(text).toContain('"followEditor": false');
+    expect(text).toContain('// дерево следует за кареткой');
+  });
+
+  it('булева настройка заводится с нуля', () => {
+    const { text, rewritten } = patchSetting('{\n}\n', 'tree', 'followEditor', false);
+    expect(rewritten).toBe(false);
+    expect(JSON.parse(text)).toEqual({ tree: { followEditor: false } });
+  });
 });

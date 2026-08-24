@@ -68,6 +68,7 @@ export const COMMANDS = {
   'tree.paste': 'Дерево: вставить',
   'tree.copyPath': 'Дерево: скопировать путь',
   'tree.reveal': 'Дерево: показать в файловом менеджере',
+  'tree.follow': 'Дерево: следовать за кареткой',
 
   'search.everywhere': 'Найти всё',
   'search.next': 'Поиск: вниз',

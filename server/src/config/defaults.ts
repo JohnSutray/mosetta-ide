@@ -8,6 +8,9 @@ export const DEFAULT_SETTINGS: Settings = {
     lineNumbers: true,
     caretWidth: 2,
   },
+  tree: {
+    followEditor: true,
+  },
   fs: {
     hidden: ['.DS_Store'],
     noScan: ['node_modules', '.git', 'dist', 'build', 'coverage'],
