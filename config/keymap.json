@@ -82,6 +82,7 @@
 
     { "command": "git.branches", "key": "alt+backquote", "where": ["browser:mac"] },
     { "command": "git.branches", "key": "control+backquote", "where": ["browser:mac", "electron:mac"] },
+    { "command": "git.branches", "key": "meta+backquote", "where": ["electron:mac"] },
     { "command": "git.branches", "key": "control+backquote", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "git.push", "key": "alt+shift+k", "where": ["browser:mac"] },
     { "command": "git.push", "key": "control+shift+k", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },

@@ -29,7 +29,12 @@ export const RESERVED: ReservedKey[] = [
   { key: 'meta+h', scopes: MAC, who: 'macOS', what: 'hide the app' },
   { key: 'meta+m', scopes: MAC, who: 'macOS', what: 'minimise the window' },
   { key: 'meta+space', scopes: MAC, who: 'macOS', what: 'Spotlight' },
-  { key: 'meta+backquote', scopes: MAC, who: 'macOS', what: 'next window of the app' },
+  {
+    key: 'meta+backquote',
+    scopes: CHROME_MAC,
+    who: 'Chrome',
+    what: 'next window of the app',
+  },
   {
     key: 'control+arrowleft',
     scopes: MAC,
