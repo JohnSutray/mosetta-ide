@@ -6,6 +6,9 @@ import { RpcError } from '../errors.js';
 export const lspStatus: Handler<'lsp.status'> = (_params, ctx) =>
   ctx.session.requireWorkspace().services.statuses();
 
+export const lspProblems: Handler<'lsp.problems'> = (_params, ctx) =>
+  ctx.session.requireWorkspace().services.knownDiagnostics();
+
 export const lspDiagnostics: Handler<'lsp.diagnostics'> = (params, ctx) => {
   const path = pathOf(params);
   const services = ctx.session.requireWorkspace().services;

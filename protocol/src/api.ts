@@ -91,6 +91,7 @@ export interface Api {
 
   'lsp.status': { params: null; result: LspStatus[] };
   'lsp.hover': { params: { path: string; line: number; character: number }; result: HoverInfo | null };
+  'lsp.problems': { params: null; result: FileDiagnostics[] };
   'lsp.diagnostics': { params: { path: string }; result: FileDiagnostics };
   'lsp.definition': {
     params: { path: string; line: number; character: number };

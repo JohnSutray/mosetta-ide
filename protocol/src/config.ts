@@ -28,6 +28,7 @@ export interface LspServerSettings {
   command: string;
   args: string[];
   extensions: string[];
+  checkExtensions?: string[];
 }
 
 export interface LspSettings {

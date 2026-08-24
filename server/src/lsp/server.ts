@@ -24,6 +24,8 @@ export type LspEvent =
 
 const SEVERITY: Record<number, Severity> = { 1: 'error', 2: 'warning', 3: 'info', 4: 'hint' };
 
+const TYPED = ['ts', 'tsx', 'mts', 'cts'];
+
 export class LspServer {
   private child: ChildProcessWithoutNullStreams | null = null;
   private readonly decoder = new FrameDecoder();
@@ -150,9 +152,10 @@ export class LspServer {
   ): Promise<void> {
     if (this.state !== 'ready') return;
 
+    const checked = new Set(this.settings.checkExtensions ?? TYPED);
     const queue: string[] = [];
     for (const file of this.ram.files()) {
-      if (!this.handles(file.path) || skip(file.path)) continue;
+      if (!checked.has(extensionOf(file.path)) || skip(file.path)) continue;
       if (this.openDocs.has(file.path)) continue;
       queue.push(file.path);
     }
@@ -174,18 +177,11 @@ export class LspServer {
       const answers = slice.map((key) => this.expectDiagnostics(key));
       for (const key of slice) this.didOpen(key);
       await Promise.all(answers);
-      for (const key of slice) {
-        if ((this.ram.docSync(key)?.openCount ?? 0) > 0) continue;
-        if ((this.diagnostics.get(key)?.length ?? 0) > 0) {
-          broken += 1;
-          continue;
-        }
-        this.didClose(key);
-      }
+      broken += slice.filter((key) => (this.diagnostics.get(key)?.length ?? 0) > 0).length;
     }
     this.log.info(
       `${this.name}: проект проверен — ${take.length} файлов за ${Date.now() - started} мс` +
-        (broken > 0 ? `, ${broken} с ошибками остались открытыми` : ''),
+        `, ${broken} с ошибками; все остаются открытыми`,
     );
   }
 

@@ -221,7 +221,7 @@ function content(panel: PanelSpec) {
     case 'tree':
       return <Tree />;
     case 'problems':
-      return <Problems items={currentDiagnostics.value} />;
+      return <Problems />;
     case 'terminal':
       return <TerminalView />;
     default:

@@ -22,7 +22,14 @@ import {
   gitRun,
   gitState,
 } from './git.js';
-import { lspDefinition, lspDiagnostics, lspHover, lspReferences, lspStatus } from './lsp.js';
+import {
+  lspDefinition,
+  lspDiagnostics,
+  lspHover,
+  lspProblems,
+  lspReferences,
+  lspStatus,
+} from './lsp.js';
 import { npmList, npmRun } from './npm.js';
 import { indexSearch, indexStats } from './search.js';
 import {
@@ -99,6 +106,7 @@ export const handlers: HandlerTable = {
 
   'lsp.status': lspStatus,
   'lsp.hover': lspHover,
+  'lsp.problems': lspProblems,
   'lsp.diagnostics': lspDiagnostics,
   'lsp.definition': lspDefinition,
   'lsp.references': lspReferences,

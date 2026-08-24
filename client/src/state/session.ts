@@ -74,8 +74,25 @@ export const currentDiagnostics = computed<Diagnostic[]>(() => {
   return path ? (diagnostics.value.get(path) ?? []) : [];
 });
 
-export const errorCount = computed(
-  () => currentDiagnostics.value.filter((d) => d.severity === 'error').length,
+export const allProblems = computed<Array<{ path: string; diagnostics: Diagnostic[] }>>(() => {
+  const here = openFile.value?.path;
+  const out: Array<{ path: string; diagnostics: Diagnostic[] }> = [];
+  for (const [path, list] of diagnostics.value) {
+    if (list.length > 0) out.push({ path, diagnostics: list });
+  }
+  out.sort((a, b) => {
+    if (a.path === here) return -1;
+    if (b.path === here) return 1;
+    return a.path.localeCompare(b.path);
+  });
+  return out;
+});
+
+export const errorCount = computed(() =>
+  allProblems.value.reduce(
+    (sum, file) => sum + file.diagnostics.filter((d) => d.severity === 'error').length,
+    0,
+  ),
 );
 
 export const title = computed(() => {
@@ -157,6 +174,9 @@ export async function switchProject(id: string) {
 async function afterAttach() {
   await loadDir('');
   lspStatuses.value = await rpc.call('lsp.status', null);
+  for (const file of await rpc.call('lsp.problems', null).catch(() => [])) {
+    setDiagnostics(file.path, file.diagnostics);
+  }
   await reopenFile();
 }
 
