@@ -404,12 +404,11 @@ body {
 .cm-tooltip.cm-tooltip-hover {
   background: transparent;
   border: none;
-  padding: 8px 16px;
+  padding: 16px;
   max-width: 672px;
   pointer-events: none;
 }
-.cm-tooltip-hover.cm-tooltip-above { padding-bottom: 18px; }
-.cm-tooltip-hover.cm-tooltip-below { padding-top: 18px; }
+
 .cm-hover-card {
   padding: 6px 8px;
   max-width: 640px;
