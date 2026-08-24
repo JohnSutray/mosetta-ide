@@ -410,6 +410,7 @@ body {
 }
 .cm-tooltip-hover.cm-tooltip-above { margin-top: 16px; }
 .cm-tooltip-hover.cm-tooltip-below { margin-top: -16px; }
+.cm-tooltip.cm-tooltip-hover { margin-left: -16px; }
 
 .cm-hover-card {
   padding: 6px 8px;
