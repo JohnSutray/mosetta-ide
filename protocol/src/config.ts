@@ -78,7 +78,8 @@ export type KeyContext =
   | 'menu'
   | 'push'
   | 'terminal'
-  | 'keys';
+  | 'keys'
+  | 'merge';
 
 export type KeyHost = 'browser' | 'electron';
 

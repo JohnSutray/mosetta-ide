@@ -22,6 +22,7 @@ export function Popup({
   over,
   layer,
   clear,
+  full,
   anchor,
   onClose,
   onEscape,
@@ -36,6 +37,7 @@ export function Popup({
   over?: string;
   layer?: boolean;
   clear?: boolean;
+  full?: boolean;
   anchor?: { x: number; y: number };
   onClose: () => void;
   onEscape?: () => void;
@@ -44,7 +46,7 @@ export function Popup({
 }) {
   const box = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
-  const want = sizeOf(id, size);
+  const want = full ? viewport.value : sizeOf(id, size);
   const at = anchor ? fitAnchored(want, anchor, viewport.value, min) : null;
   const current = at ? { w: at.w, h: at.h } : want;
 
@@ -61,10 +63,13 @@ export function Popup({
   }, []);
 
   return (
-    <div class={`se-backdrop ${clear ? 'is-clear' : ''}`} onMouseDown={onClose}>
+    <div
+      class={`se-backdrop ${clear ? 'is-clear' : ''} ${full ? 'is-full' : ''}`}
+      onMouseDown={onClose}
+    >
       <div
         ref={box}
-        class={`popup ${at ? 'is-anchored' : ''} ${extra}`}
+        class={`popup ${at ? 'is-anchored' : ''} ${full ? 'is-full' : ''} ${extra}`}
         data-keys={keys}
         tabIndex={-1}
         style={{
@@ -90,6 +95,7 @@ export function Popup({
 
         {children}
 
+        {!full && (
         <span
           class="popup-grip"
           title={t('popup.resize')}
@@ -122,6 +128,7 @@ export function Popup({
           }}
           onDblClick={() => resetPopupSize(id)}
         />
+        )}
       </div>
     </div>
   );

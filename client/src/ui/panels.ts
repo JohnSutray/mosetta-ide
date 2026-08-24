@@ -9,6 +9,7 @@ import {
 import { scriptsOpen } from '../state/scripts.js';
 import { searchOpen } from '../state/search.js';
 import { branchesOpen, pushOpen } from '../state/git.js';
+import { mergeOpen } from '../state/merge.js';
 import { projectsVisible } from '../state/projects.js';
 import { keysHelpOpen } from '../state/keys-help.js';
 import { following } from '../state/tree-follow.js';
@@ -137,6 +138,13 @@ export const TOOLBAR: ToolbarEntry[] = [
     icon: 'keys',
     command: 'keys.show',
     active: keysHelpOpen,
+  },
+  {
+    id: 'merge',
+    title: 'toolbar.merge',
+    icon: 'merge',
+    command: 'merge.show',
+    active: mergeOpen,
   },
   {
     id: 'tree.follow',

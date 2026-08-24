@@ -78,6 +78,17 @@ export const COMMANDS = {
 
   'keys.show': 'Все клавиши',
 
+  'merge.show': 'Разрешить конфликты',
+  'merge.nextFile': 'Слияние: следующий файл',
+  'merge.prevFile': 'Слияние: предыдущий файл',
+  'merge.next': 'Слияние: следующий спор',
+  'merge.prev': 'Слияние: предыдущий спор',
+  'merge.takeLeft': 'Слияние: взять левое',
+  'merge.takeRight': 'Слияние: взять правое',
+  'merge.skipLeft': 'Слияние: пропустить левое',
+  'merge.skipRight': 'Слияние: пропустить правое',
+  'merge.confirm': 'Слияние: подтвердить файл',
+
   'key.reserved': 'Занято: пока ничего не делает',
 } as const;
 

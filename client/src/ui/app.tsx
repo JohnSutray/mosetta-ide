@@ -38,6 +38,7 @@ import { Prompt } from './prompt.js';
 import { closeTreeMenu } from '../state/tree-menu.js';
 import { Push } from './push.js';
 import { gitState, refreshGit, resetGit } from '../state/git.js';
+import { loadMerge, resetMerge } from '../state/merge.js';
 import { ScriptsPopup } from './scripts.js';
 import { TerminalView } from './terminal.js';
 import { Toolbar } from './toolbar.js';
@@ -54,6 +55,7 @@ import { hideProjects, showProjects } from '../state/projects.js';
 import { headFor, loadHead, showHunk } from '../state/git-marks.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
+import { MergeScreen } from './merge.js';
 import { ToolPicker } from './tool-picker.js';
 import { Tip } from './tip.js';
 import { Symbols } from './symbols.js';
@@ -110,6 +112,7 @@ export function App() {
     void refreshTools();
     if (!ws) {
       resetGit();
+      resetMerge();
       forgetVisits();
       return;
     }
@@ -117,6 +120,7 @@ export function App() {
     void refreshScripts();
     void refreshGit();
     void loadVisits();
+    void loadMerge();
   }, [ws?.id]);
 
   return (
@@ -201,6 +205,7 @@ export function App() {
       <Branches />
       <Push />
       <ScriptsPopup />
+      <MergeScreen />
       <KeysHelp />
       <ToolPicker />
       <TreeMenu />

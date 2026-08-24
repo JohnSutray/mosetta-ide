@@ -52,6 +52,7 @@ describe('тулбар', () => {
       'git.branches',
       'git.push',
       'keys',
+      'merge',
       'projects',
       'scripts',
       'search',

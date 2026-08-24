@@ -7,8 +7,9 @@ import type {
   LspStatus,
   WorkspaceInfo,
 } from '@ide/protocol';
+import { RpcErrorCode } from '@ide/protocol';
 import { RpcClient, RpcFailure } from '../rpc/client.js';
-import { notify } from './notifications.js';
+import { notify, settle } from './notifications.js';
 import { t } from '../i18n/index.js';
 import { applyConfig } from './config.js';
 import { forget, keep, persisted, recall } from './persist.js';
@@ -270,6 +271,12 @@ export function editDoc(text: string) {
   docSync.edit(text);
 }
 
+let onSaveConflict: ((path: string) => void) | null = null;
+
+export function whenSaveConflicts(handler: (path: string) => void): void {
+  onSaveConflict = handler;
+}
+
 export async function saveDoc() {
   const file = openFile.value;
   if (!file) return;
@@ -282,6 +289,10 @@ export async function saveDoc() {
       dirty.value = false;
     });
   } catch (err) {
+    if (err instanceof RpcFailure && err.code === RpcErrorCode.RevisionConflict) {
+      onSaveConflict?.(file.path);
+      return;
+    }
     complain(describe(err));
   }
 }
@@ -362,7 +373,14 @@ rpc.on('doc.changed', (event) => {
   dirty.value = event.dirty;
 });
 
+const expected = new Set<string>();
+
+export function expectExternal(path: string): void {
+  expected.add(path);
+}
+
 rpc.on('doc.external', (event) => {
+  const asked = expected.delete(event.path);
   if (openFile.value?.path !== event.path) return;
   void rpc
     .call('doc.state', { path: event.path })
@@ -373,16 +391,19 @@ rpc.on('doc.external', (event) => {
         dirty.value = false;
         externalEpoch.value += 1;
       });
-      say(t('file.external', { path: event.path }));
+      if (!asked) say(t('file.external', { path: event.path }));
     })
     .catch((err) => complain(describe(err)));
 });
 
+const conflictNotes = new Map<string, number>();
+
 rpc.on('doc.conflict', (event) => {
   if (openFile.value?.path !== event.path) return;
-  complain(
-    t('file.dirtyConflict', { path: event.path }),
-  );
+  const text = t('file.dirtyConflict', { path: event.path });
+  const known = conflictNotes.get(event.path);
+  const id = known === undefined ? notify(text, 'error') : settle(known, text, 'error');
+  conflictNotes.set(event.path, id);
 });
 
 rpc.on('doc.moved', (event) => {

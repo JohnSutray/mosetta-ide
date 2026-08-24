@@ -26,6 +26,13 @@ import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
 import { toggleScripts } from './state/scripts.js';
 import { toggleKeysHelp } from './state/keys-help.js';
+import {
+  decideHere,
+  resolveMerge,
+  stepMergeConflict,
+  stepMergeFile,
+  toggleMerge,
+} from './state/merge.js';
 import { goBack, goForward } from './state/visits.js';
 import {
   askSymbol,
@@ -106,6 +113,17 @@ export function registerCommands(): void {
   registerCommand('key.reserved', () => {});
 
   registerCommand('keys.show', () => toggleKeysHelp());
+
+  registerCommand('merge.show', () => toggleMerge());
+  registerCommand('merge.nextFile', () => stepMergeFile(1));
+  registerCommand('merge.prevFile', () => stepMergeFile(-1));
+  registerCommand('merge.next', () => stepMergeConflict(1));
+  registerCommand('merge.prev', () => stepMergeConflict(-1));
+  registerCommand('merge.takeLeft', () => decideHere('left', 'take'));
+  registerCommand('merge.takeRight', () => decideHere('right', 'take'));
+  registerCommand('merge.skipLeft', () => decideHere('left', 'skip'));
+  registerCommand('merge.skipRight', () => decideHere('right', 'skip'));
+  registerCommand('merge.confirm', () => void resolveMerge());
 
   registerCommand('panel.tree', () => {
     treePanelVisible.value = !treePanelVisible.value;

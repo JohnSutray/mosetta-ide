@@ -6,6 +6,7 @@ import { appliesHere } from '../keys/dispatcher.js';
 import { activeTerminal, closeTerminal, focusTerminal, terminals } from '../state/terminals.js';
 import { connected, current } from '../state/session.js';
 import { gitState } from '../state/git.js';
+import { mergePending } from '../state/merge.js';
 import { t } from '../i18n/index.js';
 import { currentManager, currentShell, openToolPicker } from '../state/tools.js';
 import { hideTip, showTip } from '../state/tip.js';
@@ -36,6 +37,9 @@ export function Toolbar() {
                 }}
               >
                 <Icon name={entry.icon} filled={active} />
+                {entry.id === 'merge' && mergePending.value > 0 && (
+                  <span class="tool-count">{mergePending.value}</span>
+                )}
               </button>
             );
           })}
