@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS_FALLBACK: Settings = {
     watchDebounceMs: 60,
   },
   index: { enabled: true, maxResults: 50 },
-  lsp: { startOnOpen: true, servers: {} },
+  lsp: { startOnOpen: true, checkProject: true, checkProjectLimit: 2000, servers: {} },
   git: { autoFetchMinutes: 10 },
   tree: { followEditor: true },
   terminal: { shell: '', args: [] },

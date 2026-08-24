@@ -30,6 +30,8 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   lsp: {
     startOnOpen: true,
+    checkProject: true,
+    checkProjectLimit: 2000,
     servers: {},
   },
   git: {

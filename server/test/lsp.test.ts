@@ -42,6 +42,11 @@ describe('языковой сервер', () => {
     expect(status[0]?.state, JSON.stringify(status)).toBe('ready');
   }, 45_000);
 
+  it('ошибку в НЕОТКРЫТОМ файле видно сразу (ADR-0132)', async () => {
+    const found = await waitForDiagnostics(c, 'src/bad.ts', (d) => d.length > 0);
+    expect(found.diagnostics[0]?.severity).toBe('error');
+  }, 45_000);
+
   it('находит ошибку типа', async () => {
     const waiting = waitForDiagnostics(c, 'src/bad.ts', (d) => d.length > 0);
     await c.call('doc.open', { path: 'src/bad.ts' });

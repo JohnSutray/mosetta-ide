@@ -57,6 +57,9 @@ export class Session implements SessionContext {
     this.current = workspace;
     workspace.attach(this);
     this.notify('workspace.attached', workspace.info());
+    for (const known of workspace.services.knownDiagnostics()) {
+      this.notify('lsp.diagnostics', known);
+    }
   }
 
   detach(): void {

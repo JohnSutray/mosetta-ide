@@ -32,6 +32,8 @@ export interface LspServerSettings {
 
 export interface LspSettings {
   startOnOpen: boolean;
+  checkProject: boolean;
+  checkProjectLimit: number;
   servers: Record<string, LspServerSettings>;
 }
 

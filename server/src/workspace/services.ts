@@ -1,4 +1,4 @@
-import type { LspStatus } from '@ide/protocol';
+import type { Diagnostic, LspStatus } from '@ide/protocol';
 import type { ConfigStore } from '../config/store.js';
 import { OsFs } from '../fs/os-fs.js';
 import { OsWatcher } from '../fs/watcher.js';
@@ -141,6 +141,19 @@ export class Services {
     if (this.config.settings.lsp.startOnOpen) this.startLanguageServers();
   }
 
+  private async checkProject(server: LspServer): Promise<void> {
+    const { checkProject, checkProjectLimit } = this.config.settings.lsp;
+    if (!checkProject) return;
+    const skipped = new Set(this.config.settings.fs.noScan);
+    const skip = (key: string): boolean =>
+      key.split('/').some((part) => skipped.has(part));
+    try {
+      await server.checkProject(skip, checkProjectLimit);
+    } catch (err) {
+      this.log.warn(`обход проекта не дошёл до конца: ${String(err)}`);
+    }
+  }
+
   private async primeManifests(): Promise<void> {
     for (const file of this.ram.files()) {
       if (!file.path.endsWith('package.json')) continue;
@@ -167,7 +180,7 @@ export class Services {
       );
       const release = this.ws.hold(`lsp:${name}`);
       this.offs.push(release);
-      void server.start();
+      void server.start().then(() => this.checkProject(server));
     }
   }
 
@@ -207,6 +220,10 @@ export class Services {
 
   statuses(): LspStatus[] {
     return this.lsp.map((server) => server.status());
+  }
+
+  knownDiagnostics(): Array<{ path: string; diagnostics: Diagnostic[] }> {
+    return this.lsp.flatMap((server) => server.knownDiagnostics());
   }
 
   dispose(): void {

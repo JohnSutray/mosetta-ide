@@ -55,6 +55,20 @@ export const editorPanelVisible = persisted('panel.editor', true);
 export const problemsPanelVisible = persisted('panel.problems', false);
 export const terminalPanelVisible = persisted('panel.terminal', false);
 
+export const brokenPaths = computed<Set<string>>(() => {
+  const out = new Set<string>();
+  for (const [path, list] of diagnostics.value) {
+    if (!list.some((item) => item.severity === 'error')) continue;
+    out.add(path);
+    let at = path.lastIndexOf('/');
+    while (at > 0) {
+      out.add(path.slice(0, at));
+      at = path.lastIndexOf('/', at - 1);
+    }
+  }
+  return out;
+});
+
 export const currentDiagnostics = computed<Diagnostic[]>(() => {
   const path = openFile.value?.path;
   return path ? (diagnostics.value.get(path) ?? []) : [];

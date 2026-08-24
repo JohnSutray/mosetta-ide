@@ -30,6 +30,7 @@ export class LspServer {
   private readonly pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: unknown) => void }>();
   private readonly diagnostics = new Map<string, Diagnostic[]>();
   private readonly openDocs = new Set<string>();
+  private readonly waiting = new Map<string, () => void>();
   private readonly listeners = new Set<(event: LspEvent) => void>();
   private readonly extensions: Set<string>;
   private nextId = 1;
@@ -142,8 +143,83 @@ export class LspServer {
     return this.extensions.has(extensionOf(key));
   }
 
+  async checkProject(
+    skip: (key: string) => boolean,
+    limit: number,
+    batch = 20,
+  ): Promise<void> {
+    if (this.state !== 'ready') return;
+
+    const queue: string[] = [];
+    for (const file of this.ram.files()) {
+      if (!this.handles(file.path) || skip(file.path)) continue;
+      if (this.openDocs.has(file.path)) continue;
+      queue.push(file.path);
+    }
+
+    const take = limit > 0 ? queue.slice(0, limit) : queue;
+    if (take.length < queue.length) {
+      this.log.warn(
+        `${this.name}: проверяю ${take.length} файлов из ${queue.length} — остальные молча пропущены`,
+      );
+    }
+    if (take.length === 0) return;
+
+    const started = Date.now();
+    let broken = 0;
+    for (let at = 0; at < take.length; at += batch) {
+      if (this.state !== 'ready') return;
+      const slice = take.slice(at, at + batch);
+      await Promise.all(slice.map((key) => this.ram.peekDoc(key).catch(() => null)));
+      const answers = slice.map((key) => this.expectDiagnostics(key));
+      for (const key of slice) this.didOpen(key);
+      await Promise.all(answers);
+      for (const key of slice) {
+        if ((this.ram.docSync(key)?.openCount ?? 0) > 0) continue;
+        if ((this.diagnostics.get(key)?.length ?? 0) > 0) {
+          broken += 1;
+          continue;
+        }
+        this.didClose(key);
+      }
+    }
+    this.log.info(
+      `${this.name}: проект проверен — ${take.length} файлов за ${Date.now() - started} мс` +
+        (broken > 0 ? `, ${broken} с ошибками остались открытыми` : ''),
+    );
+  }
+
+  private expectDiagnostics(key: string, quietMs = 500, capMs = 15_000): Promise<void> {
+    return new Promise((resolve) => {
+      let quiet: NodeJS.Timeout | null = null;
+      const done = (): void => {
+        if (quiet) clearTimeout(quiet);
+        clearTimeout(cap);
+        if (this.waiting.get(key) === heard) this.waiting.delete(key);
+        resolve();
+      };
+      const cap = setTimeout(done, capMs);
+      cap.unref?.();
+      const heard = (): void => {
+        if (quiet) clearTimeout(quiet);
+        quiet = setTimeout(done, quietMs);
+        quiet.unref?.();
+        this.waiting.set(key, heard);
+      };
+      this.waiting.set(key, heard);
+    });
+  }
+
   diagnosticsFor(key: string): Diagnostic[] {
     return this.diagnostics.get(key) ?? [];
+  }
+
+  knownDiagnostics(): Array<{ path: string; diagnostics: Diagnostic[] }> {
+    const out: Array<{ path: string; diagnostics: Diagnostic[] }> = [];
+    for (const [path, diagnostics] of this.diagnostics) {
+      if (diagnostics.length > 0) out.push({ path, diagnostics });
+    }
+    return out;
   }
 
   async hover(key: string, line: number, character: number): Promise<HoverInfo | null> {
@@ -311,6 +387,11 @@ export class LspServer {
     );
     this.diagnostics.set(key, diagnostics);
     this.emit({ type: 'diagnostics', path: key, diagnostics });
+    const waiter = this.waiting.get(key);
+    if (waiter) {
+      this.waiting.delete(key);
+      waiter();
+    }
   }
 
   private request(method: string, params: unknown): Promise<unknown> {

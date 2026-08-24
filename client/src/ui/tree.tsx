@@ -1,8 +1,8 @@
 import { useEffect } from 'preact/hooks';
 import type { DirEntry } from '@ide/protocol';
 import {
+  brokenPaths,
   current,
-  diagnostics,
   dirChildren,
   expanded,
   openFile,
@@ -98,7 +98,7 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
   const isOpen = expanded.value.has(entry.path);
   const isCurrent = openFile.value?.path === entry.path;
   const kids = isOpen ? dirChildren.value.get(entry.path) : undefined;
-  const broken = (diagnostics.value.get(entry.path) ?? []).some((d) => d.severity === 'error');
+  const broken = brokenPaths.value.has(entry.path);
   const tint = entry.noScan ? undefined : gitTint.value.get(entry.path);
 
   return (
