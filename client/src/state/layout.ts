@@ -1,17 +1,16 @@
 import { signal } from '@preact/signals';
 import { PANELS } from '../ui/panels.js';
+import { keep, recall } from './persist.js';
 
-const STORAGE_KEY = 'web-ide.panel-widths';
+const STORAGE_KEY = 'panel-widths';
 
 function initial(): Record<string, number> {
   const widths: Record<string, number> = {};
   for (const panel of PANELS) widths[panel.id] = panel.defaultWidth;
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Record<string, unknown>;
-    for (const [id, value] of Object.entries(saved)) {
-      if (typeof value === 'number' && Number.isFinite(value)) widths[id] = value;
-    }
-  } catch {}
+  const saved = recall<Record<string, unknown>>(STORAGE_KEY, {});
+  for (const [id, value] of Object.entries(saved)) {
+    if (typeof value === 'number' && Number.isFinite(value)) widths[id] = value;
+  }
   return widths;
 }
 
@@ -32,9 +31,7 @@ export function setWidth(id: string, px: number, limits: { min: number; max: num
   const width = Math.round(Math.min(max, Math.max(min, px)));
   if (panelWidths.value[id] === width) return;
   panelWidths.value = { ...panelWidths.value, [id]: width };
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(panelWidths.value));
-  } catch {}
+  keep(STORAGE_KEY, panelWidths.value);
 }
 
 export function setPanelWidth(id: string, px: number): void {
@@ -43,7 +40,7 @@ export function setPanelWidth(id: string, px: number): void {
   setWidth(id, px, { min, max: window.innerWidth - 320 });
 }
 
-const SIZE_KEY = 'web-ide.popup-sizes';
+const SIZE_KEY = 'popup-sizes';
 
 export interface Size {
   w: number;
@@ -51,17 +48,13 @@ export interface Size {
 }
 
 function initialSizes(): Record<string, Size> {
-  try {
-    const saved = JSON.parse(localStorage.getItem(SIZE_KEY) ?? '{}') as Record<string, unknown>;
-    const out: Record<string, Size> = {};
-    for (const [id, value] of Object.entries(saved)) {
-      const size = value as Size;
-      if (size && Number.isFinite(size.w) && Number.isFinite(size.h)) out[id] = size;
-    }
-    return out;
-  } catch {
-    return {};
+  const saved = recall<Record<string, unknown>>(SIZE_KEY, {});
+  const out: Record<string, Size> = {};
+  for (const [id, value] of Object.entries(saved)) {
+    const size = value as Size;
+    if (size && Number.isFinite(size.w) && Number.isFinite(size.h)) out[id] = size;
   }
+  return out;
 }
 
 export const popupSizes = signal<Record<string, Size>>(initialSizes());
@@ -121,15 +114,11 @@ export function setPopupSize(id: string, size: Size, min: Size): void {
   const known = popupSizes.value[id];
   if (known && known.w === next.w && known.h === next.h) return;
   popupSizes.value = { ...popupSizes.value, [id]: next };
-  try {
-    localStorage.setItem(SIZE_KEY, JSON.stringify(popupSizes.value));
-  } catch {}
+  keep(SIZE_KEY, popupSizes.value);
 }
 
 export function resetPopupSize(id: string): void {
   const { [id]: _dropped, ...rest } = popupSizes.value;
   popupSizes.value = rest;
-  try {
-    localStorage.setItem(SIZE_KEY, JSON.stringify(rest));
-  } catch {}
+  keep(SIZE_KEY, rest);
 }

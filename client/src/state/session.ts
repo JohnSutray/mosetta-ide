@@ -11,6 +11,7 @@ import { RpcClient, RpcFailure } from '../rpc/client.js';
 import { notify } from './notifications.js';
 import { t } from '../i18n/index.js';
 import { applyConfig } from './config.js';
+import { forget, keep, persisted, recall } from './persist.js';
 import { DocSync } from './doc-sync.js';
 
 export const rpc = new RpcClient();
@@ -49,10 +50,10 @@ export function complain(message: string): void {
 
 export const diagnostics = signal<Map<string, Diagnostic[]>>(new Map());
 export const lspStatuses = signal<LspStatus[]>([]);
-export const treePanelVisible = signal(true);
-export const editorPanelVisible = signal(true);
-export const problemsPanelVisible = signal(false);
-export const terminalPanelVisible = signal(false);
+export const treePanelVisible = persisted('panel.tree', true);
+export const editorPanelVisible = persisted('panel.editor', true);
+export const problemsPanelVisible = persisted('panel.problems', false);
+export const terminalPanelVisible = persisted('panel.terminal', false);
 
 export const currentDiagnostics = computed<Diagnostic[]>(() => {
   const path = openFile.value?.path;
@@ -142,6 +143,21 @@ export async function switchProject(id: string) {
 async function afterAttach() {
   await loadDir('');
   lspStatuses.value = await rpc.call('lsp.status', null);
+  await reopenFile();
+}
+
+function fileKey(root: string): string {
+  return `file:${root}`;
+}
+
+async function reopenFile(): Promise<void> {
+  const ws = current.peek();
+  if (!ws || openFile.peek()) return;
+  const path = recall<string | null>(fileKey(ws.root), null);
+  if (!path) return;
+  const alive = await rpc.call('doc.state', { path }).catch(() => null);
+  if (alive) await openFileAt(path);
+  else forget(fileKey(ws.root), 'tab');
 }
 
 export async function loadDir(path: string) {
@@ -189,6 +205,8 @@ export async function openFileAt(path: string) {
       openFile.value = doc;
       dirty.value = doc.dirty;
     });
+    const ws = current.peek();
+    if (ws) keep(fileKey(ws.root), path, 'tab');
     const known = await rpc.call('lsp.diagnostics', { path }).catch(() => null);
     if (known) setDiagnostics(known.path, known.diagnostics);
   } catch (err) {
@@ -204,6 +222,8 @@ export async function closeFile(): Promise<void> {
   } finally {
     docSync.detach();
     void rpc.call('doc.close', { path: file.path });
+    const ws = current.peek();
+    if (ws) forget(fileKey(ws.root), 'tab');
     batch(() => {
       openFile.value = null;
       dirty.value = false;
