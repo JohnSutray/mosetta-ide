@@ -48,20 +48,36 @@ export async function revealInTree(path: string): Promise<void> {
   const parts = path.split('/');
   parts.pop();
 
-  const open = new Set(expanded.value);
   const dirs: string[] = [];
   let at = '';
   for (const part of parts) {
     at = at === '' ? part : `${at}/${part}`;
     dirs.push(at);
-    open.add(at);
   }
-  expanded.value = open;
+
+  if (shown(path, dirs)) return;
+
+  const missing = dirs.filter((dir) => !expanded.value.has(dir));
+  if (missing.length > 0) {
+    const open = new Set(expanded.value);
+    for (const dir of missing) open.add(dir);
+    expanded.value = open;
+  }
 
   for (const dir of dirs) {
     if (!dirChildren.value.has(dir)) await loadDir(dir);
   }
   selectOnly(path);
+}
+
+function shown(path: string, dirs: string[]): boolean {
+  const selection = treeSelection.value;
+  return (
+    treeFocus.value === path &&
+    selection.size === 1 &&
+    selection.has(path) &&
+    dirs.every((dir) => expanded.value.has(dir) && dirChildren.value.has(dir))
+  );
 }
 
 export function selectOnly(path: string): void {
