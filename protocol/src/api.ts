@@ -19,6 +19,7 @@ import type {
   SearchStats,
   LogLine,
   LspStatus,
+  MergeSession,
   NpmScriptInfo,
   PackageManagerInfo,
   RecentProject,
@@ -116,6 +117,10 @@ export interface Api {
     result: { error: string | null };
   };
 
+  'merge.state': { params: null; result: MergeSession | null };
+  'merge.resolve': { params: { path: string; text: string | null }; result: MergeSession | null };
+  'merge.cancel': { params: null; result: null };
+
   'term.list': { params: null; result: TerminalInfo[] };
   'term.create': { params: { cols?: number; rows?: number }; result: TerminalInfo };
   'term.open': {
@@ -148,7 +153,7 @@ export interface Events {
 
   'doc.changed': DocVersion;
   'doc.external': { path: string; revision: string };
-  'doc.conflict': { path: string };
+  'doc.conflict': { path: string; reason: 'changed' | 'removed' };
   'tree.changed': { path: string };
   'doc.removed': { path: string };
   'doc.moved': { from: string; path: string };
@@ -159,6 +164,8 @@ export interface Events {
   'term.list': TerminalInfo[];
   'term.data': { name: string; data: string };
   'term.exit': { name: string; exitCode: number };
+
+  'merge.state': MergeSession | null;
 
   'git.state': GitState;
   'git.output': { action: GitAction; chunk: string };

@@ -22,7 +22,7 @@ export type RamEvent =
   | { type: 'doc.changed'; path: string; version: number; dirty: boolean }
   | { type: 'doc.saved'; path: string; revision: string }
   | { type: 'doc.external'; path: string; revision: string }
-  | { type: 'doc.conflict'; path: string }
+  | { type: 'doc.conflict'; path: string; reason: 'changed' | 'removed' }
   | { type: 'doc.closed'; path: string }
   | { type: 'doc.removed'; path: string }
   | { type: 'doc.moved'; path: string; from: string }
@@ -238,12 +238,59 @@ export class RamFs {
       doc.revision = result.revision;
       doc.dirty = false;
       delete doc.savedText;
+    } catch (err) {
+      if (err instanceof RpcError && err.code === RpcErrorCode.RevisionConflict) {
+        this.emit({ type: 'doc.conflict', path: doc.path, reason: 'changed' });
+      }
+      throw err;
     } finally {
       this.writing.delete(doc.path);
     }
     this.emit({ type: 'doc.saved', path: doc.path, revision: result.revision });
     this.emit({ type: 'doc.changed', path: doc.path, version: doc.version, dirty: false });
     return doc;
+  }
+
+  async resolveDoc(key: string, text: string | null): Promise<void> {
+    if (text === null) {
+      this.writing.add(key);
+      try {
+        await this.os.remove(key);
+      } catch {} finally {
+        this.writing.delete(key);
+      }
+      const doc = this.docs.get(key);
+      if (doc) {
+        this.bytesResident -= doc.text.length;
+        this.docs.delete(key);
+        this.emit({ type: 'doc.removed', path: key });
+      }
+      this.emit({ type: 'tree.changed', path: parentOf(key) });
+      return;
+    }
+
+    this.writing.add(key);
+    let revision: string;
+    try {
+      revision = (await this.os.write(key, text)).revision;
+    } finally {
+      this.writing.delete(key);
+    }
+
+    const doc = this.docs.get(key);
+    if (!doc) {
+      this.emit({ type: 'tree.changed', path: parentOf(key) });
+      return;
+    }
+    this.bytesResident += text.length - doc.text.length;
+    doc.text = text;
+    doc.revision = revision;
+    doc.version += 1;
+    doc.dirty = false;
+    delete doc.savedText;
+    this.emit({ type: 'doc.changed', path: key, version: doc.version, dirty: false });
+    this.emit({ type: 'doc.saved', path: key, revision });
+    this.emit({ type: 'doc.external', path: key, revision });
   }
 
   async reloadDoc(key: string): Promise<Doc> {
@@ -347,7 +394,7 @@ export class RamFs {
     if (doc.revision === revision) return;
 
     if (doc.dirty) {
-      this.emit({ type: 'doc.conflict', path: key });
+      this.emit({ type: 'doc.conflict', path: key, reason: 'changed' });
       return;
     }
     try {
@@ -360,6 +407,10 @@ export class RamFs {
     let touched = false;
 
     const doc = this.docs.get(key);
+    if (doc?.dirty) {
+      this.emit({ type: 'doc.conflict', path: key, reason: 'removed' });
+      return true;
+    }
     if (doc) {
       this.bytesResident -= doc.text.length;
       this.docs.delete(key);
@@ -375,6 +426,10 @@ export class RamFs {
       for (const docKey of [...this.docs.keys()]) {
         if (!docKey.startsWith(prefix)) continue;
         const gone = this.docs.get(docKey)!;
+        if (gone.dirty) {
+          this.emit({ type: 'doc.conflict', path: docKey, reason: 'removed' });
+          continue;
+        }
         this.bytesResident -= gone.text.length;
         this.docs.delete(docKey);
         this.emit({ type: 'doc.removed', path: docKey });
@@ -401,7 +456,7 @@ export class RamFs {
     }
     if (doc.revision === revision) return;
     if (doc.dirty) {
-      this.emit({ type: 'doc.conflict', path: key });
+      this.emit({ type: 'doc.conflict', path: key, reason: 'changed' });
       return;
     }
     void this.reloadDoc(key)

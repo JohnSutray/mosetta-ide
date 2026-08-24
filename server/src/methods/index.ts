@@ -30,6 +30,7 @@ import {
   lspReferences,
   lspStatus,
 } from './lsp.js';
+import { mergeCancel, mergeResolve, mergeState } from './merge.js';
 import { npmList, npmRun } from './npm.js';
 import { indexSearch, indexStats } from './search.js';
 import {
@@ -121,6 +122,10 @@ export const handlers: HandlerTable = {
   'git.refresh': gitRefresh,
   'git.head': gitHead,
   'git.run': gitRun,
+
+  'merge.state': mergeState,
+  'merge.resolve': mergeResolve,
+  'merge.cancel': mergeCancel,
 
   'term.list': termList,
   'term.create': termCreate,

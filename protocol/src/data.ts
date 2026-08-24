@@ -244,3 +244,25 @@ export interface PushPreview {
   remote: GitCommit[];
   local: GitCommit[];
 }
+
+export type MergeSource = 'fs' | 'git' | 'shelve';
+
+export interface MergeSide {
+  label: string;
+  text: string | null;
+}
+
+export interface MergeFile {
+  path: string;
+  base: string | null;
+  left: MergeSide;
+  right: MergeSide;
+  done: boolean;
+}
+
+export interface MergeSession {
+  id: string;
+  source: MergeSource;
+  title: string;
+  files: MergeFile[];
+}
