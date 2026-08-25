@@ -12,7 +12,8 @@ describe('раскладка не лезет на отнятые клавиши'
         hardIn([world.scope]).map((item) => [item.key, `${item.who}: ${item.what}`]),
       );
       for (const binding of inWorld(bindings, world)) {
-        const who = taken.get(binding.key);
+        const bare = binding.key.startsWith('double:') ? binding.key.slice(7) : binding.key;
+        const who = taken.get(binding.key) ?? taken.get(bare);
         if (who) clashes.push(`${world.scope}: ${binding.key} — ${who}`);
       }
     }

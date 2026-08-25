@@ -115,5 +115,5 @@ export async function makeProject(name: string, files: Record<string, string>) {
 }
 
 export async function removeProject(root: string) {
-  await fs.rm(root, { recursive: true, force: true });
+  await fs.rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
 }

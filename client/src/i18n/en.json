@@ -245,6 +245,7 @@
   "terminal.close": "Close terminal",
   "terminal.dead": "finished, code {code}",
   "terminal.busy": "running {what}",
+  "terminal.busyUnknown": "cannot tell if it is busy — {why}",
 
   "scripts.empty": "No package.json scripts",
   "scripts.filter": "Filter scripts",

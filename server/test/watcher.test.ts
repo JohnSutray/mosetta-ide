@@ -51,8 +51,11 @@ describe('слежение за диском', () => {
     await fs.rm(path.join(root, 'readme.md'));
     await waiting;
 
-    const tree = await c.call('tree.list', { path: '' });
-    expect(tree.map((e) => e.name)).not.toContain('readme.md');
+    const names = await until(
+      async () => (await c.call('tree.list', { path: '' })).map((e) => e.name),
+      (list) => !list.includes('readme.md'),
+    );
+    expect(names).not.toContain('readme.md');
   });
 
   it('новая папка обходится целиком', async () => {
@@ -179,6 +182,16 @@ describe('слежение за диском', () => {
 
 function treeChanged(client: TestClient, dir: string): Promise<unknown> {
   return client.nextEvent('tree.changed', 5000, (p) => p?.path === dir);
+}
+
+async function until<T>(read: () => Promise<T>, done: (value: T) => boolean, ms = 8000): Promise<T> {
+  const began = Date.now();
+  for (;;) {
+    const value = await read();
+    if (done(value)) return value;
+    if (Date.now() - began > ms) return value;
+    await settle(50);
+  }
 }
 
 function settle(ms = 150): Promise<void> {

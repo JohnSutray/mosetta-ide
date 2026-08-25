@@ -4,6 +4,7 @@ import { RpcErrorCode } from '@ide/protocol';
 import { RpcError } from '../errors.js';
 import type { Logger } from '../log.js';
 import { loginShell, terminalEnv, type ShellChoice } from '../env/shell.js';
+import { foregroundProcess } from '../env/capabilities.js';
 
 export type TerminalEvent =
   | { type: 'data'; name: string; data: string }
@@ -22,6 +23,8 @@ export interface OpenOptions {
 const SCROLLBACK_BYTES = 256 * 1024;
 
 const BUSY_POLL_MS = 500;
+
+const NO_FOREGROUND = foregroundProcess();
 
 interface Terminal {
   info: TerminalInfo;
@@ -101,6 +104,7 @@ export class TerminalHost {
       alive: true,
       ...(options.command ? { command: options.command } : {}),
       busy: false,
+      ...(NO_FOREGROUND ? { busyUnknown: `${NO_FOREGROUND.who}: ${NO_FOREGROUND.why}` } : {}),
       createdAt: Date.now(),
     };
 
@@ -139,6 +143,7 @@ export class TerminalHost {
   }
 
   private watchBusy(): void {
+    if (NO_FOREGROUND) return;
     if (this.busyTimer || this.disposed) return;
     this.busyTimer = setInterval(() => this.pollBusy(), BUSY_POLL_MS);
     this.busyTimer.unref?.();

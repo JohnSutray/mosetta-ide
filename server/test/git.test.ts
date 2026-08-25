@@ -126,7 +126,7 @@ describe('git', () => {
     await waitForState(c, (s) => s.repo);
 
     const bare = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-bare-'));
-    await run('git', ['init', '--bare', bare]);
+    await run('git', ['init', '--bare', '-b', 'main', bare]);
     await git('remote', 'add', 'origin', bare);
     await git('push', '-u', 'origin', 'main');
 
@@ -162,7 +162,7 @@ describe('git', () => {
   it('файлы пуша: весь исходящий дифф и дифф одного коммита', async () => {
     await waitForState(c, (s) => s.repo);
     const bare = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-bare2-'));
-    await run('git', ['init', '--bare', bare]);
+    await run('git', ['init', '--bare', '-b', 'main', bare]);
     await git('remote', 'add', 'origin', bare);
     await git('push', '-u', 'origin', 'main');
 

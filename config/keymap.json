@@ -3,9 +3,9 @@
   "bindings": [
 
     { "command": "search.everywhere", "key": "double:shift" },
-    { "command": "scripts.open", "key": "double:meta" },
+    { "command": "scripts.open", "key": "double:meta", "where": ["browser:mac", "electron:mac"] },
     { "command": "projects.show", "key": "double:control" },
-    { "command": "git.branches", "key": "double:alt" },
+    { "command": "git.branches", "key": "double:alt", "where": ["browser:mac", "electron:mac"] },
     { "command": "popup.close", "key": "escape" },
     { "command": "prompt.confirm", "key": "enter", "when": "prompt" },
     { "command": "search.next", "key": "arrowdown", "when": "search" },
@@ -45,7 +45,8 @@
     { "command": "file.save", "key": "control+s", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "file.save", "key": "meta+s", "where": ["electron:mac"] },
     { "command": "file.reload", "key": "alt+shift+r", "where": ["browser:mac"] },
-    { "command": "file.reload", "key": "control+shift+r", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "file.reload", "key": "control+alt+r", "where": ["browser:win", "browser:linux"] },
+    { "command": "file.reload", "key": "control+shift+r", "where": ["electron:win", "electron:linux"] },
     { "command": "file.reload", "key": "meta+shift+r", "where": ["electron:mac"] },
 
     { "command": "panel.tree", "key": "alt+1", "where": ["browser:mac"] },

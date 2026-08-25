@@ -178,6 +178,7 @@ export interface TerminalInfo {
   command?: string;
   busy: boolean;
   running?: string;
+  busyUnknown?: string;
   createdAt: number;
 }
 

@@ -148,6 +148,8 @@ function TerminalChip({ info }: { info: TerminalInfo }) {
       class={classes}
       title={`${info.name}${info.command ? ` — ${info.command}` : ''}${
         info.busy ? ` · ${t('terminal.busy', { what: info.running ?? '' })}` : ''
+      }${
+        info.busyUnknown ? ` · ${t('terminal.busyUnknown', { why: info.busyUnknown })}` : ''
       }${info.alive ? '' : ` (${t('terminal.dead', { code: info.exitCode ?? '?' })})`}`}
       onClick={() => focusTerminal(info.name)}
     >

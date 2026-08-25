@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { TerminalInfo } from '@ide/protocol';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
+import { foregroundProcess } from '../src/env/capabilities.js';
 
 describe('терминалы', () => {
   let server: RunningServer;
@@ -109,9 +110,23 @@ describe('терминалы', () => {
     expect(server.registry.list()[0]!.held).toEqual([]);
   }, 20_000);
 
-  it('терминал занят, только пока в нём работает чужой процесс', async () => {
+  it('занятость либо честно считается, либо честно объявлена неизвестной', async () => {
     const info = await c.call('term.create', {});
     expect(info.busy).toBe(false);
+
+    if (foregroundProcess()) {
+      expect(info.busyUnknown, 'причина обязана быть названа').toBeTruthy();
+      expect(info.busyUnknown).toContain('ConPTY');
+
+      await c.call('term.write', { name: info.name, data: 'echo hi\r' });
+      await new Promise((done) => setTimeout(done, 1500));
+      const after = (await c.call('term.list', null))[0]!;
+      expect(after.busy, 'занятым без основания не объявляем').toBe(false);
+      expect(after.running).toBeUndefined();
+      return;
+    }
+
+    expect(info.busyUnknown, 'умеем считать — причине взяться неоткуда').toBeUndefined();
 
     await c.call('term.write', { name: info.name, data: 'sleep 3\r' });
     await waitFor(async () => {

@@ -17,6 +17,7 @@ import type { RamEvent, RamFs } from '../fs/ram-fs.js';
 import { extensionOf } from '../workspace/paths.js';
 import { encodeFrame, FrameDecoder } from './codec.js';
 import { initOptionsFor } from '../env/toolchain.js';
+import { launchPlan } from '../env/exec.js';
 
 export type LspEvent =
   | { type: 'status'; status: LspStatus }
@@ -61,10 +62,12 @@ export class LspServer {
 
   private async boot(): Promise<void> {
     this.setState('starting');
-    const child = spawn(this.settings.command, this.settings.args, {
+    const plan = launchPlan(this.settings.command, this.settings.args);
+    const child = spawn(plan.command, plan.args, {
       cwd: this.root,
       stdio: ['pipe', 'pipe', 'pipe'],
       env: process.env,
+      shell: plan.shell,
     });
     this.child = child;
 
