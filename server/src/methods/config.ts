@@ -1,14 +1,14 @@
 import { RpcError } from '../errors.js';
-import { shellExists } from '../env/shell.js';
+import { resolveShell } from '../env/shell.js';
 import type { Handler } from '../rpc/context.js';
 
 export const configGet: Handler<'config.get'> = (_params, ctx) => ctx.config.current;
 
 const WRITABLE: Record<string, (value: string | boolean) => string | null> = {
   'terminal.shell': (value) =>
-    value === '' || (typeof value === 'string' && shellExists(value))
+    value === '' || (typeof value === 'string' && resolveShell(value) !== null)
       ? null
-      : `нет такого файла: ${String(value)}`,
+      : `не нашёл такую оболочку: ${String(value)}`,
   'tools.packageManager': () => null,
   'tree.followEditor': (value) =>
     typeof value === 'boolean' ? null : 'здесь ждут true или false',

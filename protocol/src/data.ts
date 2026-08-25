@@ -33,6 +33,7 @@ export interface Visit {
 export interface ShellInfo {
   path: string;
   name: string;
+  ref: string;
   current: boolean;
 }
 

@@ -2,18 +2,44 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { ShellInfo, TerminalSettings } from '@ide/protocol';
+import { onPath } from './tools.js';
 
 export interface ShellChoice {
   file: string;
   args: string[];
+  problem?: string;
+}
+
+export function shellRef(file: string): string {
+  const bare = path.basename(file).replace(/\.exe$/i, '');
+  const found = onPath(bare);
+  return found && sameFile(found, file) ? bare : file;
+}
+
+export function resolveShell(value: string): string | null {
+  const wanted = value.trim();
+  if (wanted === '') return null;
+  if (wanted.includes('/') || wanted.includes('\\')) {
+    return shellExists(wanted) ? wanted : null;
+  }
+  return onPath(wanted);
 }
 
 export function loginShell(chosen?: Partial<TerminalSettings>): ShellChoice {
   const picked = chosen?.shell?.trim();
   if (picked) {
-    const args = chosen?.args?.length ? chosen.args : defaultArgs(picked);
-    return { file: picked, args };
+    const file = resolveShell(picked);
+    if (file) {
+      const args = chosen?.args?.length ? chosen.args : defaultArgs(file);
+      return { file, args };
+    }
+    const fallback = systemShell();
+    return { ...fallback, problem: picked };
   }
+  return systemShell();
+}
+
+function systemShell(): ShellChoice {
   if (process.platform === 'win32') {
     return { file: process.env.COMSPEC ?? 'powershell.exe', args: [] };
   }
@@ -43,6 +69,7 @@ export function detectShells(current = loginShell().file): ShellInfo[] {
     seen.set(key, {
       path: full,
       name: path.basename(full),
+      ref: shellRef(full),
       current: sameFile(full, current),
     });
   };

@@ -13,6 +13,7 @@ import { Popup } from './popup.js';
 interface Row {
   path: string;
   name: string;
+  ref: string;
   current: boolean;
   mark?: string;
 }
@@ -39,7 +40,7 @@ export function ToolPicker() {
             key={row.path}
             class={`tools-row ${row.current ? 'is-current' : ''}`}
             title={row.path}
-            onClick={() => void chooseTool(kind, row.path)}
+            onClick={() => void chooseTool(kind, row.ref)}
           >
             <span class="tools-name">{row.name}</span>
             <span class="tools-path">{row.path}</span>
@@ -74,6 +75,7 @@ function rows(kind: ToolKind): Row[] {
     return shells.value.map((item) => ({
       path: item.path,
       name: item.name,
+      ref: item.ref,
       current: item.current,
       mark: item.current ? t('tool.inUse') : undefined,
     }));
@@ -81,6 +83,7 @@ function rows(kind: ToolKind): Row[] {
   return managers.value.map((item) => ({
     path: item.path,
     name: item.name,
+    ref: item.path,
     current: item.current,
     mark: item.suggested ? t('tool.byProject') : item.current ? t('tool.inUse') : undefined,
   }));

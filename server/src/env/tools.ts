@@ -55,17 +55,23 @@ export function detectPackageManagers(
 
 export function onPath(name: string): string | null {
   const dirs = (process.env.PATH ?? '').split(path.delimiter).filter((dir) => dir !== '');
-  const suffixes =
-    process.platform === 'win32'
-      ? (process.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD').split(';').map((ext) => ext.toLowerCase())
-      : [''];
   for (const dir of dirs) {
-    for (const suffix of suffixes) {
+    for (const suffix of suffixesFor(name)) {
       const full = path.join(dir, name + suffix);
       if (exists(full)) return full;
     }
   }
   return null;
+}
+
+function suffixesFor(name: string): string[] {
+  if (process.platform !== 'win32') return [''];
+  const exts = (process.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD')
+    .split(';')
+    .map((ext) => ext.trim().toLowerCase())
+    .filter((ext) => ext !== '');
+  const named = exts.includes(path.extname(name).toLowerCase());
+  return named ? ['', ...exts] : exts;
 }
 
 function exists(file: string): boolean {

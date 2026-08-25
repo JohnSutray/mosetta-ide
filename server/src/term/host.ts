@@ -75,6 +75,11 @@ export class TerminalHost {
     if (existing) this.forget(options.name);
 
     const shell = this.shellOf();
+    if (shell.problem) {
+      this.log.warn(
+        `оболочка «${shell.problem}» на этой машине не нашлась — запускаю ${shell.file}`,
+      );
+    }
     const cols = options.cols ?? 80;
     const rows = options.rows ?? 24;
 
