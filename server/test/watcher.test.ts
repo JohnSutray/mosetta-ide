@@ -95,11 +95,11 @@ describe('слежение за диском', () => {
     expect(doc.dirty).toBe(false);
   });
 
-  it('чужая правка поверх несохранённого — конфликт, а не потеря', async () => {
+  it('чужая правка поверх несохранённого — расхождение, а не потеря', async () => {
     const doc = await c.call('doc.open', { path: 'src/main.ts' });
     await c.call('doc.edit', { path: 'src/main.ts', text: 'наше\n', baseVersion: doc.version });
 
-    const waiting = c.nextEvent('doc.conflict', 5000);
+    const waiting = c.nextEvent('doc.diverged', 5000);
     await fs.writeFile(path.join(root, 'src', 'main.ts'), 'чужое\n', 'utf8');
     await waiting;
 
@@ -121,7 +121,7 @@ describe('слежение за диском', () => {
     await c.call('doc.save', { path: 'src/main.ts' });
     await settle(300);
 
-    expect(c.events('doc.conflict')).toEqual([]);
+    expect(c.events('doc.diverged')).toEqual([]);
     expect(c.events('doc.external')).toEqual([]);
   });
 

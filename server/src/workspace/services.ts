@@ -8,7 +8,7 @@ import { LspServer } from '../lsp/server.js';
 import { TerminalHost } from '../term/host.js';
 import { GitIndex } from '../git/git-index.js';
 import { MergeSessions } from '../merge/sessions.js';
-import { watchFsConflicts } from './conflicts.js';
+import { watchFsConflicts, type FsConflicts } from './conflicts.js';
 import { loginShell } from '../env/shell.js';
 import { packageManager } from '../env/tools.js';
 import type { Logger } from '../log.js';
@@ -22,6 +22,7 @@ export class Services {
   readonly terminals: TerminalHost;
   readonly git: GitIndex;
   readonly merge = new MergeSessions();
+  readonly conflicts: FsConflicts;
   readonly lsp: LspServer[] = [];
 
   private readonly offs: Array<() => void> = [];
@@ -60,8 +61,8 @@ export class Services {
           case 'doc.external':
             ws.broadcast('doc.external', { path: event.path, revision: event.revision });
             break;
-          case 'doc.conflict':
-            ws.broadcast('doc.conflict', { path: event.path, reason: event.reason });
+          case 'doc.diverged':
+            ws.broadcast('doc.diverged', { path: event.path, reason: event.reason });
             break;
           case 'tree.changed':
             ws.broadcast('tree.changed', { path: event.path });
@@ -80,7 +81,8 @@ export class Services {
     );
 
     this.offs.push(this.merge.on((state) => ws.broadcast('merge.state', state)));
-    this.offs.push(watchFsConflicts(this.ram, this.os, this.merge, log));
+    this.conflicts = watchFsConflicts(this.ram, this.os, this.merge, log);
+    this.offs.push(() => this.conflicts.off());
 
     this.git = new GitIndex(
       ws.root,

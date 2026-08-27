@@ -32,6 +32,9 @@ export const docState: Handler<'doc.state'> = async (params, ctx) => {
   return toDocState(await ram.peekDoc(pathOf(params)));
 };
 
+export const docMergeFromDisk: Handler<'doc.mergeFromDisk'> = (params, ctx) =>
+  ctx.session.requireWorkspace().services.conflicts.forReload(pathOf(params));
+
 export const docClose: Handler<'doc.close'> = (params, ctx) => {
   ctx.session.requireWorkspace().services.ram.closeDoc(pathOf(params));
   return null;

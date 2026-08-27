@@ -1,42 +1,54 @@
-import type { MergeFile } from '@ide/protocol';
+import type { MergeFile, MergeSession } from '@ide/protocol';
 import type { OsFs } from '../fs/os-fs.js';
 import type { RamFs } from '../fs/ram-fs.js';
 import type { MergeSessions } from '../merge/sessions.js';
 import type { Logger } from '../log.js';
+
+export interface FsConflicts {
+  off(): void;
+  forReload(path: string): Promise<MergeSession | null>;
+}
 
 export function watchFsConflicts(
   ram: RamFs,
   os: OsFs,
   merge: MergeSessions,
   log: Logger,
-): () => void {
-  return ram.on((event) => {
-    if (event.type !== 'doc.conflict') return;
-    void declare(event.path, event.reason).catch((err) => {
+): FsConflicts {
+  const off = ram.on((event) => {
+    if (event.type !== 'doc.saveBlocked') return;
+    void openFor(event.path, 'save').catch((err) => {
       log.warn(`конфликт ${event.path} не собрался: ${String(err)}`);
     });
   });
 
-  async function declare(path: string, reason: 'changed' | 'removed'): Promise<void> {
+  return {
+    off,
+    forReload: (path) => openFor(path, 'reload'),
+  };
+
+  async function openFor(path: string, why: 'save' | 'reload'): Promise<MergeSession | null> {
     const doc = ram.docSync(path);
-    if (!doc) return;
+    if (!doc) return merge.state();
+
+    const stat = await os.stat(path);
+    const disk = stat && stat.kind === 'file' ? await os.read(path) : null;
 
     const file: MergeFile = {
       path,
       base: doc.savedText ?? null,
       left: { label: 'merge.side.editor', text: doc.text },
-      right:
-        reason === 'removed'
-          ? { label: 'merge.side.disk', text: null }
-          : { label: 'merge.side.disk', text: (await os.read(path)).text },
+      right: { label: 'merge.side.disk', text: disk ? disk.text : null },
       done: false,
     };
 
     merge.open({
       source: 'fs',
-      title: 'merge.title.fs',
+      title: why === 'save' ? 'merge.title.fs.save' : 'merge.title.fs.reload',
       files: [file],
-      apply: (target, text) => ram.resolveDoc(target, text),
+      apply: (target, text) =>
+        why === 'save' ? ram.resolveDoc(target, text) : ram.adoptDoc(target, text),
     });
+    return merge.state();
   }
 }

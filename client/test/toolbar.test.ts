@@ -92,6 +92,16 @@ describe('тулбар', () => {
     expect(empty, `пустые надписи: ${empty.join(', ')}`).toEqual([]);
   });
 
+  it('условная кнопка одна — разрешение конфликтов', () => {
+    const conditional = TOOLBAR.filter((entry) => entry.visible).map((entry) => entry.id);
+    expect(conditional).toEqual(['merge']);
+  });
+
+  it('условные кнопки стоят ПОСЛЕ нумерованных — иначе цифры поедут', () => {
+    const first = TOOLBAR.findIndex((entry) => entry.visible);
+    expect(first === -1 || first >= 10).toBe(true);
+  });
+
   it('единственная кнопка без состояния — заведение терминала', () => {
     const stateless = TOOLBAR.filter((entry) => !entry.active).map((entry) => entry.id);
     expect(stateless).toEqual(['terminal.create']);

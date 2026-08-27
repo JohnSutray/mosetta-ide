@@ -56,6 +56,7 @@ import { headFor, loadHead, showHunk } from '../state/git-marks.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
 import { MergeScreen } from './merge.js';
+import { DivergedBadge } from './diverged.js';
 import { ToolPicker } from './tool-picker.js';
 import { Tip } from './tip.js';
 import { Symbols } from './symbols.js';
@@ -164,6 +165,8 @@ export function App() {
           }
         >
           {file ? (
+            <>
+            <DivergedBadge />
             <Editor
               file={file}
               head={headFor(file.path)}
@@ -178,6 +181,7 @@ export function App() {
               onHover={(path, line, character) => rpc.call('lsp.hover', { path, line, character })}
               onMount={(view) => (activeEditor.value = view)}
             />
+            </>
           ) : (
             <SheepField />
           )}

@@ -9,7 +9,7 @@ import type {
 } from '@ide/protocol';
 import { RpcErrorCode } from '@ide/protocol';
 import { RpcClient, RpcFailure } from '../rpc/client.js';
-import { notify, settle } from './notifications.js';
+import { notify } from './notifications.js';
 import { t } from '../i18n/index.js';
 import { applyConfig } from './config.js';
 import { forget, keep, persisted, recall } from './persist.js';
@@ -118,6 +118,7 @@ function resetProjectScope() {
     lspStatuses.value = [];
     problemsPanelVisible.value = false;
     terminalPanelVisible.value = false;
+    diverged.value = new Map();
   });
 }
 
@@ -283,6 +284,7 @@ export async function saveDoc() {
   try {
     await docSync.flush();
     const saved = await rpc.call('doc.save', { path: file.path });
+    forgetDiverged(file.path);
     docSync.attach(saved);
     batch(() => {
       openFile.value = saved;
@@ -302,6 +304,7 @@ export async function reloadDoc() {
   if (!file) return;
   try {
     const doc = await rpc.call('doc.reload', { path: file.path });
+    forgetDiverged(file.path);
     docSync.attach(doc);
     batch(() => {
       openFile.value = doc;
@@ -381,6 +384,7 @@ export function expectExternal(path: string): void {
 
 rpc.on('doc.external', (event) => {
   const asked = expected.delete(event.path);
+  forgetDiverged(event.path);
   if (openFile.value?.path !== event.path) return;
   void rpc
     .call('doc.state', { path: event.path })
@@ -388,7 +392,7 @@ rpc.on('doc.external', (event) => {
       docSync.attach(doc);
       batch(() => {
         openFile.value = doc;
-        dirty.value = false;
+        dirty.value = doc.dirty;
         externalEpoch.value += 1;
       });
       if (!asked) say(t('file.external', { path: event.path }));
@@ -396,14 +400,23 @@ rpc.on('doc.external', (event) => {
     .catch((err) => complain(describe(err)));
 });
 
-const conflictNotes = new Map<string, number>();
+export const diverged = signal<Map<string, 'changed' | 'removed'>>(new Map());
 
-rpc.on('doc.conflict', (event) => {
-  if (openFile.value?.path !== event.path) return;
-  const text = t('file.dirtyConflict', { path: event.path });
-  const known = conflictNotes.get(event.path);
-  const id = known === undefined ? notify(text, 'error') : settle(known, text, 'error');
-  conflictNotes.set(event.path, id);
+export function divergedFrom(path: string | null): 'changed' | 'removed' | null {
+  return path ? (diverged.value.get(path) ?? null) : null;
+}
+
+export function forgetDiverged(path: string): void {
+  if (!diverged.value.has(path)) return;
+  const next = new Map(diverged.value);
+  next.delete(path);
+  diverged.value = next;
+}
+
+rpc.on('doc.diverged', (event) => {
+  const next = new Map(diverged.value);
+  next.set(event.path, event.reason);
+  diverged.value = next;
 });
 
 rpc.on('doc.moved', (event) => {

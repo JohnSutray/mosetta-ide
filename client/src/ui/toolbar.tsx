@@ -21,7 +21,7 @@ export function Toolbar() {
     <div class="toolbar">
       <div class="toolbar-left">
         <div class="toolbar-icons">
-          {TOOLBAR.map((entry) => {
+          {TOOLBAR.filter((entry) => entry.visible?.value ?? true).map((entry) => {
             const active = entry.active?.value ?? false;
             return (
               <button

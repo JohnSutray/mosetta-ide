@@ -1,6 +1,6 @@
 import { batch, computed, signal } from '@preact/signals';
 import type { MergeFile, MergeSession } from '@ide/protocol';
-import { complain, expectExternal, rpc, say, whenSaveConflicts } from './session.js';
+import { complain, expectExternal, forgetDiverged, rpc, say, whenSaveConflicts } from './session.js';
 import { t } from '../i18n/index.js';
 import {
   allDecided,
@@ -104,6 +104,22 @@ function focusOn(path: string): boolean {
 
 whenSaveConflicts(openMergeFor);
 
+export async function mergeFromDisk(path: string): Promise<void> {
+  try {
+    const session = await rpc.call('doc.mergeFromDisk', { path });
+    batch(() => {
+      mergeSession.value = session;
+      if (session) {
+        mergePath.value = path;
+        cursorRaw.value = null;
+        mergeOpen.value = true;
+      }
+    });
+  } catch (err) {
+    complain(describeMerge(err));
+  }
+}
+
 export function showMerge(): void {
   if (!mergeSession.value) {
     say(t('merge.none'));
@@ -187,6 +203,7 @@ export async function resolveMerge(text?: string | null): Promise<void> {
   expectExternal(file.path);
   try {
     const rest = await rpc.call('merge.resolve', { path: file.path, text: payload });
+    forgetDiverged(file.path);
     batch(() => {
       mergeSession.value = rest;
       decisions.value = drop(decisions.value, file.path);

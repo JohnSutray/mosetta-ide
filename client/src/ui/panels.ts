@@ -1,4 +1,4 @@
-import type { ReadonlySignal } from '@preact/signals';
+import { computed, type ReadonlySignal } from '@preact/signals';
 import type { CommandId } from '@ide/protocol';
 import {
   editorPanelVisible,
@@ -9,7 +9,7 @@ import {
 import { scriptsOpen } from '../state/scripts.js';
 import { searchOpen } from '../state/search.js';
 import { branchesOpen, pushOpen } from '../state/git.js';
-import { mergeOpen } from '../state/merge.js';
+import { mergeOpen, mergePending } from '../state/merge.js';
 import { projectsVisible } from '../state/projects.js';
 import { keysHelpOpen } from '../state/keys-help.js';
 import { following } from '../state/tree-follow.js';
@@ -77,6 +77,7 @@ export interface ToolbarEntry {
   icon: IconName;
   command: CommandId;
   active?: ReadonlySignal<boolean>;
+  visible?: ReadonlySignal<boolean>;
 }
 
 const panelButtons = PANELS.filter((panel) => panel.toolbar === 'button');
@@ -145,6 +146,7 @@ export const TOOLBAR: ToolbarEntry[] = [
     icon: 'merge',
     command: 'merge.show',
     active: mergeOpen,
+    visible: computed(() => mergePending.value > 0),
   },
   {
     id: 'tree.follow',

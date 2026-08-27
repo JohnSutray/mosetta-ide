@@ -1,6 +1,6 @@
 import type { HandlerTable } from '../rpc/context.js';
 import { configGet, configSet } from './config.js';
-import { docClose, docEdit, docOpen, docReload, docSave, docState } from './doc.js';
+import { docClose, docEdit, docMergeFromDisk, docOpen, docReload, docSave, docState } from './doc.js';
 import {
   fsAbsolute,
   fsCopy,
@@ -100,6 +100,7 @@ export const handlers: HandlerTable = {
   'doc.save': docSave,
   'doc.reload': docReload,
   'doc.state': docState,
+  'doc.mergeFromDisk': docMergeFromDisk,
   'doc.close': docClose,
 
   'index.search': indexSearch,

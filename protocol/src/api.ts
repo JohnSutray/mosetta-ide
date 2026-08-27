@@ -83,6 +83,7 @@ export interface Api {
   'doc.reload': { params: { path: string }; result: DocState };
   'doc.state': { params: { path: string }; result: DocState };
   'doc.close': { params: { path: string }; result: null };
+  'doc.mergeFromDisk': { params: { path: string }; result: MergeSession | null };
 
   'index.search': {
     params: { query: string; limit?: number; kinds?: IndexKind[] };
@@ -153,7 +154,7 @@ export interface Events {
 
   'doc.changed': DocVersion;
   'doc.external': { path: string; revision: string };
-  'doc.conflict': { path: string; reason: 'changed' | 'removed' };
+  'doc.diverged': { path: string; reason: 'changed' | 'removed' };
   'tree.changed': { path: string };
   'doc.removed': { path: string };
   'doc.moved': { from: string; path: string };

@@ -107,11 +107,11 @@ describe('RAM FS', () => {
     expect(doc.dirty).toBe(false);
   });
 
-  it('чужая запись поверх несохранённого — конфликт, а не тихая потеря', async () => {
+  it('чужая запись поверх несохранённого — расхождение, а не тихая потеря', async () => {
     const doc = await c.call('doc.open', { path: 'src/main.ts' });
     await c.call('doc.edit', { path: 'src/main.ts', text: 'наше\n', baseVersion: doc.version });
 
-    const waiting = c.nextEvent('doc.conflict');
+    const waiting = c.nextEvent('doc.diverged');
     await c.call('fs.write', { path: 'src/main.ts', text: 'чужое\n', expectedRevision: null });
     await waiting;
 
