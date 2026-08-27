@@ -1,0 +1,13 @@
+{
+  "name": "@ide/plugin-rerun",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "ide": {
+    "client": "src/client.ts",
+    "commands": {
+      "scripts.rerun": "Перезапустить последний скрипт"
+    },
+    "needs": ["@ide/plugin-npm-scripts"]
+  }
+}

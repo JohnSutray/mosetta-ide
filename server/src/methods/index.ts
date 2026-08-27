@@ -31,7 +31,7 @@ import {
   lspStatus,
 } from './lsp.js';
 import { mergeCancel, mergeResolve, mergeState } from './merge.js';
-import { npmList, npmRun } from './npm.js';
+import { pluginsCall, pluginsCode, pluginsList } from './plugins.js';
 import { indexSearch, indexStats } from './search.js';
 import {
   termAttach,
@@ -113,8 +113,9 @@ export const handlers: HandlerTable = {
   'lsp.definition': lspDefinition,
   'lsp.references': lspReferences,
 
-  'npm.list': npmList,
-  'npm.run': npmRun,
+  'plugins.list': pluginsList,
+  'plugins.code': pluginsCode,
+  'plugins.call': pluginsCall,
 
   'git.state': gitState,
   'git.branches': gitBranches,
