@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import { EditorState, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, lineNumbers, highlightSpecialChars } from '@codemirror/view';
 import type { EditorSettings } from '@ide/protocol';
-import { darcula } from './darcula.js';
+import { darcula, textStyle } from './darcula.js';
 import { languageFor } from './languages.js';
 
 export function CodeView({
@@ -30,7 +30,7 @@ export function CodeView({
       EditorState.readOnly.of(true),
       EditorView.theme({
         '&': { fontSize: `${settings.fontSize}px`, height: '100%' },
-        '.cm-content': { fontFamily: `'${settings.fontFamily}', monospace` },
+        '.cm-content': textStyle(settings),
         '.cm-scroller': { overflow: 'auto' },
       }),
     ];

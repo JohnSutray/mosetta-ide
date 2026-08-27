@@ -6,6 +6,7 @@ export interface EditorSettings {
   tabSize: number;
   lineNumbers: boolean;
   caretWidth: number;
+  ligatures: boolean;
 }
 
 export interface FsSettings {

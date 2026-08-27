@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS: Settings = {
     tabSize: 2,
     lineNumbers: true,
     caretWidth: 2,
+    ligatures: false,
   },
   tree: {
     followEditor: true,

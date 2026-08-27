@@ -15,7 +15,7 @@ import { chordHeld } from '../keys/chords.js';
 import { bracketMatching, indentOnInput, foldGutter } from '@codemirror/language';
 import { highlightSelectionMatches } from '@codemirror/search';
 import type { Diagnostic, DocState, EditorSettings, HoverInfo } from '@ide/protocol';
-import { darcula } from './darcula.js';
+import { darcula, textStyle } from './darcula.js';
 import { languageFor } from './languages.js';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
 import { gitGutter, setHeadText, type HunkBox } from './git-marks.js';
@@ -103,7 +103,7 @@ export function Editor({
       ),
       EditorView.theme({
         '&': { fontSize: `${settings.fontSize}px` },
-        '.cm-content': { fontFamily: `'${settings.fontFamily}', monospace` },
+        '.cm-content': textStyle(settings),
         '.cm-cursor, .cm-dropCursor': { borderLeftWidth: `${settings.caretWidth}px` },
       }),
       EditorState.tabSize.of(settings.tabSize),

@@ -34,6 +34,14 @@ export const dc = {
 
 export const FONT = "'JetBrains Mono', 'SF Mono', Menlo, monospace";
 
+export function textStyle(settings: { fontFamily: string; ligatures: boolean }) {
+  const off = { fontVariantLigatures: 'none', fontFeatureSettings: "'calt' 0, 'liga' 0, 'dlig' 0" };
+  return {
+    fontFamily: `'${settings.fontFamily}', monospace`,
+    ...(settings.ligatures ? {} : off),
+  };
+}
+
 export const darculaTheme = EditorView.theme(
   {
     '&': {

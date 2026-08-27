@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import { EditorState, StateEffect, StateField, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType, lineNumbers } from '@codemirror/view';
 import type { EditorSettings } from '@ide/protocol';
-import { darcula } from '../editor/darcula.js';
+import { darcula, textStyle } from '../editor/darcula.js';
 import { languageFor } from '../editor/languages.js';
 import type { Choice, Region } from '../merge/diff3.js';
 import { layout, type Lane, type LaneLayout } from '../merge/layout.js';
@@ -313,7 +313,7 @@ function paneExtensions(path: string, settings: EditorSettings): Extension[] {
     EditorState.readOnly.of(true),
     EditorView.theme({
       '&': { fontSize: `${settings.fontSize}px`, height: '100%' },
-      '.cm-content': { fontFamily: `'${settings.fontFamily}', monospace` },
+      '.cm-content': textStyle(settings),
       '.cm-scroller': { overflow: 'auto' },
     }),
   ];

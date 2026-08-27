@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS_FALLBACK: Settings = {
     tabSize: 2,
     lineNumbers: true,
     caretWidth: 2,
+    ligatures: false,
   },
   fs: {
     hidden: [],
