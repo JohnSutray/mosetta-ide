@@ -1,4 +1,5 @@
 import type { ConfigBundle } from './config.js';
+import type { PluginInfo } from './plugins.js';
 import type {
   DirEntry,
   DirSuggestion,
@@ -20,7 +21,6 @@ import type {
   LogLine,
   LspStatus,
   MergeSession,
-  NpmScriptInfo,
   PackageManagerInfo,
   RecentProject,
   ShellInfo,
@@ -104,9 +104,6 @@ export interface Api {
     result: SymbolSite[];
   };
 
-  'npm.list': { params: null; result: NpmScriptInfo[] };
-  'npm.run': { params: { id: string; cols?: number; rows?: number }; result: TerminalInfo };
-
   'git.state': { params: null; result: GitState };
   'git.branches': { params: null; result: GitBranch[] };
   'git.outgoing': { params: null; result: PushPreview };
@@ -121,6 +118,13 @@ export interface Api {
   'merge.state': { params: null; result: MergeSession | null };
   'merge.resolve': { params: { path: string; text: string | null }; result: MergeSession | null };
   'merge.cancel': { params: null; result: null };
+
+  'plugins.list': { params: null; result: PluginInfo[] };
+  'plugins.code': { params: { name: string }; result: { code: string } };
+  'plugins.call': {
+    params: { name: string; method: string; params: unknown };
+    result: unknown;
+  };
 
   'term.list': { params: null; result: TerminalInfo[] };
   'term.create': { params: { cols?: number; rows?: number }; result: TerminalInfo };

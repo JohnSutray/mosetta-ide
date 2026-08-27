@@ -9,7 +9,7 @@ import { t } from '../i18n/index.js';
 export interface KeyEcho {
   key: string;
   context: KeyContext;
-  command: CommandId | null;
+  command: string | null;
   seq: number;
 }
 
@@ -20,7 +20,7 @@ export const lastKey = signal<KeyEcho | null>(null);
 
 let seq = 0;
 
-export function echoKey(key: string, context: KeyContext, command: CommandId | null): void {
+export function echoKey(key: string, context: KeyContext, command: string | null): void {
   seq += 1;
   lastKey.value = { key, context, command, seq };
 }

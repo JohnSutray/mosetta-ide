@@ -43,7 +43,12 @@ export interface TreeSettings {
   followEditor: boolean;
 }
 
+export interface PluginSettings {
+  enabled: string[];
+}
+
 export interface Settings {
+  plugins: PluginSettings;
   editor: EditorSettings;
   tree: TreeSettings;
   fs: FsSettings;
@@ -89,7 +94,7 @@ export type KeyOs = 'mac' | 'win' | 'linux';
 export type KeyScope = KeyHost | `${KeyHost}:${KeyOs}`;
 
 export interface KeyBinding {
-  command: CommandId;
+  command: string;
   key: string;
   when?: KeyContext;
   where?: KeyScope[];

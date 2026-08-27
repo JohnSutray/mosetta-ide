@@ -1,6 +1,7 @@
 import type { Keymap, Settings } from '@ide/protocol';
 
 export const DEFAULT_SETTINGS: Settings = {
+  plugins: { enabled: ['@ide/plugin-npm-scripts', '@ide/plugin-rerun'] },
   editor: {
     fontFamily: 'JetBrains Mono',
     fontSize: 13,

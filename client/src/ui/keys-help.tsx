@@ -128,7 +128,7 @@ export function KeysHelp() {
   );
 }
 
-function commandName(id: CommandId): string {
+function commandName(id: string): string {
   return t(`command.${id}`);
 }
 

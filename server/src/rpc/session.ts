@@ -11,6 +11,7 @@ import {
 import { RpcError } from '../errors.js';
 import { describeError, logger, onLog } from '../log.js';
 import { handlers } from '../methods/index.js';
+import type { PluginHost } from '../plugins/host.js';
 import type { ConfigStore } from '../config/store.js';
 import type { WorkspaceRegistry } from '../workspace/registry.js';
 import type { Workspace } from '../workspace/workspace.js';
@@ -29,6 +30,7 @@ export class Session implements SessionContext {
     private readonly config: ConfigStore,
     private readonly stateDir: string,
     private readonly startedAt: number,
+    private readonly plugins: PluginHost,
   ) {
     socket.on('message', (data) => void this.onMessage(String(data)));
     socket.on('close', () => this.dispose());
@@ -122,6 +124,7 @@ export class Session implements SessionContext {
       registry: this.registry,
       config: this.config,
       stateDir: this.stateDir,
+      plugins: this.plugins,
       startedAt: this.startedAt,
     };
 

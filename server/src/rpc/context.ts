@@ -1,4 +1,5 @@
 import type { ApiMethod, EventName, EventPayload, Params, Result } from '@ide/protocol';
+import type { PluginHost } from '../plugins/host.js';
 import type { ConfigStore } from '../config/store.js';
 import type { WorkspaceRegistry } from '../workspace/registry.js';
 import type { Workspace } from '../workspace/workspace.js';
@@ -17,6 +18,7 @@ export interface RpcContext {
   registry: WorkspaceRegistry;
   config: ConfigStore;
   stateDir: string;
+  plugins: PluginHost;
   startedAt: number;
 }
 

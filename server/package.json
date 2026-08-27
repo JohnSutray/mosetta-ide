@@ -12,7 +12,10 @@
     "stable": "tsx src/main.ts"
   },
   "dependencies": {
+    "@ide/plugin-npm-scripts": "workspace:*",
+    "@ide/plugin-rerun": "workspace:*",
     "@ide/protocol": "workspace:*",
+    "esbuild": "0.25.12",
     "node-pty": "^1.1.0",
     "typescript": "^5.7.2",
     "ws": "^8.18.0"

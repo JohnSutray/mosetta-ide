@@ -1,4 +1,7 @@
 import http from 'node:http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { PluginHost } from './plugins/host.js';
 import { WebSocketServer } from 'ws';
 import { DEFAULT_PORT, WS_PATH } from '@ide/protocol';
 import { ConfigStore } from './config/store.js';
@@ -34,6 +37,9 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   if (options.watchConfig ?? true) config.watch();
   const registry = new WorkspaceRegistry(config, { idleMs: options.idleMs });
 
+  const plugins = new PluginHost(log, path.join(stateDir, 'plugins-build'));
+  await plugins.load(config.settings.plugins.enabled, fileURLToPath(new URL('..', import.meta.url)));
+
   const http_ = http.createServer((req, res) => {
     if (req.url === '/health') {
       res.writeHead(200, { 'content-type': 'application/json' });
@@ -57,7 +63,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       return;
     }
     wss.handleUpgrade(req, socket, head, (ws) => {
-      const session = new Session(ws, registry, config, stateDir, startedAt);
+      const session = new Session(ws, registry, config, stateDir, startedAt, plugins);
       log.debug(`подключилась вкладка ${session.id}`);
     });
   });

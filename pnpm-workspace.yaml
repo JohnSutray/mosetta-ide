@@ -2,6 +2,7 @@ packages:
   - protocol
   - server
   - client
+  - plugins/*
 
 allowBuilds:
   esbuild: true

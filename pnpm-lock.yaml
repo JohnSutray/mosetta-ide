@@ -73,13 +73,30 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@22.20.1)
 
+  plugins/npm-scripts:
+    dependencies:
+      '@ide/protocol':
+        specifier: workspace:*
+        version: link:../../protocol
+
+  plugins/rerun: {}
+
   protocol: {}
 
   server:
     dependencies:
+      '@ide/plugin-npm-scripts':
+        specifier: workspace:*
+        version: link:../plugins/npm-scripts
+      '@ide/plugin-rerun':
+        specifier: workspace:*
+        version: link:../plugins/rerun
       '@ide/protocol':
         specifier: workspace:*
         version: link:../protocol
+      esbuild:
+        specifier: 0.25.12
+        version: 0.25.12
       node-pty:
         specifier: ^1.1.0
         version: 1.1.0

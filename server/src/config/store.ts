@@ -158,8 +158,7 @@ export function validateKeymap(raw: Keymap | null): Keymap {
       continue;
     }
     if (!isCommandId(binding.command)) {
-      log.error(`keymap.json: нет команды ${binding.command} — клавиша ${binding.key} мертва`);
-      continue;
+      log.debug(`keymap.json: ${binding.command} — не наша команда, ждём плагин`);
     }
     const where = [...(binding.where ?? [])].sort().join(',');
     const slot = `${where}|${binding.when ?? 'global'}:${normalizeKey(binding.key)}`;
