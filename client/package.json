@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "stable": "vite preview --port 5177 --strictPort"
+    "stable": "vite preview --port 4000 --strictPort"
   },
   "dependencies": {
     "@codemirror/commands": "^6.7.1",
