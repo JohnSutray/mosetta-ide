@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import { PickPopup, Plugin, highlight, shiftMatches, showTerminal } from '@ide/api';
+import { PickPopup, Plugin, highlight, remote, shiftMatches, showTerminal, stub } from '@ide/api';
 
 export interface ScriptInfo {
   id: string;
@@ -40,8 +40,16 @@ export default class NpmScripts extends Plugin {
     this.surface(() => this.popup());
   }
 
+  @remote() list(): Promise<ScriptInfo[]> {
+    return stub();
+  }
+
+  @remote('run') private ask(params: { id: string }): Promise<never> {
+    return stub();
+  }
+
   async run(id: string): Promise<void> {
-    await showTerminal(() => this.rpc.call('run', { id }) as Promise<never>);
+    await showTerminal(() => this.ask({ id }));
   }
 
   scripts(): ScriptInfo[] {
@@ -50,7 +58,7 @@ export default class NpmScripts extends Plugin {
 
   async refresh(): Promise<void> {
     try {
-      known.value = (await this.rpc.call('list', null)) as ScriptInfo[];
+      known.value = await this.list();
     } catch {}
   }
 

@@ -4,35 +4,16 @@ import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import type { PluginInfo, PluginManifest } from '@ide/protocol';
 import { buildEntry } from './build.js';
+import { Plugin, command, type CallContext, type CommandHandler } from './api.js';
+export { type CallContext } from './api.js';
 import type { Logger } from '../log.js';
-
-export interface ServerPluginServices {
-  readonly name: string;
-  method(name: string, handler: (params: unknown, ctx: CallContext) => unknown): void;
-  getPlugin<T>(ctor: new () => T): T;
-  log: Logger;
-}
-
-export abstract class ServerPlugin implements ServerPluginServices {
-  declare readonly name: string;
-  declare readonly method: ServerPluginServices['method'];
-  declare readonly getPlugin: ServerPluginServices['getPlugin'];
-  declare readonly log: Logger;
-
-  activate(): void | Promise<void> {}
-  deactivate(): void {}
-}
-
-export interface CallContext {
-  services: unknown;
-}
 
 interface Loaded {
   info: PluginInfo;
   dir: string;
   manifest: PluginManifest;
   clientCode?: string;
-  methods: Map<string, (params: unknown, ctx: CallContext) => unknown>;
+  methods: Map<string, CommandHandler>;
 }
 
 export class PluginHost {
@@ -44,6 +25,15 @@ export class PluginHost {
     private readonly log: Logger,
     private readonly buildDir: string,
   ) {}
+
+  private expose(): void {
+    const global_ = globalThis as Record<string, unknown>;
+    global_.__ideApi = {
+      ...((global_.__ideApi as object) ?? {}),
+      api: { Plugin, command },
+      plugins: this.classes,
+    };
+  }
 
   list(): PluginInfo[] {
     return [...this.loaded.values()].map((item) => item.info);
@@ -68,6 +58,7 @@ export class PluginHost {
   }
 
   async load(names: string[], resolveFrom: string): Promise<void> {
+    this.expose();
     for (const name of await this.ordered(names, resolveFrom)) {
       try {
         await this.one(name, resolveFrom);
@@ -136,7 +127,7 @@ export class PluginHost {
     if (!pkg.ide) throw new Error('в package.json нет раздела "ide"');
 
     const manifest: PluginManifest = { name: pkg.name, version: pkg.version, ...pkg.ide };
-    const methods = new Map<string, (params: unknown, ctx: CallContext) => unknown>();
+    const methods = new Map<string, CommandHandler>();
 
     const peers = manifest.needs ?? [];
     let clientCode: string | undefined;
@@ -152,7 +143,7 @@ export class PluginHost {
       const out = path.join(this.buildDir, `${name.replace(/[^\w.-]/g, '_')}.server.mjs`);
       await fs.writeFile(out, built.code, 'utf8');
       const mod = (await import(`${pathToFileURL(out).href}?v=${Date.now()}`)) as {
-        default?: new () => ServerPlugin;
+        default?: new () => Plugin;
       };
       const Ctor = mod.default;
       if (typeof Ctor !== 'function') throw new Error('нет export default class');
@@ -170,10 +161,10 @@ export class PluginHost {
       });
       this.classes.set(name, Ctor);
       this.instances.set(Ctor, instance);
-      (globalThis as Record<string, unknown>).__ideApi = {
-        ...((globalThis as Record<string, unknown>).__ideApi as object),
-        plugins: this.classes,
-      };
+      this.expose();
+      for (const declared of instance.__declared ?? []) {
+        methods.set(declared.name, declared.method);
+      }
       await instance.activate();
       this.log.debug(`плагин ${name}: сервер собран за ${built.ms} мс`);
     }

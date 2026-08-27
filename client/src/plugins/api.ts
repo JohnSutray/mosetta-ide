@@ -38,3 +38,16 @@ export abstract class Plugin implements PluginServices {
 
   deactivate(): void {}
 }
+
+export function remote(name?: string) {
+  return function (method: any, ctx: ClassMethodDecoratorContext): any {
+    void method;
+    return function (this: PluginServices, params?: unknown) {
+      return this.rpc.call(name ?? String(ctx.name), params);
+    };
+  };
+}
+
+export function stub(): never {
+  throw new Error('метод не подменён: забыт декоратор @remote?');
+}

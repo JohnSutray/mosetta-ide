@@ -1,3 +1,11 @@
+import { Plugin, command, type CallContext } from '@ide/api';
+
+export interface ScriptInfo {
+  id: string;
+  script: string;
+  command: string;
+  path: string;
+}
 
 interface Services {
   index: {
@@ -8,50 +16,31 @@ interface Services {
   openTerminal(options: Record<string, unknown>): unknown;
 }
 
-export interface ScriptInfo {
-  id: string;
-  script: string;
-  command: string;
-  path: string;
-}
-
-interface Call {
-  services: unknown;
-}
-
-export default class NpmScriptsServer {
-  declare readonly method: (
-    name: string,
-    handler: (params: unknown, call: Call) => unknown,
-  ) => void;
-
-  activate(): void {
-    this.method('list', (_params, call) => this.list(call));
-    this.method('run', (params, call) => {
-      const asked = params as { id?: unknown; cols?: number; rows?: number } | null;
-      if (!asked || typeof asked.id !== 'string') throw new Error('нужен id: string');
-      return this.run(asked.id, call, asked.cols, asked.rows);
-    });
+export default class NpmScriptsServer extends Plugin {
+  @command() list(_params: unknown, call: CallContext): ScriptInfo[] {
+    return services(call).index.listScripts();
   }
 
-  list(call: Call): ScriptInfo[] {
-    return (call.services as Services).index.listScripts();
-  }
+  @command() run(params: unknown, call: CallContext): unknown {
+    const asked = params as { id?: unknown; cols?: number; rows?: number } | null;
+    if (!asked || typeof asked.id !== 'string') throw new Error('нужен id: string');
 
-  run(id: string, call: Call, cols?: number, rows?: number): unknown {
-    const services = call.services as Services;
-    const script = services.index.findScript(id);
-    if (!script) throw new Error(`нет скрипта ${id}`);
+    const script = services(call).index.findScript(asked.id);
+    if (!script) throw new Error(`нет скрипта ${asked.id}`);
 
-    return services.openTerminal({
+    return services(call).openTerminal({
       name: script.id,
       kind: 'script',
-      command: `${services.packageManager()} run ${script.script}`,
+      command: `${services(call).packageManager()} run ${script.script}`,
       cwd: parentOf(script.path),
-      ...(cols ? { cols } : {}),
-      ...(rows ? { rows } : {}),
+      ...(asked.cols ? { cols: asked.cols } : {}),
+      ...(asked.rows ? { rows: asked.rows } : {}),
     });
   }
+}
+
+function services(call: CallContext): Services {
+  return call.services as Services;
 }
 
 function parentOf(path: string): string {

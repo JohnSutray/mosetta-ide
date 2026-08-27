@@ -13,7 +13,7 @@ const SHARED: Record<string, { from: string; names: string[] }> = {
   },
   '@ide/api': {
     from: 'api',
-    names: ['PickPopup', 'highlight', 'shiftMatches', 'showTerminal', 'Plugin'],
+    names: ['PickPopup', 'highlight', 'shiftMatches', 'showTerminal', 'Plugin', 'remote', 'stub', 'command'],
   },
 };
 

@@ -6,7 +6,7 @@ import { signal } from '@preact/signals';
 import type { PluginInfo } from '@ide/protocol';
 import { complain, rpc, say } from './session.js';
 import { registerPluginCommand } from '../keys/commands.js';
-import { Plugin, type Found, type PluginToolbarEntry } from '../plugins/api.js';
+import { Plugin, remote, stub, type Found, type PluginToolbarEntry } from '../plugins/api.js';
 export type { PluginToolbarEntry } from '../plugins/api.js';
 
 export const pluginList = signal<PluginInfo[]>([]);
@@ -36,7 +36,7 @@ function expose(surface: Record<string, unknown>): void {
     jsx: jsxRuntime,
     hooks,
     signals,
-    api: { ...surface, Plugin },
+    api: { ...surface, Plugin, remote, stub },
     plugins: pluginClasses,
   };
 }
