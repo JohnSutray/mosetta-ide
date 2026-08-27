@@ -1,7 +1,7 @@
 import { batch, computed, signal } from '@preact/signals';
 import type { IndexHit, IndexKind } from '@ide/protocol';
 import { openFileAt, reveal, rpc } from './session.js';
-import { runScript } from './terminals.js';
+import { pluginOpener } from './plugins.js';
 
 export const searchOpen = signal(false);
 export const searchQuery = signal('');
@@ -103,8 +103,9 @@ export function acceptSelected(): void {
   if (!hit) return;
   closeSearch();
 
-  if (hit.kind === 'npm' && hit.id) {
-    void runScript(hit.id);
+  const opener = pluginOpener(hit.kind);
+  if (opener) {
+    opener(hit);
     return;
   }
 

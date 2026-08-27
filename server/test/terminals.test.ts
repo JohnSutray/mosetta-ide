@@ -60,7 +60,7 @@ describe('терминалы', () => {
   }, 25_000);
 
   it('скрипт запускается в терминале со своим именем', async () => {
-    const info = await c.call('npm.run', { id: '@distrojs/core::dev' });
+    const info = await runScript(c, '@distrojs/core::dev');
     expect(info.name).toBe('@distrojs/core::dev');
     expect(info.kind).toBe('script');
     expect(info.command).toBe('pnpm run dev');
@@ -70,14 +70,14 @@ describe('терминалы', () => {
   }, 20_000);
 
   it('повторный запуск скрипта попадает в тот же терминал', async () => {
-    const first = await c.call('npm.run', { id: 'root::hello' });
-    const second = await c.call('npm.run', { id: 'root::hello' });
+    const first = await runScript(c, 'root::hello');
+    const second = await runScript(c, 'root::hello');
     expect(second.pid).toBe(first.pid);
     expect((await c.call('term.list', null)).length).toBe(1);
   }, 20_000);
 
   it('чип показывает короткое имя, а не длинное', async () => {
-    const info = await c.call('npm.run', { id: '@distrojs/core::dev' });
+    const info = await runScript(c, '@distrojs/core::dev');
     expect(info.title).toBe('core::dev');
     const manual = await c.call('term.create', {});
     expect(manual.title).toBe('manual');
@@ -143,14 +143,14 @@ describe('терминалы', () => {
   }, 25_000);
 
   it('умерший скрипт перезапускается под тем же именем', async () => {
-    const first = await c.call('npm.run', { id: 'root::hello' });
+    const first = await runScript(c, 'root::hello');
     await c.call('term.write', { name: 'root::hello', data: 'exit\r' });
     await waitFor(async () => {
       const list = (await c.call('term.list', null)) as TerminalInfo[];
       return list[0]?.alive === false;
     });
 
-    const second = await c.call('npm.run', { id: 'root::hello' });
+    const second = await runScript(c, 'root::hello');
     expect(second.alive).toBe(true);
     expect(second.pid).not.toBe(first.pid);
     expect((await c.call('term.list', null)).length).toBe(1);
@@ -183,4 +183,12 @@ async function waitFor(check: () => Promise<boolean>, timeoutMs = 15_000): Promi
     if (Date.now() > deadline) throw new Error('не дождались');
     await new Promise((r) => setTimeout(r, 60));
   }
+}
+
+async function runScript(c: TestClient, id: string): Promise<TerminalInfo> {
+  return (await c.call('plugins.call', {
+    name: '@ide/plugin-npm-scripts',
+    method: 'run',
+    params: { id },
+  })) as TerminalInfo;
 }

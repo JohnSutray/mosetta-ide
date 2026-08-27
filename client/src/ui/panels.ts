@@ -6,7 +6,6 @@ import {
   terminalPanelVisible,
   treePanelVisible,
 } from '../state/session.js';
-import { scriptsOpen } from '../state/scripts.js';
 import { searchOpen } from '../state/search.js';
 import { branchesOpen, pushOpen } from '../state/git.js';
 import { mergeOpen, mergePending } from '../state/merge.js';
@@ -105,13 +104,6 @@ export const TOOLBAR: ToolbarEntry[] = [
     command: 'git.push',
     active: pushOpen,
   },
-  {
-    id: 'scripts',
-    title: 'toolbar.scripts',
-    icon: 'npm',
-    command: 'scripts.open',
-    active: scriptsOpen,
-  },
   entryFor('problems'),
   {
     id: 'terminal.create',
@@ -141,19 +133,19 @@ export const TOOLBAR: ToolbarEntry[] = [
     active: keysHelpOpen,
   },
   {
+    id: 'tree.follow',
+    title: 'toolbar.follow',
+    icon: 'follow',
+    command: 'tree.follow',
+    active: following,
+  },
+  {
     id: 'merge',
     title: 'toolbar.merge',
     icon: 'merge',
     command: 'merge.show',
     active: mergeOpen,
     visible: computed(() => mergePending.value > 0),
-  },
-  {
-    id: 'tree.follow',
-    title: 'toolbar.follow',
-    icon: 'follow',
-    command: 'tree.follow',
-    active: following,
   },
 ];
 

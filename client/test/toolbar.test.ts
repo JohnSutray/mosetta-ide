@@ -54,7 +54,6 @@ describe('тулбар', () => {
       'keys',
       'merge',
       'projects',
-      'scripts',
       'search',
       'tree.follow',
     ]);

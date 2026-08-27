@@ -15,6 +15,7 @@ const MAY_TOUCH_DISK = [
   'env/shell.ts',
   'env/tools.ts',
   'env/visits.ts',
+  'plugins/host.ts',
 ];
 
 const FORBIDDEN: Array<{ from: RegExp; importing: RegExp; why: string }> = [
@@ -52,6 +53,11 @@ const FORBIDDEN: Array<{ from: RegExp; importing: RegExp; why: string }> = [
     from: /^merge\//,
     importing: /(node:fs|node:child_process|ram-fs|os-fs|\.\.\/git\/|\.\.\/search\/|\.\.\/lsp\/|\.\.\/rpc\/|\.\.\/methods\/|\.\.\/workspace\/)/,
     why: 'сеанс слияния держит тексты и телефон поставщика — знать, откуда они и куда уедут, он не имеет права (ADR-0134)',
+  },
+  {
+    from: /^plugins\//,
+    importing: /(ram-fs|os-fs|file-index|\.\.\/search\/|\.\.\/lsp\/|\.\.\/git\/)/,
+    why: 'дом плагинов знает про машину и про сборку, а данные проекта приезжают к плагину в момент вызова (ADR-0140)',
   },
   {
     from: /^env\//,

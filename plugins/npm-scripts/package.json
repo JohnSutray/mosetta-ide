@@ -1,0 +1,16 @@
+{
+  "name": "@ide/plugin-npm-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "ide": {
+    "client": "src/client.tsx",
+    "server": "src/server.ts",
+    "commands": {
+      "scripts.open": "Скрипты package.json"
+    }
+  },
+  "peerDependencies": {
+    "@ide/protocol": "workspace:*"
+  }
+}

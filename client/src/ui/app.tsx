@@ -25,7 +25,7 @@ import { activeEditor } from '../state/editor.js';
 import { registerCommands, resolveContext, missingCommands } from '../commands.js';
 import { installDispatcher, humanizeKey } from '../keys/dispatcher.js';
 import { pendingReveal } from '../state/session.js';
-import { refreshScripts, refreshTerminals } from '../state/terminals.js';
+import { refreshTerminals } from '../state/terminals.js';
 import { refreshTools } from '../state/tools.js';
 import { forgetVisits, installMouseNav, loadVisits, visit } from '../state/visits.js';
 import { follow, following } from '../state/tree-follow.js';
@@ -39,7 +39,6 @@ import { closeTreeMenu } from '../state/tree-menu.js';
 import { Push } from './push.js';
 import { gitState, refreshGit, resetGit } from '../state/git.js';
 import { loadMerge, resetMerge } from '../state/merge.js';
-import { ScriptsPopup } from './scripts.js';
 import { TerminalView } from './terminal.js';
 import { Toolbar } from './toolbar.js';
 import { PANELS, type PanelSpec } from './panels.js';
@@ -57,6 +56,10 @@ import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
 import { MergeScreen } from './merge.js';
 import { DivergedBadge } from './diverged.js';
+import { PluginSurfaces } from './plugin-surfaces.js';
+import { PickPopup, highlight, shiftMatches } from './pick-popup.js';
+import { showTerminal } from '../state/terminals.js';
+import { loadPlugins } from '../state/plugins.js';
 import { ToolPicker } from './tool-picker.js';
 import { Tip } from './tip.js';
 import { Symbols } from './symbols.js';
@@ -71,6 +74,7 @@ export function App() {
 
   useEffect(() => {
     registerCommands();
+    void loadPlugins({ PickPopup, highlight, shiftMatches, showTerminal });
     const dead = missingCommands();
     if (dead.length) {
       console.warn('[web-ide] команды без реализации:', dead.join(', '));
@@ -118,7 +122,6 @@ export function App() {
       return;
     }
     void refreshTerminals();
-    void refreshScripts();
     void refreshGit();
     void loadVisits();
     void loadMerge();
@@ -208,7 +211,7 @@ export function App() {
       <SearchEverywhere />
       <Branches />
       <Push />
-      <ScriptsPopup />
+      <PluginSurfaces />
       <MergeScreen />
       <KeysHelp />
       <ToolPicker />

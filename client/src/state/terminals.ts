@@ -1,11 +1,10 @@
 import { batch, signal } from '@preact/signals';
-import type { NpmScriptInfo, TerminalInfo } from '@ide/protocol';
+import type { TerminalInfo } from '@ide/protocol';
 import { complain, rpc, terminalPanelVisible } from './session.js';
 import { t } from '../i18n/index.js';
 
 export const terminals = signal<TerminalInfo[]>([]);
 export const activeTerminal = signal<string | null>(null);
-export const scripts = signal<NpmScriptInfo[]>([]);
 
 type DataSink = (data: string) => void;
 const sinks = new Map<string, Set<DataSink>>();
@@ -23,18 +22,8 @@ export async function refreshTerminals(): Promise<void> {
   } catch {}
 }
 
-export async function refreshScripts(): Promise<void> {
-  try {
-    scripts.value = await rpc.call('npm.list', null);
-  } catch {}
-}
-
 export async function createTerminal(): Promise<void> {
   await showTerminal(() => rpc.call('term.create', {}));
-}
-
-export async function runScript(id: string): Promise<void> {
-  await showTerminal(() => rpc.call('npm.run', { id }));
 }
 
 export function focusTerminal(name: string): void {
@@ -56,7 +45,7 @@ export async function closeTerminal(name: string): Promise<void> {
   }
 }
 
-async function showTerminal(open: () => Promise<TerminalInfo>): Promise<void> {
+export async function showTerminal(open: () => Promise<TerminalInfo>): Promise<void> {
   try {
     const info = await open();
     batch(() => {

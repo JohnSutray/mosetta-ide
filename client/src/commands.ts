@@ -24,7 +24,6 @@ import { activeEditor, focusEditor } from './state/editor.js';
 import { closeTop } from './state/popups.js';
 import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
-import { toggleScripts } from './state/scripts.js';
 import { toggleKeysHelp } from './state/keys-help.js';
 import {
   decideHere,
@@ -134,8 +133,6 @@ export function registerCommands(): void {
   registerCommand('panel.problems', () => {
     problemsPanelVisible.value = !problemsPanelVisible.value;
   });
-
-  registerCommand('scripts.open', () => toggleScripts());
 
   registerCommand('tree.next', () => stepTree(1));
   registerCommand('tree.prev', () => stepTree(-1));

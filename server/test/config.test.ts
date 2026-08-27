@@ -83,7 +83,10 @@ describe('боевой конфиг в app/config', () => {
       await fs.readFile(path.join(SHIPPED, 'keymap.json'), 'utf8'),
       'keymap.json',
     );
-    const dead = raw.bindings.filter((b) => !isCommandId(b.command));
+    const fromPlugins = await pluginCommands();
+    const dead = raw.bindings.filter(
+      (b) => !isCommandId(b.command) && !fromPlugins.has(b.command),
+    );
     expect(dead, `мёртвые клавиши: ${dead.map((d) => d.key).join(', ')}`).toEqual([]);
   });
 
@@ -167,3 +170,17 @@ describe('запись настройки', () => {
     await fs.rm(dir, { recursive: true, force: true });
   });
 });
+
+async function pluginCommands(): Promise<Set<string>> {
+  const dir = fileURLToPath(new URL('../../plugins', import.meta.url));
+  const out = new Set<string>();
+  for (const name of await fs.readdir(dir).catch(() => [] as string[])) {
+    const raw = await fs
+      .readFile(path.join(dir, name, 'package.json'), 'utf8')
+      .catch(() => null);
+    if (!raw) continue;
+    const pkg = JSON.parse(raw) as { ide?: { commands?: Record<string, string> } };
+    for (const id of Object.keys(pkg.ide?.commands ?? {})) out.add(id);
+  }
+  return out;
+}

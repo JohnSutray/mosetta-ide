@@ -10,8 +10,9 @@ import { mergePending } from '../state/merge.js';
 import { t } from '../i18n/index.js';
 import { currentManager, currentShell, openToolPicker } from '../state/tools.js';
 import { hideTip, showTip } from '../state/tip.js';
-import { Icon } from './icons.js';
+import { Icon, type IconName } from './icons.js';
 import { TOOLBAR } from './panels.js';
+import { pluginToolbar } from '../state/plugins.js';
 
 export function Toolbar() {
   const ws = current.value;
@@ -21,7 +22,7 @@ export function Toolbar() {
     <div class="toolbar">
       <div class="toolbar-left">
         <div class="toolbar-icons">
-          {TOOLBAR.filter((entry) => entry.visible?.value ?? true).map((entry) => {
+          {[...TOOLBAR.filter((entry) => entry.visible?.value ?? true), ...pluginToolbar.value].map((entry) => {
             const active = entry.active?.value ?? false;
             return (
               <button
@@ -36,7 +37,7 @@ export function Toolbar() {
                   runCommand(entry.command);
                 }}
               >
-                <Icon name={entry.icon} filled={active} />
+                <Icon name={entry.icon as IconName} filled={active} />
                 {entry.id === 'merge' && mergePending.value > 0 && (
                   <span class="tool-count">{mergePending.value}</span>
                 )}
@@ -117,7 +118,7 @@ function ToolButton({
   );
 }
 
-function keysFor(command: CommandId): string[] {
+function keysFor(command: string): string[] {
   return keymapSignal.value.bindings
     .filter(
       (binding) =>
