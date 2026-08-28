@@ -61,10 +61,10 @@ export interface Found {
   id?: string;
 }
 
-export interface PluginServices {
+export interface Ide {
   readonly name: string;
   readonly rpc: { call(method: string, params?: unknown): Promise<unknown> };
-  getPlugin<T>(ctor: new () => T): T;
+  getPlugin<T>(ctor: PluginClass<T>): T;
   command(id: string, run: () => void): void;
   toolbar(entry: PluginToolbarEntry): void;
   surface(view: () => unknown): void;
@@ -72,33 +72,53 @@ export interface PluginServices {
   say(message: string): void;
 }
 
-export abstract class Plugin implements PluginServices {
-  declare readonly name: string;
-  declare readonly rpc: PluginServices['rpc'];
-  declare readonly getPlugin: PluginServices['getPlugin'];
-  declare readonly command: PluginServices['command'];
-  declare readonly toolbar: PluginServices['toolbar'];
-  declare readonly surface: PluginServices['surface'];
-  declare readonly open: PluginServices['open'];
-  declare readonly say: PluginServices['say'];
+export type PluginClass<T = unknown> = new (ide: Ide) => T;
 
-  activate(): void | Promise<void> {}
-
-  deactivate(): void {}
+export function activate() {
+  return function (method: () => unknown, ctx: ClassMethodDecoratorContext): void {
+    void ctx;
+    ctx.addInitializer(function (this: unknown) {
+      const target = this as object;
+      hooks.set(target, { ...hooks.get(target), start: method.bind(target) });
+    });
+  };
 }
 
 export function remote(name?: string) {
-  return function <This extends PluginServices, Args extends unknown[], R>(
+  return function <This extends object, Args extends unknown[], R>(
     method: (this: This, ...args: Args) => R,
     ctx: ClassMethodDecoratorContext,
   ): (this: This, ...args: Args) => R {
     void method;
     return function (this: This, ...args: Args): R {
-      return this.rpc.call(name ?? String(ctx.name), args[0]) as R;
+      return ideOf(this).rpc.call(name ?? String(ctx.name), args[0]) as R;
     };
   };
 }
 
 export function stub(): never {
   throw new Error('метод не подменён: забыт декоратор @remote?');
+}
+
+interface Hooks {
+  start?: () => unknown;
+}
+
+const hooks = new WeakMap<object, Hooks>();
+const services = new WeakMap<object, Ide>();
+
+export function attach(instance: object, ide: Ide): void {
+  services.set(instance, ide);
+}
+
+export function hooksOf(instance: object): Hooks {
+  return hooks.get(instance) ?? {};
+}
+
+function ideOf(instance: object): Ide {
+  const found = services.get(instance);
+  if (!found) {
+    throw new Error('плагин создан мимо плагинной системы: службы не прикреплены');
+  }
+  return found;
 }

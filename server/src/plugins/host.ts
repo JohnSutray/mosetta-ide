@@ -3,7 +3,16 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { PluginInfo, PluginManifest } from '@ide/protocol';
 import { buildEntry } from './build.js';
-import { Plugin, command, type CallContext, type CommandHandler } from '@ide/api/server';
+import {
+  activate,
+  command,
+  declaredOf,
+  hooksOf,
+  type CallContext,
+  type CommandHandler,
+  type Ide,
+  type PluginClass,
+} from '@ide/api/server';
 export { type CallContext } from '@ide/api/server';
 import type { Logger } from '../log.js';
 
@@ -29,7 +38,7 @@ export class PluginHost {
     const global_ = globalThis as Record<string, unknown>;
     global_.__ideApi = {
       ...((global_.__ideApi as object) ?? {}),
-      api: { Plugin, command },
+      api: { command, activate },
       plugins: this.classes,
     };
   }
@@ -151,29 +160,27 @@ export class PluginHost {
       const out = path.join(this.buildDir, `${name.replace(/[^\w.-]/g, '_')}.server.mjs`);
       await fs.writeFile(out, built.code, 'utf8');
       const mod = (await import(`${pathToFileURL(out).href}?v=${Date.now()}`)) as {
-        default?: new () => Plugin;
+        default?: PluginClass;
       };
       const Ctor = mod.default;
       if (typeof Ctor !== 'function') throw new Error('нет export default class');
-      const instance = new Ctor();
-      Object.assign(instance, {
+
+      const ide: Ide = {
         name,
-        method: (method: string, handler: (p: unknown, c: CallContext) => unknown) =>
-          methods.set(method, handler),
-        getPlugin: <T,>(ctor: new () => T): T => {
+        method: (method: string, handler: CommandHandler) => methods.set(method, handler),
+        getPlugin: <T,>(ctor: PluginClass<T>): T => {
           const found = this.instances.get(ctor);
           if (!found) throw new Error(`плагин не поднят: ${ctor.name}`);
           return found as T;
         },
         log: this.log,
-      });
+      };
+      const instance = new Ctor(ide) as object;
       this.classes.set(name, Ctor);
       this.instances.set(Ctor, instance);
       this.expose();
-      for (const declared of instance.__declared ?? []) {
-        methods.set(declared.name, declared.method);
-      }
-      await instance.activate();
+      for (const [method, handler] of declaredOf(instance)) methods.set(method, handler);
+      await hooksOf(instance).start?.();
       this.log.debug(`плагин ${name}: сервер собран за ${built.ms} мс`);
     }
 

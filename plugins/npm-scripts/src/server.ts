@@ -1,4 +1,4 @@
-import { Plugin, command, type CallContext } from '@ide/api/server';
+import { command, type CallContext } from '@ide/api/server';
 
 export interface ScriptInfo {
   id: string;
@@ -16,12 +16,12 @@ interface Services {
   openTerminal(options: Record<string, unknown>): unknown;
 }
 
-export default class NpmScriptsServer extends Plugin {
-  @command() list(_params: unknown, call: CallContext): ScriptInfo[] {
+export default class NpmScriptsServer {
+  @command() private list(_params: unknown, call: CallContext): ScriptInfo[] {
     return services(call).index.listScripts();
   }
 
-  @command() run(params: unknown, call: CallContext): unknown {
+  @command() private run(params: unknown, call: CallContext): unknown {
     const asked = params as { id?: unknown; cols?: number; rows?: number } | null;
     if (!asked || typeof asked.id !== 'string') throw new Error('нужен id: string');
 

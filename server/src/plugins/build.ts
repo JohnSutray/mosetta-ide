@@ -19,12 +19,12 @@ const SHARED: Record<string, { from: string; names: string[] }> = {
       'shiftMatches',
       'showTerminal',
       't',
-      'Plugin',
       'remote',
       'stub',
+      'activate',
     ],
   },
-  '@ide/api/server': { from: 'api', names: ['Plugin', 'command'] },
+  '@ide/api/server': { from: 'api', names: ['command', 'activate'] },
 };
 
 export function sharedNames(name: string): string[] {

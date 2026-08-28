@@ -1,16 +1,18 @@
-import { Plugin, t } from '@ide/api/client';
+import { activate, t, type Ide } from '@ide/api/client';
 import NpmScripts from '@ide/plugin-npm-scripts';
 
-export default class Rerun extends Plugin {
+export default class Rerun {
   private last: string | null = null;
 
-  override activate(): void {
-    const npm = this.getPlugin(NpmScripts);
+  constructor(private readonly ide: Ide) {}
 
-    this.command('scripts.rerun', () => {
+  @activate() private start(): void {
+    const npm = this.ide.getPlugin(NpmScripts);
+
+    this.ide.command('scripts.rerun', () => {
       const id = this.last ?? npm.scripts()[0]?.id ?? null;
       if (!id) {
-        this.say(t('rerun.nothing'));
+        this.ide.say(t('rerun.nothing'));
         return;
       }
       this.last = id;

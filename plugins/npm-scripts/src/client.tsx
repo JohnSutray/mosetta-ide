@@ -1,13 +1,14 @@
 import { signal } from '@preact/signals';
 import {
   PickPopup,
-  Plugin,
+  activate,
   highlight,
   remote,
   shiftMatches,
   showTerminal,
   stub,
   t,
+  type Ide,
 } from '@ide/api/client';
 
 export interface ScriptInfo {
@@ -20,14 +21,16 @@ export interface ScriptInfo {
 const open = signal(false);
 const known = signal<ScriptInfo[]>([]);
 
-export default class NpmScripts extends Plugin {
-  override activate(): void {
-    this.command('scripts.open', () => {
+export default class NpmScripts {
+  constructor(private readonly ide: Ide) {}
+
+  @activate() private start(): void {
+    this.ide.command('scripts.open', () => {
       open.value = !open.value;
       if (open.value) void this.refresh();
     });
 
-    this.toolbar({
+    this.ide.toolbar({
       id: 'scripts',
       title: 'toolbar.scripts',
       icon: 'npm',
@@ -35,14 +38,14 @@ export default class NpmScripts extends Plugin {
       active: open,
     });
 
-    this.open('npm', (found) => {
+    this.ide.open('npm', (found) => {
       if (found.id) void this.run(found.id);
     });
 
-    this.surface(() => this.popup());
+    this.ide.surface(() => this.popup());
   }
 
-  @remote() list(): Promise<ScriptInfo[]> {
+  @remote() private list(): Promise<ScriptInfo[]> {
     return stub();
   }
 
@@ -62,7 +65,7 @@ export default class NpmScripts extends Plugin {
     try {
       known.value = await this.list();
     } catch (err) {
-      this.say(`scripts: ${err instanceof Error ? err.message : String(err)}`);
+      this.ide.say(`scripts: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
