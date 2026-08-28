@@ -257,6 +257,13 @@ export function SheepField() {
       const { w, h } = size();
       ctx.clearRect(0, 0, w, h);
       drawWords(ctx, w, h);
+
+      if (world.paused) {
+        switchBox = drawSwitch(ctx, w, h, true);
+        drawScore(ctx, w, h, world.merged, world.shorn);
+        return;
+      }
+
       const barn = barnAt(w, h);
       const salon = salonAt(w, h);
       const held = world.held;
