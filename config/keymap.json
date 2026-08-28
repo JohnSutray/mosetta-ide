@@ -123,6 +123,7 @@
     { "command": "tree.follow", "key": "meta+0", "where": ["electron:mac"] },
     { "command": "tree.follow", "key": "control+0", "where": ["electron:win", "electron:linux"] },
     { "command": "tree.follow", "key": "alt+shift+f", "where": ["browser:mac"] },
+    { "command": "tree.follow", "key": "meta+0", "where": ["browser:mac"] },
     { "command": "tree.follow", "key": "control+shift+f", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "tree.follow", "key": "meta+shift+f", "where": ["electron:mac"] },
     { "command": "tools.packageManager", "key": "alt+shift+p", "where": ["browser:mac"] },
