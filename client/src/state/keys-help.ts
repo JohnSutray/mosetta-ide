@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import type { CommandId, KeyContext, KeyHost } from '@ide/protocol';
+import type { KeyContext, KeyHost } from '@ide/protocol';
 import { settle } from './notifications.js';
 import { keymap } from './config.js';
 import { humanizeKey } from '../keys/host.js';

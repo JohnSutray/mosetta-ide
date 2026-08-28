@@ -1,5 +1,5 @@
 import { Fragment } from 'preact';
-import type { CommandId, KeyBinding, KeyContext } from '@ide/protocol';
+import type { KeyBinding, KeyContext } from '@ide/protocol';
 import { keymap as keymapSignal } from '../state/config.js';
 import { closeKeysHelp, keysHelpOpen, lastKey, viewHost } from '../state/keys-help.js';
 import { HOST, OS, humanizeKey } from '../keys/host.js';
