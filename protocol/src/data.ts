@@ -90,7 +90,9 @@ export interface DocVersion {
   dirty: boolean;
 }
 
-export type IndexKind = 'file' | 'npm' | 'ts';
+export type IndexKind = string;
+
+export const CORE_KINDS = ['file', 'ts'] as const;
 
 export interface IndexHit {
   kind: IndexKind;
@@ -112,7 +114,7 @@ export interface IndexStats {
 
 export interface SearchStats {
   files: number;
-  scripts: number;
+  provided: number;
   symbols: number;
   vocabulary: number;
   pending: number;

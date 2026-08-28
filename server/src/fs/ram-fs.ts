@@ -132,6 +132,10 @@ export class RamFs {
     return { files, dirs, bytesResident: this.bytesResident, builtMs: this.builtMs };
   }
 
+  isTextual(path: string): boolean {
+    return this.settings.textExtensions.includes(extensionOf(path));
+  }
+
   preload(): Promise<void> {
     this.preloading ??= this.runPreload().catch((err) => {
       this.log.warn(`предзагрузка прервана: ${String(err)}`);

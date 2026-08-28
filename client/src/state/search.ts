@@ -9,18 +9,16 @@ export const searchHits = signal<IndexHit[]>([]);
 export const searchSelected = signal(0);
 export const searchPreview = signal<{ path: string; text: string; line: number } | null>(null);
 
-export const KIND_TITLE: Record<IndexKind, string> = {
-  ts: 'search.kind.ts',
-  npm: 'search.kind.npm',
-  file: 'search.kind.file',
-};
+export function kindTitle(kind: IndexKind): string {
+  return `search.kind.${kind}`;
+}
 
 export const searchRows = computed(() => {
   const rows: Array<{ header: string } | { hit: IndexHit; at: number }> = [];
   let previous: IndexKind | null = null;
   searchHits.value.forEach((hit, at) => {
     if (hit.kind !== previous) {
-      rows.push({ header: KIND_TITLE[hit.kind] });
+      rows.push({ header: kindTitle(hit.kind) });
       previous = hit.kind;
     }
     rows.push({ hit, at });

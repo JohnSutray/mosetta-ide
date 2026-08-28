@@ -192,11 +192,10 @@
   "projects.open": "open",
   "projects.empty": "empty",
 
-  "search.placeholder": "Files, ts::symbols, npm::scripts",
+  "search.placeholder": "Files, ts::symbols, and what plugins index",
   "search.empty": "Nothing found",
   "search.preview": "Preview",
   "search.kind.ts": "Symbols",
-  "search.kind.npm": "Scripts",
   "search.kind.file": "Files",
 
   "branches.title": "Branches",

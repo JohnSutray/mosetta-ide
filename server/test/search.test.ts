@@ -56,7 +56,7 @@ describe('поиск всего', () => {
   it('видит все три сорта', async () => {
     const stats = await c.call('index.stats', null);
     expect(stats.files).toBeGreaterThan(0);
-    expect(stats.scripts).toBe(3);
+    expect(stats.provided).toBe(3);
     expect(stats.symbols).toBeGreaterThan(8);
     expect(stats.vocabulary).toBeGreaterThan(5);
   });

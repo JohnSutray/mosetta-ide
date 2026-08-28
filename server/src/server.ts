@@ -2,6 +2,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PluginHost } from './plugins/host.js';
+import { FindProviders, type FindProvider } from './search/providers.js';
 import { WebSocketServer } from 'ws';
 import { DEFAULT_PORT, WS_PATH } from '@ide/protocol';
 import { ConfigStore } from './config/store.js';
@@ -19,6 +20,7 @@ export interface ServerOptions {
   configDir?: string;
   stateDir?: string;
   watchConfig?: boolean;
+  finds?: FindProvider[];
 }
 
 export interface RunningServer {
@@ -35,10 +37,13 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   const stateDir = options.stateDir ?? DEFAULT_STATE_DIR;
   const config = await ConfigStore.load(options.configDir);
   if (options.watchConfig ?? true) config.watch();
-  const registry = new WorkspaceRegistry(config, { idleMs: options.idleMs });
-
   const plugins = new PluginHost(log, path.join(stateDir, 'plugins-build'));
   await plugins.load(config.settings.plugins.enabled, fileURLToPath(new URL('..', import.meta.url)));
+
+  const finds = new FindProviders();
+  for (const provider of [...plugins.finds(), ...(options.finds ?? [])]) finds.add(provider);
+
+  const registry = new WorkspaceRegistry(config, finds, { idleMs: options.idleMs });
 
   const http_ = http.createServer((req, res) => {
     if (req.url === '/health') {

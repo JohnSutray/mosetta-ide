@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 import { WS_PATH, type ApiMethod, type Params, type Result } from '@ide/protocol';
 import { startServer, type RunningServer } from '../src/server.js';
+import type { FindProvider } from '../src/search/providers.js';
 
 export interface TestClient {
   call<M extends ApiMethod>(method: M, params: Params<M>): Promise<Result<M>>;
@@ -23,9 +24,10 @@ export const TEST_CONFIG_DIR = fileURLToPath(new URL('./fixtures/config', import
 export async function withServer(
   idleMs = 60_000,
   configDir = TEST_CONFIG_DIR,
+  finds: FindProvider[] = [],
 ): Promise<RunningServer> {
   const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-state-'));
-  return startServer({ port: 0, idleMs, configDir, stateDir, watchConfig: false });
+  return startServer({ port: 0, idleMs, configDir, stateDir, watchConfig: false, finds });
 }
 
 export async function connect(server: RunningServer): Promise<TestClient> {

@@ -1,11 +1,17 @@
-import type { IndexHit, IndexKind, IndexSettings, SearchStats } from '@ide/protocol';
+import {
+  CORE_KINDS,
+  type IndexHit,
+  type IndexKind,
+  type IndexSettings,
+  type SearchStats,
+} from '@ide/protocol';
 import type { Logger } from '../log.js';
-import { baseName, extensionOf } from '../workspace/paths.js';
+import { extensionOf } from '../workspace/paths.js';
 import type { RamFs } from '../fs/ram-fs.js';
 import { match } from './matcher.js';
 import { retype } from './layout.js';
 import { fold, indexString, Vocabulary, type Indexed } from './text.js';
-import { parseScripts, type NpmScript } from './npm-scripts.js';
+import type { FindProviders } from './providers.js';
 import { canParse, loadTypeScript, parseSymbols, type SymbolKind } from './ts-symbols.js';
 
 interface Entry {
@@ -18,7 +24,7 @@ interface Entry {
   indexed: Indexed;
 }
 
-const KIND_PREFIX = /^(ts|npm|file)::(.*)$/s;
+const KIND_PREFIX = /^([\w-]+)::(.*)$/s;
 
 const SYMBOL_DETAIL: Record<SymbolKind, string> = {
   function: 'функция',
@@ -34,8 +40,7 @@ const SYMBOL_DETAIL: Record<SymbolKind, string> = {
 
 export class SearchIndex {
   private files: Entry[] = [];
-  private scripts: Entry[] = [];
-  private rawScripts: NpmScript[] = [];
+  private provided: Entry[] = [];
   private readonly symbols = new Map<string, Entry[]>();
   private vocabulary = new Vocabulary();
 
@@ -49,6 +54,7 @@ export class SearchIndex {
     private readonly ram: RamFs,
     private settings: IndexSettings,
     private readonly log: Logger,
+    private readonly providers: FindProviders,
   ) {
     this.off = ram.on((event) => {
       switch (event.type) {
@@ -85,7 +91,7 @@ export class SearchIndex {
     this.disposed = true;
     this.off();
     this.files = [];
-    this.scripts = [];
+    this.provided = [];
     this.symbols.clear();
     this.pending.clear();
   }
@@ -115,55 +121,74 @@ export class SearchIndex {
       });
     }
     this.files = files;
-    this.rebuildScripts();
+    this.rebuildProvided();
     this.staleTree = false;
 
     this.log.debug(
-      `индекс: ${this.files.length} файлов, ${this.scripts.length} скриптов, ` +
+      `индекс: ${this.files.length} файлов, ${this.provided.length} находок поставщиков, ` +
         `${this.symbolCount} символов, словарь ${this.vocabulary.size} слов ` +
         `(${Date.now() - started} мс)`,
     );
   }
 
-  private rebuildScripts(): void {
-    const scripts: Entry[] = [];
-    const raw: NpmScript[] = [];
-    for (const file of this.ram.files()) {
-      if (baseName(file.path) !== 'package.json') continue;
-      const doc = this.ram.docSync(file.path);
-      if (!doc) continue;
-      for (const script of parseScripts(file.path, doc.text)) {
-        raw.push(script);
-        const label = `npm::${script.id}`;
-        scripts.push({
-          kind: 'npm',
-          label,
-          path: script.path,
-          detail: script.command,
-          id: script.id,
-          indexed: indexString(label, this.vocabulary),
-        });
+  private rebuildProvided(): void {
+    const provided: Entry[] = [];
+    const unseen: string[] = [];
+    for (const provider of this.providers.all()) {
+      for (const file of this.ram.files()) {
+        if (!provider.wants(file.path)) continue;
+        const doc = this.ram.docSync(file.path);
+        if (!doc) {
+          if (!this.ram.isTextual(file.path)) unseen.push(file.path);
+          continue;
+        }
+        let found;
+        try {
+          found = provider.finds(file.path, doc.text);
+        } catch (err) {
+          this.log.warn(`поставщик ${provider.kind} на ${file.path}: ${String(err)}`);
+          continue;
+        }
+        for (const one of found) {
+          const label = `${provider.kind}::${one.label}`;
+          provided.push({
+            kind: provider.kind,
+            label,
+            path: one.path ?? file.path,
+            ...(one.line !== undefined ? { line: one.line } : {}),
+            ...(one.detail ? { detail: one.detail } : {}),
+            ...(one.id ? { id: one.id } : {}),
+            indexed: indexString(label, this.vocabulary),
+          });
+        }
       }
     }
-    this.scripts = scripts;
-    this.rawScripts = raw;
+    if (unseen.length > 0) {
+      this.log.warn(
+        `поставщики находок ждут ${unseen.length} файлов, которые память не считает ` +
+          `текстовыми (${unseen.slice(0, 3).join(', ')}): добавь расширение в fs.textExtensions`,
+      );
+    }
+    this.provided = provided;
   }
 
-  listScripts(): NpmScript[] {
+  byKind(kind: string): IndexHit[] {
     if (this.staleTree) this.rebuild();
-    return [...this.rawScripts].sort(
-      (a, b) => a.packageName.localeCompare(b.packageName) || a.script.localeCompare(b.script),
-    );
+    return this.provided
+      .filter((entry) => entry.kind === kind)
+      .map((entry) => toHit(entry, 0, []))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }
 
-  findScript(id: string): NpmScript | undefined {
+  oneOf(kind: string, id: string): IndexHit | undefined {
     if (this.staleTree) this.rebuild();
-    return this.rawScripts.find((script) => script.id === id);
+    const found = this.provided.find((entry) => entry.kind === kind && entry.id === id);
+    return found ? toHit(found, 0, []) : undefined;
   }
 
   private enqueue(path: string): void {
     if (!this.settings.enabled) return;
-    if (baseName(path) === 'package.json') this.staleTree = true;
+    if (this.providers.wants(path)) this.staleTree = true;
     if (!canParse(extensionOf(path))) return;
     this.pending.add(path);
     this.schedule();
@@ -234,9 +259,9 @@ export class SearchIndex {
     const prefixed = KIND_PREFIX.exec(raw);
     const kindFilter = new Set(kinds ?? []);
     let term = raw;
-    if (prefixed) {
+    if (prefixed && this.knows(prefixed[1]!)) {
       kindFilter.clear();
-      kindFilter.add(prefixed[1] as IndexKind);
+      kindFilter.add(prefixed[1]!);
       term = prefixed[2]!;
     }
 
@@ -268,8 +293,13 @@ export class SearchIndex {
     return hits.slice(0, limit);
   }
 
+  private knows(kind: string): boolean {
+    const core: readonly string[] = CORE_KINDS;
+    return core.includes(kind) || this.providers.kinds().includes(kind);
+  }
+
   private *everything(): Generator<Entry> {
-    yield* this.scripts;
+    yield* this.provided;
     for (const entries of this.symbols.values()) yield* entries;
     yield* this.files;
   }
@@ -284,7 +314,7 @@ export class SearchIndex {
     if (this.staleTree) this.rebuild();
     return {
       files: this.files.length,
-      scripts: this.scripts.length,
+      provided: this.provided.length,
       symbols: this.symbolCount,
       vocabulary: this.vocabulary.size,
       pending: this.pending.size,

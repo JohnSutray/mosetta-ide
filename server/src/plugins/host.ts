@@ -10,6 +10,7 @@ import {
   hooksOf,
   type CallContext,
   type CommandHandler,
+  type FindProvider,
   type Ide,
   type PluginClass,
 } from '@ide/api/server';
@@ -29,10 +30,16 @@ export class PluginHost {
   private readonly instances = new Map<unknown, unknown>();
   private readonly classes = new Map<string, unknown>();
 
+  private readonly providers: FindProvider[] = [];
+
   constructor(
     private readonly log: Logger,
     private readonly buildDir: string,
   ) {}
+
+  finds(): readonly FindProvider[] {
+    return this.providers;
+  }
 
   private expose(): void {
     const global_ = globalThis as Record<string, unknown>;
@@ -173,6 +180,7 @@ export class PluginHost {
           if (!found) throw new Error(`плагин не поднят: ${ctor.name}`);
           return found as T;
         },
+        find: (provider) => this.providers.push(provider),
         log: this.log,
       };
       const instance = new Ctor(ide) as object;

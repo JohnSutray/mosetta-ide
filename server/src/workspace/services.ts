@@ -4,6 +4,7 @@ import { OsFs } from '../fs/os-fs.js';
 import { OsWatcher } from '../fs/watcher.js';
 import { RamFs } from '../fs/ram-fs.js';
 import { SearchIndex } from '../search/search-index.js';
+import type { FindProviders } from '../search/providers.js';
 import { LspServer } from '../lsp/server.js';
 import { TerminalHost } from '../term/host.js';
 import { GitIndex } from '../git/git-index.js';
@@ -32,11 +33,12 @@ export class Services {
     private readonly ws: Workspace,
     private readonly config: ConfigStore,
     private readonly log: Logger,
+    finds: FindProviders,
   ) {
     const settings = config.settings;
     this.os = new OsFs(ws.root, settings.fs);
     this.ram = new RamFs(this.os, settings.fs, log);
-    this.index = new SearchIndex(this.ram, settings.index, log);
+    this.index = new SearchIndex(this.ram, settings.index, log, finds);
     this.watcher = new OsWatcher(
       ws.root,
       settings.fs,
