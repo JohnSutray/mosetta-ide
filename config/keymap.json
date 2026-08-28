@@ -43,6 +43,8 @@
     { "command": "projects.suggest", "key": "control+shift+space", "when": "projects", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "projects.suggest", "key": "meta+shift+space", "when": "projects", "where": ["electron:mac"] },
 
+    { "command": "key.reserved", "key": "meta+f", "where": ["browser:mac", "electron:mac"] },
+    { "command": "key.reserved", "key": "control+f", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "key.reserved", "key": "tab" },
     { "command": "key.reserved", "key": "shift+tab" },
 
