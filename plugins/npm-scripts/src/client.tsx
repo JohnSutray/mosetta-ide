@@ -18,16 +18,16 @@ export interface ScriptInfo {
   path: string;
 }
 
-const open = signal(false);
-const known = signal<ScriptInfo[]>([]);
-
 export default class NpmScripts {
+  private readonly open = signal(false);
+  private readonly known = signal<ScriptInfo[]>([]);
+
   constructor(private readonly ide: Ide) {}
 
   @activate() private start(): void {
     this.ide.command('scripts.open', () => {
-      open.value = !open.value;
-      if (open.value) void this.refresh();
+      this.open.value = !this.open.value;
+      if (this.open.value) void this.refresh();
     });
 
     this.ide.toolbar({
@@ -35,7 +35,7 @@ export default class NpmScripts {
       title: 'toolbar.scripts',
       icon: 'npm',
       command: 'scripts.open',
-      active: open,
+      active: this.open,
     });
 
     this.ide.open('npm', (found) => {
@@ -58,21 +58,21 @@ export default class NpmScripts {
   }
 
   scripts(): ScriptInfo[] {
-    return known.value;
+    return this.known.value;
   }
 
   async refresh(): Promise<void> {
     try {
-      known.value = await this.list();
+      this.known.value = await this.list();
     } catch (err) {
       this.ide.say(`scripts: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
   private popup() {
-    if (!open.value) return null;
+    if (!this.open.value) return null;
 
-    const items = known.value.map((script) => ({
+    const items = this.known.value.map((script) => ({
       key: script.id,
       text: script.id,
       value: script,
@@ -87,10 +87,10 @@ export default class NpmScripts {
         empty={t('scripts.empty')}
         size={{ w: 620, h: 420 }}
         min={{ w: 420, h: 240 }}
-        onClose={() => (open.value = false)}
+        onClose={() => (this.open.value = false)}
         section={(script: ScriptInfo) => packageOf(script.id)}
         onPick={(script: ScriptInfo) => {
-          open.value = false;
+          this.open.value = false;
           void this.run(script.id);
         }}
         row={(script: ScriptInfo, matches: number[]) => {
