@@ -56,7 +56,6 @@ import {
 import { dirChildren, openFileAt, toggleDir } from './state/session.js';
 import {
   editorPanelVisible,
-  problemsPanelVisible,
   reloadDoc,
   saveDoc,
   terminalPanelVisible,
@@ -129,9 +128,6 @@ export function registerCommands(): void {
   });
   registerCommand('panel.editor', () => {
     editorPanelVisible.value = !editorPanelVisible.value;
-  });
-  registerCommand('panel.problems', () => {
-    problemsPanelVisible.value = !problemsPanelVisible.value;
   });
 
   registerCommand('tree.next', () => stepTree(1));

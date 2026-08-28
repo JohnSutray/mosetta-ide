@@ -1,29 +1,25 @@
 import { Fragment } from 'preact';
+import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { DEFAULT_SETTINGS_FALLBACK } from '../state/fallback.js';
 import { keymap as keymapSignal, settings as settingsSignal } from '../state/config.js';
 import {
-  connected,
   current,
   currentDiagnostics,
   dirty,
-  errorCount,
   closeFile,
   editorPanelVisible,
   externalEpoch,
-  lspStatuses,
   openFile,
-  problemsPanelVisible,
+  openFilePath,
   rpc,
-  say,
-  terminalPanelVisible,
   title,
-  treePanelVisible,
   editDoc,
 } from '../state/session.js';
 import { activeEditor } from '../state/editor.js';
+import { allProblems } from '../state/session.js';
 import { registerCommands, resolveContext, missingCommands } from '../commands.js';
-import { installDispatcher, humanizeKey } from '../keys/dispatcher.js';
+import { installDispatcher } from '../keys/dispatcher.js';
 import { pendingReveal } from '../state/session.js';
 import { refreshTerminals } from '../state/terminals.js';
 import { refreshTools } from '../state/tools.js';
@@ -46,7 +42,6 @@ import { Resizer } from './resizer.js';
 import { widthOf } from '../state/layout.js';
 import { runCommand } from '../keys/commands.js';
 import { Panel } from './panel.js';
-import { Problems } from './problems.js';
 import { Projects } from './projects.js';
 import { Tree } from './tree.js';
 import { t } from '../i18n/index.js';
@@ -59,7 +54,8 @@ import { DivergedBadge } from './diverged.js';
 import { PluginSurfaces } from './plugin-surfaces.js';
 import { PickPopup, highlight, shiftMatches } from './pick-popup.js';
 import { showTerminal } from '../state/terminals.js';
-import { loadPlugins } from '../state/plugins.js';
+import { loadPlugins, pluginPanels, type PluginPanel } from '../state/plugins.js';
+import { goTo } from './go-to.js';
 import type { ClientSurface } from '@ide/api/client';
 import { ToolPicker } from './tool-picker.js';
 import { Tip } from './tip.js';
@@ -75,7 +71,16 @@ export function App() {
 
   useEffect(() => {
     registerCommands();
-    const surface: ClientSurface = { PickPopup, highlight, shiftMatches, showTerminal, t };
+    const surface: ClientSurface = {
+      PickPopup,
+      highlight,
+      shiftMatches,
+      showTerminal,
+      t,
+      problems: allProblems,
+      openPath: openFilePath,
+      goTo,
+    };
     void loadPlugins(surface);
     const dead = missingCommands();
     if (dead.length) {
@@ -226,16 +231,16 @@ export function App() {
   );
 }
 
-function open(side: 'left' | 'right'): PanelSpec[] {
-  return PANELS.filter((panel) => panel.side === side && panel.open.value);
+function open(side: 'left' | 'right'): Array<PanelSpec | PluginPanel> {
+  const all: Array<PanelSpec | PluginPanel> = [...PANELS, ...pluginPanels.value];
+  return all.filter((panel) => panel.side === side && panel.open.value);
 }
 
-function content(panel: PanelSpec) {
+function content(panel: PanelSpec | PluginPanel) {
+  if ('view' in panel) return panel.view() as JSX.Element;
   switch (panel.id) {
     case 'tree':
       return <Tree />;
-    case 'problems':
-      return <Problems />;
     case 'terminal':
       return <TerminalView />;
     default:

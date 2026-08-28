@@ -1,5 +1,5 @@
 import type { ComponentChildren, JSX } from 'preact';
-import type { TerminalInfo } from '@ide/protocol';
+import type { Diagnostic, TerminalInfo } from '@ide/protocol';
 
 export interface Size {
   w: number;
@@ -40,12 +40,26 @@ export declare function showTerminal(open: () => Promise<TerminalInfo>): Promise
 
 export declare function t(key: string, params?: Record<string, string | number>): string;
 
+export interface FileProblems {
+  path: string;
+  diagnostics: Diagnostic[];
+}
+
+export declare const problems: { readonly value: FileProblems[] };
+
+export declare const openPath: { readonly value: string | null };
+
+export declare function goTo(path: string, line: number, character?: number): Promise<void>;
+
 export interface ClientSurface {
   PickPopup: typeof PickPopup;
   highlight: typeof highlight;
   shiftMatches: typeof shiftMatches;
   showTerminal: typeof showTerminal;
   t: typeof t;
+  problems: typeof problems;
+  openPath: typeof openPath;
+  goTo: typeof goTo;
 }
 
 export interface PluginToolbarEntry {
@@ -67,12 +81,35 @@ export interface Ide {
   getPlugin<T>(ctor: PluginClass<T>): T;
   command(id: string, run: () => void): void;
   toolbar(entry: PluginToolbarEntry): void;
+  panel(spec: PluginPanelSpec): PanelHandle;
+  css(text: string): void;
   surface(view: () => unknown): void;
   open(kind: string, handler: (found: Found) => void): void;
   say(message: string): void;
 }
 
 export type PluginClass<T = unknown> = new (ide: Ide) => T;
+
+export type PanelSide = 'left' | 'right';
+
+export interface PluginPanelSpec {
+  id: string;
+  title: string;
+  tooltip: string;
+  side: PanelSide;
+  icon: string | ((filled: boolean) => unknown);
+  command: string;
+  defaultWidth: number;
+  minWidth: number;
+  view: () => unknown;
+}
+
+export interface PanelHandle {
+  readonly open: { readonly value: boolean };
+  toggle(): void;
+  show(): void;
+  hide(): void;
+}
 
 export function activate() {
   return function (method: () => unknown, ctx: ClassMethodDecoratorContext): void {

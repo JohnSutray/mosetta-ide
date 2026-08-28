@@ -21,7 +21,6 @@ export const COMMANDS = {
   'edit.unindent': 'Отступ влево',
   'panel.tree': 'Панель: дерево проекта',
   'panel.editor': 'Панель редактора',
-  'panel.problems': 'Панель: ошибки',
   'panel.terminal': 'Панель: терминал',
 
   'terminal.create': 'Новый терминал',

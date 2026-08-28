@@ -1,7 +1,20 @@
 import type { Keymap, Settings } from '@ide/protocol';
 
 export const DEFAULT_SETTINGS: Settings = {
-  plugins: { enabled: ['@ide/plugin-npm-scripts', '@ide/plugin-rerun'] },
+  plugins: { enabled: ['@ide/plugin-npm-scripts', '@ide/plugin-rerun', '@ide/plugin-problems'] },
+  toolbar: {
+    order: [
+      'panel.tree',
+      'search.everywhere',
+      'git.branches',
+      'git.push',
+      'terminal.create',
+      'projects.show',
+      'panel.editor',
+      'keys.show',
+      'tree.follow',
+    ],
+  },
   editor: {
     fontFamily: 'JetBrains Mono',
     fontSize: 13,

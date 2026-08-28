@@ -2,7 +2,6 @@ import { computed, type ReadonlySignal } from '@preact/signals';
 import type { CommandId } from '@ide/protocol';
 import {
   editorPanelVisible,
-  problemsPanelVisible,
   terminalPanelVisible,
   treePanelVisible,
 } from '../state/session.js';
@@ -43,18 +42,6 @@ export const PANELS: PanelSpec[] = [
     toolbar: 'button',
     defaultWidth: 260,
     minWidth: 150,
-  },
-  {
-    id: 'problems',
-    title: 'panel.problems',
-    tooltip: 'toolbar.problems',
-    side: 'right',
-    icon: 'problems',
-    command: 'panel.problems',
-    open: problemsPanelVisible,
-    toolbar: 'button',
-    defaultWidth: 360,
-    minWidth: 200,
   },
   {
     id: 'terminal',
@@ -104,7 +91,6 @@ export const TOOLBAR: ToolbarEntry[] = [
     command: 'git.push',
     active: pushOpen,
   },
-  entryFor('problems'),
   {
     id: 'terminal.create',
     title: 'toolbar.terminal.create',

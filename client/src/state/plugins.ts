@@ -2,7 +2,7 @@ import * as preact from 'preact';
 import * as hooks from 'preact/hooks';
 import * as signals from '@preact/signals';
 import * as jsxRuntime from 'preact/jsx-runtime';
-import { signal } from '@preact/signals';
+import { signal, type Signal } from '@preact/signals';
 import type { PluginInfo } from '@ide/protocol';
 import { complain, rpc, say } from './session.js';
 import { registerPluginCommand } from '../keys/commands.js';
@@ -15,15 +15,24 @@ import {
   type ClientSurface,
   type Found,
   type Ide,
+  type PanelHandle,
   type PluginClass,
+  type PluginPanelSpec,
   type PluginToolbarEntry,
 } from '@ide/api/client';
+import { persisted } from './persist.js';
 import { addStrings } from '../i18n/index.js';
 export type { PluginToolbarEntry } from '@ide/api/client';
 
 export const pluginList = signal<PluginInfo[]>([]);
 export const pluginToolbar = signal<PluginToolbarEntry[]>([]);
 export const pluginSurfaces = signal<Array<() => unknown>>([]);
+
+export interface PluginPanel extends PluginPanelSpec {
+  open: Signal<boolean>;
+}
+
+export const pluginPanels = signal<PluginPanel[]>([]);
 
 const pluginClasses = new Map<string, unknown>();
 
@@ -112,6 +121,35 @@ function servicesFor(name: string): Ide {
     },
     toolbar(entry: PluginToolbarEntry) {
       pluginToolbar.value = [...pluginToolbar.value, entry];
+    },
+    panel(spec: PluginPanelSpec): PanelHandle {
+      const open = persisted(`panel.${spec.id}`, false);
+      registerPluginCommand(spec.command, () => {
+        open.value = !open.value;
+      });
+      pluginToolbar.value = [
+        ...pluginToolbar.value,
+        { id: spec.id, title: spec.tooltip, icon: spec.icon, command: spec.command, active: open },
+      ];
+      pluginPanels.value = [...pluginPanels.value, { ...spec, open }];
+      return {
+        open,
+        toggle: () => {
+          open.value = !open.value;
+        },
+        show: () => {
+          open.value = true;
+        },
+        hide: () => {
+          open.value = false;
+        },
+      };
+    },
+    css(text: string) {
+      const tag = document.createElement('style');
+      tag.dataset.plugin = name;
+      tag.textContent = text;
+      document.head.append(tag);
     },
     open(kind: string, handler: (found: Found) => void) {
       openers.set(kind, handler);

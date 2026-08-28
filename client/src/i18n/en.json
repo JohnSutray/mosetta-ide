@@ -7,7 +7,6 @@
   "git.hunk.modified": "Was in the last commit",
   "git.hunk.removed": "Deleted lines",
   "git.hunk.revert": "Revert",
-  "panel.problems": "Problems",
   "panel.terminal": "Terminal",
   "panel.editor.empty": "Nothing open",
   "panel.close": "Close panel",
@@ -16,7 +15,6 @@
   "toolbar.search": "Search everywhere",
   "toolbar.branches": "Git branches",
   "toolbar.push": "Push current branch",
-  "toolbar.problems": "TypeScript problems",
   "toolbar.terminal": "Terminal panel",
   "toolbar.terminal.create": "New terminal",
   "toolbar.fetch": "Fetch from remote",
@@ -65,7 +63,6 @@
   "command.tools.packageManager": "Package manager",
   "command.panel.tree": "Project tree panel",
   "command.panel.editor": "Editor panel",
-  "command.panel.problems": "Problems panel",
   "command.panel.terminal": "Terminal panel",
   "command.terminal.create": "New terminal",
   "command.projects.show": "Open project",
@@ -244,8 +241,6 @@
   "terminal.busyUnknown": "cannot tell if it is busy — {why}",
 
   "pick.nothing": "Nothing matches",
-  "problems.empty": "No problems",
-  "problems.more": "…and {count} more",
 
   "git.done": "{action} — done",
   "git.fetching": "fetching…",

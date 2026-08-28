@@ -53,7 +53,6 @@ export const diagnostics = signal<Map<string, Diagnostic[]>>(new Map());
 export const lspStatuses = signal<LspStatus[]>([]);
 export const treePanelVisible = persisted('panel.tree', true);
 export const editorPanelVisible = persisted('panel.editor', true);
-export const problemsPanelVisible = persisted('panel.problems', false);
 export const terminalPanelVisible = persisted('panel.terminal', false);
 
 export const brokenPaths = computed<Set<string>>(() => {
@@ -76,25 +75,15 @@ export const currentDiagnostics = computed<Diagnostic[]>(() => {
 });
 
 export const allProblems = computed<Array<{ path: string; diagnostics: Diagnostic[] }>>(() => {
-  const here = openFile.value?.path;
   const out: Array<{ path: string; diagnostics: Diagnostic[] }> = [];
   for (const [path, list] of diagnostics.value) {
     if (list.length > 0) out.push({ path, diagnostics: list });
   }
-  out.sort((a, b) => {
-    if (a.path === here) return -1;
-    if (b.path === here) return 1;
-    return a.path.localeCompare(b.path);
-  });
+  out.sort((a, b) => a.path.localeCompare(b.path));
   return out;
 });
 
-export const errorCount = computed(() =>
-  allProblems.value.reduce(
-    (sum, file) => sum + file.diagnostics.filter((d) => d.severity === 'error').length,
-    0,
-  ),
-);
+export const openFilePath = computed(() => openFile.value?.path ?? null);
 
 export const title = computed(() => {
   const ws = current.value;
@@ -116,7 +105,6 @@ function resetProjectScope() {
     dirty.value = false;
     diagnostics.value = new Map();
     lspStatuses.value = [];
-    problemsPanelVisible.value = false;
     terminalPanelVisible.value = false;
     diverged.value = new Map();
   });

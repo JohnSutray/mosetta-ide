@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { COMMAND_IDS, COMMANDS, isCommandId, type CommandId } from '@ide/protocol';
 import { PANELS, TOOLBAR } from '../src/ui/panels.js';
-import { WORLDS, inWorld, keymap } from './keymap-shared.js';
+import { WORLDS, inWorld, keymap, toolbarOrder } from './keymap-shared.js';
 import en from '../src/i18n/en.json';
 
 describe('тулбар', () => {
@@ -41,7 +41,6 @@ describe('тулбар', () => {
     const side = (id: string) => PANELS.find((panel) => panel.id === id)?.side;
     expect(side('tree')).toBe('left');
     expect(side('terminal')).toBe('right');
-    expect(side('problems')).toBe('right');
   });
 
   it('кнопка тулбара показывает панель, попап или настройку — но всегда состояние', () => {
@@ -96,9 +95,10 @@ describe('тулбар', () => {
     expect(conditional).toEqual(['merge']);
   });
 
-  it('условные кнопки стоят ПОСЛЕ нумерованных — иначе цифры поедут', () => {
-    const first = TOOLBAR.findIndex((entry) => entry.visible);
-    expect(first === -1 || first >= 10).toBe(true);
+  it('условной кнопки нет в порядке — иначе цифры поедут', () => {
+    const order = toolbarOrder();
+    const named = TOOLBAR.filter((entry) => entry.visible && order.includes(entry.command));
+    expect(named.map((entry) => entry.id)).toEqual([]);
   });
 
   it('единственная кнопка без состояния — заведение терминала', () => {
@@ -107,7 +107,7 @@ describe('тулбар', () => {
   });
 
   it('цифра — это порядковый номер кнопки в тулбаре, слева направо', () => {
-    const NUMBERED = TOOLBAR.slice(0, 10);
+    const NUMBERED = toolbarOrder().slice(0, 10);
     const bindings = keymap().bindings;
     for (const world of WORLDS) {
       const numbered = new Map<string, CommandId>();
@@ -116,10 +116,10 @@ describe('тулбар', () => {
         const digit = /(?:^|\+)(\d)$/.exec(binding.key)?.[1];
         if (digit) numbered.set(digit, binding.command);
       }
-      NUMBERED.forEach((entry, at) => {
+      NUMBERED.forEach((command, at) => {
         const digit = String((at + 1) % 10);
         expect(numbered.get(digit), `${world.scope}: цифра ${digit} зовёт не ту кнопку`).toBe(
-          entry.command,
+          command,
         );
       });
       expect(numbered.size, `${world.scope}: лишние цифры`).toBe(NUMBERED.length);

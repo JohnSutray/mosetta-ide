@@ -102,6 +102,19 @@ importers:
         specifier: ^10.25.3
         version: 10.29.8
 
+  plugins/problems:
+    dependencies:
+      '@ide/api':
+        specifier: workspace:*
+        version: link:../api
+      '@ide/protocol':
+        specifier: workspace:*
+        version: link:../../protocol
+    devDependencies:
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+
   plugins/rerun:
     dependencies:
       '@ide/api':
@@ -121,6 +134,9 @@ importers:
       '@ide/plugin-npm-scripts':
         specifier: workspace:*
         version: link:../plugins/npm-scripts
+      '@ide/plugin-problems':
+        specifier: workspace:*
+        version: link:../plugins/problems
       '@ide/plugin-rerun':
         specifier: workspace:*
         version: link:../plugins/rerun

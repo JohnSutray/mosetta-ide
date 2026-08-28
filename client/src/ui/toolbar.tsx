@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import type { CommandId, TerminalInfo } from '@ide/protocol';
+import type { TerminalInfo } from '@ide/protocol';
 import { runCommand } from '../keys/commands.js';
 import { keymap as keymapSignal } from '../state/config.js';
 import { humanizeKey } from '../keys/host.js';
@@ -12,8 +12,9 @@ import { t } from '../i18n/index.js';
 import { currentManager, currentShell, openToolPicker } from '../state/tools.js';
 import { hideTip, showTip } from '../state/tip.js';
 import { Icon, type IconName } from './icons.js';
-import { TOOLBAR } from './panels.js';
-import { pluginToolbar } from '../state/plugins.js';
+import { TOOLBAR, type ToolbarEntry } from './panels.js';
+import { pluginToolbar, type PluginToolbarEntry } from '../state/plugins.js';
+import { settings } from '../state/config.js';
 
 export function Toolbar() {
   const ws = current.value;
@@ -23,7 +24,7 @@ export function Toolbar() {
     <div class="toolbar">
       <div class="toolbar-left">
         <div class="toolbar-icons">
-          {[...TOOLBAR.filter((entry) => entry.visible?.value ?? true), ...pluginToolbar.value].map((entry) => {
+          {ordered().map((entry) => {
             const active = entry.active?.value ?? false;
             return (
               <button
@@ -172,4 +173,20 @@ function TerminalChip({ info }: { info: TerminalInfo }) {
       </span>
     </span>
   );
+}
+
+function ordered(): Array<ToolbarEntry | PluginToolbarEntry> {
+  const order = settings.value?.toolbar.order ?? [];
+  const all: Array<ToolbarEntry | PluginToolbarEntry> = [
+    ...TOOLBAR.filter((entry) => entry.visible?.value ?? true),
+    ...pluginToolbar.value,
+  ];
+  const at = (entry: { command: string }) => {
+    const found = order.indexOf(entry.command);
+    return found === -1 ? order.length : found;
+  };
+  return all
+    .map((entry, was) => ({ entry, was }))
+    .sort((a, b) => at(a.entry) - at(b.entry) || a.was - b.was)
+    .map((item) => item.entry);
 }

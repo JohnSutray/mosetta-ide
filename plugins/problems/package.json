@@ -1,0 +1,23 @@
+{
+  "name": "@ide/plugin-problems",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "ide": {
+    "client": "src/client.tsx",
+    "strings": "src/en.json",
+    "commands": {
+      "panel.problems": "Панель: ошибки"
+    }
+  },
+  "dependencies": {
+    "@ide/api": "workspace:*"
+  },
+  "peerDependencies": {
+    "@ide/protocol": "workspace:*",
+    "preact": "^10.25.3"
+  },
+  "devDependencies": {
+    "preact": "^10.25.3"
+  }
+}

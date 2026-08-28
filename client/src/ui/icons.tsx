@@ -4,7 +4,6 @@ export type IconName =
   | 'tree'
   | 'search'
   | 'editor'
-  | 'problems'
   | 'terminal'
   | 'projects'
   | 'git'
@@ -59,14 +58,6 @@ export function Icon({ name, filled }: Props): JSX.Element {
         <svg {...common}>
           <rect x="3" y="2" width="10" height="12" rx="1.4" fill={filled ? 'currentColor' : 'none'} />
           <path d="M5.4 5.6h5.2M5.4 8h5.2M5.4 10.4h3" stroke={filled ? 'var(--panel-bg)' : 'currentColor'} />
-        </svg>
-      );
-    case 'problems':
-      return (
-        <svg {...common}>
-          <path d="M8 2.3l6 10.4H2z" fill={filled ? 'currentColor' : 'none'} />
-          <path d="M8 6.4v2.6" stroke={filled ? 'var(--panel-bg)' : 'currentColor'} />
-          <path d="M8 10.9v.1" stroke={filled ? 'var(--panel-bg)' : 'currentColor'} />
         </svg>
       );
     case 'push':

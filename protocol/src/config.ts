@@ -49,6 +49,7 @@ export interface PluginSettings {
 
 export interface Settings {
   plugins: PluginSettings;
+  toolbar: ToolbarSettings;
   editor: EditorSettings;
   tree: TreeSettings;
   fs: FsSettings;
@@ -57,6 +58,10 @@ export interface Settings {
   git: GitSettings;
   terminal: TerminalSettings;
   tools: ToolSettings;
+}
+
+export interface ToolbarSettings {
+  order: string[];
 }
 
 export interface ToolSettings {

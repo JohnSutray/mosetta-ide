@@ -1,0 +1,7 @@
+{
+  "command.panel.problems": "Problems panel",
+  "panel.problems": "Problems",
+  "toolbar.problems": "TypeScript problems",
+  "problems.empty": "No problems",
+  "problems.more": "…and {count} more"
+}

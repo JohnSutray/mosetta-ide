@@ -2,6 +2,7 @@ import type { Settings } from '@ide/protocol';
 
 export const DEFAULT_SETTINGS_FALLBACK: Settings = {
   plugins: { enabled: [] },
+  toolbar: { order: [] },
   editor: {
     fontFamily: 'JetBrains Mono',
     fontSize: 13,
