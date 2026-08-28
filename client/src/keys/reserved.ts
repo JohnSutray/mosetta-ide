@@ -8,12 +8,19 @@ export interface ReservedKey {
   soft?: boolean;
 }
 
-function digits(scopes: KeyScope[], who: string, what: string, lead: string): ReservedKey[] {
+function digits(
+  scopes: KeyScope[],
+  who: string,
+  what: string,
+  lead: string,
+  soft = false,
+): ReservedKey[] {
   return Array.from({ length: 9 }, (_, at) => ({
     key: `${lead}+${at + 1}`,
     scopes,
     who,
     what,
+    ...(soft ? { soft: true } : {}),
   }));
 }
 
@@ -74,7 +81,7 @@ export const RESERVED: ReservedKey[] = [
   },
   { key: 'meta+alt+arrowleft', scopes: CHROME_MAC, who: 'Chrome', what: 'previous tab' },
   { key: 'meta+alt+arrowright', scopes: CHROME_MAC, who: 'Chrome', what: 'next tab' },
-  ...digits(CHROME_MAC, 'Chrome', 'switch to tab N', 'meta'),
+  ...digits(CHROME_MAC, 'Chrome', 'switch to tab N', 'meta', true),
   { key: 'meta+t', scopes: CHROME_MAC, who: 'Chrome', what: 'new tab' },
   { key: 'meta+w', scopes: CHROME_MAC, who: 'Chrome', what: 'close the tab' },
   { key: 'meta+n', scopes: CHROME_MAC, who: 'Chrome', what: 'new window' },
