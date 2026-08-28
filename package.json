@@ -9,7 +9,7 @@
     "dev:scratch": "node scripts/with-env.mjs IDE_PORT=4188 VITE_IDE_PORT=4188 IDE_UI_PORT=5188 -- pnpm --parallel --filter ./server --filter ./client dev",
     "stable:build": "node scripts/with-env.mjs VITE_IDE_PORT=4177 -- pnpm --filter ./protocol build && node scripts/with-env.mjs VITE_IDE_PORT=4177 -- pnpm --filter ./client build",
     "stable:serve": "pnpm --parallel --filter ./server --filter ./client stable",
-    "build": "pnpm --filter ./protocol build && pnpm --filter ./server build && pnpm --filter ./client build",
+    "build": "pnpm --filter ./protocol build && pnpm --filter ./server build && node scripts/with-env.mjs VITE_IDE_PORT=4177 -- pnpm --filter ./client build",
     "test": "pnpm --filter ./server test && pnpm --filter ./client test",
     "typecheck": "tsc -b protocol plugins/api server client && tsc -p plugins/npm-scripts && tsc -p plugins/rerun",
     "postinstall": "node scripts/ensure-pty-helper.mjs"
