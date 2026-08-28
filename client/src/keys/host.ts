@@ -11,9 +11,14 @@ function platform(): string {
   return modern ?? navigator.userAgent ?? '';
 }
 
-export const IS_MAC = /Mac|iPhone|iPad/.test(platform());
+export function osOf(name: string): KeyOs {
+  if (/mac|iphone|ipad|darwin/i.test(name)) return 'mac';
+  if (/win/i.test(name)) return 'win';
+  return 'linux';
+}
 
-export const OS: KeyOs = IS_MAC ? 'mac' : /Win/.test(platform()) ? 'win' : 'linux';
+export const OS: KeyOs = osOf(platform());
+export const IS_MAC = OS === 'mac';
 
 export const SCOPES: KeyScope[] = [HOST, `${HOST}:${OS}`];
 
