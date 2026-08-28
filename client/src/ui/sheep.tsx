@@ -258,12 +258,6 @@ export function SheepField() {
       ctx.clearRect(0, 0, w, h);
       drawWords(ctx, w, h);
 
-      if (world.paused) {
-        switchBox = drawSwitch(ctx, w, h, true);
-        drawScore(ctx, w, h, world.merged, world.shorn);
-        return;
-      }
-
       const barn = barnAt(w, h);
       const salon = salonAt(w, h);
       const held = world.held;
@@ -277,6 +271,13 @@ export function SheepField() {
         held === null ? undefined : { d: over(house) ? `${kind}Over` : `${kind}Ready` };
       paint(ctx, BARN, barn.x, barn.y, PX * HOUSE_SCALE, false, door('barn', barn));
       paint(ctx, SALON, salon.x, salon.y, PX * HOUSE_SCALE, false, door('salon', salon));
+
+      if (world.paused) {
+        switchBox = drawSwitch(ctx, w, h, true);
+        drawScore(ctx, w, h, world.merged, world.shorn);
+        return;
+      }
+
       drawSign(ctx, barn, [MINI, PLUS, MINI, EQUALS, BIG]);
       drawSign(ctx, salon, [MINI, PLUS, SCISSORS, EQUALS, MINI_BALD, PLUS, WOOL]);
       const guest = world.waiting;

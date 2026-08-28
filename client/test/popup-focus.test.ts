@@ -9,13 +9,17 @@ interface FakeEl {
   children: FakeEl[];
 }
 
+function asEl(fake: FakeEl): HTMLElement {
+  return fake as unknown as HTMLElement;
+}
+
 function el(children: FakeEl[] = []): FakeEl {
   const node: FakeEl = {
     isConnected: true,
     focused: 0,
     focus() {
       node.focused += 1;
-      setActive(node);
+      setActive(asEl(node));
     },
     contains: (other: unknown) => other === node || children.includes(other as FakeEl),
     children,
@@ -25,7 +29,7 @@ function el(children: FakeEl[] = []): FakeEl {
 
 const body = el();
 
-function setActive(node: FakeEl | null): void {
+function setActive(node: FakeEl | HTMLElement | null): void {
   (globalThis as { document?: unknown }).document = { activeElement: node ?? body, body };
 }
 
@@ -33,7 +37,7 @@ const settle = () => new Promise<void>((done) => queueMicrotask(() => done()));
 
 beforeEach(() => {
   stack.value = [];
-  setActive(body);
+  setActive(asEl(body));
 });
 
 afterEach(() => {
@@ -43,10 +47,10 @@ afterEach(() => {
 describe('возврат фокуса из попапа', () => {
   it('фокус возвращается туда, где был', async () => {
     const editor = el();
-    setActive(editor);
+    setActive(asEl(editor));
 
     const popup = el();
-    enter({ id: 'search', close: () => {}, el: popup });
+    enter({ id: 'search', close: () => {}, el: asEl(popup) });
     popup.focus();
 
     popup.isConnected = false;
@@ -57,9 +61,9 @@ describe('возврат фокуса из попапа', () => {
 
   it('мышь сильнее: щёлкнули по дереву — фокус остаётся там', async () => {
     const editor = el();
-    setActive(editor);
+    setActive(asEl(editor));
     const popup = el();
-    enter({ id: 'search', close: () => {}, el: popup });
+    enter({ id: 'search', close: () => {}, el: asEl(popup) });
     popup.focus();
 
     const tree = el();
@@ -73,13 +77,13 @@ describe('возврат фокуса из попапа', () => {
 
   it('попап над попапом возвращает фокус нижнему', async () => {
     const editor = el();
-    setActive(editor);
+    setActive(asEl(editor));
     const branches = el();
-    enter({ id: 'branches', close: () => {}, el: branches });
+    enter({ id: 'branches', close: () => {}, el: asEl(branches) });
     branches.focus();
 
     const push = el();
-    enter({ id: 'push', close: () => {}, over: 'branches', el: push });
+    enter({ id: 'push', close: () => {}, over: 'branches', el: asEl(push) });
     push.focus();
 
     push.isConnected = false;
@@ -96,9 +100,9 @@ describe('возврат фокуса из попапа', () => {
 
   it('исчезнувшему элементу фокус не возвращают', async () => {
     const gone = el();
-    setActive(gone);
+    setActive(asEl(gone));
     const popup = el();
-    enter({ id: 'search', close: () => {}, el: popup });
+    enter({ id: 'search', close: () => {}, el: asEl(popup) });
     popup.focus();
 
     gone.isConnected = false;

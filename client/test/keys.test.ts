@@ -72,7 +72,12 @@ describe('строка нажатия', () => {
   });
 
   it('ролей в строке события не бывает', () => {
-    for (const mods of [{ metaKey: true }, { ctrlKey: true }, { altKey: true }]) {
+    const cases: Array<Record<string, boolean>> = [
+      { metaKey: true },
+      { ctrlKey: true },
+      { altKey: true },
+    ];
+    for (const mods of cases) {
       expect(eventToKey(stroke('Digit1', '1', mods))).not.toMatch(/\b(mod|clip|cmd|ctrl)\b/);
     }
   });

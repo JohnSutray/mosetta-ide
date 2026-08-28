@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { registerCommand, runCommand, opensOpenPopup } from '../src/keys/commands.js';
+import {
+  opensOpenPopup,
+  registerCommand,
+  registerPluginCommand,
+  runCommand,
+} from '../src/keys/commands.js';
 import { enter, leave, stack } from '../src/state/popups.js';
 
 describe('повторное нажатие закрывает окно', () => {
@@ -25,7 +30,7 @@ describe('повторное нажатие закрывает окно', () => 
 
   it('чужое открытое окно своей команде не мешает', () => {
     let opened = 0;
-    registerCommand('scripts.open', () => {
+    registerPluginCommand('scripts.open', () => {
       opened += 1;
     });
     enter({ id: 'branches', close: () => {} });

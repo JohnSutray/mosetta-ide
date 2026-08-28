@@ -6,7 +6,7 @@ export default class Rerun {
 
   constructor(private readonly ide: Ide) {}
 
-  @activate() private start(): void {
+  @activate() protected start(): void {
     const npm = this.ide.getPlugin(NpmScripts);
 
     this.ide.command('scripts.rerun', () => {

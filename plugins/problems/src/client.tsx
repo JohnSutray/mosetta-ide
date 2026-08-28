@@ -8,7 +8,7 @@ export default class Problems {
 
   constructor(private readonly ide: Ide) {}
 
-  @activate() private start(): void {
+  @activate() protected start(): void {
     this.ide.css(STYLE);
     this.ide.panel({
       id: 'problems',

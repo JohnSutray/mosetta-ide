@@ -25,7 +25,7 @@ export default class NpmScripts {
 
   constructor(private readonly ide: Ide) {}
 
-  @activate() private start(): void {
+  @activate() protected start(): void {
     this.ide.command('scripts.open', () => {
       this.open.value = !this.open.value;
       if (this.open.value) void this.refresh();
@@ -46,11 +46,11 @@ export default class NpmScripts {
     this.ide.surface(() => this.popup());
   }
 
-  @remote() private list(): Promise<ScriptInfo[]> {
+  @remote() protected list(): Promise<ScriptInfo[]> {
     return stub();
   }
 
-  @remote('run') private ask(_params: { id: string }): Promise<never> {
+  @remote('run') protected ask(_params: { id: string }): Promise<never> {
     return stub();
   }
 

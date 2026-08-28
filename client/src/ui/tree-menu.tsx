@@ -12,7 +12,6 @@ import {
   targets,
 } from '../state/tree-ops.js';
 import { Menu, type MenuItem } from './menu.js';
-import { t } from '../i18n/index.js';
 
 export function TreeMenu() {
   const menu = treeMenu.value;

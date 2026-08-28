@@ -1,4 +1,4 @@
-import type { CommandId } from './commands.js';
+
 
 export interface EditorSettings {
   fontFamily: string;

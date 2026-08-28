@@ -20,8 +20,8 @@ function sources(dir: string): string[] {
 function declared(): Set<string> {
   const found = new Set<string>();
   for (const text of sources(SRC)) {
-    for (const [, name] of text.matchAll(/\bdata-keys="([\w-]+)"/g)) found.add(name);
-    for (const [, name] of text.matchAll(/\bkeys="([\w-]+)"/g)) found.add(name);
+    for (const [, name] of text.matchAll(/\bdata-keys="([\w-]+)"/g)) if (name) found.add(name);
+    for (const [, name] of text.matchAll(/\bkeys="([\w-]+)"/g)) if (name) found.add(name);
   }
   return found;
 }

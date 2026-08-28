@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { COMMAND_IDS, COMMANDS, isCommandId, type CommandId } from '@ide/protocol';
 import { PANELS, TOOLBAR } from '../src/ui/panels.js';
@@ -110,7 +108,7 @@ describe('тулбар', () => {
     const NUMBERED = toolbarOrder().slice(0, 10);
     const bindings = keymap().bindings;
     for (const world of WORLDS) {
-      const numbered = new Map<string, CommandId>();
+      const numbered = new Map<string, string>();
       for (const binding of inWorld(bindings, world)) {
         if ((binding.when ?? 'global') !== 'global') continue;
         const digit = /(?:^|\+)(\d)$/.exec(binding.key)?.[1];

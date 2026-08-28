@@ -23,17 +23,17 @@ interface Services {
 export default class NpmScriptsServer {
   constructor(private readonly ide: Ide) {}
 
-  @activate() private start(): void {
+  @activate() protected start(): void {
     this.ide.find(new ScriptsInPackageJson());
   }
 
-  @command() private list(_params: unknown, call: CallContext): ScriptInfo[] {
+  @command() protected list(_params: unknown, call: CallContext): ScriptInfo[] {
     return services(call)
       .index.byKind(KIND)
       .map((hit) => toScript(hit));
   }
 
-  @command() private run(params: unknown, call: CallContext): unknown {
+  @command() protected run(params: unknown, call: CallContext): unknown {
     const asked = params as { id?: unknown; cols?: number; rows?: number } | null;
     if (!asked || typeof asked.id !== 'string') throw new Error('нужен id: string');
 

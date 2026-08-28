@@ -1,5 +1,9 @@
 export function parseJsonc<T>(text: string, source: string): T {
-  return JSON.parse(stripComments(text)) as T;
+  try {
+    return JSON.parse(stripComments(text)) as T;
+  } catch (err) {
+    throw new SyntaxError(`${source}: ${err instanceof Error ? err.message : String(err)}`);
+  }
 
   function stripComments(input: string): string {
     let out = '';

@@ -5,14 +5,15 @@ export const HOST: KeyHost =
     ? 'electron'
     : 'browser';
 
-export const IS_MAC =
-  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform ?? '');
+function platform(): string {
+  if (typeof navigator === 'undefined') return '';
+  const modern = (navigator as { userAgentData?: { platform?: string } }).userAgentData?.platform;
+  return modern ?? navigator.userAgent ?? '';
+}
 
-export const OS: KeyOs = IS_MAC
-  ? 'mac'
-  : typeof navigator !== 'undefined' && /Win/.test(navigator.platform ?? '')
-    ? 'win'
-    : 'linux';
+export const IS_MAC = /Mac|iPhone|iPad/.test(platform());
+
+export const OS: KeyOs = IS_MAC ? 'mac' : /Win/.test(platform()) ? 'win' : 'linux';
 
 export const SCOPES: KeyScope[] = [HOST, `${HOST}:${OS}`];
 
