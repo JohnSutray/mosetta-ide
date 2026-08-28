@@ -10,6 +10,8 @@ import {
   activate as activateHook,
   attach,
   hooksOf,
+  registriesOf,
+  registry as registryHook,
   remote,
   stub,
   type ClientSurface,
@@ -18,14 +20,13 @@ import {
   type PanelHandle,
   type PluginClass,
   type PluginPanelSpec,
-  type PluginToolbarEntry,
+  type RegistryHandle,
 } from '@ide/api/client';
 import { persisted } from './persist.js';
+import type { Registry } from './registry.js';
 import { addStrings } from '../i18n/index.js';
-export type { PluginToolbarEntry } from '@ide/api/client';
 
 export const pluginList = signal<PluginInfo[]>([]);
-export const pluginToolbar = signal<PluginToolbarEntry[]>([]);
 export const pluginSurfaces = signal<Array<() => unknown>>([]);
 
 export interface PluginPanel extends PluginPanelSpec {
@@ -57,13 +58,15 @@ function expose(surface: ClientSurface): void {
     jsx: jsxRuntime,
     hooks,
     signals,
-    api: { ...surface, remote, stub, activate: activateHook },
+    api: { ...surface, remote, stub, activate: activateHook, registry: registryHook },
     plugins: pluginClasses,
   };
 }
 
-export async function loadPlugins(surface: ClientSurface): Promise<void> {
+export async function loadPlugins(surface: ClientSurface, registry: Registry): Promise<void> {
   expose(surface);
+  store = registry;
+  const built: Built[] = [];
   let list: PluginInfo[];
   try {
     list = await rpc.call('plugins.list', null);
@@ -80,14 +83,38 @@ export async function loadPlugins(surface: ClientSurface): Promise<void> {
     addStrings(info.name, info.strings);
     if (!info.hasClient) continue;
     try {
-      await start(info);
+      built.push(await build(info));
     } catch (err) {
       complain(`${info.name}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
+
+  for (const one of built) {
+    for (const spec of registriesOf(one.ctor)) registry.declare(spec.key, one.name, spec.schema);
+  }
+  for (const one of built) {
+    try {
+      await hooksOf(one.instance).start?.();
+    } catch (err) {
+      complain(`${one.name}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
 }
 
-async function start(info: PluginInfo): Promise<void> {
+let store: Registry | null = null;
+
+function registryOf(): Registry {
+  if (!store) throw new Error('реестр не поднят: плагины загружены мимо loadPlugins');
+  return store;
+}
+
+interface Built {
+  name: string;
+  ctor: PluginClass;
+  instance: object;
+}
+
+async function build(info: PluginInfo): Promise<Built> {
   const { code } = await rpc.call('plugins.code', { name: info.name });
   const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
   try {
@@ -103,7 +130,7 @@ async function start(info: PluginInfo): Promise<void> {
 
     pluginClasses.set(info.name, Ctor);
     instances.set(Ctor, instance);
-    await hooksOf(instance).start?.();
+    return { name: info.name, ctor: Ctor, instance };
   } finally {
     URL.revokeObjectURL(url);
   }
@@ -119,18 +146,20 @@ function servicesFor(name: string): Ide {
     command(id: string, run: () => void) {
       registerPluginCommand(id, run);
     },
-    toolbar(entry: PluginToolbarEntry) {
-      pluginToolbar.value = [...pluginToolbar.value, entry];
+    registry<T>(key: string): RegistryHandle<T> {
+      const store_ = registryOf();
+      return {
+        add: (value: T) => store_.add(key, value, name),
+        get all() {
+          return store_.all<T>(key);
+        },
+      };
     },
     panel(spec: PluginPanelSpec): PanelHandle {
       const open = persisted(`panel.${spec.id}`, false);
       registerPluginCommand(spec.command, () => {
         open.value = !open.value;
       });
-      pluginToolbar.value = [
-        ...pluginToolbar.value,
-        { id: spec.id, title: spec.tooltip, icon: spec.icon, command: spec.command, active: open },
-      ];
       pluginPanels.value = [...pluginPanels.value, { ...spec, open }];
       return {
         open,

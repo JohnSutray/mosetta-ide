@@ -52,40 +52,6 @@ body {
   height: 100%;
 }
 
-.toolbar {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 3px 10px;
-  background: var(--panel-bg);
-  border-bottom: 1px solid var(--divider);
-  flex: none;
-}
-.toolbar-left {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 8px;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 24px;
-}
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 0 1 auto;
-  min-width: 0;
-  min-height: 24px;
-}
-.toolbar-spacer { flex: 1; }
-.toolbar-error {
-  color: var(--error);
-  max-width: 42ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .dot.is-on { background: #6a8759; }
 .dot.is-off { background: var(--error); }
@@ -377,14 +343,6 @@ body {
 .chip.is-failed { color: var(--error); border-color: #6b3a39; }
 .chip.is-error { color: var(--error); border-color: #6b3a39; }
 
-.toolbar-notice {
-  color: var(--accent);
-  max-width: 46ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .cm-tooltip.cm-tooltip-hover {
   background: transparent;
   border: none;
@@ -563,8 +521,6 @@ body {
 .code-view { height: 100%; }
 .code-view .cm-editor { height: 100%; }
 .cm-hit-line { background: var(--curline); }
-
-.toolbar-icons { display: flex; gap: 2px; margin: 0 4px; flex: none; }
 
 .tool {
   position: relative; 
@@ -1654,21 +1610,6 @@ body {
 .merge-button.is-quiet { color: var(--muted); }
 .merge-button:disabled { opacity: 0.4; cursor: default; }
 .merge-button:disabled:hover { background: var(--treesel); }
-
-.tool-count {
-  position: absolute;
-  right: 1px;
-  bottom: 0;
-  min-width: 12px;
-  padding: 0 2px;
-  border-radius: 6px;
-  background: var(--git-conflict);
-  color: #2b1211;
-  font-family: var(--ui-font);
-  font-size: 9px;
-  line-height: 12px;
-  text-align: center;
-}
 
 .diverged {
   position: absolute;

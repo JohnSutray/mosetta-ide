@@ -1,7 +1,7 @@
 import type { Keymap, Settings } from '@ide/protocol';
 
 export const DEFAULT_SETTINGS: Settings = {
-  plugins: { enabled: ['@ide/plugin-npm-scripts', '@ide/plugin-rerun', '@ide/plugin-problems'] },
+  plugins: { enabled: ['@ide/plugin-npm-scripts', '@ide/plugin-rerun', '@ide/plugin-problems', '@ide/plugin-toolbar'] },
   toolbar: {
     order: [
       'panel.tree',

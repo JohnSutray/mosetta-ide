@@ -12,6 +12,7 @@ import {
   externalEpoch,
   openFile,
   openFilePath,
+  complain,
   rpc,
   title,
   editDoc,
@@ -36,7 +37,10 @@ import { Push } from './push.js';
 import { gitState, refreshGit, resetGit } from '../state/git.js';
 import { loadMerge, resetMerge } from '../state/merge.js';
 import { TerminalView } from './terminal.js';
-import { Toolbar } from './toolbar.js';
+import { registerToolbarWishes } from './toolbar-wishes.js';
+import { Registry } from '../state/registry.js';
+import { keysFor } from '../keys/keys-for.js';
+import { hideTip, showTip } from '../state/tip.js';
 import { PANELS, type PanelSpec } from './panels.js';
 import { Resizer } from './resizer.js';
 import { widthOf } from '../state/layout.js';
@@ -64,6 +68,16 @@ import { askSymbol } from '../state/symbols.js';
 import { noteUnbound } from '../state/keys-help.js';
 import { SheepField } from './sheep.js';
 
+const store = new Registry((message) => complain(message));
+
+store.declare('chrome.top', 'core');
+registerToolbarWishes(store);
+
+function Region({ name }: { name: string }) {
+  const views = store.all<() => unknown>(name).value;
+  return <>{views.map((view) => view() as JSX.Element)}</>;
+}
+
 export function App() {
   const ws = current.value;
   const file = openFile.value;
@@ -80,8 +94,13 @@ export function App() {
       problems: allProblems,
       openPath: openFilePath,
       goTo,
+      runCommand,
+      showTip,
+      hideTip,
+      keysFor,
+      settings: settingsSignal,
     };
-    void loadPlugins(surface);
+    void loadPlugins(surface, store);
     const dead = missingCommands();
     if (dead.length) {
       console.warn('[web-ide] команды без реализации:', dead.join(', '));
@@ -141,7 +160,7 @@ export function App() {
         if (!(event.target as HTMLElement).closest('.tree-menu')) closeTreeMenu();
       }}
     >
-      <Toolbar />
+      <Region name="chrome.top" />
 
       <div class="columns">
         {open('left').map((panel) => (

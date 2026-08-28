@@ -1,30 +1,49 @@
 import { describe, expect, it } from 'vitest';
 import { COMMAND_IDS, COMMANDS, isCommandId, type CommandId } from '@ide/protocol';
-import { PANELS, TOOLBAR } from '../src/ui/panels.js';
+import { PANELS } from '../src/ui/panels.js';
+import { Registry } from '../src/state/registry.js';
+import { registerToolbarWishes } from '../src/ui/toolbar-wishes.js';
 import { WORLDS, inWorld, keymap, toolbarOrder } from './keymap-shared.js';
 import en from '../src/i18n/en.json';
 
+interface Wish {
+  id: string;
+  title: string;
+  command: string;
+  icon: (filled: boolean) => unknown;
+  active?: { readonly value: boolean };
+  visible?: { readonly value: boolean };
+}
+
+function wishes(): { buttons: Wish[]; widgets: Array<{ id: string; side: string }> } {
+  const complaints: string[] = [];
+  const store = new Registry((message) => complaints.push(message));
+  registerToolbarWishes(store);
+  expect(complaints, `ядро пишет не по форме: ${complaints.join('; ')}`).toEqual([]);
+  return {
+    buttons: store.all<Wish>('toolbar.button').value,
+    widgets: store.all<{ id: string; side: string }>('toolbar.widget').value,
+  };
+}
+
 describe('тулбар', () => {
-  it('каждая панель как-то представлена в тулбаре', () => {
-    const inToolbar = new Set(TOOLBAR.map((entry) => entry.id));
-    const missing = PANELS.filter(
-      (panel) => panel.toolbar === 'button' && !inToolbar.has(panel.id),
-    ).map((p) => p.id);
-    expect(missing, `панели без кнопки в тулбаре: ${missing.join(', ')}`).toEqual([]);
+  it('каждая панель как-то представлена', () => {
+    const asked = new Set(wishes().buttons.map((entry) => entry.command));
+    const missing = PANELS.filter((panel) => !asked.has(panel.command)).map((p) => p.id);
+    expect(missing, `панели, которые никак не просят себя показать: ${missing.join(', ')}`).toEqual(
+      ['terminal'],
+    );
+    expect(wishes().widgets.map((one) => one.id)).toContain('terminals');
   });
 
   it('кнопка панели показывает ТОТ ЖЕ сигнал, а не копию', () => {
+    const buttons = wishes().buttons;
     for (const panel of PANELS) {
-      if (panel.toolbar !== 'button') continue;
-      const entry = TOOLBAR.find((item) => item.id === panel.id)!;
+      const entry = buttons.find((item) => item.command === panel.command);
+      if (!entry) continue;
       expect(entry.active, `${panel.id}: кнопка без состояния`).toBeDefined();
       expect(entry.active).toBe(panel.open);
     }
-  });
-
-  it('состояние без кнопки показывают чипы — и только у терминалов', () => {
-    const byChips = PANELS.filter((panel) => panel.toolbar === 'chips').map((p) => p.id);
-    expect(byChips).toEqual(['terminal']);
   });
 
   it('у каждой панели есть сторона и разумная ширина', () => {
@@ -42,8 +61,10 @@ describe('тулбар', () => {
   });
 
   it('кнопка тулбара показывает панель, попап или настройку — но всегда состояние', () => {
-    const panels = new Set(PANELS.map((panel) => panel.id));
-    const popups = TOOLBAR.filter((entry) => !panels.has(entry.id) && entry.active).map((e) => e.id);
+    const panels = new Set<string>(PANELS.map((panel) => panel.command));
+    const popups = wishes()
+      .buttons.filter((entry) => !panels.has(entry.command) && entry.active)
+      .map((e) => e.id);
     expect(popups.sort()).toEqual([
       'editor',
       'git.branches',
@@ -57,20 +78,23 @@ describe('тулбар', () => {
   });
 
   it('каждая кнопка зовёт существующую команду', () => {
-    const unknown = TOOLBAR.filter((entry) => !isCommandId(entry.command)).map((e) => e.command);
+    const unknown = wishes().buttons.filter((entry) => !isCommandId(entry.command)).map((e) => e.command);
     expect(unknown, `неизвестные команды: ${unknown.join(', ')}`).toEqual([]);
   });
 
   it('у каждой кнопки есть подсказка и иконка', () => {
-    for (const entry of TOOLBAR) {
+    for (const entry of wishes().buttons) {
       expect(entry.title.trim(), `${entry.id}: пустая подсказка`).not.toBe('');
-      expect(entry.icon, `${entry.id}: нет иконки`).toBeTruthy();
+      expect(typeof entry.icon, `${entry.id}: нет значка`).toBe('function');
     }
   });
 
   it('надписи реестра — ключи словаря, и все они в словаре есть', () => {
     const dictionary = en as Record<string, string>;
-    const keys = [...PANELS.flatMap((p) => [p.title, p.tooltip]), ...TOOLBAR.map((e) => e.title)];
+    const keys = [
+      ...PANELS.flatMap((p) => [p.title, p.tooltip]),
+      ...wishes().buttons.map((e) => e.title),
+    ];
     const missing = keys.filter((key) => dictionary[key] === undefined);
     expect(missing, `нет в en.json: ${missing.join(', ')}`).toEqual([]);
   });
@@ -89,18 +113,18 @@ describe('тулбар', () => {
   });
 
   it('условная кнопка одна — разрешение конфликтов', () => {
-    const conditional = TOOLBAR.filter((entry) => entry.visible).map((entry) => entry.id);
+    const conditional = wishes().buttons.filter((entry) => entry.visible).map((entry) => entry.id);
     expect(conditional).toEqual(['merge']);
   });
 
   it('условной кнопки нет в порядке — иначе цифры поедут', () => {
     const order = toolbarOrder();
-    const named = TOOLBAR.filter((entry) => entry.visible && order.includes(entry.command));
+    const named = wishes().buttons.filter((entry) => entry.visible && order.includes(entry.command));
     expect(named.map((entry) => entry.id)).toEqual([]);
   });
 
   it('единственная кнопка без состояния — заведение терминала', () => {
-    const stateless = TOOLBAR.filter((entry) => !entry.active).map((entry) => entry.id);
+    const stateless = wishes().buttons.filter((entry) => !entry.active).map((entry) => entry.id);
     expect(stateless).toEqual(['terminal.create']);
   });
 
@@ -132,7 +156,9 @@ describe('тулбар', () => {
           .filter((binding) => (binding.when ?? 'global') === 'global')
           .map((binding) => binding.command),
       );
-      const lost = TOOLBAR.filter((entry) => !reachable.has(entry.command)).map((e) => e.id);
+      const lost = wishes()
+        .buttons.filter((entry) => !reachable.has(entry.command as never))
+        .map((e) => e.id);
       expect(lost, `${world.scope}: кнопки без клавиши — ${lost.join(', ')}`).toEqual([]);
     }
   });

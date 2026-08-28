@@ -16,6 +16,7 @@
     "@ide/plugin-npm-scripts": "workspace:*",
     "@ide/plugin-problems": "workspace:*",
     "@ide/plugin-rerun": "workspace:*",
+    "@ide/plugin-toolbar": "workspace:*",
     "@ide/protocol": "workspace:*",
     "esbuild": "0.25.12",
     "node-pty": "^1.1.0",

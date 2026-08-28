@@ -1,5 +1,5 @@
 import type { ComponentChildren, JSX } from 'preact';
-import type { Diagnostic, TerminalInfo } from '@ide/protocol';
+import type { Diagnostic, Settings, TerminalInfo } from '@ide/protocol';
 
 export interface Size {
   w: number;
@@ -51,6 +51,15 @@ export declare const openPath: { readonly value: string | null };
 
 export declare function goTo(path: string, line: number, character?: number): Promise<void>;
 
+export declare function runCommand(id: string): boolean;
+
+export declare function showTip(near: Element, text: string, keys?: string[]): void;
+export declare function hideTip(): void;
+
+export declare function keysFor(command: string): string[];
+
+export declare const settings: { readonly value: Settings | null };
+
 export interface ClientSurface {
   PickPopup: typeof PickPopup;
   highlight: typeof highlight;
@@ -60,6 +69,11 @@ export interface ClientSurface {
   problems: typeof problems;
   openPath: typeof openPath;
   goTo: typeof goTo;
+  runCommand: typeof runCommand;
+  showTip: typeof showTip;
+  hideTip: typeof hideTip;
+  keysFor: typeof keysFor;
+  settings: typeof settings;
 }
 
 export interface PluginToolbarEntry {
@@ -80,7 +94,7 @@ export interface Ide {
   readonly rpc: { call(method: string, params?: unknown): Promise<unknown> };
   getPlugin<T>(ctor: PluginClass<T>): T;
   command(id: string, run: () => void): void;
-  toolbar(entry: PluginToolbarEntry): void;
+  registry<T>(key: string): RegistryHandle<T>;
   panel(spec: PluginPanelSpec): PanelHandle;
   css(text: string): void;
   surface(view: () => unknown): void;
@@ -89,6 +103,32 @@ export interface Ide {
 }
 
 export type PluginClass<T = unknown> = new (ide: Ide) => T;
+
+export interface RegistrySpec {
+  key: string;
+  schema?: object;
+  persist?: 'memory';
+}
+
+export interface RegistryHandle<T> {
+  add(value: T): () => void;
+  readonly all: { readonly value: T[] };
+}
+
+export function registry(spec: RegistrySpec) {
+  return function (target: object, ctx: ClassDecoratorContext): void {
+    void ctx;
+    const list = declared.get(target) ?? [];
+    list.push(spec);
+    declared.set(target, list);
+  };
+}
+
+const declared = new WeakMap<object, RegistrySpec[]>();
+
+export function registriesOf(ctor: object): RegistrySpec[] {
+  return declared.get(ctor) ?? [];
+}
 
 export type PanelSide = 'left' | 'right';
 

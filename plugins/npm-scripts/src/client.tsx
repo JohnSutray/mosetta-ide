@@ -31,11 +31,11 @@ export default class NpmScripts {
       if (this.open.value) void this.refresh();
     });
 
-    this.ide.toolbar({
+    this.ide.registry('toolbar.button').add({
       id: 'scripts',
       title: 'toolbar.scripts',
-      icon: NpmIcon,
       command: 'scripts.open',
+      icon: NpmIcon,
       active: this.open,
     });
 
