@@ -51,7 +51,7 @@ export interface ClientSurface {
 export interface PluginToolbarEntry {
   id: string;
   title: string;
-  icon: string;
+  icon: string | ((filled: boolean) => unknown);
   command: string;
   active?: { readonly value: boolean };
 }

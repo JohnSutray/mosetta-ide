@@ -10,6 +10,7 @@ import {
   t,
   type Ide,
 } from '@ide/api/client';
+import { NpmIcon } from './icon.js';
 
 export interface ScriptInfo {
   id: string;
@@ -33,7 +34,7 @@ export default class NpmScripts {
     this.ide.toolbar({
       id: 'scripts',
       title: 'toolbar.scripts',
-      icon: 'npm',
+      icon: NpmIcon,
       command: 'scripts.open',
       active: this.open,
     });

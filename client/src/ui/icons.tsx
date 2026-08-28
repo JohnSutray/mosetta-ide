@@ -3,7 +3,6 @@ import type { JSX } from 'preact';
 export type IconName =
   | 'tree'
   | 'search'
-  | 'npm'
   | 'editor'
   | 'problems'
   | 'terminal'
@@ -53,20 +52,6 @@ export function Icon({ name, filled }: Props): JSX.Element {
         <svg {...common}>
           <circle cx="6.9" cy="6.9" r="4.1" fill={filled ? 'currentColor' : 'none'} />
           <path d="M10 10l3.4 3.4" />
-        </svg>
-      );
-    case 'npm':
-      return (
-        <svg {...common} stroke="none">
-          <rect
-            x="2.5"
-            y="2.5"
-            width="11"
-            height="11"
-            rx="1.6"
-            fill={filled ? '#e0524f' : '#cb3837'}
-          />
-          <path d="M4.6 5h6.8v6h-1.7V6.6H6.3V11H4.6z" fill="#fff" />
         </svg>
       );
     case 'editor':

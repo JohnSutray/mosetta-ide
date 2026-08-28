@@ -1,3 +1,4 @@
+import type { JSX } from 'preact';
 import type { CommandId, TerminalInfo } from '@ide/protocol';
 import { runCommand } from '../keys/commands.js';
 import { keymap as keymapSignal } from '../state/config.js';
@@ -37,7 +38,11 @@ export function Toolbar() {
                   runCommand(entry.command);
                 }}
               >
-                <Icon name={entry.icon as IconName} filled={active} />
+                {typeof entry.icon === 'function' ? (
+                  (entry.icon(active) as JSX.Element)
+                ) : (
+                  <Icon name={entry.icon as IconName} filled={active} />
+                )}
                 {entry.id === 'merge' && mergePending.value > 0 && (
                   <span class="tool-count">{mergePending.value}</span>
                 )}
