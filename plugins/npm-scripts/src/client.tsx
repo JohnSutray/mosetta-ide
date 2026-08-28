@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import { PickPopup, Plugin, highlight, remote, shiftMatches, showTerminal, stub } from '@ide/api';
+import { PickPopup, Plugin, highlight, remote, shiftMatches, showTerminal, stub } from '@ide/api/client';
 
 export interface ScriptInfo {
   id: string;
@@ -44,7 +44,7 @@ export default class NpmScripts extends Plugin {
     return stub();
   }
 
-  @remote('run') private ask(params: { id: string }): Promise<never> {
+  @remote('run') private ask(_params: { id: string }): Promise<never> {
     return stub();
   }
 

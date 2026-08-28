@@ -1,4 +1,4 @@
-import { Plugin, command, type CallContext } from '@ide/api';
+import { Plugin, command, type CallContext } from '@ide/api/server';
 
 export interface ScriptInfo {
   id: string;

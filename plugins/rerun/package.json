@@ -8,6 +8,12 @@
     "commands": {
       "scripts.rerun": "Перезапустить последний скрипт"
     },
-    "needs": ["@ide/plugin-npm-scripts"]
+    "needs": [
+      "@ide/plugin-npm-scripts"
+    ]
+  },
+  "dependencies": {
+    "@ide/api": "workspace:*",
+    "@ide/plugin-npm-scripts": "workspace:*"
   }
 }

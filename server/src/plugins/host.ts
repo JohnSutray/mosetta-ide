@@ -1,11 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createRequire } from 'node:module';
 import type { PluginInfo, PluginManifest } from '@ide/protocol';
 import { buildEntry } from './build.js';
-import { Plugin, command, type CallContext, type CommandHandler } from './api.js';
-export { type CallContext } from './api.js';
+import { Plugin, command, type CallContext, type CommandHandler } from '@ide/api/server';
+export { type CallContext } from '@ide/api/server';
 import type { Logger } from '../log.js';
 
 interface Loaded {
@@ -108,16 +107,14 @@ export class PluginHost {
   }
 
   private async needsOf(name: string, resolveFrom: string): Promise<string[]> {
-    const require_ = createRequire(path.join(resolveFrom, 'noop.js'));
-    const pkg = JSON.parse(
-      await fs.readFile(require_.resolve(`${name}/package.json`), 'utf8'),
-    ) as { ide?: { needs?: string[] } };
+    const pkg = JSON.parse(await fs.readFile(await manifestOf(name, resolveFrom), 'utf8')) as {
+      ide?: { needs?: string[] };
+    };
     return pkg.ide?.needs ?? [];
   }
 
   private async one(name: string, resolveFrom: string): Promise<void> {
-    const require_ = createRequire(path.join(resolveFrom, 'noop.js'));
-    const pkgPath = require_.resolve(`${name}/package.json`);
+    const pkgPath = await manifestOf(name, resolveFrom);
     const dir = path.dirname(pkgPath);
     const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf8')) as {
       name: string;
@@ -186,4 +183,19 @@ export class PluginHost {
     });
     this.log.info(`плагин ${name}@${manifest.version} готов`);
   }
+}
+
+async function manifestOf(name: string, resolveFrom: string): Promise<string> {
+  let dir = path.resolve(resolveFrom);
+  for (;;) {
+    const at = path.join(dir, 'node_modules', ...name.split('/'), 'package.json');
+    try {
+      await fs.access(at);
+      return at;
+    } catch {}
+    const up = path.dirname(dir);
+    if (up === dir) break;
+    dir = up;
+  }
+  throw new Error(`не нашёл пакет ${name} рядом с ${resolveFrom}`);
 }

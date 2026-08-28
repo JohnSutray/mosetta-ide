@@ -11,7 +11,7 @@
     "stable:serve": "pnpm --parallel --filter ./server --filter ./client stable",
     "build": "pnpm --filter ./protocol build && pnpm --filter ./server build && pnpm --filter ./client build",
     "test": "pnpm --filter ./server test && pnpm --filter ./client test",
-    "typecheck": "tsc -b protocol server client",
+    "typecheck": "tsc -b protocol plugins/api server client && tsc -p plugins/npm-scripts && tsc -p plugins/rerun",
     "postinstall": "node scripts/ensure-pty-helper.mjs"
   },
   "devDependencies": {

@@ -1,4 +1,10 @@
-import type { Logger } from '../log.js';
+
+export interface Logger {
+  debug(message: string): void;
+  info(message: string): void;
+  warn(message: string): void;
+  error(message: string): void;
+}
 
 export interface CallContext {
   services: unknown;
@@ -30,10 +36,11 @@ export abstract class Plugin implements ServerPluginServices {
 }
 
 export function command(name?: string) {
-  return function (method: any, ctx: ClassMethodDecoratorContext): void {
-    ctx.addInitializer(function (this: any) {
-      const list: Declared[] = (this.__declared ??= []);
-      list.push({ name: name ?? String(ctx.name), method: method.bind(this) });
+  return function (method: CommandHandler, ctx: ClassMethodDecoratorContext): void {
+    ctx.addInitializer(function (this: unknown) {
+      const target = this as { __declared?: Declared[] };
+      const list: Declared[] = (target.__declared ??= []);
+      list.push({ name: name ?? String(ctx.name), method: method.bind(target) });
     });
   };
 }

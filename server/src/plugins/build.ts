@@ -11,11 +11,24 @@ const SHARED: Record<string, { from: string; names: string[] }> = {
     from: 'signals',
     names: ['signal', 'computed', 'effect', 'batch', 'useSignal'],
   },
-  '@ide/api': {
+  '@ide/api/client': {
     from: 'api',
-    names: ['PickPopup', 'highlight', 'shiftMatches', 'showTerminal', 'Plugin', 'remote', 'stub', 'command'],
+    names: [
+      'PickPopup',
+      'highlight',
+      'shiftMatches',
+      'showTerminal',
+      'Plugin',
+      'remote',
+      'stub',
+    ],
   },
+  '@ide/api/server': { from: 'api', names: ['Plugin', 'command'] },
 };
+
+export function sharedNames(name: string): string[] {
+  return SHARED[name]?.names ?? [];
+}
 
 export interface BuiltPlugin {
   code: string;

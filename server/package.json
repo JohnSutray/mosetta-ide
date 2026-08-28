@@ -12,6 +12,7 @@
     "stable": "tsx src/main.ts"
   },
   "dependencies": {
+    "@ide/api": "workspace:*",
     "@ide/plugin-npm-scripts": "workspace:*",
     "@ide/plugin-rerun": "workspace:*",
     "@ide/protocol": "workspace:*",

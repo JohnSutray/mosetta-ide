@@ -1,0 +1,19 @@
+{
+  "name": "@ide/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts"
+  },
+  "dependencies": {
+    "@ide/protocol": "workspace:*"
+  },
+  "peerDependencies": {
+    "preact": "^10.25.3"
+  },
+  "devDependencies": {
+    "preact": "^10.25.3"
+  }
+}

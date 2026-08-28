@@ -1,17 +1,12 @@
 import { Fragment } from 'preact';
-import type { ComponentChildren, JSX } from 'preact';
+import type { ComponentChildren } from 'preact';
+import type { PickItem, PickProps } from '@ide/api/client';
+export type { PickItem, PickProps } from '@ide/api/client';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { activePick } from '../state/pick.js';
 import { fuzzy } from './fuzzy.js';
 import { Popup } from './popup.js';
 import { t } from '../i18n/index.js';
-import type { Size } from '../state/layout.js';
-
-export interface PickItem<T> {
-  key: string;
-  text: string;
-  value: T;
-}
 
 export function PickPopup<T>({
   id,
@@ -29,23 +24,7 @@ export function PickPopup<T>({
   footer,
   extra,
   onMouseDown,
-}: {
-  id: string;
-  title: string;
-  meta?: ComponentChildren;
-  items: Array<PickItem<T>>;
-  placeholder: string;
-  empty: string;
-  size: Size;
-  min: Size;
-  onClose: () => void;
-  onPick: (value: T) => void;
-  row: (value: T, matches: number[], picked: boolean) => JSX.Element;
-  section?: (value: T) => string;
-  footer?: ComponentChildren;
-  extra?: ComponentChildren;
-  onMouseDown?: (event: MouseEvent) => void;
-}) {
+}: PickProps<T>) {
   const field = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState('');

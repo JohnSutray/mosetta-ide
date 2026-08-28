@@ -6,8 +6,15 @@ import { signal } from '@preact/signals';
 import type { PluginInfo } from '@ide/protocol';
 import { complain, rpc, say } from './session.js';
 import { registerPluginCommand } from '../keys/commands.js';
-import { Plugin, remote, stub, type Found, type PluginToolbarEntry } from '../plugins/api.js';
-export type { PluginToolbarEntry } from '../plugins/api.js';
+import {
+  Plugin,
+  remote,
+  stub,
+  type ClientSurface,
+  type Found,
+  type PluginToolbarEntry,
+} from '@ide/api/client';
+export type { PluginToolbarEntry } from '@ide/api/client';
 
 export const pluginList = signal<PluginInfo[]>([]);
 export const pluginToolbar = signal<PluginToolbarEntry[]>([]);
@@ -23,7 +30,7 @@ export function pluginOpener(kind: string) {
   return openers.get(kind);
 }
 
-function expose(surface: Record<string, unknown>): void {
+function expose(surface: ClientSurface): void {
   (globalThis as Record<string, unknown>).__ideApi = {
     preact: {
       h: preact.h,
@@ -41,7 +48,7 @@ function expose(surface: Record<string, unknown>): void {
   };
 }
 
-export async function loadPlugins(surface: Record<string, unknown>): Promise<void> {
+export async function loadPlugins(surface: ClientSurface): Promise<void> {
   expose(surface);
   let list: PluginInfo[];
   try {

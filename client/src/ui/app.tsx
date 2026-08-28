@@ -60,6 +60,7 @@ import { PluginSurfaces } from './plugin-surfaces.js';
 import { PickPopup, highlight, shiftMatches } from './pick-popup.js';
 import { showTerminal } from '../state/terminals.js';
 import { loadPlugins } from '../state/plugins.js';
+import type { ClientSurface } from '@ide/api/client';
 import { ToolPicker } from './tool-picker.js';
 import { Tip } from './tip.js';
 import { Symbols } from './symbols.js';
@@ -74,7 +75,8 @@ export function App() {
 
   useEffect(() => {
     registerCommands();
-    void loadPlugins({ PickPopup, highlight, shiftMatches, showTerminal });
+    const surface: ClientSurface = { PickPopup, highlight, shiftMatches, showTerminal };
+    void loadPlugins(surface);
     const dead = missingCommands();
     if (dead.length) {
       console.warn('[web-ide] команды без реализации:', dead.join(', '));

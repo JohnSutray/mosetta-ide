@@ -1,4 +1,4 @@
-import { Plugin } from '@ide/api';
+import { Plugin } from '@ide/api/client';
 import NpmScripts from '@ide/plugin-npm-scripts';
 
 export default class Rerun extends Plugin {
