@@ -38,11 +38,14 @@ export declare function shiftMatches(matches: number[], from: number, length: nu
 
 export declare function showTerminal(open: () => Promise<TerminalInfo>): Promise<void>;
 
+export declare function t(key: string, params?: Record<string, string | number>): string;
+
 export interface ClientSurface {
   PickPopup: typeof PickPopup;
   highlight: typeof highlight;
   shiftMatches: typeof shiftMatches;
   showTerminal: typeof showTerminal;
+  t: typeof t;
 }
 
 export interface PluginToolbarEntry {
@@ -62,7 +65,7 @@ export interface PluginServices {
   readonly name: string;
   readonly rpc: { call(method: string, params?: unknown): Promise<unknown> };
   getPlugin<T>(ctor: new () => T): T;
-  command(id: string, title: string, run: () => void): void;
+  command(id: string, run: () => void): void;
   toolbar(entry: PluginToolbarEntry): void;
   surface(view: () => unknown): void;
   open(kind: string, handler: (found: Found) => void): void;

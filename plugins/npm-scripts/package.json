@@ -9,6 +9,7 @@
   "ide": {
     "client": "src/client.tsx",
     "server": "src/server.ts",
+    "strings": "src/en.json",
     "commands": {
       "scripts.open": "Скрипты package.json"
     }

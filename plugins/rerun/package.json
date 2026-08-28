@@ -5,12 +5,11 @@
   "type": "module",
   "ide": {
     "client": "src/client.ts",
+    "strings": "src/en.json",
     "commands": {
       "scripts.rerun": "Перезапустить последний скрипт"
     },
-    "needs": [
-      "@ide/plugin-npm-scripts"
-    ]
+    "needs": ["@ide/plugin-npm-scripts"]
   },
   "dependencies": {
     "@ide/api": "workspace:*",

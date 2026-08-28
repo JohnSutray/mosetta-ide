@@ -14,6 +14,7 @@ import {
   type Found,
   type PluginToolbarEntry,
 } from '@ide/api/client';
+import { addStrings } from '../i18n/index.js';
 export type { PluginToolbarEntry } from '@ide/api/client';
 
 export const pluginList = signal<PluginInfo[]>([]);
@@ -63,6 +64,7 @@ export async function loadPlugins(surface: ClientSurface): Promise<void> {
       complain(`${info.name}: ${info.error ?? 'не поднялся'}`);
       continue;
     }
+    addStrings(info.name, info.strings);
     if (!info.hasClient) continue;
     try {
       await activate(info);
@@ -100,8 +102,8 @@ function servicesFor(name: string) {
       call: (method: string, params: unknown) =>
         rpc.call('plugins.call', { name, method, params }),
     },
-    command(id: string, title: string, run: () => void) {
-      registerPluginCommand(id, title, run);
+    command(id: string, run: () => void) {
+      registerPluginCommand(id, run);
     },
     toolbar(entry: PluginToolbarEntry) {
       pluginToolbar.value = [...pluginToolbar.value, entry];

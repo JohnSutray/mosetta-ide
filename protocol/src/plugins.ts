@@ -5,6 +5,7 @@ export interface PluginManifest {
   client?: string;
   server?: string;
   commands?: Record<string, string>;
+  strings?: string;
   needs?: string[];
 }
 
@@ -18,5 +19,6 @@ export interface PluginInfo {
   hasServer: boolean;
   commands: Record<string, string>;
   needs: string[];
+  strings: Record<string, string>;
   error?: string;
 }

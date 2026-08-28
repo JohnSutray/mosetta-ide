@@ -1,5 +1,14 @@
 import { signal } from '@preact/signals';
-import { PickPopup, Plugin, highlight, remote, shiftMatches, showTerminal, stub } from '@ide/api/client';
+import {
+  PickPopup,
+  Plugin,
+  highlight,
+  remote,
+  shiftMatches,
+  showTerminal,
+  stub,
+  t,
+} from '@ide/api/client';
 
 export interface ScriptInfo {
   id: string;
@@ -8,26 +17,19 @@ export interface ScriptInfo {
   path: string;
 }
 
-const RU = {
-  title: 'Scripts',
-  filter: 'filter scripts',
-  empty: 'no scripts in this project',
-  toolbar: 'package.json scripts',
-};
-
 const open = signal(false);
 const known = signal<ScriptInfo[]>([]);
 
 export default class NpmScripts extends Plugin {
   override activate(): void {
-    this.command('scripts.open', 'Скрипты package.json', () => {
+    this.command('scripts.open', () => {
       open.value = !open.value;
       if (open.value) void this.refresh();
     });
 
     this.toolbar({
       id: 'scripts',
-      title: RU.toolbar,
+      title: 'toolbar.scripts',
       icon: 'npm',
       command: 'scripts.open',
       active: open,
@@ -59,7 +61,9 @@ export default class NpmScripts extends Plugin {
   async refresh(): Promise<void> {
     try {
       known.value = await this.list();
-    } catch {}
+    } catch (err) {
+      this.say(`scripts: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   private popup() {
@@ -74,10 +78,10 @@ export default class NpmScripts extends Plugin {
     return (
       <PickPopup
         id="scripts"
-        title={RU.title}
+        title={t('scripts.title')}
         items={items}
-        placeholder={RU.filter}
-        empty={RU.empty}
+        placeholder={t('scripts.filter')}
+        empty={t('scripts.empty')}
         size={{ w: 620, h: 420 }}
         min={{ w: 420, h: 240 }}
         onClose={() => (open.value = false)}

@@ -1,4 +1,4 @@
-import { Plugin } from '@ide/api/client';
+import { Plugin, t } from '@ide/api/client';
 import NpmScripts from '@ide/plugin-npm-scripts';
 
 export default class Rerun extends Plugin {
@@ -7,10 +7,10 @@ export default class Rerun extends Plugin {
   override activate(): void {
     const npm = this.getPlugin(NpmScripts);
 
-    this.command('scripts.rerun', 'Перезапустить последний скрипт', () => {
+    this.command('scripts.rerun', () => {
       const id = this.last ?? npm.scripts()[0]?.id ?? null;
       if (!id) {
-        this.say('нечего перезапускать — сперва запусти скрипт');
+        this.say(t('rerun.nothing'));
         return;
       }
       this.last = id;

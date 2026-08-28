@@ -1,0 +1,4 @@
+{
+  "command.scripts.rerun": "Rerun last script",
+  "rerun.nothing": "nothing to rerun — run a script first"
+}

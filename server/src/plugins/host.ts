@@ -72,6 +72,7 @@ export class PluginHost {
             hasServer: false,
             commands: {},
             needs: [],
+            strings: {},
             error: String(err),
           },
           dir: '',
@@ -126,6 +127,16 @@ export class PluginHost {
     const manifest: PluginManifest = { name: pkg.name, version: pkg.version, ...pkg.ide };
     const methods = new Map<string, CommandHandler>();
 
+    let strings: Record<string, string> = {};
+    if (manifest.strings) {
+      const at = path.join(dir, manifest.strings);
+      try {
+        strings = JSON.parse(await fs.readFile(at, 'utf8')) as Record<string, string>;
+      } catch (err) {
+        this.log.warn(`плагин ${name}: не прочитал ${at}: ${String(err)}`);
+      }
+    }
+
     const peers = manifest.needs ?? [];
     let clientCode: string | undefined;
     if (manifest.client) {
@@ -175,6 +186,7 @@ export class PluginHost {
         hasServer: Boolean(manifest.server),
         commands: manifest.commands ?? {},
         needs: peers,
+        strings,
       },
       dir,
       manifest,

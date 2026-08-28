@@ -4,19 +4,19 @@ import { stack } from '../state/popups.js';
 type Runner = () => void | Promise<void>;
 
 const registry = new Map<string, Runner>();
-const pluginTitles = new Map<string, string>();
+const fromPlugin = new Set<string>();
 
 export function registerCommand(id: CommandId, run: Runner): void {
   registry.set(id, run);
 }
 
-export function registerPluginCommand(id: string, title: string, run: Runner): void {
+export function registerPluginCommand(id: string, run: Runner): void {
   registry.set(id, run);
-  pluginTitles.set(id, title);
+  fromPlugin.add(id);
 }
 
 export function isPluginCommand(id: string): boolean {
-  return pluginTitles.has(id);
+  return fromPlugin.has(id);
 }
 
 const OPENS: Partial<Record<CommandId, string>> = {
@@ -54,11 +54,11 @@ export function hasCommand(id: string): boolean {
 }
 
 export function commandTitle(id: string): string {
-  return COMMANDS[id as CommandId] ?? pluginTitles.get(id) ?? id;
+  return COMMANDS[id as CommandId] ?? id;
 }
 
 function opensPopup(id: string): string | undefined {
-  return OPENS[id as CommandId] ?? (pluginTitles.has(id) ? id : undefined);
+  return OPENS[id as CommandId] ?? (fromPlugin.has(id) ? id : undefined);
 }
 
 export function missingCommands(): CommandId[] {

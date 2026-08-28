@@ -1,0 +1,7 @@
+{
+  "command.scripts.open": "npm scripts",
+  "toolbar.scripts": "package.json scripts",
+  "scripts.title": "Scripts",
+  "scripts.filter": "filter scripts",
+  "scripts.empty": "no scripts in this project"
+}

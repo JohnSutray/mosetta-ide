@@ -22,6 +22,19 @@ export function t(key: string, params?: Record<string, string | number>): string
   );
 }
 
+export function addStrings(from: string, more: Strings): void {
+  const now = { ...strings.value };
+  for (const [key, value] of Object.entries(more)) {
+    if (key in now && now[key] !== value) {
+      console.warn(`[web-ide] ${from}: ключ ${key} уже занят — беру его`);
+      continue;
+    }
+    now[key] = value;
+  }
+  strings.value = now;
+  for (const key of Object.keys(more)) missing.delete(key);
+}
+
 export function missingKeys(): string[] {
   return [...missing];
 }

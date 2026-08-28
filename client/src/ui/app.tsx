@@ -75,7 +75,7 @@ export function App() {
 
   useEffect(() => {
     registerCommands();
-    const surface: ClientSurface = { PickPopup, highlight, shiftMatches, showTerminal };
+    const surface: ClientSurface = { PickPopup, highlight, shiftMatches, showTerminal, t };
     void loadPlugins(surface);
     const dead = missingCommands();
     if (dead.length) {
