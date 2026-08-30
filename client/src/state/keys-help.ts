@@ -3,7 +3,7 @@ import type { KeyContext, KeyHost } from '@ide/protocol';
 import { settle } from './notifications.js';
 import { config } from './config.js';
 import { keyHost } from '../keys/host.js';
-import { appliesHere } from '../keys/dispatcher.js';
+import { keyRules } from '../keys/dispatcher.js';
 import { i18n } from '../i18n/index.js';
 
 export interface KeyEcho {
@@ -46,7 +46,7 @@ export class KeysHelp {
   private helpKey(): string {
     const bound = config.keymap
       .peek()
-      .bindings.find((binding) => binding.command === 'keys.show' && appliesHere(binding));
+      .bindings.find((binding) => binding.command === 'keys.show' && keyRules.appliesHere(binding));
     return bound ? keyHost.humanize(bound.key) : i18n.t('keys.title');
   }
 }

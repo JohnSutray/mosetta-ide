@@ -3,7 +3,7 @@ import { popups } from '../state/popups.js';
 import type { ComponentChildren } from 'preact';
 import type { KeyContext } from '@ide/protocol';
 import { useEffect, useRef } from 'preact/hooks';
-import { catchesKeys } from '../keys/dispatcher.js';
+import { keyRules } from '../keys/dispatcher.js';
 import { i18n } from '../i18n/index.js';
 
 export function Popup({
@@ -76,7 +76,7 @@ export function Popup({
         }}
       >
         <span class="popup-exit">
-          {!catchesKeys(keys) && (
+          {!keyRules.catchesKeys(keys) && (
             <span class="popup-esc" title={i18n.t('popup.escape')}>
               {i18n.t('popup.esc')}
             </span>

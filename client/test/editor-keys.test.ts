@@ -1,7 +1,7 @@
+import { inputMechanics } from '../src/editor/input-keymap.js';
 import { describe, expect, it } from 'vitest';
 import type { KeyBinding as CmBinding } from '@codemirror/view';
 import { WORLDS, inWorld, keymap } from './keymap-shared.js';
-import { droppedEmacsKeys, inputKeymap, mechanicsKeys } from '../src/editor/input-keymap.js';
 
 function macKey(binding: CmBinding): string {
   return binding.mac ?? binding.key ?? '';
@@ -21,7 +21,7 @@ const MECHANICS = new Set([
 
 describe('редактор не приносит чужих клавиш', () => {
   it('у редактора только механика ввода — и ничего сверх списка', () => {
-    const extra = inputKeymap.map(macKey).filter((key) => !MECHANICS.has(key));
+    const extra = inputMechanics.keymap.map(macKey).filter((key) => !MECHANICS.has(key));
     expect(
       extra,
       `редактор завёл свои клавиши помимо механики: ${extra.join(', ')}`,
@@ -29,13 +29,13 @@ describe('редактор не приносит чужих клавиш', () =>
   });
 
   it('эмаксовый слой на Control выкинут целиком', () => {
-    const alive = inputKeymap.map(macKey).filter((key) => droppedEmacsKeys.includes(key));
+    const alive = inputMechanics.keymap.map(macKey).filter((key) => inputMechanics.droppedEmacs.includes(key));
     expect(alive, `эмаксовые клавиши живы: ${alive.join(', ')}`).toEqual([]);
-    expect(droppedEmacsKeys).toContain('Ctrl-k');
+    expect(inputMechanics.droppedEmacs).toContain('Ctrl-k');
   });
 
   it('механика на месте: без неё редактор перестанет быть редактором', () => {
-    const keys = new Set(inputKeymap.map(macKey));
+    const keys = new Set(inputMechanics.keymap.map(macKey));
     for (const must of ['ArrowLeft', 'Backspace', 'Enter', 'Mod-a']) {
       expect(keys.has(must), `пропала механика ${must}`).toBe(true);
     }
@@ -50,7 +50,7 @@ describe('редактор не приносит чужих клавиш', () =>
     ]);
     const bindings = keymap().bindings;
     for (const world of WORLDS) {
-      const mechanics = mechanicsKeys(world.isMac);
+      const mechanics = inputMechanics.keys(world.isMac);
       const ours = new Map(
         inWorld(bindings, world)
           .filter((binding) => ['global', 'editor'].includes(binding.when ?? 'global'))

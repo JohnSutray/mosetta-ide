@@ -1,6 +1,6 @@
 import { config } from '../state/config.js';
 import { keyHost } from './host.js';
-import { appliesHere } from './dispatcher.js';
+import { keyRules } from './dispatcher.js';
 
 export function keysFor(command: string): string[] {
   return config.keymap.value.bindings
@@ -8,7 +8,7 @@ export function keysFor(command: string): string[] {
       (binding) =>
         binding.command === command &&
         (binding.when ?? 'global') === 'global' &&
-        appliesHere(binding),
+        keyRules.appliesHere(binding),
     )
     .map((binding) => keyHost.humanize(binding.key))
     .sort((a, b) => rank(a) - rank(b))

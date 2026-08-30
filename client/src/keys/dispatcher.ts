@@ -1,28 +1,19 @@
+import { inputMechanics } from '../editor/input-keymap.js';
 import { commands } from './commands.js';
 import { keysHelp } from '../state/keys-help.js';
 import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
-import { mechanicsKeys } from '../editor/input-keymap.js';
 import { keyHost } from './host.js';
 import { reserved } from './reserved.js';
 
 export type ContextResolver = () => KeyContext;
 
-export function appliesHere(binding: KeyBinding, scopes: KeyScope[] = keyHost.scopes): boolean {
-  if (!binding.where || binding.where.length === 0) return true;
-  return binding.where.some((scope) => scopes.includes(scope));
-}
-
 const CLIPBOARD = new Set<string>(['tree.copy', 'tree.cut', 'tree.paste']);
 
 const CAPTURING = new Set<KeyContext>(['keys']);
 
-export function catchesKeys(context: KeyContext): boolean {
-  return CAPTURING.has(context);
-}
-
 const OWNING = new Set<KeyContext>(['terminal']);
 
-const MECHANICS = mechanicsKeys(keyHost.isMac);
+const MECHANICS = inputMechanics.keys(keyHost.isMac);
 
 const TAKEN = reserved.in(keyHost.scopes);
 
@@ -35,24 +26,6 @@ const OURS = ['meta', 'control', 'alt'];
 interface Foreign {
   soft?: ReadonlySet<string>;
   left?: ReadonlySet<string>;
-}
-
-export function swallows(key: string, clip: ReadonlySet<string>, foreign: Foreign = {}): boolean {
-  const soft = foreign.soft ?? SOFT_TAKEN;
-  const left = foreign.left ?? LEFT_ALONE;
-  if (soft.has(key)) return true;
-  if (left.has(key)) return false;
-  if (clip.has(key)) return false;
-  if (MECHANICS.has(key)) return false;
-  return key.split('+').some((part) => OURS.includes(part));
-}
-
-export function complains(
-  key: string,
-  opts: { repeat: boolean; clip: ReadonlySet<string> },
-): boolean {
-  if (opts.repeat) return false;
-  return swallows(key, opts.clip);
 }
 
 function mainFromCode(code: string): string | null {
@@ -77,6 +50,60 @@ const BY_CHAR: Record<string, string> = {
 const BARE_MODIFIERS = new Set(['Shift', 'Control', 'Alt', 'Meta']);
 const DOUBLE_TAP_MS = 400;
 
+export class KeyRules {
+  appliesHere(binding: KeyBinding, scopes: KeyScope[] = keyHost.scopes): boolean {
+    if (!binding.where || binding.where.length === 0) return true;
+    return binding.where.some((scope) => scopes.includes(scope));
+  }
+
+  catchesKeys(context: KeyContext): boolean {
+    return CAPTURING.has(context);
+  }
+
+  swallows(key: string, clip: ReadonlySet<string>, foreign: Foreign = {}): boolean {
+    const soft = foreign.soft ?? SOFT_TAKEN;
+    const left = foreign.left ?? LEFT_ALONE;
+    if (soft.has(key)) return true;
+    if (left.has(key)) return false;
+    if (clip.has(key)) return false;
+    if (MECHANICS.has(key)) return false;
+    return key.split('+').some((part) => OURS.includes(part));
+  }
+
+  complains(
+    key: string,
+    opts: { repeat: boolean; clip: ReadonlySet<string> },
+  ): boolean {
+    if (opts.repeat) return false;
+    return this.swallows(key, opts.clip);
+  }
+
+  typedIntoField(event: KeyboardEvent): boolean {
+    if (event.metaKey || event.ctrlKey || event.altKey) return false;
+    const edits =
+      event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete';
+    if (!edits) return false;
+    return isTextField(event.target);
+  }
+
+  eventToKey(event: KeyboardEvent): string | null {
+    const main = event.code
+      ? mainFromCode(event.code)
+      : (BY_CHAR[event.key] ?? normalizeMainKey(event.key));
+    if (!main) return null;
+
+    const parts: string[] = [];
+    if (event.metaKey) parts.push('meta');
+    if (event.ctrlKey) parts.push('control');
+    if (event.altKey) parts.push('alt');
+    if (event.shiftKey) parts.push('shift');
+    parts.push(main);
+    return parts.join('+');
+  }
+}
+
+export const keyRules = new KeyRules();
+
 export class Dispatcher {
   private bindings: KeyBinding[] = [];
   private clipKeys: ReadonlySet<string> = new Set<string>();
@@ -94,7 +121,7 @@ export class Dispatcher {
   }
 
   setKeymap(keymap: Keymap): void {
-    this.bindings = keymap.bindings.filter((binding) => appliesHere(binding));
+    this.bindings = keymap.bindings.filter((binding) => keyRules.appliesHere(binding));
     this.clipKeys = new Set(
       this.bindings.filter((binding) => CLIPBOARD.has(binding.command)).map((b) => b.key),
     );
@@ -116,7 +143,7 @@ export class Dispatcher {
 
     keysHelp.echo(key, context, binding?.command ?? null);
     if (!binding) {
-      if (!CAPTURING.has(context) && complains(key, { repeat: event.repeat, clip: this.clipKeys })) {
+      if (!CAPTURING.has(context) && keyRules.complains(key, { repeat: event.repeat, clip: this.clipKeys })) {
         this.onUnbound(key);
       }
       return;
@@ -147,10 +174,10 @@ export class Dispatcher {
       this.lastTapAt = 0;
     }
 
-    const key = eventToKey(event);
-    if (!key || typedIntoField(event)) return;
+    const key = keyRules.eventToKey(event);
+    if (!key || keyRules.typedIntoField(event)) return;
     this.fire(key, event);
-    if (!event.defaultPrevented && swallows(key, this.clipKeys)) event.preventDefault();
+    if (!event.defaultPrevented && keyRules.swallows(key, this.clipKeys)) event.preventDefault();
   };
 
   private onKeyUp = (event: KeyboardEvent): void => {
@@ -181,35 +208,12 @@ export function installDispatcher(
   return new Dispatcher(resolveContext, onUnbound);
 }
 
-export function typedIntoField(event: KeyboardEvent): boolean {
-  if (event.metaKey || event.ctrlKey || event.altKey) return false;
-  const edits =
-    event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete';
-  if (!edits) return false;
-  return isTextField(event.target);
-}
-
 function isTextField(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;
   if (!el) return false;
   if (el.isContentEditable) return true;
   const tag = el.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA';
-}
-
-export function eventToKey(event: KeyboardEvent): string | null {
-  const main = event.code
-    ? mainFromCode(event.code)
-    : (BY_CHAR[event.key] ?? normalizeMainKey(event.key));
-  if (!main) return null;
-
-  const parts: string[] = [];
-  if (event.metaKey) parts.push('meta');
-  if (event.ctrlKey) parts.push('control');
-  if (event.altKey) parts.push('alt');
-  if (event.shiftKey) parts.push('shift');
-  parts.push(main);
-  return parts.join('+');
 }
 
 function isBareModifier(event: KeyboardEvent): boolean {

@@ -1,3 +1,4 @@
+import { inputMechanics } from '../editor/input-keymap.js';
 import { keyContexts } from '../keys/context.js';
 import { treeFollow } from '../state/tree-follow.js';
 import { commands } from '../keys/commands.js';
@@ -24,7 +25,6 @@ import { darcula } from '../editor/darcula.js';
 import { languages } from '../editor/languages.js';
 import { codePainter } from '../editor/paint-line.js';
 import { lineDiff } from '../editor/line-diff.js';
-import { inputKeymap } from '../editor/input-keymap.js';
 import { registerCommands } from '../commands.js';
 import { installDispatcher } from '../keys/dispatcher.js';
 import { SearchEverywhere } from './search-everywhere.js';
@@ -122,7 +122,7 @@ export function App() {
       unstable_darcula: darcula.extension,
       unstable_textStyle: (style) => darcula.textStyle(style),
       unstable_languageFor: (path) => languages.of(path),
-      unstable_inputKeymap: inputKeymap,
+      unstable_inputKeymap: inputMechanics.keymap,
     };
     void loadPlugins(surface, store).then(() => {
       const dead = commands.missing();
