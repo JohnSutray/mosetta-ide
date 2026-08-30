@@ -17,7 +17,7 @@ import { doc, lsp, rpc, session } from '../state/session.js';
 import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
-import { git, resetGit } from '../state/git.js';
+import { git } from '../state/git.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { chordHeld } from '../keys/chords.js';
@@ -44,7 +44,7 @@ import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
 import { MergeScreen } from './merge.js';
 import { PluginSurfaces } from './plugin-surfaces.js';
-import { PickPopup, highlight, shiftMatches } from './pick-popup.js';
+import { PickPopup, matches } from './pick-popup.js';
 import { loadPlugins, pluginList } from '../state/plugins.js';
 import { goTo } from './go-to.js';
 import type { ClientSurface } from '@ide/api/client';
@@ -107,8 +107,8 @@ export function App() {
       wantsFocus: editorFocus.wanted,
       chordHeld,
       unstable_PickPopup: PickPopup,
-      unstable_highlight: highlight,
-      unstable_shiftMatches: shiftMatches,
+      unstable_highlight: (text, at) => matches.highlight(text, at),
+      unstable_shiftMatches: (at, from, len) => matches.shiftMatches(at, from, len),
       unstable_showTerminal: terminals.show,
       unstable_showTip: tips.show,
       unstable_hideTip: tips.hide,
@@ -165,7 +165,6 @@ export function App() {
   useEffect(() => {
     void tools.refresh();
     if (!ws) {
-      resetGit();
       merge.reset();
       visits.forget();
       return;

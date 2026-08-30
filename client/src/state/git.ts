@@ -1,4 +1,4 @@
-import { rpc } from './session.js';
+import { rpc, session } from './session.js';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
 import type {
   GitAction,
@@ -380,7 +380,7 @@ export const git = new Git();
 export const branchesWindow = new BranchesWindow(git);
 export const pushWindow = new PushWindow(git);
 
-export function resetGit(): void {
+session.onReset(() => {
   git.reset();
   branchesWindow.reset();
-}
+});

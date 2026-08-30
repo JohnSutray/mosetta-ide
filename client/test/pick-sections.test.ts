@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { grouped, shiftMatches, type PickItem } from '../src/ui/pick-popup.js';
+import { grouped, matches, type PickItem } from '../src/ui/pick-popup.js';
 
 function row(id: string): { item: PickItem<string>; matches: number[] } {
   return { item: { key: id, text: id, value: id }, matches: [] };
@@ -26,10 +26,10 @@ describe('секции списка', () => {
 
 describe('подсветка под кусок строки', () => {
   it('сдвигает позиции и выбрасывает чужие', () => {
-    expect(shiftMatches([6, 12, 13, 14], 12, 3)).toEqual([0, 1, 2]);
+    expect(matches.shiftMatches([6, 12, 13, 14], 12, 3)).toEqual([0, 1, 2]);
   });
 
   it('пустой список остаётся пустым', () => {
-    expect(shiftMatches([], 5, 3)).toEqual([]);
+    expect(matches.shiftMatches([], 5, 3)).toEqual([]);
   });
 });

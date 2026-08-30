@@ -134,27 +134,31 @@ export function grouped<T>(
     .map((entry) => entry.row);
 }
 
-export function shiftMatches(matches: number[], from: number, length: number): number[] {
-  return matches
-    .map((at) => at - from)
-    .filter((at) => at >= 0 && at < length);
+export class Matches {
+  shiftMatches(matches: number[], from: number, length: number): number[] {
+    return matches
+      .map((at) => at - from)
+      .filter((at) => at >= 0 && at < length);
+  }
+
+  highlight(text: string, matches: number[]): ComponentChildren {
+    if (matches.length === 0) return text;
+    const hot = new Set(matches);
+    const parts: ComponentChildren[] = [];
+    let run = '';
+    let runHot = hot.has(0);
+    for (let i = 0; i < text.length; i += 1) {
+      const isHot = hot.has(i);
+      if (isHot !== runHot) {
+        parts.push(runHot ? <b key={i}>{run}</b> : run);
+        run = '';
+        runHot = isHot;
+      }
+      run += text[i];
+    }
+    parts.push(runHot ? <b key="last">{run}</b> : run);
+    return parts;
+  }
 }
 
-export function highlight(text: string, matches: number[]): ComponentChildren {
-  if (matches.length === 0) return text;
-  const hot = new Set(matches);
-  const parts: ComponentChildren[] = [];
-  let run = '';
-  let runHot = hot.has(0);
-  for (let i = 0; i < text.length; i += 1) {
-    const isHot = hot.has(i);
-    if (isHot !== runHot) {
-      parts.push(runHot ? <b key={i}>{run}</b> : run);
-      run = '';
-      runHot = isHot;
-    }
-    run += text[i];
-  }
-  parts.push(runHot ? <b key="last">{run}</b> : run);
-  return parts;
-}
+export const matches = new Matches();
