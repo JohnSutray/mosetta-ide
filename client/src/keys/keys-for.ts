@@ -1,9 +1,9 @@
-import { keymap } from '../state/config.js';
+import { config } from '../state/config.js';
 import { keyHost } from './host.js';
 import { appliesHere } from './dispatcher.js';
 
 export function keysFor(command: string): string[] {
-  return keymap.value.bindings
+  return config.keymap.value.bindings
     .filter(
       (binding) =>
         binding.command === command &&

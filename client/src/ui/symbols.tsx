@@ -1,5 +1,5 @@
+import { config } from '../state/config.js';
 import { useEffect, useRef } from 'preact/hooks';
-import { editorSettings } from '../state/config.js';
 import { widthOf } from '../state/layout.js';
 import { codePainter } from '../editor/paint-line.js';
 import { Popup } from './popup.js';
@@ -119,7 +119,7 @@ export function Symbols() {
             path={preview.path}
             text={preview.text}
             line={preview.line}
-            settings={editorSettings()}
+            settings={config.editor()}
           />
         ) : null}
       </div>

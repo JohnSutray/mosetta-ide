@@ -2,9 +2,9 @@ import { doc, rpc } from './session.js';
 import { complain } from './notifications.js';
 import { tree } from './tree-ops.js';
 import { computed } from '@preact/signals';
-import { followEditor, settings } from './config.js';
+import { config } from './config.js';
 
-export const following = computed(() => settings.value !== null && followEditor());
+export const following = computed(() => config.settings.value !== null && config.followEditor());
 
 export async function toggleFollow(): Promise<void> {
   const next = !following.peek();

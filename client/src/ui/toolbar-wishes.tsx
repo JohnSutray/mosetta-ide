@@ -1,3 +1,5 @@
+import { terminals } from '../state/terminals.js';
+import { search } from '../state/search.js';
 import { session } from '../state/session.js';
 import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
@@ -6,8 +8,6 @@ import { branchesWindow, git, pushWindow } from '../state/git.js';
 import type { TerminalInfo } from '@ide/protocol';
 import { computed } from '@preact/signals';
 import { runCommand } from '../keys/commands.js';
-import { activeTerminal, closeTerminal, focusTerminal, terminals } from '../state/terminals.js';
-import { searchOpen } from '../state/search.js';
 import { keysHelpOpen } from '../state/keys-help.js';
 import { following } from '../state/tree-follow.js';
 import { hideTip, showTip } from '../state/tip.js';
@@ -53,7 +53,7 @@ export function registerToolbarWishes(store: Registry): void {
     title: 'toolbar.search',
     command: 'search.everywhere',
     icon: ours('search'),
-    active: searchOpen,
+    active: search.open,
   });
   button({
     id: 'git.branches',
@@ -115,7 +115,7 @@ export function registerToolbarWishes(store: Registry): void {
 function TerminalChips() {
   return (
     <>
-      {terminals.value.map((info) => (
+      {terminals.list.value.map((info) => (
         <TerminalChip key={info.name} info={info} />
       ))}
     </>
@@ -200,7 +200,7 @@ function ToolButton({
 }
 
 function TerminalChip({ info }: { info: TerminalInfo }) {
-  const isCurrent = activeTerminal.value === info.name;
+  const isCurrent = terminals.active.value === info.name;
   const classes = [
     'term-chip',
     isCurrent ? 'is-current' : '',
@@ -216,7 +216,7 @@ function TerminalChip({ info }: { info: TerminalInfo }) {
       }${
         info.busyUnknown ? ` · ${t('terminal.busyUnknown', { why: info.busyUnknown })}` : ''
       }${info.alive ? '' : ` (${t('terminal.dead', { code: info.exitCode ?? '?' })})`}`}
-      onClick={() => focusTerminal(info.name)}
+      onClick={() => terminals.focus(info.name)}
     >
       <span class="term-chip-name">{info.title}</span>
       <span
@@ -224,7 +224,7 @@ function TerminalChip({ info }: { info: TerminalInfo }) {
         title={t('terminal.close')}
         onClick={(event) => {
           event.stopPropagation();
-          void closeTerminal(info.name);
+          void terminals.close(info.name);
         }}
       >
         ×

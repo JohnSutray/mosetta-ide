@@ -2,7 +2,7 @@ import { signal } from '@preact/signals';
 import type { LogLine, WorkspaceInfo } from '@ide/protocol';
 import { RpcClient, RpcFailure } from '../rpc/client.js';
 import { complain } from './notifications.js';
-import { applyConfig } from './config.js';
+import { config } from './config.js';
 import { FileTree } from './file-tree.js';
 import { Lsp } from './lsp.js';
 import { Doc } from './doc.js';
@@ -105,7 +105,7 @@ export class Session {
       this.everConnected = true;
     });
 
-    this.rpc.on('config.changed', (bundle) => applyConfig(bundle));
+    this.rpc.on('config.changed', (bundle) => config.apply(bundle));
 
     this.rpc.on('workspace.list', (list) => {
       this.workspaces.value = list;

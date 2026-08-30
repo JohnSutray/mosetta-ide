@@ -2,124 +2,127 @@ import { doc, rpc } from './session.js';
 import { signal } from '@preact/signals';
 import type { Visit } from '@ide/protocol';
 
-const FAR = 12;
+export class Visits {
+  readonly list = signal<Visit[]>([]);
+  readonly at = signal(-1);
 
-const LIMIT = 30;
+  private readonly far = 12;
+  private readonly limit = 30;
+  private readonly saveDelay = 800;
+  private readonly settleDelay = 400;
 
-export const visits = signal<Visit[]>([]);
-export const visitAt = signal(-1);
+  private walking = false;
+  private timer: ReturnType<typeof setTimeout> | null = null;
 
-let walking = false;
-let saveTimer: ReturnType<typeof setTimeout> | null = null;
+  canGoBack(): boolean {
+    return this.at.value > 0;
+  }
 
-export function canGoBack(): boolean {
-  return visitAt.value > 0;
-}
+  canGoForward(): boolean {
+    return this.at.value >= 0 && this.at.value < this.list.value.length - 1;
+  }
 
-export function canGoForward(): boolean {
-  return visitAt.value >= 0 && visitAt.value < visits.value.length - 1;
-}
+  async load(): Promise<void> {
+    try {
+      const list = await rpc.call('visits.get', null);
+      this.list.value = list;
+      this.at.value = list.length - 1;
+    } catch {
+      this.forget();
+    }
+  }
 
-export async function loadVisits(): Promise<void> {
-  try {
-    const list = await rpc.call('visits.get', null);
-    visits.value = list;
-    visitAt.value = list.length - 1;
-  } catch {
-    visits.value = [];
-    visitAt.value = -1;
+  forget(): void {
+    this.list.value = [];
+    this.at.value = -1;
+  }
+
+  visit(path: string, line: number, character = 0): void {
+    if (this.walking) return;
+    const next = this.next(this.list.value, this.at.value, path, line, character);
+    if (!next) return;
+    this.list.value = next.list;
+    this.at.value = next.at;
+    this.schedule();
+  }
+
+  next(
+    list: Visit[],
+    at: number,
+    path: string,
+    line: number,
+    character = 0,
+    far = this.far,
+    limit = this.limit,
+  ): { list: Visit[]; at: number } | null {
+    const here = list[at];
+    if (here && here.path === path && Math.abs(here.line - line) < far) {
+      if (here.line === line && (here.character ?? 0) === character) return null;
+      const updated = [...list];
+      updated[at] = { path, line, character };
+      return { list: updated, at };
+    }
+    const kept = list.slice(0, at + 1).slice(-(limit - 1));
+    const next = [...kept, { path, line, character }];
+    return { list: next, at: next.length - 1 };  }
+
+  back(): void {
+    if (!this.canGoBack()) return;
+    void this.jump(this.at.value - 1);
+  }
+
+  forward(): void {
+    if (!this.canGoForward()) return;
+    void this.jump(this.at.value + 1);
+  }
+
+  installMouseNav(): () => void {
+    const noMenu = (event: Event) => event.preventDefault();
+    window.addEventListener('contextmenu', noMenu, { capture: true });
+
+    const onDown = (event: MouseEvent) => {
+      if (event.button !== 3 && event.button !== 4) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.button === 3) this.back();
+      else this.forward();
+    };
+    const swallow = (event: MouseEvent) => {
+      if (event.button === 3 || event.button === 4) event.preventDefault();
+    };
+    window.addEventListener('mousedown', onDown, { capture: true });
+    window.addEventListener('auxclick', swallow, { capture: true });
+    window.addEventListener('mouseup', swallow, { capture: true });
+    return () => {
+      window.removeEventListener('contextmenu', noMenu, { capture: true });
+      window.removeEventListener('mousedown', onDown, { capture: true });
+      window.removeEventListener('auxclick', swallow, { capture: true });
+      window.removeEventListener('mouseup', swallow, { capture: true });
+    };
+  }
+
+  private async jump(to: number): Promise<void> {
+    const target = this.list.value[to];
+    if (!target) return;
+    this.walking = true;
+    this.at.value = to;
+    try {
+      if (doc.open.peek()?.path !== target.path) await doc.openAt(target.path);
+      doc.reveal(target.path, target.line, target.character);
+    } finally {
+      setTimeout(() => {
+        this.walking = false;
+      }, this.settleDelay);
+    }
+  }
+
+  private schedule(): void {
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      void rpc.call('visits.set', { visits: this.list.peek() }).catch(() => undefined);
+    }, this.saveDelay);
   }
 }
 
-export function forgetVisits(): void {
-  visits.value = [];
-  visitAt.value = -1;
-}
-
-export function visit(path: string, line: number, character = 0): void {
-  if (walking) return;
-  const next = nextVisits(visits.value, visitAt.value, path, line, character);
-  if (!next) return;
-  visits.value = next.list;
-  visitAt.value = next.at;
-  schedule();
-}
-
-export function nextVisits(
-  list: Visit[],
-  at: number,
-  path: string,
-  line: number,
-  character = 0,
-  far = FAR,
-  limit = LIMIT,
-): { list: Visit[]; at: number } | null {
-  const here = list[at];
-  if (here && here.path === path && Math.abs(here.line - line) < far) {
-    if (here.line === line && (here.character ?? 0) === character) return null;
-    const updated = [...list];
-    updated[at] = { path, line, character };
-    return { list: updated, at };
-  }
-  const kept = list.slice(0, at + 1).slice(-(limit - 1));
-  const next = [...kept, { path, line, character }];
-  return { list: next, at: next.length - 1 };
-}
-
-export function goBack(): void {
-  if (!canGoBack()) return;
-  void jump(visitAt.value - 1);
-}
-
-export function goForward(): void {
-  if (!canGoForward()) return;
-  void jump(visitAt.value + 1);
-}
-
-async function jump(to: number): Promise<void> {
-  const target = visits.value[to];
-  if (!target) return;
-  walking = true;
-  visitAt.value = to;
-  try {
-    if (doc.open.peek()?.path !== target.path) await doc.openAt(target.path);
-    doc.reveal(target.path, target.line, target.character);
-  } finally {
-    setTimeout(() => {
-      walking = false;
-    }, 400);
-  }
-}
-
-function schedule(): void {
-  if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    saveTimer = null;
-    void rpc.call('visits.set', { visits: visits.peek() }).catch(() => undefined);
-  }, 800);
-}
-
-export function installMouseNav(): () => void {
-  const noMenu = (event: Event) => event.preventDefault();
-  window.addEventListener('contextmenu', noMenu, { capture: true });
-
-  const onDown = (event: MouseEvent) => {
-    if (event.button !== 3 && event.button !== 4) return;
-    event.preventDefault();
-    event.stopPropagation();
-    if (event.button === 3) goBack();
-    else goForward();
-  };
-  const swallow = (event: MouseEvent) => {
-    if (event.button === 3 || event.button === 4) event.preventDefault();
-  };
-  window.addEventListener('mousedown', onDown, { capture: true });
-  window.addEventListener('auxclick', swallow, { capture: true });
-  window.addEventListener('mouseup', swallow, { capture: true });
-  return () => {
-    window.removeEventListener('contextmenu', noMenu, { capture: true });
-    window.removeEventListener('mousedown', onDown, { capture: true });
-    window.removeEventListener('auxclick', swallow, { capture: true });
-    window.removeEventListener('mouseup', swallow, { capture: true });
-  };
-}
+export const visits = new Visits();

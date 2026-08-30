@@ -1,3 +1,6 @@
+import { config } from '../state/config.js';
+import { terminals } from '../state/terminals.js';
+import { visits } from '../state/visits.js';
 import { complain } from '../state/notifications.js';
 import { doc, lsp, rpc, session } from '../state/session.js';
 import { merge } from '../state/merge.js';
@@ -6,7 +9,6 @@ import { tools } from '../state/tools.js';
 import { git, resetGit } from '../state/git.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
-import { keymap as keymapSignal, settings as settingsSignal } from '../state/config.js';
 import { headFor, loadHead, showHunk } from '../state/git-marks.js';
 import { askSymbol } from '../state/symbols.js';
 import { takeFocusOnMount, wantsFocus } from '../state/editor.js';
@@ -18,8 +20,6 @@ import { lineDiff } from '../editor/line-diff.js';
 import { inputKeymap } from '../editor/input-keymap.js';
 import { registerCommands, resolveContext, missingCommands } from '../commands.js';
 import { installDispatcher } from '../keys/dispatcher.js';
-import { refreshTerminals } from '../state/terminals.js';
-import { forgetVisits, installMouseNav, loadVisits, visit } from '../state/visits.js';
 import { follow, following } from '../state/tree-follow.js';
 import { SearchEverywhere } from './search-everywhere.js';
 import { Branches } from './branches.js';
@@ -43,7 +43,6 @@ import { KeysHelp } from './keys-help.js';
 import { MergeScreen } from './merge.js';
 import { PluginSurfaces } from './plugin-surfaces.js';
 import { PickPopup, highlight, shiftMatches } from './pick-popup.js';
-import { showTerminal } from '../state/terminals.js';
 import { loadPlugins, pluginList } from '../state/plugins.js';
 import { goTo } from './go-to.js';
 import type { ClientSurface } from '@ide/api/client';
@@ -92,7 +91,7 @@ export function App() {
       goTo,
       runCommand,
       keysFor,
-      settings: settingsSignal,
+      settings: config.settings,
       openDoc: doc.open,
       editDoc: doc.edit,
       closeFile: doc.close,
@@ -101,7 +100,7 @@ export function App() {
       externalEpoch: doc.externalEpoch,
       pendingReveal: doc.pendingReveal,
       headFor,
-      visit,
+      visit: visits.visit,
       hover: (path, line, character) => rpc.call('lsp.hover', { path, line, character }),
       takeFocusOnMount,
       wantsFocus,
@@ -109,7 +108,7 @@ export function App() {
       unstable_PickPopup: PickPopup,
       unstable_highlight: highlight,
       unstable_shiftMatches: shiftMatches,
-      unstable_showTerminal: showTerminal,
+      unstable_showTerminal: terminals.show,
       unstable_showTip: showTip,
       unstable_hideTip: hideTip,
       unstable_Resizer: Resizer,
@@ -120,7 +119,7 @@ export function App() {
       unstable_dc: darcula.palette,
       unstable_paintCode: (text, path) => codePainter.paint(text, path),
       unstable_darcula: darcula.extension,
-      unstable_textStyle: (settings) => darcula.textStyle(settings),
+      unstable_textStyle: (style) => darcula.textStyle(style),
       unstable_languageFor: (path) => languages.of(path),
       unstable_inputKeymap: inputKeymap,
     };
@@ -129,9 +128,9 @@ export function App() {
       if (dead.length) console.warn('[web-ide] команды без реализации:', dead.join(', '));
     });
     const dispatcher = installDispatcher(resolveContext, (key) => noteUnbound(key));
-    dispatcher.setKeymap(keymapSignal.peek());
-    const stop = keymapSignal.subscribe((value) => dispatcher.setKeymap(value));
-    const mouse = installMouseNav();
+    dispatcher.setKeymap(config.keymap.peek());
+    const stop = config.keymap.subscribe((value) => dispatcher.setKeymap(value));
+    const mouse = visits.installMouseNav();
     return () => {
       stop();
       dispatcher.dispose();
@@ -146,7 +145,7 @@ export function App() {
   useEffect(() => {
     if (!file) return;
     const at = doc.pendingReveal.value;
-    visit(file.path, at?.path === file.path ? at.line : 0, at?.character ?? 0);
+    visits.visit(file.path, at?.path === file.path ? at.line : 0, at?.character ?? 0);
   }, [file?.path]);
 
   useEffect(() => {
@@ -167,12 +166,12 @@ export function App() {
     if (!ws) {
       resetGit();
       merge.reset();
-      forgetVisits();
+      visits.forget();
       return;
     }
-    void refreshTerminals();
+    void terminals.refresh();
     void git.refresh();
-    void loadVisits();
+    void visits.load();
     void merge.load();
   }, [ws?.id]);
 

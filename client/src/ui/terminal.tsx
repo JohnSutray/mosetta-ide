@@ -1,14 +1,14 @@
+import { terminals } from '../state/terminals.js';
 import { rpc } from '../state/session.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { darcula } from '../editor/darcula.js';
-import { activeTerminal, onTerminalData } from '../state/terminals.js';
 import { t } from '../i18n/index.js';
 
 export function TerminalView() {
   const host = useRef<HTMLDivElement>(null);
-  const name = activeTerminal.value;
+  const name = terminals.active.value;
 
   useEffect(() => {
     if (!host.current || !name) return;
@@ -44,7 +44,7 @@ export function TerminalView() {
     const push = (data: string) => {
       if (!disposed) term.write(data);
     };
-    const offData = onTerminalData(name, push);
+    const offData = terminals.onData(name, push);
 
     const offInput = term.onData((data) => {
       void rpc.call('term.write', { name, data }).catch(() => undefined);

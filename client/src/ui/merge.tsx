@@ -1,7 +1,6 @@
+import { config } from '../state/config.js';
 import { merge } from '../state/merge.js';
 import type { MergeFile } from '@ide/protocol';
-import { DEFAULT_SETTINGS_FALLBACK } from '../state/fallback.js';
-import { settings as settingsSignal } from '../state/config.js';
 import { MergeColumns } from './merge-columns.js';
 import { Popup } from './popup.js';
 import { FileIcon } from './file-icons.js';
@@ -12,7 +11,7 @@ export function MergeScreen() {
   if (!merge.open.value) return null;
   const session = merge.session.value;
   const file = merge.file.value;
-  const settings = settingsSignal.value?.editor ?? DEFAULT_SETTINGS_FALLBACK.editor;
+  const settings = config.editor();
   if (!session || !file) return null;
 
   const whole = file.left.text === null || file.right.text === null;
@@ -127,7 +126,7 @@ function WholeFile({ file }: { file: MergeFile }) {
   const survivor = file.left.text === null ? 'right' : 'left';
   const side = file[survivor];
   const gone = file[survivor === 'left' ? 'right' : 'left'];
-  const settings = settingsSignal.value?.editor ?? DEFAULT_SETTINGS_FALLBACK.editor;
+  const settings = config.editor();
 
   return (
     <div class="merge-whole">

@@ -1,41 +1,30 @@
+import { config } from '../state/config.js';
+import { search } from '../state/search.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { Popup } from './popup.js';
 import { CodeView } from '../editor/code-view.js';
-import { editorSettings } from '../state/config.js';
 import { t } from '../i18n/index.js';
 import type { IndexHit } from '@ide/protocol';
-import {
-  acceptSelected,
-  closeSearch,
-  searchHits,
-  searchOpen,
-  searchPreview,
-  searchQuery,
-  searchRows,
-  searchSelected,
-  selectAt,
-  setQuery,
-} from '../state/search.js';
 
 export function SearchEverywhere() {
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!searchOpen.value) return;
+    if (!search.open.value) return;
     input.current?.focus();
     input.current?.select();
-  }, [searchOpen.value]);
+  }, [search.open.value]);
 
   useEffect(() => {
     list.current
       ?.querySelector('.se-row.is-current')
       ?.scrollIntoView({ block: 'nearest' });
-  }, [searchSelected.value, searchHits.value]);
+  }, [search.selected.value, search.hits.value]);
 
-  if (!searchOpen.value) return null;
+  if (!search.open.value) return null;
 
-  const preview = searchPreview.value;
+  const preview = search.preview.value;
 
   return (
     <Popup
@@ -44,24 +33,24 @@ export function SearchEverywhere() {
       class="se"
       size={{ w: 1100, h: 640 }}
       min={{ w: 560, h: 300 }}
-      onClose={closeSearch}
+      onClose={() => search.close()}
     >
         <div class="se-input-row">
           <span class="se-icon">⌕</span>
           <input
             ref={input}
             class="se-input"
-            value={searchQuery.value}
+            value={search.query.value}
             spellcheck={false}
             placeholder={t('search.placeholder')}
-            onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+            onInput={(e) => search.setQuery((e.target as HTMLInputElement).value)}
           />
-          <span class="se-count">{searchHits.value.length}</span>
+          <span class="se-count">{search.hits.value.length}</span>
         </div>
 
         <div class="se-body">
           <div class="se-list" ref={list}>
-            {searchRows.value.map((row, i) =>
+            {search.rows.value.map((row, i) =>
               'header' in row ? (
                 <div class="se-section" key={`h${i}`}>
                   {t(row.header)}
@@ -70,13 +59,13 @@ export function SearchEverywhere() {
                 <Row
                   key={row.hit.label + row.at}
                   hit={row.hit}
-                  current={row.at === searchSelected.value}
-                  onPick={() => selectAt(row.at)}
-                  onOpen={acceptSelected}
+                  current={row.at === search.selected.value}
+                  onPick={() => search.selectAt(row.at)}
+                  onOpen={() => search.accept()}
                 />
               ),
             )}
-            {searchHits.value.length === 0 && searchQuery.value.trim() !== '' && (
+            {search.hits.value.length === 0 && search.query.value.trim() !== '' && (
               <div class="se-empty">{t('search.empty')}</div>
             )}
           </div>
@@ -88,7 +77,7 @@ export function SearchEverywhere() {
                 path={preview.path}
                 text={preview.text}
                 line={preview.line}
-                settings={editorSettings()}
+                settings={config.editor()}
               />
             ) : (
               <div class="se-empty">{t('search.preview')}</div>

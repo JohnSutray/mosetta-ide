@@ -1,6 +1,6 @@
+import { config } from '../state/config.js';
 import { Fragment } from 'preact';
 import type { KeyBinding, KeyContext, KeyScope } from '@ide/protocol';
-import { keymap as keymapSignal } from '../state/config.js';
 import { closeKeysHelp, keysHelpOpen, lastKey, viewHost } from '../state/keys-help.js';
 import { keyHost } from '../keys/host.js';
 import { reservedIn } from '../keys/reserved.js';
@@ -10,7 +10,7 @@ import { Popup } from './popup.js';
 export function KeysHelp() {
   if (!keysHelpOpen.value) return null;
 
-  const bindings = keymapSignal.value.bindings;
+  const bindings = config.keymap.value.bindings;
   const echo = lastKey.value;
   const host = viewHost.value ?? keyHost.host;
   const elsewhere = host !== keyHost.host;

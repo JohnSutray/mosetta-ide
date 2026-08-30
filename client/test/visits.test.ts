@@ -1,12 +1,12 @@
+import { visits } from '../src/state/visits.js';
 import { describe, expect, it } from 'vitest';
 import type { Visit } from '@ide/protocol';
-import { nextVisits } from '../src/state/visits.js';
 
 const FAR = 12;
 const LIMIT = 30;
 
 function push(list: Visit[], at: number, path: string, line: number, character = 0) {
-  return nextVisits(list, at, path, line, character, FAR, LIMIT);
+  return visits.next(list, at, path, line, character, FAR, LIMIT);
 }
 
 describe('список посещений', () => {

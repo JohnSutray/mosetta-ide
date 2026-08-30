@@ -1,3 +1,6 @@
+import { terminals } from './state/terminals.js';
+import { visits } from './state/visits.js';
+import { search } from './state/search.js';
 import { terminalPanelVisible, treePanelVisible } from './ui/panels.js';
 import { doc, fileTree } from './state/session.js';
 import { prompt, tree, treeOps } from './state/tree-ops.js';
@@ -8,22 +11,19 @@ import { branchesWindow, pushWindow } from './state/git.js';
 import { registerCommand, missingCommands } from './keys/commands.js';
 import { toggleFollow } from './state/tree-follow.js';
 import { resolveContext } from './keys/context.js';
-import { acceptSelected, closeSearch, moveSelection, openSearch } from './state/search.js';
 import { focusEditor } from './state/editor.js';
 import { closeTop } from './state/popups.js';
 import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
 import { toggleKeysHelp } from './state/keys-help.js';
-import { goBack, goForward } from './state/visits.js';
 import { accept as acceptSymbol, step as stepSymbol, symbolList } from './state/symbols.js';
-import { createTerminal } from './state/terminals.js';
 
 export function registerCommands(): void {
   registerCommand('file.save', () => doc.save());
   registerCommand('file.reload', () => doc.reload());
 
-  registerCommand('nav.back', () => goBack());
-  registerCommand('nav.forward', () => goForward());
+  registerCommand('nav.back', () => visits.back());
+  registerCommand('nav.forward', () => visits.forward());
 
   registerCommand('key.reserved', () => {});
 
@@ -67,7 +67,7 @@ export function registerCommands(): void {
   registerCommand('panel.terminal', () => {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });
-  registerCommand('terminal.create', () => createTerminal());
+  registerCommand('terminal.create', () => terminals.create());
   registerCommand('terminal.shell', () => tools.open('shell'));
   registerCommand('tools.packageManager', () => tools.open('manager'));
 
@@ -100,11 +100,11 @@ export function registerCommands(): void {
     closeTop();
   });
 
-  registerCommand('search.everywhere', () => openSearch());
-  registerCommand('search.next', () => moveSelection(1));
-  registerCommand('search.prev', () => moveSelection(-1));
-  registerCommand('search.accept', () => acceptSelected());
-  registerCommand('search.close', () => closeSearch());
+  registerCommand('search.everywhere', () => search.show());
+  registerCommand('search.next', () => search.move(1));
+  registerCommand('search.prev', () => search.move(-1));
+  registerCommand('search.accept', () => search.accept());
+  registerCommand('search.close', () => search.close());
 }
 
 export { missingCommands };

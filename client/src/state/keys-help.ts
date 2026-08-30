@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import type { KeyContext, KeyHost } from '@ide/protocol';
 import { settle } from './notifications.js';
-import { keymap } from './config.js';
+import { config } from './config.js';
 import { keyHost } from '../keys/host.js';
 import { appliesHere } from '../keys/dispatcher.js';
 import { t } from '../i18n/index.js';
@@ -32,7 +32,7 @@ export function noteUnbound(key: string): void {
 }
 
 function helpKey(): string {
-  const bound = keymap
+  const bound = config.keymap
     .peek()
     .bindings.find((binding) => binding.command === 'keys.show' && appliesHere(binding));
   return bound ? keyHost.humanize(bound.key) : t('keys.title');
