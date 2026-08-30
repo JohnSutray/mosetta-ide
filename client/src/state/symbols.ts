@@ -1,4 +1,5 @@
 import { batch, signal } from '@preact/signals';
+import { persisted } from './persist.js';
 import type { SymbolSite } from '@ide/protocol';
 import { complain, openFile, openFileAt, reveal, rpc } from './session.js';
 import { activeEditor } from './editor.js';
@@ -20,11 +21,10 @@ export const MAX_SITES = 200;
 
 export const symbolList = signal<SymbolList | null>(null);
 export const symbolPreview = signal<{ path: string; text: string; line: number } | null>(null);
-export const hideImports = signal(localStorage.getItem(IMPORTS_KEY) !== '0');
+export const hideImports = persisted(IMPORTS_KEY, true);
 
 export function toggleImports(): void {
   hideImports.value = !hideImports.value;
-  localStorage.setItem(IMPORTS_KEY, hideImports.value ? '1' : '0');
   const list = symbolList.peek();
   if (list) select(0);
 }
