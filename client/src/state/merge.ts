@@ -3,7 +3,7 @@ import { complain, say } from './notifications.js';
 import { diff3, type Region, type Choice, type SideChoice } from '../merge/diff3.js';
 import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
 import type { MergeFile, MergeSession } from '@ide/protocol';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 export class Merge {
   readonly session = signal<MergeSession | null>(null);
@@ -97,7 +97,7 @@ export class Merge {
         if (this.focusOn(path)) this.promised.delete(path);
       }
 
-      if (!had) say(t('merge.appeared', { count: String(state.files.length) }));
+      if (!had) say(i18n.t('merge.appeared', { count: String(state.files.length) }));
     });
   }
 
@@ -128,7 +128,7 @@ export class Merge {
 
   show(): void {
     if (!this.session.value) {
-      say(t('merge.none'));
+      say(i18n.t('merge.none'));
       return;
     }
     this.open.value = true;
@@ -217,7 +217,7 @@ export class Merge {
         this.path.value = rest?.files.find((item) => !item.done)?.path ?? null;
         if (!rest) this.open.value = false;
       });
-      if (!rest) say(t('merge.done'));
+      if (!rest) say(i18n.t('merge.done'));
     } catch (err) {
       complain(describeMerge(err));
     }

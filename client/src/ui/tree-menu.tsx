@@ -1,9 +1,9 @@
-import { tree, treeOps } from '../state/tree-ops.js';
 import { treeMenu } from '../state/tree-menu.js';
+import { tree, treeOps } from '../state/tree-ops.js';
 import { Menu, type MenuItem } from './menu.js';
 
 export function TreeMenu() {
-  const menu = treeMenu.value;
+  const menu = treeMenu.open.value;
   if (!menu) return null;
 
   const { path, isDir } = menu;
@@ -34,7 +34,7 @@ export function TreeMenu() {
       y={menu.y}
       items={items}
       onClose={() => {
-        treeMenu.value = null;
+        treeMenu.open.value = null;
         tree.takeKeyboard();
       }}
     />

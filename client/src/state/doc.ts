@@ -5,7 +5,7 @@ import { RpcFailure, type RpcClient } from '../rpc/client.js';
 import { complain, say } from './notifications.js';
 import { forget, keep, recall } from './persist.js';
 import { DocSync } from './doc-sync.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 import type { Lsp } from './lsp.js';
 import type { Session } from './session.js';
 
@@ -152,7 +152,7 @@ export class Doc {
         this.dirty.value = false;
         this.externalEpoch.value += 1;
       });
-      say(t('file.reloaded', { path: doc.path }));
+      say(i18n.t('file.reloaded', { path: doc.path }));
     } catch (err) {
       complain(describe(err));
     }
@@ -219,7 +219,7 @@ export class Doc {
             this.dirty.value = doc.dirty;
             this.externalEpoch.value += 1;
           });
-          if (!asked) say(t('file.external', { path: event.path }));
+          if (!asked) say(i18n.t('file.external', { path: event.path }));
         })
         .catch((err) => complain(describe(err)));
     });
@@ -256,7 +256,7 @@ export class Doc {
         this.dirty.value = false;
       });
       this.sync.detach();
-      complain(t('file.gone', { path: event.path }));
+      complain(i18n.t('file.gone', { path: event.path }));
       if (back) void this.openAt(back);
     });
   }

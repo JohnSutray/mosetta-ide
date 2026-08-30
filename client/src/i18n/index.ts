@@ -3,38 +3,42 @@ import en from './en.json';
 
 export type Strings = Record<string, string>;
 
-export const strings = signal<Strings>(en as Strings);
+export class I18n {
+  readonly strings = signal<Strings>(en as Strings);
 
-const missing = new Set<string>();
+  private readonly missing = new Set<string>();
 
-export function t(key: string, params?: Record<string, string | number>): string {
-  const template = strings.value[key];
-  if (template === undefined) {
-    if (!missing.has(key)) {
-      missing.add(key);
-      console.warn(`[web-ide] нет перевода: ${key}`);
+  t(key: string, params?: Record<string, string | number>): string {
+    const template = this.strings.value[key];
+    if (template === undefined) {
+      if (!this.missing.has(key)) {
+        this.missing.add(key);
+        console.warn(`[web-ide] нет перевода: ${key}`);
+      }
+      return key;
     }
-    return key;
+    if (!template.includes('{')) return template;
+    return template.replace(/\{(\w+)\}/g, (whole, name: string) =>
+      params && name in params ? String(params[name]) : whole,
+    );
   }
-  if (!template.includes('{')) return template;
-  return template.replace(/\{(\w+)\}/g, (whole, name: string) =>
-    params && name in params ? String(params[name]) : whole,
-  );
-}
 
-export function addStrings(from: string, more: Strings): void {
-  const now = { ...strings.value };
-  for (const [key, value] of Object.entries(more)) {
-    if (key in now && now[key] !== value) {
-      console.warn(`[web-ide] ${from}: ключ ${key} уже занят — беру его`);
-      continue;
+  add(from: string, more: Strings): void {
+    const now = { ...this.strings.value };
+    for (const [key, value] of Object.entries(more)) {
+      if (key in now && now[key] !== value) {
+        console.warn(`[web-ide] ${from}: ключ ${key} уже занят — беру его`);
+        continue;
+      }
+      now[key] = value;
     }
-    now[key] = value;
+    this.strings.value = now;
+    for (const key of Object.keys(more)) this.missing.delete(key);
   }
-  strings.value = now;
-  for (const key of Object.keys(more)) missing.delete(key);
+
+  missingKeys(): string[] {
+    return [...this.missing];
+  }
 }
 
-export function missingKeys(): string[] {
-  return [...missing];
-}
+export const i18n = new I18n();

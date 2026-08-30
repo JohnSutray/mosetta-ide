@@ -3,7 +3,7 @@ import { search } from '../state/search.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { Popup } from './popup.js';
 import { CodeView } from '../editor/code-view.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 import type { IndexHit } from '@ide/protocol';
 
 export function SearchEverywhere() {
@@ -42,7 +42,7 @@ export function SearchEverywhere() {
             class="se-input"
             value={search.query.value}
             spellcheck={false}
-            placeholder={t('search.placeholder')}
+            placeholder={i18n.t('search.placeholder')}
             onInput={(e) => search.setQuery((e.target as HTMLInputElement).value)}
           />
           <span class="se-count">{search.hits.value.length}</span>
@@ -53,7 +53,7 @@ export function SearchEverywhere() {
             {search.rows.value.map((row, i) =>
               'header' in row ? (
                 <div class="se-section" key={`h${i}`}>
-                  {t(row.header)}
+                  {i18n.t(row.header)}
                 </div>
               ) : (
                 <Row
@@ -66,7 +66,7 @@ export function SearchEverywhere() {
               ),
             )}
             {search.hits.value.length === 0 && search.query.value.trim() !== '' && (
-              <div class="se-empty">{t('search.empty')}</div>
+              <div class="se-empty">{i18n.t('search.empty')}</div>
             )}
           </div>
 
@@ -80,7 +80,7 @@ export function SearchEverywhere() {
                 settings={config.editor()}
               />
             ) : (
-              <div class="se-empty">{t('search.preview')}</div>
+              <div class="se-empty">{i18n.t('search.preview')}</div>
             )}
           </div>
         </div>

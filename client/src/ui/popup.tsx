@@ -11,7 +11,7 @@ import {
   type Size,
 } from '../state/layout.js';
 import { catchesKeys } from '../keys/dispatcher.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 export function Popup({
   id,
@@ -84,11 +84,11 @@ export function Popup({
       >
         <span class="popup-exit">
           {!catchesKeys(keys) && (
-            <span class="popup-esc" title={t('popup.escape')}>
-              {t('popup.esc')}
+            <span class="popup-esc" title={i18n.t('popup.escape')}>
+              {i18n.t('popup.esc')}
             </span>
           )}
-          <span class="popup-close" title={t('popup.close')} onClick={onClose}>
+          <span class="popup-close" title={i18n.t('popup.close')} onClick={onClose}>
             ×
           </span>
         </span>
@@ -98,7 +98,7 @@ export function Popup({
         {!full && (
         <span
           class="popup-grip"
-          title={t('popup.resize')}
+          title={i18n.t('popup.resize')}
           onPointerDown={(event) => {
             event.preventDefault();
             const rect = box.current?.getBoundingClientRect();

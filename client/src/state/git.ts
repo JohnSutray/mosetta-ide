@@ -10,7 +10,7 @@ import type {
 } from '@ide/protocol';
 import {complain, notify, settle} from './notifications.js';
 import { fuzzy, type FuzzyHit } from '../ui/fuzzy.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {} };
 
@@ -83,7 +83,7 @@ export class Git {
   async run(action: GitAction, branchName?: string, name?: string): Promise<boolean> {
     if (this.running.value) return false;
     const branch = branchName ?? null;
-    const note = notify(t(`branches.${action === 'force-push' ? 'push' : action}`) + '…', 'work');
+    const note = notify(i18n.t(`branches.${action === 'force-push' ? 'push' : action}`) + '…', 'work');
     batch(() => {
       this.running.value = action;
       this.output.value = '';
@@ -179,7 +179,7 @@ export class BranchesWindow {
 
   show(): void {
     if (!this.git.repo) {
-      complain(t('branches.notRepo'));
+      complain(i18n.t('branches.notRepo'));
       return;
     }
     batch(() => {
@@ -295,7 +295,7 @@ export class PushWindow {
 
   async show(): Promise<void> {
     if (!this.git.repo) {
-      complain(t('branches.notRepo'));
+      complain(i18n.t('branches.notRepo'));
       return;
     }
     batch(() => {
@@ -354,25 +354,25 @@ function doneText(action: GitAction, branch: string | null, name?: string): stri
   const of = name ?? branch ?? '';
   switch (action) {
     case 'fetch':
-      return t('git.fetched');
+      return i18n.t('git.fetched');
     case 'pull':
-      return t('git.pulled', { branch: branch ?? '' });
+      return i18n.t('git.pulled', { branch: branch ?? '' });
     case 'push':
     case 'force-push':
-      return t('git.pushed', { branch: of });
+      return i18n.t('git.pushed', { branch: of });
     case 'checkout':
-      return t('git.checkedOut', { branch: of });
+      return i18n.t('git.checkedOut', { branch: of });
     case 'merge':
-      return t('git.merged', { branch: of });
+      return i18n.t('git.merged', { branch: of });
     case 'create':
-      return t('git.created', { branch: of });
+      return i18n.t('git.created', { branch: of });
     case 'rename':
-      return t('git.renamed', { branch: of });
+      return i18n.t('git.renamed', { branch: of });
     case 'delete':
     case 'force-delete':
-      return t('git.deleted', { branch: of });
+      return i18n.t('git.deleted', { branch: of });
     default:
-      return t('git.done', { action });
+      return i18n.t('git.done', { action });
   }
 }
 

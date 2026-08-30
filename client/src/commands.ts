@@ -1,3 +1,4 @@
+import { editorFocus } from './state/editor.js';
 import { popups } from './state/popups.js';
 import { symbols } from './state/symbols.js';
 import { terminals } from './state/terminals.js';
@@ -13,7 +14,6 @@ import { branchesWindow, pushWindow } from './state/git.js';
 import { registerCommand, missingCommands } from './keys/commands.js';
 import { toggleFollow } from './state/tree-follow.js';
 import { resolveContext } from './keys/context.js';
-import { focusEditor } from './state/editor.js';
 import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
 import { toggleKeysHelp } from './state/keys-help.js';
@@ -53,7 +53,7 @@ export function registerCommands(): void {
   registerCommand('tree.open', () =>
     onPicked((path, isDir) => {
       if (isDir) void fileTree.toggle(path);
-      else void doc.openAt(path).then(focusEditor);
+      else void doc.openAt(path).then(editorFocus.focus);
     }),
   );
   registerCommand('tree.rename', () => onPicked((path) => treeOps.rename(path)));

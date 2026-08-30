@@ -7,7 +7,7 @@ import { FileTree } from './file-tree.js';
 import { Lsp } from './lsp.js';
 import { Doc } from './doc.js';
 import { say } from './notifications.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 export const rpc = new RpcClient();
 
@@ -83,7 +83,7 @@ export class Session {
       this.current.value = info;
       await this.afterAttach();
       if (path) await doc.openAt(path);
-      say(t('session.resumed'));
+      say(i18n.t('session.resumed'));
     } catch (err) {
       complain(describe(err));
     }

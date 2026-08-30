@@ -5,7 +5,7 @@ import type { DirSuggestion } from '@ide/protocol';
 import { Chevron, DirIcon } from './file-icons.js';
 import { Popup } from './popup.js';
 import { Icon } from './icons.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 export function Projects() {
   const input = useRef<HTMLInputElement>(null);
@@ -29,7 +29,7 @@ export function Projects() {
       onClose={() => projects.hide()}
     >
       <div class="branches-head">
-        <span class="branches-title">{t('panel.projects')}</span>
+        <span class="branches-title">{i18n.t('panel.projects')}</span>
       </div>
 
       <div class="projects" data-keys="projects">
@@ -46,14 +46,14 @@ export function Projects() {
             <input
               ref={input}
               class="field"
-              placeholder={t('projects.placeholder')}
+              placeholder={i18n.t('projects.placeholder')}
               value={projects.draft.value}
               spellcheck={false}
               autocomplete="off"
               onInput={(e) => projects.setDraft((e.target as HTMLInputElement).value)}
             />
             <button class="button" type="submit">
-              {t('projects.open')}
+              {i18n.t('projects.open')}
             </button>
 
             {projects.suggestOpen.value && <Suggestions />}
@@ -107,7 +107,7 @@ function shortenHome(root: string): string {
 
 function Suggestions() {
   const list = projects.suggestions.value;
-  if (list.length === 0) return <div class="suggest is-empty">{t('projects.empty')}</div>;
+  if (list.length === 0) return <div class="suggest is-empty">{i18n.t('projects.empty')}</div>;
   return (
     <div class="suggest">
       {list.map((item, at) => (
@@ -159,7 +159,7 @@ function PickerNode({ item, depth }: { item: DirSuggestion; depth: number }) {
           style={{ paddingLeft: `${6 + (depth + 1) * 14}px` }}
           onClick={() => projects.showAllIn(item.path)}
         >
-          {t('projects.more', { count: hidden })}
+          {i18n.t('projects.more', { count: hidden })}
         </div>
       )}
     </>

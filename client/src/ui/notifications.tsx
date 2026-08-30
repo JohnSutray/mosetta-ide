@@ -1,5 +1,5 @@
 import { dismiss, dismissAll, notes } from '../state/notifications.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 export function Notifications() {
   const list = notes.value;
@@ -9,14 +9,14 @@ export function Notifications() {
     <div class="notes">
       {list.length > 1 && (
         <div class="notes-all" onClick={dismissAll}>
-          {t('note.closeAll')}
+          {i18n.t('note.closeAll')}
         </div>
       )}
       {list.map((note) => (
         <div key={note.id} class={`note is-${note.kind}`}>
           {note.kind === 'work' && <span class="spinner" />}
           <span class="note-text">{note.text}</span>
-          <span class="note-close" title={t('note.close')} onClick={() => dismiss(note.id)}>
+          <span class="note-close" title={i18n.t('note.close')} onClick={() => dismiss(note.id)}>
             ×
           </span>
         </div>

@@ -1,3 +1,4 @@
+import { tips } from '../state/tip.js';
 import { terminals } from '../state/terminals.js';
 import { search } from '../state/search.js';
 import { session } from '../state/session.js';
@@ -10,9 +11,8 @@ import { computed } from '@preact/signals';
 import { runCommand } from '../keys/commands.js';
 import { keysHelpOpen } from '../state/keys-help.js';
 import { following } from '../state/tree-follow.js';
-import { hideTip, showTip } from '../state/tip.js';
 import { keysFor } from '../keys/keys-for.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 import { Icon, type IconName } from './icons.js';
 import { PANELS } from './panels.js';
 import type { Registry } from '../state/registry.js';
@@ -128,13 +128,13 @@ function Tools() {
     <>
       <ToolButton
         label={tools.currentShell()}
-        hint={t('tool.shell.title')}
+        hint={i18n.t('tool.shell.title')}
         onClick={() => tools.open('shell')}
       />
       {ws && (
         <ToolButton
           label={tools.currentManager()}
-          hint={t('tool.manager.title')}
+          hint={i18n.t('tool.manager.title')}
           onClick={() => tools.open('manager')}
         />
       )}
@@ -150,15 +150,15 @@ function Branch() {
     <button
       class="branch-label"
       onMouseEnter={(event) =>
-        showTip(event.currentTarget as Element, t('toolbar.branches'), keysFor('git.branches'))
+        tips.show(event.currentTarget as Element, i18n.t('toolbar.branches'), keysFor('git.branches'))
       }
-      onMouseLeave={hideTip}
+      onMouseLeave={tips.hide}
       onClick={() => {
-        hideTip();
+        tips.hide();
         runCommand('git.branches');
       }}
     >
-      {state.repo ? (state.branch ?? t('toolbar.noBranch')) : t('toolbar.noRepo')}
+      {state.repo ? (state.branch ?? i18n.t('toolbar.noBranch')) : i18n.t('toolbar.noRepo')}
       {state.ahead > 0 && <span class="branch-ahead">↑{state.ahead}</span>}
       {state.behind > 0 && <span class="branch-behind">↓{state.behind}</span>}
     </button>
@@ -169,7 +169,7 @@ function Connection() {
   return (
     <span
       class={`dot ${session.connected.value ? 'is-on' : 'is-off'}`}
-      title={t('toolbar.connection')}
+      title={i18n.t('toolbar.connection')}
     />
   );
 }
@@ -187,10 +187,10 @@ function ToolButton({
   return (
     <button
       class="tool-label"
-      onMouseEnter={(event) => showTip(event.currentTarget as Element, hint)}
-      onMouseLeave={hideTip}
+      onMouseEnter={(event) => tips.show(event.currentTarget as Element, hint)}
+      onMouseLeave={tips.hide}
       onClick={() => {
-        hideTip();
+        tips.hide();
         onClick();
       }}
     >
@@ -212,16 +212,16 @@ function TerminalChip({ info }: { info: TerminalInfo }) {
     <span
       class={classes}
       title={`${info.name}${info.command ? ` — ${info.command}` : ''}${
-        info.busy ? ` · ${t('terminal.busy', { what: info.running ?? '' })}` : ''
+        info.busy ? ` · ${i18n.t('terminal.busy', { what: info.running ?? '' })}` : ''
       }${
-        info.busyUnknown ? ` · ${t('terminal.busyUnknown', { why: info.busyUnknown })}` : ''
-      }${info.alive ? '' : ` (${t('terminal.dead', { code: info.exitCode ?? '?' })})`}`}
+        info.busyUnknown ? ` · ${i18n.t('terminal.busyUnknown', { why: info.busyUnknown })}` : ''
+      }${info.alive ? '' : ` (${i18n.t('terminal.dead', { code: info.exitCode ?? '?' })})`}`}
       onClick={() => terminals.focus(info.name)}
     >
       <span class="term-chip-name">{info.title}</span>
       <span
         class="term-chip-close"
-        title={t('terminal.close')}
+        title={i18n.t('terminal.close')}
         onClick={(event) => {
           event.stopPropagation();
           void terminals.close(info.name);

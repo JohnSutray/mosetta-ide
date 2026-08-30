@@ -1,6 +1,6 @@
 import { prompt, tree, type Ask } from '../state/tree-ops.js';
 import { useEffect, useRef } from 'preact/hooks';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 import { Popup } from './popup.js';
 
 const LINE = 18;
@@ -70,7 +70,7 @@ export function Prompt() {
 
         <div class="prompt-foot">
           <button class="button" type="button" onClick={() => prompt.cancel()}>
-            {t('prompt.cancel')}
+            {i18n.t('prompt.cancel')}
           </button>
           <button class={`button ${ask.danger ? 'is-danger' : ''}`} type="submit">
             {ask.confirm}

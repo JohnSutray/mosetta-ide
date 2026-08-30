@@ -3,7 +3,7 @@ import { rpc } from './session.js';
 import { complain } from './notifications.js';
 import { batch, signal } from '@preact/signals';
 import type { TerminalInfo } from '@ide/protocol';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 type DataSink = (data: string) => void;
 
@@ -81,7 +81,7 @@ export class Terminals {
 
     rpc.on('term.exit', ({ name }) => {
       void this.refresh();
-      const note = `\r\n\x1b[38;5;245m${t('terminal.finished')}\x1b[0m\r\n`;
+      const note = `\r\n\x1b[38;5;245m${i18n.t('terminal.finished')}\x1b[0m\r\n`;
       for (const sink of this.sinks.get(name) ?? []) sink(note);
     });
   }

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { activePick } from '../state/pick.js';
 import { fuzzy } from './fuzzy.js';
 import { Popup } from './popup.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 export function PickPopup<T>({
   id,
@@ -109,7 +109,7 @@ export function PickPopup<T>({
           );
         })}
         {shown.length === 0 && (
-          <div class="se-empty">{items.length === 0 ? empty : t('pick.nothing')}</div>
+          <div class="se-empty">{items.length === 0 ? empty : i18n.t('pick.nothing')}</div>
         )}
       </div>
 

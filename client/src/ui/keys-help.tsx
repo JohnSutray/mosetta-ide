@@ -4,7 +4,7 @@ import type { KeyBinding, KeyContext, KeyScope } from '@ide/protocol';
 import { closeKeysHelp, keysHelpOpen, lastKey, viewHost } from '../state/keys-help.js';
 import { keyHost } from '../keys/host.js';
 import { reservedIn } from '../keys/reserved.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 import { Popup } from './popup.js';
 
 export function KeysHelp() {
@@ -42,7 +42,7 @@ export function KeysHelp() {
     >
       <div class="keys-head">
         <div class="keys-title">
-          {t('keys.title')}
+          {i18n.t('keys.title')}
           <span class="keys-hosts">
             {(['browser', 'electron'] as const).map((one) => (
               <span
@@ -50,40 +50,40 @@ export function KeysHelp() {
                 class={`keys-host ${one === host ? 'is-on' : ''}`}
                 onClick={() => (viewHost.value = one === keyHost.host ? null : one)}
               >
-                {t(`keys.host.${one}`)}
+                {i18n.t(`keys.host.${one}`)}
               </span>
             ))}
           </span>
         </div>
         <div class="keys-note">
-          {t(host === 'browser' ? 'keys.mod.browser' : 'keys.mod.electron')}
+          {i18n.t(host === 'browser' ? 'keys.mod.browser' : 'keys.mod.electron')}
         </div>
-        {elsewhere && <div class="keys-note is-loud">{t('keys.elsewhere')}</div>}
-        <div class="keys-note">{t('keys.clip')}</div>
-        <div class="keys-note is-loud">{t('keys.captured')}</div>
+        {elsewhere && <div class="keys-note is-loud">{i18n.t('keys.elsewhere')}</div>}
+        <div class="keys-note">{i18n.t('keys.clip')}</div>
+        <div class="keys-note is-loud">{i18n.t('keys.captured')}</div>
       </div>
 
       <div class="keys-echo">
-        <span class="keys-echo-label">{t('keys.echo')}</span>
+        <span class="keys-echo-label">{i18n.t('keys.echo')}</span>
         {echo ? (
           <>
             <kbd class="keys-kbd">{keyHost.humanize(echo.key)}</kbd>
             <span class="keys-echo-arrow">→</span>
             <span class={`keys-echo-command ${echo.command ? '' : 'is-free'}`}>
-              {echo.command ? commandName(echo.command) : t('keys.echo.free')}
+              {echo.command ? commandName(echo.command) : i18n.t('keys.echo.free')}
             </span>
             <span class="keys-echo-context">{contextName(echo.context)}</span>
           </>
         ) : (
-          <span class="keys-echo-command is-free">{t('keys.echo.none')}</span>
+          <span class="keys-echo-command is-free">{i18n.t('keys.echo.none')}</span>
         )}
       </div>
-      <div class="keys-hint">{t('keys.echo.hint')}</div>
+      <div class="keys-hint">{i18n.t('keys.echo.hint')}</div>
 
       <div class="keys-list">
         {gone.length > 0 && (
           <details class="keys-taken" open>
-            <summary>{t('keys.taken', { count: gone.length })}</summary>
+            <summary>{i18n.t('keys.taken', { count: gone.length })}</summary>
             <div class="keys-grid has-who">
               {gone.map((item) => (
                 <div class="keys-row" key={`${item.scopes[0]}:${item.key}`}>
@@ -98,7 +98,7 @@ export function KeysHelp() {
 
         {ours.length > 0 && (
           <details class="keys-taken is-ours" open>
-            <summary>{t('keys.soft', { count: ours.length })}</summary>
+            <summary>{i18n.t('keys.soft', { count: ours.length })}</summary>
             <div class="keys-grid has-who">
               {ours.map((item) => (
                 <div class="keys-row" key={`${item.scopes[0]}:${item.key}`}>
@@ -130,9 +130,9 @@ export function KeysHelp() {
 }
 
 function commandName(id: string): string {
-  return t(`command.${id}`);
+  return i18n.t(`command.${id}`);
 }
 
 function contextName(context: KeyContext): string {
-  return t(`keys.context.${context}`);
+  return i18n.t(`keys.context.${context}`);
 }

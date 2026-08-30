@@ -1,6 +1,6 @@
 import { doc } from '../state/session.js';
 import { merge } from '../state/merge.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 export function DivergedBadge() {
   const file = doc.open.value;
@@ -11,24 +11,24 @@ export function DivergedBadge() {
     <div class="diverged">
       <span class="diverged-sign">⚠</span>
       <span class="diverged-text">
-        {why === 'removed' ? t('diverged.removed') : t('diverged.changed')}
+        {why === 'removed' ? i18n.t('diverged.removed') : i18n.t('diverged.changed')}
       </span>
       <button
         type="button"
         class="diverged-button"
-        title={t('diverged.merge.hint')}
+        title={i18n.t('diverged.merge.hint')}
         onClick={() => void merge.fromDisk(file.path)}
       >
-        {why === 'removed' ? t('diverged.sort') : t('diverged.reload')}
+        {why === 'removed' ? i18n.t('diverged.sort') : i18n.t('diverged.reload')}
       </button>
       {why === 'changed' && (
         <button
           type="button"
           class="diverged-button is-quiet"
-          title={t('diverged.discard.hint')}
+          title={i18n.t('diverged.discard.hint')}
           onClick={() => void doc.reload()}
         >
-          {t('diverged.discard')}
+          {i18n.t('diverged.discard')}
         </button>
       )}
     </div>

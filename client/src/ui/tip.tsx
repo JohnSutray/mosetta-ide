@@ -1,8 +1,8 @@
+import { tips } from '../state/tip.js';
 import { useLayoutEffect, useRef } from 'preact/hooks';
-import { tip } from '../state/tip.js';
 
 export function Tip() {
-  const shown = tip.value;
+  const shown = tips.spot.value;
   const box = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {

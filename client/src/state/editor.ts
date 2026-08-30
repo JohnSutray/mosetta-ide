@@ -1,19 +1,23 @@
 import { signal } from '@preact/signals';
 
-let focusOnMount = true;
+export class EditorFocus {
+  readonly wanted = signal(0);
 
-export function openWithoutFocus(): void {
-  focusOnMount = false;
+  private onMount = true;
+
+  openWithoutFocus(): void {
+    this.onMount = false;
+  }
+
+  takeOnMount(): boolean {
+    const wanted = this.onMount;
+    this.onMount = true;
+    return wanted;
+  }
+
+  focus(): void {
+    this.wanted.value += 1;
+  }
 }
 
-export function takeFocusOnMount(): boolean {
-  const wanted = focusOnMount;
-  focusOnMount = true;
-  return wanted;
-}
-
-export const wantsFocus = signal(0);
-
-export function focusEditor(): void {
-  wantsFocus.value += 1;
-}
+export const editorFocus = new EditorFocus();

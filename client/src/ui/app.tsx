@@ -1,3 +1,6 @@
+import { editorFocus } from '../state/editor.js';
+import { treeMenu } from '../state/tree-menu.js';
+import { tips } from '../state/tip.js';
 import { symbols } from '../state/symbols.js';
 import { config } from '../state/config.js';
 import { terminals } from '../state/terminals.js';
@@ -11,7 +14,6 @@ import { git, resetGit } from '../state/git.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { headFor, loadHead, showHunk } from '../state/git-marks.js';
-import { takeFocusOnMount, wantsFocus } from '../state/editor.js';
 import { chordHeld } from '../keys/chords.js';
 import { darcula } from '../editor/darcula.js';
 import { languages } from '../editor/languages.js';
@@ -26,18 +28,16 @@ import { Branches } from './branches.js';
 import { Notifications } from './notifications.js';
 import { TreeMenu } from './tree-menu.js';
 import { Prompt } from './prompt.js';
-import { closeTreeMenu } from '../state/tree-menu.js';
 import { Push } from './push.js';
 import { registerToolbarWishes } from './toolbar-wishes.js';
 import { registerPanelWishes } from './panel-wishes.js';
 import { Registry } from '../state/registry.js';
 import { keysFor } from '../keys/keys-for.js';
-import { hideTip, showTip } from '../state/tip.js';
 import { Resizer } from './resizer.js';
 import { widthOf } from '../state/layout.js';
 import { runCommand } from '../keys/commands.js';
 import { Projects } from './projects.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
 import { MergeScreen } from './merge.js';
@@ -68,12 +68,12 @@ function NoShell() {
   const loaded = pluginList.value.map((one) => one.name);
   return (
     <div class="no-shell">
-      <div class="no-shell-title">{t('shell.missing')}</div>
-      <p class="no-shell-why">{t('shell.missing.why')}</p>
+      <div class="no-shell-title">{i18n.t('shell.missing')}</div>
+      <p class="no-shell-why">{i18n.t('shell.missing.why')}</p>
       <p class="no-shell-why">
         {loaded.length > 0
-          ? t('shell.missing.loaded', { names: loaded.join(', ') })
-          : t('shell.missing.none')}
+          ? i18n.t('shell.missing.loaded', { names: loaded.join(', ') })
+          : i18n.t('shell.missing.none')}
       </p>
     </div>
   );
@@ -86,7 +86,7 @@ export function App() {
   useEffect(() => {
     registerCommands();
     const surface: ClientSurface = {
-      t,
+      t: (key, params) => i18n.t(key, params),
       problems: lsp.problems,
       goTo,
       runCommand,
@@ -102,15 +102,15 @@ export function App() {
       headFor,
       visit: visits.visit,
       hover: (path, line, character) => rpc.call('lsp.hover', { path, line, character }),
-      takeFocusOnMount,
-      wantsFocus,
+      takeFocusOnMount: editorFocus.takeOnMount,
+      wantsFocus: editorFocus.wanted,
       chordHeld,
       unstable_PickPopup: PickPopup,
       unstable_highlight: highlight,
       unstable_shiftMatches: shiftMatches,
       unstable_showTerminal: terminals.show,
-      unstable_showTip: showTip,
-      unstable_hideTip: hideTip,
+      unstable_showTip: tips.show,
+      unstable_hideTip: tips.hide,
       unstable_Resizer: Resizer,
       unstable_widthOf: widthOf,
       unstable_diffLines: (before, after) => lineDiff.hunks(before, after),
@@ -179,7 +179,7 @@ export function App() {
     <div
       class="app"
       onMouseDown={(event) => {
-        if (!(event.target as HTMLElement).closest('.tree-menu')) closeTreeMenu();
+        if (!(event.target as HTMLElement).closest('.tree-menu')) treeMenu.close();
       }}
     >
       <Region name="chrome.top" />

@@ -4,7 +4,7 @@ import { settle } from './notifications.js';
 import { config } from './config.js';
 import { keyHost } from '../keys/host.js';
 import { appliesHere } from '../keys/dispatcher.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 export interface KeyEcho {
   key: string;
@@ -28,14 +28,14 @@ export function echoKey(key: string, context: KeyContext, command: string | null
 let missNote = 0;
 
 export function noteUnbound(key: string): void {
-  missNote = settle(missNote, t('keys.unbound', { key: keyHost.humanize(key), help: helpKey() }));
+  missNote = settle(missNote, i18n.t('keys.unbound', { key: keyHost.humanize(key), help: helpKey() }));
 }
 
 function helpKey(): string {
   const bound = config.keymap
     .peek()
     .bindings.find((binding) => binding.command === 'keys.show' && appliesHere(binding));
-  return bound ? keyHost.humanize(bound.key) : t('keys.title');
+  return bound ? keyHost.humanize(bound.key) : i18n.t('keys.title');
 }
 
 export function toggleKeysHelp(): void {

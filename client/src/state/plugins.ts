@@ -28,7 +28,7 @@ import {
 } from '@ide/api/client';
 import { persisted } from './persist.js';
 import type { Registry } from './registry.js';
-import { addStrings } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 export const pluginList = signal<PluginInfo[]>([]);
 export const pluginSurfaces = signal<Array<() => unknown>>([]);
@@ -83,7 +83,7 @@ export async function loadPlugins(surface: ClientSurface, registry: Registry): P
       complain(`${info.name}: ${info.error ?? 'не поднялся'}`);
       continue;
     }
-    addStrings(info.name, info.strings);
+    i18n.add(info.name, info.strings);
     if (!info.hasClient) continue;
     try {
       built.push(await build(info));

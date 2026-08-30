@@ -6,7 +6,7 @@ import { codePainter } from '../editor/paint-line.js';
 import { Popup } from './popup.js';
 import { Resizer } from './resizer.js';
 import { CodeView } from '../editor/code-view.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 const SIZE = { w: 620, h: 420 };
 const MIN = { w: 320, h: 220 };
@@ -52,17 +52,17 @@ export function Symbols() {
     >
       <div class="symbols-head">
         <span class="symbols-title">
-          {t(list.kind === 'usages' ? 'symbols.usages' : 'symbols.definition', {
+          {i18n.t(list.kind === 'usages' ? 'symbols.usages' : 'symbols.definition', {
             word: list.word || '?',
           })}
         </span>
         <span class="symbols-count">{passed.length}</span>
         <span
           class={`symbols-filter ${symbols.hideImports.value ? 'is-on' : ''}`}
-          title={t('symbols.imports.hint')}
+          title={i18n.t('symbols.imports.hint')}
           onClick={symbols.toggleImports}
         >
-          {t('symbols.imports', { count: hidden })}
+          {i18n.t('symbols.imports', { count: hidden })}
         </span>
       </div>
 
@@ -97,7 +97,7 @@ export function Symbols() {
             </span>
           </div>
         ))}
-        {cut > 0 && <div class="symbols-more">{t('symbols.more', { count: cut })}</div>}
+        {cut > 0 && <div class="symbols-more">{i18n.t('symbols.more', { count: cut })}</div>}
       </div>
 
       <Resizer id={LIST_ID} side="left" axis="y" limits={limits} defaultWidth={LIST_DEFAULT} />

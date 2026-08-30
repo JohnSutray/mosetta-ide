@@ -1,7 +1,7 @@
 import { branchesWindow, git, pushWindow } from '../state/git.js';
 import { useEffect, useRef } from 'preact/hooks';
 import type { GitBranch } from '@ide/protocol';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 import { Popup } from './popup.js';
 import { activePick } from '../state/pick.js';
 import { Chevron } from './file-icons.js';
@@ -60,7 +60,7 @@ export function Branches() {
       }}
     >
       <div class="branches-head">
-        <span class="branches-title">{t('branches.title')}</span>
+        <span class="branches-title">{i18n.t('branches.title')}</span>
         <span class="branches-meta">
           {state.branch ?? '—'}
           {state.ahead > 0 ? ` ↑${state.ahead}` : ''}
@@ -68,7 +68,7 @@ export function Branches() {
         </span>
         <button
           class="tool is-fetch branches-fetch"
-          title={t('toolbar.fetch')}
+          title={i18n.t('toolbar.fetch')}
           disabled={git.running.value !== null}
           onClick={() => void branchesWindow.do('fetch')}
         >
@@ -80,7 +80,7 @@ export function Branches() {
         <input
           ref={field}
           class="field"
-          placeholder={t('branches.filter')}
+          placeholder={i18n.t('branches.filter')}
           value={branchesWindow.filter.value}
           spellcheck={false}
           autocomplete="off"
@@ -94,13 +94,13 @@ export function Branches() {
             <BranchRow key={row.branch.name} branch={row.branch} at={row.at} label={row.label} />
           ) : (
             <div key={`${row.kind}${i}`} class={`branch-head is-${row.kind}`}>
-              {row.kind === 'head' ? t(`branches.${row.title}`) : row.title}
+              {row.kind === 'head' ? i18n.t(`branches.${row.title}`) : row.title}
             </div>
           ),
         )}
         {rows.length === 0 && (
           <div class="se-empty">
-            {git.branches.value.length === 0 ? t('branches.none') : t('branches.nothing')}
+            {git.branches.value.length === 0 ? i18n.t('branches.none') : i18n.t('branches.nothing')}
           </div>
         )}
       </div>
@@ -115,7 +115,7 @@ export function Branches() {
           }}
         >
           <span class="branch-prompt-title">
-            {prompt.action === 'rename' ? t('branches.newName') : t('branches.branchName')}
+            {prompt.action === 'rename' ? i18n.t('branches.newName') : i18n.t('branches.branchName')}
           </span>
           <input
             ref={nameField}
@@ -131,17 +131,17 @@ export function Branches() {
             }
           />
           <button class="button" type="submit">
-            {t('branches.apply')}
+            {i18n.t('branches.apply')}
           </button>
         </form>
       )}
 
       <div class="branches-foot">
         <button class="button" disabled={git.running.value !== null} onClick={() => void pushWindow.show()}>
-          {t('branches.push')}
+          {i18n.t('branches.push')}
         </button>
         <button class="button" onClick={() => branchesWindow.close()}>
-          {t('branches.close')}
+          {i18n.t('branches.close')}
         </button>
       </div>
 

@@ -2,7 +2,7 @@ import { popups } from '../state/popups.js';
 import { doc } from '../state/session.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { closeHunk, hunkPopup, revertOpenHunk } from '../state/git-marks.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 export function HunkPopup() {
   const open = hunkPopup.value;
@@ -36,10 +36,10 @@ export function HunkPopup() {
   const { hunk, box } = open;
   const title =
     hunk.kind === 'added'
-      ? t('git.hunk.added')
+      ? i18n.t('git.hunk.added')
       : hunk.kind === 'removed'
-        ? t('git.hunk.removed')
-        : t('git.hunk.modified');
+        ? i18n.t('git.hunk.removed')
+        : i18n.t('git.hunk.modified');
 
   return (
     <div
@@ -50,7 +50,7 @@ export function HunkPopup() {
       <div class="hunk-head">
         <span class="hunk-title">{title}</span>
         <button class="button" onClick={revertOpenHunk}>
-          {t('git.hunk.revert')}
+          {i18n.t('git.hunk.revert')}
         </button>
       </div>
       {hunk.before.length > 0 && (

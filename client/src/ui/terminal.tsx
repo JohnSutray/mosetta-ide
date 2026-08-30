@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { darcula } from '../editor/darcula.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 export function TerminalView() {
   const host = useRef<HTMLDivElement>(null);
@@ -85,7 +85,7 @@ export function TerminalView() {
   }, [name]);
 
   if (!name) {
-    return <div class="placeholder">{t('terminal.empty')}</div>;
+    return <div class="placeholder">{i18n.t('terminal.empty')}</div>;
   }
   return <div class="term-host" data-keys="terminal" ref={host} />;
 }

@@ -1,12 +1,12 @@
+import { treeMenu } from '../state/tree-menu.js';
+import { editorFocus } from '../state/editor.js';
 import { doc, fileTree, lsp, session } from '../state/session.js';
 import { tree, treeOps } from '../state/tree-ops.js';
 import { git } from '../state/git.js';
 import { useEffect } from 'preact/hooks';
 import type { DirEntry } from '@ide/protocol';
-import { openTreeMenu } from '../state/tree-menu.js';
-import { focusEditor, openWithoutFocus } from '../state/editor.js';
 import { keyHost } from '../keys/host.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 import { Chevron, DirIcon, FileIcon, RootIcon } from './file-icons.js';
 
 export function Tree() {
@@ -36,7 +36,7 @@ export function Tree() {
         onContextMenu={(event) => {
           event.preventDefault();
           tree.focus.value = '';
-          openTreeMenu('', true, event.clientX, event.clientY);
+          treeMenu.show('', true, event.clientX, event.clientY);
         }}
         onDragOver={(event) => {
           event.preventDefault();
@@ -130,17 +130,17 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
             void fileTree.toggle(entry.path);
             return;
           }
-          openWithoutFocus();
+          editorFocus.openWithoutFocus();
           void doc.openAt(entry.path);
         }}
         onDblClick={() => {
-          if (!isDir) void doc.openAt(entry.path).then(focusEditor);
+          if (!isDir) void doc.openAt(entry.path).then(editorFocus.focus);
         }}
         onContextMenu={(event) => {
           event.preventDefault();
           if (!tree.picked.value.has(entry.path)) tree.only(entry.path);
           else tree.focus.value = entry.path;
-          openTreeMenu(entry.path, isDir, event.clientX, event.clientY);
+          treeMenu.show(entry.path, isDir, event.clientX, event.clientY);
         }}
         title={entry.path}
       >
@@ -153,7 +153,7 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
         <span class={`tree-name ${broken ? 'is-broken' : ''} ${tint ? `git-${tint}` : ''}`}>
           {entry.name}
         </span>
-        {entry.noScan && <span class="tree-note">{t('tree.noScan')}</span>}
+        {entry.noScan && <span class="tree-note">{i18n.t('tree.noScan')}</span>}
       </div>
       {kids ? <Level entries={kids} depth={depth + 1} /> : null}
     </>

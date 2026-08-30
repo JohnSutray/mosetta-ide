@@ -2,7 +2,7 @@ import { doc, fileTree, rpc, session } from './session.js';
 import { complain, say } from './notifications.js';
 import { batch, signal } from '@preact/signals';
 import type { EntryKind } from '@ide/protocol';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 import type { FileTree } from './file-tree.js';
 
 export interface Ask {
@@ -206,11 +206,11 @@ export class TreeOps {
   create(at: string, isDir: boolean, kind: EntryKind): void {
     const parent = parentOf(at, isDir);
     this.prompt.show({
-      title: kind === 'dir' ? t('tree.newFolder') : t('tree.newFile'),
-      text: parent === '' ? t('tree.inRoot') : parent,
+      title: kind === 'dir' ? i18n.t('tree.newFolder') : i18n.t('tree.newFile'),
+      text: parent === '' ? i18n.t('tree.inRoot') : parent,
       field: true,
       value: '',
-      confirm: t('tree.create'),
+      confirm: i18n.t('tree.create'),
       run: async (name) => {
         const path = parent === '' ? name : `${parent}/${name}`;
         await rpc.call('fs.create', { path, kind });
@@ -225,18 +225,18 @@ export class TreeOps {
     const name = path.slice(path.lastIndexOf('/') + 1);
     const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
     this.prompt.show({
-      title: t('tree.rename'),
+      title: i18n.t('tree.rename'),
       text: path,
       field: true,
       value: name,
-      confirm: t('tree.rename.do'),
+      confirm: i18n.t('tree.rename.do'),
       run: async (next) => {
         if (next === name) return;
         const to = parent === '' ? next : `${parent}/${next}`;
         await doc.sync.flush();
         await rpc.call('fs.move', { from: path, to });
         await this.files.load(parent);
-        say(t('tree.renamed', { name: next }));
+        say(i18n.t('tree.renamed', { name: next }));
       },
     });
   }
@@ -246,13 +246,13 @@ export class TreeOps {
     const many = paths.length > 1;
     this.prompt.show({
       title: many
-        ? t('tree.deleteMany', { count: paths.length })
+        ? i18n.t('tree.deleteMany', { count: paths.length })
         : isDir
-          ? t('tree.deleteFolder')
-          : t('tree.deleteFile'),
-      text: `${paths.join('\n')}\n\n${t('tree.deleteWarn')}`,
+          ? i18n.t('tree.deleteFolder')
+          : i18n.t('tree.deleteFile'),
+      text: `${paths.join('\n')}\n\n${i18n.t('tree.deleteWarn')}`,
       field: false,
-      confirm: t('tree.delete.do'),
+      confirm: i18n.t('tree.delete.do'),
       danger: true,
       run: async () => {
         for (const item of paths) {
@@ -260,7 +260,7 @@ export class TreeOps {
           await this.files.load(item.slice(0, Math.max(0, item.lastIndexOf('/'))));
         }
         this.selection.clear();
-        say(many ? t('tree.deletedMany', { count: paths.length }) : t('tree.deleted', { path }));
+        say(many ? i18n.t('tree.deletedMany', { count: paths.length }) : i18n.t('tree.deleted', { path }));
       },
     });
   }
@@ -268,15 +268,15 @@ export class TreeOps {
   copy(path: string, cut: boolean): void {
     const paths = this.selection.targets(path);
     this.clipboard.value = { paths, cut };
-    const what = paths.length > 1 ? t('tree.items', { count: paths.length }) : paths[0]!;
-    say(cut ? t('tree.cut.done', { path: what }) : t('tree.copied', { path: what }));
+    const what = paths.length > 1 ? i18n.t('tree.items', { count: paths.length }) : paths[0]!;
+    say(cut ? i18n.t('tree.cut.done', { path: what }) : i18n.t('tree.copied', { path: what }));
   }
 
   async copyAbsolutePath(path: string): Promise<void> {
     try {
       const { path: absolute } = await rpc.call('fs.absolute', { path });
       await navigator.clipboard.writeText(absolute);
-      say(t('tree.pathCopied', { path: absolute }));
+      say(i18n.t('tree.pathCopied', { path: absolute }));
     } catch (err) {
       complain(describe(err));
     }
@@ -297,7 +297,7 @@ export class TreeOps {
       const to = join(folder, name);
       if (to === from) continue;
       if (folder === from || folder.startsWith(`${from}/`)) {
-        complain(t('tree.intoItself'));
+        complain(i18n.t('tree.intoItself'));
         return;
       }
       try {
@@ -314,8 +314,8 @@ export class TreeOps {
     this.selection.clear();
     say(
       copy
-        ? t('tree.copiedInto', { folder: folder || '/' })
-        : t('tree.movedInto', { folder: folder || '/' }),
+        ? i18n.t('tree.copiedInto', { folder: folder || '/' })
+        : i18n.t('tree.movedInto', { folder: folder || '/' }),
     );
   }
 
@@ -332,7 +332,7 @@ export class TreeOps {
 
   async pasteFromSystem(parent: string): Promise<void> {
     if (!navigator.clipboard?.read) {
-      complain(t('tree.noClipboard'));
+      complain(i18n.t('tree.noClipboard'));
       return;
     }
     let items: ClipboardItem[];
@@ -352,22 +352,22 @@ export class TreeOps {
         await rpc.call('fs.writeBytes', { path: join(parent, name), base64: await toBase64(blob) });
         await this.files.load(parent);
         await this.files.ensureExpanded(parent);
-        say(t('tree.pasted', { name }));
+        say(i18n.t('tree.pasted', { name }));
         return;
       }
     }
 
     const text = await navigator.clipboard.readText().catch(() => '');
     if (text.trim() === '') {
-      complain(t('tree.clipboardEmpty'));
+      complain(i18n.t('tree.clipboardEmpty'));
       return;
     }
     this.prompt.show({
-      title: t('tree.pasteText'),
+      title: i18n.t('tree.pasteText'),
       text: text.slice(0, 200),
       field: true,
       value: '',
-      confirm: t('tree.create'),
+      confirm: i18n.t('tree.create'),
       run: async (name) => {
         const path = join(parent, name);
         await rpc.call('fs.create', { path, kind: 'file' });

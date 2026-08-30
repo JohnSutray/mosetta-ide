@@ -1,5 +1,5 @@
 import { tools, type ToolKind } from '../state/tools.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 import { Popup } from './popup.js';
 
 interface Row {
@@ -23,8 +23,8 @@ export function ToolPicker() {
       min={{ w: 380, h: 240 }}
       onClose={() => tools.close()}
     >
-      <div class="tools-title">{t(`tool.${kind}.title`)}</div>
-      <div class="tools-note">{t(`tool.${kind}.note`)}</div>
+      <div class="tools-title">{i18n.t(`tool.${kind}.title`)}</div>
+      <div class="tools-note">{i18n.t(`tool.${kind}.note`)}</div>
 
       <div class="tools-list">
         {rows(kind).map((row) => (
@@ -39,24 +39,24 @@ export function ToolPicker() {
             {row.mark && <span class="tools-mark">{row.mark}</span>}
           </div>
         ))}
-        {rows(kind).length === 0 && <div class="tools-empty">{t('tool.empty')}</div>}
+        {rows(kind).length === 0 && <div class="tools-empty">{i18n.t('tool.empty')}</div>}
       </div>
 
       <div class="tools-custom">
         <input
           class="tools-input"
           value={tools.draft.value}
-          placeholder={t(`tool.${kind}.custom`)}
+          placeholder={i18n.t(`tool.${kind}.custom`)}
           onInput={(event) => {
             tools.draft.value = (event.target as HTMLInputElement).value;
           }}
         />
         <button class="tools-apply" onClick={() => void tools.choose(kind, tools.draft.value.trim())}>
-          {t('tool.apply')}
+          {i18n.t('tool.apply')}
         </button>
       </div>
       <div class="tools-reset" onClick={() => void tools.choose(kind, '')}>
-        {t(`tool.${kind}.default`)}
+        {i18n.t(`tool.${kind}.default`)}
       </div>
     </Popup>
   );
@@ -69,7 +69,7 @@ function rows(kind: ToolKind): Row[] {
       name: item.name,
       ref: item.ref,
       current: item.current,
-      mark: item.current ? t('tool.inUse') : undefined,
+      mark: item.current ? i18n.t('tool.inUse') : undefined,
     }));
   }
   return tools.managers.value.map((item) => ({
@@ -77,6 +77,6 @@ function rows(kind: ToolKind): Row[] {
     name: item.name,
     ref: item.path,
     current: item.current,
-    mark: item.suggested ? t('tool.byProject') : item.current ? t('tool.inUse') : undefined,
+    mark: item.suggested ? i18n.t('tool.byProject') : item.current ? i18n.t('tool.inUse') : undefined,
   }));
 }

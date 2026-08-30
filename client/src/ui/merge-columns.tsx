@@ -6,7 +6,7 @@ import { darcula } from '../editor/darcula.js';
 import { languages } from '../editor/languages.js';
 import type { Choice, Region } from '../merge/diff3.js';
 import { layout, type Lane, type LaneLayout } from '../merge/layout.js';
-import { t } from '../i18n/index.js';
+import { i18n } from '../i18n/index.js';
 
 interface Props {
   path: string;
@@ -114,7 +114,7 @@ export function MergeColumns(props: Props) {
         onDecide={props.onDecide}
         onPick={props.onPick}
       />
-      <Column label={t('merge.column.result')} host={hosts.center} side="center" />
+      <Column label={i18n.t('merge.column.result')} host={hosts.center} side="center" />
       <Rail
         side="right"
         grid={grid}
@@ -193,7 +193,7 @@ function Rail({
                 <button
                   type="button"
                   class={`merge-mark is-take ${taken ? 'is-on' : ''}`}
-                  title={t('merge.take')}
+                  title={i18n.t('merge.take')}
                   onClick={() => onDecide(spot.region, side, taken ? null : 'take')}
                 >
                   {arrow}
@@ -201,7 +201,7 @@ function Rail({
                 <button
                   type="button"
                   class={`merge-mark is-skip ${skipped ? 'is-on' : ''}`}
-                  title={t('merge.skip')}
+                  title={i18n.t('merge.skip')}
                   onClick={() => onDecide(spot.region, side, skipped ? null : 'skip')}
                 >
                   ×
