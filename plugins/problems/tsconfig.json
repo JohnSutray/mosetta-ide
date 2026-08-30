@@ -10,5 +10,5 @@
     "jsxImportSource": "preact",
     "resolveJsonModule": true
   },
-  "include": ["src"]
+  "include": ["src", "test", "vitest.config.ts"]
 }
