@@ -1,10 +1,10 @@
+import { branchesWindow, git, pushWindow } from '../state/git.js';
 import type { TerminalInfo } from '@ide/protocol';
 import { computed } from '@preact/signals';
 import { runCommand } from '../keys/commands.js';
 import { activeTerminal, closeTerminal, focusTerminal, terminals } from '../state/terminals.js';
 import { connected, current } from '../state/session.js';
 import { searchOpen } from '../state/search.js';
-import { branchesOpen, gitState, pushOpen } from '../state/git.js';
 import { mergeOpen, mergePending } from '../state/merge.js';
 import { projectsVisible } from '../state/projects.js';
 import { keysHelpOpen } from '../state/keys-help.js';
@@ -60,14 +60,14 @@ export function registerToolbarWishes(store: Registry): void {
     title: 'toolbar.branches',
     command: 'git.branches',
     icon: ours('git'),
-    active: branchesOpen,
+    active: branchesWindow.open,
   });
   button({
     id: 'git.push',
     title: 'toolbar.push',
     command: 'git.push',
     icon: ours('push'),
-    active: pushOpen,
+    active: pushWindow.open,
   });
   button({
     id: 'terminal.create',
@@ -144,7 +144,7 @@ function Tools() {
 
 function Branch() {
   const ws = current.value;
-  const git = gitState.value;
+  const state = git.state.value;
   if (!ws) return null;
   return (
     <button
@@ -158,9 +158,9 @@ function Branch() {
         runCommand('git.branches');
       }}
     >
-      {git.repo ? (git.branch ?? t('toolbar.noBranch')) : t('toolbar.noRepo')}
-      {git.ahead > 0 && <span class="branch-ahead">↑{git.ahead}</span>}
-      {git.behind > 0 && <span class="branch-behind">↓{git.behind}</span>}
+      {state.repo ? (state.branch ?? t('toolbar.noBranch')) : t('toolbar.noRepo')}
+      {state.ahead > 0 && <span class="branch-ahead">↑{state.ahead}</span>}
+      {state.behind > 0 && <span class="branch-behind">↓{state.behind}</span>}
     </button>
   );
 }

@@ -1,3 +1,4 @@
+import { git } from '../state/git.js';
 import { useEffect } from 'preact/hooks';
 import type { DirEntry } from '@ide/protocol';
 import {
@@ -10,7 +11,6 @@ import {
   rootExpanded,
   toggleDir,
 } from '../state/session.js';
-import { gitTint } from '../state/git.js';
 import { openTreeMenu } from '../state/tree-menu.js';
 import {
   dropInto,
@@ -99,7 +99,7 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
   const isCurrent = openFile.value?.path === entry.path;
   const kids = isOpen ? dirChildren.value.get(entry.path) : undefined;
   const broken = brokenPaths.value.has(entry.path);
-  const tint = entry.noScan ? undefined : gitTint.value.get(entry.path);
+  const tint = entry.noScan ? undefined : git.tint.value.get(entry.path);
 
   return (
     <>

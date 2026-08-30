@@ -1,3 +1,4 @@
+import { branchesWindow, pushWindow } from './state/git.js';
 import { registerCommand, missingCommands } from './keys/commands.js';
 import { toggleFollow } from './state/tree-follow.js';
 import { resolveContext } from './keys/context.js';
@@ -39,7 +40,6 @@ import {
 } from './state/session.js';
 import { createTerminal } from './state/terminals.js';
 import { openToolPicker } from './state/tools.js';
-import { gitDo, openBranches, openPush } from './state/git.js';
 import {
   acceptPath,
   completeSuggestion,
@@ -115,9 +115,9 @@ export function registerCommands(): void {
     else hideProjects();
   });
 
-  registerCommand('git.branches', () => openBranches());
-  registerCommand('git.push', () => void openPush());
-  registerCommand('git.fetch', () => void gitDo('fetch'));
+  registerCommand('git.branches', () => branchesWindow.show());
+  registerCommand('git.push', () => void pushWindow.show());
+  registerCommand('git.fetch', () => void branchesWindow.do('fetch'));
   registerCommand('pick.next', () => (symbolList.value ? stepSymbol(1) : activePick.value?.next()));
   registerCommand('pick.prev', () => (symbolList.value ? stepSymbol(-1) : activePick.value?.prev()));
   registerCommand('pick.accept', () => (symbolList.value ? acceptSymbol() : activePick.value?.accept()));

@@ -1,3 +1,4 @@
+import { git, pushWindow } from '../state/git.js';
 import { useRef } from 'preact/hooks';
 import type { GitCommit } from '@ide/protocol';
 import { ChangedTree } from './changed-tree.js';
@@ -5,20 +6,6 @@ import { Resizer } from './resizer.js';
 import { Popup } from './popup.js';
 import { widthOf } from '../state/layout.js';
 import { t } from '../i18n/index.js';
-import {
-  clearCommit,
-  closePush,
-  doPush,
-  gitOutput,
-  gitRunning,
-  pushForce,
-  pushChanges,
-  pushOpen,
-  pushPreview,
-  pushSelected,
-  selectCommit,
-  selectedCommit,
-} from '../state/git.js';
 
 const FILES_ID = 'push.files';
 const FILES_DEFAULT = 460;
@@ -44,11 +31,11 @@ export function Push() {
     return { min: MESSAGE_MIN, max: Math.max(MESSAGE_MIN, full - TREE_MIN) };
   };
 
-  if (!pushOpen.value) return null;
+  if (!pushWindow.open.value) return null;
 
-  const preview = pushPreview.value;
-  const busy = gitRunning.value !== null;
-  const force = pushForce.value;
+  const preview = pushWindow.preview.value;
+  const busy = git.running.value !== null;
+  const force = pushWindow.force.value;
 
   return (
     <Popup
@@ -58,10 +45,10 @@ export function Push() {
       class="push"
       size={{ w: 1080, h: 560 }}
       min={{ w: 620, h: 320 }}
-      onClose={() => !busy && closePush()}
+      onClose={() => !busy && pushWindow.close()}
       onMouseDown={(event) => {
         if (!(event.target as HTMLElement).closest('.push-commit, .push-files, .resizer')) {
-          clearCommit();
+          pushWindow.clear();
         }
       }}
     >
@@ -112,13 +99,13 @@ export function Push() {
               style={{ width: `${widthOf(FILES_ID, FILES_DEFAULT)}px` }}
             >
               <div class="push-lane-title">
-                {pushSelected.value
-                  ? t('push.commitFiles', { sha: pushSelected.value })
+                {pushWindow.selected.value
+                  ? t('push.commitFiles', { sha: pushWindow.selected.value })
                   : t('push.allChanges')}
-                {pushChanges.value.length > 0 ? ` · ${pushChanges.value.length}` : ''}
+                {pushWindow.changes.value.length > 0 ? ` · ${pushWindow.changes.value.length}` : ''}
               </div>
               <div class="push-files-body">
-                <ChangedTree changes={pushChanges.value} />
+                <ChangedTree changes={pushWindow.changes.value} />
               </div>
 
               <Resizer
@@ -140,7 +127,7 @@ export function Push() {
           <div class="se-empty">{t('push.counting')}</div>
         )}
 
-        {gitOutput.value !== '' && <pre class="git-log">{gitOutput.value}</pre>}
+        {git.output.value !== '' && <pre class="git-log">{git.output.value}</pre>}
 
         <div class="branches-foot">
           <label class={`push-force ${preview?.remote.length ? 'is-armed' : ''}`}>
@@ -148,7 +135,7 @@ export function Push() {
               type="checkbox"
               checked={force}
               disabled={busy}
-              onChange={(e) => (pushForce.value = (e.target as HTMLInputElement).checked)}
+              onChange={(e) => (pushWindow.force.value = (e.target as HTMLInputElement).checked)}
             />
             {preview?.remote.length
               ? t('push.forceWarn', { count: preview.remote.length })
@@ -157,11 +144,11 @@ export function Push() {
 
           <span class="push-spacer" />
 
-          <button class={`button ${busy ? 'is-running' : ''}`} disabled={busy} onClick={() => void doPush()}>
+          <button class={`button ${busy ? 'is-running' : ''}`} disabled={busy} onClick={() => void pushWindow.send()}>
             {busy && <span class="spinner" />}
             {force ? t('push.doForce') : t('push.do')}
           </button>
-          <button class="button" disabled={busy} onClick={closePush}>
+          <button class="button" disabled={busy} onClick={pushWindow.close}>
             {t('push.cancel')}
           </button>
         </div>
@@ -170,7 +157,7 @@ export function Push() {
 }
 
 function Message() {
-  const commit = selectedCommit.value;
+  const commit = pushWindow.commit.value;
   if (!commit) return <div class="push-empty">{t('push.pickCommit')}</div>;
   return (
     <>
@@ -204,10 +191,10 @@ function Lane({
           <div
             key={commit.short}
             class={`push-commit is-pickable ${
-              pushSelected.value === commit.short ? 'is-current' : ''
+              pushWindow.selected.value === commit.short ? 'is-current' : ''
             }`}
             title={`${commit.author}, ${commit.date}`}
-            onClick={() => selectCommit(commit.short)}
+            onClick={() => pushWindow.select(commit.short)}
           >
             <span class="push-sha">{commit.short}</span>
             <span class="push-subject">{commit.subject}</span>
