@@ -1,7 +1,7 @@
+import { popups } from '../state/popups.js';
 import { doc } from '../state/session.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { closeHunk, hunkPopup, revertOpenHunk } from '../state/git-marks.js';
-import { enter, leave } from '../state/popups.js';
 import { t } from '../i18n/index.js';
 
 export function HunkPopup() {
@@ -20,13 +20,13 @@ export function HunkPopup() {
 
   useEffect(() => {
     if (!open || !alive) return;
-    enter({ id: 'hunk', close: closeHunk, layer: true });
+    popups.enter({ id: 'hunk', close: closeHunk, layer: true });
     const away = (event: MouseEvent) => {
       if (!(event.target as HTMLElement).closest('.hunk-popup')) closeHunk();
     };
     window.addEventListener('mousedown', away, { capture: true });
     return () => {
-      leave('hunk');
+      popups.leave('hunk');
       window.removeEventListener('mousedown', away, { capture: true });
     };
   }, [open, alive]);

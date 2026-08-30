@@ -1,3 +1,5 @@
+import { popups } from './state/popups.js';
+import { symbols } from './state/symbols.js';
 import { terminals } from './state/terminals.js';
 import { visits } from './state/visits.js';
 import { search } from './state/search.js';
@@ -12,11 +14,9 @@ import { registerCommand, missingCommands } from './keys/commands.js';
 import { toggleFollow } from './state/tree-follow.js';
 import { resolveContext } from './keys/context.js';
 import { focusEditor } from './state/editor.js';
-import { closeTop } from './state/popups.js';
 import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
 import { toggleKeysHelp } from './state/keys-help.js';
-import { accept as acceptSymbol, step as stepSymbol, symbolList } from './state/symbols.js';
 
 export function registerCommands(): void {
   registerCommand('file.save', () => doc.save());
@@ -85,9 +85,9 @@ export function registerCommands(): void {
   registerCommand('git.branches', () => branchesWindow.show());
   registerCommand('git.push', () => void pushWindow.show());
   registerCommand('git.fetch', () => void branchesWindow.do('fetch'));
-  registerCommand('pick.next', () => (symbolList.value ? stepSymbol(1) : activePick.value?.next()));
-  registerCommand('pick.prev', () => (symbolList.value ? stepSymbol(-1) : activePick.value?.prev()));
-  registerCommand('pick.accept', () => (symbolList.value ? acceptSymbol() : activePick.value?.accept()));
+  registerCommand('pick.next', () => (symbols.list.value ? symbols.step(1) : activePick.value?.next()));
+  registerCommand('pick.prev', () => (symbols.list.value ? symbols.step(-1) : activePick.value?.prev()));
+  registerCommand('pick.accept', () => (symbols.list.value ? symbols.accept() : activePick.value?.accept()));
   registerCommand('pick.expand', () => activePick.value?.expand?.());
 
   registerCommand('prompt.confirm', () => void prompt.answer());
@@ -97,7 +97,7 @@ export function registerCommands(): void {
   registerCommand('menu.accept', () => activeMenu.value?.accept());
 
   registerCommand('popup.close', () => {
-    closeTop();
+    popups.closeTop();
   });
 
   registerCommand('search.everywhere', () => search.show());

@@ -1,6 +1,6 @@
+import { popups } from '../state/popups.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { activeMenu } from '../state/menu.js';
-import { enter, leave } from '../state/popups.js';
 import { t } from '../i18n/index.js';
 
 export interface MenuItem {
@@ -28,9 +28,9 @@ export function Menu({
   useEffect(() => {
     const came = document.activeElement as HTMLElement | null;
     box.current?.focus({ preventScroll: true });
-    enter({ id: 'menu', close: onClose, layer: true });
+    popups.enter({ id: 'menu', close: onClose, layer: true });
     return () => {
-      leave('menu');
+      popups.leave('menu');
       const here = document.activeElement;
       const mine = here === box.current || (here !== null && box.current?.contains(here));
       if (mine || here === document.body) came?.focus();

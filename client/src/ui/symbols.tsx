@@ -1,20 +1,10 @@
+import { symbols } from '../state/symbols.js';
 import { config } from '../state/config.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { widthOf } from '../state/layout.js';
 import { codePainter } from '../editor/paint-line.js';
 import { Popup } from './popup.js';
 import { Resizer } from './resizer.js';
-import {
-  accept,
-  closeSymbols,
-  hideImports,
-  select,
-  filteredSites,
-  shownSites,
-  symbolList,
-  symbolPreview,
-  toggleImports,
-} from '../state/symbols.js';
 import { CodeView } from '../editor/code-view.js';
 import { t } from '../i18n/index.js';
 
@@ -27,8 +17,8 @@ const LIST_MIN = 60;
 const PREVIEW_MIN = 120;
 
 export function Symbols() {
-  const list = symbolList.value;
-  const preview = symbolPreview.value;
+  const list = symbols.list.value;
+  const preview = symbols.preview.value;
   const body = useRef<HTMLDivElement>(null);
 
   const limits = () => {
@@ -40,11 +30,11 @@ export function Symbols() {
     body.current?.querySelector('.symbols-row.is-current > *')?.scrollIntoView({
       block: 'nearest',
     });
-  }, [list?.at, list?.sites.length, hideImports.value]);
+  }, [list?.at, list?.sites.length, symbols.hideImports.value]);
 
   if (!list) return null;
-  const sites = shownSites(list);
-  const passed = filteredSites(list);
+  const sites = symbols.shown(list);
+  const passed = symbols.filtered(list);
   const hidden = list.sites.length - passed.length;
   const cut = passed.length - sites.length;
 
@@ -58,7 +48,7 @@ export function Symbols() {
       layer
       clear
       anchor={{ x: list.x, y: list.y }}
-      onClose={closeSymbols}
+      onClose={symbols.close}
     >
       <div class="symbols-head">
         <span class="symbols-title">
@@ -68,9 +58,9 @@ export function Symbols() {
         </span>
         <span class="symbols-count">{passed.length}</span>
         <span
-          class={`symbols-filter ${hideImports.value ? 'is-on' : ''}`}
+          class={`symbols-filter ${symbols.hideImports.value ? 'is-on' : ''}`}
           title={t('symbols.imports.hint')}
-          onClick={toggleImports}
+          onClick={symbols.toggleImports}
         >
           {t('symbols.imports', { count: hidden })}
         </span>
@@ -86,10 +76,10 @@ export function Symbols() {
             key={`${site.path}:${site.line}:${site.character}`}
             class={`symbols-row ${at === list.at ? 'is-current' : ''}`}
             title={`${site.path}:${site.line + 1}`}
-            onMouseMove={at === list.at ? undefined : () => select(at)}
+            onMouseMove={at === list.at ? undefined : () => symbols.select(at)}
             onClick={() => {
-              select(at);
-              accept();
+              symbols.select(at);
+              symbols.accept();
             }}
           >
             <span class="symbols-where">{site.path}</span>

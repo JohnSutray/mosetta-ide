@@ -1,5 +1,5 @@
+import { popups } from '../state/popups.js';
 import { COMMAND_IDS, COMMANDS, type CommandId } from '@ide/protocol';
-import { stack } from '../state/popups.js';
 
 type Runner = () => void | Promise<void>;
 
@@ -32,12 +32,12 @@ const OPENS: Partial<Record<CommandId, string>> = {
 
 export function opensOpenPopup(id: string): boolean {
   const popup = opensPopup(id);
-  return popup !== undefined && stack.value.some((item) => item.id === popup);
+  return popup !== undefined && popups.stack.value.some((item) => item.id === popup);
 }
 
 export function runCommand(id: string): boolean {
   const popup = opensPopup(id);
-  const open = popup === undefined ? undefined : stack.value.find((item) => item.id === popup);
+  const open = popup === undefined ? undefined : popups.stack.value.find((item) => item.id === popup);
   if (open) {
     open.close();
     return true;

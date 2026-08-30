@@ -1,3 +1,4 @@
+import { symbols } from '../state/symbols.js';
 import { config } from '../state/config.js';
 import { terminals } from '../state/terminals.js';
 import { visits } from '../state/visits.js';
@@ -10,7 +11,6 @@ import { git, resetGit } from '../state/git.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { headFor, loadHead, showHunk } from '../state/git-marks.js';
-import { askSymbol } from '../state/symbols.js';
 import { takeFocusOnMount, wantsFocus } from '../state/editor.js';
 import { chordHeld } from '../keys/chords.js';
 import { darcula } from '../editor/darcula.js';
@@ -115,7 +115,7 @@ export function App() {
       unstable_widthOf: widthOf,
       unstable_diffLines: (before, after) => lineDiff.hunks(before, after),
       unstable_showHunk: showHunk,
-      unstable_askSymbol: askSymbol,
+      unstable_askSymbol: symbols.ask,
       unstable_dc: darcula.palette,
       unstable_paintCode: (text, path) => codePainter.paint(text, path),
       unstable_darcula: darcula.extension,

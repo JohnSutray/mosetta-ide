@@ -1,3 +1,4 @@
+import { popups } from '../src/state/popups.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   opensOpenPopup,
@@ -5,11 +6,10 @@ import {
   registerPluginCommand,
   runCommand,
 } from '../src/keys/commands.js';
-import { enter, leave, stack } from '../src/state/popups.js';
 
 describe('повторное нажатие закрывает окно', () => {
   beforeEach(() => {
-    stack.value = [];
+    popups.stack.value = [];
   });
 
   it('окно открыто — нажатие закрывает его, а не открывает второе', () => {
@@ -22,7 +22,7 @@ describe('повторное нажатие закрывает окно', () => 
     runCommand('git.branches');
     expect(opened).toBe(1);
 
-    enter({ id: 'branches', close: () => (closed += 1) });
+    popups.enter({ id: 'branches', close: () => (closed += 1) });
     runCommand('git.branches');
     expect(closed).toBe(1);
     expect(opened).toBe(1);
@@ -33,7 +33,7 @@ describe('повторное нажатие закрывает окно', () => 
     registerPluginCommand('scripts.open', () => {
       opened += 1;
     });
-    enter({ id: 'branches', close: () => {} });
+    popups.enter({ id: 'branches', close: () => {} });
     runCommand('scripts.open');
     expect(opened).toBe(1);
   });
@@ -43,16 +43,16 @@ describe('повторное нажатие закрывает окно', () => 
     registerCommand('keys.show', () => {
       opened += 1;
     });
-    enter({ id: 'keys', close: () => leave('keys') });
+    popups.enter({ id: 'keys', close: () => popups.leave('keys') });
     runCommand('keys.show');
-    expect(stack.value).toHaveLength(0);
+    expect(popups.stack.value).toHaveLength(0);
     runCommand('keys.show');
     expect(opened).toBe(1);
   });
 
   it('окно «Keys» узнаётся снаружи: оно ловит клавиши и должно закрыться', () => {
     expect(opensOpenPopup('keys.show')).toBe(false);
-    enter({ id: 'keys', close: () => {} });
+    popups.enter({ id: 'keys', close: () => {} });
     expect(opensOpenPopup('keys.show')).toBe(true);
     expect(opensOpenPopup('git.push')).toBe(false);
   });
@@ -62,7 +62,7 @@ describe('повторное нажатие закрывает окно', () => 
     registerCommand('file.save', () => {
       ran += 1;
     });
-    enter({ id: 'search', close: () => {} });
+    popups.enter({ id: 'search', close: () => {} });
     runCommand('file.save');
     expect(ran).toBe(1);
   });

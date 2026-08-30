@@ -1,3 +1,4 @@
+import { popups } from '../state/popups.js';
 import type { ComponentChildren } from 'preact';
 import type { KeyContext } from '@ide/protocol';
 import { useEffect, useRef } from 'preact/hooks';
@@ -9,7 +10,6 @@ import {
   viewport,
   type Size,
 } from '../state/layout.js';
-import { enter, leave } from '../state/popups.js';
 import { catchesKeys } from '../keys/dispatcher.js';
 import { t } from '../i18n/index.js';
 
@@ -53,8 +53,8 @@ export function Popup({
   const closing = useRef(onEscape ?? onClose);
   closing.current = onEscape ?? onClose;
   useEffect(() => {
-    enter({ id, close: () => closing.current(), over, layer, el: box.current });
-    return () => leave(id);
+    popups.enter({ id, close: () => closing.current(), over, layer, el: box.current });
+    return () => popups.leave(id);
   }, [id, over, layer]);
 
   useEffect(() => {

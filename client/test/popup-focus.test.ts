@@ -1,5 +1,5 @@
+import { popups } from '../src/state/popups.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { enter, leave, stack } from '../src/state/popups.js';
 
 interface FakeEl {
   isConnected: boolean;
@@ -36,7 +36,7 @@ function setActive(node: FakeEl | HTMLElement | null): void {
 const settle = () => new Promise<void>((done) => queueMicrotask(() => done()));
 
 beforeEach(() => {
-  stack.value = [];
+  popups.stack.value = [];
   setActive(asEl(body));
 });
 
@@ -50,11 +50,11 @@ describe('возврат фокуса из попапа', () => {
     setActive(asEl(editor));
 
     const popup = el();
-    enter({ id: 'search', close: () => {}, el: asEl(popup) });
+    popups.enter({ id: 'search', close: () => {}, el: asEl(popup) });
     popup.focus();
 
     popup.isConnected = false;
-    leave('search');
+    popups.leave('search');
     await settle();
     expect(editor.focused).toBe(1);
   });
@@ -63,13 +63,13 @@ describe('возврат фокуса из попапа', () => {
     const editor = el();
     setActive(asEl(editor));
     const popup = el();
-    enter({ id: 'search', close: () => {}, el: asEl(popup) });
+    popups.enter({ id: 'search', close: () => {}, el: asEl(popup) });
     popup.focus();
 
     const tree = el();
     tree.focus();
     popup.isConnected = false;
-    leave('search');
+    popups.leave('search');
     await settle();
     expect(editor.focused).toBe(0);
     expect(tree.focused).toBe(1);
@@ -79,21 +79,21 @@ describe('возврат фокуса из попапа', () => {
     const editor = el();
     setActive(asEl(editor));
     const branches = el();
-    enter({ id: 'branches', close: () => {}, el: asEl(branches) });
+    popups.enter({ id: 'branches', close: () => {}, el: asEl(branches) });
     branches.focus();
 
     const push = el();
-    enter({ id: 'push', close: () => {}, over: 'branches', el: asEl(push) });
+    popups.enter({ id: 'push', close: () => {}, over: 'branches', el: asEl(push) });
     push.focus();
 
     push.isConnected = false;
-    leave('push');
+    popups.leave('push');
     await settle();
     expect(branches.focused).toBe(2);
     expect(editor.focused).toBe(0);
 
     branches.isConnected = false;
-    leave('branches');
+    popups.leave('branches');
     await settle();
     expect(editor.focused).toBe(1);
   });
@@ -102,12 +102,12 @@ describe('возврат фокуса из попапа', () => {
     const gone = el();
     setActive(asEl(gone));
     const popup = el();
-    enter({ id: 'search', close: () => {}, el: asEl(popup) });
+    popups.enter({ id: 'search', close: () => {}, el: asEl(popup) });
     popup.focus();
 
     gone.isConnected = false;
     popup.isConnected = false;
-    leave('search');
+    popups.leave('search');
     await settle();
     expect(gone.focused).toBe(0);
   });
