@@ -1,10 +1,10 @@
+import { doc } from '../state/session.js';
 import { merge } from '../state/merge.js';
-import { divergedFrom, openFile, reloadDoc } from '../state/session.js';
 import { t } from '../i18n/index.js';
 
 export function DivergedBadge() {
-  const file = openFile.value;
-  const why = divergedFrom(file?.path ?? null);
+  const file = doc.open.value;
+  const why = doc.divergedFrom(file?.path ?? null);
   if (!file || !why) return null;
 
   return (
@@ -26,7 +26,7 @@ export function DivergedBadge() {
           type="button"
           class="diverged-button is-quiet"
           title={t('diverged.discard.hint')}
-          onClick={() => void reloadDoc()}
+          onClick={() => void doc.reload()}
         >
           {t('diverged.discard')}
         </button>

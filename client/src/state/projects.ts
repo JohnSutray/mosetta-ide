@@ -1,6 +1,6 @@
+import { rpc, session } from './session.js';
 import { batch, signal } from '@preact/signals';
 import type { DirSuggestion, RecentProject } from '@ide/protocol';
-import { current, openProject, rpc, switchProject } from './session.js';
 
 export class Projects {
   readonly visible = signal(false);
@@ -32,7 +32,7 @@ export class Projects {
   }
 
   hide(): void {
-    if (!current.value) return;
+    if (!session.current.value) return;
     batch(() => {
       this.visible.value = false;
       this.closeSuggest();
@@ -129,13 +129,13 @@ export class Projects {
 
   choose(root: string, liveId?: string): void {
     if (root === '' && !liveId) return;
-    if (liveId && current.value?.id === liveId) {
+    if (liveId && session.current.value?.id === liveId) {
       this.hide();
       return;
     }
-    const going = liveId ? switchProject(liveId) : openProject(root);
+    const going = liveId ? session.switchProject(liveId) : session.openProject(root);
     void going.then(() => {
-      if (!current.value) return;
+      if (!session.current.value) return;
       this.hide();
       void this.load();
     });

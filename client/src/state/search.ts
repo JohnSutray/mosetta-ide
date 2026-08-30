@@ -1,6 +1,6 @@
+import { doc, rpc } from './session.js';
 import { batch, computed, signal } from '@preact/signals';
 import type { IndexHit, IndexKind } from '@ide/protocol';
-import { openFileAt, reveal, rpc } from './session.js';
 import { pluginOpener } from './plugins.js';
 
 export const searchOpen = signal(false);
@@ -107,8 +107,8 @@ export function acceptSelected(): void {
     return;
   }
 
-  void openFileAt(hit.path).then(() => {
-    if (hit.line !== undefined) reveal(hit.path, hit.line);
+  void doc.openAt(hit.path).then(() => {
+    if (hit.line !== undefined) doc.reveal(hit.path, hit.line);
   });
 }
 

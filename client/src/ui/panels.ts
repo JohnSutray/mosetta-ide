@@ -1,6 +1,12 @@
+import { session } from '../state/session.js';
 import type { ReadonlySignal } from '@preact/signals';
 import type { CommandId } from '@ide/protocol';
-import { terminalPanelVisible, treePanelVisible } from '../state/session.js';
+import { persisted } from '../state/persist.js';
+
+export const treePanelVisible = persisted('panel.tree', true);
+export const terminalPanelVisible = persisted('panel.terminal', false);
+
+session.onReset(() => (terminalPanelVisible.value = false));
 import type { IconName } from './icons.js';
 
 export type PanelSide = 'left' | 'right';

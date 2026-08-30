@@ -1,8 +1,8 @@
+import { rpc } from '../state/session.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { darcula } from '../editor/darcula.js';
-import { rpc } from '../state/session.js';
 import { activeTerminal, onTerminalData } from '../state/terminals.js';
 import { t } from '../i18n/index.js';
 

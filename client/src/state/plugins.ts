@@ -1,3 +1,5 @@
+import { rpc } from './session.js';
+import { complain, say } from './notifications.js';
 import * as preact from 'preact';
 import * as hooks from 'preact/hooks';
 import * as signals from '@preact/signals';
@@ -9,7 +11,6 @@ import * as cmLanguage from '@codemirror/language';
 import * as cmSearch from '@codemirror/search';
 import { signal, type Signal } from '@preact/signals';
 import type { PluginInfo } from '@ide/protocol';
-import { complain, rpc, say } from './session.js';
 import { registerPluginCommand } from '../keys/commands.js';
 import {
   activate as activateHook,
@@ -178,6 +179,6 @@ function servicesFor(name: string): Ide {
     surface(view: () => unknown) {
       pluginSurfaces.value = [...pluginSurfaces.value, view];
     },
-    say,
+    say: (message: string) => say(message),
   };
 }

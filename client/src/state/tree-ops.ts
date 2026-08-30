@@ -1,19 +1,9 @@
+import { doc, fileTree, rpc, session } from './session.js';
+import { complain, say } from './notifications.js';
 import { batch, signal } from '@preact/signals';
 import type { EntryKind } from '@ide/protocol';
-import {
-  complain,
-  current,
-  dirChildren,
-  docSync,
-  ensureExpanded,
-  expanded,
-  loadDir,
-  openFileAt,
-  rpc,
-  say,
-  toggleDir,
-} from './session.js';
 import { t } from '../i18n/index.js';
+import type { FileTree } from './file-tree.js';
 
 export interface Ask {
   id: number;
@@ -60,6 +50,8 @@ export class Prompt {
 }
 
 export class TreeSelection {
+  constructor(private readonly files: FileTree) {}
+
   readonly focus = signal<string | null>(null);
 
   readonly picked = signal<Set<string>>(new Set());
@@ -112,9 +104,9 @@ export class TreeSelection {
   visibleOrder(): string[] {
     const out: string[] = [];
     const walk = (path: string) => {
-      for (const entry of dirChildren.value.get(path) ?? []) {
+      for (const entry of this.files.children.value.get(path) ?? []) {
         out.push(entry.path);
-        if (entry.kind === 'dir' && expanded.value.has(entry.path)) walk(entry.path);
+        if (entry.kind === 'dir' && this.files.expanded.value.has(entry.path)) walk(entry.path);
       }
     };
     walk('');
@@ -123,7 +115,7 @@ export class TreeSelection {
 
   isDir(path: string): boolean {
     const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
-    return dirChildren.value.get(parent)?.find((item) => item.path === path)?.kind === 'dir';
+    return this.files.children.value.get(parent)?.find((item) => item.path === path)?.kind === 'dir';
   }
 
   step(delta: number): void {
@@ -138,8 +130,8 @@ export class TreeSelection {
   openBranch(): void {
     const path = this.focus.value;
     if (!path) return;
-    if (this.isDir(path) && !expanded.value.has(path)) {
-      void toggleDir(path);
+    if (this.isDir(path) && !this.files.expanded.value.has(path)) {
+      void this.files.toggle(path);
       return;
     }
     this.step(1);
@@ -148,8 +140,8 @@ export class TreeSelection {
   closeBranch(): void {
     const path = this.focus.value;
     if (!path) return;
-    if (this.isDir(path) && expanded.value.has(path)) {
-      void toggleDir(path);
+    if (this.isDir(path) && this.files.expanded.value.has(path)) {
+      void this.files.toggle(path);
       return;
     }
     const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
@@ -169,15 +161,15 @@ export class TreeSelection {
 
     if (this.shown(path, dirs)) return;
 
-    const missing = dirs.filter((dir) => !expanded.value.has(dir));
+    const missing = dirs.filter((dir) => !this.files.expanded.value.has(dir));
     if (missing.length > 0) {
-      const open = new Set(expanded.value);
+      const open = new Set(this.files.expanded.value);
       for (const dir of missing) open.add(dir);
-      expanded.value = open;
+      this.files.expanded.value = open;
     }
 
     for (const dir of dirs) {
-      if (!dirChildren.value.has(dir)) await loadDir(dir);
+      if (!this.files.children.value.has(dir)) await this.files.load(dir);
     }
     this.only(path);
   }
@@ -188,7 +180,7 @@ export class TreeSelection {
   }
 
   hasProject(): boolean {
-    return current.value !== null;
+    return session.current.value !== null;
   }
 
   private shown(path: string, dirs: string[]): boolean {
@@ -197,7 +189,7 @@ export class TreeSelection {
       this.focus.value === path &&
       selection.size === 1 &&
       selection.has(path) &&
-      dirs.every((dir) => expanded.value.has(dir) && dirChildren.value.has(dir))
+      dirs.every((dir) => this.files.expanded.value.has(dir) && this.files.children.value.has(dir))
     );
   }
 }
@@ -208,6 +200,7 @@ export class TreeOps {
   constructor(
     private readonly selection: TreeSelection,
     private readonly prompt: Prompt,
+    private readonly files: FileTree,
   ) {}
 
   create(at: string, isDir: boolean, kind: EntryKind): void {
@@ -221,9 +214,9 @@ export class TreeOps {
       run: async (name) => {
         const path = parent === '' ? name : `${parent}/${name}`;
         await rpc.call('fs.create', { path, kind });
-        await loadDir(parent);
-        await ensureExpanded(parent);
-        if (kind === 'file') await openFileAt(path);
+        await this.files.load(parent);
+        await this.files.ensureExpanded(parent);
+        if (kind === 'file') await doc.openAt(path);
       },
     });
   }
@@ -240,9 +233,9 @@ export class TreeOps {
       run: async (next) => {
         if (next === name) return;
         const to = parent === '' ? next : `${parent}/${next}`;
-        await docSync.flush();
+        await doc.sync.flush();
         await rpc.call('fs.move', { from: path, to });
-        await loadDir(parent);
+        await this.files.load(parent);
         say(t('tree.renamed', { name: next }));
       },
     });
@@ -264,7 +257,7 @@ export class TreeOps {
       run: async () => {
         for (const item of paths) {
           await rpc.call('fs.remove', { path: item });
-          await loadDir(item.slice(0, Math.max(0, item.lastIndexOf('/'))));
+          await this.files.load(item.slice(0, Math.max(0, item.lastIndexOf('/'))));
         }
         this.selection.clear();
         say(many ? t('tree.deletedMany', { count: paths.length }) : t('tree.deleted', { path }));
@@ -298,7 +291,7 @@ export class TreeOps {
   }
 
   async dropInto(paths: string[], folder: string, copy: boolean): Promise<void> {
-    if (!copy) await docSync.flush();
+    if (!copy) await doc.sync.flush();
     for (const from of paths) {
       const name = from.slice(from.lastIndexOf('/') + 1);
       const to = join(folder, name);
@@ -314,10 +307,10 @@ export class TreeOps {
         complain(describe(err));
         return;
       }
-      await loadDir(from.slice(0, Math.max(0, from.lastIndexOf('/'))));
+      await this.files.load(from.slice(0, Math.max(0, from.lastIndexOf('/'))));
     }
-    await loadDir(folder);
-    await ensureExpanded(folder);
+    await this.files.load(folder);
+    await this.files.ensureExpanded(folder);
     this.selection.clear();
     say(
       copy
@@ -357,8 +350,8 @@ export class TreeOps {
         const extension = image.slice('image/'.length).replace('svg+xml', 'svg');
         const name = await freeName(parent, 'image', extension);
         await rpc.call('fs.writeBytes', { path: join(parent, name), base64: await toBase64(blob) });
-        await loadDir(parent);
-        await ensureExpanded(parent);
+        await this.files.load(parent);
+        await this.files.ensureExpanded(parent);
         say(t('tree.pasted', { name }));
         return;
       }
@@ -379,8 +372,8 @@ export class TreeOps {
         const path = join(parent, name);
         await rpc.call('fs.create', { path, kind: 'file' });
         await rpc.call('fs.write', { path, text });
-        await loadDir(parent);
-        await openFileAt(path);
+        await this.files.load(parent);
+        await doc.openAt(path);
       },
     });
   }
@@ -421,5 +414,5 @@ function describe(err: unknown): string {
 }
 
 export const prompt = new Prompt();
-export const tree = new TreeSelection();
-export const treeOps = new TreeOps(tree, prompt);
+export const tree = new TreeSelection(fileTree);
+export const treeOps = new TreeOps(tree, prompt, fileTree);

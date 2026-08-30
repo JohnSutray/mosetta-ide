@@ -1,3 +1,4 @@
+import { rpc } from './session.js';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
 import type {
   GitAction,
@@ -7,8 +8,7 @@ import type {
   GitState,
   PushPreview,
 } from '@ide/protocol';
-import { complain, rpc } from './session.js';
-import { notify, settle } from './notifications.js';
+import {complain, notify, settle} from './notifications.js';
 import { fuzzy, type FuzzyHit } from '../ui/fuzzy.js';
 import { t } from '../i18n/index.js';
 

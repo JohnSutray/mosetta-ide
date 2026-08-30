@@ -1,7 +1,7 @@
+import { session } from '../state/session.js';
 import { projects } from '../state/projects.js';
 import { useEffect, useRef } from 'preact/hooks';
 import type { DirSuggestion } from '@ide/protocol';
-import { current, workspaces } from '../state/session.js';
 import { Chevron, DirIcon } from './file-icons.js';
 import { Popup } from './popup.js';
 import { Icon } from './icons.js';
@@ -72,8 +72,8 @@ export function Projects() {
 
 function Recent() {
   const list = projects.recent.value;
-  const live = workspaces.value;
-  const active = current.value;
+  const live = session.workspaces.value;
+  const active = session.current.value;
   if (list.length === 0) return null;
 
   return (

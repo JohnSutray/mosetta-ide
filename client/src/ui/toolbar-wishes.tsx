@@ -1,3 +1,4 @@
+import { session } from '../state/session.js';
 import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
@@ -6,7 +7,6 @@ import type { TerminalInfo } from '@ide/protocol';
 import { computed } from '@preact/signals';
 import { runCommand } from '../keys/commands.js';
 import { activeTerminal, closeTerminal, focusTerminal, terminals } from '../state/terminals.js';
-import { connected, current } from '../state/session.js';
 import { searchOpen } from '../state/search.js';
 import { keysHelpOpen } from '../state/keys-help.js';
 import { following } from '../state/tree-follow.js';
@@ -123,7 +123,7 @@ function TerminalChips() {
 }
 
 function Tools() {
-  const ws = current.value;
+  const ws = session.current.value;
   return (
     <>
       <ToolButton
@@ -143,7 +143,7 @@ function Tools() {
 }
 
 function Branch() {
-  const ws = current.value;
+  const ws = session.current.value;
   const state = git.state.value;
   if (!ws) return null;
   return (
@@ -168,7 +168,7 @@ function Branch() {
 function Connection() {
   return (
     <span
-      class={`dot ${connected.value ? 'is-on' : 'is-off'}`}
+      class={`dot ${session.connected.value ? 'is-on' : 'is-off'}`}
       title={t('toolbar.connection')}
     />
   );

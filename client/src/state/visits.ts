@@ -1,6 +1,6 @@
+import { doc, rpc } from './session.js';
 import { signal } from '@preact/signals';
 import type { Visit } from '@ide/protocol';
-import { openFile, openFileAt, reveal, rpc } from './session.js';
 
 const FAR = 12;
 
@@ -82,8 +82,8 @@ async function jump(to: number): Promise<void> {
   walking = true;
   visitAt.value = to;
   try {
-    if (openFile.peek()?.path !== target.path) await openFileAt(target.path);
-    reveal(target.path, target.line, target.character);
+    if (doc.open.peek()?.path !== target.path) await doc.openAt(target.path);
+    doc.reveal(target.path, target.line, target.character);
   } finally {
     setTimeout(() => {
       walking = false;

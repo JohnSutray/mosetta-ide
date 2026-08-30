@@ -1,6 +1,7 @@
+import { rpc, session } from './session.js';
+import { complain, say } from './notifications.js';
 import { signal } from '@preact/signals';
 import type { PackageManagerInfo, ShellInfo } from '@ide/protocol';
-import { complain, current, rpc, say } from './session.js';
 
 export type ToolKind = 'shell' | 'manager';
 
@@ -40,7 +41,7 @@ export class Tools {
       this.shells.value = [];
       complain(`shells: ${err instanceof Error ? err.message : String(err)}`);
     }
-    if (!current.peek()) {
+    if (!session.current.peek()) {
       this.managers.value = [];
       return;
     }

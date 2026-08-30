@@ -1,3 +1,5 @@
+import { terminalPanelVisible, treePanelVisible } from './ui/panels.js';
+import { doc, fileTree } from './state/session.js';
 import { prompt, tree, treeOps } from './state/tree-ops.js';
 import { merge } from './state/merge.js';
 import { projects } from './state/projects.js';
@@ -14,18 +16,11 @@ import { activeMenu } from './state/menu.js';
 import { toggleKeysHelp } from './state/keys-help.js';
 import { goBack, goForward } from './state/visits.js';
 import { accept as acceptSymbol, step as stepSymbol, symbolList } from './state/symbols.js';
-import { dirChildren, openFileAt, toggleDir } from './state/session.js';
-import {
-  reloadDoc,
-  saveDoc,
-  terminalPanelVisible,
-  treePanelVisible,
-} from './state/session.js';
 import { createTerminal } from './state/terminals.js';
 
 export function registerCommands(): void {
-  registerCommand('file.save', () => saveDoc());
-  registerCommand('file.reload', () => reloadDoc());
+  registerCommand('file.save', () => doc.save());
+  registerCommand('file.reload', () => doc.reload());
 
   registerCommand('nav.back', () => goBack());
   registerCommand('nav.forward', () => goForward());
@@ -57,8 +52,8 @@ export function registerCommands(): void {
   registerCommand('tree.newFolder', () => onFocused((path, isDir) => treeOps.create(path, isDir, 'dir')));
   registerCommand('tree.open', () =>
     onPicked((path, isDir) => {
-      if (isDir) void toggleDir(path);
-      else void openFileAt(path).then(focusEditor);
+      if (isDir) void fileTree.toggle(path);
+      else void doc.openAt(path).then(focusEditor);
     }),
   );
   registerCommand('tree.rename', () => onPicked((path) => treeOps.rename(path)));
@@ -117,7 +112,7 @@ export { missingCommands };
 function onFocused(run: (path: string, isDir: boolean) => void): void {
   const path = tree.focus.value ?? '';
   const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
-  const entry = dirChildren.value.get(parent)?.find((item) => item.path === path);
+  const entry = fileTree.children.value.get(parent)?.find((item) => item.path === path);
   run(path, path === '' ? true : entry?.kind === 'dir');
 }
 

@@ -57,3 +57,11 @@ function arm(id: number): void {
     setTimeout(() => dismiss(id), LIFETIME_MS),
   );
 }
+
+export function say(message: string): void {
+  notify(message, 'info');
+}
+
+export function complain(message: string): void {
+  notify(message, 'error');
+}

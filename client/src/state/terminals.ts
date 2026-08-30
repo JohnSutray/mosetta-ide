@@ -1,6 +1,8 @@
+import { terminalPanelVisible } from '../ui/panels.js';
+import { rpc } from './session.js';
+import { complain } from './notifications.js';
 import { batch, signal } from '@preact/signals';
 import type { TerminalInfo } from '@ide/protocol';
-import { complain, rpc, terminalPanelVisible } from './session.js';
 import { t } from '../i18n/index.js';
 
 export const terminals = signal<TerminalInfo[]>([]);

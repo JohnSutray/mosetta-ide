@@ -1,7 +1,8 @@
+import { doc, rpc } from './session.js';
+import { complain, say } from './notifications.js';
 import { diff3, type Region, type Choice, type SideChoice } from '../merge/diff3.js';
 import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
 import type { MergeFile, MergeSession } from '@ide/protocol';
-import { complain, expectExternal, forgetDiverged, rpc, say, whenSaveConflicts } from './session.js';
 import { t } from '../i18n/index.js';
 
 export class Merge {
@@ -79,7 +80,7 @@ export class Merge {
   });
 
   constructor() {
-    whenSaveConflicts((path) => this.openFor(path));
+    doc.whenSaveConflicts((path) => this.openFor(path));
 
     rpc.on('merge.state', (state) => {
       const had = this.session.value !== null;
@@ -205,10 +206,10 @@ export class Merge {
     const file = this.file.value;
     if (!file) return;
     const payload = text === undefined ? this.result.value : text;
-    expectExternal(file.path);
+    doc.expectExternal(file.path);
     try {
       const rest = await rpc.call('merge.resolve', { path: file.path, text: payload });
-      forgetDiverged(file.path);
+      doc.forgetDiverged(file.path);
       batch(() => {
         this.session.value = rest;
         this.decisions.value = without(this.decisions.value, file.path);

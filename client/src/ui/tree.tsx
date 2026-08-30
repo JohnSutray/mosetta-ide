@@ -1,17 +1,8 @@
+import { doc, fileTree, lsp, session } from '../state/session.js';
 import { tree, treeOps } from '../state/tree-ops.js';
 import { git } from '../state/git.js';
 import { useEffect } from 'preact/hooks';
 import type { DirEntry } from '@ide/protocol';
-import {
-  brokenPaths,
-  current,
-  dirChildren,
-  expanded,
-  openFile,
-  openFileAt,
-  rootExpanded,
-  toggleDir,
-} from '../state/session.js';
 import { openTreeMenu } from '../state/tree-menu.js';
 import { focusEditor, openWithoutFocus } from '../state/editor.js';
 import { keyHost } from '../keys/host.js';
@@ -19,8 +10,8 @@ import { t } from '../i18n/index.js';
 import { Chevron, DirIcon, FileIcon, RootIcon } from './file-icons.js';
 
 export function Tree() {
-  const ws = current.value;
-  const children = dirChildren.value.get('');
+  const ws = session.current.value;
+  const children = fileTree.children.value.get('');
   const focused = tree.focus.value;
 
   useEffect(() => {
@@ -30,7 +21,7 @@ export function Tree() {
   }, [focused]);
 
   if (!ws || !children) return <div class="tree-empty">…</div>;
-  const open = rootExpanded.value;
+  const open = fileTree.rootExpanded.value;
   return (
     <div
       class="tree"
@@ -41,7 +32,7 @@ export function Tree() {
       <div
         class="tree-row is-root"
         data-path=""
-        onClick={() => (rootExpanded.value = !rootExpanded.value)}
+        onClick={() => (fileTree.rootExpanded.value = !fileTree.rootExpanded.value)}
         onContextMenu={(event) => {
           event.preventDefault();
           tree.focus.value = '';
@@ -87,10 +78,10 @@ function Level({ entries, depth }: { entries: DirEntry[]; depth: number }) {
 
 function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
   const isDir = entry.kind === 'dir';
-  const isOpen = expanded.value.has(entry.path);
-  const isCurrent = openFile.value?.path === entry.path;
-  const kids = isOpen ? dirChildren.value.get(entry.path) : undefined;
-  const broken = brokenPaths.value.has(entry.path);
+  const isOpen = fileTree.expanded.value.has(entry.path);
+  const isCurrent = doc.open.value?.path === entry.path;
+  const kids = isOpen ? fileTree.children.value.get(entry.path) : undefined;
+  const broken = lsp.brokenPaths.value.has(entry.path);
   const tint = entry.noScan ? undefined : git.tint.value.get(entry.path);
 
   return (
@@ -136,14 +127,14 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
           }
           tree.only(entry.path);
           if (isDir) {
-            void toggleDir(entry.path);
+            void fileTree.toggle(entry.path);
             return;
           }
           openWithoutFocus();
-          void openFileAt(entry.path);
+          void doc.openAt(entry.path);
         }}
         onDblClick={() => {
-          if (!isDir) void openFileAt(entry.path).then(focusEditor);
+          if (!isDir) void doc.openAt(entry.path).then(focusEditor);
         }}
         onContextMenu={(event) => {
           event.preventDefault();

@@ -1,112 +1,140 @@
-import { batch, computed, signal } from '@preact/signals';
-import type {
-  Diagnostic,
-  DirEntry,
-  DocState,
-  LogLine,
-  LspStatus,
-  WorkspaceInfo,
-} from '@ide/protocol';
-import { RpcErrorCode } from '@ide/protocol';
+import { signal } from '@preact/signals';
+import type { LogLine, WorkspaceInfo } from '@ide/protocol';
 import { RpcClient, RpcFailure } from '../rpc/client.js';
-import { notify } from './notifications.js';
-import { t } from '../i18n/index.js';
+import { complain } from './notifications.js';
 import { applyConfig } from './config.js';
-import { forget, keep, persisted, recall } from './persist.js';
-import { DocSync } from './doc-sync.js';
+import { FileTree } from './file-tree.js';
+import { Lsp } from './lsp.js';
+import { Doc } from './doc.js';
+import { say } from './notifications.js';
+import { t } from '../i18n/index.js';
 
 export const rpc = new RpcClient();
 
-export const workspaces = signal<WorkspaceInfo[]>([]);
-export const current = signal<WorkspaceInfo | null>(null);
-export const logs = signal<LogLine[]>([]);
-export const connected = rpc.connected;
+export class Session {
+  readonly connected = rpc.connected;
+  readonly workspaces = signal<WorkspaceInfo[]>([]);
+  readonly current = signal<WorkspaceInfo | null>(null);
+  readonly logs = signal<LogLine[]>([]);
 
-export const dirChildren = signal<Map<string, DirEntry[]>>(new Map());
-export const expanded = signal<Set<string>>(new Set());
-export const rootExpanded = signal(true);
-export const openFile = signal<DocState | null>(null);
-export const fileHistory = signal<string[]>([]);
-export const externalEpoch = signal(0);
+  private readonly parts: Array<{ reset(): void }> = [];
+  private readonly extraResets: Array<() => void> = [];
 
-export const pendingReveal = signal<{
-  path: string;
-  line: number;
-  character?: number;
-  epoch: number;
-} | null>(null);
+  private restored = false;
+  private everConnected = false;
 
-export function reveal(path: string, line: number, character?: number): void {
-  const epoch = (pendingReveal.value?.epoch ?? 0) + 1;
-  pendingReveal.value = { path, line, character, epoch };
-}
-export const dirty = signal(false);
-export function say(message: string): void {
-  notify(message, 'info');
-}
+  constructor(private readonly rpc: RpcClient) {
+    this.listen();
+  }
 
-export function complain(message: string): void {
-  notify(message, 'error');
-}
+  owns(...parts: Array<{ reset(): void }>): void {
+    this.parts.push(...parts);
+  }
 
-export const diagnostics = signal<Map<string, Diagnostic[]>>(new Map());
-export const lspStatuses = signal<LspStatus[]>([]);
-export const treePanelVisible = persisted('panel.tree', true);
-export const terminalPanelVisible = persisted('panel.terminal', false);
+  onReset(handler: () => void): void {
+    this.extraResets.push(handler);
+  }
 
-export const brokenPaths = computed<Set<string>>(() => {
-  const out = new Set<string>();
-  for (const [path, list] of diagnostics.value) {
-    if (!list.some((item) => item.severity === 'error')) continue;
-    out.add(path);
-    let at = path.lastIndexOf('/');
-    while (at > 0) {
-      out.add(path.slice(0, at));
-      at = path.lastIndexOf('/', at - 1);
+  async openProject(root: string): Promise<void> {
+    try {
+      const info = await this.rpc.call('workspace.open', { root });
+      this.reset();
+      this.current.value = info;
+      rememberInUrl(info.root);
+      await this.afterAttach();
+    } catch (err) {
+      complain(describe(err));
     }
   }
-  return out;
-});
 
-export const currentDiagnostics = computed<Diagnostic[]>(() => {
-  const path = openFile.value?.path;
-  return path ? (diagnostics.value.get(path) ?? []) : [];
-});
-
-export const allProblems = computed<Array<{ path: string; diagnostics: Diagnostic[] }>>(() => {
-  const out: Array<{ path: string; diagnostics: Diagnostic[] }> = [];
-  for (const [path, list] of diagnostics.value) {
-    if (list.length > 0) out.push({ path, diagnostics: list });
+  async switchProject(id: string): Promise<void> {
+    if (this.current.value?.id === id) return;
+    try {
+      const info = await this.rpc.call('workspace.attach', { id });
+      this.reset();
+      this.current.value = info;
+      rememberInUrl(info.root);
+      await this.afterAttach();
+    } catch (err) {
+      complain(describe(err));
+    }
   }
-  out.sort((a, b) => a.path.localeCompare(b.path));
-  return out;
-});
 
-export const openFilePath = computed(() => openFile.value?.path ?? null);
+  private reset(): void {
+    for (const part of this.parts) part.reset();
+    for (const extra of this.extraResets) extra();
+  }
 
-export const title = computed(() => {
-  const ws = current.value;
-  const file = openFile.value;
-  if (!ws) return 'web-ide';
-  return file ? `${file.path} — ${ws.name}` : ws.name;
-});
+  private async afterAttach(): Promise<void> {
+    await fileTree.load('');
+    lsp.statuses.value = await this.rpc.call('lsp.status', null);
+    for (const file of await this.rpc.call('lsp.problems', null).catch(() => [])) {
+      lsp.set(file.path, file.diagnostics);
+    }
+    await doc.reopen();
+  }
 
-export const docSync = new DocSync(rpc, (message) => complain(message));
+  private async resume(): Promise<void> {
+    const ws = this.current.peek();
+    if (!ws) return;
+    const path = doc.open.peek()?.path ?? null;
+    try {
+      const info = await this.rpc.call('workspace.open', { root: ws.root });
+      this.current.value = info;
+      await this.afterAttach();
+      if (path) await doc.openAt(path);
+      say(t('session.resumed'));
+    } catch (err) {
+      complain(describe(err));
+    }
+  }
 
-function resetProjectScope() {
-  docSync.detach();
-  batch(() => {
-    dirChildren.value = new Map();
-    fileHistory.value = [];
-    expanded.value = new Set();
-    rootExpanded.value = true;
-    openFile.value = null;
-    dirty.value = false;
-    diagnostics.value = new Map();
-    lspStatuses.value = [];
-    terminalPanelVisible.value = false;
-    diverged.value = new Map();
-  });
+  private restoreFromUrl(list: WorkspaceInfo[]): void {
+    if (this.restored) return;
+    this.restored = true;
+    const wanted = projectFromUrl();
+    if (!wanted || this.current.value) return;
+    const alive = list.find((ws) => ws.root === wanted);
+    void (alive ? this.switchProject(alive.id) : this.openProject(wanted));
+  }
+
+  private listen(): void {
+    this.connected.subscribe((now) => {
+      if (!now) return;
+      if (this.everConnected) void this.resume();
+      this.everConnected = true;
+    });
+
+    this.rpc.on('config.changed', (bundle) => applyConfig(bundle));
+
+    this.rpc.on('workspace.list', (list) => {
+      this.workspaces.value = list;
+      const mine = this.current.value;
+      if (mine) this.current.value = list.find((w) => w.id === mine.id) ?? mine;
+      this.restoreFromUrl(list);
+    });
+
+    this.rpc.on('workspace.attached', (info) => {
+      if (info?.id !== this.current.value?.id) this.reset();
+      this.current.value = info;
+      if (info) rememberInUrl(info.root);
+    });
+
+    this.rpc.on('workspace.closed', ({ id }) => {
+      if (this.current.value?.id !== id) return;
+      this.reset();
+      this.current.value = null;
+    });
+
+    this.rpc.on('tree.changed', (event) => fileTree.refresh(event.path));
+
+    this.rpc.on('lsp.diagnostics', (event) => lsp.set(event.path, event.diagnostics));
+    this.rpc.on('lsp.status', (status) => lsp.setStatus(status));
+
+    this.rpc.on('log', (line) => {
+      this.logs.value = [...this.logs.value.slice(-499), line];
+    });
+  }
 }
 
 const WS_PARAM = 'ws';
@@ -124,337 +152,14 @@ function rememberInUrl(root: string): void {
   history.replaceState(null, '', url);
 }
 
-let restored = false;
-
-function restoreFromUrl(list: WorkspaceInfo[]): void {
-  if (restored) return;
-  restored = true;
-  const wanted = projectFromUrl();
-  if (!wanted || current.value) return;
-  const alive = list.find((ws) => ws.root === wanted);
-  void (alive ? switchProject(alive.id) : openProject(wanted));
-}
-
-export async function openProject(root: string) {
-  try {
-    const info = await rpc.call('workspace.open', { root });
-    resetProjectScope();
-    current.value = info;
-    rememberInUrl(info.root);
-    await afterAttach();
-  } catch (err) {
-    complain(describe(err));
-  }
-}
-
-export async function switchProject(id: string) {
-  if (current.value?.id === id) return;
-  try {
-    const info = await rpc.call('workspace.attach', { id });
-    resetProjectScope();
-    current.value = info;
-    rememberInUrl(info.root);
-    await afterAttach();
-  } catch (err) {
-    complain(describe(err));
-  }
-}
-
-async function afterAttach() {
-  await loadDir('');
-  lspStatuses.value = await rpc.call('lsp.status', null);
-  for (const file of await rpc.call('lsp.problems', null).catch(() => [])) {
-    setDiagnostics(file.path, file.diagnostics);
-  }
-  await reopenFile();
-}
-
-function fileKey(root: string): string {
-  return `file:${root}`;
-}
-
-async function reopenFile(): Promise<void> {
-  const ws = current.peek();
-  if (!ws || openFile.peek()) return;
-  const path = recall<string | null>(fileKey(ws.root), null);
-  if (!path) return;
-  const alive = await rpc.call('doc.state', { path }).catch(() => null);
-  if (alive) await openFileAt(path);
-  else forget(fileKey(ws.root), 'tab');
-}
-
-export async function loadDir(path: string) {
-  const entries = await rpc.call('tree.list', { path });
-  const next = new Map(dirChildren.value);
-  next.set(path, entries);
-  dirChildren.value = next;
-}
-
-export async function ensureExpanded(path: string): Promise<void> {
-  if (path === '' || expanded.value.has(path)) return;
-  await toggleDir(path);
-}
-
-export async function toggleDir(path: string) {
-  const next = new Set(expanded.value);
-  if (next.has(path)) {
-    next.delete(path);
-    expanded.value = next;
-    return;
-  }
-  next.add(path);
-  expanded.value = next;
-  if (!dirChildren.value.has(path)) {
-    try {
-      await loadDir(path);
-    } catch (err) {
-      complain(describe(err));
-    }
-  }
-}
-
-export async function openFileAt(path: string) {
-  try {
-    const previous = openFile.value;
-    if (previous && previous.path !== path) {
-      await docSync.flush();
-      void rpc.call('doc.close', { path: previous.path });
-    }
-    const doc = await rpc.call('doc.open', { path });
-    docSync.attach(doc);
-    batch(() => {
-      fileHistory.value = [path, ...fileHistory.value.filter((item) => item !== path)].slice(0, 20);
-      openFile.value = doc;
-      dirty.value = doc.dirty;
-    });
-    const ws = current.peek();
-    if (ws) keep(fileKey(ws.root), path, 'tab');
-    const known = await rpc.call('lsp.diagnostics', { path }).catch(() => null);
-    if (known) setDiagnostics(known.path, known.diagnostics);
-  } catch (err) {
-    complain(describe(err));
-  }
-}
-
-export async function closeFile(): Promise<void> {
-  const file = openFile.value;
-  if (!file) return;
-  try {
-    await docSync.flush();
-  } finally {
-    docSync.detach();
-    void rpc.call('doc.close', { path: file.path });
-    const ws = current.peek();
-    if (ws) forget(fileKey(ws.root), 'tab');
-    batch(() => {
-      openFile.value = null;
-      dirty.value = false;
-    });
-  }
-}
-
-export function editDoc(text: string) {
-  dirty.value = true;
-  docSync.edit(text);
-}
-
-export function replaceText(text: string): void {
-  const file = openFile.value;
-  if (!file || file.text === text) return;
-  batch(() => {
-    openFile.value = { ...file, text };
-    externalEpoch.value += 1;
-  });
-  editDoc(text);
-}
-
-let onSaveConflict: ((path: string) => void) | null = null;
-
-export function whenSaveConflicts(handler: (path: string) => void): void {
-  onSaveConflict = handler;
-}
-
-export async function saveDoc() {
-  const file = openFile.value;
-  if (!file) return;
-  try {
-    await docSync.flush();
-    const saved = await rpc.call('doc.save', { path: file.path });
-    forgetDiverged(file.path);
-    docSync.attach(saved);
-    batch(() => {
-      openFile.value = saved;
-      dirty.value = false;
-    });
-  } catch (err) {
-    if (err instanceof RpcFailure && err.code === RpcErrorCode.RevisionConflict) {
-      onSaveConflict?.(file.path);
-      return;
-    }
-    complain(describe(err));
-  }
-}
-
-export async function reloadDoc() {
-  const file = openFile.value;
-  if (!file) return;
-  try {
-    const doc = await rpc.call('doc.reload', { path: file.path });
-    forgetDiverged(file.path);
-    docSync.attach(doc);
-    batch(() => {
-      openFile.value = doc;
-      dirty.value = false;
-      externalEpoch.value += 1;
-    });
-    say(t('file.reloaded', { path: doc.path }));
-  } catch (err) {
-    complain(describe(err));
-  }
-}
-
-function setDiagnostics(path: string, list: Diagnostic[]) {
-  const next = new Map(diagnostics.value);
-  next.set(path, list);
-  diagnostics.value = next;
-}
-
 function describe(err: unknown): string {
   if (err instanceof RpcFailure) return err.message;
   return err instanceof Error ? err.message : String(err);
 }
 
-let everConnected = false;
-connected.subscribe((now) => {
-  if (!now) return;
-  if (everConnected) void resume();
-  everConnected = true;
-});
+export const session = new Session(rpc);
+export const fileTree = new FileTree(rpc);
+export const lsp = new Lsp();
+export const doc = new Doc(rpc, session, lsp);
 
-async function resume(): Promise<void> {
-  const ws = current.peek();
-  if (!ws) return;
-  const path = openFile.peek()?.path ?? null;
-  try {
-    const info = await rpc.call('workspace.open', { root: ws.root });
-    current.value = info;
-    await afterAttach();
-    if (path) await openFileAt(path);
-    say(t('session.resumed'));
-  } catch (err) {
-    complain(describe(err));
-  }
-}
-
-rpc.on('config.changed', (bundle) => applyConfig(bundle));
-
-rpc.on('workspace.list', (list) => {
-  workspaces.value = list;
-  const mine = current.value;
-  if (mine) current.value = list.find((w) => w.id === mine.id) ?? mine;
-  restoreFromUrl(list);
-});
-
-rpc.on('workspace.attached', (info) => {
-  if (info?.id !== current.value?.id) resetProjectScope();
-  current.value = info;
-  if (info) rememberInUrl(info.root);
-});
-
-rpc.on('workspace.closed', ({ id }) => {
-  if (current.value?.id !== id) return;
-  resetProjectScope();
-  current.value = null;
-});
-
-rpc.on('doc.changed', (event) => {
-  if (openFile.value?.path !== event.path) return;
-  dirty.value = event.dirty;
-});
-
-const expected = new Set<string>();
-
-export function expectExternal(path: string): void {
-  expected.add(path);
-}
-
-rpc.on('doc.external', (event) => {
-  const asked = expected.delete(event.path);
-  forgetDiverged(event.path);
-  if (openFile.value?.path !== event.path) return;
-  void rpc
-    .call('doc.state', { path: event.path })
-    .then((doc) => {
-      docSync.attach(doc);
-      batch(() => {
-        openFile.value = doc;
-        dirty.value = doc.dirty;
-        externalEpoch.value += 1;
-      });
-      if (!asked) say(t('file.external', { path: event.path }));
-    })
-    .catch((err) => complain(describe(err)));
-});
-
-export const diverged = signal<Map<string, 'changed' | 'removed'>>(new Map());
-
-export function divergedFrom(path: string | null): 'changed' | 'removed' | null {
-  return path ? (diverged.value.get(path) ?? null) : null;
-}
-
-export function forgetDiverged(path: string): void {
-  if (!diverged.value.has(path)) return;
-  const next = new Map(diverged.value);
-  next.delete(path);
-  diverged.value = next;
-}
-
-rpc.on('doc.diverged', (event) => {
-  const next = new Map(diverged.value);
-  next.set(event.path, event.reason);
-  diverged.value = next;
-});
-
-rpc.on('doc.moved', (event) => {
-  fileHistory.value = fileHistory.value.map((path) => (path === event.from ? event.path : path));
-  if (openFile.value?.path !== event.from) return;
-  void rpc
-    .call('doc.state', { path: event.path })
-    .then((doc) => {
-      docSync.attach(doc);
-      batch(() => {
-        openFile.value = doc;
-        dirty.value = doc.dirty;
-      });
-    })
-    .catch((err) => complain(describe(err)));
-});
-
-rpc.on('doc.removed', (event) => {
-  if (openFile.value?.path !== event.path) return;
-  const back = fileHistory.value.find((path) => path !== event.path);
-  batch(() => {
-    fileHistory.value = fileHistory.value.filter((path) => path !== event.path);
-    openFile.value = null;
-    dirty.value = false;
-  });
-  docSync.detach();
-  complain(t('file.gone', { path: event.path }));
-  if (back) void openFileAt(back);
-});
-
-rpc.on('tree.changed', (event) => {
-  if (!dirChildren.value.has(event.path)) return;
-  void loadDir(event.path).catch(() => {});
-});
-
-rpc.on('lsp.diagnostics', (event) => setDiagnostics(event.path, event.diagnostics));
-
-rpc.on('lsp.status', (status) => {
-  const next = lspStatuses.value.filter((s) => s.server !== status.server);
-  lspStatuses.value = [...next, status];
-});
-
-rpc.on('log', (line) => {
-  logs.value = [...logs.value.slice(-499), line];
-});
+session.owns(fileTree, doc, lsp);

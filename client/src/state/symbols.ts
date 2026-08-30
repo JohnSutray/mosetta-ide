@@ -1,7 +1,8 @@
+import { doc, rpc } from './session.js';
+import { complain } from './notifications.js';
 import { batch, signal } from '@preact/signals';
 import { persisted } from './persist.js';
 import type { SymbolSite } from '@ide/protocol';
-import { complain, openFile, openFileAt, reveal, rpc } from './session.js';
 
 export type SymbolKind = 'definition' | 'usages';
 
@@ -53,10 +54,10 @@ export interface SymbolAsk {
 }
 
 export async function askSymbol(where: SymbolAsk): Promise<void> {
-  const doc = openFile.peek();
-  if (!doc) return;
+  const file = doc.open.peek();
+  if (!file) return;
 
-  const spot = { path: doc.path, line: where.line, character: where.character };
+  const spot = { path: file.path, line: where.line, character: where.character };
   const word = wordAt(where.text, where.character);
   const box = where.box;
 
@@ -111,7 +112,7 @@ export function select(at: number): void {
     .call('doc.state', { path: site.path })
     .then((doc) => {
       if (symbolList.peek() === null) return;
-      symbolPreview.value = { path: doc.path, text: doc.text, line: site.line };
+      symbolPreview.value = { path: site.path, text: doc.text, line: site.line };
     })
     .catch(() => (symbolPreview.value = null));
 }
@@ -133,7 +134,7 @@ export function accept(): void {
 
 function jumpTo(site: SymbolSite): void {
   closeSymbols();
-  void openFileAt(site.path).then(() => reveal(site.path, site.line, site.character));
+  void doc.openAt(site.path).then(() => doc.reveal(site.path, site.line, site.character));
 }
 
 function samePlace(site: SymbolSite, spot: { path: string; line: number }): boolean {

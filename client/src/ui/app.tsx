@@ -1,3 +1,5 @@
+import { complain } from '../state/notifications.js';
+import { doc, lsp, rpc, session } from '../state/session.js';
 import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
@@ -5,18 +7,6 @@ import { git, resetGit } from '../state/git.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { keymap as keymapSignal, settings as settingsSignal } from '../state/config.js';
-import {
-  current,
-  closeFile,
-  currentDiagnostics,
-  dirty,
-  editDoc,
-  externalEpoch,
-  openFile,
-  complain,
-  rpc,
-  title,
-} from '../state/session.js';
 import { headFor, loadHead, showHunk } from '../state/git-marks.js';
 import { askSymbol } from '../state/symbols.js';
 import { takeFocusOnMount, wantsFocus } from '../state/editor.js';
@@ -26,10 +16,8 @@ import { languages } from '../editor/languages.js';
 import { codePainter } from '../editor/paint-line.js';
 import { lineDiff } from '../editor/line-diff.js';
 import { inputKeymap } from '../editor/input-keymap.js';
-import { allProblems } from '../state/session.js';
 import { registerCommands, resolveContext, missingCommands } from '../commands.js';
 import { installDispatcher } from '../keys/dispatcher.js';
-import { pendingReveal } from '../state/session.js';
 import { refreshTerminals } from '../state/terminals.js';
 import { forgetVisits, installMouseNav, loadVisits, visit } from '../state/visits.js';
 import { follow, following } from '../state/tree-follow.js';
@@ -93,25 +81,25 @@ function NoShell() {
 }
 
 export function App() {
-  const ws = current.value;
-  const file = openFile.value;
+  const ws = session.current.value;
+  const file = doc.open.value;
 
   useEffect(() => {
     registerCommands();
     const surface: ClientSurface = {
       t,
-      problems: allProblems,
+      problems: lsp.problems,
       goTo,
       runCommand,
       keysFor,
       settings: settingsSignal,
-      openDoc: openFile,
-      editDoc,
-      closeFile,
-      dirty,
-      fileDiagnostics: currentDiagnostics,
-      externalEpoch,
-      pendingReveal,
+      openDoc: doc.open,
+      editDoc: doc.edit,
+      closeFile: doc.close,
+      dirty: doc.dirty,
+      fileDiagnostics: doc.diagnostics,
+      externalEpoch: doc.externalEpoch,
+      pendingReveal: doc.pendingReveal,
       headFor,
       visit,
       hover: (path, line, character) => rpc.call('lsp.hover', { path, line, character }),
@@ -152,12 +140,12 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    document.title = title.value;
-  }, [title.value]);
+    document.title = doc.title.value;
+  }, [doc.title.value]);
 
   useEffect(() => {
     if (!file) return;
-    const at = pendingReveal.value;
+    const at = doc.pendingReveal.value;
     visit(file.path, at?.path === file.path ? at.line : 0, at?.character ?? 0);
   }, [file?.path]);
 
