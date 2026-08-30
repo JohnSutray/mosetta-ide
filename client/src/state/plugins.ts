@@ -2,7 +2,7 @@ import * as preact from 'preact';
 import * as hooks from 'preact/hooks';
 import * as signals from '@preact/signals';
 import * as jsxRuntime from 'preact/jsx-runtime';
-import { signal, type Signal } from '@preact/signals';
+import { signal } from '@preact/signals';
 import type { PluginInfo } from '@ide/protocol';
 import { complain, rpc, say } from './session.js';
 import { registerPluginCommand } from '../keys/commands.js';
@@ -28,12 +28,6 @@ import { addStrings } from '../i18n/index.js';
 
 export const pluginList = signal<PluginInfo[]>([]);
 export const pluginSurfaces = signal<Array<() => unknown>>([]);
-
-export interface PluginPanel extends PluginPanelSpec {
-  open: Signal<boolean>;
-}
-
-export const pluginPanels = signal<PluginPanel[]>([]);
 
 const pluginClasses = new Map<string, unknown>();
 
@@ -160,7 +154,22 @@ function servicesFor(name: string): Ide {
       registerPluginCommand(spec.command, () => {
         open.value = !open.value;
       });
-      pluginPanels.value = [...pluginPanels.value, { ...spec, open }];
+      registryOf().add(
+        'panel',
+        {
+          id: spec.id,
+          title: spec.title,
+          side: spec.side,
+          open,
+          view: spec.view,
+          close: () => {
+            open.value = false;
+          },
+          defaultWidth: spec.defaultWidth,
+          minWidth: spec.minWidth,
+        },
+        name,
+      );
       return {
         open,
         toggle: () => {

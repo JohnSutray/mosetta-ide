@@ -9,8 +9,10 @@
   "git.hunk.revert": "Revert",
   "panel.terminal": "Terminal",
   "panel.editor.empty": "Nothing open",
-  "panel.close": "Close panel",
-
+  "shell.missing": "No one is drawing the panels",
+  "shell.missing.why": "The layout is a plugin: the core keeps a registry of panels and a place for them, but nothing has claimed that place. Add a layout plugin to \"plugins.enabled\" in config/settings.json — ours is @ide/plugin-layout.",
+  "shell.missing.loaded": "Plugins that did load: {names}",
+  "shell.missing.none": "No plugins loaded at all — check the server log.",
   "toolbar.tree": "Project tree",
   "toolbar.search": "Search everywhere",
   "toolbar.branches": "Git branches",
@@ -37,7 +39,6 @@
   "tool.empty": "Nothing found — type a path below",
   "session.resumed": "Reconnected — the project is attached again",
   "keys.unbound": "{key} does nothing. {help} lists every key.",
-
   "command.file.save": "Save file",
   "command.file.reload": "Reload file from disk",
   "command.edit.undo": "Undo",
@@ -58,7 +59,7 @@
   "command.nav.forward": "Forward",
   "command.edit.indent": "Indent",
   "command.edit.unindent": "Unindent",
-  "command.key.reserved": "Reserved \u2014 does nothing yet",
+  "command.key.reserved": "Reserved — does nothing yet",
   "command.terminal.shell": "Terminal shell",
   "command.tools.packageManager": "Package manager",
   "command.panel.tree": "Project tree panel",
@@ -117,7 +118,6 @@
   "command.tree.follow": "Tree follows the editor",
   "toolbar.follow": "Select the open file in the tree",
   "toolbar.merge": "Resolve conflicts",
-
   "keys.title": "Keys",
   "keys.mod.browser": "On macOS the main modifier is Cmd — in the browser too. Out of a hundred-odd Cmd shortcuts Chrome keeps five: new tab, close tab, new window, quit, and find-selection. Everything else reaches the page and we take it. Elsewhere the main modifier is Control.",
   "keys.mod.electron": "In the desktop app the main modifier is Cmd on macOS and Control elsewhere. Nothing else claims it there.",
@@ -146,7 +146,6 @@
   "keys.context.terminal": "Terminal",
   "keys.context.keys": "This window",
   "keys.context.merge": "Resolve conflicts",
-
   "editor.empty.title": "Nothing here, I am just a spacer panel",
   "editor.empty.hint": "Open a file to be rid of me, or stay and herd the sheep",
   "tree.pick": "Pick a file in the tree",
@@ -185,17 +184,14 @@
   "tree.noClipboard": "Clipboard is not available in this browser",
   "tree.clipboardEmpty": "Clipboard is empty",
   "prompt.cancel": "cancel",
-
   "projects.placeholder": "Path to a project",
   "projects.open": "open",
   "projects.empty": "empty",
-
   "search.placeholder": "Files, ts::symbols, and what plugins index",
   "search.empty": "Nothing found",
   "search.preview": "Preview",
   "search.kind.ts": "Symbols",
   "search.kind.file": "Files",
-
   "branches.title": "Branches",
   "branches.local": "local",
   "branches.remote": "remote",
@@ -216,7 +212,6 @@
   "branches.branchName": "New branch name",
   "branches.apply": "apply",
   "branches.notRepo": "Not a git repository",
-
   "push.title": "Push",
   "push.newBranch": "origin (new branch)",
   "push.counting": "Counting…",
@@ -234,15 +229,12 @@
   "push.do": "push",
   "push.doForce": "force push",
   "push.cancel": "cancel",
-
   "terminal.empty": "No terminals",
   "terminal.close": "Close terminal",
   "terminal.dead": "finished, code {code}",
   "terminal.busy": "running {what}",
   "terminal.busyUnknown": "cannot tell if it is busy — {why}",
-
   "pick.nothing": "Nothing matches",
-
   "git.done": "{action} — done",
   "git.fetching": "fetching…",
   "git.checkedOut": "switched to {branch}",
@@ -253,7 +245,6 @@
   "git.created": "created {branch}",
   "git.renamed": "renamed to {branch}",
   "git.deleted": "deleted {branch}",
-
   "symbols.definition": "Declarations of {word}",
   "symbols.usages": "Usages of {word}",
   "symbols.imports": "imports ({count})",
@@ -265,7 +256,6 @@
   "popup.resize": "Drag to resize",
   "note.close": "Dismiss",
   "note.closeAll": "Dismiss all",
-
   "file.reloaded": "{path} reloaded from disk",
   "file.conflict": "{path} changed on disk and here — pick one",
   "file.removed": "{path} is gone from disk",
@@ -274,7 +264,6 @@
   "file.gone": "{path} is gone from disk. Saving will recreate it.",
   "terminal.finished": "[process finished]",
   "rpc.closed": "Connection closed",
-
   "merge.none": "nothing to merge — no conflicts right now",
   "merge.appeared": "{count} file(s) need merging — see the merge button",
   "merge.done": "all conflicts resolved",
@@ -292,8 +281,8 @@
   "merge.column.result": "result",
   "merge.take": "take this side",
   "merge.skip": "leave this side out",
-  "merge.acceptLeft": "take all of \u201c{side}\u201d",
-  "merge.acceptRight": "take all of \u201c{side}\u201d",
+  "merge.acceptLeft": "take all of “{side}”",
+  "merge.acceptRight": "take all of “{side}”",
   "merge.confirm": "confirm this file",
   "merge.confirm.blocked": "some conflicts are still undecided",
   "merge.cancel": "drop the whole merge",

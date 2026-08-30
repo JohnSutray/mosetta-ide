@@ -13,9 +13,7 @@ export default class Problems {
     const panel = this.ide.panel({
       id: 'problems',
       title: 'panel.problems',
-      tooltip: 'toolbar.problems',
       side: 'right',
-      icon: ProblemsIcon,
       command: 'panel.problems',
       defaultWidth: 360,
       minWidth: 200,

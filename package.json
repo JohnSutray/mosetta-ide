@@ -11,7 +11,7 @@
     "stable:serve": "pnpm --parallel --filter ./server --filter ./client stable",
     "build": "pnpm --filter ./protocol build && pnpm --filter ./server build && node scripts/with-env.mjs VITE_IDE_PORT=4177 -- pnpm --filter ./client build",
     "test": "pnpm --filter ./server test && pnpm --filter ./client test && pnpm --filter './plugins/*' test",
-    "typecheck": "tsc -b protocol plugins/api server client && tsc -p client/tsconfig.test.json && tsc -p plugins/npm-scripts && tsc -p plugins/rerun && tsc -p plugins/problems && tsc -p plugins/toolbar",
+    "typecheck": "tsc -b protocol plugins/api server client && tsc -p client/tsconfig.test.json && tsc -p plugins/npm-scripts && tsc -p plugins/rerun && tsc -p plugins/problems && tsc -p plugins/toolbar && tsc -p plugins/layout",
     "postinstall": "node scripts/ensure-pty-helper.mjs"
   },
   "devDependencies": {

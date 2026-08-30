@@ -95,6 +95,19 @@ importers:
         specifier: ^10.25.3
         version: 10.29.8
 
+  plugins/layout:
+    dependencies:
+      '@ide/api':
+        specifier: workspace:*
+        version: link:../api
+    devDependencies:
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
+
   plugins/npm-scripts:
     dependencies:
       '@ide/api':
@@ -169,6 +182,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../plugins/api
+      '@ide/plugin-layout':
+        specifier: workspace:*
+        version: link:../plugins/layout
       '@ide/plugin-npm-scripts':
         specifier: workspace:*
         version: link:../plugins/npm-scripts

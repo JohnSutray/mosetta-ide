@@ -1,10 +1,5 @@
 import { useRef } from 'preact/hooks';
-import { setPanelWidth, setWidth, widthOf } from '../state/layout.js';
-import { PANELS, type PanelSide } from './panels.js';
-
-const PANEL_DEFAULTS: Record<string, number> = Object.fromEntries(
-  PANELS.map((panel) => [panel.id, panel.defaultWidth]),
-);
+import { setWidth, widthOf } from '../state/layout.js';
 
 export function Resizer({
   id,
@@ -14,17 +9,14 @@ export function Resizer({
   defaultWidth,
 }: {
   id: string;
-  side: PanelSide;
+  side: 'left' | 'right';
   axis?: 'x' | 'y';
-  limits?: () => { min: number; max: number };
-  defaultWidth?: number;
+  limits: () => { min: number; max: number };
+  defaultWidth: number;
 }) {
   const drag = useRef<{ startX: number; startWidth: number } | null>(null);
 
-  const apply = (px: number) => {
-    if (limits) setWidth(id, px, limits());
-    else setPanelWidth(id, px);
-  };
+  const apply = (px: number) => setWidth(id, px, limits());
 
   return (
     <div
@@ -48,8 +40,7 @@ export function Resizer({
         (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
       }}
       onDblClick={() => {
-        const back = defaultWidth ?? PANEL_DEFAULTS[id];
-        if (back !== undefined) apply(back);
+        apply(defaultWidth);
       }}
     />
   );

@@ -58,6 +58,17 @@ export declare function hideTip(): void;
 
 export declare function keysFor(command: string): string[];
 
+export interface ResizerProps {
+  id: string;
+  side: 'left' | 'right';
+  axis?: 'x' | 'y';
+  limits: () => { min: number; max: number };
+  defaultWidth: number;
+}
+export declare function Resizer(props: ResizerProps): JSX.Element;
+
+export declare function widthOf(id: string, fallback: number): number;
+
 export declare const settings: { readonly value: Settings | null };
 
 export interface ClientSurface {
@@ -74,6 +85,8 @@ export interface ClientSurface {
   hideTip: typeof hideTip;
   keysFor: typeof keysFor;
   settings: typeof settings;
+  Resizer: typeof Resizer;
+  widthOf: typeof widthOf;
 }
 
 export interface PluginToolbarEntry {
@@ -130,14 +143,12 @@ export function registriesOf(ctor: object): RegistrySpec[] {
   return declared.get(ctor) ?? [];
 }
 
-export type PanelSide = 'left' | 'right';
+export type PanelSide = 'left' | 'main' | 'right';
 
 export interface PluginPanelSpec {
   id: string;
   title: string;
-  tooltip: string;
-  side: PanelSide;
-  icon: string | ((filled: boolean) => unknown);
+  side: 'left' | 'right';
   command: string;
   defaultWidth: number;
   minWidth: number;

@@ -27,6 +27,8 @@ const SHARED: Record<string, { from: string; names: string[] }> = {
       'hideTip',
       'keysFor',
       'settings',
+      'Resizer',
+      'widthOf',
       'remote',
       'stub',
       'activate',

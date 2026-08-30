@@ -1,23 +1,13 @@
-import { Fragment } from 'preact';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
-import { DEFAULT_SETTINGS_FALLBACK } from '../state/fallback.js';
 import { keymap as keymapSignal, settings as settingsSignal } from '../state/config.js';
 import {
   current,
-  currentDiagnostics,
-  dirty,
-  closeFile,
-  editorPanelVisible,
-  externalEpoch,
   openFile,
   openFilePath,
   complain,
-  rpc,
   title,
-  editDoc,
 } from '../state/session.js';
-import { activeEditor } from '../state/editor.js';
 import { allProblems } from '../state/session.js';
 import { registerCommands, resolveContext, missingCommands } from '../commands.js';
 import { installDispatcher } from '../keys/dispatcher.js';
@@ -26,7 +16,6 @@ import { refreshTerminals } from '../state/terminals.js';
 import { refreshTools } from '../state/tools.js';
 import { forgetVisits, installMouseNav, loadVisits, visit } from '../state/visits.js';
 import { follow, following } from '../state/tree-follow.js';
-import { Editor } from '../editor/editor.js';
 import { SearchEverywhere } from './search-everywhere.js';
 import { Branches } from './branches.js';
 import { Notifications } from './notifications.js';
@@ -36,52 +25,63 @@ import { closeTreeMenu } from '../state/tree-menu.js';
 import { Push } from './push.js';
 import { gitState, refreshGit, resetGit } from '../state/git.js';
 import { loadMerge, resetMerge } from '../state/merge.js';
-import { TerminalView } from './terminal.js';
 import { registerToolbarWishes } from './toolbar-wishes.js';
+import { registerPanelWishes } from './panel-wishes.js';
 import { Registry } from '../state/registry.js';
 import { keysFor } from '../keys/keys-for.js';
 import { hideTip, showTip } from '../state/tip.js';
-import { PANELS, type PanelSpec } from './panels.js';
 import { Resizer } from './resizer.js';
 import { widthOf } from '../state/layout.js';
 import { runCommand } from '../keys/commands.js';
-import { Panel } from './panel.js';
 import { Projects } from './projects.js';
-import { Tree } from './tree.js';
 import { t } from '../i18n/index.js';
 import { hideProjects, showProjects } from '../state/projects.js';
-import { headFor, loadHead, showHunk } from '../state/git-marks.js';
+import { loadHead } from '../state/git-marks.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
 import { MergeScreen } from './merge.js';
-import { DivergedBadge } from './diverged.js';
 import { PluginSurfaces } from './plugin-surfaces.js';
 import { PickPopup, highlight, shiftMatches } from './pick-popup.js';
 import { showTerminal } from '../state/terminals.js';
-import { loadPlugins, pluginPanels, type PluginPanel } from '../state/plugins.js';
+import { loadPlugins, pluginList } from '../state/plugins.js';
 import { goTo } from './go-to.js';
 import type { ClientSurface } from '@ide/api/client';
 import { ToolPicker } from './tool-picker.js';
 import { Tip } from './tip.js';
 import { Symbols } from './symbols.js';
-import { askSymbol } from '../state/symbols.js';
 import { noteUnbound } from '../state/keys-help.js';
-import { SheepField } from './sheep.js';
 
 const store = new Registry((message) => complain(message));
 
 store.declare('chrome.top', 'core');
+store.declare('chrome.main', 'core');
 registerToolbarWishes(store);
+registerPanelWishes(store);
 
-function Region({ name }: { name: string }) {
+function Region({ name, fallback }: { name: string; fallback?: JSX.Element }) {
   const views = store.all<() => unknown>(name).value;
+  if (views.length === 0) return fallback ?? null;
   return <>{views.map((view) => view() as JSX.Element)}</>;
+}
+
+function NoShell() {
+  const loaded = pluginList.value.map((one) => one.name);
+  return (
+    <div class="no-shell">
+      <div class="no-shell-title">{t('shell.missing')}</div>
+      <p class="no-shell-why">{t('shell.missing.why')}</p>
+      <p class="no-shell-why">
+        {loaded.length > 0
+          ? t('shell.missing.loaded', { names: loaded.join(', ') })
+          : t('shell.missing.none')}
+      </p>
+    </div>
+  );
 }
 
 export function App() {
   const ws = current.value;
   const file = openFile.value;
-  const settings = settingsSignal.value ?? DEFAULT_SETTINGS_FALLBACK;
 
   useEffect(() => {
     registerCommands();
@@ -99,6 +99,8 @@ export function App() {
       hideTip,
       keysFor,
       settings: settingsSignal,
+      Resizer,
+      widthOf,
     };
     void loadPlugins(surface, store);
     const dead = missingCommands();
@@ -161,76 +163,7 @@ export function App() {
       }}
     >
       <Region name="chrome.top" />
-
-      <div class="columns">
-        {open('left').map((panel) => (
-          <Fragment key={panel.id}>
-            <Panel
-              class={`column-${panel.id}`}
-              width={widthOf(panel.id)}
-              title={t(panel.title)}
-              onClose={() => runCommand(panel.command)}
-            >
-              {content(panel)}
-            </Panel>
-            <Resizer id={panel.id} side="left" />
-          </Fragment>
-        ))}
-
-        {editorPanelVisible.value && (
-        <Panel
-          class="column-editor"
-          title={file ? file.path : t('panel.editor.empty')}
-          onClose={
-            file ? () => void closeFile() : () => (editorPanelVisible.value = false)
-          }
-          actions={
-            file ? (
-              <>
-                {file.truncated && <span class="tag">read-only</span>}
-                {dirty.value && <span class="tag is-dirty">modified</span>}
-              </>
-            ) : null
-          }
-        >
-          {file ? (
-            <>
-            <DivergedBadge />
-            <Editor
-              file={file}
-              head={headFor(file.path)}
-              onHunk={showHunk}
-              externalEpoch={externalEpoch.value}
-              reveal={pendingReveal.value}
-              settings={settings.editor}
-              diagnostics={currentDiagnostics.value}
-              onEdit={editDoc}
-              onCaret={(line, character) => visit(file.path, line, character)}
-              onModClick={(pos) => void askSymbol(pos)}
-              onHover={(path, line, character) => rpc.call('lsp.hover', { path, line, character })}
-              onMount={(view) => (activeEditor.value = view)}
-            />
-            </>
-          ) : (
-            <SheepField />
-          )}
-        </Panel>
-        )}
-
-        {open('right').map((panel) => (
-          <Fragment key={panel.id}>
-            <Resizer id={panel.id} side="right" />
-            <Panel
-              class={`column-${panel.id}`}
-              width={widthOf(panel.id)}
-              title={t(panel.title)}
-              onClose={() => runCommand(panel.command)}
-            >
-              {content(panel)}
-            </Panel>
-          </Fragment>
-        ))}
-      </div>
+      <Region name="chrome.main" fallback={<NoShell />} />
 
       <HunkPopup />
       <Projects />
@@ -248,21 +181,4 @@ export function App() {
       <Tip />
     </div>
   );
-}
-
-function open(side: 'left' | 'right'): Array<PanelSpec | PluginPanel> {
-  const all: Array<PanelSpec | PluginPanel> = [...PANELS, ...pluginPanels.value];
-  return all.filter((panel) => panel.side === side && panel.open.value);
-}
-
-function content(panel: PanelSpec | PluginPanel) {
-  if ('view' in panel) return panel.view() as JSX.Element;
-  switch (panel.id) {
-    case 'tree':
-      return <Tree />;
-    case 'terminal':
-      return <TerminalView />;
-    default:
-      return null;
-  }
 }

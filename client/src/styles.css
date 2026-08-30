@@ -56,69 +56,7 @@ body {
 .dot.is-on { background: #6a8759; }
 .dot.is-off { background: var(--error); }
 
-.columns {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
 .column-tree { background: var(--panel-bg); }
-.column-editor { flex: 1; min-width: 0; }
-
-.panel {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  border-right: 1px solid var(--divider);
-}
-.panel:last-child { border-right: none; }
-
-.panel-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 24px;
-  padding: 0 8px;
-  flex: none;
-  background: var(--panel-bg);
-  border-bottom: 1px solid var(--divider);
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-}
-.panel-title { overflow: hidden; text-overflow: ellipsis; }
-.panel-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
-
-.panel-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  flex: none;
-  border-radius: 4px;
-  background: var(--control-bg);
-  color: #b9c2c6;
-  font-size: 12px;
-  line-height: 1;
-  transition: background-color 90ms linear, color 90ms linear;
-}
-.panel-close:hover { background: #6b3a39; color: #ffd7d6; }
-
-.panel-action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  flex: none;
-  border-radius: 4px;
-  background: var(--control-bg);
-  color: #b9c2c6;
-  transition: background-color 90ms linear, color 90ms linear;
-}
-.panel-action:hover { background: var(--control-bg-hover); color: var(--fg); }
-.panel-action.is-active { background: var(--treesel); color: #dbe6ef; }
-.panel-action.is-active:hover { background: #36699e; }
 
 .resizer {
   flex: none;
@@ -131,7 +69,20 @@ body {
 }
 .resizer:hover, .resizer:active { background: var(--treesel); }
 
-.panel-body { position: relative; flex: 1; min-height: 0; overflow: auto; }
+.no-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+}
+.no-shell-title { color: var(--fg); font-size: 15px; }
+.no-shell-why { max-width: 60ch; margin: 0; line-height: 1.5; }
+.no-shell-why code { color: var(--fg); }
 
 .tag {
   padding: 0 5px;
@@ -588,7 +539,6 @@ body {
 
 .term-chip.is-dead { opacity: 0.55; font-style: italic; }
 
-.column-scripts { background: var(--panel-bg); }
 .scripts { padding: 3px 0; }
 .scripts-package {
   padding: 6px 10px 2px;

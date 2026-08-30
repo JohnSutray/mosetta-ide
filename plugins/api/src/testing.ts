@@ -10,6 +10,7 @@ import type {
   PanelHandle,
   PickProps,
   PluginClass,
+  ResizerProps,
   PluginPanelSpec,
   RegistryHandle,
 } from './client.js';
@@ -53,6 +54,12 @@ export function hideTip(): void {
 export function keysFor(command: string): string[] {
   return surface().keysFor(command);
 }
+export function Resizer(props: ResizerProps): JSX.Element {
+  return surface().Resizer(props);
+}
+export function widthOf(id: string, fallback: number): number {
+  return surface().widthOf(id, fallback);
+}
 
 export const problems: { readonly value: FileProblems[] } = {
   get value() {
@@ -86,6 +93,7 @@ export class FakeSurface implements ClientSurface {
   readonly terminals: TerminalInfo[] = [];
   tip: Tip | null = null;
   readonly keys = new Map<string, string[]>();
+  readonly widths = new Map<string, number>();
 
   constructor(private readonly host: FakeHost) {}
 
@@ -132,6 +140,14 @@ export class FakeSurface implements ClientSurface {
 
   keysFor(command: string): string[] {
     return this.keys.get(command) ?? [];
+  }
+
+  Resizer(props: ResizerProps): JSX.Element {
+    return { type: 'Resizer', props } as unknown as JSX.Element;
+  }
+
+  widthOf(id: string, fallback: number): number {
+    return this.widths.get(id) ?? fallback;
   }
 }
 

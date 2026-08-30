@@ -32,7 +32,6 @@ describe('панель ошибок', () => {
     expect(spec.defaultWidth).toBeGreaterThanOrEqual(spec.minWidth);
     expect(spec.minWidth).toBeGreaterThan(80);
     expect(spec.title).toBe('panel.problems');
-    expect(spec.tooltip).toBe('toolbar.problems');
   });
 
   it('команду-переключатель заводит система, а не плагин', () => {
@@ -53,8 +52,8 @@ describe('панель ошибок', () => {
   });
 
   it('приносит свой значок и свои стили', () => {
-    const spec = host.ide(NAME).panels[0]!.spec;
-    expect(typeof spec.icon).toBe('function');
+    const wish = host.registry.all<{ icon: unknown }>('toolbar.button')[0]!;
+    expect(typeof wish.icon).toBe('function');
     expect(host.ide(NAME).styles.join('')).toContain('.problems');
   });
 
