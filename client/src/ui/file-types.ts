@@ -19,7 +19,7 @@ export interface FileType {
 const LIGHT = '#e8eef2';
 const DARK = '#1f2224';
 
-export const PLAIN: FileType = { label: '', color: '#6f7679', ink: LIGHT };
+const PLAIN: FileType = { label: '', color: '#6f7679', ink: LIGHT };
 
 function type(label: string, color: string, ink = LIGHT): FileType {
   return { label, color, ink };
@@ -41,7 +41,7 @@ const GIT = drawn('git', '#e0603a', 'git');
 const NPM = drawn('npm', '#cb3837', 'npm');
 const TEXT = drawn('TXT', '#8a8f92', 'text');
 
-export const BY_EXTENSION: Record<string, FileType> = {
+const BY_EXTENSION: Record<string, FileType> = {
   ts: TS,
   tsx: type('TSX', '#3178c6'),
   mts: TS,
@@ -102,7 +102,7 @@ export const BY_EXTENSION: Record<string, FileType> = {
   gz: drawn('GZ', '#a08f75', 'archive'),
 };
 
-export const BY_NAME: Record<string, FileType> = {
+const BY_NAME: Record<string, FileType> = {
   'package.json': NPM,
   'package-lock.json': LOCK,
   'pnpm-lock.yaml': LOCK,
@@ -119,7 +119,7 @@ export const BY_NAME: Record<string, FileType> = {
   makefile: type('MK', '#8a7f6f'),
 };
 
-export const BY_SUFFIX: Array<[string, FileType]> = [
+const BY_SUFFIX: Array<[string, FileType]> = [
   ['.d.ts', type('D', '#5a7ea8')],
   ['.tsbuildinfo', GENERATED],
   ['.config.ts', TS],
@@ -129,26 +129,50 @@ export const BY_SUFFIX: Array<[string, FileType]> = [
   ['.spec.ts', type('TS', '#4e9a68')],
 ];
 
-export const BY_PREFIX: Array<[string, FileType]> = [
+const BY_PREFIX: Array<[string, FileType]> = [
   ['tsconfig.', TS],
   ['jsconfig.', JS],
   ['.env', CONF],
 ];
 
-export function fileType(name: string): FileType {
-  const key = name.toLowerCase();
-  const exact = BY_NAME[key];
-  if (exact) return exact;
-  for (const [suffix, found] of BY_SUFFIX) {
-    if (key.endsWith(suffix)) return found;
+export class FileTypes {
+  readonly plain = PLAIN;
+
+  of(name: string): FileType {
+    const key = name.toLowerCase();
+    const exact = BY_NAME[key];
+    if (exact) return exact;
+    for (const [suffix, found] of BY_SUFFIX) {
+      if (key.endsWith(suffix)) return found;
+    }
+    for (const [prefix, found] of BY_PREFIX) {
+      if (key.startsWith(prefix)) return found;
+    }
+    const dot = key.lastIndexOf('.');
+    if (dot > 0) {
+      const extension = BY_EXTENSION[key.slice(dot + 1)];
+      if (extension) return extension;
+    }
+    return PLAIN;
   }
-  for (const [prefix, found] of BY_PREFIX) {
-    if (key.startsWith(prefix)) return found;
+
+  all(): FileType[] {
+    return [
+      ...Object.values(BY_EXTENSION),
+      ...Object.values(BY_NAME),
+      ...BY_SUFFIX.map(([, value]) => value),
+      ...BY_PREFIX.map(([, value]) => value),
+    ];
   }
-  const dot = key.lastIndexOf('.');
-  if (dot > 0) {
-    const extension = BY_EXTENSION[key.slice(dot + 1)];
-    if (extension) return extension;
+
+  keys(): string[] {
+    return [
+      ...Object.keys(BY_EXTENSION),
+      ...Object.keys(BY_NAME),
+      ...BY_SUFFIX.map(([key]) => key),
+      ...BY_PREFIX.map(([key]) => key),
+    ];
   }
-  return PLAIN;
 }
+
+export const fileTypes = new FileTypes();

@@ -1,18 +1,8 @@
+import { diff3, type Region, type Choice, type SideChoice } from '../merge/diff3.js';
 import { batch, computed, signal } from '@preact/signals';
 import type { MergeFile, MergeSession } from '@ide/protocol';
 import { complain, expectExternal, forgetDiverged, rpc, say, whenSaveConflicts } from './session.js';
 import { t } from '../i18n/index.js';
-import {
-  allDecided,
-  buildText,
-  defaultChoices,
-  diff3,
-  takeSide,
-  undecided,
-  type Choice,
-  type Region,
-  type SideChoice,
-} from '../merge/diff3.js';
 
 export const mergeSession = signal<MergeSession | null>(null);
 export const mergeOpen = signal(false);
@@ -39,7 +29,7 @@ export const mergeFile = computed<MergeFile | null>(() => {
 export const mergeRegions = computed<Region[]>(() => {
   const file = mergeFile.value;
   if (!file || file.left.text === null || file.right.text === null) return [];
-  return diff3(file.base ?? '', file.left.text, file.right.text);
+  return diff3.regions(file.base ?? '', file.left.text, file.right.text);
 });
 
 export const mergeChoices = computed<Choice[]>(() => {
@@ -48,16 +38,16 @@ export const mergeChoices = computed<Choice[]>(() => {
   if (!file) return [];
   const stored = decisions.value.get(file.path);
   if (stored && stored.length === regions.length) return stored;
-  return defaultChoices(regions);
+  return diff3.defaultChoices(regions);
 });
 
-export const mergeResult = computed(() => buildText(mergeRegions.value, mergeChoices.value));
+export const mergeResult = computed(() => diff3.buildText(mergeRegions.value, mergeChoices.value));
 
 export const mergeReady = computed(() => {
   const file = mergeFile.value;
   if (!file) return false;
   if (file.left.text === null || file.right.text === null) return false;
-  return allDecided(mergeRegions.value, mergeChoices.value);
+  return diff3.allDecided(mergeRegions.value, mergeChoices.value);
 });
 
 export const mergeConflicts = computed(() =>
@@ -80,7 +70,7 @@ export function setMergeCursor(at: number): void {
 export const mergeLeft = computed(() => {
   const regions = mergeRegions.value;
   const choices = mergeChoices.value;
-  return regions.filter((region, at) => undecided(region, choices[at] ?? { left: null, right: null }))
+  return regions.filter((region, at) => diff3.undecided(region, choices[at] ?? { left: null, right: null }))
     .length;
 });
 
@@ -193,7 +183,7 @@ export function acceptSide(side: 'left' | 'right'): void {
     void resolveMerge(side === 'left' ? file.left.text : file.right.text);
     return;
   }
-  remember(file.path, takeSide(mergeRegions.value, side));
+  remember(file.path, diff3.takeSide(mergeRegions.value, side));
 }
 
 export async function resolveMerge(text?: string | null): Promise<void> {
@@ -254,7 +244,7 @@ export function isUndecided(at: number): boolean {
   const region = mergeRegions.value[at];
   const choice = mergeChoices.value[at];
   if (!region || !choice) return false;
-  return undecided(region, choice);
+  return diff3.undecided(region, choice);
 }
 
 function remember(path: string, choices: Choice[]): void {

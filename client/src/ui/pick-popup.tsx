@@ -36,7 +36,7 @@ export function PickPopup<T>({
       query === ''
         ? items.map((item) => ({ item, matches: [] as number[] }))
         : items
-            .map((item) => ({ item, hit: fuzzy(item.text, query) }))
+            .map((item) => ({ item, hit: fuzzy.find(item.text, query) }))
             .filter(
               (hit): hit is { item: PickItem<T>; hit: { score: number; matches: number[] } } =>
                 hit.hit !== null,

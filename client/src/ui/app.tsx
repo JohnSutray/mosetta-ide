@@ -21,7 +21,7 @@ import { chordHeld } from '../keys/chords.js';
 import { dc, darcula, textStyle } from '../editor/darcula.js';
 import { languageFor } from '../editor/languages.js';
 import { paintCode } from '../editor/paint-line.js';
-import { diffLines } from '../editor/line-diff.js';
+import { lineDiff } from '../editor/line-diff.js';
 import { inputKeymap } from '../editor/input-keymap.js';
 import { allProblems } from '../state/session.js';
 import { registerCommands, resolveContext, missingCommands } from '../commands.js';
@@ -126,7 +126,7 @@ export function App() {
       unstable_hideTip: hideTip,
       unstable_Resizer: Resizer,
       unstable_widthOf: widthOf,
-      unstable_diffLines: diffLines,
+      unstable_diffLines: (before, after) => lineDiff.hunks(before, after),
       unstable_showHunk: showHunk,
       unstable_askSymbol: askSymbol,
       unstable_dc: dc,

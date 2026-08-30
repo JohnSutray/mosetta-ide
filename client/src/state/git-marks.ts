@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import { revertedText, type Hunk } from '../editor/line-diff.js';
+import { lineDiff, type Hunk } from '../editor/line-diff.js';
 import type { HunkBox } from '@ide/api/client';
 import { openFile, replaceText, rpc } from './session.js';
 
@@ -25,7 +25,7 @@ export function revertOpenHunk(): void {
   const file = openFile.peek();
   hunkPopup.value = null;
   if (!open || !file) return;
-  replaceText(revertedText(file.text, open.hunk));
+  replaceText(lineDiff.reverted(file.text, open.hunk));
 }
 
 export async function loadHead(path: string | null): Promise<void> {

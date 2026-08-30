@@ -129,7 +129,7 @@ export class BranchesWindow {
     const query = this.filter.value.trim();
     if (query === '') return this.git.branches.value;
     return this.git.branches.value
-      .map((branch) => ({ branch, hit: fuzzy(branch.name, query) }))
+      .map((branch) => ({ branch, hit: fuzzy.find(branch.name, query) }))
       .filter((row): row is { branch: GitBranch; hit: FuzzyHit } => row.hit !== null)
       .sort((a, b) => b.hit.score - a.hit.score)
       .map((row) => row.branch);

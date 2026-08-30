@@ -1,5 +1,5 @@
+import { diff3 } from '../src/merge/diff3.js';
 import { describe, expect, it } from 'vitest';
-import { defaultChoices, diff3 } from '../src/merge/diff3.js';
 import { layout } from '../src/merge/layout.js';
 
 const lines = (...items: string[]) => `${items.join('\n')}\n`;
@@ -15,8 +15,8 @@ describe('раскладка трёх колонок', () => {
     const left = lines('a', 'левое-1', 'левое-2', 'левое-3', 'c');
     const right = lines('a', 'правое', 'c');
 
-    const regions = diff3(base, left, right);
-    const grid = layout(regions, defaultChoices(regions));
+    const regions = diff3.regions(base, left, right);
+    const grid = layout(regions, diff3.defaultChoices(regions));
 
     expect(rowsOf(grid.left)).toBe(grid.rows);
     expect(rowsOf(grid.center)).toBe(grid.rows);
@@ -28,8 +28,8 @@ describe('раскладка трёх колонок', () => {
     const left = lines('1', 'два-а', 'два-б', '3', '4', '5');
     const right = lines('1', '2', '3', 'ЧЕТЫРЕ', '5');
 
-    const regions = diff3(base, left, right);
-    const grid = layout(regions, defaultChoices(regions));
+    const regions = diff3.regions(base, left, right);
+    const grid = layout(regions, diff3.defaultChoices(regions));
 
     const cellOf = (lane: 'left' | 'center' | 'right', region: number): number => {
       const band = grid[lane].bands.find((item) => item.region === region)!;
@@ -48,8 +48,8 @@ describe('раскладка трёх колонок', () => {
 
   it('пустая колонка не длиннее соседей на невидимую строку', () => {
     const base = lines('a', 'b');
-    const regions = diff3(base, '', base);
-    const grid = layout(regions, defaultChoices(regions));
+    const regions = diff3.regions(base, '', base);
+    const grid = layout(regions, diff3.defaultChoices(regions));
 
     expect(rowsOf(grid.left)).toBe(grid.rows);
     expect(rowsOf(grid.right)).toBe(grid.rows);
@@ -57,7 +57,7 @@ describe('раскладка трёх колонок', () => {
 
   it('центр растёт, когда взяли обе стороны спора', () => {
     const base = lines('a', 'b', 'c');
-    const regions = diff3(base, lines('a', 'моё', 'c'), lines('a', 'чужое', 'c'));
+    const regions = diff3.regions(base, lines('a', 'моё', 'c'), lines('a', 'чужое', 'c'));
 
     const one = layout(regions, [
       { left: null, right: null },

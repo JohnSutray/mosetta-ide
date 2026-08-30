@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { fileType, type FileType, type GlyphName } from './file-types.js';
+import { fileTypes, type FileType, type GlyphName } from './file-types.js';
 
 const ICON = {
   width: 16,
@@ -13,7 +13,7 @@ const PAPER = '#4e5356';
 const PAPER_EDGE = '#7b8386';
 
 export function FileIcon({ name }: { name: string }): JSX.Element {
-  const type = fileType(name);
+  const type = fileTypes.of(name);
   if (type.glyph) return <svg {...ICON}>{GLYPHS[type.glyph](type.color)}</svg>;
   if (type.label === '') return <svg {...ICON}>{paper()}</svg>;
   return <svg {...ICON}>{tile(type)}</svg>;

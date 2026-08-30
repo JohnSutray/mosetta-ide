@@ -1,4 +1,4 @@
-import { resultOf, type Choice, type Region } from './diff3.js';
+import { diff3, type Region, type Choice } from './diff3.js';
 
 export type Lane = 'left' | 'center' | 'right';
 
@@ -43,7 +43,7 @@ export function layout(regions: Region[], choices: Choice[]): Layout {
   regions.forEach((region, at) => {
     const own: Record<Lane, string[]> = {
       left: region.left,
-      center: resultOf(region, choices[at] ?? { left: null, right: null }),
+      center: diff3.resultOf(region, choices[at] ?? { left: null, right: null }),
       right: region.right,
     };
     const rows = Math.max(own.left.length, own.center.length, own.right.length);
