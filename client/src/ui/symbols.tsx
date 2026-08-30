@@ -1,7 +1,7 @@
+import { geometry } from '../state/layout.js';
 import { symbols } from '../state/symbols.js';
 import { config } from '../state/config.js';
 import { useEffect, useRef } from 'preact/hooks';
-import { widthOf } from '../state/layout.js';
 import { codePainter } from '../editor/paint-line.js';
 import { Popup } from './popup.js';
 import { Resizer } from './resizer.js';
@@ -69,7 +69,7 @@ export function Symbols() {
       <div
         class="symbols-list"
         ref={body}
-        style={{ height: `${widthOf(LIST_ID, LIST_DEFAULT)}px` }}
+        style={{ height: `${geometry.widthOf(LIST_ID, LIST_DEFAULT)}px` }}
       >
         {sites.map((site, at) => (
           <div

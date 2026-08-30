@@ -1,3 +1,6 @@
+import { geometry } from '../state/layout.js';
+import { keysHelp } from '../state/keys-help.js';
+import { gitMarks } from '../state/git-marks.js';
 import { editorFocus } from '../state/editor.js';
 import { treeMenu } from '../state/tree-menu.js';
 import { tips } from '../state/tip.js';
@@ -13,7 +16,6 @@ import { tools } from '../state/tools.js';
 import { git, resetGit } from '../state/git.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
-import { headFor, loadHead, showHunk } from '../state/git-marks.js';
 import { chordHeld } from '../keys/chords.js';
 import { darcula } from '../editor/darcula.js';
 import { languages } from '../editor/languages.js';
@@ -34,7 +36,6 @@ import { registerPanelWishes } from './panel-wishes.js';
 import { Registry } from '../state/registry.js';
 import { keysFor } from '../keys/keys-for.js';
 import { Resizer } from './resizer.js';
-import { widthOf } from '../state/layout.js';
 import { runCommand } from '../keys/commands.js';
 import { Projects } from './projects.js';
 import { i18n } from '../i18n/index.js';
@@ -49,7 +50,6 @@ import type { ClientSurface } from '@ide/api/client';
 import { ToolPicker } from './tool-picker.js';
 import { Tip } from './tip.js';
 import { Symbols } from './symbols.js';
-import { noteUnbound } from '../state/keys-help.js';
 
 const store = new Registry((message) => complain(message));
 
@@ -99,7 +99,7 @@ export function App() {
       fileDiagnostics: doc.diagnostics,
       externalEpoch: doc.externalEpoch,
       pendingReveal: doc.pendingReveal,
-      headFor,
+      headFor: gitMarks.headFor,
       visit: visits.visit,
       hover: (path, line, character) => rpc.call('lsp.hover', { path, line, character }),
       takeFocusOnMount: editorFocus.takeOnMount,
@@ -112,9 +112,9 @@ export function App() {
       unstable_showTip: tips.show,
       unstable_hideTip: tips.hide,
       unstable_Resizer: Resizer,
-      unstable_widthOf: widthOf,
+      unstable_widthOf: geometry.widthOf,
       unstable_diffLines: (before, after) => lineDiff.hunks(before, after),
-      unstable_showHunk: showHunk,
+      unstable_showHunk: gitMarks.show,
       unstable_askSymbol: symbols.ask,
       unstable_dc: darcula.palette,
       unstable_paintCode: (text, path) => codePainter.paint(text, path),
@@ -127,7 +127,7 @@ export function App() {
       const dead = missingCommands();
       if (dead.length) console.warn('[web-ide] команды без реализации:', dead.join(', '));
     });
-    const dispatcher = installDispatcher(resolveContext, (key) => noteUnbound(key));
+    const dispatcher = installDispatcher(resolveContext, (key) => keysHelp.noteUnbound(key));
     dispatcher.setKeymap(config.keymap.peek());
     const stop = config.keymap.subscribe((value) => dispatcher.setKeymap(value));
     const mouse = visits.installMouseNav();
@@ -158,7 +158,7 @@ export function App() {
   }, [ws?.id]);
 
   useEffect(() => {
-    void loadHead(file?.path ?? null);
+    void gitMarks.load(file?.path ?? null);
   }, [file?.path, git.state.value]);
 
   useEffect(() => {

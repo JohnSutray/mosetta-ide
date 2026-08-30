@@ -1,6 +1,6 @@
+import { keysHelp } from '../state/keys-help.js';
 import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
 import { opensOpenPopup, runCommand } from './commands.js';
-import { echoKey } from '../state/keys-help.js';
 import { mechanicsKeys } from '../editor/input-keymap.js';
 import { keyHost } from './host.js';
 import { reservedIn } from './reserved.js';
@@ -102,7 +102,7 @@ export function installDispatcher(
         ? undefined
         : bindings.find((b) => (b.when ?? 'global') === 'global' && b.key === key));
 
-    echoKey(key, context, binding?.command ?? null);
+    keysHelp.echo(key, context, binding?.command ?? null);
     if (!binding) {
       if (!CAPTURING.has(context) && complains(key, { repeat: event.repeat, clip: clipKeys })) {
         onUnbound(key);

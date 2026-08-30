@@ -1,15 +1,8 @@
+import { geometry, type Size } from '../state/layout.js';
 import { popups } from '../state/popups.js';
 import type { ComponentChildren } from 'preact';
 import type { KeyContext } from '@ide/protocol';
 import { useEffect, useRef } from 'preact/hooks';
-import {
-  fitAnchored,
-  resetPopupSize,
-  setPopupSize,
-  sizeOf,
-  viewport,
-  type Size,
-} from '../state/layout.js';
 import { catchesKeys } from '../keys/dispatcher.js';
 import { i18n } from '../i18n/index.js';
 
@@ -46,8 +39,8 @@ export function Popup({
 }) {
   const box = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
-  const want = full ? viewport.value : sizeOf(id, size);
-  const at = anchor ? fitAnchored(want, anchor, viewport.value, min) : null;
+  const want = full ? geometry.viewport.value : geometry.sizeOf(id, size);
+  const at = anchor ? geometry.fitAnchored(want, anchor, geometry.viewport.value, min) : null;
   const current = at ? { w: at.w, h: at.h } : want;
 
   const closing = useRef(onEscape ?? onClose);
@@ -113,7 +106,7 @@ export function Popup({
           onPointerMove={(event) => {
             const started = drag.current;
             if (!started) return;
-            setPopupSize(
+            geometry.setPopupSize(
               id,
               {
                 w: started.w + (event.clientX - started.x),
@@ -126,7 +119,7 @@ export function Popup({
             drag.current = null;
             (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
           }}
-          onDblClick={() => resetPopupSize(id)}
+          onDblClick={() => geometry.resetPopupSize(id)}
         />
         )}
       </div>

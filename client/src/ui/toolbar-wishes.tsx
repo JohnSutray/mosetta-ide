@@ -1,3 +1,4 @@
+import { keysHelp } from '../state/keys-help.js';
 import { tips } from '../state/tip.js';
 import { terminals } from '../state/terminals.js';
 import { search } from '../state/search.js';
@@ -9,7 +10,6 @@ import { branchesWindow, git, pushWindow } from '../state/git.js';
 import type { TerminalInfo } from '@ide/protocol';
 import { computed } from '@preact/signals';
 import { runCommand } from '../keys/commands.js';
-import { keysHelpOpen } from '../state/keys-help.js';
 import { following } from '../state/tree-follow.js';
 import { keysFor } from '../keys/keys-for.js';
 import { i18n } from '../i18n/index.js';
@@ -87,7 +87,7 @@ export function registerToolbarWishes(store: Registry): void {
     title: 'toolbar.keys',
     command: 'keys.show',
     icon: ours('keys'),
-    active: keysHelpOpen,
+    active: keysHelp.open,
   });
   button({
     id: 'tree.follow',

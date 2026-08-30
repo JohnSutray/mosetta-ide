@@ -1,11 +1,11 @@
+import { gitMarks } from '../state/git-marks.js';
 import { popups } from '../state/popups.js';
 import { doc } from '../state/session.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import { closeHunk, hunkPopup, revertOpenHunk } from '../state/git-marks.js';
 import { i18n } from '../i18n/index.js';
 
 export function HunkPopup() {
-  const open = hunkPopup.value;
+  const open = gitMarks.popup.value;
   const self = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(open ? open.box.bottom + 4 : 0);
   const alive = doc.open.value !== null;
@@ -20,9 +20,9 @@ export function HunkPopup() {
 
   useEffect(() => {
     if (!open || !alive) return;
-    popups.enter({ id: 'hunk', close: closeHunk, layer: true });
+    popups.enter({ id: 'hunk', close: gitMarks.close, layer: true });
     const away = (event: MouseEvent) => {
-      if (!(event.target as HTMLElement).closest('.hunk-popup')) closeHunk();
+      if (!(event.target as HTMLElement).closest('.hunk-popup')) gitMarks.close();
     };
     window.addEventListener('mousedown', away, { capture: true });
     return () => {
@@ -49,7 +49,7 @@ export function HunkPopup() {
     >
       <div class="hunk-head">
         <span class="hunk-title">{title}</span>
-        <button class="button" onClick={revertOpenHunk}>
+        <button class="button" onClick={gitMarks.revertOpen}>
           {i18n.t('git.hunk.revert')}
         </button>
       </div>

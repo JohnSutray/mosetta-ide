@@ -13,35 +13,42 @@ export interface KeyEcho {
   seq: number;
 }
 
-export const keysHelpOpen = signal(false);
+export class KeysHelp {
+  readonly open = signal(false);
 
-export const viewHost = signal<KeyHost | null>(null);
-export const lastKey = signal<KeyEcho | null>(null);
+  readonly viewHost = signal<KeyHost | null>(null);
 
-let seq = 0;
+  readonly lastKey = signal<KeyEcho | null>(null);
 
-export function echoKey(key: string, context: KeyContext, command: string | null): void {
-  seq += 1;
-  lastKey.value = { key, context, command, seq };
+  private seq = 0;
+  private missNote = 0;
+
+  echo(key: string, context: KeyContext, command: string | null): void {
+    this.seq += 1;
+    this.lastKey.value = { key, context, command, seq: this.seq };
+  }
+
+  noteUnbound(key: string): void {
+    this.missNote = settle(
+      this.missNote,
+      i18n.t('keys.unbound', { key: keyHost.humanize(key), help: this.helpKey() }),
+    );
+  }
+
+  toggle(): void {
+    this.open.value = !this.open.value;
+  }
+
+  close(): void {
+    this.open.value = false;
+  }
+
+  private helpKey(): string {
+    const bound = config.keymap
+      .peek()
+      .bindings.find((binding) => binding.command === 'keys.show' && appliesHere(binding));
+    return bound ? keyHost.humanize(bound.key) : i18n.t('keys.title');
+  }
 }
 
-let missNote = 0;
-
-export function noteUnbound(key: string): void {
-  missNote = settle(missNote, i18n.t('keys.unbound', { key: keyHost.humanize(key), help: helpKey() }));
-}
-
-function helpKey(): string {
-  const bound = config.keymap
-    .peek()
-    .bindings.find((binding) => binding.command === 'keys.show' && appliesHere(binding));
-  return bound ? keyHost.humanize(bound.key) : i18n.t('keys.title');
-}
-
-export function toggleKeysHelp(): void {
-  keysHelpOpen.value = !keysHelpOpen.value;
-}
-
-export function closeKeysHelp(): void {
-  keysHelpOpen.value = false;
-}
+export const keysHelp = new KeysHelp();

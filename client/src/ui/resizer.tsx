@@ -1,5 +1,5 @@
+import { geometry } from '../state/layout.js';
 import { useRef } from 'preact/hooks';
-import { setWidth, widthOf } from '../state/layout.js';
 
 export function Resizer({
   id,
@@ -16,7 +16,7 @@ export function Resizer({
 }) {
   const drag = useRef<{ startX: number; startWidth: number } | null>(null);
 
-  const apply = (px: number) => setWidth(id, px, limits());
+  const apply = (px: number) => geometry.setWidth(id, px, limits());
 
   return (
     <div
@@ -25,7 +25,7 @@ export function Resizer({
         event.preventDefault();
         drag.current = {
           startX: axis === 'y' ? event.clientY : event.clientX,
-          startWidth: widthOf(id, defaultWidth),
+          startWidth: geometry.widthOf(id, defaultWidth),
         };
         (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
       }}

@@ -1,18 +1,18 @@
+import { keysHelp } from '../state/keys-help.js';
 import { config } from '../state/config.js';
 import { Fragment } from 'preact';
 import type { KeyBinding, KeyContext, KeyScope } from '@ide/protocol';
-import { closeKeysHelp, keysHelpOpen, lastKey, viewHost } from '../state/keys-help.js';
 import { keyHost } from '../keys/host.js';
 import { reservedIn } from '../keys/reserved.js';
 import { i18n } from '../i18n/index.js';
 import { Popup } from './popup.js';
 
 export function KeysHelp() {
-  if (!keysHelpOpen.value) return null;
+  if (!keysHelp.open.value) return null;
 
   const bindings = config.keymap.value.bindings;
-  const echo = lastKey.value;
-  const host = viewHost.value ?? keyHost.host;
+  const echo = keysHelp.lastKey.value;
+  const host = keysHelp.viewHost.value ?? keyHost.host;
   const elsewhere = host !== keyHost.host;
   const taken = reservedIn([host, `${host}:${keyHost.os}` as KeyScope]);
   const gone = taken.filter((item) => !item.soft);
@@ -37,7 +37,7 @@ export function KeysHelp() {
       class="keys-help"
       size={{ w: 720, h: 560 }}
       min={{ w: 460, h: 320 }}
-      onClose={closeKeysHelp}
+      onClose={keysHelp.close}
       onEscape={() => {}}
     >
       <div class="keys-head">
@@ -48,7 +48,7 @@ export function KeysHelp() {
               <span
                 key={one}
                 class={`keys-host ${one === host ? 'is-on' : ''}`}
-                onClick={() => (viewHost.value = one === keyHost.host ? null : one)}
+                onClick={() => (keysHelp.viewHost.value = one === keyHost.host ? null : one)}
               >
                 {i18n.t(`keys.host.${one}`)}
               </span>

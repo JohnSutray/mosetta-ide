@@ -1,11 +1,11 @@
+import { geometry } from '../src/state/layout.js';
 import { describe, expect, it } from 'vitest';
-import { EDGE, fitAnchored } from '../src/state/layout.js';
 
 const BOX = { w: 1600, h: 1000 };
 const MIN = { w: 320, h: 220 };
 
 function fit(want: { w: number; h: number }, y: number, x = 400) {
-  return fitAnchored(want, { x, y }, BOX, MIN);
+  return geometry.fitAnchored(want, { x, y }, BOX, MIN);
 }
 
 describe('попап у строки', () => {
@@ -19,13 +19,13 @@ describe('попап у строки', () => {
   it('огромное желание у ВЕРХНЕГО края исполняется целиком', () => {
     const at = fit({ w: 1000, h: 900 }, 60);
     expect(at.h).toBe(900);
-    expect(at.top + at.h).toBeLessThanOrEqual(BOX.h - EDGE);
+    expect(at.top + at.h).toBeLessThanOrEqual(BOX.h - geometry.edge);
   });
 
   it('у НИЖНЕГО края тот же попап уезжает наверх и ужимается', () => {
     const at = fit({ w: 1000, h: 950 }, 940);
-    expect(at.top).toBe(EDGE);
-    expect(at.h).toBe(940 - 6 - EDGE);
+    expect(at.top).toBe(geometry.edge);
+    expect(at.h).toBe(940 - 6 - geometry.edge);
     expect(at.top + at.h).toBeLessThan(940);
   });
 
@@ -49,16 +49,16 @@ describe('попап у строки', () => {
       [5, BOX.h - 5],
     ]) {
       const at = fit({ w: 1400, h: 900 }, y!, x!);
-      expect(at.left, `${x},${y}`).toBeGreaterThanOrEqual(EDGE);
-      expect(at.top, `${x},${y}`).toBeGreaterThanOrEqual(EDGE);
-      expect(at.left + at.w, `${x},${y}`).toBeLessThanOrEqual(BOX.w - EDGE);
-      expect(at.top + at.h, `${x},${y}`).toBeLessThanOrEqual(BOX.h - EDGE);
+      expect(at.left, `${x},${y}`).toBeGreaterThanOrEqual(geometry.edge);
+      expect(at.top, `${x},${y}`).toBeGreaterThanOrEqual(geometry.edge);
+      expect(at.left + at.w, `${x},${y}`).toBeLessThanOrEqual(BOX.w - geometry.edge);
+      expect(at.top + at.h, `${x},${y}`).toBeLessThanOrEqual(BOX.h - geometry.edge);
     }
   });
 
   it('на узком экране ширина режется, а не вылезает', () => {
-    const at = fitAnchored({ w: 1200, h: 300 }, { x: 500, y: 100 }, { w: 800, h: 600 }, MIN);
-    expect(at.w).toBe(800 - EDGE * 2);
-    expect(at.left).toBe(EDGE);
+    const at = geometry.fitAnchored({ w: 1200, h: 300 }, { x: 500, y: 100 }, { w: 800, h: 600 }, MIN);
+    expect(at.w).toBe(800 - geometry.edge * 2);
+    expect(at.left).toBe(geometry.edge);
   });
 });

@@ -1,3 +1,4 @@
+import { keysHelp } from './state/keys-help.js';
 import { editorFocus } from './state/editor.js';
 import { popups } from './state/popups.js';
 import { symbols } from './state/symbols.js';
@@ -16,7 +17,6 @@ import { toggleFollow } from './state/tree-follow.js';
 import { resolveContext } from './keys/context.js';
 import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
-import { toggleKeysHelp } from './state/keys-help.js';
 
 export function registerCommands(): void {
   registerCommand('file.save', () => doc.save());
@@ -27,7 +27,7 @@ export function registerCommands(): void {
 
   registerCommand('key.reserved', () => {});
 
-  registerCommand('keys.show', () => toggleKeysHelp());
+  registerCommand('keys.show', () => keysHelp.toggle());
 
   registerCommand('merge.show', () => merge.toggle());
   registerCommand('merge.nextFile', () => merge.stepFile(1));

@@ -3,41 +3,44 @@ import { signal } from '@preact/signals';
 import { lineDiff, type Hunk } from '../editor/line-diff.js';
 import type { HunkBox } from '@ide/api/client';
 
-export const hunkPopup = signal<{ hunk: Hunk; box: HunkBox } | null>(null);
+export class GitMarks {
+  readonly popup = signal<{ hunk: Hunk; box: HunkBox } | null>(null);
 
-export const headText = signal<{ path: string; text: string | null } | null>(null);
+  readonly head = signal<{ path: string; text: string | null } | null>(null);
 
-export function headFor(path: string | null): string | null {
-  const known = headText.value;
-  return known && known.path === path ? known.text : null;
-}
-
-export function showHunk(hunk: Hunk, box: HunkBox): void {
-  hunkPopup.value = { hunk, box };
-}
-
-export function closeHunk(): void {
-  hunkPopup.value = null;
-}
-
-export function revertOpenHunk(): void {
-  const open = hunkPopup.value;
-  const file = doc.open.peek();
-  hunkPopup.value = null;
-  if (!open || !file) return;
-  doc.replaceText(lineDiff.reverted(file.text, open.hunk));
-}
-
-export async function loadHead(path: string | null): Promise<void> {
-  if (!path) {
-    headText.value = null;
-    return;
+  headFor(path: string | null): string | null {
+    const known = this.head.value;
+    return known && known.path === path ? known.text : null;
   }
-  try {
-    const head = await rpc.call('git.head', { path });
-    if (head.path === path) headText.value = { path, text: head.text };
-  } catch (err) {
-    headText.value = null;
-    void err;
+
+  show(hunk: Hunk, box: HunkBox): void {
+    this.popup.value = { hunk, box };
+  }
+
+  close(): void {
+    this.popup.value = null;
+  }
+
+  revertOpen(): void {
+    const open = this.popup.value;
+    const file = doc.open.peek();
+    this.popup.value = null;
+    if (!open || !file) return;
+    doc.replaceText(lineDiff.reverted(file.text, open.hunk));
+  }
+
+  async load(path: string | null): Promise<void> {
+    if (!path) {
+      this.head.value = null;
+      return;
+    }
+    try {
+      const head = await rpc.call('git.head', { path });
+      if (head.path === path) this.head.value = { path, text: head.text };
+    } catch {
+      this.head.value = null;
+    }
   }
 }
+
+export const gitMarks = new GitMarks();

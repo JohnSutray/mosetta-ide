@@ -1,10 +1,10 @@
+import { geometry } from '../state/layout.js';
 import { git, pushWindow } from '../state/git.js';
 import { useRef } from 'preact/hooks';
 import type { GitCommit } from '@ide/protocol';
 import { ChangedTree } from './changed-tree.js';
 import { Resizer } from './resizer.js';
 import { Popup } from './popup.js';
-import { widthOf } from '../state/layout.js';
 import { i18n } from '../i18n/index.js';
 
 const FILES_ID = 'push.files';
@@ -96,7 +96,7 @@ export function Push() {
             <div
               class="push-files"
               ref={files}
-              style={{ width: `${widthOf(FILES_ID, FILES_DEFAULT)}px` }}
+              style={{ width: `${geometry.widthOf(FILES_ID, FILES_DEFAULT)}px` }}
             >
               <div class="push-lane-title">
                 {pushWindow.selected.value
@@ -117,7 +117,7 @@ export function Push() {
               />
               <div
                 class="push-message"
-                style={{ height: `${widthOf(MESSAGE_ID, MESSAGE_DEFAULT)}px` }}
+                style={{ height: `${geometry.widthOf(MESSAGE_ID, MESSAGE_DEFAULT)}px` }}
               >
                 <Message />
               </div>
