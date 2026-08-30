@@ -19,7 +19,7 @@ import {
 import { effect, type Signal } from '@preact/signals';
 import {
   activate,
-  askSymbol,
+  unstable_askSymbol as askSymbol,
   closeFile,
   dirty,
   editDoc,
@@ -31,7 +31,7 @@ import {
   pendingReveal,
   registry,
   settings,
-  showHunk,
+  unstable_showHunk as showHunk,
   t,
   visit,
   wantsFocus,

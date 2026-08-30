@@ -79,7 +79,7 @@ describe('панель ошибок', () => {
       { path: 'a.ts', diagnostics: [problem(0, 'раз')] },
       { path: 'b.ts', diagnostics: [problem(1, 'два'), problem(2, 'три')] },
     ];
-    host.surface.openPath.value = 'a.ts';
+    host.surface.openDoc.value = { path: 'a.ts' } as never;
     const paths = of(view(), 'span')
       .filter((n) => n.props['class'] === 'problems-path')
       .map((n) => n.props['children']);
@@ -92,7 +92,7 @@ describe('панель ошибок', () => {
       { path: 'a.ts', diagnostics: [problem(0, 'раз')] },
       { path: 'b.ts', diagnostics: [problem(0, 'два')] },
     ];
-    host.surface.openPath.value = 'b.ts';
+    host.surface.openDoc.value = { path: 'b.ts' } as never;
     const marked = of(view(), 'div')
       .filter((n) => String(n.props['class']).startsWith('problems-where'))
       .map((n) => String(n.props['class']).includes('is-current'));

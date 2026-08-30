@@ -1,3 +1,4 @@
+import { git, resetGit } from '../state/git.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { keymap as keymapSignal, settings as settingsSignal } from '../state/config.js';
@@ -9,7 +10,6 @@ import {
   editDoc,
   externalEpoch,
   openFile,
-  openFilePath,
   complain,
   rpc,
   title,
@@ -38,7 +38,6 @@ import { TreeMenu } from './tree-menu.js';
 import { Prompt } from './prompt.js';
 import { closeTreeMenu } from '../state/tree-menu.js';
 import { Push } from './push.js';
-import { gitState, refreshGit, resetGit } from '../state/git.js';
 import { loadMerge, resetMerge } from '../state/merge.js';
 import { registerToolbarWishes } from './toolbar-wishes.js';
 import { registerPanelWishes } from './panel-wishes.js';
@@ -100,21 +99,12 @@ export function App() {
   useEffect(() => {
     registerCommands();
     const surface: ClientSurface = {
-      PickPopup,
-      highlight,
-      shiftMatches,
-      showTerminal,
       t,
       problems: allProblems,
-      openPath: openFilePath,
       goTo,
       runCommand,
-      showTip,
-      hideTip,
       keysFor,
       settings: settingsSignal,
-      Resizer,
-      widthOf,
       openDoc: openFile,
       editDoc,
       closeFile,
@@ -124,19 +114,27 @@ export function App() {
       pendingReveal,
       headFor,
       visit,
-      diffLines,
-      showHunk,
-      askSymbol,
       hover: (path, line, character) => rpc.call('lsp.hover', { path, line, character }),
       takeFocusOnMount,
       wantsFocus,
       chordHeld,
-      dc,
-      paintCode,
-      darcula,
-      textStyle,
-      languageFor,
-      inputKeymap,
+      unstable_PickPopup: PickPopup,
+      unstable_highlight: highlight,
+      unstable_shiftMatches: shiftMatches,
+      unstable_showTerminal: showTerminal,
+      unstable_showTip: showTip,
+      unstable_hideTip: hideTip,
+      unstable_Resizer: Resizer,
+      unstable_widthOf: widthOf,
+      unstable_diffLines: diffLines,
+      unstable_showHunk: showHunk,
+      unstable_askSymbol: askSymbol,
+      unstable_dc: dc,
+      unstable_paintCode: paintCode,
+      unstable_darcula: darcula,
+      unstable_textStyle: textStyle,
+      unstable_languageFor: languageFor,
+      unstable_inputKeymap: inputKeymap,
     };
     void loadPlugins(surface, store).then(() => {
       const dead = missingCommands();
@@ -174,7 +172,7 @@ export function App() {
 
   useEffect(() => {
     void loadHead(file?.path ?? null);
-  }, [file?.path, gitState.value]);
+  }, [file?.path, git.state.value]);
 
   useEffect(() => {
     void refreshTools();
@@ -185,7 +183,7 @@ export function App() {
       return;
     }
     void refreshTerminals();
-    void refreshGit();
+    void git.refresh();
     void loadVisits();
     void loadMerge();
   }, [ws?.id]);

@@ -1,5 +1,5 @@
 import { Fragment } from 'preact';
-import { Resizer, activate, registry, t, widthOf, type Ide } from '@ide/api/client';
+import { unstable_Resizer as Resizer, activate, registry, t, unstable_widthOf as widthOf, type Ide } from '@ide/api/client';
 import { PANEL_SCHEMA, type PanelWish } from './schema.js';
 import { STYLE } from './style.js';
 

@@ -73,6 +73,19 @@ describe('контракт @ide/api', () => {
     }
   });
 
+  it('взятое взаймы помечено, и список закрытый', () => {
+    const BORROWED = [
+      'PickPopup', 'highlight', 'shiftMatches', 'showTip', 'hideTip', 'Resizer', 'widthOf',
+      'darcula', 'dc', 'textStyle', 'languageFor', 'paintCode', 'inputKeymap', 'diffLines',
+      'showHunk', 'askSymbol',
+      'showTerminal',
+    ].map((name) => `unstable_${name}`);
+
+    const members = surfaceMembers(source('client.ts'));
+    const marked = members.filter((name) => name.startsWith('unstable_'));
+    expect(marked.sort()).toEqual([...BORROWED].sort());
+  });
+
   it('в тесте подменяется тот же список, что и на сборке', () => {
     const text = source('testing.ts');
     const own = [...text.matchAll(/^export (?:function|const) (\w+)/gm)].map((m) => m[1]!);

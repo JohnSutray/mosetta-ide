@@ -1,6 +1,6 @@
 import { StateEffect, StateField, type Extension } from '@codemirror/state';
 import { EditorView, gutter, GutterMarker } from '@codemirror/view';
-import { diffLines, type Hunk, type HunkBox } from '@ide/api/client';
+import { unstable_diffLines as diffLines, type Hunk, type HunkBox } from '@ide/api/client';
 
 export const setHeadText = StateEffect.define<string | null>();
 

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FakeHost, Resizer, nodes, of } from '@ide/api/testing';
+import { FakeHost, unstable_Resizer as Resizer, nodes, of } from '@ide/api/testing';
 import Layout from '../src/client.js';
 import type { PanelWish } from '../src/schema.js';
 

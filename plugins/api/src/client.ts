@@ -31,13 +31,13 @@ export interface PickProps<T> {
   onMouseDown?: (event: MouseEvent) => void;
 }
 
-export declare function PickPopup<T>(props: PickProps<T>): JSX.Element;
+export declare function unstable_PickPopup<T>(props: PickProps<T>): JSX.Element;
 
-export declare function highlight(text: string, matches: number[]): ComponentChildren;
+export declare function unstable_highlight(text: string, matches: number[]): ComponentChildren;
 
-export declare function shiftMatches(matches: number[], from: number, length: number): number[];
+export declare function unstable_shiftMatches(matches: number[], from: number, length: number): number[];
 
-export declare function showTerminal(open: () => Promise<TerminalInfo>): Promise<void>;
+export declare function unstable_showTerminal(open: () => Promise<TerminalInfo>): Promise<void>;
 
 export declare function t(key: string, params?: Record<string, string | number>): string;
 
@@ -48,14 +48,12 @@ export interface FileProblems {
 
 export declare const problems: { readonly value: FileProblems[] };
 
-export declare const openPath: { readonly value: string | null };
-
 export declare function goTo(path: string, line: number, character?: number): Promise<void>;
 
 export declare function runCommand(id: string): boolean;
 
-export declare function showTip(near: Element, text: string, keys?: string[]): void;
-export declare function hideTip(): void;
+export declare function unstable_showTip(near: Element, text: string, keys?: string[]): void;
+export declare function unstable_hideTip(): void;
 
 export declare function keysFor(command: string): string[];
 
@@ -66,9 +64,9 @@ export interface ResizerProps {
   limits: () => { min: number; max: number };
   defaultWidth: number;
 }
-export declare function Resizer(props: ResizerProps): JSX.Element;
+export declare function unstable_Resizer(props: ResizerProps): JSX.Element;
 
-export declare function widthOf(id: string, fallback: number): number;
+export declare function unstable_widthOf(id: string, fallback: number): number;
 
 export declare const settings: { readonly value: Settings | null };
 
@@ -109,9 +107,9 @@ export interface HunkBox {
   bottom: number;
 }
 
-export declare function diffLines(before: string, after: string): Hunk[];
+export declare function unstable_diffLines(before: string, after: string): Hunk[];
 
-export declare function showHunk(hunk: Hunk, box: HunkBox): void;
+export declare function unstable_showHunk(hunk: Hunk, box: HunkBox): void;
 
 export interface SymbolAsk {
   line: number;
@@ -120,7 +118,7 @@ export interface SymbolAsk {
   box: { x: number; y: number };
 }
 
-export declare function askSymbol(where: SymbolAsk): Promise<void>;
+export declare function unstable_askSymbol(where: SymbolAsk): Promise<void>;
 
 export declare function hover(
   path: string,
@@ -137,9 +135,9 @@ export declare function chordHeld(
   event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean },
 ): boolean;
 
-export declare const darcula: unknown;
+export declare const unstable_darcula: unknown;
 
-export declare function textStyle(settings: {
+export declare function unstable_textStyle(settings: {
   fontFamily: string;
   ligatures: boolean;
 }): Record<string, string>;
@@ -173,35 +171,34 @@ export interface Palette {
   warnFg: string;
   tooltipBg: string;
 }
-export declare const dc: Palette;
+export declare const unstable_dc: Palette;
 
 export interface CodeChunk {
   text: string;
   color: string | null;
 }
 
-export declare function paintCode(text: string, path: string): CodeChunk[];
+export declare function unstable_paintCode(text: string, path: string): CodeChunk[];
 
-export declare function languageFor(path: string): unknown;
+export declare function unstable_languageFor(path: string): unknown;
 
-export declare const inputKeymap: readonly unknown[];
+export declare const unstable_inputKeymap: readonly unknown[];
 
 export interface ClientSurface {
-  PickPopup: typeof PickPopup;
-  highlight: typeof highlight;
-  shiftMatches: typeof shiftMatches;
-  showTerminal: typeof showTerminal;
+  unstable_PickPopup: typeof unstable_PickPopup;
+  unstable_highlight: typeof unstable_highlight;
+  unstable_shiftMatches: typeof unstable_shiftMatches;
+  unstable_showTerminal: typeof unstable_showTerminal;
   t: typeof t;
   problems: typeof problems;
-  openPath: typeof openPath;
   goTo: typeof goTo;
   runCommand: typeof runCommand;
-  showTip: typeof showTip;
-  hideTip: typeof hideTip;
+  unstable_showTip: typeof unstable_showTip;
+  unstable_hideTip: typeof unstable_hideTip;
   keysFor: typeof keysFor;
   settings: typeof settings;
-  Resizer: typeof Resizer;
-  widthOf: typeof widthOf;
+  unstable_Resizer: typeof unstable_Resizer;
+  unstable_widthOf: typeof unstable_widthOf;
   openDoc: typeof openDoc;
   editDoc: typeof editDoc;
   closeFile: typeof closeFile;
@@ -211,19 +208,19 @@ export interface ClientSurface {
   pendingReveal: typeof pendingReveal;
   headFor: typeof headFor;
   visit: typeof visit;
-  diffLines: typeof diffLines;
-  showHunk: typeof showHunk;
-  askSymbol: typeof askSymbol;
+  unstable_diffLines: typeof unstable_diffLines;
+  unstable_showHunk: typeof unstable_showHunk;
+  unstable_askSymbol: typeof unstable_askSymbol;
   hover: typeof hover;
   takeFocusOnMount: typeof takeFocusOnMount;
   wantsFocus: typeof wantsFocus;
   chordHeld: typeof chordHeld;
-  darcula: typeof darcula;
-  textStyle: typeof textStyle;
-  dc: typeof dc;
-  paintCode: typeof paintCode;
-  languageFor: typeof languageFor;
-  inputKeymap: typeof inputKeymap;
+  unstable_darcula: typeof unstable_darcula;
+  unstable_textStyle: typeof unstable_textStyle;
+  unstable_dc: typeof unstable_dc;
+  unstable_paintCode: typeof unstable_paintCode;
+  unstable_languageFor: typeof unstable_languageFor;
+  unstable_inputKeymap: typeof unstable_inputKeymap;
 }
 
 export interface PluginToolbarEntry {

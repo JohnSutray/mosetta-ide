@@ -1,5 +1,5 @@
 import type { Diagnostic } from '@ide/protocol';
-import { activate, goTo, openPath, problems, t, type Ide } from '@ide/api/client';
+import { activate, goTo, openDoc, problems, t, type Ide } from '@ide/api/client';
 import { STYLE } from './style.js';
 import { ProblemsIcon } from './icon.js';
 
@@ -58,7 +58,7 @@ export default class Problems {
         {shown.map((file) => (
           <div class="problems-file" key={file.path}>
             <div
-              class={`problems-where ${openPath.value === file.path ? 'is-current' : ''}`}
+              class={`problems-where ${openDoc.value?.path === file.path ? 'is-current' : ''}`}
               title={file.path}
               onClick={() => void this.jump(file.path, file.diagnostics[0])}
             >

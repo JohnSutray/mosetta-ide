@@ -16,11 +16,11 @@ import type { KeyBinding } from '@codemirror/view';
 import type { Diagnostic, DocState, EditorSettings, HoverInfo } from '@ide/protocol';
 import {
   chordHeld,
-  darcula,
-  inputKeymap,
-  languageFor,
+  unstable_darcula as darcula,
+  unstable_inputKeymap as inputKeymap,
+  unstable_languageFor as languageFor,
   takeFocusOnMount,
-  textStyle,
+  unstable_textStyle as textStyle,
   type Hunk,
   type HunkBox,
 } from '@ide/api/client';

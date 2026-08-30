@@ -1,7 +1,7 @@
 import { hoverTooltip, type Tooltip } from '@codemirror/view';
 import type { EditorState } from '@codemirror/state';
 import type { HoverInfo, Severity } from '@ide/protocol';
-import { dc, paintCode } from '@ide/api/client';
+import { unstable_dc as dc, unstable_paintCode as paintCode } from '@ide/api/client';
 import { diagnosticsAt } from './diagnostics.js';
 
 export function lspHover(

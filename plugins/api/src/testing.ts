@@ -29,17 +29,17 @@ function surface(): FakeSurface {
   return installed;
 }
 
-export function PickPopup<T>(props: PickProps<T>): JSX.Element {
-  return surface().PickPopup(props);
+export function unstable_PickPopup<T>(props: PickProps<T>): JSX.Element {
+  return surface().unstable_PickPopup(props);
 }
-export function highlight(text: string, matches: number[]): ComponentChildren {
-  return surface().highlight(text, matches);
+export function unstable_highlight(text: string, matches: number[]): ComponentChildren {
+  return surface().unstable_highlight(text, matches);
 }
-export function shiftMatches(matches: number[], from: number, length: number): number[] {
-  return surface().shiftMatches(matches, from, length);
+export function unstable_shiftMatches(matches: number[], from: number, length: number): number[] {
+  return surface().unstable_shiftMatches(matches, from, length);
 }
-export function showTerminal(open: () => Promise<TerminalInfo>): Promise<void> {
-  return surface().showTerminal(open);
+export function unstable_showTerminal(open: () => Promise<TerminalInfo>): Promise<void> {
+  return surface().unstable_showTerminal(open);
 }
 export function t(key: string, params?: Record<string, string | number>): string {
   return surface().t(key, params);
@@ -50,20 +50,20 @@ export function goTo(path: string, line: number, character?: number): Promise<vo
 export function runCommand(id: string): boolean {
   return surface().runCommand(id);
 }
-export function showTip(near: Element, text: string, keys?: string[]): void {
-  surface().showTip(near, text, keys);
+export function unstable_showTip(near: Element, text: string, keys?: string[]): void {
+  surface().unstable_showTip(near, text, keys);
 }
-export function hideTip(): void {
-  surface().hideTip();
+export function unstable_hideTip(): void {
+  surface().unstable_hideTip();
 }
 export function keysFor(command: string): string[] {
   return surface().keysFor(command);
 }
-export function Resizer(props: ResizerProps): JSX.Element {
-  return surface().Resizer(props);
+export function unstable_Resizer(props: ResizerProps): JSX.Element {
+  return surface().unstable_Resizer(props);
 }
-export function widthOf(id: string, fallback: number): number {
-  return surface().widthOf(id, fallback);
+export function unstable_widthOf(id: string, fallback: number): number {
+  return surface().unstable_widthOf(id, fallback);
 }
 export function editDoc(text: string): void {
   surface().editDoc(text);
@@ -77,14 +77,14 @@ export function headFor(path: string | null): string | null {
 export function visit(path: string, line: number, character: number): void {
   surface().visit(path, line, character);
 }
-export function diffLines(before: string, after: string): Hunk[] {
-  return surface().diffLines(before, after);
+export function unstable_diffLines(before: string, after: string): Hunk[] {
+  return surface().unstable_diffLines(before, after);
 }
-export function showHunk(hunk: Hunk, box: HunkBox): void {
-  surface().showHunk(hunk, box);
+export function unstable_showHunk(hunk: Hunk, box: HunkBox): void {
+  surface().unstable_showHunk(hunk, box);
 }
-export function askSymbol(where: SymbolAsk): Promise<void> {
-  return surface().askSymbol(where);
+export function unstable_askSymbol(where: SymbolAsk): Promise<void> {
+  return surface().unstable_askSymbol(where);
 }
 export function hover(path: string, line: number, character: number): Promise<HoverInfo | null> {
   return surface().hover(path, line, character);
@@ -98,27 +98,22 @@ export function chordHeld(
 ): boolean {
   return surface().chordHeld(command, event);
 }
-export function textStyle(settings: {
+export function unstable_textStyle(settings: {
   fontFamily: string;
   ligatures: boolean;
 }): Record<string, string> {
-  return surface().textStyle(settings);
+  return surface().unstable_textStyle(settings);
 }
-export function languageFor(path: string): unknown {
-  return surface().languageFor(path);
+export function unstable_languageFor(path: string): unknown {
+  return surface().unstable_languageFor(path);
 }
-export function paintCode(text: string, path: string): CodeChunk[] {
-  return surface().paintCode(text, path);
+export function unstable_paintCode(text: string, path: string): CodeChunk[] {
+  return surface().unstable_paintCode(text, path);
 }
 
 export const problems: { readonly value: FileProblems[] } = {
   get value() {
     return surface().problems.value;
-  },
-};
-export const openPath: { readonly value: string | null } = {
-  get value() {
-    return surface().openPath.value;
   },
 };
 export const settings: { readonly value: Settings | null } = {
@@ -156,12 +151,12 @@ export const wantsFocus: { readonly value: number } = {
     return surface().wantsFocus.value;
   },
 };
-export const darcula: unknown = { fake: 'darcula' };
-export const dc: Palette = new Proxy(
+export const unstable_darcula: unknown = { fake: 'darcula' };
+export const unstable_dc: Palette = new Proxy(
   {},
   { get: (_target, key: string) => `var(--fake-${key})` },
 ) as Palette;
-export const inputKeymap: readonly unknown[] = [];
+export const unstable_inputKeymap: readonly unknown[] = [];
 
 export { activate, registry, remote, stub } from './client.js';
 
@@ -172,7 +167,6 @@ export interface Tip {
 
 export class FakeSurface implements ClientSurface {
   readonly problems: Signal<FileProblems[]> = signal([]);
-  readonly openPath: Signal<string | null> = signal(null);
   readonly settings: Signal<Settings | null> = signal(null);
 
   readonly jumps: Array<{ path: string; line: number; character?: number }> = [];
@@ -199,19 +193,19 @@ export class FakeSurface implements ClientSurface {
 
   constructor(private readonly host: FakeHost) {}
 
-  PickPopup<T>(props: PickProps<T>): JSX.Element {
+  unstable_PickPopup<T>(props: PickProps<T>): JSX.Element {
     return { type: 'PickPopup', props } as unknown as JSX.Element;
   }
 
-  highlight(text: string, matches: number[]): ComponentChildren {
+  unstable_highlight(text: string, matches: number[]): ComponentChildren {
     return { type: 'highlight', text, matches } as unknown as ComponentChildren;
   }
 
-  shiftMatches(matches: number[], from: number, length: number): number[] {
+  unstable_shiftMatches(matches: number[], from: number, length: number): number[] {
     return matches.filter((at) => at >= from && at < from + length).map((at) => at - from);
   }
 
-  async showTerminal(open: () => Promise<TerminalInfo>): Promise<void> {
+  async unstable_showTerminal(open: () => Promise<TerminalInfo>): Promise<void> {
     this.terminals.push(await open());
   }
 
@@ -231,12 +225,12 @@ export class FakeSurface implements ClientSurface {
     return this.host.run(id);
   }
 
-  showTip(near: Element, text: string, keys?: string[]): void {
+  unstable_showTip(near: Element, text: string, keys?: string[]): void {
     void near;
     this.tip = { text, keys: keys ?? [] };
   }
 
-  hideTip(): void {
+  unstable_hideTip(): void {
     this.tip = null;
   }
 
@@ -244,11 +238,11 @@ export class FakeSurface implements ClientSurface {
     return this.keys.get(command) ?? [];
   }
 
-  Resizer(props: ResizerProps): JSX.Element {
+  unstable_Resizer(props: ResizerProps): JSX.Element {
     return { type: 'Resizer', props } as unknown as JSX.Element;
   }
 
-  widthOf(id: string, fallback: number): number {
+  unstable_widthOf(id: string, fallback: number): number {
     return this.widths.get(id) ?? fallback;
   }
 
@@ -269,18 +263,18 @@ export class FakeSurface implements ClientSurface {
     this.visits.push({ path, line, character });
   }
 
-  diffLines(before: string, after: string): Hunk[] {
+  unstable_diffLines(before: string, after: string): Hunk[] {
     if (before === after) return [];
     const a = before.split('\n');
     const b = after.split('\n');
     return [{ kind: 'modified', from: 1, to: Math.max(a.length, b.length), before: a }];
   }
 
-  showHunk(hunk: Hunk, box: HunkBox): void {
+  unstable_showHunk(hunk: Hunk, box: HunkBox): void {
     this.hunks.push({ hunk, box });
   }
 
-  async askSymbol(where: SymbolAsk): Promise<void> {
+  async unstable_askSymbol(where: SymbolAsk): Promise<void> {
     this.symbols.push(where);
   }
 
@@ -300,22 +294,22 @@ export class FakeSurface implements ClientSurface {
     return this.chords.has(command);
   }
 
-  textStyle(settings: { fontFamily: string; ligatures: boolean }): Record<string, string> {
+  unstable_textStyle(settings: { fontFamily: string; ligatures: boolean }): Record<string, string> {
     return { fontFamily: settings.fontFamily };
   }
 
-  languageFor(path: string): unknown {
+  unstable_languageFor(path: string): unknown {
     return { language: path.slice(path.lastIndexOf('.') + 1) };
   }
 
-  paintCode(text: string, path: string): CodeChunk[] {
+  unstable_paintCode(text: string, path: string): CodeChunk[] {
     void path;
     return [{ text, color: null }];
   }
 
-  readonly darcula = darcula;
-  readonly dc = dc;
-  readonly inputKeymap = inputKeymap;
+  readonly unstable_darcula = unstable_darcula;
+  readonly unstable_dc = unstable_dc;
+  readonly unstable_inputKeymap = unstable_inputKeymap;
 }
 
 export class FakeRegistry {

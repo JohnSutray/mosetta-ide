@@ -1,11 +1,11 @@
 import { signal } from '@preact/signals';
 import {
-  PickPopup,
+  unstable_PickPopup as PickPopup,
   activate,
-  highlight,
+  unstable_highlight as highlight,
   remote,
-  shiftMatches,
-  showTerminal,
+  unstable_shiftMatches as shiftMatches,
+  unstable_showTerminal as showTerminal,
   stub,
   t,
   type Ide,

@@ -1,11 +1,11 @@
 import {
   activate,
-  hideTip,
+  unstable_hideTip as hideTip,
   keysFor,
   registry,
   runCommand,
   settings,
-  showTip,
+  unstable_showTip as showTip,
   t,
   type Ide,
 } from '@ide/api/client';
