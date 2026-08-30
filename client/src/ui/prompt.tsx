@@ -1,12 +1,5 @@
+import { prompt, tree, type Ask } from '../state/tree-ops.js';
 import { useEffect, useRef } from 'preact/hooks';
-import {
-  focusTree,
-  prompt,
-  promptAnswer,
-  promptCancel,
-  promptDraft,
-  type Ask,
-} from '../state/tree-ops.js';
 import { t } from '../i18n/index.js';
 import { Popup } from './popup.js';
 
@@ -26,7 +19,7 @@ function heightFor(ask: Ask): number {
 
 export function Prompt() {
   const field = useRef<HTMLInputElement>(null);
-  const ask = prompt.value;
+  const ask = prompt.ask.value;
 
   useEffect(() => {
     if (!ask?.field) return;
@@ -37,7 +30,7 @@ export function Prompt() {
   }, [ask?.id]);
 
   useEffect(() => {
-    if (!ask) focusTree();
+    if (!ask) tree.takeKeyboard();
   }, [ask === null]);
 
   if (!ask) return null;
@@ -49,7 +42,7 @@ export function Prompt() {
       class="prompt"
       size={{ w: 460, h: heightFor(ask) }}
       min={{ w: 320, h: 140 }}
-      onClose={promptCancel}
+      onClose={() => prompt.cancel()}
     >
       <div class="branches-head">
         <span class="branches-title">{ask.title}</span>
@@ -59,7 +52,7 @@ export function Prompt() {
         class="prompt-body"
         onSubmit={(event) => {
           event.preventDefault();
-          void promptAnswer();
+          void prompt.answer();
         }}
       >
         {ask.text && <div class="prompt-text">{ask.text}</div>}
@@ -67,16 +60,16 @@ export function Prompt() {
           <input
             ref={field}
             class="field"
-            value={promptDraft.value}
+            value={prompt.draft.value}
             spellcheck={false}
             autocomplete="off"
-            onInput={(event) => (promptDraft.value = (event.target as HTMLInputElement).value)}
+            onInput={(event) => (prompt.draft.value = (event.target as HTMLInputElement).value)}
           />
         )}
         {ask.error && <div class="prompt-error">{ask.error}</div>}
 
         <div class="prompt-foot">
-          <button class="button" type="button" onClick={promptCancel}>
+          <button class="button" type="button" onClick={() => prompt.cancel()}>
             {t('prompt.cancel')}
           </button>
           <button class={`button ${ask.danger ? 'is-danger' : ''}`} type="submit">

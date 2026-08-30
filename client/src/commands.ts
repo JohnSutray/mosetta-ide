@@ -1,3 +1,5 @@
+import { prompt, tree, treeOps } from './state/tree-ops.js';
+import { merge } from './state/merge.js';
 import { projects } from './state/projects.js';
 import { tools } from './state/tools.js';
 import { branchesWindow, pushWindow } from './state/git.js';
@@ -10,29 +12,8 @@ import { closeTop } from './state/popups.js';
 import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
 import { toggleKeysHelp } from './state/keys-help.js';
-import {
-  decideHere,
-  resolveMerge,
-  stepMergeConflict,
-  stepMergeFile,
-  toggleMerge,
-} from './state/merge.js';
 import { goBack, goForward } from './state/visits.js';
 import { accept as acceptSymbol, step as stepSymbol, symbolList } from './state/symbols.js';
-import {
-  askCreate,
-  askRemove,
-  askRename,
-  closeTreeBranch,
-  openTreeBranch,
-  stepTree,
-  copyAbsolutePath,
-  copyToClipboard,
-  promptAnswer,
-  revealInOs,
-  pasteInto,
-  treeFocus,
-} from './state/tree-ops.js';
 import { dirChildren, openFileAt, toggleDir } from './state/session.js';
 import {
   reloadDoc,
@@ -53,40 +34,40 @@ export function registerCommands(): void {
 
   registerCommand('keys.show', () => toggleKeysHelp());
 
-  registerCommand('merge.show', () => toggleMerge());
-  registerCommand('merge.nextFile', () => stepMergeFile(1));
-  registerCommand('merge.prevFile', () => stepMergeFile(-1));
-  registerCommand('merge.next', () => stepMergeConflict(1));
-  registerCommand('merge.prev', () => stepMergeConflict(-1));
-  registerCommand('merge.takeLeft', () => decideHere('left', 'take'));
-  registerCommand('merge.takeRight', () => decideHere('right', 'take'));
-  registerCommand('merge.skipLeft', () => decideHere('left', 'skip'));
-  registerCommand('merge.skipRight', () => decideHere('right', 'skip'));
-  registerCommand('merge.confirm', () => void resolveMerge());
+  registerCommand('merge.show', () => merge.toggle());
+  registerCommand('merge.nextFile', () => merge.stepFile(1));
+  registerCommand('merge.prevFile', () => merge.stepFile(-1));
+  registerCommand('merge.next', () => merge.stepConflict(1));
+  registerCommand('merge.prev', () => merge.stepConflict(-1));
+  registerCommand('merge.takeLeft', () => merge.decideHere('left', 'take'));
+  registerCommand('merge.takeRight', () => merge.decideHere('right', 'take'));
+  registerCommand('merge.skipLeft', () => merge.decideHere('left', 'skip'));
+  registerCommand('merge.skipRight', () => merge.decideHere('right', 'skip'));
+  registerCommand('merge.confirm', () => void merge.resolve());
 
   registerCommand('panel.tree', () => {
     treePanelVisible.value = !treePanelVisible.value;
   });
 
-  registerCommand('tree.next', () => stepTree(1));
-  registerCommand('tree.prev', () => stepTree(-1));
-  registerCommand('tree.expand', () => openTreeBranch());
-  registerCommand('tree.collapse', () => closeTreeBranch());
-  registerCommand('tree.newFile', () => onFocused((path, isDir) => askCreate(path, isDir, 'file')));
-  registerCommand('tree.newFolder', () => onFocused((path, isDir) => askCreate(path, isDir, 'dir')));
+  registerCommand('tree.next', () => tree.step(1));
+  registerCommand('tree.prev', () => tree.step(-1));
+  registerCommand('tree.expand', () => tree.openBranch());
+  registerCommand('tree.collapse', () => tree.closeBranch());
+  registerCommand('tree.newFile', () => onFocused((path, isDir) => treeOps.create(path, isDir, 'file')));
+  registerCommand('tree.newFolder', () => onFocused((path, isDir) => treeOps.create(path, isDir, 'dir')));
   registerCommand('tree.open', () =>
     onPicked((path, isDir) => {
       if (isDir) void toggleDir(path);
       else void openFileAt(path).then(focusEditor);
     }),
   );
-  registerCommand('tree.rename', () => onPicked((path) => askRename(path)));
-  registerCommand('tree.delete', () => onPicked((path, isDir) => askRemove(path, isDir)));
-  registerCommand('tree.copy', () => onPicked((path) => copyToClipboard(path, false)));
-  registerCommand('tree.cut', () => onPicked((path) => copyToClipboard(path, true)));
-  registerCommand('tree.paste', () => onFocused((path, isDir) => void pasteInto(path, isDir)));
-  registerCommand('tree.copyPath', () => onPicked((path) => void copyAbsolutePath(path)));
-  registerCommand('tree.reveal', () => onPicked((path) => void revealInOs(path)));
+  registerCommand('tree.rename', () => onPicked((path) => treeOps.rename(path)));
+  registerCommand('tree.delete', () => onPicked((path, isDir) => treeOps.remove(path, isDir)));
+  registerCommand('tree.copy', () => onPicked((path) => treeOps.copy(path, false)));
+  registerCommand('tree.cut', () => onPicked((path) => treeOps.copy(path, true)));
+  registerCommand('tree.paste', () => onFocused((path, isDir) => void treeOps.pasteInto(path, isDir)));
+  registerCommand('tree.copyPath', () => onPicked((path) => void treeOps.copyAbsolutePath(path)));
+  registerCommand('tree.reveal', () => onPicked((path) => void treeOps.revealInOs(path)));
   registerCommand('tree.follow', () => void toggleFollow());
   registerCommand('panel.terminal', () => {
     terminalPanelVisible.value = !terminalPanelVisible.value;
@@ -114,7 +95,7 @@ export function registerCommands(): void {
   registerCommand('pick.accept', () => (symbolList.value ? acceptSymbol() : activePick.value?.accept()));
   registerCommand('pick.expand', () => activePick.value?.expand?.());
 
-  registerCommand('prompt.confirm', () => void promptAnswer());
+  registerCommand('prompt.confirm', () => void prompt.answer());
 
   registerCommand('menu.next', () => activeMenu.value?.next());
   registerCommand('menu.prev', () => activeMenu.value?.prev());
@@ -134,14 +115,14 @@ export function registerCommands(): void {
 export { missingCommands };
 
 function onFocused(run: (path: string, isDir: boolean) => void): void {
-  const path = treeFocus.value ?? '';
+  const path = tree.focus.value ?? '';
   const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
   const entry = dirChildren.value.get(parent)?.find((item) => item.path === path);
   run(path, path === '' ? true : entry?.kind === 'dir');
 }
 
 function onPicked(run: (path: string, isDir: boolean) => void): void {
-  const path = treeFocus.value;
+  const path = tree.focus.value;
   if (!path) return;
   onFocused(run);
 }

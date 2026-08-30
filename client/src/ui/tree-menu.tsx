@@ -1,16 +1,5 @@
+import { tree, treeOps } from '../state/tree-ops.js';
 import { treeMenu } from '../state/tree-menu.js';
-import {
-  askCreate,
-  askRemove,
-  askRename,
-  clipboard,
-  copyAbsolutePath,
-  copyToClipboard,
-  pasteInto,
-  focusTree,
-  revealInOs,
-  targets,
-} from '../state/tree-ops.js';
 import { Menu, type MenuItem } from './menu.js';
 
 export function TreeMenu() {
@@ -18,24 +7,24 @@ export function TreeMenu() {
   if (!menu) return null;
 
   const { path, isDir } = menu;
-  const many = targets(path).length > 1;
+  const many = tree.targets(path).length > 1;
   const items: MenuItem[] = [
-    { label: 'tree.newFile', run: () => askCreate(path, isDir, 'file') },
-    { label: 'tree.newFolder', run: () => askCreate(path, isDir, 'dir') },
-    ...(many ? [] : [{ label: 'tree.rename', run: () => askRename(path) }]),
-    { label: 'tree.copy', run: () => copyToClipboard(path, false) },
-    { label: 'tree.cut', run: () => copyToClipboard(path, true) },
+    { label: 'tree.newFile', run: () => treeOps.create(path, isDir, 'file') },
+    { label: 'tree.newFolder', run: () => treeOps.create(path, isDir, 'dir') },
+    ...(many ? [] : [{ label: 'tree.rename', run: () => treeOps.rename(path) }]),
+    { label: 'tree.copy', run: () => treeOps.copy(path, false) },
+    { label: 'tree.cut', run: () => treeOps.copy(path, true) },
     {
-      label: clipboard.value ? 'tree.paste' : 'tree.pasteExternal',
-      run: () => void pasteInto(path, isDir),
+      label: treeOps.clipboard.value ? 'tree.paste' : 'tree.pasteExternal',
+      run: () => void treeOps.pasteInto(path, isDir),
     },
     ...(many
       ? []
       : [
-          { label: 'tree.copyPath', run: () => void copyAbsolutePath(path) },
-          { label: 'tree.reveal', run: () => void revealInOs(path) },
+          { label: 'tree.copyPath', run: () => void treeOps.copyAbsolutePath(path) },
+          { label: 'tree.reveal', run: () => void treeOps.revealInOs(path) },
         ]),
-    { label: 'tree.delete', danger: true, run: () => askRemove(path, isDir) },
+    { label: 'tree.delete', danger: true, run: () => treeOps.remove(path, isDir) },
   ];
 
   return (
@@ -46,7 +35,7 @@ export function TreeMenu() {
       items={items}
       onClose={() => {
         treeMenu.value = null;
-        focusTree();
+        tree.takeKeyboard();
       }}
     />
   );

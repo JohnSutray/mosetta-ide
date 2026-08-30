@@ -1,3 +1,4 @@
+import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
 import { branchesWindow, git, pushWindow } from '../state/git.js';
@@ -7,7 +8,6 @@ import { runCommand } from '../keys/commands.js';
 import { activeTerminal, closeTerminal, focusTerminal, terminals } from '../state/terminals.js';
 import { connected, current } from '../state/session.js';
 import { searchOpen } from '../state/search.js';
-import { mergeOpen, mergePending } from '../state/merge.js';
 import { keysHelpOpen } from '../state/keys-help.js';
 import { following } from '../state/tree-follow.js';
 import { hideTip, showTip } from '../state/tip.js';
@@ -101,9 +101,9 @@ export function registerToolbarWishes(store: Registry): void {
     title: 'toolbar.merge',
     command: 'merge.show',
     icon: ours('merge'),
-    active: mergeOpen,
-    visible: computed(() => mergePending.value > 0),
-    badge: mergePending,
+    active: merge.open,
+    visible: computed(() => merge.pending.value > 0),
+    badge: merge.pending,
   });
 
   widget({ id: 'terminals', side: 'left', view: () => <TerminalChips /> });

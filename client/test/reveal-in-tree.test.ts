@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { dirChildren, expanded } from '../src/state/session.js';
-import { revealInTree, treeFocus, treeSelection } from '../src/state/tree-ops.js';
+import { TreeSelection } from '../src/state/tree-ops.js';
+
+const tree = new TreeSelection();
 
 const FILE = 'client/src/state/persist.ts';
 const DIRS = ['client', 'client/src', 'client/src/state'];
@@ -10,15 +12,15 @@ function ready(): void {
   for (const dir of ['', ...DIRS]) children.set(dir, []);
   dirChildren.value = children as never;
   expanded.value = new Set(DIRS);
-  treeSelection.value = new Set([FILE]);
-  treeFocus.value = FILE;
+  tree.picked.value = new Set([FILE]);
+  tree.focus.value = FILE;
 }
 
 beforeEach(() => {
   dirChildren.value = new Map();
   expanded.value = new Set();
-  treeSelection.value = new Set();
-  treeFocus.value = null;
+  tree.picked.value = new Set();
+  tree.focus.value = null;
 });
 
 describe('наведение дерева', () => {
@@ -26,12 +28,12 @@ describe('наведение дерева', () => {
     ready();
     const before = {
       expanded: expanded.value,
-      selection: treeSelection.value,
+      selection: tree.picked.value,
       children: dirChildren.value,
     };
-    await revealInTree(FILE);
+    await tree.reveal(FILE);
     expect(expanded.value).toBe(before.expanded);
-    expect(treeSelection.value).toBe(before.selection);
+    expect(tree.picked.value).toBe(before.selection);
     expect(dirChildren.value).toBe(before.children);
   });
 
@@ -40,10 +42,10 @@ describe('наведение дерева', () => {
     for (const dir of ['', ...DIRS]) children.set(dir, []);
     dirChildren.value = children as never;
 
-    await revealInTree(FILE);
+    await tree.reveal(FILE);
     for (const dir of DIRS) expect(expanded.value.has(dir), dir).toBe(true);
-    expect(treeFocus.value).toBe(FILE);
-    expect([...treeSelection.value]).toEqual([FILE]);
+    expect(tree.focus.value).toBe(FILE);
+    expect([...tree.picked.value]).toEqual([FILE]);
   });
 
   it('раскрывает только недостающие папки', async () => {
@@ -52,15 +54,15 @@ describe('наведение дерева', () => {
     dirChildren.value = children as never;
     expanded.value = new Set(['client', 'docs']);
 
-    await revealInTree(FILE);
+    await tree.reveal(FILE);
     expect(expanded.value.has('docs')).toBe(true);
     expect(expanded.value.has('client/src/state')).toBe(true);
   });
 
   it('файл в корне не требует раскрывать ничего', async () => {
     dirChildren.value = new Map([['', []]]) as never;
-    await revealInTree('README.md');
-    expect(treeFocus.value).toBe('README.md');
+    await tree.reveal('README.md');
+    expect(tree.focus.value).toBe('README.md');
     expect(expanded.value.size).toBe(0);
   });
 });

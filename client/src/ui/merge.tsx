@@ -1,23 +1,7 @@
+import { merge } from '../state/merge.js';
 import type { MergeFile } from '@ide/protocol';
 import { DEFAULT_SETTINGS_FALLBACK } from '../state/fallback.js';
 import { settings as settingsSignal } from '../state/config.js';
-import {
-  acceptSide,
-  cancelMerge,
-  closeMerge,
-  decide,
-  mergeChoices,
-  mergeLeft,
-  mergeCursor,
-  setMergeCursor,
-  mergeFile,
-  mergeReady,
-  mergeRegions,
-  mergeSession,
-  mergeOpen,
-  pickMergeFile,
-  resolveMerge,
-} from '../state/merge.js';
 import { MergeColumns } from './merge-columns.js';
 import { Popup } from './popup.js';
 import { FileIcon } from './file-icons.js';
@@ -25,14 +9,14 @@ import { CodeView } from '../editor/code-view.js';
 import { t } from '../i18n/index.js';
 
 export function MergeScreen() {
-  if (!mergeOpen.value) return null;
-  const session = mergeSession.value;
-  const file = mergeFile.value;
+  if (!merge.open.value) return null;
+  const session = merge.session.value;
+  const file = merge.file.value;
   const settings = settingsSignal.value?.editor ?? DEFAULT_SETTINGS_FALLBACK.editor;
   if (!session || !file) return null;
 
   const whole = file.left.text === null || file.right.text === null;
-  const left = mergeLeft.value;
+  const left = merge.left.value;
 
   return (
     <Popup
@@ -42,7 +26,7 @@ export function MergeScreen() {
       class="merge"
       size={{ w: 1200, h: 800 }}
       min={{ w: 700, h: 400 }}
-      onClose={closeMerge}
+      onClose={() => merge.close()}
     >
       <div class="merge-head">
         <span class="merge-title">{t(session.title)}</span>
@@ -56,7 +40,7 @@ export function MergeScreen() {
               key={item.path}
               file={item}
               active={item.path === file.path}
-              onPick={() => pickMergeFile(item.path)}
+              onPick={() => merge.pickFile(item.path)}
             />
           ))}
         </div>
@@ -67,24 +51,24 @@ export function MergeScreen() {
           ) : (
             <MergeColumns
               path={file.path}
-              regions={mergeRegions.value}
-              choices={mergeChoices.value}
-              cursor={mergeCursor.value}
+              regions={merge.regions.value}
+              choices={merge.choices.value}
+              cursor={merge.cursor.value}
               settings={settings}
               leftLabel={t(file.left.label)}
               rightLabel={t(file.right.label)}
-              onDecide={decide}
-              onPick={setMergeCursor}
+              onDecide={(at, side, choice) => merge.decide(at, side, choice)}
+              onPick={(at) => merge.setCursor(at)}
             />
           )}
         </div>
       </div>
 
       <div class="merge-foot">
-        <button type="button" class="merge-button" onClick={() => acceptSide('left')}>
+        <button type="button" class="merge-button" onClick={() => merge.acceptSide('left')}>
           {t('merge.acceptLeft', { side: t(file.left.label) })}
         </button>
-        <button type="button" class="merge-button" onClick={() => acceptSide('right')}>
+        <button type="button" class="merge-button" onClick={() => merge.acceptSide('right')}>
           {t('merge.acceptRight', { side: t(file.right.label) })}
         </button>
 
@@ -100,14 +84,14 @@ export function MergeScreen() {
           <button
             type="button"
             class="merge-button is-main"
-            disabled={!mergeReady.value}
-            title={mergeReady.value ? t('merge.confirm') : t('merge.confirm.blocked')}
-            onClick={() => void resolveMerge()}
+            disabled={!merge.ready.value}
+            title={merge.ready.value ? t('merge.confirm') : t('merge.confirm.blocked')}
+            onClick={() => void merge.resolve()}
           >
             {t('merge.confirm')}
           </button>
         )}
-        <button type="button" class="merge-button is-quiet" onClick={() => void cancelMerge()}>
+        <button type="button" class="merge-button is-quiet" onClick={() => void merge.cancel()}>
           {t('merge.cancel')}
         </button>
       </div>
@@ -157,7 +141,7 @@ function WholeFile({ file }: { file: MergeFile }) {
           <button
             type="button"
             class="merge-button is-main"
-            onClick={() => void resolveMerge(null)}
+            onClick={() => void merge.resolve(null)}
           >
             {t('merge.acceptDelete')}
           </button>
@@ -171,7 +155,7 @@ function WholeFile({ file }: { file: MergeFile }) {
           <button
             type="button"
             class="merge-button is-main"
-            onClick={() => void resolveMerge(side.text)}
+            onClick={() => void merge.resolve(side.text)}
           >
             {t('merge.keepFile')}
           </button>

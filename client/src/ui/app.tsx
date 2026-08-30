@@ -1,3 +1,4 @@
+import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
 import { git, resetGit } from '../state/git.js';
@@ -39,7 +40,6 @@ import { TreeMenu } from './tree-menu.js';
 import { Prompt } from './prompt.js';
 import { closeTreeMenu } from '../state/tree-menu.js';
 import { Push } from './push.js';
-import { loadMerge, resetMerge } from '../state/merge.js';
 import { registerToolbarWishes } from './toolbar-wishes.js';
 import { registerPanelWishes } from './panel-wishes.js';
 import { Registry } from '../state/registry.js';
@@ -178,14 +178,14 @@ export function App() {
     void tools.refresh();
     if (!ws) {
       resetGit();
-      resetMerge();
+      merge.reset();
       forgetVisits();
       return;
     }
     void refreshTerminals();
     void git.refresh();
     void loadVisits();
-    void loadMerge();
+    void merge.load();
   }, [ws?.id]);
 
   return (

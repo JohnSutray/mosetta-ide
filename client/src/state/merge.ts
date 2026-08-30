@@ -1,259 +1,286 @@
 import { diff3, type Region, type Choice, type SideChoice } from '../merge/diff3.js';
-import { batch, computed, signal } from '@preact/signals';
+import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
 import type { MergeFile, MergeSession } from '@ide/protocol';
 import { complain, expectExternal, forgetDiverged, rpc, say, whenSaveConflicts } from './session.js';
 import { t } from '../i18n/index.js';
 
-export const mergeSession = signal<MergeSession | null>(null);
-export const mergeOpen = signal(false);
-export const mergePath = signal<string | null>(null);
-const decisions = signal<Map<string, Choice[]>>(new Map());
-const cursorRaw = signal<number | null>(null);
+export class Merge {
+  readonly session = signal<MergeSession | null>(null);
+  readonly open = signal(false);
+  readonly path = signal<string | null>(null);
 
-export const mergePending = computed(
-  () => mergeSession.value?.files.filter((file) => !file.done).length ?? 0,
-);
+  private readonly decisions = signal<Map<string, Choice[]>>(new Map());
 
-export const mergeFile = computed<MergeFile | null>(() => {
-  const session = mergeSession.value;
-  if (!session) return null;
-  const wanted = mergePath.value;
-  return (
-    session.files.find((file) => file.path === wanted) ??
-    session.files.find((file) => !file.done) ??
-    session.files[0] ??
-    null
+  private readonly cursorRaw: Signal<number | null> = signal(null);
+
+  private readonly promised = new Set<string>();
+
+  readonly pending: ReadonlySignal<number> = computed(
+    () => this.session.value?.files.filter((file) => !file.done).length ?? 0,
   );
-});
 
-export const mergeRegions = computed<Region[]>(() => {
-  const file = mergeFile.value;
-  if (!file || file.left.text === null || file.right.text === null) return [];
-  return diff3.regions(file.base ?? '', file.left.text, file.right.text);
-});
-
-export const mergeChoices = computed<Choice[]>(() => {
-  const file = mergeFile.value;
-  const regions = mergeRegions.value;
-  if (!file) return [];
-  const stored = decisions.value.get(file.path);
-  if (stored && stored.length === regions.length) return stored;
-  return diff3.defaultChoices(regions);
-});
-
-export const mergeResult = computed(() => diff3.buildText(mergeRegions.value, mergeChoices.value));
-
-export const mergeReady = computed(() => {
-  const file = mergeFile.value;
-  if (!file) return false;
-  if (file.left.text === null || file.right.text === null) return false;
-  return diff3.allDecided(mergeRegions.value, mergeChoices.value);
-});
-
-export const mergeConflicts = computed(() =>
-  mergeRegions.value
-    .map((region, at) => ({ region, at }))
-    .filter(({ region }) => region.kind === 'conflict')
-    .map(({ at }) => at),
-);
-
-export const mergeCursor = computed(() => {
-  const raw = cursorRaw.value;
-  if (raw !== null && mergeRegions.value[raw]) return raw;
-  return mergeConflicts.value[0] ?? 0;
-});
-
-export function setMergeCursor(at: number): void {
-  cursorRaw.value = at;
-}
-
-export const mergeLeft = computed(() => {
-  const regions = mergeRegions.value;
-  const choices = mergeChoices.value;
-  return regions.filter((region, at) => diff3.undecided(region, choices[at] ?? { left: null, right: null }))
-    .length;
-});
-
-const promised = new Set<string>();
-
-export function openMergeFor(path: string): void {
-  if (focusOn(path)) return;
-  promised.add(path);
-}
-
-function focusOn(path: string): boolean {
-  const file = mergeSession.value?.files.find((item) => item.path === path && !item.done);
-  if (!file) return false;
-  batch(() => {
-    mergePath.value = path;
-    cursorRaw.value = null;
-    mergeOpen.value = true;
+  readonly file: ReadonlySignal<MergeFile | null> = computed(() => {
+    const session = this.session.value;
+    if (!session) return null;
+    const wanted = this.path.value;
+    return (
+      session.files.find((file) => file.path === wanted) ??
+      session.files.find((file) => !file.done) ??
+      session.files[0] ??
+      null
+    );
   });
-  return true;
-}
 
-whenSaveConflicts(openMergeFor);
+  readonly regions: ReadonlySignal<Region[]> = computed(() => {
+    const file = this.file.value;
+    if (!file || file.left.text === null || file.right.text === null) return [];
+    return diff3.regions(file.base ?? '', file.left.text, file.right.text);
+  });
 
-export async function mergeFromDisk(path: string): Promise<void> {
-  try {
-    const session = await rpc.call('doc.mergeFromDisk', { path });
-    batch(() => {
-      mergeSession.value = session;
-      if (session) {
-        mergePath.value = path;
-        cursorRaw.value = null;
-        mergeOpen.value = true;
+  readonly choices: ReadonlySignal<Choice[]> = computed(() => {
+    const file = this.file.value;
+    const regions = this.regions.value;
+    if (!file) return [];
+    const stored = this.decisions.value.get(file.path);
+    if (stored && stored.length === regions.length) return stored;
+    return diff3.defaultChoices(regions);
+  });
+
+  readonly result: ReadonlySignal<string> = computed(() =>
+    diff3.buildText(this.regions.value, this.choices.value),
+  );
+
+  readonly ready: ReadonlySignal<boolean> = computed(() => {
+    const file = this.file.value;
+    if (!file) return false;
+    if (file.left.text === null || file.right.text === null) return false;
+    return diff3.allDecided(this.regions.value, this.choices.value);
+  });
+
+  readonly conflicts: ReadonlySignal<number[]> = computed(() =>
+    this.regions.value
+      .map((region, at) => ({ region, at }))
+      .filter(({ region }) => region.kind === 'conflict')
+      .map(({ at }) => at),
+  );
+
+  readonly cursor: ReadonlySignal<number> = computed(() => {
+    const raw = this.cursorRaw.value;
+    if (raw !== null && this.regions.value[raw]) return raw;
+    return this.conflicts.value[0] ?? 0;
+  });
+
+  readonly left: ReadonlySignal<number> = computed(() => {
+    const regions = this.regions.value;
+    const choices = this.choices.value;
+    return regions.filter((region, at) =>
+      diff3.undecided(region, choices[at] ?? { left: null, right: null }),
+    ).length;
+  });
+
+  constructor() {
+    whenSaveConflicts((path) => this.openFor(path));
+
+    rpc.on('merge.state', (state) => {
+      const had = this.session.value !== null;
+      this.session.value = state;
+      if (!state) {
+        batch(() => {
+          this.open.value = false;
+          this.path.value = null;
+          this.decisions.value = new Map();
+        });
+        return;
       }
+      for (const path of [...this.promised]) {
+        if (this.focusOn(path)) this.promised.delete(path);
+      }
+
+      if (!had) say(t('merge.appeared', { count: String(state.files.length) }));
     });
-  } catch (err) {
-    complain(describeMerge(err));
   }
-}
 
-export function showMerge(): void {
-  if (!mergeSession.value) {
-    say(t('merge.none'));
-    return;
+  setCursor(at: number): void {
+    this.cursorRaw.value = at;
   }
-  mergeOpen.value = true;
-}
 
-export function closeMerge(): void {
-  mergeOpen.value = false;
-}
-
-export function toggleMerge(): void {
-  if (mergeOpen.value) closeMerge();
-  else showMerge();
-}
-
-export function pickMergeFile(path: string): void {
-  batch(() => {
-    mergePath.value = path;
-    cursorRaw.value = null;
-  });
-}
-
-export function stepMergeFile(delta: number): void {
-  const session = mergeSession.value;
-  const current = mergeFile.value;
-  if (!session || !current) return;
-  const at = session.files.findIndex((file) => file.path === current.path);
-  const next = session.files[(at + delta + session.files.length) % session.files.length];
-  if (next) pickMergeFile(next.path);
-}
-
-export function stepMergeConflict(delta: number): void {
-  const spots = mergeConflicts.value;
-  if (spots.length === 0) return;
-  const here = mergeCursor.value;
-  const at = spots.indexOf(here);
-  if (at === -1) {
-    const forward = spots.find((spot) => spot > here);
-    const back = [...spots].reverse().find((spot) => spot < here);
-    cursorRaw.value = (delta > 0 ? forward : back) ?? (delta > 0 ? spots[0]! : spots.at(-1)!);
-    return;
+  openFor(path: string): void {
+    if (this.focusOn(path)) return;
+    this.promised.add(path);
   }
-  cursorRaw.value = spots[(at + delta + spots.length) % spots.length]!;
-}
 
-export function decide(at: number, side: 'left' | 'right', choice: SideChoice): void {
-  const file = mergeFile.value;
-  if (!file) return;
-  const next = mergeChoices.value.map((item) => ({ ...item }));
-  const target = next[at];
-  if (!target) return;
-  target[side] = choice;
-  if (mergeRegions.value[at]?.kind === 'both') {
-    target.left = choice;
-    target.right = choice;
+  async fromDisk(path: string): Promise<void> {
+    try {
+      const session = await rpc.call('doc.mergeFromDisk', { path });
+      batch(() => {
+        this.session.value = session;
+        if (session) {
+          this.path.value = path;
+          this.cursorRaw.value = null;
+          this.open.value = true;
+        }
+      });
+    } catch (err) {
+      complain(describeMerge(err));
+    }
   }
-  remember(file.path, next);
-}
 
-export function decideHere(side: 'left' | 'right', choice: SideChoice): void {
-  decide(mergeCursor.value, side, choice);
-  if (choice !== null) stepMergeConflict(1);
-}
-
-export function acceptSide(side: 'left' | 'right'): void {
-  const file = mergeFile.value;
-  if (!file) return;
-  if (file.left.text === null || file.right.text === null) {
-    void resolveMerge(side === 'left' ? file.left.text : file.right.text);
-    return;
+  show(): void {
+    if (!this.session.value) {
+      say(t('merge.none'));
+      return;
+    }
+    this.open.value = true;
   }
-  remember(file.path, diff3.takeSide(mergeRegions.value, side));
-}
 
-export async function resolveMerge(text?: string | null): Promise<void> {
-  const file = mergeFile.value;
-  if (!file) return;
-  const payload = text === undefined ? mergeResult.value : text;
-  expectExternal(file.path);
-  try {
-    const rest = await rpc.call('merge.resolve', { path: file.path, text: payload });
-    forgetDiverged(file.path);
+  close(): void {
+    this.open.value = false;
+  }
+
+  toggle(): void {
+    if (this.open.value) this.close();
+    else this.show();
+  }
+
+  pickFile(path: string): void {
     batch(() => {
-      mergeSession.value = rest;
-      decisions.value = drop(decisions.value, file.path);
-      cursorRaw.value = null;
-      mergePath.value = rest?.files.find((item) => !item.done)?.path ?? null;
-      if (!rest) mergeOpen.value = false;
+      this.path.value = path;
+      this.cursorRaw.value = null;
     });
-    if (!rest) say(t('merge.done'));
-  } catch (err) {
-    complain(describeMerge(err));
+  }
+
+  stepFile(delta: number): void {
+    const session = this.session.value;
+    const current = this.file.value;
+    if (!session || !current) return;
+    const at = session.files.findIndex((file) => file.path === current.path);
+    const next = session.files[(at + delta + session.files.length) % session.files.length];
+    if (next) this.pickFile(next.path);
+  }
+
+  stepConflict(delta: number): void {
+    const spots = this.conflicts.value;
+    if (spots.length === 0) return;
+    const here = this.cursor.value;
+    const at = spots.indexOf(here);
+    if (at === -1) {
+      const forward = spots.find((spot) => spot > here);
+      const back = [...spots].reverse().find((spot) => spot < here);
+      this.cursorRaw.value = (delta > 0 ? forward : back) ?? (delta > 0 ? spots[0]! : spots.at(-1)!);
+      return;
+    }
+    this.cursorRaw.value = spots[(at + delta + spots.length) % spots.length]!;
+  }
+
+  decide(at: number, side: 'left' | 'right', choice: SideChoice): void {
+    const file = this.file.value;
+    if (!file) return;
+    const next = this.choices.value.map((item) => ({ ...item }));
+    const target = next[at];
+    if (!target) return;
+    target[side] = choice;
+    if (this.regions.value[at]?.kind === 'both') {
+      target.left = choice;
+      target.right = choice;
+    }
+    this.remember(file.path, next);
+  }
+
+  decideHere(side: 'left' | 'right', choice: SideChoice): void {
+    this.decide(this.cursor.value, side, choice);
+    if (choice !== null) this.stepConflict(1);
+  }
+
+  acceptSide(side: 'left' | 'right'): void {
+    const file = this.file.value;
+    if (!file) return;
+    if (file.left.text === null || file.right.text === null) {
+      void this.resolve(side === 'left' ? file.left.text : file.right.text);
+      return;
+    }
+    this.remember(file.path, diff3.takeSide(this.regions.value, side));
+  }
+
+  async resolve(text?: string | null): Promise<void> {
+    const file = this.file.value;
+    if (!file) return;
+    const payload = text === undefined ? this.result.value : text;
+    expectExternal(file.path);
+    try {
+      const rest = await rpc.call('merge.resolve', { path: file.path, text: payload });
+      forgetDiverged(file.path);
+      batch(() => {
+        this.session.value = rest;
+        this.decisions.value = without(this.decisions.value, file.path);
+        this.cursorRaw.value = null;
+        this.path.value = rest?.files.find((item) => !item.done)?.path ?? null;
+        if (!rest) this.open.value = false;
+      });
+      if (!rest) say(t('merge.done'));
+    } catch (err) {
+      complain(describeMerge(err));
+    }
+  }
+
+  async cancel(): Promise<void> {
+    try {
+      await rpc.call('merge.cancel', null);
+    } catch (err) {
+      complain(describeMerge(err));
+      return;
+    }
+    batch(() => {
+      this.session.value = null;
+      this.open.value = false;
+      this.decisions.value = new Map();
+    });
+  }
+
+  async load(): Promise<void> {
+    try {
+      this.session.value = await rpc.call('merge.state', null);
+    } catch {
+      this.session.value = null;
+    }
+  }
+
+  reset(): void {
+    batch(() => {
+      this.session.value = null;
+      this.open.value = false;
+      this.path.value = null;
+      this.cursorRaw.value = null;
+      this.decisions.value = new Map();
+      this.promised.clear();
+    });
+  }
+
+  isUndecided(at: number): boolean {
+    const region = this.regions.value[at];
+    const choice = this.choices.value[at];
+    if (!region || !choice) return false;
+    return diff3.undecided(region, choice);
+  }
+
+  private focusOn(path: string): boolean {
+    const file = this.session.value?.files.find((item) => item.path === path && !item.done);
+    if (!file) return false;
+    batch(() => {
+      this.path.value = path;
+      this.cursorRaw.value = null;
+      this.open.value = true;
+    });
+    return true;
+  }
+
+  private remember(path: string, choices: Choice[]): void {
+    const next = new Map(this.decisions.value);
+    next.set(path, choices);
+    this.decisions.value = next;
   }
 }
 
-export async function cancelMerge(): Promise<void> {
-  try {
-    await rpc.call('merge.cancel', null);
-  } catch (err) {
-    complain(describeMerge(err));
-    return;
-  }
-  batch(() => {
-    mergeSession.value = null;
-    mergeOpen.value = false;
-    decisions.value = new Map();
-  });
-}
-
-export async function loadMerge(): Promise<void> {
-  try {
-    mergeSession.value = await rpc.call('merge.state', null);
-  } catch {
-    mergeSession.value = null;
-  }
-}
-
-export function resetMerge(): void {
-  batch(() => {
-    mergeSession.value = null;
-    mergeOpen.value = false;
-    mergePath.value = null;
-    cursorRaw.value = null;
-    decisions.value = new Map();
-    promised.clear();
-  });
-}
-
-export function isUndecided(at: number): boolean {
-  const region = mergeRegions.value[at];
-  const choice = mergeChoices.value[at];
-  if (!region || !choice) return false;
-  return diff3.undecided(region, choice);
-}
-
-function remember(path: string, choices: Choice[]): void {
-  const next = new Map(decisions.value);
-  next.set(path, choices);
-  decisions.value = next;
-}
-
-function drop(map: Map<string, Choice[]>, path: string): Map<string, Choice[]> {
+function without(map: Map<string, Choice[]>, path: string): Map<string, Choice[]> {
   const next = new Map(map);
   next.delete(path);
   return next;
@@ -264,20 +291,4 @@ function describeMerge(err: unknown): string {
   return String(err);
 }
 
-rpc.on('merge.state', (state) => {
-  const had = mergeSession.value !== null;
-  mergeSession.value = state;
-  if (!state) {
-    batch(() => {
-      mergeOpen.value = false;
-      mergePath.value = null;
-      decisions.value = new Map();
-    });
-    return;
-  }
-  for (const path of [...promised]) {
-    if (focusOn(path)) promised.delete(path);
-  }
-
-  if (!had) say(t('merge.appeared', { count: String(state.files.length) }));
-});
+export const merge = new Merge();
