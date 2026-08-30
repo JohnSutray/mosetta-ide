@@ -1,3 +1,5 @@
+import { projects } from '../state/projects.js';
+import { tools } from '../state/tools.js';
 import { branchesWindow, git, pushWindow } from '../state/git.js';
 import type { TerminalInfo } from '@ide/protocol';
 import { computed } from '@preact/signals';
@@ -6,10 +8,8 @@ import { activeTerminal, closeTerminal, focusTerminal, terminals } from '../stat
 import { connected, current } from '../state/session.js';
 import { searchOpen } from '../state/search.js';
 import { mergeOpen, mergePending } from '../state/merge.js';
-import { projectsVisible } from '../state/projects.js';
 import { keysHelpOpen } from '../state/keys-help.js';
 import { following } from '../state/tree-follow.js';
-import { currentManager, currentShell, openToolPicker } from '../state/tools.js';
 import { hideTip, showTip } from '../state/tip.js';
 import { keysFor } from '../keys/keys-for.js';
 import { t } from '../i18n/index.js';
@@ -80,7 +80,7 @@ export function registerToolbarWishes(store: Registry): void {
     title: 'toolbar.projects',
     command: 'projects.show',
     icon: ours('projects'),
-    active: projectsVisible,
+    active: projects.visible,
   });
   button({
     id: 'keys',
@@ -127,15 +127,15 @@ function Tools() {
   return (
     <>
       <ToolButton
-        label={currentShell()}
+        label={tools.currentShell()}
         hint={t('tool.shell.title')}
-        onClick={() => openToolPicker('shell')}
+        onClick={() => tools.open('shell')}
       />
       {ws && (
         <ToolButton
-          label={currentManager()}
+          label={tools.currentManager()}
           hint={t('tool.manager.title')}
-          onClick={() => openToolPicker('manager')}
+          onClick={() => tools.open('manager')}
         />
       )}
     </>

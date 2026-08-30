@@ -22,7 +22,7 @@ import {
   treeSelection,
 } from '../state/tree-ops.js';
 import { focusEditor, openWithoutFocus } from '../state/editor.js';
-import { primaryHeld } from '../keys/host.js';
+import { keyHost } from '../keys/host.js';
 import { t } from '../i18n/index.js';
 import { Chevron, DirIcon, FileIcon, RootIcon } from './file-icons.js';
 
@@ -133,7 +133,7 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
           void dropInto(JSON.parse(raw) as string[], folderFor(entry), event.altKey);
         }}
         onClick={(event) => {
-          const additive = primaryHeld(event);
+          const additive = keyHost.primaryHeld(event);
           if (event.shiftKey) {
             selectRange(entry.path, visibleOrder());
             return;

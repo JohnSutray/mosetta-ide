@@ -52,7 +52,7 @@ export function Branches() {
       size={{ w: 620, h: 460 }}
       min={{ w: 420, h: 260 }}
       onClose={() => (branchesWindow.open.value = false)}
-      onEscape={branchesWindow.close}
+      onEscape={() => branchesWindow.close()}
       onMouseDown={(event) => {
         if (!(event.target as HTMLElement).closest('.branch-menu, .branch-row')) {
           branchesWindow.menu.value = null;
@@ -140,7 +140,7 @@ export function Branches() {
         <button class="button" disabled={git.running.value !== null} onClick={() => void pushWindow.show()}>
           {t('branches.push')}
         </button>
-        <button class="button" onClick={branchesWindow.close}>
+        <button class="button" onClick={() => branchesWindow.close()}>
           {t('branches.close')}
         </button>
       </div>

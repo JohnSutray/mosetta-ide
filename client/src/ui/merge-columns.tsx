@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'preact/hooks';
 import { EditorState, StateEffect, StateField, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType, lineNumbers } from '@codemirror/view';
 import type { EditorSettings } from '@ide/protocol';
-import { darcula, textStyle } from '../editor/darcula.js';
-import { languageFor } from '../editor/languages.js';
+import { darcula } from '../editor/darcula.js';
+import { languages } from '../editor/languages.js';
 import type { Choice, Region } from '../merge/diff3.js';
 import { layout, type Lane, type LaneLayout } from '../merge/layout.js';
 import { t } from '../i18n/index.js';
@@ -306,14 +306,14 @@ function decorate(state: EditorState, lane: LaneState) {
 function paneExtensions(path: string, settings: EditorSettings): Extension[] {
   return [
     lineNumbers(),
-    languageFor(path),
-    darcula,
+    languages.of(path),
+    darcula.extension,
     laneField,
     EditorView.editable.of(false),
     EditorState.readOnly.of(true),
     EditorView.theme({
       '&': { fontSize: `${settings.fontSize}px`, height: '100%' },
-      '.cm-content': textStyle(settings),
+      '.cm-content': darcula.textStyle(settings),
       '.cm-scroller': { overflow: 'auto' },
     }),
   ];

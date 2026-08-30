@@ -2,12 +2,12 @@ import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
 import { opensOpenPopup, runCommand } from './commands.js';
 import { echoKey } from '../state/keys-help.js';
 import { mechanicsKeys } from '../editor/input-keymap.js';
-import { humanizeKey, IS_MAC, SCOPES } from './host.js';
+import { keyHost } from './host.js';
 import { reservedIn } from './reserved.js';
 
 export type ContextResolver = () => KeyContext;
 
-export function appliesHere(binding: KeyBinding, scopes: KeyScope[] = SCOPES): boolean {
+export function appliesHere(binding: KeyBinding, scopes: KeyScope[] = keyHost.scopes): boolean {
   if (!binding.where || binding.where.length === 0) return true;
   return binding.where.some((scope) => scopes.includes(scope));
 }
@@ -22,9 +22,9 @@ export function catchesKeys(context: KeyContext): boolean {
 
 const OWNING = new Set<KeyContext>(['terminal']);
 
-const MECHANICS = mechanicsKeys(IS_MAC);
+const MECHANICS = mechanicsKeys(keyHost.isMac);
 
-const TAKEN = reservedIn(SCOPES);
+const TAKEN = reservedIn(keyHost.scopes);
 
 const SOFT_TAKEN = new Set(TAKEN.filter((item) => item.soft).map((item) => item.key));
 
@@ -234,5 +234,3 @@ function normalizeMainKey(key: string): string | null {
   if (key.length === 1) return key.toLowerCase();
   return key.toLowerCase();
 }
-
-export { humanizeKey };

@@ -1,12 +1,4 @@
-import {
-  chooseTool,
-  closeToolPicker,
-  managers,
-  shells,
-  toolDraft,
-  toolPicker,
-  type ToolKind,
-} from '../state/tools.js';
+import { tools, type ToolKind } from '../state/tools.js';
 import { t } from '../i18n/index.js';
 import { Popup } from './popup.js';
 
@@ -19,7 +11,7 @@ interface Row {
 }
 
 export function ToolPicker() {
-  const kind = toolPicker.value;
+  const kind = tools.picker.value;
   if (!kind) return null;
 
   return (
@@ -29,7 +21,7 @@ export function ToolPicker() {
       class="tools"
       size={{ w: 560, h: 380 }}
       min={{ w: 380, h: 240 }}
-      onClose={closeToolPicker}
+      onClose={() => tools.close()}
     >
       <div class="tools-title">{t(`tool.${kind}.title`)}</div>
       <div class="tools-note">{t(`tool.${kind}.note`)}</div>
@@ -40,7 +32,7 @@ export function ToolPicker() {
             key={row.path}
             class={`tools-row ${row.current ? 'is-current' : ''}`}
             title={row.path}
-            onClick={() => void chooseTool(kind, row.ref)}
+            onClick={() => void tools.choose(kind, row.ref)}
           >
             <span class="tools-name">{row.name}</span>
             <span class="tools-path">{row.path}</span>
@@ -53,17 +45,17 @@ export function ToolPicker() {
       <div class="tools-custom">
         <input
           class="tools-input"
-          value={toolDraft.value}
+          value={tools.draft.value}
           placeholder={t(`tool.${kind}.custom`)}
           onInput={(event) => {
-            toolDraft.value = (event.target as HTMLInputElement).value;
+            tools.draft.value = (event.target as HTMLInputElement).value;
           }}
         />
-        <button class="tools-apply" onClick={() => void chooseTool(kind, toolDraft.value.trim())}>
+        <button class="tools-apply" onClick={() => void tools.choose(kind, tools.draft.value.trim())}>
           {t('tool.apply')}
         </button>
       </div>
-      <div class="tools-reset" onClick={() => void chooseTool(kind, '')}>
+      <div class="tools-reset" onClick={() => void tools.choose(kind, '')}>
         {t(`tool.${kind}.default`)}
       </div>
     </Popup>
@@ -72,7 +64,7 @@ export function ToolPicker() {
 
 function rows(kind: ToolKind): Row[] {
   if (kind === 'shell') {
-    return shells.value.map((item) => ({
+    return tools.shells.value.map((item) => ({
       path: item.path,
       name: item.name,
       ref: item.ref,
@@ -80,7 +72,7 @@ function rows(kind: ToolKind): Row[] {
       mark: item.current ? t('tool.inUse') : undefined,
     }));
   }
-  return managers.value.map((item) => ({
+  return tools.managers.value.map((item) => ({
     path: item.path,
     name: item.name,
     ref: item.path,

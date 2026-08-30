@@ -148,7 +148,7 @@ export function Push() {
             {busy && <span class="spinner" />}
             {force ? t('push.doForce') : t('push.do')}
           </button>
-          <button class="button" disabled={busy} onClick={pushWindow.close}>
+          <button class="button" disabled={busy} onClick={() => pushWindow.close()}>
             {t('push.cancel')}
           </button>
         </div>

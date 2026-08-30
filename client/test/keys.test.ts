@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { complains, eventToKey, swallows, typedIntoField } from '../src/keys/dispatcher.js';
-import { IS_MAC, PRIMARY, humanizeKey } from '../src/keys/host.js';
+import { keyHost } from '../src/keys/host.js';
 import { hardIn } from '../src/keys/reserved.js';
 import { mechanicsKeys } from '../src/editor/input-keymap.js';
 import { WORLDS, inWorld, keymap } from './keymap-shared.js';
@@ -117,16 +117,16 @@ describe('клавиша от клетки, а не от символа', () => 
 });
 
 describe('жалоба на клавишу без команды', () => {
-  const clip = new Set([`${PRIMARY}+c`, `${PRIMARY}+x`, `${PRIMARY}+v`]);
+  const clip = new Set([`${keyHost.primary}+c`, `${keyHost.primary}+x`, `${keyHost.primary}+v`]);
   const once = { repeat: false, clip };
 
   it('аккорд без команды — говорим', () => {
-    expect(complains(`${PRIMARY}+j`, once)).toBe(true);
-    expect(complains(`${PRIMARY}+shift+j`, once)).toBe(true);
+    expect(complains(`${keyHost.primary}+j`, once)).toBe(true);
+    expect(complains(`${keyHost.primary}+shift+j`, once)).toBe(true);
   });
 
   it('другой наш модификатор тоже говорит: мы и его забрали', () => {
-    const other = PRIMARY === 'control' ? 'meta' : 'control';
+    const other = keyHost.primary === 'control' ? 'meta' : 'control';
     expect(complains(`${other}+j`, once)).toBe(true);
   });
 
@@ -141,28 +141,28 @@ describe('жалоба на клавишу без команды', () => {
   });
 
   it('механика ввода редактора молчит', () => {
-    for (const key of mechanicsKeys(IS_MAC)) {
-      if (!key.split('+').includes(PRIMARY)) continue;
+    for (const key of mechanicsKeys(keyHost.isMac)) {
+      if (!key.split('+').includes(keyHost.primary)) continue;
       expect(complains(key, once), key).toBe(false);
     }
   });
 
   it('зажатая клавиша не бубнит', () => {
-    expect(complains(`${PRIMARY}+j`, { repeat: true, clip })).toBe(false);
+    expect(complains(`${keyHost.primary}+j`, { repeat: true, clip })).toBe(false);
   });
 
   it('буфер обмена молчит, даже когда он на главном модификаторе', () => {
-    expect(complains(`${PRIMARY}+c`, once)).toBe(false);
+    expect(complains(`${keyHost.primary}+c`, once)).toBe(false);
   });
 });
 
 describe('перехват чужих эффектов', () => {
-  const clip = new Set([`${PRIMARY}+c`, `${PRIMARY}+v`]);
+  const clip = new Set([`${keyHost.primary}+c`, `${keyHost.primary}+v`]);
 
   it('аккорд с главным модификатором гасится, даже если не назначен', () => {
-    expect(swallows(`${PRIMARY}+s`, clip)).toBe(true);
-    expect(swallows(`${PRIMARY}+p`, clip)).toBe(true);
-    expect(swallows(`${PRIMARY}+j`, clip)).toBe(true);
+    expect(swallows(`${keyHost.primary}+s`, clip)).toBe(true);
+    expect(swallows(`${keyHost.primary}+p`, clip)).toBe(true);
+    expect(swallows(`${keyHost.primary}+j`, clip)).toBe(true);
   });
 
   it('любой наш модификатор гасится, а не только главный', () => {
@@ -177,9 +177,9 @@ describe('перехват чужих эффектов', () => {
   });
 
   it('буфер обмена и механика ввода не гасятся', () => {
-    expect(swallows(`${PRIMARY}+c`, clip)).toBe(false);
-    for (const key of mechanicsKeys(IS_MAC)) {
-      if (!key.split('+').includes(PRIMARY)) continue;
+    expect(swallows(`${keyHost.primary}+c`, clip)).toBe(false);
+    for (const key of mechanicsKeys(keyHost.isMac)) {
+      if (!key.split('+').includes(keyHost.primary)) continue;
       expect(swallows(key, clip), key).toBe(false);
     }
   });
@@ -190,24 +190,24 @@ describe('перехват чужих эффектов', () => {
   });
 
   it('мягко отнятое гасится везде, даже мимо всех прочих правил', () => {
-    const key = [...mechanicsKeys(IS_MAC)][0]!;
+    const key = [...mechanicsKeys(keyHost.isMac)][0]!;
     expect(swallows(key, clip)).toBe(false);
     expect(swallows(key, clip, { soft: new Set([key]) })).toBe(true);
   });
 
   it('оставленное браузеру не гасится: это клавиша выхода', () => {
-    const left = new Set([`${PRIMARY}+r`]);
-    expect(swallows(`${PRIMARY}+r`, clip)).toBe(true);
-    expect(swallows(`${PRIMARY}+r`, clip, { left })).toBe(false);
+    const left = new Set([`${keyHost.primary}+r`]);
+    expect(swallows(`${keyHost.primary}+r`, clip)).toBe(true);
+    expect(swallows(`${keyHost.primary}+r`, clip, { left })).toBe(false);
   });
 });
 
 describe('двойные модификаторы', () => {
   it('раскладка и человек называют клавишу одинаково', () => {
-    expect(humanizeKey('double:meta')).toBe(IS_MAC ? 'Cmd Cmd' : 'Win Win');
-    expect(humanizeKey('double:control')).toBe('Control Control');
-    expect(humanizeKey('double:alt')).toBe(IS_MAC ? 'Option Option' : 'Alt Alt');
-    expect(humanizeKey('double:shift')).toBe('Shift Shift');
+    expect(keyHost.humanize('double:meta')).toBe(keyHost.isMac ? 'Cmd Cmd' : 'Win Win');
+    expect(keyHost.humanize('double:control')).toBe('Control Control');
+    expect(keyHost.humanize('double:alt')).toBe(keyHost.isMac ? 'Option Option' : 'Alt Alt');
+    expect(keyHost.humanize('double:shift')).toBe('Shift Shift');
   });
 
   it('все четыре модификатора заняты и заняты разным', () => {

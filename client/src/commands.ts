@@ -1,3 +1,5 @@
+import { projects } from './state/projects.js';
+import { tools } from './state/tools.js';
 import { branchesWindow, pushWindow } from './state/git.js';
 import { registerCommand, missingCommands } from './keys/commands.js';
 import { toggleFollow } from './state/tree-follow.js';
@@ -39,17 +41,6 @@ import {
   treePanelVisible,
 } from './state/session.js';
 import { createTerminal } from './state/terminals.js';
-import { openToolPicker } from './state/tools.js';
-import {
-  acceptPath,
-  completeSuggestion,
-  hideProjects,
-  moveSuggestion,
-  openSuggest,
-  toggleProjects,
-  closeSuggest,
-  suggestOpen,
-} from './state/projects.js';
 
 export function registerCommands(): void {
   registerCommand('file.save', () => saveDoc());
@@ -101,18 +92,18 @@ export function registerCommands(): void {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });
   registerCommand('terminal.create', () => createTerminal());
-  registerCommand('terminal.shell', () => openToolPicker('shell'));
-  registerCommand('tools.packageManager', () => openToolPicker('manager'));
+  registerCommand('terminal.shell', () => tools.open('shell'));
+  registerCommand('tools.packageManager', () => tools.open('manager'));
 
-  registerCommand('projects.show', () => toggleProjects());
-  registerCommand('projects.next', () => moveSuggestion(1));
-  registerCommand('projects.prev', () => moveSuggestion(-1));
-  registerCommand('projects.suggest', () => openSuggest());
-  registerCommand('projects.complete', () => completeSuggestion());
-  registerCommand('projects.accept', () => acceptPath());
+  registerCommand('projects.show', () => projects.toggle());
+  registerCommand('projects.next', () => projects.moveSuggestion(1));
+  registerCommand('projects.prev', () => projects.moveSuggestion(-1));
+  registerCommand('projects.suggest', () => projects.openSuggest());
+  registerCommand('projects.complete', () => projects.complete());
+  registerCommand('projects.accept', () => projects.accept());
   registerCommand('projects.close', () => {
-    if (suggestOpen.peek()) closeSuggest();
-    else hideProjects();
+    if (projects.suggestOpen.peek()) projects.closeSuggest();
+    else projects.hide();
   });
 
   registerCommand('git.branches', () => branchesWindow.show());

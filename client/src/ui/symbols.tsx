@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { editorSettings } from '../state/config.js';
 import { widthOf } from '../state/layout.js';
-import { paintCode } from '../editor/paint-line.js';
+import { codePainter } from '../editor/paint-line.js';
 import { Popup } from './popup.js';
 import { Resizer } from './resizer.js';
 import {
@@ -95,7 +95,7 @@ export function Symbols() {
             <span class="symbols-where">{site.path}</span>
             <span class="symbols-line">{site.line + 1}</span>
             <span class="symbols-text">
-              {paintCode(site.preview, site.path).map((chunk, i) =>
+              {codePainter.paint(site.preview, site.path).map((chunk, i) =>
                 chunk.color ? (
                   <span key={i} style={{ color: chunk.color }}>
                     {chunk.text}

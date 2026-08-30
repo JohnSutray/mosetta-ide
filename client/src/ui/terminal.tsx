@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
-import { dc, FONT } from '../editor/darcula.js';
+import { darcula } from '../editor/darcula.js';
 import { rpc } from '../state/session.js';
 import { activeTerminal, onTerminalData } from '../state/terminals.js';
 import { t } from '../i18n/index.js';
@@ -15,7 +15,7 @@ export function TerminalView() {
     let disposed = false;
 
     const term = new Terminal({
-      fontFamily: FONT,
+      fontFamily: darcula.font,
       fontSize: 12.5,
       lineHeight: 1.2,
       cursorBlink: true,
@@ -23,18 +23,18 @@ export function TerminalView() {
       cursorWidth: 2,
       scrollback: 10_000,
       theme: {
-        background: dc.bg,
-        foreground: dc.fg,
-        cursor: dc.caret,
-        selectionBackground: dc.selection,
+        background: darcula.palette.bg,
+        foreground: darcula.palette.fg,
+        cursor: darcula.palette.caret,
+        selectionBackground: darcula.palette.selection,
         black: '#2B2B2B',
-        red: dc.errorFg,
-        green: dc.string,
-        yellow: dc.annot,
-        blue: dc.number,
-        magenta: dc.const,
+        red: darcula.palette.errorFg,
+        green: darcula.palette.string,
+        yellow: darcula.palette.annot,
+        blue: darcula.palette.number,
+        magenta: darcula.palette.const,
         cyan: '#299999',
-        white: dc.fg,
+        white: darcula.palette.fg,
       },
     });
     const fit = new FitAddon();

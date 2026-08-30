@@ -1,5 +1,5 @@
 import { keymap } from '../state/config.js';
-import { humanizeKey } from './host.js';
+import { keyHost } from './host.js';
 import { appliesHere } from './dispatcher.js';
 
 export function keysFor(command: string): string[] {
@@ -10,7 +10,7 @@ export function keysFor(command: string): string[] {
         (binding.when ?? 'global') === 'global' &&
         appliesHere(binding),
     )
-    .map((binding) => humanizeKey(binding.key))
+    .map((binding) => keyHost.humanize(binding.key))
     .sort((a, b) => rank(a) - rank(b))
     .slice(0, 2);
 }

@@ -2,7 +2,7 @@ import { signal } from '@preact/signals';
 import type { KeyContext, KeyHost } from '@ide/protocol';
 import { settle } from './notifications.js';
 import { keymap } from './config.js';
-import { humanizeKey } from '../keys/host.js';
+import { keyHost } from '../keys/host.js';
 import { appliesHere } from '../keys/dispatcher.js';
 import { t } from '../i18n/index.js';
 
@@ -28,14 +28,14 @@ export function echoKey(key: string, context: KeyContext, command: string | null
 let missNote = 0;
 
 export function noteUnbound(key: string): void {
-  missNote = settle(missNote, t('keys.unbound', { key: humanizeKey(key), help: helpKey() }));
+  missNote = settle(missNote, t('keys.unbound', { key: keyHost.humanize(key), help: helpKey() }));
 }
 
 function helpKey(): string {
   const bound = keymap
     .peek()
     .bindings.find((binding) => binding.command === 'keys.show' && appliesHere(binding));
-  return bound ? humanizeKey(bound.key) : t('keys.title');
+  return bound ? keyHost.humanize(bound.key) : t('keys.title');
 }
 
 export function toggleKeysHelp(): void {

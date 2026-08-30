@@ -1,3 +1,5 @@
+import { projects } from '../state/projects.js';
+import { tools } from '../state/tools.js';
 import { git, resetGit } from '../state/git.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
@@ -18,9 +20,9 @@ import { headFor, loadHead, showHunk } from '../state/git-marks.js';
 import { askSymbol } from '../state/symbols.js';
 import { takeFocusOnMount, wantsFocus } from '../state/editor.js';
 import { chordHeld } from '../keys/chords.js';
-import { dc, darcula, textStyle } from '../editor/darcula.js';
-import { languageFor } from '../editor/languages.js';
-import { paintCode } from '../editor/paint-line.js';
+import { darcula } from '../editor/darcula.js';
+import { languages } from '../editor/languages.js';
+import { codePainter } from '../editor/paint-line.js';
 import { lineDiff } from '../editor/line-diff.js';
 import { inputKeymap } from '../editor/input-keymap.js';
 import { allProblems } from '../state/session.js';
@@ -28,7 +30,6 @@ import { registerCommands, resolveContext, missingCommands } from '../commands.j
 import { installDispatcher } from '../keys/dispatcher.js';
 import { pendingReveal } from '../state/session.js';
 import { refreshTerminals } from '../state/terminals.js';
-import { refreshTools } from '../state/tools.js';
 import { forgetVisits, installMouseNav, loadVisits, visit } from '../state/visits.js';
 import { follow, following } from '../state/tree-follow.js';
 import { SearchEverywhere } from './search-everywhere.js';
@@ -49,7 +50,6 @@ import { widthOf } from '../state/layout.js';
 import { runCommand } from '../keys/commands.js';
 import { Projects } from './projects.js';
 import { t } from '../i18n/index.js';
-import { hideProjects, showProjects } from '../state/projects.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
 import { MergeScreen } from './merge.js';
@@ -129,11 +129,11 @@ export function App() {
       unstable_diffLines: (before, after) => lineDiff.hunks(before, after),
       unstable_showHunk: showHunk,
       unstable_askSymbol: askSymbol,
-      unstable_dc: dc,
-      unstable_paintCode: paintCode,
-      unstable_darcula: darcula,
-      unstable_textStyle: textStyle,
-      unstable_languageFor: languageFor,
+      unstable_dc: darcula.palette,
+      unstable_paintCode: (text, path) => codePainter.paint(text, path),
+      unstable_darcula: darcula.extension,
+      unstable_textStyle: (settings) => darcula.textStyle(settings),
+      unstable_languageFor: (path) => languages.of(path),
       unstable_inputKeymap: inputKeymap,
     };
     void loadPlugins(surface, store).then(() => {
@@ -166,8 +166,8 @@ export function App() {
   }, [file?.path, following.value]);
 
   useEffect(() => {
-    if (ws) hideProjects();
-    else showProjects();
+    if (ws) projects.hide();
+    else projects.show();
   }, [ws?.id]);
 
   useEffect(() => {
@@ -175,7 +175,7 @@ export function App() {
   }, [file?.path, git.state.value]);
 
   useEffect(() => {
-    void refreshTools();
+    void tools.refresh();
     if (!ws) {
       resetGit();
       resetMerge();

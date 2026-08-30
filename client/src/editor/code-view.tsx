@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'preact/hooks';
 import { EditorState, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, lineNumbers, highlightSpecialChars } from '@codemirror/view';
 import type { EditorSettings } from '@ide/protocol';
-import { darcula, textStyle } from './darcula.js';
-import { languageFor } from './languages.js';
+import { darcula } from './darcula.js';
+import { languages } from './languages.js';
 
 export function CodeView({
   path,
@@ -23,14 +23,14 @@ export function CodeView({
     const extensions: Extension[] = [
       lineNumbers(),
       highlightSpecialChars(),
-      languageFor(path),
-      darcula,
+      languages.of(path),
+      darcula.extension,
       hitLine,
       EditorView.editable.of(false),
       EditorState.readOnly.of(true),
       EditorView.theme({
         '&': { fontSize: `${settings.fontSize}px`, height: '100%' },
-        '.cm-content': textStyle(settings),
+        '.cm-content': darcula.textStyle(settings),
         '.cm-scroller': { overflow: 'auto' },
       }),
     ];
