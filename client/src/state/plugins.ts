@@ -7,7 +7,7 @@ import * as cmView from '@codemirror/view';
 import * as cmCommands from '@codemirror/commands';
 import * as cmLanguage from '@codemirror/language';
 import * as cmSearch from '@codemirror/search';
-import { signal } from '@preact/signals';
+import { signal, type Signal } from '@preact/signals';
 import type { PluginInfo } from '@ide/protocol';
 import { complain, rpc, say } from './session.js';
 import { registerPluginCommand } from '../keys/commands.js';
@@ -22,9 +22,7 @@ import {
   type ClientSurface,
   type Found,
   type Ide,
-  type PanelHandle,
   type PluginClass,
-  type PluginPanelSpec,
   type RegistryHandle,
 } from '@ide/api/client';
 import { persisted } from './persist.js';
@@ -159,44 +157,10 @@ function servicesFor(name: string): Ide {
         },
       };
     },
-    panel(spec: PluginPanelSpec): PanelHandle {
-      const open = persisted(`panel.${spec.id}`, spec.startOpen ?? false);
-      registerPluginCommand(spec.command, () => {
-        open.value = !open.value;
-      });
-      registryOf().add(
-        'panel',
-        {
-          id: spec.id,
-          title: spec.title,
-          side: spec.side,
-          open,
-          view: spec.view,
-          ...(spec.heading ? { heading: spec.heading } : {}),
-          ...(spec.badges ? { badges: spec.badges } : {}),
-          close:
-            spec.close ??
-            (() => {
-              open.value = false;
-            }),
-          defaultWidth: spec.defaultWidth,
-          minWidth: spec.minWidth,
-        },
-        name,
-      );
-      return {
-        open,
-        toggle: () => {
-          open.value = !open.value;
-        },
-        show: () => {
-          open.value = true;
-        },
-        hide: () => {
-          open.value = false;
-        },
-      };
+    remember<T>(key: string, initial: T): Signal<T> {
+      return persisted(`${name}/${key}`, initial);
     },
+
     css(text: string) {
       const tag = document.createElement('style');
       tag.dataset.plugin = name;

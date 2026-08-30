@@ -22,11 +22,24 @@ describe('панель ошибок', () => {
     host = new FakeHost();
     host.add(Problems, NAME);
     await host.start();
-    view = host.ide(NAME).panels[0]!.spec.view;
+    view = wish().view;
   });
 
+  function wish() {
+    return host.registry.all<{
+      id: string;
+      title: string;
+      side: string;
+      open: { value: boolean };
+      view: () => unknown;
+      close: () => void;
+      defaultWidth?: number;
+      minWidth?: number;
+    }>('panel')[0]!;
+  }
+
   it('заводит панель по правилам, общим для всех', () => {
-    const spec = host.ide(NAME).panels[0]!.spec;
+    const spec = wish();
     expect(spec.id).toBe('problems');
     expect(spec.side).toBe('right');
     expect(spec.defaultWidth!).toBeGreaterThanOrEqual(spec.minWidth!);
@@ -34,11 +47,11 @@ describe('панель ошибок', () => {
     expect(spec.title).toBe('panel.problems');
   });
 
-  it('команду-переключатель заводит система, а не плагин', () => {
-    const panel = host.ide(NAME).panels[0]!;
-    expect(panel.open.value).toBe(false);
+  it('команду-переключатель заводит плагин, а память ведёт ядро', () => {
+    expect(host.ide(NAME).remembered.has('panel.open')).toBe(true);
+    expect(wish().open.value).toBe(false);
     expect(host.run('panel.problems')).toBe(true);
-    expect(panel.open.value).toBe(true);
+    expect(wish().open.value).toBe(true);
   });
 
   it('просит кнопку отдельно от панели', () => {
@@ -48,7 +61,7 @@ describe('панель ошибок', () => {
     expect(wishes).toHaveLength(1);
     expect(host.registry.authors('toolbar.button')).toEqual([NAME]);
     expect(wishes[0]!.command).toBe('panel.problems');
-    expect(wishes[0]!.active).toBe(host.ide(NAME).panels[0]!.open);
+    expect(wishes[0]!.active).toBe(wish().open);
   });
 
   it('приносит свой значок и свои стили', () => {

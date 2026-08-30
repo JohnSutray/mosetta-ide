@@ -16,7 +16,7 @@ import {
   toggleComment,
   undo,
 } from '@codemirror/commands';
-import { effect } from '@preact/signals';
+import { effect, type Signal } from '@preact/signals';
 import {
   activate,
   askSymbol,
@@ -36,7 +36,6 @@ import {
   visit,
   wantsFocus,
   type Ide,
-  type PanelHandle,
 } from '@ide/api/client';
 import { EMPTY_SCHEMA, type EmptyView } from './schema.js';
 import { STYLE } from './style.js';
@@ -46,7 +45,7 @@ import { CodeEditor } from './view.js';
 @registry({ key: 'editor.empty', schema: EMPTY_SCHEMA })
 export default class Editor {
   private view: EditorView | null = null;
-  private panel: PanelHandle | null = null;
+  private open: Signal<boolean> | null = null;
   private shown: string | null = null;
 
   constructor(private readonly ide: Ide) {}
@@ -54,33 +53,37 @@ export default class Editor {
   @activate() protected start(): void {
     this.ide.css(STYLE);
 
-    const panel = this.ide.panel({
+    const open = this.ide.remember('panel.open', true);
+    this.open = open;
+    this.ide.command('panel.editor', () => {
+      open.value = !open.value;
+    });
+
+    this.ide.registry('panel').add({
       id: 'editor',
       title: 'panel.editor.empty',
       side: 'main',
-      command: 'panel.editor',
-      startOpen: true,
+      open,
       view: () => this.body(),
       heading: () => openDoc.value?.path ?? null,
       badges: () => this.badges(),
       close: () => {
         if (openDoc.value) void closeFile();
-        else panel.hide();
+        else open.value = false;
       },
     });
-    this.panel = panel;
 
     this.ide.registry('toolbar.button').add({
       id: 'editor',
       title: 'toolbar.editor',
       command: 'panel.editor',
       icon: EditorIcon,
-      active: panel.open,
+      active: open,
     });
 
     effect(() => {
       const path = openDoc.value?.path ?? null;
-      if (path && path !== this.shown) panel.show();
+      if (path && path !== this.shown) open.value = true;
       this.shown = path;
     });
 
@@ -169,6 +172,6 @@ export default class Editor {
   }
 
   toggle(): void {
-    this.panel?.toggle();
+    if (this.open) this.open.value = !this.open.value;
   }
 }

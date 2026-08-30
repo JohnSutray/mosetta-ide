@@ -9,7 +9,6 @@ import type {
   FileProblems,
   Found,
   Ide,
-  PanelHandle,
   Hunk,
   HunkBox,
   Palette,
@@ -18,7 +17,6 @@ import type {
   ResizerProps,
   Reveal,
   SymbolAsk,
-  PluginPanelSpec,
   RegistryHandle,
 } from './client.js';
 
@@ -375,14 +373,9 @@ export class FakeRegistry {
   }
 }
 
-export interface FakePanel {
-  spec: PluginPanelSpec;
-  open: Signal<boolean>;
-}
-
 export class FakeIde implements Ide {
   readonly commands = new Map<string, () => void>();
-  readonly panels: FakePanel[] = [];
+  readonly remembered = new Map<string, Signal<unknown>>();
   readonly openers = new Map<string, (found: Found) => void>();
   readonly surfaces: Array<() => unknown> = [];
   readonly styles: string[] = [];
@@ -423,24 +416,12 @@ export class FakeIde implements Ide {
     };
   }
 
-  panel(spec: PluginPanelSpec): PanelHandle {
-    const open = signal(spec.startOpen ?? false);
-    this.commands.set(spec.command, () => {
-      open.value = !open.value;
-    });
-    this.panels.push({ spec, open });
-    return {
-      open,
-      toggle: () => {
-        open.value = !open.value;
-      },
-      show: () => {
-        open.value = true;
-      },
-      hide: () => {
-        open.value = false;
-      },
-    };
+  remember<T>(key: string, initial: T): Signal<T> {
+    const known = this.remembered.get(key);
+    if (known) return known as Signal<T>;
+    const made = signal(initial);
+    this.remembered.set(key, made as Signal<unknown>);
+    return made;
   }
 
   css(text: string): void {

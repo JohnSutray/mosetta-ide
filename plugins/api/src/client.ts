@@ -1,4 +1,5 @@
 import type { ComponentChildren, JSX } from 'preact';
+import type { Signal } from '@preact/signals';
 import type { Diagnostic, DocState, HoverInfo, Settings, TerminalInfo } from '@ide/protocol';
 
 export interface Size {
@@ -244,7 +245,7 @@ export interface Ide {
   getPlugin<T>(ctor: PluginClass<T>): T;
   command(id: string, run: () => void): void;
   registry<T>(key: string): RegistryHandle<T>;
-  panel(spec: PluginPanelSpec): PanelHandle;
+  remember<T>(key: string, initial: T): Signal<T>;
   css(text: string): void;
   surface(view: () => unknown): void;
   open(kind: string, handler: (found: Found) => void): void;
@@ -277,29 +278,6 @@ const declared = new WeakMap<object, RegistrySpec[]>();
 
 export function registriesOf(ctor: object): RegistrySpec[] {
   return declared.get(ctor) ?? [];
-}
-
-export type PanelSide = 'left' | 'main' | 'right';
-
-export interface PluginPanelSpec {
-  id: string;
-  title: string;
-  side: PanelSide;
-  command: string;
-  defaultWidth?: number;
-  minWidth?: number;
-  startOpen?: boolean;
-  view: () => unknown;
-  heading?: () => string | null;
-  badges?: () => unknown;
-  close?: () => void;
-}
-
-export interface PanelHandle {
-  readonly open: { readonly value: boolean };
-  toggle(): void;
-  show(): void;
-  hide(): void;
 }
 
 export function activate() {

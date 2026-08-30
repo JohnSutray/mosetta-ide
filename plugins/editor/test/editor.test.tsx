@@ -18,8 +18,20 @@ describe('редактор', () => {
     await host.start();
   });
 
-  const panel = () => host.ide(NAME).panels[0]!;
-  const head = () => panel().spec;
+  const head = () =>
+    host.registry.all<{
+      id: string;
+      title: string;
+      side: string;
+      open: { value: boolean };
+      view: () => unknown;
+      heading?: () => string | null;
+      badges?: () => unknown;
+      close?: () => void;
+      defaultWidth?: number;
+      minWidth?: number;
+    }>('panel')[0]!;
+  const open = () => head().open;
 
   it('объявляет, чем можно занять пустое место, до всякой активации', () => {
     const early = new FakeHost();
@@ -34,8 +46,15 @@ describe('редактор', () => {
   });
 
   it('единственная панель, открытая с самого начала', () => {
-    expect(head().startOpen).toBe(true);
-    expect(panel().open.value).toBe(true);
+    expect(host.ide(NAME).remembered.has('panel.open')).toBe(true);
+    expect(open().value).toBe(true);
+  });
+
+  it('переключается той же командой, что зовёт кнопка', () => {
+    expect(host.run('panel.editor')).toBe(true);
+    expect(open().value).toBe(false);
+    host.run('panel.editor');
+    expect(open().value).toBe(true);
   });
 
   it('просит кнопку сам и держит ТОТ ЖЕ сигнал', () => {
@@ -43,7 +62,7 @@ describe('редактор', () => {
       'toolbar.button',
     )[0]!;
     expect(wish.command).toBe('panel.editor');
-    expect(wish.active).toBe(panel().open);
+    expect(wish.active).toBe(open());
   });
 
   it('приносит свои стили', () => {
@@ -78,24 +97,24 @@ describe('редактор', () => {
     host.surface.openDoc.value = doc('a.ts');
     head().close!();
     expect(host.surface.closed).toBe(1);
-    expect(panel().open.value).toBe(true);
+    expect(open().value).toBe(true);
 
     head().close!();
     expect(host.surface.closed).toBe(1);
-    expect(panel().open.value).toBe(false);
+    expect(open().value).toBe(false);
   });
 
   it('открыли файл — показывается сам', () => {
-    panel().open.value = false;
+    open().value = false;
     host.surface.openDoc.value = doc('a.ts');
-    expect(panel().open.value).toBe(true);
+    expect(open().value).toBe(true);
   });
 
   it('закрыли панель при открытом файле — сама не лезет обратно', () => {
     host.surface.openDoc.value = doc('a.ts');
-    panel().open.value = false;
+    open().value = false;
     host.surface.dirty.value = true;
-    expect(panel().open.value).toBe(false);
+    expect(open().value).toBe(false);
   });
 
   it('пустое место занимает тот, кто попросил', () => {

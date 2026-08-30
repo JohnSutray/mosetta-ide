@@ -10,14 +10,22 @@ export default class Problems {
 
   @activate() protected start(): void {
     this.ide.css(STYLE);
-    const panel = this.ide.panel({
+    const open = this.ide.remember('panel.open', false);
+    this.ide.command('panel.problems', () => {
+      open.value = !open.value;
+    });
+
+    this.ide.registry('panel').add({
       id: 'problems',
       title: 'panel.problems',
       side: 'right',
-      command: 'panel.problems',
+      open,
       defaultWidth: 360,
       minWidth: 200,
       view: () => this.view(),
+      close: () => {
+        open.value = false;
+      },
     });
 
     this.ide.registry('toolbar.button').add({
@@ -25,7 +33,7 @@ export default class Problems {
       title: 'toolbar.problems',
       command: 'panel.problems',
       icon: ProblemsIcon,
-      active: panel.open,
+      active: open,
     });
   }
 
