@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cell, setPixelRatio, snap } from '../src/ui/pixel-grid.js';
+import { cell, setPixelRatio, snap } from '../src/pixel-grid.js';
 
 describe('сетка физических пикселей', () => {
   it('край клетки попадает в целый физический пиксель', () => {

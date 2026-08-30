@@ -15,10 +15,10 @@ import {
   SHEEP_W,
   step,
   type Sheep,
-} from './sheep-world.js';
+} from './world.js';
 import { GLYPH_H, measure, write } from './pixel-font.js';
 import { cell, setPixelRatio } from './pixel-grid.js';
-import { t } from '../i18n/index.js';
+import { t } from '@ide/api/client';
 
 const DIGIT_FONT = "'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif";
 

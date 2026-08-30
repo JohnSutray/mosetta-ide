@@ -14,7 +14,7 @@ import {
   spawn,
   step,
   type World,
-} from '../src/ui/sheep-world.js';
+} from '../src/world.js';
 
 const W = 600;
 const H = 400;
