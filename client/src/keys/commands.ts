@@ -3,22 +3,6 @@ import { COMMAND_IDS, COMMANDS, type CommandId } from '@ide/protocol';
 
 type Runner = () => void | Promise<void>;
 
-const registry = new Map<string, Runner>();
-const fromPlugin = new Set<string>();
-
-export function registerCommand(id: CommandId, run: Runner): void {
-  registry.set(id, run);
-}
-
-export function registerPluginCommand(id: string, run: Runner): void {
-  registry.set(id, run);
-  fromPlugin.add(id);
-}
-
-export function isPluginCommand(id: string): boolean {
-  return fromPlugin.has(id);
-}
-
 const OPENS: Partial<Record<CommandId, string>> = {
   'search.everywhere': 'search',
   'projects.show': 'projects',
@@ -30,37 +14,59 @@ const OPENS: Partial<Record<CommandId, string>> = {
   'tools.packageManager': 'tool-manager',
 };
 
-export function opensOpenPopup(id: string): boolean {
-  const popup = opensPopup(id);
-  return popup !== undefined && popups.stack.value.some((item) => item.id === popup);
-}
+export class Commands {
+  private readonly registry = new Map<string, Runner>();
 
-export function runCommand(id: string): boolean {
-  const popup = opensPopup(id);
-  const open = popup === undefined ? undefined : popups.stack.value.find((item) => item.id === popup);
-  if (open) {
-    open.close();
+  private readonly fromPlugin = new Set<string>();
+
+  register(id: CommandId, run: Runner): void {
+    this.registry.set(id, run);
+  }
+
+  registerPlugin(id: string, run: Runner): void {
+    this.registry.set(id, run);
+    this.fromPlugin.add(id);
+  }
+
+  isPlugin(id: string): boolean {
+    return this.fromPlugin.has(id);
+  }
+
+  opensOpenPopup(id: string): boolean {
+    const popup = this.opensPopup(id);
+    return popup !== undefined && popups.stack.value.some((item) => item.id === popup);
+  }
+
+  run(id: string): boolean {
+    const popup = this.opensPopup(id);
+    const open =
+      popup === undefined ? undefined : popups.stack.value.find((item) => item.id === popup);
+    if (open) {
+      open.close();
+      return true;
+    }
+
+    const run = this.registry.get(id);
+    if (!run) return false;
+    void run();
     return true;
   }
 
-  const run = registry.get(id);
-  if (!run) return false;
-  void run();
-  return true;
+  has(id: string): boolean {
+    return this.registry.has(id);
+  }
+
+  title(id: string): string {
+    return COMMANDS[id as CommandId] ?? id;
+  }
+
+  missing(): CommandId[] {
+    return COMMAND_IDS.filter((id) => !this.registry.has(id));
+  }
+
+  private opensPopup(id: string): string | undefined {
+    return OPENS[id as CommandId] ?? (this.fromPlugin.has(id) ? id : undefined);
+  }
 }
 
-export function hasCommand(id: string): boolean {
-  return registry.has(id);
-}
-
-export function commandTitle(id: string): string {
-  return COMMANDS[id as CommandId] ?? id;
-}
-
-function opensPopup(id: string): string | undefined {
-  return OPENS[id as CommandId] ?? (fromPlugin.has(id) ? id : undefined);
-}
-
-export function missingCommands(): CommandId[] {
-  return COMMAND_IDS.filter((id) => !registry.has(id));
-}
+export const commands = new Commands();

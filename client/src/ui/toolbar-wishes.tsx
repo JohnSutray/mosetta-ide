@@ -1,3 +1,4 @@
+import { commands } from '../keys/commands.js';
 import { keysHelp } from '../state/keys-help.js';
 import { tips } from '../state/tip.js';
 import { terminals } from '../state/terminals.js';
@@ -9,7 +10,6 @@ import { tools } from '../state/tools.js';
 import { branchesWindow, git, pushWindow } from '../state/git.js';
 import type { TerminalInfo } from '@ide/protocol';
 import { computed } from '@preact/signals';
-import { runCommand } from '../keys/commands.js';
 import { following } from '../state/tree-follow.js';
 import { keysFor } from '../keys/keys-for.js';
 import { i18n } from '../i18n/index.js';
@@ -155,7 +155,7 @@ function Branch() {
       onMouseLeave={tips.hide}
       onClick={() => {
         tips.hide();
-        runCommand('git.branches');
+        commands.run('git.branches');
       }}
     >
       {state.repo ? (state.branch ?? i18n.t('toolbar.noBranch')) : i18n.t('toolbar.noRepo')}

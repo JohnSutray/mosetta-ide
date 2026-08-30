@@ -1,6 +1,6 @@
+import { commands } from './commands.js';
 import { keysHelp } from '../state/keys-help.js';
 import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
-import { opensOpenPopup, runCommand } from './commands.js';
 import { mechanicsKeys } from '../editor/input-keymap.js';
 import { keyHost } from './host.js';
 import { reservedIn } from './reserved.js';
@@ -113,14 +113,14 @@ export function installDispatcher(
     if (
       CAPTURING.has(context) &&
       (binding.when ?? 'global') !== context &&
-      !opensOpenPopup(binding.command)
+      !commands.opensOpenPopup(binding.command)
     ) {
       event.preventDefault();
       event.stopPropagation();
       return;
     }
 
-    if (runCommand(binding.command)) {
+    if (commands.run(binding.command)) {
       event.preventDefault();
       event.stopPropagation();
     }

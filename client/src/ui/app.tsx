@@ -1,3 +1,4 @@
+import { commands } from '../keys/commands.js';
 import { geometry } from '../state/layout.js';
 import { keysHelp } from '../state/keys-help.js';
 import { gitMarks } from '../state/git-marks.js';
@@ -22,7 +23,7 @@ import { languages } from '../editor/languages.js';
 import { codePainter } from '../editor/paint-line.js';
 import { lineDiff } from '../editor/line-diff.js';
 import { inputKeymap } from '../editor/input-keymap.js';
-import { registerCommands, resolveContext, missingCommands } from '../commands.js';
+import { registerCommands, resolveContext } from '../commands.js';
 import { installDispatcher } from '../keys/dispatcher.js';
 import { follow, following } from '../state/tree-follow.js';
 import { SearchEverywhere } from './search-everywhere.js';
@@ -36,7 +37,6 @@ import { registerPanelWishes } from './panel-wishes.js';
 import { Registry } from '../state/registry.js';
 import { keysFor } from '../keys/keys-for.js';
 import { Resizer } from './resizer.js';
-import { runCommand } from '../keys/commands.js';
 import { Projects } from './projects.js';
 import { i18n } from '../i18n/index.js';
 import { HunkPopup } from './hunk-popup.js';
@@ -89,7 +89,7 @@ export function App() {
       t: (key, params) => i18n.t(key, params),
       problems: lsp.problems,
       goTo,
-      runCommand,
+      runCommand: commands.run,
       keysFor,
       settings: config.settings,
       openDoc: doc.open,
@@ -124,7 +124,7 @@ export function App() {
       unstable_inputKeymap: inputKeymap,
     };
     void loadPlugins(surface, store).then(() => {
-      const dead = missingCommands();
+      const dead = commands.missing();
       if (dead.length) console.warn('[web-ide] команды без реализации:', dead.join(', '));
     });
     const dispatcher = installDispatcher(resolveContext, (key) => keysHelp.noteUnbound(key));

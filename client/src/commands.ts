@@ -1,3 +1,4 @@
+import { commands } from './keys/commands.js';
 import { keysHelp } from './state/keys-help.js';
 import { editorFocus } from './state/editor.js';
 import { popups } from './state/popups.js';
@@ -12,102 +13,99 @@ import { merge } from './state/merge.js';
 import { projects } from './state/projects.js';
 import { tools } from './state/tools.js';
 import { branchesWindow, pushWindow } from './state/git.js';
-import { registerCommand, missingCommands } from './keys/commands.js';
 import { toggleFollow } from './state/tree-follow.js';
 import { resolveContext } from './keys/context.js';
 import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
 
 export function registerCommands(): void {
-  registerCommand('file.save', () => doc.save());
-  registerCommand('file.reload', () => doc.reload());
+  commands.register('file.save', () => doc.save());
+  commands.register('file.reload', () => doc.reload());
 
-  registerCommand('nav.back', () => visits.back());
-  registerCommand('nav.forward', () => visits.forward());
+  commands.register('nav.back', () => visits.back());
+  commands.register('nav.forward', () => visits.forward());
 
-  registerCommand('key.reserved', () => {});
+  commands.register('key.reserved', () => {});
 
-  registerCommand('keys.show', () => keysHelp.toggle());
+  commands.register('keys.show', () => keysHelp.toggle());
 
-  registerCommand('merge.show', () => merge.toggle());
-  registerCommand('merge.nextFile', () => merge.stepFile(1));
-  registerCommand('merge.prevFile', () => merge.stepFile(-1));
-  registerCommand('merge.next', () => merge.stepConflict(1));
-  registerCommand('merge.prev', () => merge.stepConflict(-1));
-  registerCommand('merge.takeLeft', () => merge.decideHere('left', 'take'));
-  registerCommand('merge.takeRight', () => merge.decideHere('right', 'take'));
-  registerCommand('merge.skipLeft', () => merge.decideHere('left', 'skip'));
-  registerCommand('merge.skipRight', () => merge.decideHere('right', 'skip'));
-  registerCommand('merge.confirm', () => void merge.resolve());
+  commands.register('merge.show', () => merge.toggle());
+  commands.register('merge.nextFile', () => merge.stepFile(1));
+  commands.register('merge.prevFile', () => merge.stepFile(-1));
+  commands.register('merge.next', () => merge.stepConflict(1));
+  commands.register('merge.prev', () => merge.stepConflict(-1));
+  commands.register('merge.takeLeft', () => merge.decideHere('left', 'take'));
+  commands.register('merge.takeRight', () => merge.decideHere('right', 'take'));
+  commands.register('merge.skipLeft', () => merge.decideHere('left', 'skip'));
+  commands.register('merge.skipRight', () => merge.decideHere('right', 'skip'));
+  commands.register('merge.confirm', () => void merge.resolve());
 
-  registerCommand('panel.tree', () => {
+  commands.register('panel.tree', () => {
     treePanelVisible.value = !treePanelVisible.value;
   });
 
-  registerCommand('tree.next', () => tree.step(1));
-  registerCommand('tree.prev', () => tree.step(-1));
-  registerCommand('tree.expand', () => tree.openBranch());
-  registerCommand('tree.collapse', () => tree.closeBranch());
-  registerCommand('tree.newFile', () => onFocused((path, isDir) => treeOps.create(path, isDir, 'file')));
-  registerCommand('tree.newFolder', () => onFocused((path, isDir) => treeOps.create(path, isDir, 'dir')));
-  registerCommand('tree.open', () =>
+  commands.register('tree.next', () => tree.step(1));
+  commands.register('tree.prev', () => tree.step(-1));
+  commands.register('tree.expand', () => tree.openBranch());
+  commands.register('tree.collapse', () => tree.closeBranch());
+  commands.register('tree.newFile', () => onFocused((path, isDir) => treeOps.create(path, isDir, 'file')));
+  commands.register('tree.newFolder', () => onFocused((path, isDir) => treeOps.create(path, isDir, 'dir')));
+  commands.register('tree.open', () =>
     onPicked((path, isDir) => {
       if (isDir) void fileTree.toggle(path);
       else void doc.openAt(path).then(editorFocus.focus);
     }),
   );
-  registerCommand('tree.rename', () => onPicked((path) => treeOps.rename(path)));
-  registerCommand('tree.delete', () => onPicked((path, isDir) => treeOps.remove(path, isDir)));
-  registerCommand('tree.copy', () => onPicked((path) => treeOps.copy(path, false)));
-  registerCommand('tree.cut', () => onPicked((path) => treeOps.copy(path, true)));
-  registerCommand('tree.paste', () => onFocused((path, isDir) => void treeOps.pasteInto(path, isDir)));
-  registerCommand('tree.copyPath', () => onPicked((path) => void treeOps.copyAbsolutePath(path)));
-  registerCommand('tree.reveal', () => onPicked((path) => void treeOps.revealInOs(path)));
-  registerCommand('tree.follow', () => void toggleFollow());
-  registerCommand('panel.terminal', () => {
+  commands.register('tree.rename', () => onPicked((path) => treeOps.rename(path)));
+  commands.register('tree.delete', () => onPicked((path, isDir) => treeOps.remove(path, isDir)));
+  commands.register('tree.copy', () => onPicked((path) => treeOps.copy(path, false)));
+  commands.register('tree.cut', () => onPicked((path) => treeOps.copy(path, true)));
+  commands.register('tree.paste', () => onFocused((path, isDir) => void treeOps.pasteInto(path, isDir)));
+  commands.register('tree.copyPath', () => onPicked((path) => void treeOps.copyAbsolutePath(path)));
+  commands.register('tree.reveal', () => onPicked((path) => void treeOps.revealInOs(path)));
+  commands.register('tree.follow', () => void toggleFollow());
+  commands.register('panel.terminal', () => {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });
-  registerCommand('terminal.create', () => terminals.create());
-  registerCommand('terminal.shell', () => tools.open('shell'));
-  registerCommand('tools.packageManager', () => tools.open('manager'));
+  commands.register('terminal.create', () => terminals.create());
+  commands.register('terminal.shell', () => tools.open('shell'));
+  commands.register('tools.packageManager', () => tools.open('manager'));
 
-  registerCommand('projects.show', () => projects.toggle());
-  registerCommand('projects.next', () => projects.moveSuggestion(1));
-  registerCommand('projects.prev', () => projects.moveSuggestion(-1));
-  registerCommand('projects.suggest', () => projects.openSuggest());
-  registerCommand('projects.complete', () => projects.complete());
-  registerCommand('projects.accept', () => projects.accept());
-  registerCommand('projects.close', () => {
+  commands.register('projects.show', () => projects.toggle());
+  commands.register('projects.next', () => projects.moveSuggestion(1));
+  commands.register('projects.prev', () => projects.moveSuggestion(-1));
+  commands.register('projects.suggest', () => projects.openSuggest());
+  commands.register('projects.complete', () => projects.complete());
+  commands.register('projects.accept', () => projects.accept());
+  commands.register('projects.close', () => {
     if (projects.suggestOpen.peek()) projects.closeSuggest();
     else projects.hide();
   });
 
-  registerCommand('git.branches', () => branchesWindow.show());
-  registerCommand('git.push', () => void pushWindow.show());
-  registerCommand('git.fetch', () => void branchesWindow.do('fetch'));
-  registerCommand('pick.next', () => (symbols.list.value ? symbols.step(1) : activePick.value?.next()));
-  registerCommand('pick.prev', () => (symbols.list.value ? symbols.step(-1) : activePick.value?.prev()));
-  registerCommand('pick.accept', () => (symbols.list.value ? symbols.accept() : activePick.value?.accept()));
-  registerCommand('pick.expand', () => activePick.value?.expand?.());
+  commands.register('git.branches', () => branchesWindow.show());
+  commands.register('git.push', () => void pushWindow.show());
+  commands.register('git.fetch', () => void branchesWindow.do('fetch'));
+  commands.register('pick.next', () => (symbols.list.value ? symbols.step(1) : activePick.value?.next()));
+  commands.register('pick.prev', () => (symbols.list.value ? symbols.step(-1) : activePick.value?.prev()));
+  commands.register('pick.accept', () => (symbols.list.value ? symbols.accept() : activePick.value?.accept()));
+  commands.register('pick.expand', () => activePick.value?.expand?.());
 
-  registerCommand('prompt.confirm', () => void prompt.answer());
+  commands.register('prompt.confirm', () => void prompt.answer());
 
-  registerCommand('menu.next', () => activeMenu.value?.next());
-  registerCommand('menu.prev', () => activeMenu.value?.prev());
-  registerCommand('menu.accept', () => activeMenu.value?.accept());
+  commands.register('menu.next', () => activeMenu.value?.next());
+  commands.register('menu.prev', () => activeMenu.value?.prev());
+  commands.register('menu.accept', () => activeMenu.value?.accept());
 
-  registerCommand('popup.close', () => {
+  commands.register('popup.close', () => {
     popups.closeTop();
   });
 
-  registerCommand('search.everywhere', () => search.show());
-  registerCommand('search.next', () => search.move(1));
-  registerCommand('search.prev', () => search.move(-1));
-  registerCommand('search.accept', () => search.accept());
-  registerCommand('search.close', () => search.close());
+  commands.register('search.everywhere', () => search.show());
+  commands.register('search.next', () => search.move(1));
+  commands.register('search.prev', () => search.move(-1));
+  commands.register('search.accept', () => search.accept());
+  commands.register('search.close', () => search.close());
 }
-
-export { missingCommands };
 
 function onFocused(run: (path: string, isDir: boolean) => void): void {
   const path = tree.focus.value ?? '';

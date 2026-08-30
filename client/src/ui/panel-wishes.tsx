@@ -1,4 +1,4 @@
-import { runCommand } from '../keys/commands.js';
+import { commands } from '../keys/commands.js';
 import { TerminalView } from './terminal.js';
 import { Tree } from './tree.js';
 import { PANELS } from './panels.js';
@@ -38,7 +38,7 @@ export function registerPanelWishes(store: Registry): void {
       side: spec.side,
       open: spec.open,
       view: () => content(spec.id),
-      close: () => runCommand(spec.command),
+      close: () => commands.run(spec.command),
       defaultWidth: spec.defaultWidth,
       minWidth: spec.minWidth,
     });

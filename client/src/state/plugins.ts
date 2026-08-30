@@ -1,3 +1,4 @@
+import { commands } from '../keys/commands.js';
 import { rpc } from './session.js';
 import { complain, say } from './notifications.js';
 import * as preact from 'preact';
@@ -11,7 +12,6 @@ import * as cmLanguage from '@codemirror/language';
 import * as cmSearch from '@codemirror/search';
 import { signal, type Signal } from '@preact/signals';
 import type { PluginInfo } from '@ide/protocol';
-import { registerPluginCommand } from '../keys/commands.js';
 import {
   activate as activateHook,
   attach,
@@ -147,7 +147,7 @@ function servicesFor(name: string): Ide {
         rpc.call('plugins.call', { name, method, params }),
     },
     command(id: string, run: () => void) {
-      registerPluginCommand(id, run);
+      commands.registerPlugin(id, run);
     },
     registry<T>(key: string): RegistryHandle<T> {
       const store_ = registryOf();
