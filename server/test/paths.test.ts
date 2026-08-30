@@ -1,33 +1,33 @@
 import { describe, expect, it } from 'vitest';
 import path from 'node:path';
-import { toKey, toAbsolute, toRelative, isInside, joinKey, extensionOf } from '../src/workspace/paths.js';
+import { paths } from '../src/workspace/paths.js';
 
 const root = path.resolve('/tmp/project');
 
 describe('ключи и пути', () => {
   it('корень — пустая строка', () => {
-    expect(toKey('')).toBe('');
-    expect(toAbsolute(root, '')).toBe(root);
+    expect(paths.toKey('')).toBe('');
+    expect(paths.toAbsolute(root, '')).toBe(root);
   });
 
   it('ключ всегда со слэшем, диск — в разделителях ОС', () => {
-    expect(toKey('src\\app\\main.ts')).toBe('src/app/main.ts');
-    expect(toAbsolute(root, 'src/app/main.ts')).toBe(
+    expect(paths.toKey('src\\app\\main.ts')).toBe('src/app/main.ts');
+    expect(paths.toAbsolute(root, 'src/app/main.ts')).toBe(
       path.join(root, 'src', 'app', 'main.ts'),
     );
   });
 
   it('обратно получается тот же ключ', () => {
-    const abs = toAbsolute(root, 'src/app/main.ts');
-    expect(toRelative(root, abs)).toBe('src/app/main.ts');
+    const abs = paths.toAbsolute(root, 'src/app/main.ts');
+    expect(paths.toRelative(root, abs)).toBe('src/app/main.ts');
   });
 
   it('лишние сегменты схлопываются', () => {
-    expect(toKey('./src//app/./main.ts')).toBe('src/app/main.ts');
+    expect(paths.toKey('./src//app/./main.ts')).toBe('src/app/main.ts');
   });
 
   it('.. внутри проекта разрешён', () => {
-    expect(toKey('src/app/../main.ts')).toBe('src/main.ts');
+    expect(paths.toKey('src/app/../main.ts')).toBe('src/main.ts');
   });
 
   it.each([
@@ -39,19 +39,19 @@ describe('ключи и пути', () => {
     ['\\\\server\\share', 'UNC'],
     ['src/\0/x', 'NUL-байт'],
   ])('отвергает %s (%s)', (bad) => {
-    expect(() => toKey(bad)).toThrow();
+    expect(() => paths.toKey(bad)).toThrow();
   });
 
   it('сосед с похожим именем не считается потомком', () => {
-    expect(isInside(root, `${root}-secret`)).toBe(false);
-    expect(isInside(root, path.join(root, 'src'))).toBe(true);
+    expect(paths.isInside(root, `${root}-secret`)).toBe(false);
+    expect(paths.isInside(root, path.join(root, 'src'))).toBe(true);
   });
 
   it('склейка и расширение', () => {
-    expect(joinKey('', 'a.ts')).toBe('a.ts');
-    expect(joinKey('src', 'a.ts')).toBe('src/a.ts');
-    expect(extensionOf('src/a.d.ts')).toBe('ts');
-    expect(extensionOf('src/Makefile')).toBe('');
-    expect(extensionOf('.gitignore')).toBe('');
+    expect(paths.joinKey('', 'a.ts')).toBe('a.ts');
+    expect(paths.joinKey('src', 'a.ts')).toBe('src/a.ts');
+    expect(paths.extensionOf('src/a.d.ts')).toBe('ts');
+    expect(paths.extensionOf('src/Makefile')).toBe('');
+    expect(paths.extensionOf('.gitignore')).toBe('');
   });
 });

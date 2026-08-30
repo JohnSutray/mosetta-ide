@@ -3,7 +3,7 @@ import type { TerminalInfo, TerminalKind } from '@ide/protocol';
 import { RpcErrorCode } from '@ide/protocol';
 import { RpcError } from '../errors.js';
 import type { Logger } from '../log.js';
-import { loginShell, terminalEnv, type ShellChoice } from '../env/shell.js';
+import { shells, type ShellChoice } from '../env/shell.js';
 import { foregroundProcess } from '../env/capabilities.js';
 
 export type TerminalEvent =
@@ -43,7 +43,7 @@ export class TerminalHost {
   constructor(
     private readonly hold: (reason: string) => () => void,
     private readonly log: Logger,
-    private readonly shellOf: () => ShellChoice = () => loginShell(),
+    private readonly shellOf: () => ShellChoice = () => shells.loginShell(),
   ) {}
 
   on(listener: (event: TerminalEvent) => void): () => void {
@@ -90,7 +90,7 @@ export class TerminalHost {
         cols,
         rows,
         cwd: options.cwd,
-        env: terminalEnv(),
+        env: shells.terminalEnv(),
       });
     } catch (err) {
       throw new RpcError(

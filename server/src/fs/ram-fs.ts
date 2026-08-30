@@ -2,7 +2,7 @@ import type { DirEntry, DocState, FsSettings, IndexStats } from '@ide/protocol';
 import { RpcErrorCode } from '@ide/protocol';
 import { RpcError } from '../errors.js';
 import type { Logger } from '../log.js';
-import { baseName, extensionOf } from '../workspace/paths.js';
+import { paths } from '../workspace/paths.js';
 import type { OsFs } from './os-fs.js';
 
 export interface Doc {
@@ -133,7 +133,7 @@ export class RamFs {
   }
 
   isTextual(path: string): boolean {
-    return this.settings.textExtensions.includes(extensionOf(path));
+    return this.settings.textExtensions.includes(paths.extensionOf(path));
   }
 
   preload(): Promise<void> {
@@ -150,7 +150,7 @@ export class RamFs {
     let loaded = 0;
 
     const candidates = [...this.files()]
-      .filter((e) => textual.has(extensionOf(e.path)) && e.size <= limit)
+      .filter((e) => textual.has(paths.extensionOf(e.path)) && e.size <= limit)
       .sort((a, b) => a.size - b.size);
 
     for (const entry of candidates) {
@@ -479,7 +479,7 @@ export class RamFs {
   }
 
   private isNoScan(key: string): boolean {
-    return this.settings.noScan.includes(baseName(key));
+    return this.settings.noScan.includes(paths.baseName(key));
   }
 
   private onDiskWrite(key: string, revision: string): void {

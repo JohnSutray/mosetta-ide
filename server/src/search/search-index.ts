@@ -6,7 +6,7 @@ import {
   type SearchStats,
 } from '@ide/protocol';
 import type { Logger } from '../log.js';
-import { extensionOf } from '../workspace/paths.js';
+import { paths } from '../workspace/paths.js';
 import type { RamFs } from '../fs/ram-fs.js';
 import { match } from './matcher.js';
 import { retype } from './layout.js';
@@ -189,7 +189,7 @@ export class SearchIndex {
   private enqueue(path: string): void {
     if (!this.settings.enabled) return;
     if (this.providers.wants(path)) this.staleTree = true;
-    if (!canParse(extensionOf(path))) return;
+    if (!canParse(paths.extensionOf(path))) return;
     this.pending.add(path);
     this.schedule();
   }
@@ -197,7 +197,7 @@ export class SearchIndex {
   indexSymbols(): Promise<void> {
     if (!this.settings.enabled) return Promise.resolve();
     for (const file of this.ram.files()) {
-      if (canParse(extensionOf(file.path)) && this.ram.docSync(file.path)) {
+      if (canParse(paths.extensionOf(file.path)) && this.ram.docSync(file.path)) {
         this.pending.add(file.path);
       }
     }
@@ -225,7 +225,7 @@ export class SearchIndex {
         continue;
       }
       try {
-        const found = parseSymbols(api, path, doc.text, extensionOf(path));
+        const found = parseSymbols(api, path, doc.text, paths.extensionOf(path));
         this.symbols.set(
           path,
           found.map((symbol) => {

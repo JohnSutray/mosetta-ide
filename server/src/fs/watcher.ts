@@ -3,7 +3,7 @@ import path from 'node:path';
 import type { FsSettings } from '@ide/protocol';
 import type { Logger } from '../log.js';
 import { isTempFile } from './os-fs.js';
-import { toKey } from '../workspace/paths.js';
+import { paths } from '../workspace/paths.js';
 
 export interface WatcherOptions {
   debounceMs?: number;
@@ -69,7 +69,7 @@ export class OsWatcher {
   private enqueue(raw: string): void {
     let key: string;
     try {
-      key = toKey(raw.split(path.sep).join('/'));
+      key = paths.toKey(raw.split(path.sep).join('/'));
     } catch {
       return;
     }

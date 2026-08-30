@@ -2,89 +2,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { ShellInfo, TerminalSettings } from '@ide/protocol';
-import { onPath } from './tools.js';
+import { tools } from './tools.js';
 
 export interface ShellChoice {
   file: string;
   args: string[];
   problem?: string;
-}
-
-export function shellRef(file: string): string {
-  const bare = path.basename(file).replace(/\.exe$/i, '');
-  const found = onPath(bare);
-  return found && sameFile(found, file) ? bare : file;
-}
-
-export function resolveShell(value: string): string | null {
-  const wanted = value.trim();
-  if (wanted === '') return null;
-  if (wanted.includes('/') || wanted.includes('\\')) {
-    return shellExists(wanted) ? wanted : null;
-  }
-  return onPath(wanted);
-}
-
-export function loginShell(chosen?: Partial<TerminalSettings>): ShellChoice {
-  const picked = chosen?.shell?.trim();
-  if (picked) {
-    const file = resolveShell(picked);
-    if (file) {
-      const args = chosen?.args?.length ? chosen.args : defaultArgs(file);
-      return { file, args };
-    }
-    const fallback = systemShell();
-    return { ...fallback, problem: picked };
-  }
-  return systemShell();
-}
-
-function systemShell(): ShellChoice {
-  if (process.platform === 'win32') {
-    return { file: process.env.COMSPEC ?? 'powershell.exe', args: [] };
-  }
-  const file = process.env.SHELL ?? (process.platform === 'darwin' ? '/bin/zsh' : '/bin/bash');
-  return { file, args: defaultArgs(file) };
-}
-
-export function defaultArgs(file: string): string[] {
-  const name = path.basename(file).toLowerCase().replace(/\.exe$/, '');
-  if (['cmd', 'powershell', 'pwsh', 'wsl'].includes(name)) return [];
-  if (name === 'nu' || name === 'nushell') return ['-i'];
-  return ['-l', '-i'];
-}
-
-export function detectShells(current = loginShell().file): ShellInfo[] {
-  const seen = new Map<string, ShellInfo>();
-  const add = (file: string) => {
-    const full = file.trim();
-    if (full === '') return;
-    const key = process.platform === 'win32' ? full.toLowerCase() : full;
-    if (seen.has(key)) return;
-    try {
-      if (!fs.statSync(full).isFile()) return;
-    } catch {
-      return;
-    }
-    seen.set(key, {
-      path: full,
-      name: path.basename(full),
-      ref: shellRef(full),
-      current: sameFile(full, current),
-    });
-  };
-
-  for (const candidate of candidates()) add(candidate);
-  add(current);
-  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
-}
-
-export function shellExists(file: string): boolean {
-  try {
-    return fs.statSync(file).isFile();
-  } catch {
-    return false;
-  }
 }
 
 function sameFile(a: string, b: string): boolean {
@@ -135,20 +58,101 @@ function windowsCandidates(): string[] {
   ];
 }
 
-export function terminalEnv(extra: Record<string, string> = {}): Record<string, string> {
-  const env: Record<string, string> = {};
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') env[key] = value;
+export class Shells {
+  shellRef(file: string): string {
+    const bare = path.basename(file).replace(/\.exe$/i, '');
+    const found = tools.onPath(bare);
+    return found && sameFile(found, file) ? bare : file;
   }
-  return {
-    ...env,
-    TERM: 'xterm-256color',
-    COLORTERM: 'truecolor',
-    FORCE_COLOR: '1',
-    ...extra,
-  };
+
+  resolveShell(value: string): string | null {
+    const wanted = value.trim();
+    if (wanted === '') return null;
+    if (wanted.includes('/') || wanted.includes('\\')) {
+      return this.shellExists(wanted) ? wanted : null;
+    }
+    return tools.onPath(wanted);
+  }
+
+  loginShell(chosen?: Partial<TerminalSettings>): ShellChoice {
+    const picked = chosen?.shell?.trim();
+    if (picked) {
+      const file = this.resolveShell(picked);
+      if (file) {
+        const args = chosen?.args?.length ? chosen.args : this.defaultArgs(file);
+        return { file, args };
+      }
+      const fallback = this.systemShell();
+      return { ...fallback, problem: picked };
+    }
+    return this.systemShell();
+  }
+
+  private systemShell(): ShellChoice {
+    if (process.platform === 'win32') {
+      return { file: process.env.COMSPEC ?? 'powershell.exe', args: [] };
+    }
+    const file = process.env.SHELL ?? (process.platform === 'darwin' ? '/bin/zsh' : '/bin/bash');
+    return { file, args: this.defaultArgs(file) };
+  }
+
+  defaultArgs(file: string): string[] {
+    const name = path.basename(file).toLowerCase().replace(/\.exe$/, '');
+    if (['cmd', 'powershell', 'pwsh', 'wsl'].includes(name)) return [];
+    if (name === 'nu' || name === 'nushell') return ['-i'];
+    return ['-l', '-i'];
+  }
+
+  detectShells(current = this.loginShell().file): ShellInfo[] {
+    const seen = new Map<string, ShellInfo>();
+    const add = (file: string) => {
+      const full = file.trim();
+      if (full === '') return;
+      const key = process.platform === 'win32' ? full.toLowerCase() : full;
+      if (seen.has(key)) return;
+      try {
+        if (!fs.statSync(full).isFile()) return;
+      } catch {
+        return;
+      }
+      seen.set(key, {
+        path: full,
+        name: path.basename(full),
+        ref: this.shellRef(full),
+        current: sameFile(full, current),
+      });
+    };
+
+    for (const candidate of candidates()) add(candidate);
+    add(current);
+    return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  shellExists(file: string): boolean {
+    try {
+      return fs.statSync(file).isFile();
+    } catch {
+      return false;
+    }
+  }
+
+  terminalEnv(extra: Record<string, string> = {}): Record<string, string> {
+    const env: Record<string, string> = {};
+    for (const [key, value] of Object.entries(process.env)) {
+      if (typeof value === 'string') env[key] = value;
+    }
+    return {
+      ...env,
+      TERM: 'xterm-256color',
+      COLORTERM: 'truecolor',
+      FORCE_COLOR: '1',
+      ...extra,
+    };
+  }
+
+  homeDirectory(): string {
+    return os.homedir();
+  }
 }
 
-export function homeDirectory(): string {
-  return os.homedir();
-}
+export const shells = new Shells();

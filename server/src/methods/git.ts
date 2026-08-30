@@ -2,39 +2,6 @@ import type { GitAction } from '@ide/protocol';
 import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
 
-export const gitState: Handler<'git.state'> = (_params, ctx) =>
-  ctx.session.requireWorkspace().services.git.snapshot();
-
-export const gitBranches: Handler<'git.branches'> = (_params, ctx) =>
-  ctx.session.requireWorkspace().services.git.branches();
-
-export const gitOutgoing: Handler<'git.outgoing'> = (_params, ctx) =>
-  ctx.session.requireWorkspace().services.git.outgoing();
-
-export const gitChanges: Handler<'git.changes'> = (params, ctx) =>
-  ctx.session.requireWorkspace().services.git.changes(params?.commit);
-
-export const gitHead: Handler<'git.head'> = async (params, ctx) => {
-  if (!params || typeof params.path !== 'string') throw RpcError.invalidParams('нужен path');
-  const git = ctx.session.requireWorkspace().services.git;
-  return { path: params.path, text: await git.headText(params.path) };
-};
-
-export const gitRefresh: Handler<'git.refresh'> = async (_params, ctx) => {
-  const git = ctx.session.requireWorkspace().services.git;
-  await git.refresh();
-  return git.snapshot();
-};
-
-export const gitRun: Handler<'git.run'> = async (params, ctx) => {
-  if (!params || typeof params.action !== 'string') {
-    throw RpcError.invalidParams('нужен action');
-  }
-  const git = ctx.session.requireWorkspace().services.git;
-  const args = argsFor(params.action, params.branch, params.name);
-  return { error: await git.run(params.action, args) };
-};
-
 function argsFor(action: GitAction, branch?: string, name?: string): string[] {
   switch (action) {
     case 'checkout':
@@ -74,3 +41,40 @@ function ref(value: string | undefined): string {
   }
   return name;
 }
+
+export class GitMethods {
+  readonly state: Handler<'git.state'> = (_params, ctx) =>
+    ctx.session.requireWorkspace().services.git.snapshot();
+
+  readonly branches: Handler<'git.branches'> = (_params, ctx) =>
+    ctx.session.requireWorkspace().services.git.branches();
+
+  readonly outgoing: Handler<'git.outgoing'> = (_params, ctx) =>
+    ctx.session.requireWorkspace().services.git.outgoing();
+
+  readonly changes: Handler<'git.changes'> = (params, ctx) =>
+    ctx.session.requireWorkspace().services.git.changes(params?.commit);
+
+  readonly head: Handler<'git.head'> = async (params, ctx) => {
+    if (!params || typeof params.path !== 'string') throw RpcError.invalidParams('нужен path');
+    const git = ctx.session.requireWorkspace().services.git;
+    return { path: params.path, text: await git.headText(params.path) };
+  };
+
+  readonly refresh: Handler<'git.refresh'> = async (_params, ctx) => {
+    const git = ctx.session.requireWorkspace().services.git;
+    await git.refresh();
+    return git.snapshot();
+  };
+
+  readonly run: Handler<'git.run'> = async (params, ctx) => {
+    if (!params || typeof params.action !== 'string') {
+      throw RpcError.invalidParams('нужен action');
+    }
+    const git = ctx.session.requireWorkspace().services.git;
+    const args = argsFor(params.action, params.branch, params.name);
+    return { error: await git.run(params.action, args) };
+  };
+}
+
+export const gitMethods = new GitMethods();

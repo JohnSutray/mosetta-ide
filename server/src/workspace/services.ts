@@ -10,8 +10,8 @@ import { TerminalHost } from '../term/host.js';
 import { GitIndex } from '../git/git-index.js';
 import { MergeSessions } from '../merge/sessions.js';
 import { watchFsConflicts, type FsConflicts } from './conflicts.js';
-import { loginShell } from '../env/shell.js';
-import { packageManager } from '../env/tools.js';
+import { shells } from '../env/shell.js';
+import { tools } from '../env/tools.js';
 import type { Logger } from '../log.js';
 import type { Workspace } from './workspace.js';
 
@@ -94,7 +94,7 @@ export class Services {
     );
 
     this.terminals = new TerminalHost((reason) => ws.hold(reason), log, () =>
-      loginShell(config.settings.terminal),
+      shells.loginShell(config.settings.terminal),
     );
     this.offs.push(
       this.terminals.on((event) => {
@@ -221,7 +221,7 @@ export class Services {
   suggestedManager(): string {
     const top = this.ram.listSync('') ?? [];
     const names = new Set(top.map((entry) => entry.name));
-    return packageManager((file) => names.has(file));
+    return tools.packageManager((file) => names.has(file));
   }
 
   lspFor(key: string): LspServer | null {

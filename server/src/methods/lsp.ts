@@ -3,48 +3,12 @@ import type { Handler, RpcContext } from '../rpc/context.js';
 import type { LspServer } from '../lsp/server.js';
 import { RpcError } from '../errors.js';
 
-export const lspStatus: Handler<'lsp.status'> = (_params, ctx) =>
-  ctx.session.requireWorkspace().services.statuses();
-
-export const lspProblems: Handler<'lsp.problems'> = (_params, ctx) =>
-  ctx.session.requireWorkspace().services.knownDiagnostics();
-
-export const lspDiagnostics: Handler<'lsp.diagnostics'> = (params, ctx) => {
-  const path = pathOf(params);
-  const services = ctx.session.requireWorkspace().services;
-  const server = services.lspFor(path);
-  return { path, diagnostics: server?.diagnosticsFor(path) ?? [] };
-};
-
-export const lspHover: Handler<'lsp.hover'> = (params, ctx) => {
-  const path = pathOf(params);
-  if (typeof params?.line !== 'number' || typeof params?.character !== 'number') {
-    throw RpcError.invalidParams('нужны line и character');
-  }
-  const services = ctx.session.requireWorkspace().services;
-  const server = services.lspFor(path);
-  if (!server) {
-    throw new RpcError(RpcErrorCode.LspUnavailable, `Нет языкового сервера для ${path}`);
-  }
-  return server.hover(path, params.line, params.character);
-};
-
 function pathOf(params: { path?: unknown } | null): string {
   if (!params || typeof params.path !== 'string') {
     throw RpcError.invalidParams('нужен path: string');
   }
   return params.path;
 }
-
-export const lspDefinition: Handler<'lsp.definition'> = (params, ctx) => {
-  const { path, line, character } = spot(params);
-  return serverFor(ctx, path).definition(path, line, character);
-};
-
-export const lspReferences: Handler<'lsp.references'> = (params, ctx) => {
-  const { path, line, character } = spot(params);
-  return serverFor(ctx, path).references(path, line, character);
-};
 
 function spot(params: { path?: unknown; line?: unknown; character?: unknown } | null) {
   const path = pathOf(params);
@@ -61,3 +25,43 @@ function serverFor(ctx: RpcContext, path: string): LspServer {
   }
   return server;
 }
+
+export class LspMethods {
+  readonly status: Handler<'lsp.status'> = (_params, ctx) =>
+    ctx.session.requireWorkspace().services.statuses();
+
+  readonly problems: Handler<'lsp.problems'> = (_params, ctx) =>
+    ctx.session.requireWorkspace().services.knownDiagnostics();
+
+  readonly diagnostics: Handler<'lsp.diagnostics'> = (params, ctx) => {
+    const path = pathOf(params);
+    const services = ctx.session.requireWorkspace().services;
+    const server = services.lspFor(path);
+    return { path, diagnostics: server?.diagnosticsFor(path) ?? [] };
+  };
+
+  readonly hover: Handler<'lsp.hover'> = (params, ctx) => {
+    const path = pathOf(params);
+    if (typeof params?.line !== 'number' || typeof params?.character !== 'number') {
+      throw RpcError.invalidParams('нужны line и character');
+    }
+    const services = ctx.session.requireWorkspace().services;
+    const server = services.lspFor(path);
+    if (!server) {
+      throw new RpcError(RpcErrorCode.LspUnavailable, `Нет языкового сервера для ${path}`);
+    }
+    return server.hover(path, params.line, params.character);
+  };
+
+  readonly definition: Handler<'lsp.definition'> = (params, ctx) => {
+    const { path, line, character } = spot(params);
+    return serverFor(ctx, path).definition(path, line, character);
+  };
+
+  readonly references: Handler<'lsp.references'> = (params, ctx) => {
+    const { path, line, character } = spot(params);
+    return serverFor(ctx, path).references(path, line, character);
+  };
+}
+
+export const lspMethods = new LspMethods();

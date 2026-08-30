@@ -4,7 +4,7 @@ import type { Stats } from 'node:fs';
 import type { DirEntry, EntryKind, FsSettings } from '@ide/protocol';
 import { RpcErrorCode } from '@ide/protocol';
 import { RpcError } from '../errors.js';
-import { expandRoot, joinKey, toAbsolute, toKey } from '../workspace/paths.js';
+import { paths } from '../workspace/paths.js';
 
 export interface OsEvent {
   type: 'wrote' | 'removed' | 'moved';
@@ -28,7 +28,7 @@ export interface OsFileText {
 }
 
 export async function probeRoot(input: string): Promise<string> {
-  const expanded = expandRoot(input);
+  const expanded = paths.expandRoot(input);
   let real: string;
   try {
     real = await fs.realpath(expanded);
@@ -60,8 +60,8 @@ export class OsFs {
   }
 
   async list(key: string): Promise<DirEntry[]> {
-    const dirKey = toKey(key);
-    const absolute = toAbsolute(this.root, dirKey);
+    const dirKey = paths.toKey(key);
+    const absolute = paths.toAbsolute(this.root, dirKey);
     let dirents;
     try {
       dirents = await fs.readdir(absolute, { withFileTypes: true });
@@ -76,7 +76,7 @@ export class OsFs {
     for (const dirent of dirents) {
       if (hidden.has(dirent.name)) continue;
       if (isTempFile(dirent.name)) continue;
-      const childKey = joinKey(dirKey, dirent.name);
+      const childKey = paths.joinKey(dirKey, dirent.name);
       let stat: Stats;
       try {
         stat = await fs.stat(path.join(absolute, dirent.name));
@@ -102,7 +102,7 @@ export class OsFs {
   async stat(key: string): Promise<OsStat | null> {
     let stat: Stats;
     try {
-      stat = await fs.stat(toAbsolute(this.root, key));
+      stat = await fs.stat(paths.toAbsolute(this.root, key));
     } catch {
       return null;
     }
@@ -116,8 +116,8 @@ export class OsFs {
   }
 
   async read(key: string): Promise<OsFileText> {
-    const fileKey = toKey(key);
-    const absolute = toAbsolute(this.root, fileKey);
+    const fileKey = paths.toKey(key);
+    const absolute = paths.toAbsolute(this.root, fileKey);
     let stat: Stats;
     try {
       stat = await fs.stat(absolute);
@@ -150,8 +150,8 @@ export class OsFs {
     text: string,
     expectedRevision?: string | null,
   ): Promise<{ path: string; revision: string }> {
-    const fileKey = toKey(key);
-    const absolute = toAbsolute(this.root, fileKey);
+    const fileKey = paths.toKey(key);
+    const absolute = paths.toAbsolute(this.root, fileKey);
 
     let current: Stats | null = null;
     try {
@@ -194,8 +194,8 @@ export class OsFs {
   }
 
   async create(key: string, kind: 'file' | 'dir'): Promise<DirEntry> {
-    const fileKey = toKey(key);
-    const absolute = toAbsolute(this.root, fileKey);
+    const fileKey = paths.toKey(key);
+    const absolute = paths.toAbsolute(this.root, fileKey);
     if (await exists(absolute)) throw RpcError.invalidParams(`Уже есть: ${fileKey}`);
 
     if (kind === 'dir') {
@@ -208,10 +208,10 @@ export class OsFs {
   }
 
   async move(from: string, to: string): Promise<DirEntry> {
-    const fromKey = toKey(from);
-    const toKey_ = toKey(to);
-    const source = toAbsolute(this.root, fromKey);
-    const target = toAbsolute(this.root, toKey_);
+    const fromKey = paths.toKey(from);
+    const toKey_ = paths.toKey(to);
+    const source = paths.toAbsolute(this.root, fromKey);
+    const target = paths.toAbsolute(this.root, toKey_);
     if (!(await exists(source))) throw RpcError.notFound(fromKey);
     if (source !== target && (await exists(target))) {
       throw RpcError.invalidParams(`Уже есть: ${toKey_}`);
@@ -223,10 +223,10 @@ export class OsFs {
   }
 
   async copy(from: string, to: string): Promise<DirEntry> {
-    const fromKey = toKey(from);
-    const toKey_ = toKey(to);
-    const source = toAbsolute(this.root, fromKey);
-    const target = toAbsolute(this.root, toKey_);
+    const fromKey = paths.toKey(from);
+    const toKey_ = paths.toKey(to);
+    const source = paths.toAbsolute(this.root, fromKey);
+    const target = paths.toAbsolute(this.root, toKey_);
     if (!(await exists(source))) throw RpcError.notFound(fromKey);
     if (await exists(target)) throw RpcError.invalidParams(`Уже есть: ${toKey_}`);
     await fs.mkdir(path.dirname(target), { recursive: true });
@@ -235,16 +235,16 @@ export class OsFs {
   }
 
   async remove(key: string): Promise<void> {
-    const fileKey = toKey(key);
+    const fileKey = paths.toKey(key);
     if (fileKey === '') throw RpcError.invalidParams('Нельзя удалить корень проекта');
-    const absolute = toAbsolute(this.root, fileKey);
+    const absolute = paths.toAbsolute(this.root, fileKey);
     if (!(await exists(absolute))) throw RpcError.notFound(fileKey);
     await fs.rm(absolute, { recursive: true, force: true });
   }
 
   async writeBytes(key: string, base64: string): Promise<DirEntry> {
-    const fileKey = toKey(key);
-    const absolute = toAbsolute(this.root, fileKey);
+    const fileKey = paths.toKey(key);
+    const absolute = paths.toAbsolute(this.root, fileKey);
     if (await exists(absolute)) throw RpcError.invalidParams(`Уже есть: ${fileKey}`);
     await fs.mkdir(path.dirname(absolute), { recursive: true });
     await fs.writeFile(absolute, Buffer.from(base64, 'base64'));
@@ -252,7 +252,7 @@ export class OsFs {
   }
 
   private async describe(key: string): Promise<DirEntry> {
-    const absolute = toAbsolute(this.root, key);
+    const absolute = paths.toAbsolute(this.root, key);
     const stat = await fs.stat(absolute);
     const isDir = stat.isDirectory();
     const name = key.slice(key.lastIndexOf('/') + 1);

@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import type { EventName, EventPayload, WorkspaceInfo } from '@ide/protocol';
 import { logger, type Logger } from '../log.js';
 import type { ConfigStore } from '../config/store.js';
-import { toAbsolute, toRelative } from './paths.js';
+import { paths } from './paths.js';
 import { Services } from './services.js';
 import type { FindProviders } from '../search/providers.js';
 
@@ -40,7 +40,7 @@ export class Workspace {
   }
 
   resolve(relative: string): string {
-    return toAbsolute(this.root, relative);
+    return paths.toAbsolute(this.root, relative);
   }
 
   get services(): Services {
@@ -52,7 +52,7 @@ export class Workspace {
   }
 
   relative(absolute: string): string {
-    return toRelative(this.root, absolute);
+    return paths.toRelative(this.root, absolute);
   }
 
   attach(session: SessionLike): void {

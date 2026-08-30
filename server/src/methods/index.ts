@@ -1,63 +1,15 @@
 import type { HandlerTable } from '../rpc/context.js';
-import { configGet, configSet } from './config.js';
-import { docClose, docEdit, docMergeFromDisk, docOpen, docReload, docSave, docState } from './doc.js';
-import {
-  fsAbsolute,
-  fsCopy,
-  fsCreate,
-  fsList,
-  fsMove,
-  fsRead,
-  fsRemove,
-  fsReveal,
-  fsWrite,
-  fsWriteBytes,
-} from './fs.js';
-import {
-  gitBranches,
-  gitChanges,
-  gitOutgoing,
-  gitHead,
-  gitRefresh,
-  gitRun,
-  gitState,
-} from './git.js';
-import {
-  lspDefinition,
-  lspDiagnostics,
-  lspHover,
-  lspProblems,
-  lspReferences,
-  lspStatus,
-} from './lsp.js';
-import { mergeCancel, mergeResolve, mergeState } from './merge.js';
-import { pluginsCall, pluginsCode, pluginsList } from './plugins.js';
-import { indexSearch, indexStats } from './search.js';
-import {
-  termAttach,
-  termClose,
-  termCreate,
-  termList,
-  termOpen,
-  termResize,
-  termWrite,
-} from './term.js';
-import { treeList, treeStats } from './tree.js';
-import {
-  workspaceAttach,
-  workspaceBrowse,
-  workspaceClose,
-  workspaceRecent,
-  workspaceRoots,
-  envPackageManagers,
-  envShells,
-  visitsGet,
-  visitsSet,
-  workspaceCurrent,
-  workspaceDetach,
-  workspaceList,
-  workspaceOpen,
-} from './workspace.js';
+import { configMethods } from './config.js';
+import { docMethods } from './doc.js';
+import { fsMethods } from './fs.js';
+import { gitMethods } from './git.js';
+import { lspMethods } from './lsp.js';
+import { mergeMethods } from './merge.js';
+import { pluginMethods } from './plugins.js';
+import { searchMethods } from './search.js';
+import { termMethods } from './term.js';
+import { treeMethods } from './tree.js';
+import { envMethods, visitsMethods, workspaceMethods } from './workspace.js';
 
 export const handlers: HandlerTable = {
   'server.ping': (_params, ctx) => ({
@@ -65,75 +17,75 @@ export const handlers: HandlerTable = {
     pid: process.pid,
   }),
 
-  'config.get': configGet,
-  'config.set': configSet,
+  'config.get': (p, c) => configMethods.get(p, c),
+  'config.set': (p, c) => configMethods.set(p, c),
 
-  'workspace.open': workspaceOpen,
-  'workspace.attach': workspaceAttach,
-  'workspace.detach': workspaceDetach,
-  'workspace.list': workspaceList,
-  'workspace.current': workspaceCurrent,
-  'workspace.close': workspaceClose,
-  'workspace.browse': workspaceBrowse,
-  'env.shells': envShells,
-  'env.packageManagers': envPackageManagers,
-  'visits.get': visitsGet,
-  'visits.set': visitsSet,
-  'workspace.roots': workspaceRoots,
-  'workspace.recent': workspaceRecent,
+  'workspace.open': (p, c) => workspaceMethods.open(p, c),
+  'workspace.attach': (p, c) => workspaceMethods.attach(p, c),
+  'workspace.detach': (p, c) => workspaceMethods.detach(p, c),
+  'workspace.list': (p, c) => workspaceMethods.list(p, c),
+  'workspace.current': (p, c) => workspaceMethods.current(p, c),
+  'workspace.close': (p, c) => workspaceMethods.close(p, c),
+  'workspace.browse': (p, c) => workspaceMethods.browse(p, c),
+  'env.shells': (p, c) => envMethods.shells(p, c),
+  'env.packageManagers': (p, c) => envMethods.packageManagers(p, c),
+  'visits.get': (p, c) => visitsMethods.get(p, c),
+  'visits.set': (p, c) => visitsMethods.set(p, c),
+  'workspace.roots': (p, c) => workspaceMethods.roots(p, c),
+  'workspace.recent': (p, c) => workspaceMethods.recent(p, c),
 
-  'fs.list': fsList,
-  'fs.read': fsRead,
-  'fs.write': fsWrite,
-  'fs.create': fsCreate,
-  'fs.move': fsMove,
-  'fs.copy': fsCopy,
-  'fs.remove': fsRemove,
-  'fs.writeBytes': fsWriteBytes,
-  'fs.reveal': fsReveal,
-  'fs.absolute': fsAbsolute,
+  'fs.list': (p, c) => fsMethods.list(p, c),
+  'fs.read': (p, c) => fsMethods.read(p, c),
+  'fs.write': (p, c) => fsMethods.write(p, c),
+  'fs.create': (p, c) => fsMethods.create(p, c),
+  'fs.move': (p, c) => fsMethods.move(p, c),
+  'fs.copy': (p, c) => fsMethods.copy(p, c),
+  'fs.remove': (p, c) => fsMethods.remove(p, c),
+  'fs.writeBytes': (p, c) => fsMethods.writeBytes(p, c),
+  'fs.reveal': (p, c) => fsMethods.reveal(p, c),
+  'fs.absolute': (p, c) => fsMethods.absolute(p, c),
 
-  'tree.list': treeList,
-  'tree.stats': treeStats,
-  'doc.open': docOpen,
-  'doc.edit': docEdit,
-  'doc.save': docSave,
-  'doc.reload': docReload,
-  'doc.state': docState,
-  'doc.mergeFromDisk': docMergeFromDisk,
-  'doc.close': docClose,
+  'tree.list': (p, c) => treeMethods.list(p, c),
+  'tree.stats': (p, c) => treeMethods.stats(p, c),
+  'doc.open': (p, c) => docMethods.open(p, c),
+  'doc.edit': (p, c) => docMethods.edit(p, c),
+  'doc.save': (p, c) => docMethods.save(p, c),
+  'doc.reload': (p, c) => docMethods.reload(p, c),
+  'doc.state': (p, c) => docMethods.state(p, c),
+  'doc.mergeFromDisk': (p, c) => docMethods.mergeFromDisk(p, c),
+  'doc.close': (p, c) => docMethods.close(p, c),
 
-  'index.search': indexSearch,
-  'index.stats': indexStats,
+  'index.search': (p, c) => searchMethods.search(p, c),
+  'index.stats': (p, c) => searchMethods.stats(p, c),
 
-  'lsp.status': lspStatus,
-  'lsp.hover': lspHover,
-  'lsp.problems': lspProblems,
-  'lsp.diagnostics': lspDiagnostics,
-  'lsp.definition': lspDefinition,
-  'lsp.references': lspReferences,
+  'lsp.status': (p, c) => lspMethods.status(p, c),
+  'lsp.hover': (p, c) => lspMethods.hover(p, c),
+  'lsp.problems': (p, c) => lspMethods.problems(p, c),
+  'lsp.diagnostics': (p, c) => lspMethods.diagnostics(p, c),
+  'lsp.definition': (p, c) => lspMethods.definition(p, c),
+  'lsp.references': (p, c) => lspMethods.references(p, c),
 
-  'plugins.list': pluginsList,
-  'plugins.code': pluginsCode,
-  'plugins.call': pluginsCall,
+  'plugins.list': (p, c) => pluginMethods.list(p, c),
+  'plugins.code': (p, c) => pluginMethods.code(p, c),
+  'plugins.call': (p, c) => pluginMethods.call(p, c),
 
-  'git.state': gitState,
-  'git.branches': gitBranches,
-  'git.outgoing': gitOutgoing,
-  'git.changes': gitChanges,
-  'git.refresh': gitRefresh,
-  'git.head': gitHead,
-  'git.run': gitRun,
+  'git.state': (p, c) => gitMethods.state(p, c),
+  'git.branches': (p, c) => gitMethods.branches(p, c),
+  'git.outgoing': (p, c) => gitMethods.outgoing(p, c),
+  'git.changes': (p, c) => gitMethods.changes(p, c),
+  'git.refresh': (p, c) => gitMethods.refresh(p, c),
+  'git.head': (p, c) => gitMethods.head(p, c),
+  'git.run': (p, c) => gitMethods.run(p, c),
 
-  'merge.state': mergeState,
-  'merge.resolve': mergeResolve,
-  'merge.cancel': mergeCancel,
+  'merge.state': (p, c) => mergeMethods.state(p, c),
+  'merge.resolve': (p, c) => mergeMethods.resolve(p, c),
+  'merge.cancel': (p, c) => mergeMethods.cancel(p, c),
 
-  'term.list': termList,
-  'term.create': termCreate,
-  'term.open': termOpen,
-  'term.attach': termAttach,
-  'term.write': termWrite,
-  'term.resize': termResize,
-  'term.close': termClose,
+  'term.list': (p, c) => termMethods.list(p, c),
+  'term.create': (p, c) => termMethods.create(p, c),
+  'term.open': (p, c) => termMethods.open(p, c),
+  'term.attach': (p, c) => termMethods.attach(p, c),
+  'term.write': (p, c) => termMethods.write(p, c),
+  'term.resize': (p, c) => termMethods.resize(p, c),
+  'term.close': (p, c) => termMethods.close(p, c),
 };

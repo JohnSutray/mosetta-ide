@@ -14,7 +14,7 @@ import { RpcErrorCode } from '@ide/protocol';
 import { RpcError } from '../errors.js';
 import type { Logger } from '../log.js';
 import type { RamEvent, RamFs } from '../fs/ram-fs.js';
-import { extensionOf } from '../workspace/paths.js';
+import { paths } from '../workspace/paths.js';
 import { encodeFrame, FrameDecoder } from './codec.js';
 import { initOptionsFor } from '../env/toolchain.js';
 import { launchPlan } from '../env/exec.js';
@@ -145,7 +145,7 @@ export class LspServer {
   }
 
   handles(key: string): boolean {
-    return this.extensions.has(extensionOf(key));
+    return this.extensions.has(paths.extensionOf(key));
   }
 
   async checkProject(
@@ -158,7 +158,7 @@ export class LspServer {
     const checked = new Set(this.settings.checkExtensions ?? TYPED);
     const queue: string[] = [];
     for (const file of this.ram.files()) {
-      if (!checked.has(extensionOf(file.path)) || skip(file.path)) continue;
+      if (!checked.has(paths.extensionOf(file.path)) || skip(file.path)) continue;
       if (this.openDocs.has(file.path)) continue;
       queue.push(file.path);
     }
@@ -455,7 +455,7 @@ interface PublishDiagnostics {
 }
 
 function languageIdFor(key: string): string {
-  switch (extensionOf(key)) {
+  switch (paths.extensionOf(key)) {
     case 'ts':
     case 'mts':
     case 'cts':
