@@ -78,9 +78,18 @@ export class Registry {
     const schema = this.schemas.get(key);
     if (!schema) return;
     if (schema.validate(entry.value)) return;
-    const why = (schema.validate.errors ?? [])
-      .map((error) => `${error.instancePath || '/'} ${error.message ?? ''}`)
-      .join('; ');
-    this.complain(`${entry.by} пишет в «${key}» запись не той формы: ${why}`);
+    this.complain(`${entry.by} пишет в «${key}» запись не той формы: ${why(schema.validate)}`);
   }
+}
+
+export function why(validate: ValidateFunction): string {
+  return (validate.errors ?? [])
+    .map((error) => {
+      const where = error.instancePath || '/';
+      const params = error.params as Record<string, unknown> | undefined;
+      const named = params?.['additionalProperty'] ?? params?.['missingProperty'];
+      const extra = typeof named === 'string' ? ` «${named}»` : '';
+      return `${where} ${error.message ?? ''}${extra}`;
+    })
+    .join('; ');
 }
