@@ -55,11 +55,6 @@ export function complains(
   return swallows(key, opts.clip);
 }
 
-interface Installed {
-  setKeymap(keymap: Keymap): void;
-  dispose(): void;
-}
-
 function mainFromCode(code: string): string | null {
   const letter = /^Key([A-Z])$/.exec(code);
   if (letter) return letter[1]!.toLowerCase();
@@ -82,30 +77,47 @@ const BY_CHAR: Record<string, string> = {
 const BARE_MODIFIERS = new Set(['Shift', 'Control', 'Alt', 'Meta']);
 const DOUBLE_TAP_MS = 400;
 
-export function installDispatcher(
-  resolveContext: ContextResolver,
-  onUnbound: (key: string) => void,
-): Installed {
-  let bindings: KeyBinding[] = [];
-  let clipKeys: ReadonlySet<string> = new Set<string>();
+export class Dispatcher {
+  private bindings: KeyBinding[] = [];
+  private clipKeys: ReadonlySet<string> = new Set<string>();
 
-  let holding: { key: string; clean: boolean } | null = null;
-  let lastTapKey = '';
-  let lastTapAt = 0;
+  private holding: { key: string; clean: boolean } | null = null;
+  private lastTapKey = '';
+  private lastTapAt = 0;
 
-  const fire = (key: string, event: KeyboardEvent): void => {
-    const context = resolveContext();
-    const own = bindings.find((b) => (b.when ?? 'global') === context && b.key === key);
+  constructor(
+    private readonly resolveContext: ContextResolver,
+    private readonly onUnbound: (key: string) => void,
+  ) {
+    window.addEventListener('keydown', this.onKeyDown, { capture: true });
+    window.addEventListener('keyup', this.onKeyUp, { capture: true });
+  }
+
+  setKeymap(keymap: Keymap): void {
+    this.bindings = keymap.bindings.filter((binding) => appliesHere(binding));
+    this.clipKeys = new Set(
+      this.bindings.filter((binding) => CLIPBOARD.has(binding.command)).map((b) => b.key),
+    );
+  }
+
+  dispose(): void {
+    window.removeEventListener('keydown', this.onKeyDown, { capture: true });
+    window.removeEventListener('keyup', this.onKeyUp, { capture: true });
+  }
+
+  private fire(key: string, event: KeyboardEvent): void {
+    const context = this.resolveContext();
+    const own = this.bindings.find((b) => (b.when ?? 'global') === context && b.key === key);
     const binding =
       own ??
       (OWNING.has(context)
         ? undefined
-        : bindings.find((b) => (b.when ?? 'global') === 'global' && b.key === key));
+        : this.bindings.find((b) => (b.when ?? 'global') === 'global' && b.key === key));
 
     keysHelp.echo(key, context, binding?.command ?? null);
     if (!binding) {
-      if (!CAPTURING.has(context) && complains(key, { repeat: event.repeat, clip: clipKeys })) {
-        onUnbound(key);
+      if (!CAPTURING.has(context) && complains(key, { repeat: event.repeat, clip: this.clipKeys })) {
+        this.onUnbound(key);
       }
       return;
     }
@@ -126,56 +138,47 @@ export function installDispatcher(
     }
   };
 
-  const onKeyDown = (event: KeyboardEvent) => {
+  private onKeyDown = (event: KeyboardEvent): void => {
     if (isBareModifier(event)) {
       const name = modifierName(event);
-      holding ??= { key: name, clean: !hasOtherModifier(event, name) };
+      this.holding ??= { key: name, clean: !hasOtherModifier(event, name) };
     } else {
-      if (holding) holding.clean = false;
-      lastTapAt = 0;
+      if (this.holding) this.holding.clean = false;
+      this.lastTapAt = 0;
     }
 
     const key = eventToKey(event);
     if (!key || typedIntoField(event)) return;
-    fire(key, event);
-    if (!event.defaultPrevented && swallows(key, clipKeys)) event.preventDefault();
+    this.fire(key, event);
+    if (!event.defaultPrevented && swallows(key, this.clipKeys)) event.preventDefault();
   };
 
-  const onKeyUp = (event: KeyboardEvent) => {
+  private onKeyUp = (event: KeyboardEvent): void => {
     if (!isBareModifier(event)) return;
     const name = modifierName(event);
-    const pressed = holding;
-    holding = null;
+    const pressed = this.holding;
+    this.holding = null;
     if (!pressed || pressed.key !== name || !pressed.clean) {
-      lastTapAt = 0;
+      this.lastTapAt = 0;
       return;
     }
 
     const now = performance.now();
-    if (lastTapKey === name && now - lastTapAt <= DOUBLE_TAP_MS) {
-      lastTapAt = 0;
-      fire(`double:${name}`, event);
+    if (this.lastTapKey === name && now - this.lastTapAt <= DOUBLE_TAP_MS) {
+      this.lastTapAt = 0;
+      this.fire(`double:${name}`, event);
       return;
     }
-    lastTapKey = name;
-    lastTapAt = now;
+    this.lastTapKey = name;
+    this.lastTapAt = now;
   };
+}
 
-  window.addEventListener('keydown', onKeyDown, { capture: true });
-  window.addEventListener('keyup', onKeyUp, { capture: true });
-
-  return {
-    setKeymap(keymap) {
-      bindings = keymap.bindings.filter((binding) => appliesHere(binding));
-      clipKeys = new Set(
-        bindings.filter((binding) => CLIPBOARD.has(binding.command)).map((b) => b.key),
-      );
-    },
-    dispose() {
-      window.removeEventListener('keydown', onKeyDown, { capture: true });
-      window.removeEventListener('keyup', onKeyUp, { capture: true });
-    },
-  };
+export function installDispatcher(
+  resolveContext: ContextResolver,
+  onUnbound: (key: string) => void,
+): Dispatcher {
+  return new Dispatcher(resolveContext, onUnbound);
 }
 
 export function typedIntoField(event: KeyboardEvent): boolean {
