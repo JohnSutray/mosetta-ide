@@ -1,3 +1,4 @@
+import { treeFollow } from './state/tree-follow.js';
 import { commands } from './keys/commands.js';
 import { keysHelp } from './state/keys-help.js';
 import { editorFocus } from './state/editor.js';
@@ -13,8 +14,6 @@ import { merge } from './state/merge.js';
 import { projects } from './state/projects.js';
 import { tools } from './state/tools.js';
 import { branchesWindow, pushWindow } from './state/git.js';
-import { toggleFollow } from './state/tree-follow.js';
-import { resolveContext } from './keys/context.js';
 import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
 
@@ -63,7 +62,7 @@ export function registerCommands(): void {
   commands.register('tree.paste', () => onFocused((path, isDir) => void treeOps.pasteInto(path, isDir)));
   commands.register('tree.copyPath', () => onPicked((path) => void treeOps.copyAbsolutePath(path)));
   commands.register('tree.reveal', () => onPicked((path) => void treeOps.revealInOs(path)));
-  commands.register('tree.follow', () => void toggleFollow());
+  commands.register('tree.follow', () => void treeFollow.toggle());
   commands.register('panel.terminal', () => {
     terminalPanelVisible.value = !terminalPanelVisible.value;
   });
@@ -119,5 +118,3 @@ function onPicked(run: (path: string, isDir: boolean) => void): void {
   if (!path) return;
   onFocused(run);
 }
-
-export { resolveContext };

@@ -1,9 +1,9 @@
+import { keyContexts } from '../src/keys/context.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { Keymap } from '@ide/protocol';
-import { contextOf } from '../src/keys/context.js';
 
 const SRC = fileURLToPath(new URL('../src', import.meta.url));
 const PLUGINS = fileURLToPath(new URL('../../plugins', import.meta.url));
@@ -67,10 +67,10 @@ describe('контексты клавиш', () => {
   it('контекст берётся у сфокусированного элемента, иначе — global', () => {
     const surface = { getAttribute: () => 'prompt' } as unknown as Element;
     const focused = { closest: () => surface } as unknown as Element;
-    expect(contextOf(focused)).toBe('prompt');
+    expect(keyContexts.of(focused)).toBe('prompt');
 
     const loner = { closest: () => null } as unknown as Element;
-    expect(contextOf(loner)).toBe('global');
-    expect(contextOf(null)).toBe('global');
+    expect(keyContexts.of(loner)).toBe('global');
+    expect(keyContexts.of(null)).toBe('global');
   });
 });

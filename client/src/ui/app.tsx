@@ -1,3 +1,5 @@
+import { keyContexts } from '../keys/context.js';
+import { treeFollow } from '../state/tree-follow.js';
 import { commands } from '../keys/commands.js';
 import { geometry } from '../state/layout.js';
 import { keysHelp } from '../state/keys-help.js';
@@ -23,9 +25,8 @@ import { languages } from '../editor/languages.js';
 import { codePainter } from '../editor/paint-line.js';
 import { lineDiff } from '../editor/line-diff.js';
 import { inputKeymap } from '../editor/input-keymap.js';
-import { registerCommands, resolveContext } from '../commands.js';
+import { registerCommands } from '../commands.js';
 import { installDispatcher } from '../keys/dispatcher.js';
-import { follow, following } from '../state/tree-follow.js';
 import { SearchEverywhere } from './search-everywhere.js';
 import { Branches } from './branches.js';
 import { Notifications } from './notifications.js';
@@ -127,7 +128,7 @@ export function App() {
       const dead = commands.missing();
       if (dead.length) console.warn('[web-ide] команды без реализации:', dead.join(', '));
     });
-    const dispatcher = installDispatcher(resolveContext, (key) => keysHelp.noteUnbound(key));
+    const dispatcher = installDispatcher(() => keyContexts.here(), (key) => keysHelp.noteUnbound(key));
     dispatcher.setKeymap(config.keymap.peek());
     const stop = config.keymap.subscribe((value) => dispatcher.setKeymap(value));
     const mouse = visits.installMouseNav();
@@ -149,8 +150,8 @@ export function App() {
   }, [file?.path]);
 
   useEffect(() => {
-    void follow();
-  }, [file?.path, following.value]);
+    void treeFollow.now();
+  }, [file?.path, treeFollow.on.value]);
 
   useEffect(() => {
     if (ws) projects.hide();
