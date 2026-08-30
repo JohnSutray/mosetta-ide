@@ -165,7 +165,8 @@ export class PluginHost {
       const built = await buildEntry(path.join(dir, manifest.server), 'server', peers);
       await fs.mkdir(this.buildDir, { recursive: true });
       const out = path.join(this.buildDir, `${name.replace(/[^\w.-]/g, '_')}.server.mjs`);
-      await fs.writeFile(out, built.code, 'utf8');
+      const before = await fs.readFile(out, 'utf8').catch(() => null);
+      if (before !== built.code) await fs.writeFile(out, built.code, 'utf8');
       const mod = (await import(`${pathToFileURL(out).href}?v=${Date.now()}`)) as {
         default?: PluginClass;
       };
