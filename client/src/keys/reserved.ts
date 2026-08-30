@@ -29,7 +29,7 @@ const WIN: KeyScope[] = ['browser:win', 'electron:win'];
 const CHROME_MAC: KeyScope[] = ['browser:mac'];
 const CHROME_WIN: KeyScope[] = ['browser:win'];
 
-export const RESERVED: ReservedKey[] = [
+const TABLE: ReservedKey[] = [
   { key: 'meta+tab', scopes: MAC, who: 'macOS', what: 'switch apps' },
   { key: 'meta+shift+tab', scopes: MAC, who: 'macOS', what: 'switch apps back' },
   { key: 'meta+q', scopes: MAC, who: 'macOS', what: 'quit the app' },
@@ -184,48 +184,54 @@ export const RESERVED: ReservedKey[] = [
   { key: 'alt+home', scopes: CHROME_WIN, who: 'Chrome', what: 'home page', soft: true },
 ];
 
-export function reservedIn(scopes: KeyScope[]): ReservedKey[] {
-  const here = new Set(scopes);
-  return RESERVED.filter((item) => item.scopes.some((scope) => here.has(scope)));
-}
+export class Reserved {
+  readonly table = TABLE;
 
-export function hardIn(scopes: KeyScope[]): ReservedKey[] {
-  return reservedIn(scopes).filter((item) => !item.soft);
-}
-
-export function physicalOf(key: string, modIsMeta: boolean, isMac: boolean): string {
-  if (key.startsWith('double:')) {
-    return `double:${physicalOf(key.slice('double:'.length), modIsMeta, isMac)}`;
+  in(scopes: KeyScope[]): ReservedKey[] {
+    const here = new Set(scopes);
+    return this.table.filter((item) => item.scopes.some((scope) => here.has(scope)));
   }
-  const lead = modIsMeta ? 'meta' : 'control';
-  const clip = isMac ? 'meta' : 'control';
-  const parts = key.split('+').map((part) => {
-    if (part === 'mod') return lead;
-    if (part === 'clip') return clip;
-    if (part === 'cmd') return 'meta';
-    if (part === 'ctrl') return 'control';
-    return part;
-  });
-  const main = parts.pop() ?? '';
-  const mods = new Set(parts);
-  const out: string[] = [];
-  if (mods.has('meta')) out.push('meta');
-  if (mods.has('control')) out.push('control');
-  if (mods.has('alt')) out.push('alt');
-  if (mods.has('shift')) out.push('shift');
-  out.push(main);
-  return out.join('+');
+
+  hardIn(scopes: KeyScope[]): ReservedKey[] {
+    return this.in(scopes).filter((item) => !item.soft);
+  }
+
+  physicalOf(key: string, modIsMeta: boolean, isMac: boolean): string {
+    if (key.startsWith('double:')) {
+      return `double:${this.physicalOf(key.slice('double:'.length), modIsMeta, isMac)}`;
+    }
+    const lead = modIsMeta ? 'meta' : 'control';
+    const clip = isMac ? 'meta' : 'control';
+    const parts = key.split('+').map((part) => {
+      if (part === 'mod') return lead;
+      if (part === 'clip') return clip;
+      if (part === 'cmd') return 'meta';
+      if (part === 'ctrl') return 'control';
+      return part;
+    });
+    const main = parts.pop() ?? '';
+    const mods = new Set(parts);
+    const out: string[] = [];
+    if (mods.has('meta')) out.push('meta');
+    if (mods.has('control')) out.push('control');
+    if (mods.has('alt')) out.push('alt');
+    if (mods.has('shift')) out.push('shift');
+    out.push(main);
+    return out.join('+');
+  }
+
+  modIsMetaIn(host: KeyHost, os: KeyOs): boolean {
+    return os === 'mac' && host === 'electron';
+  }
+
+  keyIn(
+    binding: { key: string; keys?: Partial<Record<KeyScope, string>> },
+    host: KeyHost,
+    os: KeyOs,
+  ): string {
+    const own = binding.keys?.[`${host}:${os}`] ?? binding.keys?.[host] ?? binding.key;
+    return this.physicalOf(own, this.modIsMetaIn(host, os), os === 'mac');
+  }
 }
 
-export function modIsMetaIn(host: KeyHost, os: KeyOs): boolean {
-  return os === 'mac' && host === 'electron';
-}
-
-export function keyIn(
-  binding: { key: string; keys?: Partial<Record<KeyScope, string>> },
-  host: KeyHost,
-  os: KeyOs,
-): string {
-  const own = binding.keys?.[`${host}:${os}`] ?? binding.keys?.[host] ?? binding.key;
-  return physicalOf(own, modIsMetaIn(host, os), os === 'mac');
-}
+export const reserved = new Reserved();

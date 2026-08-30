@@ -3,7 +3,7 @@ import { keysHelp } from '../state/keys-help.js';
 import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
 import { mechanicsKeys } from '../editor/input-keymap.js';
 import { keyHost } from './host.js';
-import { reservedIn } from './reserved.js';
+import { reserved } from './reserved.js';
 
 export type ContextResolver = () => KeyContext;
 
@@ -24,7 +24,7 @@ const OWNING = new Set<KeyContext>(['terminal']);
 
 const MECHANICS = mechanicsKeys(keyHost.isMac);
 
-const TAKEN = reservedIn(keyHost.scopes);
+const TAKEN = reserved.in(keyHost.scopes);
 
 const SOFT_TAKEN = new Set(TAKEN.filter((item) => item.soft).map((item) => item.key));
 

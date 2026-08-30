@@ -1,7 +1,7 @@
+import { reserved } from '../src/keys/reserved.js';
 import { describe, expect, it } from 'vitest';
 import { complains, eventToKey, swallows, typedIntoField } from '../src/keys/dispatcher.js';
 import { keyHost } from '../src/keys/host.js';
-import { hardIn } from '../src/keys/reserved.js';
 import { mechanicsKeys } from '../src/editor/input-keymap.js';
 import { WORLDS, inWorld, keymap } from './keymap-shared.js';
 
@@ -223,7 +223,7 @@ describe('двойные модификаторы', () => {
 
   it('двойной тап живёт там, где голый тап свободен', () => {
     for (const world of WORLDS) {
-      const taken = new Set(hardIn([world.scope]).map((item) => item.key));
+      const taken = new Set(reserved.hardIn([world.scope]).map((item) => item.key));
       const doubles = inWorld(keymap().bindings, world).filter((b) => b.key.startsWith('double:'));
       for (const binding of doubles) {
         expect(taken.has(binding.key.slice(7)), `${world.scope}: ${binding.key}`).toBe(false);

@@ -1,9 +1,9 @@
+import { reserved } from '../keys/reserved.js';
 import { keysHelp } from '../state/keys-help.js';
 import { config } from '../state/config.js';
 import { Fragment } from 'preact';
 import type { KeyBinding, KeyContext, KeyScope } from '@ide/protocol';
 import { keyHost } from '../keys/host.js';
-import { reservedIn } from '../keys/reserved.js';
 import { i18n } from '../i18n/index.js';
 import { Popup } from './popup.js';
 
@@ -14,7 +14,7 @@ export function KeysHelp() {
   const echo = keysHelp.lastKey.value;
   const host = keysHelp.viewHost.value ?? keyHost.host;
   const elsewhere = host !== keyHost.host;
-  const taken = reservedIn([host, `${host}:${keyHost.os}` as KeyScope]);
+  const taken = reserved.in([host, `${host}:${keyHost.os}` as KeyScope]);
   const gone = taken.filter((item) => !item.soft);
   const ours = taken.filter((item) => item.soft);
 
