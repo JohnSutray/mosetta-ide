@@ -52,7 +52,6 @@ export function complain(message: string): void {
 export const diagnostics = signal<Map<string, Diagnostic[]>>(new Map());
 export const lspStatuses = signal<LspStatus[]>([]);
 export const treePanelVisible = persisted('panel.tree', true);
-export const editorPanelVisible = persisted('panel.editor', true);
 export const terminalPanelVisible = persisted('panel.terminal', false);
 
 export const brokenPaths = computed<Set<string>>(() => {
@@ -224,7 +223,6 @@ export async function openFileAt(path: string) {
     const doc = await rpc.call('doc.open', { path });
     docSync.attach(doc);
     batch(() => {
-      editorPanelVisible.value = true;
       fileHistory.value = [path, ...fileHistory.value.filter((item) => item !== path)].slice(0, 20);
       openFile.value = doc;
       dirty.value = doc.dirty;
@@ -258,6 +256,16 @@ export async function closeFile(): Promise<void> {
 export function editDoc(text: string) {
   dirty.value = true;
   docSync.edit(text);
+}
+
+export function replaceText(text: string): void {
+  const file = openFile.value;
+  if (!file || file.text === text) return;
+  batch(() => {
+    openFile.value = { ...file, text };
+    externalEpoch.value += 1;
+  });
+  editDoc(text);
 }
 
 let onSaveConflict: ((path: string) => void) | null = null;

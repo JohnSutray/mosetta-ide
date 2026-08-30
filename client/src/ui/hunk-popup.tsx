@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import { activeEditor } from '../state/editor.js';
+import { openFile } from '../state/session.js';
 import { closeHunk, hunkPopup, revertOpenHunk } from '../state/git-marks.js';
 import { enter, leave } from '../state/popups.js';
 import { t } from '../i18n/index.js';
@@ -8,7 +8,7 @@ export function HunkPopup() {
   const open = hunkPopup.value;
   const self = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(open ? open.box.bottom + 4 : 0);
-  const alive = activeEditor.value !== null;
+  const alive = openFile.value !== null;
 
   useLayoutEffect(() => {
     if (!open || !self.current) return;

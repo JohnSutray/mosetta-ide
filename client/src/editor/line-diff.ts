@@ -193,3 +193,23 @@ export function splitLines(text: string): string[] {
   if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop();
   return lines;
 }
+
+export function revertedText(text: string, hunk: Hunk): string {
+  const lines = splitLines(text);
+  const restored = hunk.before;
+
+  if (hunk.kind === 'added') {
+    const from = Math.min(hunk.from, lines.length + 1) - 1;
+    const to = Math.min(hunk.to, lines.length);
+    return [...lines.slice(0, from), ...lines.slice(to)].join('\n');
+  }
+
+  if (hunk.kind === 'modified') {
+    const from = Math.min(hunk.from, lines.length) - 1;
+    const to = Math.min(hunk.to, lines.length);
+    return [...lines.slice(0, from), ...restored, ...lines.slice(to)].join('\n');
+  }
+
+  const at = Math.min(hunk.from, lines.length + 1) - 1;
+  return [...lines.slice(0, at), ...restored, ...lines.slice(at)].join('\n');
+}

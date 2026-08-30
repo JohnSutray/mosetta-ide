@@ -32,6 +32,7 @@ export default class Layout {
         ))}
 
         {side('main').map((panel) => this.column(panel))}
+        {side('main').length === 0 && <div class="columns-rest" />}
 
         {side('right').map((panel) => (
           <Fragment key={panel.id}>

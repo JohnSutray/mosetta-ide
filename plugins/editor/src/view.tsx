@@ -9,19 +9,24 @@ import {
   highlightSpecialChars,
 } from '@codemirror/view';
 import { history } from '@codemirror/commands';
-import { inputKeymap } from './input-keymap.js';
 import { activeLine } from './active-line.js';
-import { chordHeld } from '../keys/chords.js';
 import { bracketMatching, indentOnInput, foldGutter } from '@codemirror/language';
 import { highlightSelectionMatches } from '@codemirror/search';
+import type { KeyBinding } from '@codemirror/view';
 import type { Diagnostic, DocState, EditorSettings, HoverInfo } from '@ide/protocol';
-import { darcula, textStyle } from './darcula.js';
-import { languageFor } from './languages.js';
+import {
+  chordHeld,
+  darcula,
+  inputKeymap,
+  languageFor,
+  takeFocusOnMount,
+  textStyle,
+  type Hunk,
+  type HunkBox,
+} from '@ide/api/client';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
-import { gitGutter, setHeadText, type HunkBox } from './git-marks.js';
-import type { Hunk } from './line-diff.js';
+import { gitGutter, setHeadText } from './git-marks.js';
 import { lspHover } from './hover.js';
-import { takeFocusOnMount } from '../state/editor.js';
 
 const externalUpdate = Annotation.define<boolean>();
 
@@ -31,6 +36,7 @@ interface Props {
   onHunk: (hunk: Hunk, box: HunkBox) => void;
   externalEpoch: number;
   reveal: { path: string; line: number; character?: number; epoch: number } | null;
+  wantsFocus: number;
   settings: EditorSettings;
   diagnostics: Diagnostic[];
   onEdit: (text: string) => void;
@@ -40,12 +46,13 @@ interface Props {
   onMount: (view: EditorView | null) => void;
 }
 
-export function Editor({
+export function CodeEditor({
   file,
   head,
   onHunk,
   externalEpoch,
   reveal,
+  wantsFocus,
   settings,
   diagnostics,
   onEdit,
@@ -73,7 +80,7 @@ export function Editor({
       bracketMatching(),
       activeLine,
       highlightSelectionMatches(),
-      keymap.of([...inputKeymap]),
+      keymap.of([...(inputKeymap as KeyBinding[])]),
       EditorView.updateListener.of((update) => {
         if (update.selectionSet || update.docChanged) {
           const at = update.state.selection.main.head;
@@ -94,7 +101,7 @@ export function Editor({
           return true;
         },
       }),
-      darcula,
+      darcula as Extension,
       gitGutter((hunk, box) => handlers.current.onHunk(hunk, box)),
       diagnosticsExtension,
       lspHover(
@@ -107,7 +114,7 @@ export function Editor({
         '.cm-cursor, .cm-dropCursor': { borderLeftWidth: `${settings.caretWidth}px` },
       }),
       EditorState.tabSize.of(settings.tabSize),
-      languageFor(file.path),
+      languageFor(file.path) as Extension,
       EditorState.readOnly.of(file.truncated),
     ];
 
@@ -147,6 +154,13 @@ export function Editor({
       annotations: externalUpdate.of(true),
     });
   }, [externalEpoch]);
+
+  const focusSeen = useRef(wantsFocus);
+  useEffect(() => {
+    if (wantsFocus === focusSeen.current) return;
+    focusSeen.current = wantsFocus;
+    view.current?.focus();
+  }, [wantsFocus]);
 
   useEffect(() => {
     const instance = view.current;

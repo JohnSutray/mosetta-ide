@@ -3,11 +3,26 @@ import { useEffect } from 'preact/hooks';
 import { keymap as keymapSignal, settings as settingsSignal } from '../state/config.js';
 import {
   current,
+  closeFile,
+  currentDiagnostics,
+  dirty,
+  editDoc,
+  externalEpoch,
   openFile,
   openFilePath,
   complain,
+  rpc,
   title,
 } from '../state/session.js';
+import { headFor, loadHead, showHunk } from '../state/git-marks.js';
+import { askSymbol } from '../state/symbols.js';
+import { takeFocusOnMount, wantsFocus } from '../state/editor.js';
+import { chordHeld } from '../keys/chords.js';
+import { dc, darcula, textStyle } from '../editor/darcula.js';
+import { languageFor } from '../editor/languages.js';
+import { paintCode } from '../editor/paint-line.js';
+import { diffLines } from '../editor/line-diff.js';
+import { inputKeymap } from '../editor/input-keymap.js';
 import { allProblems } from '../state/session.js';
 import { registerCommands, resolveContext, missingCommands } from '../commands.js';
 import { installDispatcher } from '../keys/dispatcher.js';
@@ -36,7 +51,6 @@ import { runCommand } from '../keys/commands.js';
 import { Projects } from './projects.js';
 import { t } from '../i18n/index.js';
 import { hideProjects, showProjects } from '../state/projects.js';
-import { loadHead } from '../state/git-marks.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
 import { MergeScreen } from './merge.js';
@@ -101,12 +115,33 @@ export function App() {
       settings: settingsSignal,
       Resizer,
       widthOf,
+      openDoc: openFile,
+      editDoc,
+      closeFile,
+      dirty,
+      fileDiagnostics: currentDiagnostics,
+      externalEpoch,
+      pendingReveal,
+      headFor,
+      visit,
+      diffLines,
+      showHunk,
+      askSymbol,
+      hover: (path, line, character) => rpc.call('lsp.hover', { path, line, character }),
+      takeFocusOnMount,
+      wantsFocus,
+      chordHeld,
+      dc,
+      paintCode,
+      darcula,
+      textStyle,
+      languageFor,
+      inputKeymap,
     };
-    void loadPlugins(surface, store);
-    const dead = missingCommands();
-    if (dead.length) {
-      console.warn('[web-ide] команды без реализации:', dead.join(', '));
-    }
+    void loadPlugins(surface, store).then(() => {
+      const dead = missingCommands();
+      if (dead.length) console.warn('[web-ide] команды без реализации:', dead.join(', '));
+    });
     const dispatcher = installDispatcher(resolveContext, (key) => noteUnbound(key));
     dispatcher.setKeymap(keymapSignal.peek());
     const stop = keymapSignal.subscribe((value) => dispatcher.setKeymap(value));

@@ -6,6 +6,14 @@ import type { Keymap } from '@ide/protocol';
 import { contextOf } from '../src/keys/context.js';
 
 const SRC = fileURLToPath(new URL('../src', import.meta.url));
+const PLUGINS = fileURLToPath(new URL('../../plugins', import.meta.url));
+
+function pluginSources(): string[] {
+  return fs
+    .readdirSync(PLUGINS, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(PLUGINS, entry.name, 'src')))
+    .flatMap((entry) => sources(path.join(PLUGINS, entry.name, 'src')));
+}
 const KEYMAP = fileURLToPath(new URL('../../config/keymap.json', import.meta.url));
 const PROTOCOL = fileURLToPath(new URL('../../protocol/src/config.ts', import.meta.url));
 
@@ -19,7 +27,7 @@ function sources(dir: string): string[] {
 
 function declared(): Set<string> {
   const found = new Set<string>();
-  for (const text of sources(SRC)) {
+  for (const text of [...sources(SRC), ...pluginSources()]) {
     for (const [, name] of text.matchAll(/\bdata-keys="([\w-]+)"/g)) if (name) found.add(name);
     for (const [, name] of text.matchAll(/\bkeys="([\w-]+)"/g)) if (name) found.add(name);
   }

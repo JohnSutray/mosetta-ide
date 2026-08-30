@@ -2,7 +2,6 @@ import { batch, signal } from '@preact/signals';
 import { persisted } from './persist.js';
 import type { SymbolSite } from '@ide/protocol';
 import { complain, openFile, openFileAt, reveal, rpc } from './session.js';
-import { activeEditor } from './editor.js';
 
 export type SymbolKind = 'definition' | 'usages';
 
@@ -46,21 +45,20 @@ export function shownSites(list: SymbolList): SymbolSite[] {
   return filteredSites(list).slice(0, MAX_SITES);
 }
 
-export async function askSymbol(at?: number): Promise<void> {
-  const view = activeEditor.peek();
-  const doc = openFile.peek();
-  if (!view || !doc) return;
+export interface SymbolAsk {
+  line: number;
+  character: number;
+  text: string;
+  box: { x: number; y: number };
+}
 
-  const pos = at ?? view.state.selection.main.head;
-  const line = view.state.doc.lineAt(pos);
-  const spot = {
-    path: doc.path,
-    line: line.number - 1,
-    character: pos - line.from,
-  };
-  const word = wordAt(line.text, spot.character);
-  const coords = view.coordsAtPos(pos);
-  const box = { x: coords?.left ?? 0, y: coords?.bottom ?? 0 };
+export async function askSymbol(where: SymbolAsk): Promise<void> {
+  const doc = openFile.peek();
+  if (!doc) return;
+
+  const spot = { path: doc.path, line: where.line, character: where.character };
+  const word = wordAt(where.text, where.character);
+  const box = where.box;
 
   let definition: SymbolSite[] = [];
   try {

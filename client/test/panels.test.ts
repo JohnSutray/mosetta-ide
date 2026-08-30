@@ -31,15 +31,16 @@ describe('пожелания ядра про панели', () => {
     expect(missing, `панели без пожелания: ${missing.join(', ')}`).toEqual([]);
   });
 
-  it('редактор тоже панель, хоть его и нет в реестре колонок', () => {
-    const editor = wishes().find((one) => one.id === 'editor');
-    expect(editor, 'редактор себя не просит').toBeDefined();
-    expect(editor!.side).toBe('main');
-    expect(editor!.defaultWidth).toBeUndefined();
+  it('середину ядро себе не просит', () => {
+    expect(wishes().filter((one) => one.side === 'main')).toEqual([]);
   });
 
-  it('середина одна', () => {
-    expect(wishes().filter((one) => one.side === 'main')).toHaveLength(1);
+  it('ядро пишет ТОЛЬКО про свои панели и никуда больше', () => {
+    const complaints: string[] = [];
+    const store = new Registry((message) => complaints.push(message));
+    registerPanelWishes(store);
+    const keys = store.describe().filter((one) => one.count > 0);
+    expect(keys.map((one) => one.key)).toEqual(['panel']);
   });
 
   it('навигация слева, рабочее справа', () => {
@@ -64,12 +65,8 @@ describe('пожелания ядра про панели', () => {
     }
   });
 
-  it('заголовок — ключ словаря, а путь файла — отдельным полем', () => {
-    for (const wish of wishes()) {
-      expect(wish.title).toMatch(/^panel\./);
-    }
-    const editor = wishes().find((one) => one.id === 'editor')!;
-    expect(typeof editor.heading).toBe('function');
+  it('заголовок — ключ словаря', () => {
+    for (const wish of wishes()) expect(wish.title).toMatch(/^panel\./);
   });
 
   it('каждую колонку можно закрыть, и содержимое у каждой есть', () => {

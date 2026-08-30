@@ -13,10 +13,12 @@
   },
   "dependencies": {
     "@ide/api": "workspace:*",
+    "@ide/plugin-editor": "workspace:*",
     "@ide/plugin-layout": "workspace:*",
     "@ide/plugin-npm-scripts": "workspace:*",
     "@ide/plugin-problems": "workspace:*",
     "@ide/plugin-rerun": "workspace:*",
+    "@ide/plugin-sheep": "workspace:*",
     "@ide/plugin-toolbar": "workspace:*",
     "@ide/protocol": "workspace:*",
     "esbuild": "0.25.12",

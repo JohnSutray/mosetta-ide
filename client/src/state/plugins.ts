@@ -2,6 +2,11 @@ import * as preact from 'preact';
 import * as hooks from 'preact/hooks';
 import * as signals from '@preact/signals';
 import * as jsxRuntime from 'preact/jsx-runtime';
+import * as cm from '@codemirror/state';
+import * as cmView from '@codemirror/view';
+import * as cmCommands from '@codemirror/commands';
+import * as cmLanguage from '@codemirror/language';
+import * as cmSearch from '@codemirror/search';
 import { signal } from '@preact/signals';
 import type { PluginInfo } from '@ide/protocol';
 import { complain, rpc, say } from './session.js';
@@ -52,6 +57,11 @@ function expose(surface: ClientSurface): void {
     jsx: jsxRuntime,
     hooks,
     signals,
+    cm,
+    cmView,
+    cmCommands,
+    cmLanguage,
+    cmSearch,
     api: { ...surface, remote, stub, activate: activateHook, registry: registryHook },
     plugins: pluginClasses,
   };
@@ -150,7 +160,7 @@ function servicesFor(name: string): Ide {
       };
     },
     panel(spec: PluginPanelSpec): PanelHandle {
-      const open = persisted(`panel.${spec.id}`, false);
+      const open = persisted(`panel.${spec.id}`, spec.startOpen ?? false);
       registerPluginCommand(spec.command, () => {
         open.value = !open.value;
       });
@@ -162,9 +172,13 @@ function servicesFor(name: string): Ide {
           side: spec.side,
           open,
           view: spec.view,
-          close: () => {
-            open.value = false;
-          },
+          ...(spec.heading ? { heading: spec.heading } : {}),
+          ...(spec.badges ? { badges: spec.badges } : {}),
+          close:
+            spec.close ??
+            (() => {
+              open.value = false;
+            }),
           defaultWidth: spec.defaultWidth,
           minWidth: spec.minWidth,
         },

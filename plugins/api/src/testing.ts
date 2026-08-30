@@ -1,16 +1,23 @@
 import Ajv, { type ValidateFunction } from 'ajv';
+import { signal, type Signal } from '@preact/signals';
 import type { ComponentChildren, JSX } from 'preact';
-import type { Settings, TerminalInfo } from '@ide/protocol';
+import type { Diagnostic, DocState, HoverInfo, Settings, TerminalInfo } from '@ide/protocol';
 import { attach, hooksOf, registriesOf } from './client.js';
 import type {
   ClientSurface,
+  CodeChunk,
   FileProblems,
   Found,
   Ide,
   PanelHandle,
+  Hunk,
+  HunkBox,
+  Palette,
   PickProps,
   PluginClass,
   ResizerProps,
+  Reveal,
+  SymbolAsk,
   PluginPanelSpec,
   RegistryHandle,
 } from './client.js';
@@ -60,6 +67,51 @@ export function Resizer(props: ResizerProps): JSX.Element {
 export function widthOf(id: string, fallback: number): number {
   return surface().widthOf(id, fallback);
 }
+export function editDoc(text: string): void {
+  surface().editDoc(text);
+}
+export function closeFile(): Promise<void> {
+  return surface().closeFile();
+}
+export function headFor(path: string | null): string | null {
+  return surface().headFor(path);
+}
+export function visit(path: string, line: number, character: number): void {
+  surface().visit(path, line, character);
+}
+export function diffLines(before: string, after: string): Hunk[] {
+  return surface().diffLines(before, after);
+}
+export function showHunk(hunk: Hunk, box: HunkBox): void {
+  surface().showHunk(hunk, box);
+}
+export function askSymbol(where: SymbolAsk): Promise<void> {
+  return surface().askSymbol(where);
+}
+export function hover(path: string, line: number, character: number): Promise<HoverInfo | null> {
+  return surface().hover(path, line, character);
+}
+export function takeFocusOnMount(): boolean {
+  return surface().takeFocusOnMount();
+}
+export function chordHeld(
+  command: string,
+  event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean },
+): boolean {
+  return surface().chordHeld(command, event);
+}
+export function textStyle(settings: {
+  fontFamily: string;
+  ligatures: boolean;
+}): Record<string, string> {
+  return surface().textStyle(settings);
+}
+export function languageFor(path: string): unknown {
+  return surface().languageFor(path);
+}
+export function paintCode(text: string, path: string): CodeChunk[] {
+  return surface().paintCode(text, path);
+}
 
 export const problems: { readonly value: FileProblems[] } = {
   get value() {
@@ -76,6 +128,42 @@ export const settings: { readonly value: Settings | null } = {
     return surface().settings.value;
   },
 };
+export const dirty: { readonly value: boolean } = {
+  get value() {
+    return surface().dirty.value;
+  },
+};
+export const openDoc: { readonly value: DocState | null } = {
+  get value() {
+    return surface().openDoc.value;
+  },
+};
+export const fileDiagnostics: { readonly value: Diagnostic[] } = {
+  get value() {
+    return surface().fileDiagnostics.value;
+  },
+};
+export const externalEpoch: { readonly value: number } = {
+  get value() {
+    return surface().externalEpoch.value;
+  },
+};
+export const pendingReveal: { readonly value: Reveal | null } = {
+  get value() {
+    return surface().pendingReveal.value;
+  },
+};
+export const wantsFocus: { readonly value: number } = {
+  get value() {
+    return surface().wantsFocus.value;
+  },
+};
+export const darcula: unknown = { fake: 'darcula' };
+export const dc: Palette = new Proxy(
+  {},
+  { get: (_target, key: string) => `var(--fake-${key})` },
+) as Palette;
+export const inputKeymap: readonly unknown[] = [];
 
 export { activate, registry, remote, stub } from './client.js';
 
@@ -85,15 +173,31 @@ export interface Tip {
 }
 
 export class FakeSurface implements ClientSurface {
-  readonly problems: { value: FileProblems[] } = { value: [] };
-  readonly openPath: { value: string | null } = { value: null };
-  readonly settings: { value: Settings | null } = { value: null };
+  readonly problems: Signal<FileProblems[]> = signal([]);
+  readonly openPath: Signal<string | null> = signal(null);
+  readonly settings: Signal<Settings | null> = signal(null);
 
   readonly jumps: Array<{ path: string; line: number; character?: number }> = [];
   readonly terminals: TerminalInfo[] = [];
   tip: Tip | null = null;
   readonly keys = new Map<string, string[]>();
   readonly widths = new Map<string, number>();
+
+  readonly openDoc: Signal<DocState | null> = signal(null);
+  readonly dirty = signal(false);
+  closed = 0;
+  readonly fileDiagnostics: Signal<Diagnostic[]> = signal([]);
+  readonly externalEpoch = signal(0);
+  readonly pendingReveal: Signal<Reveal | null> = signal(null);
+  readonly wantsFocus = signal(0);
+  readonly edits: string[] = [];
+  readonly visits: Array<{ path: string; line: number; character: number }> = [];
+  readonly hunks: Array<{ hunk: Hunk; box: HunkBox }> = [];
+  readonly symbols: SymbolAsk[] = [];
+  readonly hovers: Array<{ path: string; line: number; character: number }> = [];
+  readonly heads = new Map<string, string>();
+  readonly chords = new Set<string>();
+  focusOnMount = true;
 
   constructor(private readonly host: FakeHost) {}
 
@@ -149,10 +253,75 @@ export class FakeSurface implements ClientSurface {
   widthOf(id: string, fallback: number): number {
     return this.widths.get(id) ?? fallback;
   }
+
+  editDoc(text: string): void {
+    this.edits.push(text);
+  }
+
+  async closeFile(): Promise<void> {
+    this.openDoc.value = null;
+    this.closed += 1;
+  }
+
+  headFor(path: string | null): string | null {
+    return path === null ? null : (this.heads.get(path) ?? null);
+  }
+
+  visit(path: string, line: number, character: number): void {
+    this.visits.push({ path, line, character });
+  }
+
+  diffLines(before: string, after: string): Hunk[] {
+    if (before === after) return [];
+    const a = before.split('\n');
+    const b = after.split('\n');
+    return [{ kind: 'modified', from: 1, to: Math.max(a.length, b.length), before: a }];
+  }
+
+  showHunk(hunk: Hunk, box: HunkBox): void {
+    this.hunks.push({ hunk, box });
+  }
+
+  async askSymbol(where: SymbolAsk): Promise<void> {
+    this.symbols.push(where);
+  }
+
+  async hover(path: string, line: number, character: number): Promise<HoverInfo | null> {
+    this.hovers.push({ path, line, character });
+    return null;
+  }
+
+  takeFocusOnMount(): boolean {
+    const wanted = this.focusOnMount;
+    this.focusOnMount = true;
+    return wanted;
+  }
+
+  chordHeld(command: string, event: { metaKey: boolean }): boolean {
+    void event;
+    return this.chords.has(command);
+  }
+
+  textStyle(settings: { fontFamily: string; ligatures: boolean }): Record<string, string> {
+    return { fontFamily: settings.fontFamily };
+  }
+
+  languageFor(path: string): unknown {
+    return { language: path.slice(path.lastIndexOf('.') + 1) };
+  }
+
+  paintCode(text: string, path: string): CodeChunk[] {
+    void path;
+    return [{ text, color: null }];
+  }
+
+  readonly darcula = darcula;
+  readonly dc = dc;
+  readonly inputKeymap = inputKeymap;
 }
 
 export class FakeRegistry {
-  private readonly entries = new Map<string, Array<{ by: string; value: unknown }>>();
+  private readonly entries = new Map<string, Signal<Array<{ by: string; value: unknown }>>>();
   private readonly schemas = new Map<string, { by: string; validate: ValidateFunction }>();
   private readonly ajv = new Ajv({ allErrors: true, strict: false });
 
@@ -165,36 +334,35 @@ export class FakeRegistry {
     }
     if (!schema) return;
     this.schemas.set(key, { by, validate: this.ajv.compile(schema) });
-    for (const entry of this.slot(key)) this.check(key, entry.by, entry.value);
+    for (const entry of this.slot(key).peek()) this.check(key, entry.by, entry.value);
   }
 
   add<T>(key: string, value: T, by: string): () => void {
     const entry = { by, value };
     this.check(key, by, value);
-    this.slot(key).push(entry);
+    const slot = this.slot(key);
+    slot.value = [...slot.value, entry];
     return () => {
-      const list = this.slot(key);
-      const at = list.indexOf(entry);
-      if (at >= 0) list.splice(at, 1);
+      slot.value = slot.value.filter((item) => item !== entry);
     };
   }
 
   all<T>(key: string): T[] {
-    return this.slot(key).map((entry) => entry.value as T);
+    return this.slot(key).value.map((entry) => entry.value as T);
   }
 
   authors(key: string): string[] {
-    return this.slot(key).map((entry) => entry.by);
+    return this.slot(key).value.map((entry) => entry.by);
   }
 
   declared(): string[] {
     return [...this.schemas.keys()].sort();
   }
 
-  private slot(key: string): Array<{ by: string; value: unknown }> {
+  private slot(key: string): Signal<Array<{ by: string; value: unknown }>> {
     let found = this.entries.get(key);
     if (!found) {
-      found = [];
+      found = signal<Array<{ by: string; value: unknown }>>([]);
       this.entries.set(key, found);
     }
     return found;
@@ -207,16 +375,9 @@ export class FakeRegistry {
   }
 }
 
-class Flag {
-  value: boolean;
-  constructor(value: boolean) {
-    this.value = value;
-  }
-}
-
 export interface FakePanel {
   spec: PluginPanelSpec;
-  open: Flag;
+  open: Signal<boolean>;
 }
 
 export class FakeIde implements Ide {
@@ -263,7 +424,7 @@ export class FakeIde implements Ide {
   }
 
   panel(spec: PluginPanelSpec): PanelHandle {
-    const open = new Flag(false);
+    const open = signal(spec.startOpen ?? false);
     this.commands.set(spec.command, () => {
       open.value = !open.value;
     });

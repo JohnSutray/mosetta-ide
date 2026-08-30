@@ -66,7 +66,6 @@ describe('тулбар', () => {
       .buttons.filter((entry) => !panels.has(entry.command) && entry.active)
       .map((e) => e.id);
     expect(popups.sort()).toEqual([
-      'editor',
       'git.branches',
       'git.push',
       'keys',

@@ -1,26 +1,8 @@
-import {
-  addCursorAbove,
-  addCursorBelow,
-  copyLineDown,
-  cursorGroupLeft,
-  cursorGroupRight,
-  deleteLine,
-  indentLess,
-  indentMore,
-  moveLineDown,
-  moveLineUp,
-  redo,
-  selectGroupLeft,
-  selectGroupRight,
-  toggleComment,
-  undo,
-} from '@codemirror/commands';
 import { registerCommand, missingCommands } from './keys/commands.js';
 import { toggleFollow } from './state/tree-follow.js';
 import { resolveContext } from './keys/context.js';
 import { acceptSelected, closeSearch, moveSelection, openSearch } from './state/search.js';
-import type { EditorView } from '@codemirror/view';
-import { activeEditor, focusEditor } from './state/editor.js';
+import { focusEditor } from './state/editor.js';
 import { closeTop } from './state/popups.js';
 import { activePick } from './state/pick.js';
 import { activeMenu } from './state/menu.js';
@@ -33,12 +15,7 @@ import {
   toggleMerge,
 } from './state/merge.js';
 import { goBack, goForward } from './state/visits.js';
-import {
-  askSymbol,
-  accept as acceptSymbol,
-  step as stepSymbol,
-  symbolList,
-} from './state/symbols.js';
+import { accept as acceptSymbol, step as stepSymbol, symbolList } from './state/symbols.js';
 import {
   askCreate,
   askRemove,
@@ -55,7 +32,6 @@ import {
 } from './state/tree-ops.js';
 import { dirChildren, openFileAt, toggleDir } from './state/session.js';
 import {
-  editorPanelVisible,
   reloadDoc,
   saveDoc,
   terminalPanelVisible,
@@ -79,34 +55,8 @@ export function registerCommands(): void {
   registerCommand('file.save', () => saveDoc());
   registerCommand('file.reload', () => reloadDoc());
 
-  registerCommand('edit.undo', () => {
-    const view = activeEditor.value;
-    if (view) undo(view);
-  });
-  registerCommand('edit.redo', () => {
-    const view = activeEditor.value;
-    if (view) redo(view);
-  });
-
-  registerCommand('edit.deleteLine', () => inEditor(deleteLine));
-  registerCommand('edit.duplicateLine', () => inEditor(copyLineDown));
-  registerCommand('edit.toggleComment', () => inEditor(toggleComment));
-  registerCommand('edit.moveLineUp', () => inEditor(moveLineUp));
-  registerCommand('edit.moveLineDown', () => inEditor(moveLineDown));
-  registerCommand('edit.addCursorAbove', () => inEditor(addCursorAbove));
-  registerCommand('edit.addCursorBelow', () => inEditor(addCursorBelow));
-  registerCommand('symbol.goto', () => void askSymbol());
-
   registerCommand('nav.back', () => goBack());
   registerCommand('nav.forward', () => goForward());
-
-  registerCommand('edit.wordLeft', () => inEditor(cursorGroupLeft));
-  registerCommand('edit.wordRight', () => inEditor(cursorGroupRight));
-  registerCommand('edit.selectWordLeft', () => inEditor(selectGroupLeft));
-  registerCommand('edit.selectWordRight', () => inEditor(selectGroupRight));
-
-  registerCommand('edit.indent', () => inEditor(indentMore));
-  registerCommand('edit.unindent', () => inEditor(indentLess));
 
   registerCommand('key.reserved', () => {});
 
@@ -125,9 +75,6 @@ export function registerCommands(): void {
 
   registerCommand('panel.tree', () => {
     treePanelVisible.value = !treePanelVisible.value;
-  });
-  registerCommand('panel.editor', () => {
-    editorPanelVisible.value = !editorPanelVisible.value;
   });
 
   registerCommand('tree.next', () => stepTree(1));
@@ -194,11 +141,6 @@ export function registerCommands(): void {
 }
 
 export { missingCommands };
-
-function inEditor(run: (view: EditorView) => boolean): void {
-  const view = activeEditor.value;
-  if (view) run(view);
-}
 
 function onFocused(run: (path: string, isDir: boolean) => void): void {
   const path = treeFocus.value ?? '';

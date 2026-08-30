@@ -1,6 +1,6 @@
 import { StateEffect, StateField, type Extension } from '@codemirror/state';
 import { EditorView, gutter, GutterMarker } from '@codemirror/view';
-import { diffLines, type Hunk } from './line-diff.js';
+import { diffLines, type Hunk, type HunkBox } from '@ide/api/client';
 
 export const setHeadText = StateEffect.define<string | null>();
 
@@ -57,12 +57,6 @@ const MARKS = {
   modified: new Mark('modified'),
   removed: new Mark('removed'),
 };
-
-export interface HunkBox {
-  left: number;
-  top: number;
-  bottom: number;
-}
 
 export function gitGutter(onClick: (hunk: Hunk, at: HunkBox) => void): Extension {
   return [

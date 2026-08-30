@@ -1,7 +1,7 @@
 import { StateEffect, StateField, type EditorState, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, type DecorationSet } from '@codemirror/view';
 import type { Diagnostic, Severity } from '@ide/protocol';
-import { dc } from './darcula.js';
+import { dc } from '@ide/api/client';
 
 export const setDiagnostics = StateEffect.define<Diagnostic[]>();
 

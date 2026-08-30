@@ -13,6 +13,7 @@ export const STYLE = `
 }
 .panel:last-child { border-right: none; }
 .panel.is-main { flex: 1; min-width: 0; }
+.columns-rest { flex: 1; min-width: 0; }
 
 .panel-head {
   display: flex;

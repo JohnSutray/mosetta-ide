@@ -2,7 +2,7 @@ import type { TerminalInfo } from '@ide/protocol';
 import { computed } from '@preact/signals';
 import { runCommand } from '../keys/commands.js';
 import { activeTerminal, closeTerminal, focusTerminal, terminals } from '../state/terminals.js';
-import { connected, current, editorPanelVisible } from '../state/session.js';
+import { connected, current } from '../state/session.js';
 import { searchOpen } from '../state/search.js';
 import { branchesOpen, gitState, pushOpen } from '../state/git.js';
 import { mergeOpen, mergePending } from '../state/merge.js';
@@ -81,13 +81,6 @@ export function registerToolbarWishes(store: Registry): void {
     command: 'projects.show',
     icon: ours('projects'),
     active: projectsVisible,
-  });
-  button({
-    id: 'editor',
-    title: 'toolbar.editor',
-    command: 'panel.editor',
-    icon: ours('editor'),
-    active: editorPanelVisible,
   });
   button({
     id: 'keys',

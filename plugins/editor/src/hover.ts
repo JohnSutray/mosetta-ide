@@ -1,9 +1,8 @@
 import { hoverTooltip, type Tooltip } from '@codemirror/view';
 import type { EditorState } from '@codemirror/state';
 import type { HoverInfo, Severity } from '@ide/protocol';
-import { paintCode } from './paint-line.js';
+import { dc, paintCode } from '@ide/api/client';
 import { diagnosticsAt } from './diagnostics.js';
-import { dc } from './darcula.js';
 
 export function lspHover(
   pathOf: () => string | null,

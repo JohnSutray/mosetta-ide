@@ -1,5 +1,5 @@
 import type { ComponentChildren, JSX } from 'preact';
-import type { Diagnostic, Settings, TerminalInfo } from '@ide/protocol';
+import type { Diagnostic, DocState, HoverInfo, Settings, TerminalInfo } from '@ide/protocol';
 
 export interface Size {
   w: number;
@@ -71,6 +71,120 @@ export declare function widthOf(id: string, fallback: number): number;
 
 export declare const settings: { readonly value: Settings | null };
 
+export declare const openDoc: { readonly value: DocState | null };
+
+export declare function editDoc(text: string): void;
+
+export declare function closeFile(): Promise<void>;
+
+export declare const dirty: { readonly value: boolean };
+
+export declare const fileDiagnostics: { readonly value: Diagnostic[] };
+
+export declare const externalEpoch: { readonly value: number };
+
+export interface Reveal {
+  path: string;
+  line: number;
+  character?: number;
+  epoch: number;
+}
+export declare const pendingReveal: { readonly value: Reveal | null };
+
+export declare function headFor(path: string | null): string | null;
+
+export declare function visit(path: string, line: number, character: number): void;
+
+export type HunkKind = 'added' | 'modified' | 'removed';
+export interface Hunk {
+  kind: HunkKind;
+  from: number;
+  to: number;
+  before: string[];
+}
+export interface HunkBox {
+  left: number;
+  top: number;
+  bottom: number;
+}
+
+export declare function diffLines(before: string, after: string): Hunk[];
+
+export declare function showHunk(hunk: Hunk, box: HunkBox): void;
+
+export interface SymbolAsk {
+  line: number;
+  character: number;
+  text: string;
+  box: { x: number; y: number };
+}
+
+export declare function askSymbol(where: SymbolAsk): Promise<void>;
+
+export declare function hover(
+  path: string,
+  line: number,
+  character: number,
+): Promise<HoverInfo | null>;
+
+export declare function takeFocusOnMount(): boolean;
+
+export declare const wantsFocus: { readonly value: number };
+
+export declare function chordHeld(
+  command: string,
+  event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean },
+): boolean;
+
+export declare const darcula: unknown;
+
+export declare function textStyle(settings: {
+  fontFamily: string;
+  ligatures: boolean;
+}): Record<string, string>;
+
+export interface Palette {
+  fg: string;
+  bg: string;
+  keyword: string;
+  string: string;
+  number: string;
+  comment: string;
+  doc: string;
+  todo: string;
+  parenBg: string;
+  parenFg: string;
+  treeBg: string;
+  iconDir: string;
+  const: string;
+  class: string;
+  func: string;
+  annot: string;
+  curline: string;
+  selection: string;
+  treesel: string;
+  caret: string;
+  divider: string;
+  gutterBg: string;
+  gutterFg: string;
+  gutterHl: string;
+  errorFg: string;
+  warnFg: string;
+  tooltipBg: string;
+}
+export declare const dc: Palette;
+
+export interface CodeChunk {
+  text: string;
+  color: string | null;
+}
+
+export declare function paintCode(text: string, path: string): CodeChunk[];
+
+export declare function languageFor(path: string): unknown;
+
+export declare const inputKeymap: readonly unknown[];
+
 export interface ClientSurface {
   PickPopup: typeof PickPopup;
   highlight: typeof highlight;
@@ -87,6 +201,28 @@ export interface ClientSurface {
   settings: typeof settings;
   Resizer: typeof Resizer;
   widthOf: typeof widthOf;
+  openDoc: typeof openDoc;
+  editDoc: typeof editDoc;
+  closeFile: typeof closeFile;
+  dirty: typeof dirty;
+  fileDiagnostics: typeof fileDiagnostics;
+  externalEpoch: typeof externalEpoch;
+  pendingReveal: typeof pendingReveal;
+  headFor: typeof headFor;
+  visit: typeof visit;
+  diffLines: typeof diffLines;
+  showHunk: typeof showHunk;
+  askSymbol: typeof askSymbol;
+  hover: typeof hover;
+  takeFocusOnMount: typeof takeFocusOnMount;
+  wantsFocus: typeof wantsFocus;
+  chordHeld: typeof chordHeld;
+  darcula: typeof darcula;
+  textStyle: typeof textStyle;
+  dc: typeof dc;
+  paintCode: typeof paintCode;
+  languageFor: typeof languageFor;
+  inputKeymap: typeof inputKeymap;
 }
 
 export interface PluginToolbarEntry {
@@ -148,11 +284,15 @@ export type PanelSide = 'left' | 'main' | 'right';
 export interface PluginPanelSpec {
   id: string;
   title: string;
-  side: 'left' | 'right';
+  side: PanelSide;
   command: string;
-  defaultWidth: number;
-  minWidth: number;
+  defaultWidth?: number;
+  minWidth?: number;
+  startOpen?: boolean;
   view: () => unknown;
+  heading?: () => string | null;
+  badges?: () => unknown;
+  close?: () => void;
 }
 
 export interface PanelHandle {

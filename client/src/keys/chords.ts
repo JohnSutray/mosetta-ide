@@ -1,8 +1,7 @@
-import type { CommandId } from '@ide/protocol';
 import { keymap } from '../state/config.js';
 import { appliesHere } from './dispatcher.js';
 
-function modifiersOf(command: CommandId): Set<string>[] {
+function modifiersOf(command: string): Set<string>[] {
   return keymap.value.bindings
     .filter((binding) => binding.command === command && appliesHere(binding))
     .map((binding) => new Set(binding.key.split('+').slice(0, -1)))
@@ -10,7 +9,7 @@ function modifiersOf(command: CommandId): Set<string>[] {
 }
 
 export function chordHeld(
-  command: CommandId,
+  command: string,
   event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean },
 ): boolean {
   return modifiersOf(command).some(

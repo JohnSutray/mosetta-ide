@@ -29,8 +29,8 @@ describe('панель ошибок', () => {
     const spec = host.ide(NAME).panels[0]!.spec;
     expect(spec.id).toBe('problems');
     expect(spec.side).toBe('right');
-    expect(spec.defaultWidth).toBeGreaterThanOrEqual(spec.minWidth);
-    expect(spec.minWidth).toBeGreaterThan(80);
+    expect(spec.defaultWidth!).toBeGreaterThanOrEqual(spec.minWidth!);
+    expect(spec.minWidth!).toBeGreaterThan(80);
     expect(spec.title).toBe('panel.problems');
   });
 

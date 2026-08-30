@@ -1,8 +1,7 @@
 import { signal } from '@preact/signals';
-import type { Hunk } from '../editor/line-diff.js';
-import { activeEditor } from './editor.js';
-import { revertHunk, type HunkBox } from '../editor/git-marks.js';
-import { rpc } from './session.js';
+import { revertedText, type Hunk } from '../editor/line-diff.js';
+import type { HunkBox } from '@ide/api/client';
+import { openFile, replaceText, rpc } from './session.js';
 
 export const hunkPopup = signal<{ hunk: Hunk; box: HunkBox } | null>(null);
 
@@ -23,11 +22,10 @@ export function closeHunk(): void {
 
 export function revertOpenHunk(): void {
   const open = hunkPopup.value;
-  const view = activeEditor.value;
+  const file = openFile.peek();
   hunkPopup.value = null;
-  if (!open || !view) return;
-  revertHunk(view, open.hunk);
-  view.focus();
+  if (!open || !file) return;
+  replaceText(revertedText(file.text, open.hunk));
 }
 
 export async function loadHead(path: string | null): Promise<void> {

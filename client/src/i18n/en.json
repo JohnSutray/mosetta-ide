@@ -146,8 +146,6 @@
   "keys.context.terminal": "Terminal",
   "keys.context.keys": "This window",
   "keys.context.merge": "Resolve conflicts",
-  "editor.empty.title": "Nothing here, I am just a spacer panel",
-  "editor.empty.hint": "Open a file to be rid of me, or stay and herd the sheep",
   "tree.pick": "Pick a file in the tree",
   "tree.openProject": "Open a project on the left",
   "tree.noScan": "not indexed",

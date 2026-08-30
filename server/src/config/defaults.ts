@@ -8,6 +8,8 @@ export const DEFAULT_SETTINGS: Settings = {
       '@ide/plugin-problems',
       '@ide/plugin-toolbar',
       '@ide/plugin-layout',
+      '@ide/plugin-editor',
+      '@ide/plugin-sheep',
     ],
   },
   toolbar: {
