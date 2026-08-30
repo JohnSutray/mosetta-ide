@@ -5,10 +5,13 @@
   "type": "module",
   "exports": {
     "./client": "./src/client.ts",
-    "./server": "./src/server.ts"
+    "./server": "./src/server.ts",
+    "./testing": "./src/testing.ts",
+    "./vitest": "./src/vitest.ts"
   },
   "dependencies": {
-    "@ide/protocol": "workspace:*"
+    "@ide/protocol": "workspace:*",
+    "ajv": "^8.17.1"
   },
   "peerDependencies": {
     "preact": "^10.25.3"

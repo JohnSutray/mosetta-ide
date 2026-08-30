@@ -87,6 +87,9 @@ importers:
       '@ide/protocol':
         specifier: workspace:*
         version: link:../../protocol
+      ajv:
+        specifier: ^8.17.1
+        version: 8.20.0
     devDependencies:
       preact:
         specifier: ^10.25.3
@@ -107,6 +110,9 @@ importers:
       preact:
         specifier: ^10.25.3
         version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
 
   plugins/problems:
     dependencies:
@@ -120,6 +126,9 @@ importers:
       preact:
         specifier: ^10.25.3
         version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
 
   plugins/rerun:
     dependencies:
@@ -129,6 +138,13 @@ importers:
       '@ide/plugin-npm-scripts':
         specifier: workspace:*
         version: link:../npm-scripts
+    devDependencies:
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
 
   plugins/toolbar:
     dependencies:
@@ -142,6 +158,9 @@ importers:
       preact:
         specifier: ^10.25.3
         version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
 
   protocol: {}
 

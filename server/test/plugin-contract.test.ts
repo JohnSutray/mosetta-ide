@@ -73,6 +73,18 @@ describe('контракт @ide/api', () => {
     }
   });
 
+  it('в тесте подменяется тот же список, что и на сборке', () => {
+    const text = source('testing.ts');
+    const own = [...text.matchAll(/^export (?:function|const) (\w+)/gm)].map((m) => m[1]!);
+    const passed = [...text.matchAll(/^export \{([^}]+)\} from/gm)].flatMap((m) =>
+      m[1]!.split(',').map((one) => one.trim()),
+    );
+    const offered = new Set([...own, ...passed]);
+    for (const name of sharedNames('@ide/api/client')) {
+      expect(offered.has(name), `${name} подменяется на сборке, но не в тесте`).toBe(true);
+    }
+  });
+
   it('приложение обязано отдать ровно то, что объявлено injected', () => {
     const text = source('client.ts');
     expect(injected(text).length).toBeGreaterThan(3);
