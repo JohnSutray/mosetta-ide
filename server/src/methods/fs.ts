@@ -1,5 +1,5 @@
 import type { Handler } from '../rpc/context.js';
-import { revealInFileManager } from '../env/reveal.js';
+import { reveal } from '../env/reveal.js';
 import { RpcError } from '../errors.js';
 
 function pathOf(params: { path?: unknown } | null): string {
@@ -61,7 +61,7 @@ export class FsMethods {
   readonly reveal: Handler<'fs.reveal'> = async (params, ctx) => {
     if (!params || typeof params.path !== 'string') throw RpcError.invalidParams('нужен path');
     const ws = ctx.session.requireWorkspace();
-    await revealInFileManager(ws.resolve(params.path));
+    await reveal.inFileManager(ws.resolve(params.path));
     return null;
   };
 

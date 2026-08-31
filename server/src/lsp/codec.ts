@@ -1,9 +1,4 @@
 
-export function encodeFrame(message: unknown): Buffer {
-  const body = Buffer.from(JSON.stringify(message), 'utf8');
-  const header = Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, 'ascii');
-  return Buffer.concat([header, body]);
-}
 
 export class FrameDecoder {
   private buffer: Buffer<ArrayBufferLike> = Buffer.alloc(0);
@@ -35,5 +30,11 @@ export class FrameDecoder {
     }
 
     return out;
+  }
+
+  encodeFrame(message: unknown): Buffer {
+    const body = Buffer.from(JSON.stringify(message), 'utf8');
+    const header = Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, 'ascii');
+    return Buffer.concat([header, body]);
   }
 }

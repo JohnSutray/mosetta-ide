@@ -9,7 +9,7 @@ import type { Logger } from '../log.js';
 import { paths } from '../workspace/paths.js';
 import type { RamFs } from '../fs/ram-fs.js';
 import { matcher } from './matcher.js';
-import { retype } from './layout.js';
+import { layout } from './layout.js';
 import { Vocabulary, textIndex, type Indexed } from './text.js';
 import type { FindProviders } from './providers.js';
 import { tsSymbols, type SymbolKind } from './ts-symbols.js';
@@ -266,7 +266,7 @@ export class SearchIndex {
     }
 
     const folded = textIndex.fold(term);
-    const other = folded === '' ? null : retype(folded);
+    const other = folded === '' ? null : layout.retype(folded);
     const hits: IndexHit[] = [];
 
     for (const entry of this.everything()) {

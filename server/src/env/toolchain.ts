@@ -5,19 +5,6 @@ import type { Logger } from '../log.js';
 
 type InitOptions = Record<string, unknown> | undefined;
 
-export function initOptionsFor(name: string, root: string, log: Logger): InitOptions {
-  if (name !== 'typescript') return undefined;
-
-  const tsserver = resolveTsserver(root, log);
-  return {
-    ...(tsserver ? { tsserver: { path: tsserver } } : {}),
-    preferences: {
-      includeCompletionsForModuleExports: true,
-      includeInlayParameterNameHints: 'none',
-    },
-  };
-}
-
 function resolveTsserver(root: string, log: Logger): string | null {
   const local = path.join(root, 'node_modules', 'typescript', 'lib', 'tsserver.js');
   if (existsSync(local)) {
@@ -33,3 +20,20 @@ function resolveTsserver(root: string, log: Logger): string | null {
     return null;
   }
 }
+
+export class Toolchain {
+  optionsFor(name: string, root: string, log: Logger): InitOptions {
+    if (name !== 'typescript') return undefined;
+
+    const tsserver = resolveTsserver(root, log);
+    return {
+      ...(tsserver ? { tsserver: { path: tsserver } } : {}),
+      preferences: {
+        includeCompletionsForModuleExports: true,
+        includeInlayParameterNameHints: 'none',
+      },
+    };
+  }
+}
+
+export const toolchain = new Toolchain();

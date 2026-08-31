@@ -12,7 +12,7 @@ import {
 import { journal } from '../log.js';
 import { defaults } from './defaults.js';
 import { jsonc } from './jsonc.js';
-import { patchSetting } from './patch.js';
+import { patch } from './patch.js';
 
 const log = journal.logger('config');
 
@@ -70,7 +70,7 @@ export class ConfigStore {
     try {
       raw = await fsp.readFile(file, 'utf8');
     } catch {}
-    const patched = patchSetting(raw, section, key, value);
+    const patched = patch.setting(raw, section, key, value);
     await fsp.mkdir(this.dir, { recursive: true });
     await fsp.writeFile(file, patched.text, 'utf8');
     if (patched.rewritten) log.warn('settings.json пересобран — комментарии в нём не сохранились');

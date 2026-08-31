@@ -119,7 +119,7 @@ export class GitIndex {
       return;
     }
 
-    const files = parseStatus(status.stdout);
+    const files = gitStatus.parse(status.stdout);
     const [head, tracking, branchList] = await Promise.all([
       gitCli.run(this.root, ['rev-parse', '--abbrev-ref', 'HEAD']),
       gitCli.run(this.root, ['rev-list', '--left-right', '--count', 'HEAD...@{upstream}']),
@@ -295,23 +295,7 @@ export class GitIndex {
     this.debounce = null;
     this.poll = null;
     this.autoFetch = null;
-  }
-}
-
-export function parseStatus(raw: string): Record<string, GitFileState> {
-  const files: Record<string, GitFileState> = {};
-  const tokens = raw.split('\0');
-  for (let i = 0; i < tokens.length; i += 1) {
-    const token = tokens[i];
-    if (!token || token.length < 4) continue;
-    const x = token[0]!;
-    const y = token[1]!;
-    const path = token.slice(3);
-    if (x === 'R' || x === 'C') i += 1;
-    files[path] = classify(x, y);
-  }
-  return files;
-}
+  }}
 
 function byMark(mark: string): GitFileState {
   if (mark === 'A') return 'added';
@@ -347,3 +331,22 @@ function same(a: GitState, b: GitState): boolean {
   if (ka.length !== kb.length) return false;
   return ka.every((key) => a.files[key] === b.files[key]);
 }
+
+export class GitStatus {
+  parse(raw: string): Record<string, GitFileState> {
+    const files: Record<string, GitFileState> = {};
+    const tokens = raw.split('\0');
+    for (let i = 0; i < tokens.length; i += 1) {
+      const token = tokens[i];
+      if (!token || token.length < 4) continue;
+      const x = token[0]!;
+      const y = token[1]!;
+      const path = token.slice(3);
+      if (x === 'R' || x === 'C') i += 1;
+      files[path] = classify(x, y);
+    }
+    return files;
+  }
+}
+
+export const gitStatus = new GitStatus();

@@ -502,17 +502,17 @@ export class RamFs {
   private emit(event: RamEvent): void {
     for (const listener of this.listeners) listener(event);
   }
-}
 
-export function toDocState(doc: Doc): DocState {
-  return {
-    path: doc.path,
-    text: doc.text,
-    version: doc.version,
-    revision: doc.revision,
-    dirty: doc.dirty,
-    truncated: doc.truncated,
-  };
+  toDocState(doc: Doc): DocState {
+    return {
+      path: doc.path,
+      text: doc.text,
+      version: doc.version,
+      revision: doc.revision,
+      dirty: doc.dirty,
+      truncated: doc.truncated,
+    };
+  }
 }
 
 function parentOf(key: string): string {

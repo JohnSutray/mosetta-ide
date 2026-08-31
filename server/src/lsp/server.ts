@@ -15,9 +15,9 @@ import { RpcError } from '../errors.js';
 import type { Logger } from '../log.js';
 import type { RamEvent, RamFs } from '../fs/ram-fs.js';
 import { paths } from '../workspace/paths.js';
-import { encodeFrame, FrameDecoder } from './codec.js';
-import { initOptionsFor } from '../env/toolchain.js';
-import { launchPlan } from '../env/exec.js';
+import { FrameDecoder } from './codec.js';
+import { toolchain } from '../env/toolchain.js';
+import { exec } from '../env/exec.js';
 
 export type LspEvent =
   | { type: 'status'; status: LspStatus }
@@ -62,7 +62,7 @@ export class LspServer {
 
   private async boot(): Promise<void> {
     this.setState('starting');
-    const plan = launchPlan(this.settings.command, this.settings.args);
+    const plan = exec.plan(this.settings.command, this.settings.args);
     const child = spawn(plan.command, plan.args, {
       cwd: this.root,
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -100,7 +100,7 @@ export class LspServer {
         },
         workspace: { workspaceFolders: true, configuration: false },
       },
-      initializationOptions: initOptionsFor(this.name, this.root, this.log),
+      initializationOptions: toolchain.optionsFor(this.name, this.root, this.log),
     });
     this.notify('initialized', {});
     this.setState('ready');
@@ -412,7 +412,7 @@ export class LspServer {
 
   private send(message: unknown): void {
     if (!this.child?.stdin.writable) return;
-    this.child.stdin.write(encodeFrame(message));
+    this.child.stdin.write(this.decoder.encodeFrame(message));
   }
 
   private uri(key: string): string {

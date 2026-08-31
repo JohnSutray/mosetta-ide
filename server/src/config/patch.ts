@@ -5,20 +5,6 @@ export interface PatchResult {
   rewritten: boolean;
 }
 
-export function patchSetting(
-  raw: string,
-  section: string,
-  key: string,
-  value: string | boolean,
-): PatchResult {
-  const text = raw.trim() === '' ? '{\n}\n' : raw;
-  const minimal = tryMinimal(text, section, key, value);
-  if (minimal !== null && applied(minimal, section, key, value)) {
-    return { text: minimal, rewritten: false };
-  }
-  return { text: rewrite(text, section, key, value), rewritten: true };
-}
-
 function applied(text: string, section: string, key: string, value: string | boolean): boolean {
   try {
     const parsed = jsonc.parse<Record<string, Record<string, unknown>>>(text, 'settings.json');
@@ -74,3 +60,21 @@ function rewrite(text: string, section: string, key: string, value: string | boo
   merged[key] = value;
   return `${JSON.stringify({ ...parsed, [section]: merged }, null, 2)}\n`;
 }
+
+export class Patch {
+  setting(
+    raw: string,
+    section: string,
+    key: string,
+    value: string | boolean,
+  ): PatchResult {
+    const text = raw.trim() === '' ? '{\n}\n' : raw;
+    const minimal = tryMinimal(text, section, key, value);
+    if (minimal !== null && applied(minimal, section, key, value)) {
+      return { text: minimal, rewritten: false };
+    }
+    return { text: rewrite(text, section, key, value), rewritten: true };
+  }
+}
+
+export const patch = new Patch();

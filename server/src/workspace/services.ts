@@ -9,7 +9,7 @@ import { LspServer } from '../lsp/server.js';
 import { TerminalHost } from '../term/host.js';
 import { GitIndex } from '../git/git-index.js';
 import { MergeSessions } from '../merge/sessions.js';
-import { watchFsConflicts, type FsConflicts } from './conflicts.js';
+import { conflicts, type FsConflicts } from './conflicts.js';
 import { shells } from '../env/shell.js';
 import { tools } from '../env/tools.js';
 import type { Logger } from '../log.js';
@@ -83,7 +83,7 @@ export class Services {
     );
 
     this.offs.push(this.merge.on((state) => ws.broadcast('merge.state', state)));
-    this.conflicts = watchFsConflicts(this.ram, this.os, this.merge, log);
+    this.conflicts = conflicts.watch(this.ram, this.os, this.merge, log);
     this.offs.push(() => this.conflicts.off());
 
     this.git = new GitIndex(

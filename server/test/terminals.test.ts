@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { TerminalInfo } from '@ide/protocol';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
-import { foregroundProcess } from '../src/env/capabilities.js';
+import { capabilities } from '../src/env/capabilities.js';
 
 describe('терминалы', () => {
   let server: RunningServer;
@@ -114,7 +114,7 @@ describe('терминалы', () => {
     const info = await c.call('term.create', {});
     expect(info.busy).toBe(false);
 
-    if (foregroundProcess()) {
+    if (capabilities.foregroundProcess()) {
       expect(info.busyUnknown, 'причина обязана быть названа').toBeTruthy();
       expect(info.busyUnknown).toContain('ConPTY');
 

@@ -4,7 +4,7 @@ import { RpcErrorCode } from '@ide/protocol';
 import { RpcError } from '../errors.js';
 import type { Logger } from '../log.js';
 import { shells, type ShellChoice } from '../env/shell.js';
-import { foregroundProcess } from '../env/capabilities.js';
+import { capabilities } from '../env/capabilities.js';
 
 export type TerminalEvent =
   | { type: 'data'; name: string; data: string }
@@ -24,7 +24,7 @@ const SCROLLBACK_BYTES = 256 * 1024;
 
 const BUSY_POLL_MS = 500;
 
-const NO_FOREGROUND = foregroundProcess();
+const NO_FOREGROUND = capabilities.foregroundProcess();
 
 interface Terminal {
   info: TerminalInfo;
@@ -101,7 +101,7 @@ export class TerminalHost {
 
     const info: TerminalInfo = {
       name: options.name,
-      title: titleOf(options.name),
+      title: this.titleOf(options.name),
       kind: options.kind ?? 'manual',
       pid: pty.pid,
       cols,
@@ -246,10 +246,10 @@ export class TerminalHost {
   private emit(event: TerminalEvent): void {
     for (const listener of this.listeners) listener(event);
   }
-}
 
-export function titleOf(name: string): string {
-  return name.replace(/^@[^/]+\//, '');
+  private titleOf(name: string): string {
+    return name.replace(/^@[^/]+\//, '');
+  }
 }
 
 function baseName(command: string): string {

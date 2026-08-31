@@ -1,6 +1,5 @@
 import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
-import { toDocState } from '../fs/ram-fs.js';
 
 function pathOf(params: { path?: unknown } | null): string {
   if (!params || typeof params.path !== 'string') {
@@ -12,7 +11,7 @@ function pathOf(params: { path?: unknown } | null): string {
 export class DocMethods {
   readonly open: Handler<'doc.open'> = async (params, ctx) => {
     const ram = ctx.session.requireWorkspace().services.ram;
-    return toDocState(await ram.openDoc(pathOf(params)));
+    return ram.toDocState(await ram.openDoc(pathOf(params)));
   };
 
   readonly edit: Handler<'doc.edit'> = (params, ctx) => {
@@ -27,17 +26,17 @@ export class DocMethods {
 
   readonly save: Handler<'doc.save'> = async (params, ctx) => {
     const ram = ctx.session.requireWorkspace().services.ram;
-    return toDocState(await ram.saveDoc(pathOf(params)));
+    return ram.toDocState(await ram.saveDoc(pathOf(params)));
   };
 
   readonly reload: Handler<'doc.reload'> = async (params, ctx) => {
     const ram = ctx.session.requireWorkspace().services.ram;
-    return toDocState(await ram.reloadDoc(pathOf(params)));
+    return ram.toDocState(await ram.reloadDoc(pathOf(params)));
   };
 
   readonly state: Handler<'doc.state'> = async (params, ctx) => {
     const ram = ctx.session.requireWorkspace().services.ram;
-    return toDocState(await ram.peekDoc(pathOf(params)));
+    return ram.toDocState(await ram.peekDoc(pathOf(params)));
   };
 
   readonly mergeFromDisk: Handler<'doc.mergeFromDisk'> = (params, ctx) =>

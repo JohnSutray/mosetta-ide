@@ -5,7 +5,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RunningServer } from '../src/server.js';
-import { parseStatus } from '../src/git/git-index.js';
+import { gitStatus } from '../src/git/git-index.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
 const run = promisify(execFile);
@@ -194,7 +194,7 @@ describe('git', () => {
 
   it('переименование в разборе статуса не съедает следующую запись', () => {
     const raw = 'R  new.ts\0old.ts\0 M src/main.ts\0?? src/fresh.ts\0';
-    expect(parseStatus(raw)).toEqual({
+    expect(gitStatus.parse(raw)).toEqual({
       'new.ts': 'modified',
       'src/main.ts': 'modified',
       'src/fresh.ts': 'untracked',
