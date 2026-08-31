@@ -45,7 +45,7 @@ import { KeysHelp } from './keys-help.js';
 import { MergeScreen } from './merge.js';
 import { PluginSurfaces } from './plugin-surfaces.js';
 import { PickPopup, matches } from './pick-popup.js';
-import { loadPlugins, pluginList } from '../state/plugins.js';
+import { plugins } from '../state/plugins.js';
 import { goTo } from './go-to.js';
 import type { ClientSurface } from '@ide/api/client';
 import { ToolPicker } from './tool-picker.js';
@@ -66,7 +66,7 @@ function Region({ name, fallback }: { name: string; fallback?: JSX.Element }) {
 }
 
 function NoShell() {
-  const loaded = pluginList.value.map((one) => one.name);
+  const loaded = plugins.list.value.map((one) => one.name);
   return (
     <div class="no-shell">
       <div class="no-shell-title">{i18n.t('shell.missing')}</div>
@@ -124,7 +124,7 @@ export function App() {
       unstable_languageFor: (path) => languages.of(path),
       unstable_inputKeymap: inputMechanics.keymap,
     };
-    void loadPlugins(surface, store).then(() => {
+    void plugins.load(surface, store).then(() => {
       const dead = commands.missing();
       if (dead.length) console.warn('[web-ide] команды без реализации:', dead.join(', '));
     });

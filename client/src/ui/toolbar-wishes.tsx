@@ -14,7 +14,7 @@ import { computed } from '@preact/signals';
 import { keysFor } from '../keys/keys-for.js';
 import { i18n } from '../i18n/index.js';
 import { Icon, type IconName } from './icons.js';
-import { PANELS } from './panels.js';
+import { panels } from './panels.js';
 import type { Registry } from '../state/registry.js';
 
 interface ButtonWish {
@@ -38,7 +38,7 @@ function ours(name: IconName) {
 }
 
 function panelWish(id: string, icon: IconName): ButtonWish {
-  const panel = PANELS.find((item) => item.id === id);
+  const panel = panels.all.find((item) => item.id === id);
   if (!panel) throw new Error(`нет панели ${id}`);
   return { id, title: panel.tooltip, command: panel.command, icon: ours(icon), active: panel.open };
 }

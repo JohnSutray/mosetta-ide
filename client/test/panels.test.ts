@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Registry } from '../src/state/registry.js';
 import { registerPanelWishes } from '../src/ui/panel-wishes.js';
-import { PANELS } from '../src/ui/panels.js';
+import { panels } from '../src/ui/panels.js';
 
 interface PanelWish {
   id: string;
@@ -27,7 +27,7 @@ function wishes(): PanelWish[] {
 describe('пожелания ядра про панели', () => {
   it('каждая панель реестра просит себе колонку', () => {
     const asked = new Set(wishes().map((one) => one.id));
-    const missing = PANELS.filter((panel) => !asked.has(panel.id)).map((p) => p.id);
+    const missing = panels.all.filter((panel) => !asked.has(panel.id)).map((p) => p.id);
     expect(missing, `панели без пожелания: ${missing.join(', ')}`).toEqual([]);
   });
 
@@ -50,7 +50,7 @@ describe('пожелания ядра про панели', () => {
   });
 
   it('сторона и ширины повторяют реестр, а не выдуманы заново', () => {
-    for (const spec of PANELS) {
+    for (const spec of panels.all) {
       const wish = wishes().find((one) => one.id === spec.id)!;
       expect(wish.side).toBe(spec.side);
       expect(wish.defaultWidth).toBe(spec.defaultWidth);
@@ -59,7 +59,7 @@ describe('пожелания ядра про панели', () => {
   });
 
   it('пожелание держит ТОТ ЖЕ сигнал, а не копию', () => {
-    for (const spec of PANELS) {
+    for (const spec of panels.all) {
       const wish = wishes().find((one) => one.id === spec.id)!;
       expect(wish.open).toBe(spec.open);
     }

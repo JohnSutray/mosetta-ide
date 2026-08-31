@@ -30,155 +30,159 @@ import { persisted } from './persist.js';
 import type { Registry } from './registry.js';
 import { i18n } from '../i18n/index.js';
 
-export const pluginList = signal<PluginInfo[]>([]);
-export const pluginSurfaces = signal<Array<() => unknown>>([]);
-
-const pluginClasses = new Map<string, unknown>();
-
-const openers = new Map<string, (found: Found) => void>();
-
-const instances = new Map<unknown, unknown>();
-
-export function pluginOpener(kind: string) {
-  return openers.get(kind);
-}
-
-function expose(surface: ClientSurface): void {
-  (globalThis as Record<string, unknown>).__ideApi = {
-    preact: {
-      h: preact.h,
-      jsx: preact.h,
-      Fragment: preact.Fragment,
-      createElement: preact.createElement,
-      render: preact.render,
-      cloneElement: preact.cloneElement,
-    },
-    jsx: jsxRuntime,
-    hooks,
-    signals,
-    cm,
-    cmView,
-    cmCommands,
-    cmLanguage,
-    cmSearch,
-    api: { ...surface, remote, stub, activate: activateHook, registry: registryHook },
-    plugins: pluginClasses,
-  };
-}
-
-export async function loadPlugins(surface: ClientSurface, registry: Registry): Promise<void> {
-  expose(surface);
-  store = registry;
-  const built: Built[] = [];
-  let list: PluginInfo[];
-  try {
-    list = await rpc.call('plugins.list', null);
-  } catch {
-    return;
-  }
-  pluginList.value = list;
-
-  for (const info of list) {
-    if (info.state !== 'ok') {
-      complain(`${info.name}: ${info.error ?? 'не поднялся'}`);
-      continue;
-    }
-    i18n.add(info.name, info.strings);
-    if (!info.hasClient) continue;
-    try {
-      built.push(await build(info));
-    } catch (err) {
-      complain(`${info.name}: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }
-
-  for (const one of built) {
-    for (const spec of registriesOf(one.ctor)) registry.declare(spec.key, one.name, spec.schema);
-  }
-  for (const one of built) {
-    try {
-      await hooksOf(one.instance).start?.();
-    } catch (err) {
-      complain(`${one.name}: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }
-}
-
-let store: Registry | null = null;
-
-function registryOf(): Registry {
-  if (!store) throw new Error('реестр не поднят: плагины загружены мимо loadPlugins');
-  return store;
-}
-
 interface Built {
   name: string;
   ctor: PluginClass;
   instance: object;
 }
 
-async function build(info: PluginInfo): Promise<Built> {
-  const { code } = await rpc.call('plugins.code', { name: info.name });
-  const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
-  try {
-    const mod = (await import(/* @vite-ignore */ url)) as { default?: PluginClass };
-    const Ctor = mod.default;
-    if (typeof Ctor !== 'function') {
-      throw new Error('нет export default class');
+export class Plugins {
+  readonly list = signal<PluginInfo[]>([]);
+  readonly surfaces = signal<Array<() => unknown>>([]);
+
+  private readonly classes = new Map<string, unknown>();
+
+  private readonly openers = new Map<string, (found: Found) => void>();
+
+  private readonly instances = new Map<unknown, unknown>();
+
+  opener(kind: string) {
+    return this.openers.get(kind);
+  }
+
+  private expose(surface: ClientSurface): void {
+    (globalThis as Record<string, unknown>).__ideApi = {
+      preact: {
+        h: preact.h,
+        jsx: preact.h,
+        Fragment: preact.Fragment,
+        createElement: preact.createElement,
+        render: preact.render,
+        cloneElement: preact.cloneElement,
+      },
+      jsx: jsxRuntime,
+      hooks,
+      signals,
+      cm,
+      cmView,
+      cmCommands,
+      cmLanguage,
+      cmSearch,
+      api: { ...surface, remote, stub, activate: activateHook, registry: registryHook },
+      plugins: this.classes,
+    };
+  }
+
+  async load(surface: ClientSurface, registry: Registry): Promise<void> {
+    this.expose(surface);
+    this.store = registry;
+    const built: Built[] = [];
+    let list: PluginInfo[];
+    try {
+      list = await rpc.call('plugins.list', null);
+    } catch {
+      return;
+    }
+    this.list.value = list;
+
+    for (const info of list) {
+      if (info.state !== 'ok') {
+        complain(`${info.name}: ${info.error ?? 'не поднялся'}`);
+        continue;
+      }
+      i18n.add(info.name, info.strings);
+      if (!info.hasClient) continue;
+      try {
+        built.push(await this.build(info));
+      } catch (err) {
+        complain(`${info.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
     }
 
-    const ide = servicesFor(info.name);
-    const instance = new Ctor(ide) as object;
-    attach(instance, ide);
+    for (const one of built) {
+      for (const spec of registriesOf(one.ctor)) registry.declare(spec.key, one.name, spec.schema);
+    }
+    for (const one of built) {
+      try {
+        await hooksOf(one.instance).start?.();
+      } catch (err) {
+        complain(`${one.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+  }
 
-    pluginClasses.set(info.name, Ctor);
-    instances.set(Ctor, instance);
-    return { name: info.name, ctor: Ctor, instance };
-  } finally {
-    URL.revokeObjectURL(url);
+  private store: Registry | null = null;
+
+  private registryOf(): Registry {
+    if (!this.store) throw new Error('реестр не поднят: плагины загружены мимо plugins.load');
+    return this.store;
+  }
+
+  private async build(info: PluginInfo): Promise<Built> {
+    const { code } = await rpc.call('plugins.code', { name: info.name });
+    const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+    try {
+      const mod = (await import(/* @vite-ignore */ url)) as { default?: PluginClass };
+      const Ctor = mod.default;
+      if (typeof Ctor !== 'function') {
+        throw new Error('нет export default class');
+      }
+
+      const ide = this.servicesFor(info.name);
+      const instance = new Ctor(ide) as object;
+      attach(instance, ide);
+
+      this.classes.set(info.name, Ctor);
+      this.instances.set(Ctor, instance);
+      return { name: info.name, ctor: Ctor, instance };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  private servicesFor(name: string): Ide {
+    return {
+      name,
+      rpc: {
+        call: (method: string, params: unknown) =>
+          rpc.call('plugins.call', { name, method, params }),
+      },
+      command(id: string, run: () => void) {
+        commands.registerPlugin(id, run);
+      },
+      registry: <T,>(key: string): RegistryHandle<T> => {
+        const store_ = this.registryOf();
+        return {
+          add: (value: T) => store_.add(key, value, name),
+          get all() {
+            return store_.all<T>(key);
+          },
+        };
+      },
+      remember<T>(key: string, initial: T): Signal<T> {
+        return persisted(`${name}/${key}`, initial);
+      },
+
+      css(text: string) {
+        const tag = document.createElement('style');
+        tag.dataset.plugin = name;
+        tag.textContent = text;
+        document.head.append(tag);
+      },
+      open: (kind: string, handler: (found: Found) => void) => {
+        this.openers.set(kind, handler);
+      },
+      getPlugin: <T,>(ctor: PluginClass<T>): T => {
+        const found = this.instances.get(ctor);
+        if (!found) throw new Error(`плагин не поднят: ${ctor.name}`);
+        return found as T;
+      },
+      surface: (view: () => unknown) => {
+        this.surfaces.value = [...this.surfaces.value, view];
+      },
+      say: (message: string) => say(message),
+    };
   }
 }
 
-function servicesFor(name: string): Ide {
-  return {
-    name,
-    rpc: {
-      call: (method: string, params: unknown) =>
-        rpc.call('plugins.call', { name, method, params }),
-    },
-    command(id: string, run: () => void) {
-      commands.registerPlugin(id, run);
-    },
-    registry<T>(key: string): RegistryHandle<T> {
-      const store_ = registryOf();
-      return {
-        add: (value: T) => store_.add(key, value, name),
-        get all() {
-          return store_.all<T>(key);
-        },
-      };
-    },
-    remember<T>(key: string, initial: T): Signal<T> {
-      return persisted(`${name}/${key}`, initial);
-    },
-
-    css(text: string) {
-      const tag = document.createElement('style');
-      tag.dataset.plugin = name;
-      tag.textContent = text;
-      document.head.append(tag);
-    },
-    open(kind: string, handler: (found: Found) => void) {
-      openers.set(kind, handler);
-    },
-    getPlugin<T>(ctor: PluginClass<T>): T {
-      const found = instances.get(ctor);
-      if (!found) throw new Error(`плагин не поднят: ${ctor.name}`);
-      return found as T;
-    },
-    surface(view: () => unknown) {
-      pluginSurfaces.value = [...pluginSurfaces.value, view];
-    },
-    say: (message: string) => say(message),
-  };
-}
+export const plugins = new Plugins();

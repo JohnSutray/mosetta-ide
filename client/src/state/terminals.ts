@@ -1,4 +1,4 @@
-import { terminalPanelVisible } from '../ui/panels.js';
+import { panels } from '../ui/panels.js';
 import { rpc } from './session.js';
 import { complain } from './notifications.js';
 import { batch, signal } from '@preact/signals';
@@ -37,7 +37,7 @@ export class Terminals {
   focus(name: string): void {
     batch(() => {
       this.active.value = name;
-      terminalPanelVisible.value = true;
+      panels.terminal.value = true;
     });
   }
 
@@ -58,7 +58,7 @@ export class Terminals {
       const info = await open();
       batch(() => {
         this.active.value = info.name;
-        terminalPanelVisible.value = true;
+        panels.terminal.value = true;
       });
       await this.refresh();
     } catch (err) {
@@ -72,7 +72,7 @@ export class Terminals {
       if (this.active.value && !list.some((info) => info.name === this.active.value)) {
         this.active.value = list[0]?.name ?? null;
       }
-      if (list.length === 0) terminalPanelVisible.value = false;
+      if (list.length === 0) panels.terminal.value = false;
     });
 
     rpc.on('term.data', ({ name, data }) => {

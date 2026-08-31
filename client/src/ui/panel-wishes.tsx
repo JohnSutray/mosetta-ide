@@ -1,7 +1,7 @@
 import { commands } from '../keys/commands.js';
 import { TerminalView } from './terminal.js';
 import { Tree } from './tree.js';
-import { PANELS } from './panels.js';
+import { panels } from './panels.js';
 import type { Registry } from '../state/registry.js';
 
 interface PanelWish {
@@ -31,7 +31,7 @@ function content(id: string) {
 export function registerPanelWishes(store: Registry): void {
   const panel = (wish: PanelWish) => store.add('panel', wish, 'core');
 
-  for (const spec of PANELS) {
+  for (const spec of panels.all) {
     panel({
       id: spec.id,
       title: spec.title,

@@ -7,7 +7,7 @@ import { symbols } from './state/symbols.js';
 import { terminals } from './state/terminals.js';
 import { visits } from './state/visits.js';
 import { search } from './state/search.js';
-import { terminalPanelVisible, treePanelVisible } from './ui/panels.js';
+import { panels } from './ui/panels.js';
 import { doc, fileTree } from './state/session.js';
 import { prompt, tree, treeOps } from './state/tree-ops.js';
 import { merge } from './state/merge.js';
@@ -40,7 +40,7 @@ export function registerCommands(): void {
   commands.register('merge.confirm', () => void merge.resolve());
 
   commands.register('panel.tree', () => {
-    treePanelVisible.value = !treePanelVisible.value;
+    panels.tree.value = !panels.tree.value;
   });
 
   commands.register('tree.next', () => tree.step(1));
@@ -64,7 +64,7 @@ export function registerCommands(): void {
   commands.register('tree.reveal', () => onPicked((path) => void treeOps.revealInOs(path)));
   commands.register('tree.follow', () => void treeFollow.toggle());
   commands.register('panel.terminal', () => {
-    terminalPanelVisible.value = !terminalPanelVisible.value;
+    panels.terminal.value = !panels.terminal.value;
   });
   commands.register('terminal.create', () => terminals.create());
   commands.register('terminal.shell', () => tools.open('shell'));

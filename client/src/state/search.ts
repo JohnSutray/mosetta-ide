@@ -1,7 +1,7 @@
 import { doc, rpc } from './session.js';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
 import type { IndexHit, IndexKind } from '@ide/protocol';
-import { pluginOpener } from './plugins.js';
+import { plugins } from './plugins.js';
 
 export class Search {
   readonly open = signal(false);
@@ -75,7 +75,7 @@ export class Search {
     if (!hit) return;
     this.close();
 
-    const opener = pluginOpener(hit.kind);
+    const opener = plugins.opener(hit.kind);
     if (opener) {
       opener(hit);
       return;
