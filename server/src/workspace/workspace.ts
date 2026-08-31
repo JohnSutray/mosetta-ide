@@ -4,6 +4,7 @@ import type { EventName, EventPayload, WorkspaceInfo } from '@ide/protocol';
 import { journal, type Logger } from '../log.js';
 import type { ConfigStore } from '../config/store.js';
 import { paths } from './paths.js';
+import { processes } from '../env/processes.js';
 import { Services } from './services.js';
 import type { FindProviders } from '../search/providers.js';
 
@@ -111,6 +112,8 @@ export class Workspace {
       }
     }
     this.resources.clear();
+    const orphans = processes.killOwned(this.root);
+    if (orphans > 0) this.log.warn(`убито осиротевших подпроцессов: ${orphans}`);
     this.log.info('закрыт');
   }
 

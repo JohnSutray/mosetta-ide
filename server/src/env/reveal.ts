@@ -1,5 +1,5 @@
-import { execFile } from 'node:child_process';
 import { RpcError } from '../errors.js';
+import { processes } from './processes.js';
 
 function commandFor(absolute: string): { command: string; args: string[] } {
   if (process.platform === 'darwin') return { command: 'open', args: ['-R', absolute] };
@@ -10,14 +10,17 @@ function commandFor(absolute: string): { command: string; args: string[] } {
 }
 
 export class Reveal {
-  inFileManager(absolute: string): Promise<void> {
+  async inFileManager(absolute: string): Promise<void> {
     const { command, args } = commandFor(absolute);
-    return new Promise((resolve, reject) => {
-      execFile(command, args, { timeout: 10_000 }, (err) => {
-        if (err) reject(RpcError.invalidParams(`Не смог показать: ${err.message}`));
-        else resolve();
-      });
+    const ran = await processes.run({
+      command,
+      args,
+      reason: `показать ${absolute}`,
+      timeoutMs: 10_000,
     });
+    if (!ran.ok) {
+      throw RpcError.invalidParams(`Не смог показать: ${ran.stderr || 'менеджер файлов не ответил'}`);
+    }
   }
 }
 

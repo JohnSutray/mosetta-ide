@@ -18,6 +18,11 @@ const MAY_TOUCH_DISK = [
   'plugins/host.ts',
 ];
 
+const MAY_SPAWN = [
+  'env/processes.ts',
+  'term/host.ts',
+];
+
 const FORBIDDEN: Array<{ from: RegExp; importing: RegExp; why: string }> = [
   {
     from: /^search\//,
@@ -99,6 +104,20 @@ describe('слои не растекаются', () => {
     expect(
       offenders,
       `эти файлы полезли в node:fs мимо слоя ОС:\n${offenders.join('\n')}`,
+    ).toEqual([]);
+  });
+
+  it('подпроцессы рождаются там, где положено', async () => {
+    const offenders: string[] = [];
+    for (const { rel, text } of await sources()) {
+      if (MAY_SPAWN.includes(rel)) continue;
+      const bad = importsOf(text).filter((i) => i === 'node:child_process' || i === 'node-pty');
+      if (bad.length) offenders.push(`${rel} → ${bad.join(', ')}`);
+    }
+    expect(
+      offenders,
+      'эти файлы запускают процесс мимо `env/processes` — можно, но впишите ' +
+        `их в MAY_SPAWN с причиной:\n${offenders.join('\n')}`,
     ).toEqual([]);
   });
 

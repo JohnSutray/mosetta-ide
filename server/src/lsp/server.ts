@@ -1,4 +1,3 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import path from 'node:path';
 import type {
@@ -17,7 +16,7 @@ import type { RamEvent, RamFs } from '../fs/ram-fs.js';
 import { paths } from '../workspace/paths.js';
 import { FrameDecoder } from './codec.js';
 import { toolchain } from '../env/toolchain.js';
-import { exec } from '../env/exec.js';
+import { processes, type Handle } from '../env/processes.js';
 
 export type LspEvent =
   | { type: 'status'; status: LspStatus }
@@ -28,7 +27,8 @@ const SEVERITY: Record<number, Severity> = { 1: 'error', 2: 'warning', 3: 'info'
 const TYPED = ['ts', 'tsx', 'mts', 'cts'];
 
 export class LspServer {
-  private child: ChildProcessWithoutNullStreams | null = null;
+  private child: Handle['child'] | null = null;
+  private process: Handle | null = null;
   private readonly decoder = new FrameDecoder();
   private readonly pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: unknown) => void }>();
   private readonly diagnostics = new Map<string, Diagnostic[]>();
@@ -62,13 +62,15 @@ export class LspServer {
 
   private async boot(): Promise<void> {
     this.setState('starting');
-    const plan = exec.plan(this.settings.command, this.settings.args);
-    const child = spawn(plan.command, plan.args, {
+    const handle = processes.start({
+      command: this.settings.command,
+      args: this.settings.args,
       cwd: this.root,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: process.env,
-      shell: plan.shell,
+      owner: this.root,
+      reason: `${this.name} для ${path.basename(this.root)}`,
     });
+    this.process = handle;
+    const child = handle.child;
     this.child = child;
 
     child.on('error', (err) => {
@@ -119,15 +121,14 @@ export class LspServer {
     for (const [, slot] of this.pending) slot.reject(new Error('языковой сервер закрыт'));
     this.pending.clear();
     const child = this.child;
+    const running = this.process;
     this.child = null;
-    if (!child) return;
+    this.process = null;
+    if (!child || !running) return;
     try {
       child.stdin.end();
     } catch {}
-    const timer = setTimeout(() => child.kill('SIGKILL'), 1500);
-    timer.unref?.();
-    child.once('exit', () => clearTimeout(timer));
-    child.kill('SIGTERM');
+    running.kill();
   }
 
   on(listener: (event: LspEvent) => void): () => void {

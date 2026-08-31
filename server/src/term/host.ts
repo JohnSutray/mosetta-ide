@@ -5,6 +5,7 @@ import { RpcError } from '../errors.js';
 import type { Logger } from '../log.js';
 import { shells, type ShellChoice } from '../env/shell.js';
 import { capabilities } from '../env/capabilities.js';
+import { processes } from '../env/processes.js';
 
 export type TerminalEvent =
   | { type: 'data'; name: string; data: string }
@@ -31,6 +32,7 @@ interface Terminal {
   pty: IPty | null;
   buffer: string;
   release: () => void;
+  unlist: () => void;
   shell: string;
 }
 
@@ -118,6 +120,15 @@ export class TerminalHost {
       pty,
       buffer: '',
       release: this.hold(`terminal:${options.name}`),
+      unlist: processes.adopt(
+        {
+          pid: pty.pid,
+          command: shell.file,
+          reason: `терминал ${options.name}`,
+          owner: options.cwd,
+        },
+        () => pty.kill(),
+      ),
       shell: baseName(shell.file),
     };
     this.terminals.set(options.name, terminal);
@@ -128,6 +139,7 @@ export class TerminalHost {
     });
 
     pty.onExit(({ exitCode }) => {
+      terminal.unlist();
       terminal.pty = null;
       terminal.info = { ...terminal.info, alive: false, exitCode, busy: false };
       delete terminal.info.running;
@@ -234,6 +246,7 @@ export class TerminalHost {
     const terminal = this.terminals.get(name);
     if (!terminal) return;
     if (terminal.info.alive) terminal.release();
+    terminal.unlist();
     this.terminals.delete(name);
   }
 

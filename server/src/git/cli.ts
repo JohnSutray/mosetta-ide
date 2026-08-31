@@ -1,4 +1,4 @@
-import { execFile, spawn } from 'node:child_process';
+import { processes, type Ran } from '../env/processes.js';
 
 export interface GitResult {
   ok: boolean;
@@ -16,75 +16,49 @@ function complaint(text: string): string {
   return lines[lines.length - 1] ?? 'git отказался';
 }
 
-export class GitCli {
-  private askNothing(): NodeJS.ProcessEnv {
-    return {
-      ...process.env,
-      GIT_OPTIONAL_LOCKS: '0',
-      LC_ALL: 'C',
-      GIT_TERMINAL_PROMPT: '0',
-      GIT_SSH_COMMAND: `${process.env.GIT_SSH_COMMAND ?? 'ssh'} -oBatchMode=yes`,
-    };
-  }
+const OPTIONAL_LOCKS = { GIT_OPTIONAL_LOCKS: '0' };
 
-  stream(
+function said(ran: Ran, code: number | null): string {
+  if (ran.stderr) return ran.stderr;
+  return ran.ok ? '' : `git завершился с кодом ${code ?? '?'}`;
+}
+
+export class GitCli {
+  async stream(
     cwd: string,
     args: string[],
     onChunk: (text: string) => void,
     timeoutMs = 120_000,
   ): Promise<GitResult> {
-    return new Promise((resolve) => {
-      const child = spawn('git', args, {
+    const ran = await processes.stream(
+      {
+        command: 'git',
+        args,
         cwd,
-        env: this.askNothing(),
-      });
-
-      let tail = '';
-      const timer = setTimeout(() => {
-        onChunk('\n[превышено время ожидания, процесс убит]\n');
-        child.kill('SIGKILL');
-      }, timeoutMs);
-      timer.unref?.();
-
-      const feed = (data: Buffer) => {
-        const text = data.toString();
-        tail = (tail + text).slice(-2000);
-        onChunk(text);
-      };
-      child.stdout.on('data', feed);
-      child.stderr.on('data', feed);
-
-      child.on('error', (err) => {
-        clearTimeout(timer);
-        resolve({ ok: false, stdout: '', stderr: err.message });
-      });
-      child.on('close', (code) => {
-        clearTimeout(timer);
-        resolve({ ok: code === 0, stdout: '', stderr: code === 0 ? '' : complaint(tail) });
-      });
-    });
+        owner: cwd,
+        reason: `git ${args[0] ?? ''}`.trim(),
+        wants: ['no-prompts', 'machine-readable'],
+        env: OPTIONAL_LOCKS,
+        timeoutMs,
+      },
+      onChunk,
+    );
+    return { ok: ran.ok, stdout: '', stderr: ran.ok ? '' : complaint(said(ran, ran.code)) };
   }
 
-  run(cwd: string, args: string[], timeoutMs = 15_000): Promise<GitResult> {
-    return new Promise((resolve) => {
-      execFile(
-        'git',
-        args,
-        {
-          cwd,
-          timeout: timeoutMs,
-          maxBuffer: 16 * 1024 * 1024,
-          env: { ...process.env, GIT_OPTIONAL_LOCKS: '0', LC_ALL: 'C' },
-        },
-        (err, stdout, stderr) => {
-          resolve({
-            ok: !err,
-            stdout: stdout.toString(),
-            stderr: (stderr.toString() || (err ? err.message : '')).trim(),
-          });
-        },
-      );
+  async run(cwd: string, args: string[], timeoutMs = 15_000): Promise<GitResult> {
+    const ran = await processes.run({
+      command: 'git',
+      args,
+      cwd,
+      owner: cwd,
+      reason: `git ${args[0] ?? ''}`.trim(),
+      wants: ['no-prompts', 'machine-readable'],
+      env: OPTIONAL_LOCKS,
+      timeoutMs,
+      maxBuffer: 16 * 1024 * 1024,
     });
+    return { ok: ran.ok, stdout: ran.stdout, stderr: said(ran, ran.code).trim() };
   }
 }
 
