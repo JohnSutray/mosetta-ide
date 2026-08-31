@@ -8,7 +8,7 @@ export function Notifications() {
   return (
     <div class="notifications.notes">
       {list.length > 1 && (
-        <div class="notes-all" onClick={notifications.dismissAll}>
+        <div class="notes-all" onClick={() => notifications.dismissAll()}>
           {i18n.t('note.closeAll')}
         </div>
       )}

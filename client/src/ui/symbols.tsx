@@ -48,7 +48,7 @@ export function Symbols() {
       layer
       clear
       anchor={{ x: list.x, y: list.y }}
-      onClose={symbols.close}
+      onClose={() => symbols.close()}
     >
       <div class="symbols-head">
         <span class="symbols-title">
@@ -60,7 +60,7 @@ export function Symbols() {
         <span
           class={`symbols-filter ${symbols.hideImports.value ? 'is-on' : ''}`}
           title={i18n.t('symbols.imports.hint')}
-          onClick={symbols.toggleImports}
+          onClick={() => symbols.toggleImports()}
         >
           {i18n.t('symbols.imports', { count: hidden })}
         </span>

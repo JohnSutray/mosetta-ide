@@ -49,7 +49,7 @@ export function HunkPopup() {
     >
       <div class="hunk-head">
         <span class="hunk-title">{title}</span>
-        <button class="button" onClick={gitMarks.revertOpen}>
+        <button class="button" onClick={() => gitMarks.revertOpen()}>
           {i18n.t('git.hunk.revert')}
         </button>
       </div>

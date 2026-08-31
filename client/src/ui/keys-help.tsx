@@ -37,7 +37,7 @@ export function KeysHelp() {
       class="keys-help"
       size={{ w: 720, h: 560 }}
       min={{ w: 460, h: 320 }}
-      onClose={keysHelp.close}
+      onClose={() => keysHelp.close()}
       onEscape={() => {}}
     >
       <div class="keys-head">

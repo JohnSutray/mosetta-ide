@@ -152,7 +152,7 @@ function Branch() {
       onMouseEnter={(event) =>
         tips.show(event.currentTarget as Element, i18n.t('toolbar.branches'), keysFor('git.branches'))
       }
-      onMouseLeave={tips.hide}
+      onMouseLeave={() => tips.hide()}
       onClick={() => {
         tips.hide();
         commands.run('git.branches');
@@ -188,7 +188,7 @@ function ToolButton({
     <button
       class="tool-label"
       onMouseEnter={(event) => tips.show(event.currentTarget as Element, hint)}
-      onMouseLeave={tips.hide}
+      onMouseLeave={() => tips.hide()}
       onClick={() => {
         tips.hide();
         onClick();
