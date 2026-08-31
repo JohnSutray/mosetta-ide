@@ -32,13 +32,6 @@ export class ScriptsInPackageJson implements FindProvider {
   }
 }
 
-export const SEP = '::';
-
-export function scriptOf(id: string): string {
-  const at = id.lastIndexOf(SEP);
-  return at === -1 ? id : id.slice(at + SEP.length);
-}
-
 function baseName(path: string): string {
   const at = path.lastIndexOf('/');
   return at === -1 ? path : path.slice(at + 1);

@@ -11,6 +11,7 @@ import {
   type Ide,
 } from '@ide/api/client';
 import { NpmIcon } from './icon.js';
+import { scriptId } from './script-id.js';
 
 export interface ScriptInfo {
   id: string;
@@ -89,17 +90,17 @@ export default class NpmScripts {
         size={{ w: 620, h: 420 }}
         min={{ w: 420, h: 240 }}
         onClose={() => (this.open.value = false)}
-        section={(script: ScriptInfo) => packageOf(script.id)}
+        section={(script: ScriptInfo) => scriptId.packageOf(script.id)}
         onPick={(script: ScriptInfo) => {
           this.open.value = false;
           void this.run(script.id);
         }}
         row={(script: ScriptInfo, matches: number[]) => {
-          const from = packageOf(script.id).length + SEP.length;
+          const from = scriptId.packageOf(script.id).length + scriptId.sep.length;
           return (
             <>
               <span class="pick-name">
-                {highlight(nameOf(script.id), shiftMatches(matches, from, script.id.length - from))}
+                {highlight(scriptId.scriptOf(script.id), shiftMatches(matches, from, script.id.length - from))}
               </span>
               <span class="pick-detail">{script.command}</span>
             </>
@@ -108,16 +109,4 @@ export default class NpmScripts {
       />
     );
   }
-}
-
-const SEP = '::';
-
-function packageOf(id: string): string {
-  const at = id.lastIndexOf(SEP);
-  return at === -1 ? '' : id.slice(0, at);
-}
-
-function nameOf(id: string): string {
-  const at = id.lastIndexOf(SEP);
-  return at === -1 ? id : id.slice(at + SEP.length);
 }

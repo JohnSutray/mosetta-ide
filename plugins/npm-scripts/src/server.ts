@@ -1,6 +1,7 @@
 import { activate, command, type CallContext, type Ide } from '@ide/api/server';
 import type { IndexHit } from '@ide/protocol';
-import { ScriptsInPackageJson, scriptOf } from './scripts.js';
+import { ScriptsInPackageJson } from './scripts.js';
+import { scriptId } from './script-id.js';
 
 export interface ScriptInfo {
   id: string;
@@ -54,7 +55,7 @@ export default class NpmScriptsServer {
 
 function toScript(hit: IndexHit): ScriptInfo {
   const id = hit.id ?? '';
-  return { id, script: scriptOf(id), command: hit.detail ?? '', path: hit.path };
+  return { id, script: scriptId.scriptOf(id), command: hit.detail ?? '', path: hit.path };
 }
 
 function services(call: CallContext): Services {

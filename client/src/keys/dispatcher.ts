@@ -201,13 +201,6 @@ export class Dispatcher {
   };
 }
 
-export function installDispatcher(
-  resolveContext: ContextResolver,
-  onUnbound: (key: string) => void,
-): Dispatcher {
-  return new Dispatcher(resolveContext, onUnbound);
-}
-
 function isTextField(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;
   if (!el) return false;

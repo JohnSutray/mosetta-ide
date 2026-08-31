@@ -26,7 +26,7 @@ import { languages } from '../editor/languages.js';
 import { codePainter } from '../editor/paint-line.js';
 import { lineDiff } from '../editor/line-diff.js';
 import { registerCommands } from '../commands.js';
-import { installDispatcher } from '../keys/dispatcher.js';
+import { Dispatcher } from '../keys/dispatcher.js';
 import { SearchEverywhere } from './search-everywhere.js';
 import { Branches } from './branches.js';
 import { Notifications } from './notifications.js';
@@ -128,7 +128,10 @@ export function App() {
       const dead = commands.missing();
       if (dead.length) console.warn('[web-ide] команды без реализации:', dead.join(', '));
     });
-    const dispatcher = installDispatcher(() => keyContexts.here(), (key) => keysHelp.noteUnbound(key));
+    const dispatcher = new Dispatcher(
+      () => keyContexts.here(),
+      (key) => keysHelp.noteUnbound(key),
+    );
     dispatcher.setKeymap(config.keymap.peek());
     const stop = config.keymap.subscribe((value) => dispatcher.setKeymap(value));
     const mouse = visits.installMouseNav();
