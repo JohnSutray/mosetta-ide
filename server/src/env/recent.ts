@@ -30,9 +30,9 @@ function valid(item: unknown): item is RecentProject {
 }
 
 export class Recent {
-  readonly DEFAULT_STATE_DIR = path.join(os.homedir(), '.web-ide');
+  readonly defaultStateDir = path.join(os.homedir(), '.web-ide');
 
-  async listRecent(stateDir: string): Promise<RecentProject[]> {
+  async list(stateDir: string): Promise<RecentProject[]> {
     const known = caches.get(stateDir);
     if (known) return known;
     let list: RecentProject[] = [];
@@ -54,7 +54,7 @@ export class Recent {
     root: string,
     name: string,
   ): Promise<RecentProject[]> {
-    const list = await this.listRecent(stateDir);
+    const list = await this.list(stateDir);
     const next = [
       { root, name, openedAt: Date.now() },
       ...list.filter((item) => item.root !== root),

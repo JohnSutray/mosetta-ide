@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { patchSetting } from '../src/config/patch.js';
-import { parseJsonc } from '../src/config/jsonc.js';
+import { jsonc } from '../src/config/jsonc.js';
 
 function read(text: string): Record<string, Record<string, unknown>> {
-  return parseJsonc<Record<string, Record<string, unknown>>>(text, 'settings.json')!;
+  return jsonc.parse<Record<string, Record<string, unknown>>>(text, 'settings.json')!;
 }
 
 describe('точечная правка настроек', () => {

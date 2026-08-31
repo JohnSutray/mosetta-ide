@@ -4,11 +4,6 @@ type Sink = (line: LogLine) => void;
 
 const sinks = new Set<Sink>();
 
-export function onLog(sink: Sink): () => void {
-  sinks.add(sink);
-  return () => sinks.delete(sink);
-}
-
 function emit(level: LogLevel, scope: string, message: string) {
   const line: LogLine = { level, scope, message, at: Date.now() };
   for (const sink of sinks) sink(line);
@@ -24,16 +19,25 @@ export interface Logger {
   error(message: string): void;
 }
 
-export function logger(scope: string): Logger {
-  return {
-    debug: (m) => emit('debug', scope, m),
-    info: (m) => emit('info', scope, m),
-    warn: (m) => emit('warn', scope, m),
-    error: (m) => emit('error', scope, m),
-  };
+export class Journal {
+  onLog(sink: Sink): () => void {
+    sinks.add(sink);
+    return () => sinks.delete(sink);
+  }
+
+  logger(scope: string): Logger {
+    return {
+      debug: (m) => emit('debug', scope, m),
+      info: (m) => emit('info', scope, m),
+      warn: (m) => emit('warn', scope, m),
+      error: (m) => emit('error', scope, m),
+    };
+  }
+
+  describeError(err: unknown): string {
+    if (err instanceof Error) return err.stack ?? `${err.name}: ${err.message}`;
+    return String(err);
+  }
 }
 
-export function describeError(err: unknown): string {
-  if (err instanceof Error) return err.stack ?? `${err.name}: ${err.message}`;
-  return String(err);
-}
+export const journal = new Journal();

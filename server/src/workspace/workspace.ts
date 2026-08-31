@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import type { EventName, EventPayload, WorkspaceInfo } from '@ide/protocol';
-import { logger, type Logger } from '../log.js';
+import { journal, type Logger } from '../log.js';
 import type { ConfigStore } from '../config/store.js';
 import { paths } from './paths.js';
 import { Services } from './services.js';
@@ -36,7 +36,7 @@ export class Workspace {
     this.root = root;
     this.name = path.basename(root) || root;
     this.id = createHash('sha256').update(root).digest('hex').slice(0, 12);
-    this.log = logger(`ws:${this.name}`);
+    this.log = journal.logger(`ws:${this.name}`);
   }
 
   resolve(relative: string): string {

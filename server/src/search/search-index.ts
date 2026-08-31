@@ -8,11 +8,11 @@ import {
 import type { Logger } from '../log.js';
 import { paths } from '../workspace/paths.js';
 import type { RamFs } from '../fs/ram-fs.js';
-import { match } from './matcher.js';
+import { matcher } from './matcher.js';
 import { retype } from './layout.js';
-import { fold, indexString, Vocabulary, type Indexed } from './text.js';
+import { Vocabulary, textIndex, type Indexed } from './text.js';
 import type { FindProviders } from './providers.js';
-import { canParse, loadTypeScript, parseSymbols, type SymbolKind } from './ts-symbols.js';
+import { tsSymbols, type SymbolKind } from './ts-symbols.js';
 
 interface Entry {
   kind: IndexKind;
@@ -117,7 +117,7 @@ export class SearchIndex {
         label: path,
         path,
         detail: parentOf(path) || undefined,
-        indexed: indexString(path, this.vocabulary),
+        indexed: textIndex.of(path, this.vocabulary),
       });
     }
     this.files = files;
@@ -158,7 +158,7 @@ export class SearchIndex {
             ...(one.line !== undefined ? { line: one.line } : {}),
             ...(one.detail ? { detail: one.detail } : {}),
             ...(one.id ? { id: one.id } : {}),
-            indexed: indexString(label, this.vocabulary),
+            indexed: textIndex.of(label, this.vocabulary),
           });
         }
       }
@@ -189,7 +189,7 @@ export class SearchIndex {
   private enqueue(path: string): void {
     if (!this.settings.enabled) return;
     if (this.providers.wants(path)) this.staleTree = true;
-    if (!canParse(paths.extensionOf(path))) return;
+    if (!tsSymbols.canParse(paths.extensionOf(path))) return;
     this.pending.add(path);
     this.schedule();
   }
@@ -197,7 +197,7 @@ export class SearchIndex {
   indexSymbols(): Promise<void> {
     if (!this.settings.enabled) return Promise.resolve();
     for (const file of this.ram.files()) {
-      if (canParse(paths.extensionOf(file.path)) && this.ram.docSync(file.path)) {
+      if (tsSymbols.canParse(paths.extensionOf(file.path)) && this.ram.docSync(file.path)) {
         this.pending.add(file.path);
       }
     }
@@ -213,7 +213,7 @@ export class SearchIndex {
 
   private async drain(): Promise<void> {
     if (this.pending.size === 0) return;
-    const api = await loadTypeScript();
+    const api = await tsSymbols.load();
     let done = 0;
 
     while (this.pending.size > 0 && !this.disposed) {
@@ -225,7 +225,7 @@ export class SearchIndex {
         continue;
       }
       try {
-        const found = parseSymbols(api, path, doc.text, paths.extensionOf(path));
+        const found = tsSymbols.parse(api, path, doc.text, paths.extensionOf(path));
         this.symbols.set(
           path,
           found.map((symbol) => {
@@ -236,7 +236,7 @@ export class SearchIndex {
               path,
               line: symbol.line,
               detail: `${SYMBOL_DETAIL[symbol.kind]} · ${path}`,
-              indexed: indexString(label, this.vocabulary),
+              indexed: textIndex.of(label, this.vocabulary),
             };
           }),
         );
@@ -265,7 +265,7 @@ export class SearchIndex {
       term = prefixed[2]!;
     }
 
-    const folded = fold(term);
+    const folded = textIndex.fold(term);
     const other = folded === '' ? null : retype(folded);
     const hits: IndexHit[] = [];
 
@@ -275,9 +275,9 @@ export class SearchIndex {
         hits.push(toHit(entry, 0, []));
         continue;
       }
-      let found = match(entry.indexed, folded);
+      let found = matcher.match(entry.indexed, folded);
       if (other !== null) {
-        const alt = match(entry.indexed, other);
+        const alt = matcher.match(entry.indexed, other);
         if (alt && (!found || alt.score > found.score)) found = alt;
       }
       if (!found) continue;

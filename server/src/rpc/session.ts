@@ -9,7 +9,7 @@ import {
   type ServerFrame,
 } from '@ide/protocol';
 import { RpcError } from '../errors.js';
-import { describeError, logger, onLog } from '../log.js';
+import { journal } from '../log.js';
 import { handlers } from '../methods/index.js';
 import type { PluginHost } from '../plugins/host.js';
 import type { ConfigStore } from '../config/store.js';
@@ -17,7 +17,7 @@ import type { WorkspaceRegistry } from '../workspace/registry.js';
 import type { Workspace } from '../workspace/workspace.js';
 import type { RpcContext, SessionContext } from './context.js';
 
-const log = logger('session');
+const log = journal.logger('session');
 
 export class Session implements SessionContext {
   readonly id = randomUUID().slice(0, 8);
@@ -37,7 +37,7 @@ export class Session implements SessionContext {
     socket.on('error', (err) => log.warn(`сокет ${this.id}: ${String(err)}`));
 
     this.unsubscribe.push(this.registry.onChange((list) => this.notify('workspace.list', list)));
-    this.unsubscribe.push(onLog((line) => this.notify('log', line)));
+    this.unsubscribe.push(journal.onLog((line) => this.notify('log', line)));
     this.unsubscribe.push(this.config.onChange((bundle) => this.notify('config.changed', bundle)));
 
     this.notify('workspace.list', this.registry.list());
@@ -135,7 +135,7 @@ export class Session implements SessionContext {
       if (err instanceof RpcError) {
         this.sendError(id, err.toBody());
       } else {
-        log.error(`${method}: ${describeError(err)}`);
+        log.error(`${method}: ${journal.describeError(err)}`);
         this.sendError(id, {
           code: RpcErrorCode.Internal,
           message: err instanceof Error ? err.message : String(err),

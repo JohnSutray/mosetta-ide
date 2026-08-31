@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sharedNames } from '../src/plugins/build.js';
+import { pluginBuild } from '../src/plugins/build.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const api = path.resolve(here, '../../plugins/api/src');
@@ -41,14 +41,14 @@ describe('контракт @ide/api', () => {
   it('всё, что плагин может импортировать, сборка умеет подменить', () => {
     const text = source('client.ts');
     const offered = new Set([...injected(text), ...real(forPlugins(text))]);
-    for (const name of sharedNames('@ide/api/client')) {
+    for (const name of pluginBuild.shared('@ide/api/client')) {
       expect(offered.has(name), `${name} есть в SHARED, но не объявлен в @ide/api/client`).toBe(
         true,
       );
     }
     for (const name of injected(text)) {
       expect(
-        sharedNames('@ide/api/client'),
+        pluginBuild.shared('@ide/api/client'),
         `${name} объявлен в @ide/api/client, но плагину его не отдают`,
       ).toContain(name);
     }
@@ -57,7 +57,7 @@ describe('контракт @ide/api', () => {
   it('серверная половина сшита так же', () => {
     const text = source('server.ts');
     const offered = new Set(real(forPlugins(text)));
-    for (const name of sharedNames('@ide/api/server')) {
+    for (const name of pluginBuild.shared('@ide/api/server')) {
       expect(offered.has(name), `${name} есть в SHARED, но не объявлен в @ide/api/server`).toBe(
         true,
       );
@@ -66,7 +66,7 @@ describe('контракт @ide/api', () => {
 
   it('хостовое наружу не отдаётся', () => {
     for (const file of ['client.ts', 'server.ts'] as const) {
-      const shared = sharedNames(`@ide/api/${file === 'client.ts' ? 'client' : 'server'}`);
+      const shared = pluginBuild.shared(`@ide/api/${file === 'client.ts' ? 'client' : 'server'}`);
       for (const name of real(forHost(source(file)))) {
         expect(shared, `${name} — для хоста, плагину он приедет пустым`).not.toContain(name);
       }
@@ -93,7 +93,7 @@ describe('контракт @ide/api', () => {
       m[1]!.split(',').map((one) => one.trim()),
     );
     const offered = new Set([...own, ...passed]);
-    for (const name of sharedNames('@ide/api/client')) {
+    for (const name of pluginBuild.shared('@ide/api/client')) {
       expect(offered.has(name), `${name} подменяется на сборке, но не в тесте`).toBe(true);
     }
   });

@@ -41,17 +41,17 @@ describe('чем запускать терминалы', () => {
   });
 
   it('в конфиг уезжает имя, когда это без потерь', () => {
-    expect(shells.shellRef(shell)).toBe(`ide-fake-shell${EXT}`);
-    expect(path.isAbsolute(shells.shellRef(shell))).toBe(false);
+    expect(shells.ref(shell)).toBe(`ide-fake-shell${EXT}`);
+    expect(path.isAbsolute(shells.ref(shell))).toBe(false);
   });
 
   it('одноимённая чужая оболочка сокращаться не должна', () => {
-    expect(shells.shellRef(hidden)).toBe(hidden);
+    expect(shells.ref(hidden)).toBe(hidden);
   });
 
   it('записанное читается обратно в тот же файл', () => {
     for (const original of [shell, hidden]) {
-      const stored = shells.shellRef(original);
+      const stored = shells.ref(original);
       expect(shells.loginShell({ shell: stored }).file, stored).toBe(original);
     }
   });

@@ -1,7 +1,7 @@
-import { logger, describeError } from './log.js';
+import { journal } from './log.js';
 import { startServer } from './server.js';
 
-const log = logger('main');
+const log = journal.logger('main');
 
 const port = process.env.IDE_PORT ? Number(process.env.IDE_PORT) : undefined;
 const idleMs = process.env.IDE_WORKSPACE_IDLE_MS
@@ -17,4 +17,4 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   });
 }
 
-process.on('unhandledRejection', (err) => log.error(`необработанный reject: ${describeError(err)}`));
+process.on('unhandledRejection', (err) => log.error(`необработанный reject: ${journal.describeError(err)}`));

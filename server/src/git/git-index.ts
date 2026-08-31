@@ -8,7 +8,7 @@ import type {
   PushPreview,
 } from '@ide/protocol';
 import type { Logger } from '../log.js';
-import { git, gitStream } from './cli.js';
+import { gitCli } from './cli.js';
 
 const DEBOUNCE_MS = 400;
 
@@ -46,7 +46,7 @@ export class GitIndex {
     if (this.disposed || minutes <= 0) return;
     this.autoFetch = setInterval(
       () => {
-        void git(this.root, ['fetch', '--all', '--prune'], 60_000).then((result) => {
+        void gitCli.run(this.root, ['fetch', '--all', '--prune'], 60_000).then((result) => {
           if (!result.ok) {
             this.log.debug(`автофетч не удался: ${result.stderr}`);
             return;
@@ -84,7 +84,7 @@ export class GitIndex {
   }
 
   async headText(key: string): Promise<string | null> {
-    const shown = await git(this.root, ['show', `HEAD:./${key}`]);
+    const shown = await gitCli.run(this.root, ['show', `HEAD:./${key}`]);
     return shown.ok ? shown.stdout : null;
   }
 
@@ -104,7 +104,7 @@ export class GitIndex {
   }
 
   private async doRefresh(): Promise<void> {
-    const status = await git(this.root, [
+    const status = await gitCli.run(this.root, [
       'status',
       '--porcelain',
       '-z',
@@ -121,8 +121,8 @@ export class GitIndex {
 
     const files = parseStatus(status.stdout);
     const [head, tracking, branchList] = await Promise.all([
-      git(this.root, ['rev-parse', '--abbrev-ref', 'HEAD']),
-      git(this.root, ['rev-list', '--left-right', '--count', 'HEAD...@{upstream}']),
+      gitCli.run(this.root, ['rev-parse', '--abbrev-ref', 'HEAD']),
+      gitCli.run(this.root, ['rev-list', '--left-right', '--count', 'HEAD...@{upstream}']),
       this.readBranches(),
     ]);
 
@@ -138,7 +138,7 @@ export class GitIndex {
   }
 
   private async readBranches(): Promise<GitBranch[]> {
-    const result = await git(this.root, [
+    const result = await gitCli.run(this.root, [
       'branch',
       '--all',
       '--format=%(refname)\t%(refname:short)\t%(upstream:short)\t%(HEAD)\t%(objectname:short)\t%(upstream:track)\t%(contents:subject)',
@@ -177,10 +177,10 @@ export class GitIndex {
   }
 
   async outgoing(): Promise<PushPreview> {
-    const head = await git(this.root, ['rev-parse', '--abbrev-ref', 'HEAD']);
+    const head = await gitCli.run(this.root, ['rev-parse', '--abbrev-ref', 'HEAD']);
     const branch = head.ok ? head.stdout.trim() || null : null;
 
-    const tracking = await git(this.root, [
+    const tracking = await gitCli.run(this.root, [
       'rev-parse',
       '--abbrev-ref',
       '--symbolic-full-name',
@@ -197,7 +197,7 @@ export class GitIndex {
     const [local, remote, base] = await Promise.all([
       this.commits([`${upstream}..HEAD`]),
       this.commits([`HEAD..${upstream}`]),
-      git(this.root, ['merge-base', 'HEAD', upstream]),
+      gitCli.run(this.root, ['merge-base', 'HEAD', upstream]),
     ]);
     const common = base.ok
       ? await this.commits(['-n', `${COMMON_SHOWN}`, base.stdout.trim()])
@@ -211,7 +211,7 @@ export class GitIndex {
       return this.names(['show', '--name-status', '--format=', commit]);
     }
 
-    const tracking = await git(this.root, [
+    const tracking = await gitCli.run(this.root, [
       'rev-parse',
       '--abbrev-ref',
       '--symbolic-full-name',
@@ -224,13 +224,13 @@ export class GitIndex {
     const local = await this.commits(['--not', '--remotes', 'HEAD']);
     const oldest = local[local.length - 1];
     if (!oldest) return [];
-    const parent = await git(this.root, ['rev-parse', `${oldest.short}^`]);
+    const parent = await gitCli.run(this.root, ['rev-parse', `${oldest.short}^`]);
     const base = parent.ok ? parent.stdout.trim() : EMPTY_TREE;
     return this.names(['diff', '--name-status', base, 'HEAD']);
   }
 
   private async names(args: string[]): Promise<GitChange[]> {
-    const result = await git(this.root, args);
+    const result = await gitCli.run(this.root, args);
     if (!result.ok) return [];
     const out: GitChange[] = [];
     for (const line of result.stdout.split('\n')) {
@@ -244,7 +244,7 @@ export class GitIndex {
   }
 
   private async commits(args: string[]): Promise<GitCommit[]> {
-    const result = await git(this.root, [
+    const result = await gitCli.run(this.root, [
       'log',
       '--format=%h%x09%an%x09%ad%x09%s%x09%b%x00',
       '--date=short',
@@ -270,7 +270,7 @@ export class GitIndex {
 
   async run(action: GitAction, args: string[]): Promise<string | null> {
     this.onOutput(action, `$ git ${args.join(' ')}\n`);
-    const result = await gitStream(this.root, args, (chunk) => this.onOutput(action, chunk));
+    const result = await gitCli.stream(this.root, args, (chunk) => this.onOutput(action, chunk));
     await this.refresh();
     if (result.ok) {
       this.onOutput(action, '\n[готово]\n');

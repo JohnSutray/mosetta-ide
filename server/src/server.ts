@@ -7,11 +7,11 @@ import { WebSocketServer } from 'ws';
 import { DEFAULT_PORT, WS_PATH } from '@ide/protocol';
 import { ConfigStore } from './config/store.js';
 import { recent } from './env/recent.js';
-import { logger } from './log.js';
+import { journal } from './log.js';
 import { Session } from './rpc/session.js';
 import { WorkspaceRegistry } from './workspace/registry.js';
 
-const log = logger('server');
+const log = journal.logger('server');
 
 export interface ServerOptions {
   port?: number;
@@ -34,7 +34,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   const host = options.host ?? '127.0.0.1';
   const port = options.port ?? DEFAULT_PORT;
   const startedAt = Date.now();
-  const stateDir = options.stateDir ?? recent.DEFAULT_STATE_DIR;
+  const stateDir = options.stateDir ?? recent.defaultStateDir;
   const config = await ConfigStore.load(options.configDir);
   if (options.watchConfig ?? true) config.watch();
   const plugins = new PluginHost(log, path.join(stateDir, 'plugins-build'));

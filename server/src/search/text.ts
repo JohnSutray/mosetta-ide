@@ -1,8 +1,4 @@
 
-export function fold(value: string): string {
-  return value.normalize('NFC').toLowerCase();
-}
-
 const SEPARATOR = /[^\p{L}\p{N}]/u;
 
 function isSeparator(ch: string): boolean {
@@ -26,52 +22,15 @@ export interface Piece {
   at: number;
 }
 
-export function splitPieces(input: string): Piece[] {
-  const pieces: Piece[] = [];
-  let start = -1;
-
-  const flush = (end: number) => {
-    if (start === -1) return;
-    pieces.push({ text: input.slice(start, end), at: start });
-    start = -1;
-  };
-
-  for (let i = 0; i < input.length; i += 1) {
-    const ch = input[i]!;
-    if (isSeparator(ch)) {
-      flush(i);
-      continue;
-    }
-    if (start === -1) {
-      start = i;
-      continue;
-    }
-
-    const prev = input[i - 1]!;
-    const next = input[i + 1];
-    const camel = !isUpper(prev) && isUpper(ch);
-    const acronymEnd =
-      isUpper(prev) && isUpper(ch) && next !== undefined && isLower(next);
-    const digitEdge = isDigit(prev) !== isDigit(ch);
-
-    if (camel || acronymEnd || digitEdge) {
-      flush(i);
-      start = i;
-    }
-  }
-  flush(input.length);
-  return pieces;
-}
-
 export class Vocabulary {
   private readonly counts = new Map<string, number>();
   private static readonly MIN = 3;
 
   learn(input: string): void {
-    const pieces = splitPieces(input);
+    const pieces = textIndex.splitPieces(input);
     if (pieces.length < 2) return;
     for (const piece of pieces) {
-      const word = fold(piece.text);
+      const word = textIndex.fold(piece.text);
       if (word.length < Vocabulary.MIN) continue;
       this.counts.set(word, (this.counts.get(word) ?? 0) + 1);
     }
@@ -136,23 +95,68 @@ export interface Indexed {
   starts: Uint8Array;
 }
 
-export function indexString(input: string, vocabulary?: Vocabulary): Indexed {
-  const text = fold(input);
-  const starts = new Uint8Array(text.length);
-
-  for (const piece of splitPieces(input)) {
-    starts[piece.at] = 1;
-    if (!vocabulary) continue;
-    const word = fold(piece.text);
-    if (vocabulary.has(word)) continue;
-    const parts = vocabulary.segment(word);
-    if (!parts) continue;
-    let at = piece.at;
-    for (const part of parts) {
-      starts[at] = 1;
-      at += part.length;
-    }
+export class TextIndex {
+  fold(value: string): string {
+    return value.normalize('NFC').toLowerCase();
   }
 
-  return { text, starts };
+  splitPieces(input: string): Piece[] {
+    const pieces: Piece[] = [];
+    let start = -1;
+
+    const flush = (end: number) => {
+      if (start === -1) return;
+      pieces.push({ text: input.slice(start, end), at: start });
+      start = -1;
+    };
+
+    for (let i = 0; i < input.length; i += 1) {
+      const ch = input[i]!;
+      if (isSeparator(ch)) {
+        flush(i);
+        continue;
+      }
+      if (start === -1) {
+        start = i;
+        continue;
+      }
+
+      const prev = input[i - 1]!;
+      const next = input[i + 1];
+      const camel = !isUpper(prev) && isUpper(ch);
+      const acronymEnd =
+        isUpper(prev) && isUpper(ch) && next !== undefined && isLower(next);
+      const digitEdge = isDigit(prev) !== isDigit(ch);
+
+      if (camel || acronymEnd || digitEdge) {
+        flush(i);
+        start = i;
+      }
+    }
+    flush(input.length);
+    return pieces;
+  }
+
+  of(input: string, vocabulary?: Vocabulary): Indexed {
+    const text = this.fold(input);
+    const starts = new Uint8Array(text.length);
+
+    for (const piece of this.splitPieces(input)) {
+      starts[piece.at] = 1;
+      if (!vocabulary) continue;
+      const word = this.fold(piece.text);
+      if (vocabulary.has(word)) continue;
+      const parts = vocabulary.segment(word);
+      if (!parts) continue;
+      let at = piece.at;
+      for (const part of parts) {
+        starts[at] = 1;
+        at += part.length;
+      }
+    }
+
+    return { text, starts };
+  }
 }
+
+export const textIndex = new TextIndex();

@@ -27,21 +27,6 @@ export interface OsFileText {
   truncated: boolean;
 }
 
-export async function probeRoot(input: string): Promise<string> {
-  const expanded = paths.expandRoot(input);
-  let real: string;
-  try {
-    real = await fs.realpath(expanded);
-  } catch {
-    throw new RpcError(RpcErrorCode.BadRoot, `Путь не существует: ${expanded}`);
-  }
-  const stat = await fs.stat(real);
-  if (!stat.isDirectory()) {
-    throw new RpcError(RpcErrorCode.BadRoot, `Не директория: ${real}`);
-  }
-  return real;
-}
-
 export class OsFs {
   private readonly listeners = new Set<(event: OsEvent) => void>();
 
@@ -75,7 +60,7 @@ export class OsFs {
 
     for (const dirent of dirents) {
       if (hidden.has(dirent.name)) continue;
-      if (isTempFile(dirent.name)) continue;
+      if (disk.isTempFile(dirent.name)) continue;
       const childKey = paths.joinKey(dirKey, dirent.name);
       let stat: Stats;
       try {
@@ -96,7 +81,7 @@ export class OsFs {
       });
     }
 
-    return sortEntries(entries);
+    return disk.sortEntries(entries);
   }
 
   async stat(key: string): Promise<OsStat | null> {
@@ -289,19 +274,6 @@ function revisionOf(stat: Stats): string {
   return `${Math.round(stat.mtimeMs)}:${stat.size}`;
 }
 
-export const TEMP_FILE = /(^\.#)|(~$)|(\.sw[px]$)|(^\..*\.tmp-\d+-)/;
-
-export function isTempFile(name: string): boolean {
-  return TEMP_FILE.test(name);
-}
-
-export function sortEntries(entries: DirEntry[]): DirEntry[] {
-  return entries.sort((a, b) => {
-    if (a.kind !== b.kind) return a.kind === 'dir' ? -1 : 1;
-    return a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' });
-  });
-}
-
 function translate(err: unknown, key: string, expected: 'file' | 'dir'): RpcError {
   const code = (err as NodeJS.ErrnoException)?.code;
   if (code === 'ENOENT') return RpcError.notFound(key);
@@ -311,3 +283,35 @@ function translate(err: unknown, key: string, expected: 'file' | 'dir'): RpcErro
   }
   return new RpcError(RpcErrorCode.Internal, String(err));
 }
+
+export class Disk {
+  async probeRoot(input: string): Promise<string> {
+    const expanded = paths.expandRoot(input);
+    let real: string;
+    try {
+      real = await fs.realpath(expanded);
+    } catch {
+      throw new RpcError(RpcErrorCode.BadRoot, `Путь не существует: ${expanded}`);
+    }
+    const stat = await fs.stat(real);
+    if (!stat.isDirectory()) {
+      throw new RpcError(RpcErrorCode.BadRoot, `Не директория: ${real}`);
+    }
+    return real;
+  }
+
+  readonly tempFile = /(^\.#)|(~$)|(\.sw[px]$)|(^\..*\.tmp-\d+-)/;
+
+  isTempFile(name: string): boolean {
+    return this.tempFile.test(name);
+  }
+
+  sortEntries(entries: DirEntry[]): DirEntry[] {
+    return entries.sort((a, b) => {
+      if (a.kind !== b.kind) return a.kind === 'dir' ? -1 : 1;
+      return a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' });
+    });
+  }
+}
+
+export const disk = new Disk();

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { PluginInfo, PluginManifest } from '@ide/protocol';
-import { buildEntry } from './build.js';
+import { pluginBuild } from './build.js';
 import {
   activate,
   command,
@@ -156,13 +156,13 @@ export class PluginHost {
     const peers = manifest.needs ?? [];
     let clientCode: string | undefined;
     if (manifest.client) {
-      const built = await buildEntry(path.join(dir, manifest.client), 'client', peers);
+      const built = await pluginBuild.entry(path.join(dir, manifest.client), 'client', peers);
       clientCode = built.code;
       this.log.debug(`плагин ${name}: клиент собран за ${built.ms} мс`);
     }
 
     if (manifest.server) {
-      const built = await buildEntry(path.join(dir, manifest.server), 'server', peers);
+      const built = await pluginBuild.entry(path.join(dir, manifest.server), 'server', peers);
       await fs.mkdir(this.buildDir, { recursive: true });
       const out = path.join(this.buildDir, `${name.replace(/[^\w.-]/g, '_')}.server.mjs`);
       const before = await fs.readFile(out, 'utf8').catch(() => null);

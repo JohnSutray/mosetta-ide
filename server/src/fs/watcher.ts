@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { FsSettings } from '@ide/protocol';
 import type { Logger } from '../log.js';
-import { isTempFile } from './os-fs.js';
+import { disk } from './os-fs.js';
 import { paths } from '../workspace/paths.js';
 
 export interface WatcherOptions {
@@ -94,7 +94,7 @@ export class OsWatcher {
   private ignored(key: string): boolean {
     const segments = key.split('/');
     const name = segments[segments.length - 1] ?? '';
-    if (isTempFile(name)) return true;
+    if (disk.isTempFile(name)) return true;
     if (this.settings.hidden.includes(name)) return true;
     const noScan = new Set(this.settings.noScan);
     return segments.slice(0, -1).some((segment) => noScan.has(segment));

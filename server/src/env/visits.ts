@@ -26,9 +26,9 @@ async function exists(root: string, key: string): Promise<boolean> {
 }
 
 export class VisitsStore {
-  readonly VISIT_LIMIT = 30;
+  readonly limit = 30;
 
-  async loadVisits(stateDir: string, root: string): Promise<Visit[]> {
+  async load(stateDir: string, root: string): Promise<Visit[]> {
     let raw: string;
     try {
       raw = await fs.readFile(fileFor(stateDir, root), 'utf8');
@@ -42,19 +42,19 @@ export class VisitsStore {
       return [];
     }
     if (!Array.isArray(parsed)) return [];
-    const clean = parsed.filter(valid).slice(-this.VISIT_LIMIT);
+    const clean = parsed.filter(valid).slice(-this.limit);
     const alive = await Promise.all(clean.map((visit) => exists(root, visit.path)));
     return clean.filter((_, at) => alive[at]);
   }
 
-  async saveVisits(
+  async save(
     stateDir: string,
     root: string,
     visits: Visit[],
   ): Promise<void> {
     const file = fileFor(stateDir, root);
     await fs.mkdir(path.dirname(file), { recursive: true });
-    await fs.writeFile(file, JSON.stringify(visits.slice(-this.VISIT_LIMIT), null, 2), 'utf8');
+    await fs.writeFile(file, JSON.stringify(visits.slice(-this.limit), null, 2), 'utf8');
   }
 }
 

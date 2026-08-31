@@ -30,7 +30,7 @@ export class Tools {
     return 'npm';
   }
 
-  detectPackageManagers(
+  detect(
     suggested: string,
     chosen: string,
     root: string,

@@ -59,7 +59,7 @@ function windowsCandidates(): string[] {
 }
 
 export class Shells {
-  shellRef(file: string): string {
+  ref(file: string): string {
     const bare = path.basename(file).replace(/\.exe$/i, '');
     const found = tools.onPath(bare);
     return found && sameFile(found, file) ? bare : file;
@@ -69,7 +69,7 @@ export class Shells {
     const wanted = value.trim();
     if (wanted === '') return null;
     if (wanted.includes('/') || wanted.includes('\\')) {
-      return this.shellExists(wanted) ? wanted : null;
+      return this.exists(wanted) ? wanted : null;
     }
     return tools.onPath(wanted);
   }
@@ -103,7 +103,7 @@ export class Shells {
     return ['-l', '-i'];
   }
 
-  detectShells(current = this.loginShell().file): ShellInfo[] {
+  detect(current = this.loginShell().file): ShellInfo[] {
     const seen = new Map<string, ShellInfo>();
     const add = (file: string) => {
       const full = file.trim();
@@ -118,7 +118,7 @@ export class Shells {
       seen.set(key, {
         path: full,
         name: path.basename(full),
-        ref: this.shellRef(full),
+        ref: this.ref(full),
         current: sameFile(full, current),
       });
     };
@@ -128,7 +128,7 @@ export class Shells {
     return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  shellExists(file: string): boolean {
+  exists(file: string): boolean {
     try {
       return fs.statSync(file).isFile();
     } catch {

@@ -1,4 +1,4 @@
-import { parseJsonc } from './jsonc.js';
+import { jsonc } from './jsonc.js';
 
 export interface PatchResult {
   text: string;
@@ -21,7 +21,7 @@ export function patchSetting(
 
 function applied(text: string, section: string, key: string, value: string | boolean): boolean {
   try {
-    const parsed = parseJsonc<Record<string, Record<string, unknown>>>(text, 'settings.json');
+    const parsed = jsonc.parse<Record<string, Record<string, unknown>>>(text, 'settings.json');
     return parsed?.[section]?.[key] === value;
   } catch {
     return false;
@@ -63,7 +63,7 @@ function tryMinimal(
 function rewrite(text: string, section: string, key: string, value: string | boolean): string {
   let parsed: Record<string, unknown> = {};
   try {
-    parsed = parseJsonc<Record<string, unknown>>(text, 'settings.json') ?? {};
+    parsed = jsonc.parse<Record<string, unknown>>(text, 'settings.json') ?? {};
   } catch {
     parsed = {};
   }

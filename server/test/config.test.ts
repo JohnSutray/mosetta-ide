@@ -4,14 +4,14 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isCommandId, type Keymap } from '@ide/protocol';
-import { parseJsonc } from '../src/config/jsonc.js';
-import { ConfigStore, normalizeKey, validateKeymap } from '../src/config/store.js';
+import { jsonc } from '../src/config/jsonc.js';
+import { ConfigStore, keymapRules } from '../src/config/store.js';
 
 const SHIPPED = fileURLToPath(new URL('../../config', import.meta.url));
 
 describe('JSONC', () => {
   it('понимает комментарии и висячие запятые', () => {
-    const parsed = parseJsonc<{ a: number; b: string[] }>(
+    const parsed = jsonc.parse<{ a: number; b: string[] }>(
       `{
          // строчный
          "a": 1, 
@@ -23,7 +23,7 @@ describe('JSONC', () => {
   });
 
   it('не режет слэши внутри строк', () => {
-    const parsed = parseJsonc<{ url: string; win: string }>(
+    const parsed = jsonc.parse<{ url: string; win: string }>(
       '{ "url": "https://example.com//x", "win": "C:\\\\a\\\\b" }',
       'test',
     );
@@ -34,23 +34,23 @@ describe('JSONC', () => {
 
 describe('клавиши', () => {
   it('порядок модификаторов и регистр не важны', () => {
-    expect(normalizeKey('Shift+Meta+S')).toBe(normalizeKey('meta+shift+s'));
-    expect(normalizeKey('CONTROL+1')).toBe('control+1');
+    expect(keymapRules.normalizeKey('Shift+Meta+S')).toBe(keymapRules.normalizeKey('meta+shift+s'));
+    expect(keymapRules.normalizeKey('CONTROL+1')).toBe('control+1');
   });
 
   it('все физические модификаторы доживают до клиента', () => {
-    expect(normalizeKey('meta+alt+shift+c')).toBe('meta+alt+shift+c');
-    expect(normalizeKey('shift+alt+meta+c')).toBe('meta+alt+shift+c');
-    expect(normalizeKey('control+alt+1')).toBe('control+alt+1');
+    expect(keymapRules.normalizeKey('meta+alt+shift+c')).toBe('meta+alt+shift+c');
+    expect(keymapRules.normalizeKey('shift+alt+meta+c')).toBe('meta+alt+shift+c');
+    expect(keymapRules.normalizeKey('control+alt+1')).toBe('control+alt+1');
   });
 
   it('клавиша зовётся и тем именем, что написано на ней', () => {
-    expect(normalizeKey('Cmd+S')).toBe('meta+s');
-    expect(normalizeKey('Command+Shift+S')).toBe('meta+shift+s');
-    expect(normalizeKey('Win+1')).toBe('meta+1');
-    expect(normalizeKey('Ctrl+Option+T')).toBe('control+alt+t');
-    expect(normalizeKey('double:cmd')).toBe('double:meta');
-    expect(normalizeKey('Esc')).toBe('escape');
+    expect(keymapRules.normalizeKey('Cmd+S')).toBe('meta+s');
+    expect(keymapRules.normalizeKey('Command+Shift+S')).toBe('meta+shift+s');
+    expect(keymapRules.normalizeKey('Win+1')).toBe('meta+1');
+    expect(keymapRules.normalizeKey('Ctrl+Option+T')).toBe('control+alt+t');
+    expect(keymapRules.normalizeKey('double:cmd')).toBe('double:meta');
+    expect(keymapRules.normalizeKey('Esc')).toBe('escape');
   });
 
   it('одна клавиша в разных окружениях — не дубль, а вторая раскладка', () => {
@@ -62,7 +62,7 @@ describe('клавиши', () => {
         { command: 'file.save', key: 'control+s', where: ['browser:win'] },
       ],
     };
-    expect(validateKeymap(raw).bindings).toHaveLength(3);
+    expect(keymapRules.validate(raw).bindings).toHaveLength(3);
   });
 
   it('а вот дубль в одной области по-прежнему выбрасывается', () => {
@@ -73,13 +73,13 @@ describe('клавиши', () => {
         { command: 'file.reload', key: 'alt+s', where: ['browser:mac'] },
       ],
     };
-    expect(validateKeymap(raw).bindings).toHaveLength(1);
+    expect(keymapRules.validate(raw).bindings).toHaveLength(1);
   });
 });
 
 describe('боевой конфиг в app/config', () => {
   it('keymap.json ссылается только на существующие команды', async () => {
-    const raw = parseJsonc<Keymap>(
+    const raw = jsonc.parse<Keymap>(
       await fs.readFile(path.join(SHIPPED, 'keymap.json'), 'utf8'),
       'keymap.json',
     );

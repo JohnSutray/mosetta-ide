@@ -9,12 +9,12 @@ import {
   type Keymap,
   type Settings,
 } from '@ide/protocol';
-import { logger } from '../log.js';
-import { DEFAULT_SETTINGS, EMPTY_KEYMAP } from './defaults.js';
-import { parseJsonc } from './jsonc.js';
+import { journal } from '../log.js';
+import { defaults } from './defaults.js';
+import { jsonc } from './jsonc.js';
 import { patchSetting } from './patch.js';
 
-const log = logger('config');
+const log = journal.logger('config');
 
 const WATCHED = new Set(['settings.json', 'keymap.json']);
 
@@ -32,7 +32,7 @@ export class ConfigStore {
   }
 
   static async load(dir = defaultConfigDir()): Promise<ConfigStore> {
-    const store = new ConfigStore(dir, { settings: DEFAULT_SETTINGS, keymap: EMPTY_KEYMAP, sources: [] });
+    const store = new ConfigStore(dir, { settings: defaults.settings, keymap: defaults.emptyKeymap, sources: [] });
     store.bundle = await store.read();
     return store;
   }
@@ -101,11 +101,11 @@ export class ConfigStore {
   private async read(): Promise<ConfigBundle> {
     const sources: string[] = [];
     const settings = mergeSettings(
-      DEFAULT_SETTINGS,
+      defaults.settings,
       await this.readFile<Partial<Settings>>('settings.json', sources),
     );
     const rawKeymap = await this.readFile<Keymap>('keymap.json', sources);
-    return { settings, keymap: validateKeymap(rawKeymap), sources };
+    return { settings, keymap: keymapRules.validate(rawKeymap), sources };
   }
 
   private async readFile<T>(name: string, sources: string[]): Promise<T | null> {
@@ -118,7 +118,7 @@ export class ConfigStore {
       return null;
     }
     try {
-      const parsed = parseJsonc<T>(text, target);
+      const parsed = jsonc.parse<T>(text, target);
       sources.push(target);
       return parsed;
     } catch (err) {
@@ -147,36 +147,6 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export function validateKeymap(raw: Keymap | null): Keymap {
-  if (!raw || !Array.isArray(raw.bindings)) return EMPTY_KEYMAP;
-  const seen = new Map<string, KeyBinding>();
-  const bindings: KeyBinding[] = [];
-
-  for (const binding of raw.bindings) {
-    if (!binding || typeof binding.key !== 'string' || typeof binding.command !== 'string') {
-      log.error(`битый биндинг в keymap.json: ${JSON.stringify(binding)}`);
-      continue;
-    }
-    if (!isCommandId(binding.command)) {
-      log.debug(`keymap.json: ${binding.command} — не наша команда, ждём плагин`);
-    }
-    const where = [...(binding.where ?? [])].sort().join(',');
-    const slot = `${where}|${binding.when ?? 'global'}:${normalizeKey(binding.key)}`;
-    const previous = seen.get(slot);
-    if (previous) {
-      log.error(
-        `keymap.json: ${binding.key} (${binding.when ?? 'global'}) занята ` +
-          `командой ${previous.command}, ${binding.command} проигнорирована`,
-      );
-      continue;
-    }
-    seen.set(slot, binding);
-    bindings.push({ ...binding, key: normalizeKey(binding.key) });
-  }
-
-  return { version: raw.version ?? 1, bindings };
-}
-
 const ALIASES: Record<string, string> = {
   cmd: 'meta',
   command: 'meta',
@@ -190,25 +160,59 @@ const ALIASES: Record<string, string> = {
   return: 'enter',
 };
 
-export function normalizeKey(key: string): string {
-  if (key.toLowerCase().startsWith('double:')) {
-    const name = key.slice('double:'.length).trim().toLowerCase();
-    return `double:${ALIASES[name] ?? name}`;
-  }
-  const parts = key
-    .toLowerCase()
-    .split('+')
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .map((p) => ALIASES[p] ?? p);
-  const main = parts.pop() ?? '';
-  const order = ['meta', 'control', 'alt', 'shift'];
-  const mods = order.filter((m) => parts.includes(m));
-  return [...mods, main].join('+');
-}
-
 function defaultConfigDir(): string {
   if (process.env.IDE_CONFIG_DIR) return path.resolve(process.env.IDE_CONFIG_DIR);
   const here = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(here, '..', '..', '..', 'config');
 }
+
+export class KeymapRules {
+  validate(raw: Keymap | null): Keymap {
+    if (!raw || !Array.isArray(raw.bindings)) return defaults.emptyKeymap;
+    const seen = new Map<string, KeyBinding>();
+    const bindings: KeyBinding[] = [];
+
+    for (const binding of raw.bindings) {
+      if (!binding || typeof binding.key !== 'string' || typeof binding.command !== 'string') {
+        log.error(`битый биндинг в keymap.json: ${JSON.stringify(binding)}`);
+        continue;
+      }
+      if (!isCommandId(binding.command)) {
+        log.debug(`keymap.json: ${binding.command} — не наша команда, ждём плагин`);
+      }
+      const where = [...(binding.where ?? [])].sort().join(',');
+      const slot = `${where}|${binding.when ?? 'global'}:${this.normalizeKey(binding.key)}`;
+      const previous = seen.get(slot);
+      if (previous) {
+        log.error(
+          `keymap.json: ${binding.key} (${binding.when ?? 'global'}) занята ` +
+            `командой ${previous.command}, ${binding.command} проигнорирована`,
+        );
+        continue;
+      }
+      seen.set(slot, binding);
+      bindings.push({ ...binding, key: this.normalizeKey(binding.key) });
+    }
+
+    return { version: raw.version ?? 1, bindings };
+  }
+
+  normalizeKey(key: string): string {
+    if (key.toLowerCase().startsWith('double:')) {
+      const name = key.slice('double:'.length).trim().toLowerCase();
+      return `double:${ALIASES[name] ?? name}`;
+    }
+    const parts = key
+      .toLowerCase()
+      .split('+')
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => ALIASES[p] ?? p);
+    const main = parts.pop() ?? '';
+    const order = ['meta', 'control', 'alt', 'shift'];
+    const mods = order.filter((m) => parts.includes(m));
+    return [...mods, main].join('+');
+  }
+}
+
+export const keymapRules = new KeymapRules();

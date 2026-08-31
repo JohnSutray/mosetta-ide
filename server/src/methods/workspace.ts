@@ -63,21 +63,21 @@ export class WorkspaceMethods {
     return browse.suggestDirectories(params.prefix, limit, depth);
   };
 
-  readonly roots: Handler<'workspace.roots'> = () => browse.browseRoots();
+  readonly roots: Handler<'workspace.roots'> = () => browse.roots();
 
   readonly recent: Handler<'workspace.recent'> = (_params, ctx) =>
-    recent.listRecent(ctx.stateDir);
+    recent.list(ctx.stateDir);
 }
 
 export const workspaceMethods = new WorkspaceMethods();
 
 export class EnvMethods {
   readonly shells: Handler<'env.shells'> = (_params, ctx) =>
-    shells.detectShells(shells.loginShell(ctx.config.settings.terminal).file);
+    shells.detect(shells.loginShell(ctx.config.settings.terminal).file);
 
   readonly packageManagers: Handler<'env.packageManagers'> = (_params, ctx) => {
     const ws = ctx.session.requireWorkspace();
-    return tools.detectPackageManagers(
+    return tools.detect(
       ws.services.suggestedManager(),
       ctx.config.settings.tools.packageManager,
       ws.root,
@@ -90,7 +90,7 @@ export const envMethods = new EnvMethods();
 export class VisitsMethods {
   readonly get: Handler<'visits.get'> = (_params, ctx) => {
     const ws = ctx.session.requireWorkspace();
-    return visitsStore.loadVisits(ctx.stateDir, ws.root);
+    return visitsStore.load(ctx.stateDir, ws.root);
   };
 
   readonly set: Handler<'visits.set'> = async (params, ctx) => {
@@ -98,8 +98,8 @@ export class VisitsMethods {
       throw RpcError.invalidParams('нужен visits: Visit[]');
     }
     const ws = ctx.session.requireWorkspace();
-    const visits = params.visits.slice(-visitsStore.VISIT_LIMIT);
-    await visitsStore.saveVisits(ctx.stateDir, ws.root, visits);
+    const visits = params.visits.slice(-visitsStore.limit);
+    await visitsStore.save(ctx.stateDir, ws.root, visits);
     return { saved: visits.length };
   };
 }

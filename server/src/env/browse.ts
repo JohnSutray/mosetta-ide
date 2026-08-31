@@ -26,9 +26,9 @@ function split(value: string): { dir: string; partial: string } {
 }
 
 export class Browse {
-  readonly SUGGEST_LIMIT = 24;
+  readonly suggestLimit = 24;
 
-  async browseRoots(): Promise<DirSuggestion[]> {
+  async roots(): Promise<DirSuggestion[]> {
     const home = os.homedir();
     const [homeKids, diskKids] = await Promise.all([
       this.suggestDirectories(`${home}${path.sep}`, ALL, 2),

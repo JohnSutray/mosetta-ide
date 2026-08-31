@@ -1,12 +1,12 @@
 import type { WorkspaceInfo } from '@ide/protocol';
 import type { ConfigStore } from '../config/store.js';
-import { probeRoot } from '../fs/os-fs.js';
+import { disk } from '../fs/os-fs.js';
 import { RpcError } from '../errors.js';
-import { logger } from '../log.js';
+import { journal } from '../log.js';
 import { Workspace } from './workspace.js';
 import type { FindProviders } from '../search/providers.js';
 
-const log = logger('workspaces');
+const log = journal.logger('workspaces');
 
 export interface RegistryOptions {
   idleMs?: number;
@@ -29,7 +29,7 @@ export class WorkspaceRegistry {
   }
 
   async open(rootInput: string): Promise<Workspace> {
-    const real = await probeRoot(rootInput);
+    const real = await disk.probeRoot(rootInput);
 
     const existing = this.byRoot.get(real);
     if (existing) {

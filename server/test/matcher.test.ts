@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { indexString, splitPieces, Vocabulary, fold } from '../src/search/text.js';
-import { match } from '../src/search/matcher.js';
+import { Vocabulary, textIndex } from '../src/search/text.js';
+import { matcher } from '../src/search/matcher.js';
 
 function rank(query: string, items: string[], vocabulary?: Vocabulary): string[] {
   return items
-    .map((item) => ({ item, m: match(indexString(item, vocabulary), fold(query)) }))
+    .map((item) => ({ item, m: matcher.match(textIndex.of(item, vocabulary), textIndex.fold(query)) }))
     .filter((r) => r.m)
     .sort((a, b) => b.m!.score - a.m!.score || a.item.length - b.item.length)
     .map((r) => r.item);
@@ -21,7 +21,7 @@ describe('разбор на слова', () => {
     ['parseHTML2Text', ['parse', 'HTML', '2', 'Text']],
     ['ts::EMyRoleEnum.role', ['ts', 'E', 'My', 'Role', 'Enum', 'role']],
   ])('%s', (input, expected) => {
-    expect(splitPieces(input).map((p) => p.text)).toEqual(expected);
+    expect(textIndex.splitPieces(input).map((p) => p.text)).toEqual(expected);
   });
 });
 
@@ -44,9 +44,9 @@ describe('словарь проекта', () => {
   });
 
   it('слипшееся имя ищется по первым буквам слов', () => {
-    const item = indexString('creditcardform.ts', vocabulary);
-    const withVocabulary = match(item, 'ccf');
-    const without = match(indexString('creditcardform.ts'), 'ccf');
+    const item = textIndex.of('creditcardform.ts', vocabulary);
+    const withVocabulary = matcher.match(item, 'ccf');
+    const without = matcher.match(textIndex.of('creditcardform.ts'), 'ccf');
     expect(withVocabulary!.score).toBeGreaterThan(without!.score);
   });
 });
@@ -98,18 +98,18 @@ describe('оценка совпадений', () => {
   });
 
   it('чего нет — того нет', () => {
-    expect(match(indexString('src/main.ts'), 'zzz')).toBeNull();
+    expect(matcher.match(textIndex.of('src/main.ts'), 'zzz')).toBeNull();
   });
 
   it('позиции совпадений указывают на настоящие символы', () => {
     const item = 'ts::DesktopCreditCardForm()';
-    const result = match(indexString(item), 'dccf')!;
+    const result = matcher.match(textIndex.of(item), 'dccf')!;
     const letters = result.positions.map((p) => item[p]);
     expect(letters).toEqual(['D', 'C', 'C', 'F']);
   });
 
   it('кириллица ищется, несмотря на разложение с диска', () => {
     const decomposed = 'src/находка.ts'.normalize('NFD');
-    expect(match(indexString(decomposed), fold('находка'))).not.toBeNull();
+    expect(matcher.match(textIndex.of(decomposed), textIndex.fold('находка'))).not.toBeNull();
   });
 });
