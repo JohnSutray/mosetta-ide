@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 import { WS_PATH, type ApiMethod, type Params, type Result } from '@ide/protocol';
-import { startServer, type RunningServer } from '../src/server.js';
+import { boot, type RunningServer } from '../src/server.js';
 import type { FindProvider } from '../src/search/providers.js';
 
 export interface TestClient {
@@ -27,7 +27,7 @@ export async function withServer(
   finds: FindProvider[] = [],
 ): Promise<RunningServer> {
   const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-state-'));
-  return startServer({ port: 0, idleMs, configDir, stateDir, watchConfig: false, finds });
+  return boot.start({ port: 0, idleMs, configDir, stateDir, watchConfig: false, finds });
 }
 
 export async function connect(server: RunningServer): Promise<TestClient> {

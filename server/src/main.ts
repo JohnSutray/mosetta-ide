@@ -1,5 +1,5 @@
 import { journal } from './log.js';
-import { startServer } from './server.js';
+import { boot } from './server.js';
 
 const log = journal.logger('main');
 
@@ -8,7 +8,7 @@ const idleMs = process.env.IDE_WORKSPACE_IDLE_MS
   ? Number(process.env.IDE_WORKSPACE_IDLE_MS)
   : undefined;
 
-const server = await startServer({ port, idleMs });
+const server = await boot.start({ port, idleMs });
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => {

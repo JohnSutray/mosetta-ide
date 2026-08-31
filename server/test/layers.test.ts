@@ -127,8 +127,8 @@ describe('состояние машины', () => {
     for (const name of await fs.readdir(dir)) {
       if (!name.endsWith('.test.ts')) continue;
       const text = await fs.readFile(path.join(dir, name), 'utf8');
-      if (/\bstartServer\s*\(/.test(text)) guilty.push(name);
+      if (/\bboot\.start\s*\(/.test(text)) guilty.push(name);
     }
-    expect(guilty, 'startServer напрямую — история поедет в дом пользователя').toEqual([]);
+    expect(guilty, 'boot.start напрямую — история поедет в дом пользователя').toEqual([]);
   });
 });
