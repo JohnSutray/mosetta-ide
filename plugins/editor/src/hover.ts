@@ -2,7 +2,7 @@ import { hoverTooltip, type Tooltip } from '@codemirror/view';
 import type { EditorState } from '@codemirror/state';
 import type { HoverInfo, Severity } from '@ide/protocol';
 import { unstable_dc as dc, unstable_paintCode as paintCode } from '@ide/api/client';
-import { diagnosticsAt } from './diagnostics.js';
+import { diagnostics } from './diagnostics.js';
 
 export function lspHover(
   pathOf: () => string | null,
@@ -12,7 +12,7 @@ export function lspHover(
     const path = pathOf();
     if (!path) return null;
 
-    const problems = diagnosticsAt(view.state as EditorState, pos);
+    const problems = diagnostics.at(view.state as EditorState, pos);
 
     const line = view.state.doc.lineAt(pos);
     const info = await ask(path, line.number - 1, pos - line.from).catch(() => null);

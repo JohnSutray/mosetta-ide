@@ -1,4 +1,4 @@
-import { cell } from './pixel-grid.js';
+import { pixelGrid } from './pixel-grid.js';
 
 const G: Record<string, string[]> = {
   A: ['.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
@@ -50,8 +50,6 @@ const G: Record<string, string[]> = {
   '·': ['.....', '.....', '.....', '.##..', '.##..', '.....', '.....'],
 };
 
-export const GLYPH_W = 5;
-export const GLYPH_H = 7;
 const TRACK = 1;
 
 function normalize(text: string): string {
@@ -62,30 +60,38 @@ function normalize(text: string): string {
     .replace(/[’]/g, "'");
 }
 
-export function measure(text: string, px: number): number {
-  return normalize(text).length * (GLYPH_W + TRACK) * px - TRACK * px;
-}
+export class PixelFont {
+  readonly GLYPH_W = 5;
 
-export function write(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  px: number,
-  color: string,
-): void {
-  ctx.fillStyle = color;
-  let at = x;
-  for (const ch of normalize(text)) {
-    const glyph = G[ch];
-    if (glyph) {
-      glyph.forEach((row, ry) => {
-        for (let rx = 0; rx < row.length; rx += 1) {
-          if (row[rx] !== '#') continue;
-          cell(ctx, at + rx * px, y + ry * px, px, px);
-        }
-      });
+  readonly GLYPH_H = 7;
+
+  measure(text: string, px: number): number {
+    return normalize(text).length * (this.GLYPH_W + TRACK) * px - TRACK * px;
+  }
+
+  write(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number,
+    px: number,
+    color: string,
+  ): void {
+    ctx.fillStyle = color;
+    let at = x;
+    for (const ch of normalize(text)) {
+      const glyph = G[ch];
+      if (glyph) {
+        glyph.forEach((row, ry) => {
+          for (let rx = 0; rx < row.length; rx += 1) {
+            if (row[rx] !== '#') continue;
+            pixelGrid.cell(ctx, at + rx * px, y + ry * px, px, px);
+          }
+        });
+      }
+      at += (this.GLYPH_W + TRACK) * px;
     }
-    at += (GLYPH_W + TRACK) * px;
   }
 }
+
+export const pixelFont = new PixelFont();

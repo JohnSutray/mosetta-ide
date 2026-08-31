@@ -13,18 +13,6 @@ function mark(item: Diagnostic) {
   });
 }
 
-export function diagnosticsAt(
-  state: EditorState,
-  pos: number,
-): Array<{ message: string; severity: Severity }> {
-  const found: Array<{ message: string; severity: Severity }> = [];
-  state.field(diagnosticsField).between(pos, pos, (_from, _to, value) => {
-    const spec = value.spec as { message?: string; severity?: Severity };
-    if (spec.message) found.push({ message: spec.message, severity: spec.severity ?? 'error' });
-  });
-  return found;
-}
-
 export const diagnosticsField = StateField.define<DecorationSet>({
   create() {
     return Decoration.none;
@@ -43,8 +31,8 @@ export const diagnosticsField = StateField.define<DecorationSet>({
 function build(list: Diagnostic[], doc: { lines: number; line(n: number): { from: number; to: number } }) {
   const ranges = [];
   for (const item of list) {
-    const from = offsetOf(doc, item.range.start.line, item.range.start.character);
-    const to = offsetOf(doc, item.range.end.line, item.range.end.character);
+    const from = diagnostics.offsetOf(doc, item.range.start.line, item.range.start.character);
+    const to = diagnostics.offsetOf(doc, item.range.end.line, item.range.end.character);
     if (from === null || to === null) continue;
     const end = to > from ? to : Math.min(from + 1, doc.line(doc.lines).to);
     if (end <= from) continue;
@@ -52,16 +40,6 @@ function build(list: Diagnostic[], doc: { lines: number; line(n: number): { from
   }
   ranges.sort((a, b) => a.from - b.from || a.to - b.to);
   return Decoration.set(ranges, true);
-}
-
-export function offsetOf(
-  doc: { lines: number; line(n: number): { from: number; to: number } },
-  line: number,
-  character: number,
-): number | null {
-  if (line < 0 || line >= doc.lines) return null;
-  const target = doc.line(line + 1);
-  return Math.min(target.from + character, target.to);
 }
 
 export const diagnosticsTheme = EditorView.theme({
@@ -73,3 +51,29 @@ export const diagnosticsTheme = EditorView.theme({
 });
 
 export const diagnosticsExtension: Extension = [diagnosticsField, diagnosticsTheme];
+
+export class Diagnostics {
+  at(
+    state: EditorState,
+    pos: number,
+  ): Array<{ message: string; severity: Severity }> {
+    const found: Array<{ message: string; severity: Severity }> = [];
+    state.field(diagnosticsField).between(pos, pos, (_from, _to, value) => {
+      const spec = value.spec as { message?: string; severity?: Severity };
+      if (spec.message) found.push({ message: spec.message, severity: spec.severity ?? 'error' });
+    });
+    return found;
+  }
+
+  offsetOf(
+    doc: { lines: number; line(n: number): { from: number; to: number } },
+    line: number,
+    character: number,
+  ): number | null {
+    if (line < 0 || line >= doc.lines) return null;
+    const target = doc.line(line + 1);
+    return Math.min(target.from + character, target.to);
+  }
+}
+
+export const diagnostics = new Diagnostics();

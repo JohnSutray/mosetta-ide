@@ -25,7 +25,7 @@ import {
   type HunkBox,
 } from '@ide/api/client';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
-import { gitGutter, setHeadText } from './git-marks.js';
+import { gitMarks, setHeadText } from './git-marks.js';
 import { lspHover } from './hover.js';
 
 const externalUpdate = Annotation.define<boolean>();
@@ -102,7 +102,7 @@ export function CodeEditor({
         },
       }),
       darcula as Extension,
-      gitGutter((hunk, box) => handlers.current.onHunk(hunk, box)),
+      gitMarks.gutter((hunk, box) => handlers.current.onHunk(hunk, box)),
       diagnosticsExtension,
       lspHover(
         () => pathRef.current,

@@ -29,13 +29,6 @@ export const gitField = StateField.define<GitLines>({
   },
 });
 
-export function hunkAt(hunks: Hunk[], line: number): Hunk | null {
-  for (const hunk of hunks) {
-    if (line >= hunk.from && line <= hunk.to) return hunk;
-  }
-  return null;
-}
-
 class Mark extends GutterMarker {
   constructor(private readonly kind: Hunk['kind']) {
     super();
@@ -58,36 +51,6 @@ const MARKS = {
   removed: new Mark('removed'),
 };
 
-export function gitGutter(onClick: (hunk: Hunk, at: HunkBox) => void): Extension {
-  return [
-    gitField,
-    gutter({
-      class: 'cm-gitgutter',
-      lineMarker(view, block) {
-        const { hunks } = view.state.field(gitField);
-        if (hunks.length === 0) return null;
-        const line = view.state.doc.lineAt(block.from).number;
-        const hunk = hunkAt(hunks, line);
-        return hunk ? MARKS[hunk.kind] : null;
-      },
-      lineMarkerChange(update) {
-        return update.docChanged || update.startState.field(gitField) !== update.state.field(gitField);
-      },
-      domEventHandlers: {
-        mousedown(view, block, event) {
-          const { hunks } = view.state.field(gitField);
-          const line = view.state.doc.lineAt(block.from).number;
-          const hunk = hunkAt(hunks, line);
-          if (!hunk) return false;
-          onClick(hunk, boxOf(view, hunk, event as MouseEvent));
-          return true;
-        },
-      },
-    }),
-
-  ];
-}
-
 function boxOf(view: EditorView, hunk: Hunk, event: MouseEvent): HunkBox {
   const doc = view.state.doc;
   const first = view.coordsAtPos(doc.line(Math.min(hunk.from, doc.lines)).from);
@@ -96,29 +59,70 @@ function boxOf(view: EditorView, hunk: Hunk, event: MouseEvent): HunkBox {
   return { left: view.dom.getBoundingClientRect().left, top: first.top, bottom: last.bottom };
 }
 
-export function revertHunk(view: EditorView, hunk: Hunk): void {
-  const doc = view.state.doc;
-  const restored = hunk.before.join('\n');
-
-  if (hunk.kind === 'added') {
-    const from = doc.line(Math.min(hunk.from, doc.lines)).from;
-    const last = doc.line(Math.min(hunk.to, doc.lines));
-    const to = Math.min(last.to + 1, doc.length);
-    view.dispatch({ changes: { from, to, insert: '' } });
-    return;
+export class GitMarks {
+  at(hunks: Hunk[], line: number): Hunk | null {
+    for (const hunk of hunks) {
+      if (line >= hunk.from && line <= hunk.to) return hunk;
+    }
+    return null;
   }
 
-  if (hunk.kind === 'modified') {
-    const from = doc.line(Math.min(hunk.from, doc.lines)).from;
-    const to = doc.line(Math.min(hunk.to, doc.lines)).to;
-    view.dispatch({ changes: { from, to, insert: restored } });
-    return;
+  gutter(onClick: (hunk: Hunk, at: HunkBox) => void): Extension {
+    return [
+      gitField,
+      gutter({
+        class: 'cm-gitgutter',
+        lineMarker: (view, block) => {
+          const { hunks } = view.state.field(gitField);
+          if (hunks.length === 0) return null;
+          const line = view.state.doc.lineAt(block.from).number;
+          const hunk = this.at(hunks, line);
+          return hunk ? MARKS[hunk.kind] : null;
+        },
+        lineMarkerChange: (update) => {
+          return update.docChanged || update.startState.field(gitField) !== update.state.field(gitField);
+        },
+        domEventHandlers: {
+          mousedown: (view, block, event) => {
+            const { hunks } = view.state.field(gitField);
+            const line = view.state.doc.lineAt(block.from).number;
+            const hunk = this.at(hunks, line);
+            if (!hunk) return false;
+            onClick(hunk, boxOf(view, hunk, event as MouseEvent));
+            return true;
+          },
+        },
+      }),
+
+    ];
   }
 
-  if (hunk.from > doc.lines) {
-    view.dispatch({ changes: { from: doc.length, to: doc.length, insert: `\n${restored}` } });
-    return;
+  revert(view: EditorView, hunk: Hunk): void {
+    const doc = view.state.doc;
+    const restored = hunk.before.join('\n');
+
+    if (hunk.kind === 'added') {
+      const from = doc.line(Math.min(hunk.from, doc.lines)).from;
+      const last = doc.line(Math.min(hunk.to, doc.lines));
+      const to = Math.min(last.to + 1, doc.length);
+      view.dispatch({ changes: { from, to, insert: '' } });
+      return;
+    }
+
+    if (hunk.kind === 'modified') {
+      const from = doc.line(Math.min(hunk.from, doc.lines)).from;
+      const to = doc.line(Math.min(hunk.to, doc.lines)).to;
+      view.dispatch({ changes: { from, to, insert: restored } });
+      return;
+    }
+
+    if (hunk.from > doc.lines) {
+      view.dispatch({ changes: { from: doc.length, to: doc.length, insert: `\n${restored}` } });
+      return;
+    }
+    const at = doc.line(hunk.from).from;
+    view.dispatch({ changes: { from: at, to: at, insert: `${restored}\n` } });
   }
-  const at = doc.line(hunk.from).from;
-  view.dispatch({ changes: { from: at, to: at, insert: `${restored}\n` } });
 }
+
+export const gitMarks = new GitMarks();

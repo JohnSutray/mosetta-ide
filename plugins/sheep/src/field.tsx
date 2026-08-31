@@ -1,23 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import {
-  barnAt,
-  createWorld,
-  grab,
-  HOUSE_H,
-  HOUSE_SCALE,
-  HOUSE_W,
-  MAX_LEVEL,
-  moveHeld,
-  PX,
-  release,
-  salonAt,
-  SHEEP_H,
-  SHEEP_W,
-  step,
-  type Sheep,
-} from './world.js';
-import { GLYPH_H, measure, write } from './pixel-font.js';
-import { cell, setPixelRatio } from './pixel-grid.js';
+import { sheepfold, type Sheep } from './world.js';
+import { pixelFont } from './pixel-font.js';
+import { pixelGrid } from './pixel-grid.js';
 import { t } from '@ide/api/client';
 
 const DIGIT_FONT = "'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif";
@@ -101,13 +85,13 @@ function paint(
       const key = swap?.[raw] ?? raw;
       ctx.fillStyle = COLORS[key] ?? '#fff';
       const cx = flip ? row.length - 1 - rx : rx;
-      cell(ctx, x + cx * px, y + ry * px, px, px);
+      pixelGrid.cell(ctx, x + cx * px, y + ry * px, px, px);
     }
   });
 }
 
 function drawSheep(ctx: CanvasRenderingContext2D, s: Sheep): void {
-  const px = PX * s.level;
+  const px = sheepfold.PX * s.level;
   const flip = s.face > 0;
   const swap = s.shorn ? { w: 's' } : undefined;
   paint(ctx, BODY, s.x, s.y, px, flip, swap);
@@ -116,7 +100,7 @@ function drawSheep(ctx: CanvasRenderingContext2D, s: Sheep): void {
   paint(ctx, [LEGS[phase % LEGS.length]!], s.x, s.y + 5 * px, px, flip);
 
   if (s.level > 1) {
-    const level = Math.min(s.level, MAX_LEVEL);
+    const level = Math.min(s.level, sheepfold.MAX_LEVEL);
     ctx.fillStyle = s.shorn ? '#8a5a58' : '#8d8880';
     ctx.font = `600 ${Math.round(px * 2.4)}px ${DIGIT_FONT}`;
     ctx.textAlign = 'center';
@@ -141,7 +125,7 @@ function drawSign(
   });
   width -= gap;
 
-  let x = house.x + HOUSE_W / 2 - width / 2;
+  let x = house.x + sheepfold.HOUSE_W / 2 - width / 2;
   const bottom = house.y - 10;
   for (let at = 0; at < parts.length; at += 1) {
     const art = parts[at]!;
@@ -152,9 +136,9 @@ function drawSign(
 }
 
 function drawShadow(ctx: CanvasRenderingContext2D, s: Sheep): void {
-  const px = PX * s.level;
+  const px = sheepfold.PX * s.level;
   ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
-  cell(ctx, s.x + px, s.y + 6 * px, 6 * px, Math.max(2, px / 2));
+  pixelGrid.cell(ctx, s.x + px, s.y + 6 * px, 6 * px, Math.max(2, px / 2));
 }
 
 function drawSwitch(
@@ -165,26 +149,26 @@ function drawSwitch(
 ): { x: number; y: number; w: number; h: number } {
   const px = 2;
   const label = paused ? 'PASTURE CLOSED' : 'PASTURE OPEN';
-  const text = measure(label, px);
+  const text = pixelFont.measure(label, px);
   const pad = 8;
-  const box = { x: Math.round(w / 2 - text / 2 - pad), y: Math.round(h - 46), w: text + pad * 2, h: GLYPH_H * px + pad };
+  const box = { x: Math.round(w / 2 - text / 2 - pad), y: Math.round(h - 46), w: text + pad * 2, h: pixelFont.GLYPH_H * px + pad };
 
   ctx.fillStyle = paused ? '#3a3d3f' : '#57472f';
-  cell(ctx, box.x, box.y, box.w, box.h);
+  pixelGrid.cell(ctx, box.x, box.y, box.w, box.h);
   ctx.fillStyle = paused ? '#4a4e50' : '#6b5638';
-  cell(ctx, box.x, box.y, box.w, 2);
+  pixelGrid.cell(ctx, box.x, box.y, box.w, 2);
   ctx.fillStyle = '#4a3a26';
-  cell(ctx, w / 2 - 2, box.y + box.h, 4, 12);
-  write(ctx, label, box.x + pad, box.y + pad / 2, px, paused ? '#9aa2a8' : '#e8dcc4');
+  pixelGrid.cell(ctx, w / 2 - 2, box.y + box.h, 4, 12);
+  pixelFont.write(ctx, label, box.x + pad, box.y + pad / 2, px, paused ? '#9aa2a8' : '#e8dcc4');
 
   if (paused) {
     const hint = 'CLICK TO OPEN';
     const hintPx = 2;
-    write(
+    pixelFont.write(
       ctx,
       hint,
-      Math.round(w / 2 - measure(hint, hintPx) / 2),
-      box.y - GLYPH_H * hintPx - 10,
+      Math.round(w / 2 - pixelFont.measure(hint, hintPx) / 2),
+      box.y - pixelFont.GLYPH_H * hintPx - 10,
       hintPx,
       '#79817f',
     );
@@ -201,21 +185,21 @@ function drawScore(
 ): void {
   const px = 2;
   const line = `MERGED ${merged} · SHORN ${shorn}`;
-  write(ctx, line, w - measure(line, px) - 12, h - 8 - GLYPH_H * px, px, '#5f6871');
+  pixelFont.write(ctx, line, w - pixelFont.measure(line, px) - 12, h - 8 - pixelFont.GLYPH_H * px, px, '#5f6871');
 }
 
 function drawWords(ctx: CanvasRenderingContext2D, w: number, h: number): void {
   const title = t('editor.empty.title');
   const hint = t('editor.empty.hint');
-  const titlePx = Math.max(1, Math.min(4, Math.floor((w * 0.82) / (measure(title, 1) || 1))));
-  const hintPx = Math.max(1, Math.min(2, Math.floor((w * 0.7) / (measure(hint, 1) || 1))));
+  const titlePx = Math.max(1, Math.min(4, Math.floor((w * 0.82) / (pixelFont.measure(title, 1) || 1))));
+  const hintPx = Math.max(1, Math.min(2, Math.floor((w * 0.7) / (pixelFont.measure(hint, 1) || 1))));
 
-  write(ctx, title, w / 2 - measure(title, titlePx) / 2, h * 0.12, titlePx, '#9aa4ad');
-  write(
+  pixelFont.write(ctx, title, w / 2 - pixelFont.measure(title, titlePx) / 2, h * 0.12, titlePx, '#9aa4ad');
+  pixelFont.write(
     ctx,
     hint,
-    w / 2 - measure(hint, hintPx) / 2,
-    h * 0.12 + GLYPH_H * titlePx + 14,
+    w / 2 - pixelFont.measure(hint, hintPx) / 2,
+    h * 0.12 + pixelFont.GLYPH_H * titlePx + 14,
     hintPx,
     '#6d757c',
   );
@@ -232,7 +216,7 @@ export function SheepField() {
     const ctx = el?.getContext('2d');
     if (!el || !ctx) return;
 
-    const world = createWorld();
+    const world = sheepfold.create();
     world.merged = Number(localStorage.getItem(MERGED_KEY) ?? '0');
     world.shorn = Number(localStorage.getItem(SHORN_KEY) ?? '0');
     world.paused = localStorage.getItem(PAUSED_KEY) !== '0';
@@ -247,7 +231,7 @@ export function SheepField() {
       el.height = Math.max(1, Math.floor(h * ratio));
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       ctx.imageSmoothingEnabled = false;
-      setPixelRatio(ratio);
+      pixelGrid.setRatio(ratio);
     };
     resize();
 
@@ -258,19 +242,19 @@ export function SheepField() {
       ctx.clearRect(0, 0, w, h);
       drawWords(ctx, w, h);
 
-      const barn = barnAt(w, h);
-      const salon = salonAt(w, h);
+      const barn = sheepfold.barnAt(w, h);
+      const salon = sheepfold.salonAt(w, h);
       const held = world.held;
       const over = (house: { x: number; y: number }) =>
         held !== null &&
-        held.x + (SHEEP_W * held.level) / 2 > house.x &&
-        held.x + (SHEEP_W * held.level) / 2 < house.x + HOUSE_W &&
-        held.y + (SHEEP_H * held.level) / 2 > house.y &&
-        held.y + (SHEEP_H * held.level) / 2 < house.y + HOUSE_H;
+        held.x + (sheepfold.SHEEP_W * held.level) / 2 > house.x &&
+        held.x + (sheepfold.SHEEP_W * held.level) / 2 < house.x + sheepfold.HOUSE_W &&
+        held.y + (sheepfold.SHEEP_H * held.level) / 2 > house.y &&
+        held.y + (sheepfold.SHEEP_H * held.level) / 2 < house.y + sheepfold.HOUSE_H;
       const door = (kind: 'barn' | 'salon', house: { x: number; y: number }) =>
         held === null ? undefined : { d: over(house) ? `${kind}Over` : `${kind}Ready` };
-      paint(ctx, BARN, barn.x, barn.y, PX * HOUSE_SCALE, false, door('barn', barn));
-      paint(ctx, SALON, salon.x, salon.y, PX * HOUSE_SCALE, false, door('salon', salon));
+      paint(ctx, BARN, barn.x, barn.y, sheepfold.PX * sheepfold.HOUSE_SCALE, false, door('barn', barn));
+      paint(ctx, SALON, salon.x, salon.y, sheepfold.PX * sheepfold.HOUSE_SCALE, false, door('salon', salon));
 
       if (world.paused) {
         switchBox = drawSwitch(ctx, w, h, true);
@@ -284,16 +268,16 @@ export function SheepField() {
       if (guest) {
         drawSheep(ctx, {
           ...guest,
-          x: barn.x + HOUSE_W / 2 - (SHEEP_W * guest.level) / 2,
-          y: barn.y + HOUSE_H - SHEEP_H * guest.level,
+          x: barn.x + sheepfold.HOUSE_W / 2 - (sheepfold.SHEEP_W * guest.level) / 2,
+          y: barn.y + sheepfold.HOUSE_H - sheepfold.SHEEP_H * guest.level,
           held: false,
         });
       }
       for (const bale of world.bales) {
         ctx.fillStyle = COLORS.w!;
-        cell(ctx, bale.x, bale.y, PX * 5, PX * 4);
+        pixelGrid.cell(ctx, bale.x, bale.y, sheepfold.PX * 5, sheepfold.PX * 4);
         ctx.fillStyle = '#c9c3b8';
-        cell(ctx, bale.x, bale.y + PX * 2, PX * 5, PX);
+        pixelGrid.cell(ctx, bale.x, bale.y + sheepfold.PX * 2, sheepfold.PX * 5, sheepfold.PX);
       }
       for (const s of world.flock) drawShadow(ctx, s);
       for (const s of world.flock) drawSheep(ctx, s);
@@ -325,7 +309,7 @@ export function SheepField() {
       const { w, h } = size();
       let moved = false;
       while (debt >= STEP_MS) {
-        step(world, w, h);
+        sheepfold.step(world, w, h);
         debt -= STEP_MS;
         moved = true;
       }
@@ -350,7 +334,7 @@ export function SheepField() {
         return;
       }
       if (world.paused) return;
-      if (grab(world, p.x, p.y)) el.setPointerCapture(event.pointerId);
+      if (sheepfold.grab(world, p.x, p.y)) el.setPointerCapture(event.pointerId);
     };
 
     const toggle = () => {
@@ -368,12 +352,12 @@ export function SheepField() {
 
     const move = (event: PointerEvent) => {
       const p = at(event);
-      moveHeld(world, p.x, p.y);
+      sheepfold.moveHeld(world, p.x, p.y);
     };
 
     const up = () => {
       const { w, h } = size();
-      const what = release(world, w, h);
+      const what = sheepfold.release(world, w, h);
       if (what === 'merged') {
         localStorage.setItem(MERGED_KEY, String(world.merged));
         setMerged(world.merged);
@@ -391,7 +375,7 @@ export function SheepField() {
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
 
-    step(world, size().w, size().h);
+    sheepfold.step(world, size().w, size().h);
     draw();
 
     return () => {
