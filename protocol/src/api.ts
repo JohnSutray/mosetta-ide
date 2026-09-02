@@ -175,6 +175,8 @@ export interface Events {
   'git.state': GitState;
   'git.output': { action: GitAction; chunk: string };
 
+  'plugins.event': { name: string; event: string; payload: unknown };
+
   log: LogLine;
 }
 

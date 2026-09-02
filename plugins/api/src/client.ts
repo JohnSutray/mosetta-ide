@@ -244,6 +244,8 @@ export interface Ide {
   registry<T>(key: string): RegistryHandle<T>;
   remember<T>(key: string, initial: T): Signal<T>;
   css(text: string): void;
+  on(event: string, handler: (payload: unknown) => void): () => void;
+
   surface(view: () => unknown): void;
   open(kind: string, handler: (found: Found) => void): void;
   say(message: string): void;

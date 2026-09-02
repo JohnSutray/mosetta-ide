@@ -9,6 +9,8 @@ import { Doc } from './doc.js';
 import { say } from './notifications.js';
 import { i18n } from '../i18n/index.js';
 
+export type RpcLike = Pick<RpcClient, 'call' | 'on'>;
+
 export const rpc = new RpcClient();
 
 export class Session {

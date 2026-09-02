@@ -6,7 +6,23 @@ export interface Logger {
   error(message: string): void;
 }
 
+export interface ProjectResource {
+  dispose(): void | Promise<void>;
+}
+
+export interface Project {
+  readonly root: string;
+  readonly name: string;
+
+  use<T extends ProjectResource>(key: string, create: () => T): T;
+
+  emit(event: string, payload: unknown): void;
+
+  hold(reason: string): () => void;
+}
+
 export interface CallContext {
+  project: Project;
   services: unknown;
 }
 

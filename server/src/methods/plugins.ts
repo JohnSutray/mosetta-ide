@@ -1,5 +1,6 @@
 import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
+import { PluginProject } from '../plugins/project.js';
 
 export class PluginMethods {
   readonly list: Handler<'plugins.list'> = (_params, ctx) => ctx.plugins.list();
@@ -15,7 +16,11 @@ export class PluginMethods {
     if (!params || typeof params.name !== 'string' || typeof params.method !== 'string') {
       throw RpcError.invalidParams('нужны name и method');
     }
-    return ctx.plugins.call(params.name, params.method, params.params, {
+    const plugin = params.name;
+    return ctx.plugins.call(plugin, params.method, params.params, {
+      get project() {
+        return new PluginProject(ctx.session.requireWorkspace(), plugin);
+      },
       get services() {
         return ctx.session.requireWorkspace().services;
       },

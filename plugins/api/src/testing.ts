@@ -376,6 +376,7 @@ export class FakeIde implements Ide {
   readonly said: string[] = [];
   readonly calls: Array<{ method: string; params: unknown }> = [];
   readonly answers = new Map<string, (params: unknown) => unknown>();
+  readonly listeners = new Map<string, Set<(payload: unknown) => void>>();
 
   readonly rpc = {
     call: async (method: string, params?: unknown): Promise<unknown> => {
@@ -393,6 +394,17 @@ export class FakeIde implements Ide {
 
   getPlugin<T>(ctor: PluginClass<T>): T {
     return this.host.plugin(ctor);
+  }
+
+  on(event: string, handler: (payload: unknown) => void): () => void {
+    const set = this.listeners.get(event) ?? new Set();
+    set.add(handler);
+    this.listeners.set(event, set);
+    return () => set.delete(handler);
+  }
+
+  emit(event: string, payload: unknown): void {
+    for (const handler of [...(this.listeners.get(event) ?? [])]) handler(payload);
   }
 
   command(id: string, run: () => void): void {
