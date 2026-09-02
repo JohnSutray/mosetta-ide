@@ -1,5 +1,4 @@
 import { commands } from '../keys/commands.js';
-import { TerminalView } from './terminal.js';
 import { Tree } from './tree.js';
 import { panels } from './panels.js';
 import type { Registry } from '../state/registry.js';
@@ -21,8 +20,6 @@ function content(id: string) {
   switch (id) {
     case 'tree':
       return <Tree />;
-    case 'terminal':
-      return <TerminalView />;
     default:
       return null;
   }

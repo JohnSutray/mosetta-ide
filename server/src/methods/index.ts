@@ -7,7 +7,6 @@ import { lspMethods } from './lsp.js';
 import { mergeMethods } from './merge.js';
 import { pluginMethods } from './plugins.js';
 import { searchMethods } from './search.js';
-import { termMethods } from './term.js';
 import { treeMethods } from './tree.js';
 import { envMethods, visitsMethods, workspaceMethods } from './workspace.js';
 
@@ -80,12 +79,4 @@ export const handlers: HandlerTable = {
   'merge.state': (p, c) => mergeMethods.state(p, c),
   'merge.resolve': (p, c) => mergeMethods.resolve(p, c),
   'merge.cancel': (p, c) => mergeMethods.cancel(p, c),
-
-  'term.list': (p, c) => termMethods.list(p, c),
-  'term.create': (p, c) => termMethods.create(p, c),
-  'term.open': (p, c) => termMethods.open(p, c),
-  'term.attach': (p, c) => termMethods.attach(p, c),
-  'term.write': (p, c) => termMethods.write(p, c),
-  'term.resize': (p, c) => termMethods.resize(p, c),
-  'term.close': (p, c) => termMethods.close(p, c),
 };

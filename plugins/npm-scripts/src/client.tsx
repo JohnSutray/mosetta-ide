@@ -5,13 +5,14 @@ import {
   unstable_highlight as highlight,
   remote,
   unstable_shiftMatches as shiftMatches,
-  unstable_showTerminal as showTerminal,
   stub,
   t,
   type Ide,
 } from '@ide/api/client';
 import { NpmIcon } from './icon.js';
 import { scriptId } from './script-id.js';
+import TerminalPlugin from '@ide/plugin-terminal';
+import type { RunPlan } from './server.js';
 
 export interface ScriptInfo {
   id: string;
@@ -51,12 +52,16 @@ export default class NpmScripts {
     return stub();
   }
 
-  @remote('run') protected ask(_params: { id: string }): Promise<never> {
+  @remote('run') protected ask(_params: { id: string }): Promise<RunPlan> {
     return stub();
   }
 
   async run(id: string): Promise<void> {
-    await showTerminal(() => this.ask({ id }));
+    const terminal = this.ide.getPlugin(TerminalPlugin);
+    await terminal.show(async () => {
+      const plan = await this.ask({ id });
+      return terminal.open({ ...plan, kind: 'script' });
+    });
   }
 
   scripts(): ScriptInfo[] {

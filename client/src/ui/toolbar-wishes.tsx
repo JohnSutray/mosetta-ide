@@ -2,14 +2,12 @@ import { treeFollow } from '../state/tree-follow.js';
 import { commands } from '../keys/commands.js';
 import { keysHelp } from '../state/keys-help.js';
 import { tips } from '../state/tip.js';
-import { terminals } from '../state/terminals.js';
 import { search } from '../state/search.js';
 import { session } from '../state/session.js';
 import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
 import { branchesWindow, git, pushWindow } from '../state/git.js';
-import type { TerminalInfo } from '@ide/protocol';
 import { computed } from '@preact/signals';
 import { keysFor } from '../keys/keys-for.js';
 import { i18n } from '../i18n/index.js';
@@ -70,12 +68,6 @@ export function registerToolbarWishes(store: Registry): void {
     active: pushWindow.open,
   });
   button({
-    id: 'terminal.create',
-    title: 'toolbar.terminal.create',
-    command: 'terminal.create',
-    icon: ours('terminal'),
-  });
-  button({
     id: 'projects',
     title: 'toolbar.projects',
     command: 'projects.show',
@@ -106,20 +98,9 @@ export function registerToolbarWishes(store: Registry): void {
     badge: merge.pending,
   });
 
-  widget({ id: 'terminals', side: 'left', view: () => <TerminalChips /> });
   widget({ id: 'tools', side: 'right', view: () => <Tools /> });
   widget({ id: 'branch', side: 'right', view: () => <Branch /> });
   widget({ id: 'connection', side: 'right', view: () => <Connection /> });
-}
-
-function TerminalChips() {
-  return (
-    <>
-      {terminals.list.value.map((info) => (
-        <TerminalChip key={info.name} info={info} />
-      ))}
-    </>
-  );
 }
 
 function Tools() {
@@ -196,39 +177,5 @@ function ToolButton({
     >
       {label}
     </button>
-  );
-}
-
-function TerminalChip({ info }: { info: TerminalInfo }) {
-  const isCurrent = terminals.active.value === info.name;
-  const classes = [
-    'term-chip',
-    isCurrent ? 'is-current' : '',
-    info.busy ? 'is-busy' : '',
-    info.alive ? 'is-alive' : 'is-dead',
-  ].join(' ');
-
-  return (
-    <span
-      class={classes}
-      title={`${info.name}${info.command ? ` — ${info.command}` : ''}${
-        info.busy ? ` · ${i18n.t('terminal.busy', { what: info.running ?? '' })}` : ''
-      }${
-        info.busyUnknown ? ` · ${i18n.t('terminal.busyUnknown', { why: info.busyUnknown })}` : ''
-      }${info.alive ? '' : ` (${i18n.t('terminal.dead', { code: info.exitCode ?? '?' })})`}`}
-      onClick={() => terminals.focus(info.name)}
-    >
-      <span class="term-chip-name">{info.title}</span>
-      <span
-        class="term-chip-close"
-        title={i18n.t('terminal.close')}
-        onClick={(event) => {
-          event.stopPropagation();
-          void terminals.close(info.name);
-        }}
-      >
-        ×
-      </span>
-    </span>
   );
 }

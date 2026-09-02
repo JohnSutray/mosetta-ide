@@ -1,5 +1,7 @@
 import { build } from 'esbuild';
 import path from 'node:path';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
 
 const SHARED: Record<string, { from: string; names: string[] }> = {
   preact: { from: 'preact', names: ['h', 'Fragment', 'createElement', 'render', 'cloneElement'] },
@@ -17,7 +19,6 @@ const SHARED: Record<string, { from: string; names: string[] }> = {
       'unstable_PickPopup',
       'unstable_highlight',
       'unstable_shiftMatches',
-      'unstable_showTerminal',
       't',
       'problems',
       'goTo',
@@ -154,6 +155,25 @@ export class PluginBuild {
       logLevel: 'silent',
       ...(side === 'server' ? { packages: 'external' as const } : {}),
       plugins: [
+        {
+          name: 'ide-externals',
+          setup(api) {
+            if (side !== 'server') return;
+            api.onResolve({ filter: /^[^./]/ }, (args) => {
+              if (args.kind === 'entry-point') return null;
+              if (SHARED[args.path] || peers.includes(args.path)) return null;
+              if (args.path.startsWith('node:')) return { path: args.path, external: true };
+              try {
+                const found = createRequire(path.join(path.dirname(entry), 'noop.js')).resolve(
+                  args.path,
+                );
+                return { path: pathToFileURL(found).href, external: true };
+              } catch {
+                return { path: args.path, external: true };
+              }
+            });
+          },
+        },
         {
           name: 'ide-peers',
           setup(api) {

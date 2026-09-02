@@ -13,6 +13,7 @@ import {
   type FindProvider,
   type Ide,
   type PluginClass,
+  type ShellChoice,
 } from '@ide/api/server';
 export { type CallContext } from '@ide/api/server';
 import type { Logger } from '../log.js';
@@ -35,6 +36,7 @@ export class PluginHost {
   constructor(
     private readonly log: Logger,
     private readonly buildDir: string,
+    private readonly shellFor: () => ShellChoice = () => ({ file: '', args: [], env: {} }),
   ) {}
 
   finds(): readonly FindProvider[] {
@@ -182,6 +184,7 @@ export class PluginHost {
           return found as T;
         },
         find: (provider) => this.providers.push(provider),
+        shell: () => this.shellFor(),
         log: this.log,
       };
       const instance = new Ctor(ide) as object;

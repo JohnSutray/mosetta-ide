@@ -25,9 +25,7 @@ import type {
   RecentProject,
   ShellInfo,
   SymbolSite,
-  TerminalInfo,
   Visit,
-  TerminalKind,
   WorkspaceId,
   WorkspaceInfo,
   WriteResult,
@@ -125,24 +123,6 @@ export interface Api {
     params: { name: string; method: string; params: unknown };
     result: unknown;
   };
-
-  'term.list': { params: null; result: TerminalInfo[] };
-  'term.create': { params: { cols?: number; rows?: number }; result: TerminalInfo };
-  'term.open': {
-    params: {
-      name: string;
-      kind?: TerminalKind;
-      command?: string;
-      cwd?: string;
-      cols?: number;
-      rows?: number;
-    };
-    result: TerminalInfo;
-  };
-  'term.attach': { params: { name: string }; result: { info: TerminalInfo; buffer: string } };
-  'term.write': { params: { name: string; data: string }; result: null };
-  'term.resize': { params: { name: string; cols: number; rows: number }; result: null };
-  'term.close': { params: { name: string }; result: null };
 }
 
 export type ApiMethod = keyof Api;
@@ -165,10 +145,6 @@ export interface Events {
 
   'lsp.status': LspStatus;
   'lsp.diagnostics': FileDiagnostics;
-
-  'term.list': TerminalInfo[];
-  'term.data': { name: string; data: string };
-  'term.exit': { name: string; exitCode: number };
 
   'merge.state': MergeSession | null;
 

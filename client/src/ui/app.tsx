@@ -10,7 +10,6 @@ import { treeMenu } from '../state/tree-menu.js';
 import { tips } from '../state/tip.js';
 import { symbols } from '../state/symbols.js';
 import { config } from '../state/config.js';
-import { terminals } from '../state/terminals.js';
 import { visits } from '../state/visits.js';
 import { complain } from '../state/notifications.js';
 import { doc, lsp, rpc, session } from '../state/session.js';
@@ -109,7 +108,6 @@ export function App() {
       unstable_PickPopup: PickPopup,
       unstable_highlight: (text, at) => matches.highlight(text, at),
       unstable_shiftMatches: (at, from, len) => matches.shiftMatches(at, from, len),
-      unstable_showTerminal: (open) => terminals.show(open),
       unstable_showTip: (near, text, keys) => tips.show(near, text, keys),
       unstable_hideTip: () => tips.hide(),
       unstable_Resizer: Resizer,
@@ -172,7 +170,6 @@ export function App() {
       visits.forget();
       return;
     }
-    void terminals.refresh();
     void git.refresh();
     void visits.load();
     void merge.load();

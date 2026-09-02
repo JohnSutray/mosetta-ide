@@ -1,4 +1,3 @@
-import { session } from '../state/session.js';
 import type { ReadonlySignal } from '@preact/signals';
 import type { CommandId } from '@ide/protocol';
 import { persisted } from '../state/persist.js';
@@ -21,11 +20,6 @@ export interface PanelSpec {
 
 export class Panels {
   readonly tree = persisted('panel.tree', true);
-  readonly terminal = persisted('panel.terminal', false);
-
-  constructor() {
-    session.onReset(() => (this.terminal.value = false));
-  }
 
   readonly all: PanelSpec[] = [
     {
@@ -38,17 +32,6 @@ export class Panels {
       open: this.tree,
       defaultWidth: 260,
       minWidth: 150,
-    },
-    {
-      id: 'terminal',
-      title: 'panel.terminal',
-      tooltip: 'toolbar.terminal',
-      side: 'right',
-      icon: 'terminal',
-      command: 'panel.terminal',
-      open: this.terminal,
-      defaultWidth: 460,
-      minWidth: 240,
     },
   ];
 }

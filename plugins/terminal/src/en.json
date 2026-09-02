@@ -1,0 +1,13 @@
+{
+  "command.terminal.create": "New terminal",
+  "command.panel.terminal": "Terminal panel",
+  "toolbar.terminal.create": "New terminal",
+  "toolbar.terminal": "Terminal panel",
+  "panel.terminal": "Terminal",
+  "terminal.empty": "No terminals",
+  "terminal.finished": "[process finished]",
+  "terminal.busy": "running {what}",
+  "terminal.busyUnknown": "cannot tell if it is busy — {why}",
+  "terminal.dead": "finished, code {code}",
+  "terminal.close": "Close terminal"
+}

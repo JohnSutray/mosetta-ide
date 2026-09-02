@@ -19,6 +19,20 @@ export interface Project {
   emit(event: string, payload: unknown): void;
 
   hold(reason: string): () => void;
+
+  resolve(relative: string): string;
+
+  spawned(
+    info: { pid: number | undefined; command: string; reason: string },
+    kill: () => void,
+  ): () => void;
+}
+
+export interface ShellChoice {
+  file: string;
+  args: string[];
+  env: Record<string, string>;
+  problem?: string;
 }
 
 export interface CallContext {
@@ -47,6 +61,7 @@ export interface Ide {
   method(name: string, handler: CommandHandler): void;
   getPlugin<T>(ctor: PluginClass<T>): T;
   find(provider: FindProvider): void;
+  shell(): ShellChoice;
   readonly log: Logger;
 }
 

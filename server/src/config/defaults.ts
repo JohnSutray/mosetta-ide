@@ -4,6 +4,7 @@ export class Defaults {
   readonly settings: Settings = {
     plugins: {
       enabled: [
+        '@ide/plugin-terminal',
         '@ide/plugin-npm-scripts',
         '@ide/plugin-rerun',
         '@ide/plugin-problems',

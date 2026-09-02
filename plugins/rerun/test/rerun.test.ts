@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
 import NpmScripts, { type ScriptInfo } from '@ide/plugin-npm-scripts';
+import TerminalPlugin from '@ide/plugin-terminal';
 import Rerun from '../src/client.js';
 
 const NPM = '@ide/plugin-npm-scripts';
@@ -21,10 +22,27 @@ describe('перезапуск последнего скрипта', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
+    host.add(TerminalPlugin, '@ide/plugin-terminal');
+    host.ide('@ide/plugin-terminal').answers.set('list', () => []);
     npm = host.add(NpmScripts, NPM);
     host.add(Rerun, RERUN);
     host.ide(NPM).answers.set('list', () => SCRIPTS);
-    host.ide(NPM).answers.set('run', () => ({ id: 'term-1', title: 'скрипт' }));
+    host.ide(NPM).answers.set('run', () => ({
+      name: 'скрипт',
+      command: 'pnpm run dev',
+      cwd: '.',
+    }));
+    host.ide('@ide/plugin-terminal').answers.set('open', () => ({
+      name: 'скрипт',
+      title: 'скрипт',
+      kind: 'script',
+      pid: 1,
+      cols: 80,
+      rows: 24,
+      alive: true,
+      busy: false,
+      createdAt: 0,
+    }));
     await host.start();
   });
 

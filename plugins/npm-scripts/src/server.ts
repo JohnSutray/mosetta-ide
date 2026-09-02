@@ -12,13 +12,18 @@ export interface ScriptInfo {
 
 const KIND = 'npm';
 
+export interface RunPlan {
+  name: string;
+  command: string;
+  cwd: string;
+}
+
 interface Services {
   index: {
     byKind(kind: string): IndexHit[];
     oneOf(kind: string, id: string): IndexHit | undefined;
   };
   packageManager(): string;
-  openTerminal(options: Record<string, unknown>): unknown;
 }
 
 export default class NpmScriptsServer {
@@ -34,22 +39,19 @@ export default class NpmScriptsServer {
       .map((hit) => toScript(hit));
   }
 
-  @command() protected run(params: unknown, call: CallContext): unknown {
-    const asked = params as { id?: unknown; cols?: number; rows?: number } | null;
+  @command() protected run(params: unknown, call: CallContext): RunPlan {
+    const asked = params as { id?: unknown } | null;
     if (!asked || typeof asked.id !== 'string') throw new Error('нужен id: string');
 
     const hit = services(call).index.oneOf(KIND, asked.id);
     if (!hit) throw new Error(`нет скрипта ${asked.id}`);
     const script = toScript(hit);
 
-    return services(call).openTerminal({
+    return {
       name: script.id,
-      kind: 'script',
       command: `${services(call).packageManager()} run ${script.script}`,
       cwd: parentOf(script.path),
-      ...(asked.cols ? { cols: asked.cols } : {}),
-      ...(asked.rows ? { rows: asked.rows } : {}),
-    });
+    };
   }
 }
 

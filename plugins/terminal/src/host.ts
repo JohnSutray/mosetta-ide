@@ -1,16 +1,14 @@
 import { spawn, type IPty } from 'node-pty';
-import type { TerminalInfo, TerminalKind } from '@ide/protocol';
-import { RpcErrorCode } from '@ide/protocol';
-import { RpcError } from '../errors.js';
-import type { Logger } from '../log.js';
-import { shells, type ShellChoice } from '../env/shell.js';
-import { capabilities } from '../env/capabilities.js';
-import { processes } from '../env/processes.js';
+import type { Logger, Project, ShellChoice } from '@ide/api/server';
+import type { TerminalInfo, TerminalKind } from './types.js';
 
-export type TerminalEvent =
-  | { type: 'data'; name: string; data: string }
-  | { type: 'exit'; name: string; exitCode: number }
-  | { type: 'list' };
+function noForeground(): { who: string; why: string } | null {
+  if (process.platform !== 'win32') return null;
+  return {
+    who: 'ConPTY',
+    why: 'Windows has no foreground process group — the terminal cannot say what is running in it',
+  };
+}
 
 export interface OpenOptions {
   name: string;
@@ -25,7 +23,7 @@ const SCROLLBACK_BYTES = 256 * 1024;
 
 const BUSY_POLL_MS = 500;
 
-const NO_FOREGROUND = capabilities.foregroundProcess();
+const NO_FOREGROUND = noForeground();
 
 interface Terminal {
   info: TerminalInfo;
@@ -38,20 +36,14 @@ interface Terminal {
 
 export class TerminalHost {
   private readonly terminals = new Map<string, Terminal>();
-  private readonly listeners = new Set<(event: TerminalEvent) => void>();
   private busyTimer: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
 
   constructor(
-    private readonly hold: (reason: string) => () => void,
+    private readonly project: Project,
     private readonly log: Logger,
-    private readonly shellOf: () => ShellChoice = () => shells.loginShell(),
+    private readonly shellOf: () => ShellChoice,
   ) {}
-
-  on(listener: (event: TerminalEvent) => void): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
 
   list(): TerminalInfo[] {
     return [...this.terminals.values()]
@@ -92,11 +84,10 @@ export class TerminalHost {
         cols,
         rows,
         cwd: options.cwd,
-        env: shells.terminalEnv(),
+        env: this.env(),
       });
     } catch (err) {
-      throw new RpcError(
-        RpcErrorCode.Internal,
+      throw new Error(
         `Не удалось открыть терминал: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
@@ -119,14 +110,9 @@ export class TerminalHost {
       info,
       pty,
       buffer: '',
-      release: this.hold(`terminal:${options.name}`),
-      unlist: processes.adopt(
-        {
-          pid: pty.pid,
-          command: shell.file,
-          reason: `терминал ${options.name}`,
-          owner: options.cwd,
-        },
+      release: this.project.hold(`терминал ${options.name}`),
+      unlist: this.project.spawned(
+        { pid: pty.pid, command: shell.file, reason: `терминал ${options.name}` },
         () => pty.kill(),
       ),
       shell: baseName(shell.file),
@@ -135,7 +121,7 @@ export class TerminalHost {
 
     pty.onData((data) => {
       terminal.buffer = trim(terminal.buffer + data);
-      this.emit({ type: 'data', name: options.name, data });
+      this.emit('data', { name: options.name, data });
     });
 
     pty.onExit(({ exitCode }) => {
@@ -145,8 +131,8 @@ export class TerminalHost {
       delete terminal.info.running;
       terminal.release();
       this.log.info(`терминал ${options.name} завершился (${exitCode})`);
-      this.emit({ type: 'exit', name: options.name, exitCode });
-      this.emit({ type: 'list' });
+      this.emit('exit', { name: options.name, exitCode });
+      this.announce();
     });
 
     if (options.command) {
@@ -155,7 +141,7 @@ export class TerminalHost {
 
     this.log.info(`терминал ${options.name} открыт (pid ${pty.pid})`);
     this.watchBusy();
-    this.emit({ type: 'list' });
+    this.announce();
     return info;
   }
 
@@ -194,7 +180,7 @@ export class TerminalHost {
       clearInterval(this.busyTimer);
       this.busyTimer = null;
     }
-    if (changed) this.emit({ type: 'list' });
+    if (changed) this.announce();
   }
 
   attach(name: string): { info: TerminalInfo; buffer: string } {
@@ -222,7 +208,7 @@ export class TerminalHost {
     this.log.info(`терминал ${name} закрыт по просьбе`);
     terminal.pty?.kill();
     this.forget(name);
-    this.emit({ type: 'list' });
+    this.announce();
   }
 
   dispose(): void {
@@ -239,7 +225,20 @@ export class TerminalHost {
       this.terminals.get(name)?.pty?.kill();
       this.forget(name);
     }
-    this.listeners.clear();
+  }
+
+  private env(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const [key, value] of Object.entries(process.env)) {
+      if (typeof value === 'string') out[key] = value;
+    }
+    Object.assign(out, this.shellOf().env);
+    return {
+      ...out,
+      TERM: 'xterm-256color',
+      COLORTERM: 'truecolor',
+      FORCE_COLOR: '1',
+    };
   }
 
   private forget(name: string): void {
@@ -252,12 +251,16 @@ export class TerminalHost {
 
   private require(name: string): Terminal {
     const terminal = this.terminals.get(name);
-    if (!terminal) throw new RpcError(RpcErrorCode.NotFound, `Нет терминала ${name}`);
+    if (!terminal) throw new Error(`Нет терминала ${name}`);
     return terminal;
   }
 
-  private emit(event: TerminalEvent): void {
-    for (const listener of this.listeners) listener(event);
+  private emit(event: string, payload: unknown): void {
+    this.project.emit(event, payload);
+  }
+
+  private announce(): void {
+    this.emit('list', this.list());
   }
 
   private titleOf(name: string): string {

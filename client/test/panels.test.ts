@@ -46,7 +46,6 @@ describe('пожелания ядра про панели', () => {
   it('навигация слева, рабочее справа', () => {
     const side = (id: string) => wishes().find((one) => one.id === id)?.side;
     expect(side('tree')).toBe('left');
-    expect(side('terminal')).toBe('right');
   });
 
   it('сторона и ширины повторяют реестр, а не выдуманы заново', () => {

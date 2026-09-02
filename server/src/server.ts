@@ -66,7 +66,15 @@ export class Boot {
         harvest();
       });
     }
-    const plugins = new PluginHost(log, path.join(stateDir, 'plugins-build'));
+    const plugins = new PluginHost(log, path.join(stateDir, 'plugins-build'), () => {
+      const chosen = shells.loginShell(config.settings.terminal);
+      return {
+        file: chosen.file,
+        args: chosen.args,
+        env: shellEnv.current ?? {},
+        ...(chosen.problem ? { problem: chosen.problem } : {}),
+      };
+    });
     await plugins.load(config.settings.plugins.enabled, fileURLToPath(new URL('..', import.meta.url)));
 
     const finds = new FindProviders();

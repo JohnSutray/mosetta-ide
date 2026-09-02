@@ -4,7 +4,6 @@ import { keysHelp } from './state/keys-help.js';
 import { editorFocus } from './state/editor.js';
 import { popups } from './state/popups.js';
 import { symbols } from './state/symbols.js';
-import { terminals } from './state/terminals.js';
 import { visits } from './state/visits.js';
 import { search } from './state/search.js';
 import { panels } from './ui/panels.js';
@@ -63,10 +62,6 @@ export function registerCommands(): void {
   commands.register('tree.copyPath', () => onPicked((path) => void treeOps.copyAbsolutePath(path)));
   commands.register('tree.reveal', () => onPicked((path) => void treeOps.revealInOs(path)));
   commands.register('tree.follow', () => void treeFollow.toggle());
-  commands.register('panel.terminal', () => {
-    panels.terminal.value = !panels.terminal.value;
-  });
-  commands.register('terminal.create', () => terminals.create());
   commands.register('terminal.shell', () => tools.open('shell'));
   commands.register('tools.packageManager', () => tools.open('manager'));
 

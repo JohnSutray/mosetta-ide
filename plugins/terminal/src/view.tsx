@@ -1,21 +1,29 @@
-import { terminals } from '../state/terminals.js';
-import { rpc } from '../state/session.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
-import { darcula } from '../editor/darcula.js';
-import { i18n } from '../i18n/index.js';
+import { unstable_dc as dc, t } from '@ide/api/client';
+import type { Attached } from './types.js';
 
-export function TerminalView() {
+const FONT = "'JetBrains Mono', 'SF Mono', Menlo, monospace";
+
+export interface Screen {
+  name: string | null;
+  onData(name: string, sink: (data: string) => void): () => void;
+  attach(name: string): Promise<Attached>;
+  write(name: string, data: string): void;
+  resize(name: string, cols: number, rows: number): void;
+}
+
+export function TerminalView({ screen }: { screen: Screen }) {
   const host = useRef<HTMLDivElement>(null);
-  const name = terminals.active.value;
+  const name = screen.name;
 
   useEffect(() => {
     if (!host.current || !name) return;
     let disposed = false;
 
     const term = new Terminal({
-      fontFamily: darcula.font,
+      fontFamily: FONT,
       fontSize: 12.5,
       lineHeight: 1.2,
       cursorBlink: true,
@@ -23,32 +31,29 @@ export function TerminalView() {
       cursorWidth: 2,
       scrollback: 10_000,
       theme: {
-        background: darcula.palette.bg,
-        foreground: darcula.palette.fg,
-        cursor: darcula.palette.caret,
-        selectionBackground: darcula.palette.selection,
+        background: dc.bg,
+        foreground: dc.fg,
+        cursor: dc.caret,
+        selectionBackground: dc.selection,
         black: '#2B2B2B',
-        red: darcula.palette.errorFg,
-        green: darcula.palette.string,
-        yellow: darcula.palette.annot,
-        blue: darcula.palette.number,
-        magenta: darcula.palette.const,
+        red: dc.errorFg,
+        green: dc.string,
+        yellow: dc.annot,
+        blue: dc.number,
+        magenta: dc.const,
         cyan: '#299999',
-        white: darcula.palette.fg,
+        white: dc.fg,
       },
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
     term.open(host.current);
 
-    const push = (data: string) => {
+    const offData = screen.onData(name, (data) => {
       if (!disposed) term.write(data);
-    };
-    const offData = terminals.onData(name, push);
-
-    const offInput = term.onData((data) => {
-      void rpc.call('term.write', { name, data }).catch(() => undefined);
     });
+
+    const offInput = term.onData((data) => screen.write(name, data));
 
     const sync = () => {
       if (disposed) return;
@@ -57,13 +62,11 @@ export function TerminalView() {
       } catch {
         return;
       }
-      void rpc
-        .call('term.resize', { name, cols: term.cols, rows: term.rows })
-        .catch(() => undefined);
+      screen.resize(name, term.cols, term.rows);
     };
 
-    void rpc
-      .call('term.attach', { name })
+    void screen
+      .attach(name)
       .then(({ buffer }) => {
         if (disposed) return;
         if (buffer) term.write(buffer);
@@ -85,7 +88,7 @@ export function TerminalView() {
   }, [name]);
 
   if (!name) {
-    return <div class="placeholder">{i18n.t('terminal.empty')}</div>;
+    return <div class="placeholder">{t('terminal.empty')}</div>;
   }
   return <div class="term-host" data-keys="terminal" ref={host} />;
 }

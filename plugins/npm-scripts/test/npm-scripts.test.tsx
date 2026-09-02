@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
 import NpmScripts, { type ScriptInfo } from '../src/client.js';
+import TerminalPlugin from '@ide/plugin-terminal';
 
 const NAME = '@ide/plugin-npm-scripts';
 
@@ -17,12 +18,30 @@ function tick(): Promise<void> {
 describe('скрипты', () => {
   let host: FakeHost;
   let npm: NpmScripts;
+  let terminal: TerminalPlugin;
 
   beforeEach(async () => {
     host = new FakeHost();
+    terminal = host.add(TerminalPlugin, '@ide/plugin-terminal');
+    host.ide('@ide/plugin-terminal').answers.set('list', () => []);
     npm = host.add(NpmScripts, NAME);
     host.ide(NAME).answers.set('list', () => SCRIPTS);
-    host.ide(NAME).answers.set('run', () => ({ id: 'term-1', title: 'core::dev' }));
+    host.ide(NAME).answers.set('run', () => ({
+      name: 'core::dev',
+      command: 'pnpm run dev',
+      cwd: 'packages/core',
+    }));
+    host.ide('@ide/plugin-terminal').answers.set('open', (p) => ({
+      name: (p as { name: string }).name,
+      title: (p as { name: string }).name,
+      kind: 'script',
+      pid: 42,
+      cols: 80,
+      rows: 24,
+      alive: true,
+      busy: false,
+      createdAt: 0,
+    }));
     await host.start();
   });
 
@@ -37,9 +56,10 @@ describe('скрипты', () => {
     expect(host.ide(NAME).calls).toEqual([{ method: 'run', params: { id: 'core::dev' } }]);
   });
 
-  it('запуск открывает терминал, а не переизобретает панель', async () => {
+  it('запуск открывает терминал ЧУЖИМИ руками', async () => {
+    expect(terminal.showing()).toBe(null);
     await npm.run('core::dev');
-    expect(host.surface.terminals).toEqual([{ id: 'term-1', title: 'core::dev' }]);
+    expect(terminal.showing()).toBe('core::dev');
   });
 
   it('отказ сервера не стирает список и не молчит', async () => {

@@ -167,24 +167,6 @@ export interface NpmScriptInfo {
   path: string;
 }
 
-export type TerminalKind = 'manual' | 'script';
-
-export interface TerminalInfo {
-  name: string;
-  title: string;
-  kind: TerminalKind;
-  pid: number;
-  cols: number;
-  rows: number;
-  alive: boolean;
-  exitCode?: number;
-  command?: string;
-  busy: boolean;
-  running?: string;
-  busyUnknown?: string;
-  createdAt: number;
-}
-
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export interface LogLine {

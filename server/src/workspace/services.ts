@@ -6,11 +6,9 @@ import { RamFs } from '../fs/ram-fs.js';
 import { SearchIndex } from '../search/search-index.js';
 import type { FindProviders } from '../search/providers.js';
 import { LspServer } from '../lsp/server.js';
-import { TerminalHost } from '../term/host.js';
 import { GitIndex } from '../git/git-index.js';
 import { MergeSessions } from '../merge/sessions.js';
 import { conflicts, type FsConflicts } from './conflicts.js';
-import { shells } from '../env/shell.js';
 import { tools } from '../env/tools.js';
 import type { Logger } from '../log.js';
 import type { Workspace } from './workspace.js';
@@ -20,7 +18,6 @@ export class Services {
   readonly ram: RamFs;
   readonly index: SearchIndex;
   readonly watcher: OsWatcher;
-  readonly terminals: TerminalHost;
   readonly git: GitIndex;
   readonly merge = new MergeSessions();
   readonly conflicts: FsConflicts;
@@ -91,27 +88,6 @@ export class Services {
       log,
       (state) => ws.broadcast('git.state', state),
       (action, chunk) => ws.broadcast('git.output', { action, chunk }),
-    );
-
-    this.terminals = new TerminalHost((reason) => ws.hold(reason), log, () =>
-      shells.loginShell(config.settings.terminal),
-    );
-    this.offs.push(
-      this.terminals.on((event) => {
-        switch (event.type) {
-          case 'data':
-            ws.broadcast('term.data', { name: event.name, data: event.data });
-            break;
-          case 'exit':
-            ws.broadcast('term.exit', { name: event.name, exitCode: event.exitCode });
-            break;
-          case 'list':
-            ws.broadcast('term.list', this.terminals.list());
-            break;
-          default:
-            break;
-        }
-      }),
     );
 
     this.offs.push(
@@ -194,25 +170,6 @@ export class Services {
     }
   }
 
-  openTerminal(options: {
-    name: string;
-    kind?: 'manual' | 'script';
-    command?: string;
-    cwd?: string;
-    cols?: number;
-    rows?: number;
-  }) {
-    const { cwd, ...rest } = options;
-    return this.terminals.open({
-      ...rest,
-      cwd: cwd ? this.ws.resolve(cwd) : this.ws.root,
-    });
-  }
-
-  createTerminal(options: { cols?: number; rows?: number }) {
-    return this.terminals.create({ ...options, cwd: this.ws.root });
-  }
-
   packageManager(): string {
     const chosen = this.config.settings.tools.packageManager.trim();
     return chosen === '' ? this.suggestedManager() : chosen;
@@ -238,7 +195,6 @@ export class Services {
 
   dispose(): void {
     for (const off of this.offs.splice(0)) off();
-    this.terminals.dispose();
     this.merge.dispose();
     this.git.dispose();
     this.watcher.dispose();

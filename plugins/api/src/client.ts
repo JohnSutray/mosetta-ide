@@ -1,6 +1,6 @@
 import type { ComponentChildren, JSX } from 'preact';
 import type { Signal } from '@preact/signals';
-import type { Diagnostic, DocState, HoverInfo, Settings, TerminalInfo } from '@ide/protocol';
+import type { Diagnostic, DocState, HoverInfo, Settings } from '@ide/protocol';
 
 export interface Size {
   w: number;
@@ -36,8 +36,6 @@ export declare function unstable_PickPopup<T>(props: PickProps<T>): JSX.Element;
 export declare function unstable_highlight(text: string, matches: number[]): ComponentChildren;
 
 export declare function unstable_shiftMatches(matches: number[], from: number, length: number): number[];
-
-export declare function unstable_showTerminal(open: () => Promise<TerminalInfo>): Promise<void>;
 
 export declare function t(key: string, params?: Record<string, string | number>): string;
 
@@ -188,7 +186,6 @@ export interface ClientSurface {
   unstable_PickPopup: typeof unstable_PickPopup;
   unstable_highlight: typeof unstable_highlight;
   unstable_shiftMatches: typeof unstable_shiftMatches;
-  unstable_showTerminal: typeof unstable_showTerminal;
   t: typeof t;
   problems: typeof problems;
   goTo: typeof goTo;

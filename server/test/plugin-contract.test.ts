@@ -78,7 +78,6 @@ describe('контракт @ide/api', () => {
       'PickPopup', 'highlight', 'shiftMatches', 'showTip', 'hideTip', 'Resizer', 'widthOf',
       'darcula', 'dc', 'textStyle', 'languageFor', 'paintCode', 'inputKeymap', 'diffLines',
       'showHunk', 'askSymbol',
-      'showTerminal',
     ].map((name) => `unstable_${name}`);
 
     const members = surfaceMembers(source('client.ts'));

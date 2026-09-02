@@ -31,9 +31,8 @@ describe('тулбар', () => {
     const asked = new Set(wishes().buttons.map((entry) => entry.command));
     const missing = panels.all.filter((panel) => !asked.has(panel.command)).map((p) => p.id);
     expect(missing, `панели, которые никак не просят себя показать: ${missing.join(', ')}`).toEqual(
-      ['terminal'],
+      [],
     );
-    expect(wishes().widgets.map((one) => one.id)).toContain('terminals');
   });
 
   it('кнопка панели показывает ТОТ ЖЕ сигнал, а не копию', () => {
@@ -57,7 +56,6 @@ describe('тулбар', () => {
   it('рабочие панели открываются справа, навигация — слева', () => {
     const side = (id: string) => panels.all.find((panel) => panel.id === id)?.side;
     expect(side('tree')).toBe('left');
-    expect(side('terminal')).toBe('right');
   });
 
   it('кнопка тулбара показывает панель, попап или настройку — но всегда состояние', () => {
@@ -122,9 +120,9 @@ describe('тулбар', () => {
     expect(named.map((entry) => entry.id)).toEqual([]);
   });
 
-  it('единственная кнопка без состояния — заведение терминала', () => {
+  it('у каждой НАШЕЙ кнопки есть состояние', () => {
     const stateless = wishes().buttons.filter((entry) => !entry.active).map((entry) => entry.id);
-    expect(stateless).toEqual(['terminal.create']);
+    expect(stateless).toEqual([]);
   });
 
   it('цифра — это порядковый номер кнопки в тулбаре, слева направо', () => {

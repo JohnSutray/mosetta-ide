@@ -1,7 +1,7 @@
 import Ajv, { type ValidateFunction } from 'ajv';
 import { signal, type Signal } from '@preact/signals';
 import type { ComponentChildren, JSX } from 'preact';
-import type { Diagnostic, DocState, HoverInfo, Settings, TerminalInfo } from '@ide/protocol';
+import type { Diagnostic, DocState, HoverInfo, Settings } from '@ide/protocol';
 import { attach, hooksOf, registriesOf } from './client.js';
 import type {
   ClientSurface,
@@ -37,9 +37,6 @@ export function unstable_highlight(text: string, matches: number[]): ComponentCh
 }
 export function unstable_shiftMatches(matches: number[], from: number, length: number): number[] {
   return surface().unstable_shiftMatches(matches, from, length);
-}
-export function unstable_showTerminal(open: () => Promise<TerminalInfo>): Promise<void> {
-  return surface().unstable_showTerminal(open);
 }
 export function t(key: string, params?: Record<string, string | number>): string {
   return surface().t(key, params);
@@ -170,7 +167,6 @@ export class FakeSurface implements ClientSurface {
   readonly settings: Signal<Settings | null> = signal(null);
 
   readonly jumps: Array<{ path: string; line: number; character?: number }> = [];
-  readonly terminals: TerminalInfo[] = [];
   tip: Tip | null = null;
   readonly keys = new Map<string, string[]>();
   readonly widths = new Map<string, number>();
@@ -203,10 +199,6 @@ export class FakeSurface implements ClientSurface {
 
   unstable_shiftMatches(matches: number[], from: number, length: number): number[] {
     return matches.filter((at) => at >= from && at < from + length).map((at) => at - from);
-  }
-
-  async unstable_showTerminal(open: () => Promise<TerminalInfo>): Promise<void> {
-    this.terminals.push(await open());
   }
 
   t(key: string, params?: Record<string, string | number>): string {

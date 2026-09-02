@@ -11,6 +11,7 @@ export function pluginTests(): Record<string, unknown> {
     },
     test: {
       environment: 'node',
+      setupFiles: ['@ide/api/browser-globals'],
       include: ['test/**/*.test.ts', 'test/**/*.test.tsx'],
     },
   };
