@@ -2,12 +2,10 @@ import { inputMechanics } from '../editor/input-keymap.js';
 import { keyContexts } from '../keys/context.js';
 import { treeFollow } from '../state/tree-follow.js';
 import { commands } from '../keys/commands.js';
-import { geometry } from '../state/layout.js';
 import { keysHelp } from '../state/keys-help.js';
 import { gitMarks } from '../state/git-marks.js';
 import { editorFocus } from '../state/editor.js';
 import { treeMenu } from '../state/tree-menu.js';
-import { tips } from '../state/tip.js';
 import { symbols } from '../state/symbols.js';
 import { config } from '../state/config.js';
 import { visits } from '../state/visits.js';
@@ -36,19 +34,17 @@ import { registerToolbarWishes } from './toolbar-wishes.js';
 import { registerPanelWishes } from './panel-wishes.js';
 import { Registry } from '../state/registry.js';
 import { keysFor } from '../keys/keys-for.js';
-import { Resizer } from './resizer.js';
 import { Projects } from './projects.js';
 import { i18n } from '../i18n/index.js';
 import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
+import { Tip } from '@ide/ui';
 import { MergeScreen } from './merge.js';
 import { PluginSurfaces } from './plugin-surfaces.js';
-import { PickPopup, matches } from './pick-popup.js';
 import { plugins } from '../state/plugins.js';
 import { goTo } from './go-to.js';
 import type { ClientSurface } from '@ide/api/client';
 import { ToolPicker } from './tool-picker.js';
-import { Tip } from './tip.js';
 import { Symbols } from './symbols.js';
 
 const store = new Registry((message) => complain(message));
@@ -105,13 +101,6 @@ export function App() {
       takeFocusOnMount: () => editorFocus.takeOnMount(),
       wantsFocus: editorFocus.wanted,
       chordHeld,
-      unstable_PickPopup: PickPopup,
-      unstable_highlight: (text, at) => matches.highlight(text, at),
-      unstable_shiftMatches: (at, from, len) => matches.shiftMatches(at, from, len),
-      unstable_showTip: (near, text, keys) => tips.show(near, text, keys),
-      unstable_hideTip: () => tips.hide(),
-      unstable_Resizer: Resizer,
-      unstable_widthOf: (id, fallback) => geometry.widthOf(id, fallback),
       unstable_diffLines: (before, after) => lineDiff.hunks(before, after),
       unstable_showHunk: (hunk, box) => gitMarks.show(hunk, box),
       unstable_askSymbol: (where) => symbols.ask(where),

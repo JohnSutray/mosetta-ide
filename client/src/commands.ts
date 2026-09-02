@@ -2,7 +2,6 @@ import { treeFollow } from './state/tree-follow.js';
 import { commands } from './keys/commands.js';
 import { keysHelp } from './state/keys-help.js';
 import { editorFocus } from './state/editor.js';
-import { popups } from './state/popups.js';
 import { symbols } from './state/symbols.js';
 import { visits } from './state/visits.js';
 import { search } from './state/search.js';
@@ -13,8 +12,7 @@ import { merge } from './state/merge.js';
 import { projects } from './state/projects.js';
 import { tools } from './state/tools.js';
 import { branchesWindow, pushWindow } from './state/git.js';
-import { activePick } from './state/pick.js';
-import { activeMenu } from './state/menu.js';
+import { activeMenu, activePick, popups } from '@ide/ui';
 
 export function registerCommands(): void {
   commands.register('file.save', () => doc.save());

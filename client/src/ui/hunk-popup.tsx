@@ -1,8 +1,8 @@
 import { gitMarks } from '../state/git-marks.js';
-import { popups } from '../state/popups.js';
 import { doc } from '../state/session.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { i18n } from '../i18n/index.js';
+import { popups } from '@ide/ui';
 
 export function HunkPopup() {
   const open = gitMarks.popup.value;

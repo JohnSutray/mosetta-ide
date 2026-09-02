@@ -4,6 +4,7 @@ import { complain, say } from './notifications.js';
 import * as preact from 'preact';
 import * as hooks from 'preact/hooks';
 import * as signals from '@preact/signals';
+import * as ui from '@ide/ui';
 import * as jsxRuntime from 'preact/jsx-runtime';
 import * as cm from '@codemirror/state';
 import * as cmView from '@codemirror/view';
@@ -65,6 +66,7 @@ export class Plugins {
       jsx: jsxRuntime,
       hooks,
       signals,
+      ui,
       cm,
       cmView,
       cmCommands,

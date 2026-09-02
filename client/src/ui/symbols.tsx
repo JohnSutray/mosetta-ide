@@ -1,12 +1,10 @@
-import { geometry } from '../state/layout.js';
 import { symbols } from '../state/symbols.js';
 import { config } from '../state/config.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { codePainter } from '../editor/paint-line.js';
-import { Popup } from './popup.js';
-import { Resizer } from './resizer.js';
 import { CodeView } from '../editor/code-view.js';
 import { i18n } from '../i18n/index.js';
+import { Popup, Resizer, geometry } from '@ide/ui';
 
 const SIZE = { w: 620, h: 420 };
 const MIN = { w: 320, h: 220 };

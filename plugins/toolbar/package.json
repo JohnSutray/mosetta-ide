@@ -14,7 +14,8 @@
     "strings": "src/en.json"
   },
   "dependencies": {
-    "@ide/api": "workspace:*"
+    "@ide/api": "workspace:*",
+    "@ide/ui": "workspace:*"
   },
   "peerDependencies": {
     "@ide/protocol": "workspace:*",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "preact": "^10.25.3",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "@ide/ui": "workspace:*"
   }
 }

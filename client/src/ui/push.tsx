@@ -1,11 +1,9 @@
-import { geometry } from '../state/layout.js';
 import { git, pushWindow } from '../state/git.js';
 import { useRef } from 'preact/hooks';
 import type { GitCommit } from '@ide/protocol';
 import { ChangedTree } from './changed-tree.js';
-import { Resizer } from './resizer.js';
-import { Popup } from './popup.js';
 import { i18n } from '../i18n/index.js';
+import { Popup, Resizer, geometry } from '@ide/ui';
 
 const FILES_ID = 'push.files';
 const FILES_DEFAULT = 460;

@@ -1,7 +1,6 @@
 import { treeFollow } from '../state/tree-follow.js';
 import { commands } from '../keys/commands.js';
 import { keysHelp } from '../state/keys-help.js';
-import { tips } from '../state/tip.js';
 import { search } from '../state/search.js';
 import { session } from '../state/session.js';
 import { merge } from '../state/merge.js';
@@ -11,9 +10,9 @@ import { branchesWindow, git, pushWindow } from '../state/git.js';
 import { computed } from '@preact/signals';
 import { keysFor } from '../keys/keys-for.js';
 import { i18n } from '../i18n/index.js';
-import { Icon, type IconName } from './icons.js';
 import { panels } from './panels.js';
 import type { Registry } from '../state/registry.js';
+import { Icon, tips, type IconName } from '@ide/ui';
 
 interface ButtonWish {
   id: string;

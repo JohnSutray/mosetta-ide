@@ -1,4 +1,4 @@
-import { tips } from '../state/tip.js';
+import { tips } from './tips.js';
 import { useLayoutEffect, useRef } from 'preact/hooks';
 
 export function Tip() {

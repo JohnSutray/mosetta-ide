@@ -2,10 +2,8 @@ import { session } from '../state/session.js';
 import { projects } from '../state/projects.js';
 import { useEffect, useRef } from 'preact/hooks';
 import type { DirSuggestion } from '@ide/protocol';
-import { Chevron, DirIcon } from './file-icons.js';
-import { Popup } from './popup.js';
-import { Icon } from './icons.js';
 import { i18n } from '../i18n/index.js';
+import { Chevron, DirIcon, Icon, Popup } from '@ide/ui';
 
 export function Projects() {
   const input = useRef<HTMLInputElement>(null);

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, of, nodes } from '@ide/api/testing';
+import { tips } from '@ide/ui';
 import Toolbar from '../src/client.js';
 
 const NAME = '@ide/plugin-toolbar';
@@ -95,10 +96,17 @@ describe('тулбар', () => {
     host.surface.keys.set('panel.tree', ['Cmd+1']);
     host.registry.add('toolbar.button', wish('tree'), 'core');
     const button = of(top(), 'button')[0]!;
-    (button.props['onMouseEnter'] as (e: unknown) => void)({ currentTarget: {} });
-    expect(host.surface.tip).toEqual({ text: 'toolbar.tree', keys: ['Cmd+1'] });
+    (button.props['onMouseEnter'] as (e: unknown) => void)({
+      currentTarget: { getBoundingClientRect: () => ({ left: 0, bottom: 0 }) },
+    });
+    expect(tips.spot.value).toEqual({
+      x: 0,
+      y: 6,
+      title: 'toolbar.tree',
+      keys: ['Cmd+1'],
+    });
     (button.props['onMouseLeave'] as () => void)();
-    expect(host.surface.tip).toBeNull();
+    expect(tips.spot.value).toBeNull();
   });
 
   it('число на кнопке показывается только когда оно есть', () => {

@@ -1,12 +1,35 @@
 import { Fragment } from 'preact';
-import type { ComponentChildren } from 'preact';
-import type { PickItem, PickProps } from '@ide/api/client';
-export type { PickItem, PickProps } from '@ide/api/client';
+import type { ComponentChildren, JSX } from 'preact';
+import type { Size } from './geometry.js';
+
+export interface PickItem<T> {
+  key: string;
+  text: string;
+  value: T;
+}
+
+export interface PickProps<T> {
+  id: string;
+  title: string;
+  meta?: ComponentChildren;
+  items: Array<PickItem<T>>;
+  placeholder: string;
+  empty: string;
+  size: Size;
+  min: Size;
+  onClose: () => void;
+  onPick: (value: T) => void;
+  row: (value: T, matches: number[], picked: boolean) => JSX.Element;
+  section?: (value: T) => string;
+  footer?: ComponentChildren;
+  extra?: ComponentChildren;
+  onMouseDown?: (event: MouseEvent) => void;
+}
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { activePick } from '../state/pick.js';
+import { activePick } from './pick.js';
 import { fuzzy } from './fuzzy.js';
 import { Popup } from './popup.js';
-import { i18n } from '../i18n/index.js';
+import { host } from './host.js';
 
 export function PickPopup<T>({
   id,
@@ -109,7 +132,7 @@ export function PickPopup<T>({
           );
         })}
         {shown.length === 0 && (
-          <div class="se-empty">{items.length === 0 ? empty : i18n.t('pick.nothing')}</div>
+          <div class="se-empty">{items.length === 0 ? empty : host.t('pick.nothing')}</div>
         )}
       </div>
 

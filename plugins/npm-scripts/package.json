@@ -22,7 +22,8 @@
   },
   "dependencies": {
     "@ide/api": "workspace:*",
-    "@ide/plugin-terminal": "workspace:*"
+    "@ide/plugin-terminal": "workspace:*",
+    "@ide/ui": "workspace:*"
   },
   "peerDependencies": {
     "@ide/protocol": "workspace:*",

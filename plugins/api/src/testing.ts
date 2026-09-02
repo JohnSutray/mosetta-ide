@@ -1,6 +1,5 @@
 import Ajv, { type ValidateFunction } from 'ajv';
 import { signal, type Signal } from '@preact/signals';
-import type { ComponentChildren, JSX } from 'preact';
 import type { Diagnostic, DocState, HoverInfo, Settings } from '@ide/protocol';
 import { attach, hooksOf, registriesOf } from './client.js';
 import type {
@@ -12,9 +11,7 @@ import type {
   Hunk,
   HunkBox,
   Palette,
-  PickProps,
   PluginClass,
-  ResizerProps,
   Reveal,
   SymbolAsk,
   RegistryHandle,
@@ -29,15 +26,6 @@ function surface(): FakeSurface {
   return installed;
 }
 
-export function unstable_PickPopup<T>(props: PickProps<T>): JSX.Element {
-  return surface().unstable_PickPopup(props);
-}
-export function unstable_highlight(text: string, matches: number[]): ComponentChildren {
-  return surface().unstable_highlight(text, matches);
-}
-export function unstable_shiftMatches(matches: number[], from: number, length: number): number[] {
-  return surface().unstable_shiftMatches(matches, from, length);
-}
 export function t(key: string, params?: Record<string, string | number>): string {
   return surface().t(key, params);
 }
@@ -47,20 +35,8 @@ export function goTo(path: string, line: number, character?: number): Promise<vo
 export function runCommand(id: string): boolean {
   return surface().runCommand(id);
 }
-export function unstable_showTip(near: Element, text: string, keys?: string[]): void {
-  surface().unstable_showTip(near, text, keys);
-}
-export function unstable_hideTip(): void {
-  surface().unstable_hideTip();
-}
 export function keysFor(command: string): string[] {
   return surface().keysFor(command);
-}
-export function unstable_Resizer(props: ResizerProps): JSX.Element {
-  return surface().unstable_Resizer(props);
-}
-export function unstable_widthOf(id: string, fallback: number): number {
-  return surface().unstable_widthOf(id, fallback);
 }
 export function editDoc(text: string): void {
   surface().editDoc(text);
@@ -169,7 +145,6 @@ export class FakeSurface implements ClientSurface {
   readonly jumps: Array<{ path: string; line: number; character?: number }> = [];
   tip: Tip | null = null;
   readonly keys = new Map<string, string[]>();
-  readonly widths = new Map<string, number>();
 
   readonly openDoc: Signal<DocState | null> = signal(null);
   readonly dirty = signal(false);
@@ -189,18 +164,6 @@ export class FakeSurface implements ClientSurface {
 
   constructor(private readonly host: FakeHost) {}
 
-  unstable_PickPopup<T>(props: PickProps<T>): JSX.Element {
-    return { type: 'PickPopup', props } as unknown as JSX.Element;
-  }
-
-  unstable_highlight(text: string, matches: number[]): ComponentChildren {
-    return { type: 'highlight', text, matches } as unknown as ComponentChildren;
-  }
-
-  unstable_shiftMatches(matches: number[], from: number, length: number): number[] {
-    return matches.filter((at) => at >= from && at < from + length).map((at) => at - from);
-  }
-
   t(key: string, params?: Record<string, string | number>): string {
     if (!params) return key;
     const tail = Object.entries(params)
@@ -217,25 +180,8 @@ export class FakeSurface implements ClientSurface {
     return this.host.run(id);
   }
 
-  unstable_showTip(near: Element, text: string, keys?: string[]): void {
-    void near;
-    this.tip = { text, keys: keys ?? [] };
-  }
-
-  unstable_hideTip(): void {
-    this.tip = null;
-  }
-
   keysFor(command: string): string[] {
     return this.keys.get(command) ?? [];
-  }
-
-  unstable_Resizer(props: ResizerProps): JSX.Element {
-    return { type: 'Resizer', props } as unknown as JSX.Element;
-  }
-
-  unstable_widthOf(id: string, fallback: number): number {
-    return this.widths.get(id) ?? fallback;
   }
 
   editDoc(text: string): void {

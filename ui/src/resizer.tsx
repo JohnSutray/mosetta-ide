@@ -1,4 +1,4 @@
-import { geometry } from '../state/layout.js';
+import { geometry } from './geometry.js';
 import { useRef } from 'preact/hooks';
 
 export function Resizer({

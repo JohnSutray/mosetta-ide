@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import { keep, recall } from './persist.js';
+import { host } from './host.js';
 
 export interface Size {
   w: number;
@@ -39,7 +39,7 @@ export class Geometry {
     const width = Math.round(Math.min(max, Math.max(min, px)));
     if (this.widths.value[id] === width) return;
     this.widths.value = { ...this.widths.value, [id]: width };
-    keep(this.widthsKey, this.widths.value);
+    host.keep(this.widthsKey, this.widths.value);
   }
 
   sizeOf(id: string, fallback: Size): Size {
@@ -59,13 +59,13 @@ export class Geometry {
     const known = this.popupSizes.value[id];
     if (known && known.w === next.w && known.h === next.h) return;
     this.popupSizes.value = { ...this.popupSizes.value, [id]: next };
-    keep(this.sizesKey, this.popupSizes.value);
+    host.keep(this.sizesKey, this.popupSizes.value);
   }
 
   resetPopupSize(id: string): void {
     const { [id]: _dropped, ...rest } = this.popupSizes.value;
     this.popupSizes.value = rest;
-    keep(this.sizesKey, rest);
+    host.keep(this.sizesKey, rest);
   }
 
   fitAnchored(
@@ -92,7 +92,7 @@ export class Geometry {
 
   private readWidths(): Record<string, number> {
     const out: Record<string, number> = {};
-    for (const [id, value] of Object.entries(recall<Record<string, unknown>>('panel-widths', {}))) {
+    for (const [id, value] of Object.entries(host.recall<Record<string, unknown>>('panel-widths', {}))) {
       if (typeof value === 'number' && Number.isFinite(value)) out[id] = value;
     }
     return out;
@@ -100,7 +100,7 @@ export class Geometry {
 
   private readSizes(): Record<string, Size> {
     const out: Record<string, Size> = {};
-    for (const [id, value] of Object.entries(recall<Record<string, unknown>>('popup-sizes', {}))) {
+    for (const [id, value] of Object.entries(host.recall<Record<string, unknown>>('popup-sizes', {}))) {
       const size = value as Size;
       if (size && Number.isFinite(size.w) && Number.isFinite(size.h)) out[id] = size;
     }

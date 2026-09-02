@@ -1,7 +1,7 @@
-import { popups } from '../state/popups.js';
+import { popups } from './popups.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { activeMenu } from '../state/menu.js';
-import { i18n } from '../i18n/index.js';
+import { activeMenu } from './menu-state.js';
+import { host } from './host.js';
 
 export interface MenuItem {
   label: string;
@@ -74,7 +74,7 @@ export function Menu({
             item.run();
           }}
         >
-          {i18n.t(item.label)}
+          {host.t(item.label)}
         </button>
       ))}
     </div>

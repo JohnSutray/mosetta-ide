@@ -54,6 +54,25 @@ describe('контракт @ide/api', () => {
     }
   });
 
+  it('@ide/ui подменяется ровно тем, что он отдаёт', () => {
+    const index = fs.readFileSync(
+      path.resolve(here, '../../ui/src/index.ts'),
+      'utf8',
+    );
+    const exported = [...index.matchAll(/^export \{([^}]*)\} from/gm)]
+      .flatMap((m) => m[1]!.split(','))
+      .map((one) => one.trim())
+      .filter((one) => one !== '' && !one.startsWith('type '));
+
+    const shared = source('../../../server/src/plugins/build.ts');
+    const listed = [...shared.matchAll(/^const UI_NAMES = \[([^\]]*)\]/gm)]
+      .flatMap((m) => m[1]!.split(','))
+      .map((one) => one.trim().replace(/^'|',?$/g, ''))
+      .filter((one) => one !== '');
+
+    expect([...listed].sort()).toEqual([...exported].sort());
+  });
+
   it('серверная половина сшита так же', () => {
     const text = source('server.ts');
     const offered = new Set(real(forPlugins(text)));
@@ -75,7 +94,6 @@ describe('контракт @ide/api', () => {
 
   it('взятое взаймы помечено, и список закрытый', () => {
     const BORROWED = [
-      'PickPopup', 'highlight', 'shiftMatches', 'showTip', 'hideTip', 'Resizer', 'widthOf',
       'darcula', 'dc', 'textStyle', 'languageFor', 'paintCode', 'inputKeymap', 'diffLines',
       'showHunk', 'askSymbol',
     ].map((name) => `unstable_${name}`);

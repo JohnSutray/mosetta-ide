@@ -1,6 +1,6 @@
 import { tools, type ToolKind } from '../state/tools.js';
 import { i18n } from '../i18n/index.js';
-import { Popup } from './popup.js';
+import { Popup } from '@ide/ui';
 
 interface Row {
   path: string;

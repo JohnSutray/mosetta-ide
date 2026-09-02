@@ -1,7 +1,7 @@
 import { prompt, tree, type Ask } from '../state/tree-ops.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { i18n } from '../i18n/index.js';
-import { Popup } from './popup.js';
+import { Popup } from '@ide/ui';
 
 const LINE = 18;
 const CHROME = 86;

@@ -1,8 +1,7 @@
 import type { ReadonlySignal } from '@preact/signals';
 import type { CommandId } from '@ide/protocol';
 import { persisted } from '../state/persist.js';
-
-import type { IconName } from './icons.js';
+import type { IconName } from '@ide/ui';
 
 export type PanelSide = 'left' | 'right';
 

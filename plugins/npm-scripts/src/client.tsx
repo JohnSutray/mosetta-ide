@@ -1,14 +1,12 @@
 import { signal } from '@preact/signals';
 import {
-  unstable_PickPopup as PickPopup,
   activate,
-  unstable_highlight as highlight,
   remote,
-  unstable_shiftMatches as shiftMatches,
   stub,
   t,
   type Ide,
 } from '@ide/api/client';
+import { PickPopup, matches as pickMatches } from '@ide/ui';
 import { NpmIcon } from './icon.js';
 import { scriptId } from './script-id.js';
 import TerminalPlugin from '@ide/plugin-terminal';
@@ -105,7 +103,7 @@ export default class NpmScripts {
           return (
             <>
               <span class="pick-name">
-                {highlight(scriptId.scriptOf(script.id), shiftMatches(matches, from, script.id.length - from))}
+                {pickMatches.highlight(scriptId.scriptOf(script.id), pickMatches.shiftMatches(matches, from, script.id.length - from))}
               </span>
               <span class="pick-detail">{script.command}</span>
             </>

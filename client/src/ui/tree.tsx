@@ -7,7 +7,7 @@ import { useEffect } from 'preact/hooks';
 import type { DirEntry } from '@ide/protocol';
 import { keyHost } from '../keys/host.js';
 import { i18n } from '../i18n/index.js';
-import { Chevron, DirIcon, FileIcon, RootIcon } from './file-icons.js';
+import { Chevron, DirIcon, FileIcon, RootIcon } from '@ide/ui';
 
 export function Tree() {
   const ws = session.current.value;

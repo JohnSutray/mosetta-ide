@@ -1,6 +1,6 @@
 import type { GitChange } from '@ide/protocol';
-import { DirIcon, FileIcon } from './file-icons.js';
 import { i18n } from '../i18n/index.js';
+import { DirIcon, FileIcon } from '@ide/ui';
 
 interface Node {
   name: string;

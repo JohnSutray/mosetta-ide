@@ -1,5 +1,5 @@
-import { geometry } from '../src/state/layout.js';
 import { describe, expect, it } from 'vitest';
+import { geometry } from '@ide/ui';
 
 const BOX = { w: 1600, h: 1000 };
 const MIN = { w: 320, h: 220 };

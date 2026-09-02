@@ -2,11 +2,7 @@ import { branchesWindow, git, pushWindow } from '../state/git.js';
 import { useEffect, useRef } from 'preact/hooks';
 import type { GitBranch } from '@ide/protocol';
 import { i18n } from '../i18n/index.js';
-import { Popup } from './popup.js';
-import { activePick } from '../state/pick.js';
-import { Chevron } from './file-icons.js';
-import { Icon } from './icons.js';
-import { Menu, type MenuItem } from './menu.js';
+import { Chevron, Icon, Menu, Popup, activePick, type MenuItem } from '@ide/ui';
 
 export function Branches() {
   const list = useRef<HTMLDivElement>(null);

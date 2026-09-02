@@ -1,5 +1,6 @@
 import { Fragment } from 'preact';
-import { unstable_Resizer as Resizer, activate, registry, t, unstable_widthOf as widthOf, type Ide } from '@ide/api/client';
+import { activate, registry, t, type Ide } from '@ide/api/client';
+import { Resizer, geometry } from '@ide/ui';
 import { PANEL_SCHEMA, type PanelWish } from './schema.js';
 import { STYLE } from './style.js';
 
@@ -86,6 +87,6 @@ export default class Layout {
   }
 
   private width(panel: PanelWish): number {
-    return widthOf(panel.id, panel.defaultWidth ?? this.fallbackWidth);
+    return geometry.widthOf(panel.id, panel.defaultWidth ?? this.fallbackWidth);
   }
 }

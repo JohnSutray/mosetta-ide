@@ -1,10 +1,10 @@
 import { config } from '../state/config.js';
 import { search } from '../state/search.js';
 import { useEffect, useRef } from 'preact/hooks';
-import { Popup } from './popup.js';
 import { CodeView } from '../editor/code-view.js';
 import { i18n } from '../i18n/index.js';
 import type { IndexHit } from '@ide/protocol';
+import { Popup } from '@ide/ui';
 
 export function SearchEverywhere() {
   const input = useRef<HTMLInputElement>(null);

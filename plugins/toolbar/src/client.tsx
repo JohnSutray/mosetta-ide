@@ -1,14 +1,13 @@
 import {
   activate,
-  unstable_hideTip as hideTip,
   keysFor,
   registry,
   runCommand,
   settings,
-  unstable_showTip as showTip,
   t,
   type Ide,
 } from '@ide/api/client';
+import { tips } from '@ide/ui';
 import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarWidget } from './schema.js';
 import { STYLE } from './style.js';
 
@@ -45,11 +44,11 @@ export default class Toolbar {
         key={entry.id}
         class={`tool ${active ? 'is-active' : ''}`}
         onMouseEnter={(event) =>
-          showTip(event.currentTarget as Element, t(entry.title), keysFor(entry.command))
+          tips.show(event.currentTarget as Element, t(entry.title), keysFor(entry.command))
         }
-        onMouseLeave={hideTip}
+        onMouseLeave={() => tips.hide()}
         onClick={() => {
-          hideTip();
+          tips.hide();
           runCommand(entry.command);
         }}
       >

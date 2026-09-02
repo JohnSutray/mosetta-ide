@@ -1,10 +1,21 @@
 import { rpc } from './state/session.js';
 import { render } from 'preact';
+import { installUi } from '@ide/ui';
 import { App } from './ui/app.js';
+import { i18n } from './i18n/index.js';
+import { keyRules } from './keys/dispatcher.js';
+import { keep, recall } from './state/persist.js';
 import './styles.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('нет #root');
+
+installUi({
+  t: (key, params) => i18n.t(key, params),
+  catchesKeys: (context) => context !== undefined && keyRules.catchesKeys(context),
+  keep: (key, value) => keep(key, value),
+  recall: (key, fallback) => recall(key, fallback),
+});
 
 rpc.connect();
 render(<App />, root);

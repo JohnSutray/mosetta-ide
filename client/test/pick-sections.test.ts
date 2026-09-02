@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { grouped, matches, type PickItem } from '../src/ui/pick-popup.js';
+import { grouped, matches, type PickItem } from '@ide/ui';
 
 function row(id: string): { item: PickItem<string>; matches: number[] } {
   return { item: { key: id, text: id, value: id }, matches: [] };

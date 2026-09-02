@@ -1,4 +1,3 @@
-import type { ComponentChildren, JSX } from 'preact';
 import type { Signal } from '@preact/signals';
 import type { Diagnostic, DocState, HoverInfo, Settings } from '@ide/protocol';
 
@@ -6,36 +5,6 @@ export interface Size {
   w: number;
   h: number;
 }
-
-export interface PickItem<T> {
-  key: string;
-  text: string;
-  value: T;
-}
-
-export interface PickProps<T> {
-  id: string;
-  title: string;
-  meta?: ComponentChildren;
-  items: Array<PickItem<T>>;
-  placeholder: string;
-  empty: string;
-  size: Size;
-  min: Size;
-  onClose: () => void;
-  onPick: (value: T) => void;
-  row: (value: T, matches: number[], picked: boolean) => JSX.Element;
-  section?: (value: T) => string;
-  footer?: ComponentChildren;
-  extra?: ComponentChildren;
-  onMouseDown?: (event: MouseEvent) => void;
-}
-
-export declare function unstable_PickPopup<T>(props: PickProps<T>): JSX.Element;
-
-export declare function unstable_highlight(text: string, matches: number[]): ComponentChildren;
-
-export declare function unstable_shiftMatches(matches: number[], from: number, length: number): number[];
 
 export declare function t(key: string, params?: Record<string, string | number>): string;
 
@@ -50,9 +19,6 @@ export declare function goTo(path: string, line: number, character?: number): Pr
 
 export declare function runCommand(id: string): boolean;
 
-export declare function unstable_showTip(near: Element, text: string, keys?: string[]): void;
-export declare function unstable_hideTip(): void;
-
 export declare function keysFor(command: string): string[];
 
 export interface ResizerProps {
@@ -62,9 +28,6 @@ export interface ResizerProps {
   limits: () => { min: number; max: number };
   defaultWidth: number;
 }
-export declare function unstable_Resizer(props: ResizerProps): JSX.Element;
-
-export declare function unstable_widthOf(id: string, fallback: number): number;
 
 export declare const settings: { readonly value: Settings | null };
 
@@ -183,19 +146,12 @@ export declare function unstable_languageFor(path: string): unknown;
 export declare const unstable_inputKeymap: readonly unknown[];
 
 export interface ClientSurface {
-  unstable_PickPopup: typeof unstable_PickPopup;
-  unstable_highlight: typeof unstable_highlight;
-  unstable_shiftMatches: typeof unstable_shiftMatches;
   t: typeof t;
   problems: typeof problems;
   goTo: typeof goTo;
   runCommand: typeof runCommand;
-  unstable_showTip: typeof unstable_showTip;
-  unstable_hideTip: typeof unstable_hideTip;
   keysFor: typeof keysFor;
   settings: typeof settings;
-  unstable_Resizer: typeof unstable_Resizer;
-  unstable_widthOf: typeof unstable_widthOf;
   openDoc: typeof openDoc;
   editDoc: typeof editDoc;
   closeFile: typeof closeFile;

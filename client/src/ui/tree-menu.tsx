@@ -1,6 +1,6 @@
 import { treeMenu } from '../state/tree-menu.js';
 import { tree, treeOps } from '../state/tree-ops.js';
-import { Menu, type MenuItem } from './menu.js';
+import { Menu, type MenuItem } from '@ide/ui';
 
 export function TreeMenu() {
   const menu = treeMenu.open.value;

@@ -1,10 +1,9 @@
-import { geometry, type Size } from '../state/layout.js';
-import { popups } from '../state/popups.js';
+import { geometry, type Size } from './geometry.js';
+import { popups } from './popups.js';
 import type { ComponentChildren } from 'preact';
 import type { KeyContext } from '@ide/protocol';
 import { useEffect, useRef } from 'preact/hooks';
-import { keyRules } from '../keys/dispatcher.js';
-import { i18n } from '../i18n/index.js';
+import { host } from './host.js';
 
 export function Popup({
   id,
@@ -76,12 +75,12 @@ export function Popup({
         }}
       >
         <span class="popup-exit">
-          {!keyRules.catchesKeys(keys) && (
-            <span class="popup-esc" title={i18n.t('popup.escape')}>
-              {i18n.t('popup.esc')}
+          {!host.catchesKeys(keys) && (
+            <span class="popup-esc" title={host.t('popup.escape')}>
+              {host.t('popup.esc')}
             </span>
           )}
-          <span class="popup-close" title={i18n.t('popup.close')} onClick={onClose}>
+          <span class="popup-close" title={host.t('popup.close')} onClick={onClose}>
             ×
           </span>
         </span>
@@ -91,7 +90,7 @@ export function Popup({
         {!full && (
         <span
           class="popup-grip"
-          title={i18n.t('popup.resize')}
+          title={host.t('popup.resize')}
           onPointerDown={(event) => {
             event.preventDefault();
             const rect = box.current?.getBoundingClientRect();

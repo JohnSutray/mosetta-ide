@@ -3,6 +3,29 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 
+const UI_NAMES = [
+  'installUi',
+  'Popup',
+  'PickPopup',
+  'grouped',
+  'matches',
+  'Menu',
+  'activeMenu',
+  'Resizer',
+  'Tip',
+  'tips',
+  'popups',
+  'activePick',
+  'geometry',
+  'fuzzy',
+  'Icon',
+  'FileIcon',
+  'DirIcon',
+  'RootIcon',
+  'Chevron',
+  'fileTypes',
+];
+
 const SHARED: Record<string, { from: string; names: string[] }> = {
   preact: { from: 'preact', names: ['h', 'Fragment', 'createElement', 'render', 'cloneElement'] },
   'preact/hooks': {
@@ -13,22 +36,16 @@ const SHARED: Record<string, { from: string; names: string[] }> = {
     from: 'signals',
     names: ['signal', 'computed', 'effect', 'batch', 'useSignal'],
   },
+  '@ide/ui': { from: 'ui', names: UI_NAMES },
   '@ide/api/client': {
     from: 'api',
     names: [
-      'unstable_PickPopup',
-      'unstable_highlight',
-      'unstable_shiftMatches',
       't',
       'problems',
       'goTo',
       'runCommand',
-      'unstable_showTip',
-      'unstable_hideTip',
       'keysFor',
       'settings',
-      'unstable_Resizer',
-      'unstable_widthOf',
       'openDoc',
       'editDoc',
       'closeFile',

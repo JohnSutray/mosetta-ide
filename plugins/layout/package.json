@@ -6,13 +6,16 @@
   "scripts": {
     "test": "vitest run"
   },
-  "exports": { ".": "./src/client.tsx" },
+  "exports": {
+    ".": "./src/client.tsx"
+  },
   "ide": {
     "client": "src/client.tsx",
     "strings": "src/en.json"
   },
   "dependencies": {
-    "@ide/api": "workspace:*"
+    "@ide/api": "workspace:*",
+    "@ide/ui": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3"

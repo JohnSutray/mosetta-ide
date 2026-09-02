@@ -9,8 +9,8 @@ import type {
   PushPreview,
 } from '@ide/protocol';
 import { complain, notify, settle } from './notifications.js';
-import { fuzzy, type FuzzyHit } from '../ui/fuzzy.js';
 import { i18n } from '../i18n/index.js';
+import { fuzzy, type FuzzyHit } from '@ide/ui';
 
 const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {} };
 

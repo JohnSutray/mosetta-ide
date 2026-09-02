@@ -5,7 +5,7 @@ import { Fragment } from 'preact';
 import type { KeyBinding, KeyContext, KeyScope } from '@ide/protocol';
 import { keyHost } from '../keys/host.js';
 import { i18n } from '../i18n/index.js';
-import { Popup } from './popup.js';
+import { Popup } from '@ide/ui';
 
 export function KeysHelp() {
   if (!keysHelp.open.value) return null;

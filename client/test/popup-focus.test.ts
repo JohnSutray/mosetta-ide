@@ -1,5 +1,5 @@
-import { popups } from '../src/state/popups.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { popups } from '@ide/ui';
 
 interface FakeEl {
   isConnected: boolean;

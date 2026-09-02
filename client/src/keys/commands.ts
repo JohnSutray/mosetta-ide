@@ -1,5 +1,5 @@
-import { popups } from '../state/popups.js';
 import { COMMAND_IDS, COMMANDS, type CommandId } from '@ide/protocol';
+import { popups } from '@ide/ui';
 
 type Runner = () => void | Promise<void>;
 
