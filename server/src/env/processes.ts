@@ -1,10 +1,11 @@
 import { spawn, type ChildProcess, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { exec } from './exec.js';
+import { shellEnv } from './shell-env.js';
 import { journal } from '../log.js';
 
 const log = journal.logger('proc');
 
-export type Wish = 'no-prompts' | 'machine-readable';
+export type Wish = 'no-prompts' | 'machine-readable' | 'user-shell';
 
 function noPrompts(): Record<string, string> {
   return {
@@ -18,6 +19,10 @@ function noPrompts(): Record<string, string> {
 
 function machineReadable(): Record<string, string> {
   return { LC_ALL: 'C', LANG: 'C' };
+}
+
+export interface UserEnv {
+  readonly current: Record<string, string> | null;
 }
 
 export interface RunSpec {
@@ -69,6 +74,8 @@ const TAIL = 2000;
 export class Processes {
   private readonly live = new Map<number, Entry>();
   private next = 1;
+
+  constructor(private readonly userEnv: UserEnv = shellEnv) {}
 
   run(spec: RunSpec): Promise<Ran> {
     return this.collect(spec, null);
@@ -137,7 +144,9 @@ export class Processes {
   private envFor(spec: RunSpec): NodeJS.ProcessEnv {
     const env: NodeJS.ProcessEnv = { ...process.env };
     for (const wish of spec.wants ?? []) {
-      Object.assign(env, wish === 'no-prompts' ? noPrompts() : machineReadable());
+      if (wish === 'no-prompts') Object.assign(env, noPrompts());
+      else if (wish === 'machine-readable') Object.assign(env, machineReadable());
+      else Object.assign(env, this.userEnv.current ?? {});
     }
     return { ...env, ...spec.env };
   }

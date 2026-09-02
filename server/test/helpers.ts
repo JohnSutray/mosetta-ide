@@ -27,7 +27,15 @@ export async function withServer(
   finds: FindProvider[] = [],
 ): Promise<RunningServer> {
   const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-state-'));
-  return boot.start({ port: 0, idleMs, configDir, stateDir, watchConfig: false, finds });
+  return boot.start({
+    port: 0,
+    idleMs,
+    configDir,
+    stateDir,
+    watchConfig: false,
+    shellEnv: false,
+    finds,
+  });
 }
 
 export async function connect(server: RunningServer): Promise<TestClient> {

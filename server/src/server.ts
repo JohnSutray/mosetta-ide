@@ -7,6 +7,9 @@ import { WebSocketServer } from 'ws';
 import { DEFAULT_PORT, WS_PATH } from '@ide/protocol';
 import { ConfigStore } from './config/store.js';
 import { recent } from './env/recent.js';
+import { shells } from './env/shell.js';
+import { shellEnv } from './env/shell-env.js';
+import { processes } from './env/processes.js';
 import { journal } from './log.js';
 import { Session } from './rpc/session.js';
 import { WorkspaceRegistry } from './workspace/registry.js';
@@ -20,6 +23,7 @@ export interface ServerOptions {
   configDir?: string;
   stateDir?: string;
   watchConfig?: boolean;
+  shellEnv?: boolean;
   finds?: FindProvider[];
 }
 
@@ -48,6 +52,20 @@ export class Boot {
     const stateDir = options.stateDir ?? recent.defaultStateDir;
     const config = await ConfigStore.load(options.configDir);
     if (options.watchConfig ?? true) config.watch();
+
+    if (options.shellEnv ?? true) {
+      const harvest = () =>
+        void shellEnv.prime(
+          (spec) => processes.run(spec),
+          shells.loginShell(config.settings.terminal),
+          shells.homeDirectory(),
+        );
+      harvest();
+      config.onChange(() => {
+        shellEnv.forget();
+        harvest();
+      });
+    }
     const plugins = new PluginHost(log, path.join(stateDir, 'plugins-build'));
     await plugins.load(config.settings.plugins.enabled, fileURLToPath(new URL('..', import.meta.url)));
 

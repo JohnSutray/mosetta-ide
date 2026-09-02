@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { PackageManagerInfo } from '@ide/protocol';
+import { shellEnv } from './shell-env.js';
 
 const KNOWN = ['pnpm', 'yarn', 'npm', 'bun'] as const;
 
@@ -73,7 +74,8 @@ export class Tools {
   }
 
   onPath(name: string): string | null {
-    const dirs = (process.env.PATH ?? '').split(path.delimiter).filter((dir) => dir !== '');
+    const search = shellEnv.path ?? process.env.PATH ?? '';
+    const dirs = search.split(path.delimiter).filter((dir) => dir !== '');
     for (const dir of dirs) {
       for (const suffix of suffixesFor(name)) {
         const full = path.join(dir, name + suffix);

@@ -68,6 +68,7 @@ export class LspServer {
       cwd: this.root,
       owner: this.root,
       reason: `${this.name} для ${path.basename(this.root)}`,
+      wants: ['user-shell'],
     });
     this.process = handle;
     const child = handle.child;
