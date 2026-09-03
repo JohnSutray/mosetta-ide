@@ -43,12 +43,6 @@ export const COMMANDS = {
 
   'popup.close': 'Закрыть верхний попап',
 
-  'search.everywhere': 'Найти всё',
-  'search.next': 'Поиск: вниз',
-  'search.prev': 'Поиск: вверх',
-  'search.accept': 'Поиск: открыть',
-  'search.close': 'Поиск: закрыть',
-
   'keys.show': 'Все клавиши',
 
   'key.reserved': 'Занято: пока ничего не делает',

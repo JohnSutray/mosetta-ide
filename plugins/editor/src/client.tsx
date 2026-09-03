@@ -19,7 +19,6 @@ import {
 import { effect, signal, type Signal } from '@preact/signals';
 import {
   activate,
-  unstable_askSymbol as askSymbol,
   closeFile,
   dirty,
   editDoc,
@@ -42,10 +41,18 @@ import { STYLE } from './style.js';
 import { EditorIcon } from './icon.js';
 import { CodeEditor } from './view.js';
 
+export interface SymbolSpot {
+  line: number;
+  character: number;
+  text: string;
+  box: { x: number; y: number };
+}
+
 @registry({ key: 'editor.empty', schema: EMPTY_SCHEMA })
 export default class Editor {
   private readonly head = signal<{ path: string; text: string | null } | null>(null);
   private hunkHandler: ((hunk: Hunk, box: HunkBox) => void) | null = null;
+  private symbolHandler: ((spot: SymbolSpot) => void) | null = null;
 
   private view: EditorView | null = null;
   private open: Signal<boolean> | null = null;
@@ -116,19 +123,23 @@ export default class Editor {
     this.ide.command('symbol.goto', () => {
       const view = this.view;
       if (!view) return;
-      void this.ask(view, view.state.selection.main.head);
+      this.ask(view, view.state.selection.main.head);
     });
   }
 
-  private ask(view: EditorView, at: number): Promise<void> {
+  private ask(view: EditorView, at: number): void {
     const line = view.state.doc.lineAt(at);
     const coords = view.coordsAtPos(at);
-    return askSymbol({
+    this.symbolHandler?.({
       line: line.number - 1,
       character: at - line.from,
       text: line.text,
       box: { x: coords?.left ?? 0, y: coords?.bottom ?? 0 },
     });
+  }
+
+  onSymbolAsk(handler: ((spot: SymbolSpot) => void) | null): void {
+    this.symbolHandler = handler;
   }
 
   private badges() {
@@ -160,7 +171,7 @@ export default class Editor {
         onEdit={editDoc}
         onCaret={(line, character) => visit(file.path, line, character)}
         onModClick={(pos) => {
-          if (this.view) void this.ask(this.view, pos);
+          if (this.view) this.ask(this.view, pos);
         }}
         onHover={hover}
         onMount={(view) => (this.view = view)}

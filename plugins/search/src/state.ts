@@ -1,7 +1,6 @@
-import { doc, rpc } from './session.js';
+import { goTo, openerFor, peekFile, searchIndex } from '@ide/api/client';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
 import type { IndexHit, IndexKind } from '@ide/protocol';
-import { plugins } from './plugins.js';
 
 export class Search {
   readonly open = signal(false);
@@ -53,6 +52,11 @@ export class Search {
     });
   }
 
+  toggle(): void {
+    if (this.open.value) this.close();
+    else this.show();
+  }
+
   setQuery(value: string): void {
     this.query.value = value;
     void this.run(value);
@@ -75,15 +79,13 @@ export class Search {
     if (!hit) return;
     this.close();
 
-    const opener = plugins.opener(hit.kind);
+    const opener = openerFor(hit.kind);
     if (opener) {
       opener(hit);
       return;
     }
 
-    void doc.openAt(hit.path).then(() => {
-      if (hit.line !== undefined) doc.reveal(hit.path, hit.line);
-    });
+    void goTo(hit.path, hit.line ?? 0);
   }
 
   private async run(value: string): Promise<void> {
@@ -97,7 +99,7 @@ export class Search {
       return;
     }
     try {
-      const hits = await rpc.call('index.search', { query: value, limit: this.limit });
+      const hits = await searchIndex(value, this.limit);
       if (token !== this.token) return;
       batch(() => {
         this.hits.value = this.groupByKind(hits);
@@ -129,8 +131,7 @@ export class Search {
     this.timer = setTimeout(() => {
       this.timer = null;
       const token = this.token;
-      void rpc
-        .call('doc.state', { path: hit.path })
+      void peekFile(hit.path)
         .then((state) => {
           if (token !== this.token || !this.open.value) return;
           this.preview.value = { path: state.path, text: state.text, line: hit.line ?? 0 };
@@ -139,5 +140,3 @@ export class Search {
     }, this.previewDelay);
   }
 }
-
-export const search = new Search();

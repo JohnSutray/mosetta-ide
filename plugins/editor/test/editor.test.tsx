@@ -154,9 +154,11 @@ describe('редактор', () => {
   });
 
   it('без живого редактора правки молчат, а не падают', () => {
+    const asked: unknown[] = [];
+    host.plugin(Editor).onSymbolAsk((spot) => asked.push(spot));
     expect(host.run('edit.undo')).toBe(true);
     expect(host.run('symbol.goto')).toBe(true);
-    expect(host.surface.symbols).toEqual([]);
+    expect(asked).toEqual([]);
   });
 
   it('без настроек не рисует ничего: шрифт и табы приезжают с сервера', () => {

@@ -1,10 +1,8 @@
-import { symbols } from '../state/symbols.js';
-import { config } from '../state/config.js';
+import { settings, t } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import { codePainter } from '@ide/code';
-import { CodeView } from '@ide/code';
-import { i18n } from '../i18n/index.js';
+import { CodeView, codePainter } from '@ide/code';
 import { Popup, Resizer, geometry } from '@ide/ui';
+import type { Symbols } from './state.js';
 
 const SIZE = { w: 620, h: 420 };
 const MIN = { w: 320, h: 220 };
@@ -14,8 +12,9 @@ const LIST_DEFAULT = 150;
 const LIST_MIN = 60;
 const PREVIEW_MIN = 120;
 
-export function Symbols() {
+export function SymbolsPopup({ symbols }: { symbols: Symbols }) {
   const list = symbols.list.value;
+  const editor = settings.value?.editor;
   const preview = symbols.preview.value;
   const body = useRef<HTMLDivElement>(null);
 
@@ -30,7 +29,7 @@ export function Symbols() {
     });
   }, [list?.at, list?.sites.length, symbols.hideImports.value]);
 
-  if (!list) return null;
+  if (!list || !editor) return null;
   const sites = symbols.shown(list);
   const passed = symbols.filtered(list);
   const hidden = list.sites.length - passed.length;
@@ -50,17 +49,17 @@ export function Symbols() {
     >
       <div class="symbols-head">
         <span class="symbols-title">
-          {i18n.t(list.kind === 'usages' ? 'symbols.usages' : 'symbols.definition', {
+          {t(list.kind === 'usages' ? 'symbols.usages' : 'symbols.definition', {
             word: list.word || '?',
           })}
         </span>
         <span class="symbols-count">{passed.length}</span>
         <span
           class={`symbols-filter ${symbols.hideImports.value ? 'is-on' : ''}`}
-          title={i18n.t('symbols.imports.hint')}
+          title={t('symbols.imports.hint')}
           onClick={() => symbols.toggleImports()}
         >
-          {i18n.t('symbols.imports', { count: hidden })}
+          {t('symbols.imports', { count: hidden })}
         </span>
       </div>
 
@@ -95,7 +94,7 @@ export function Symbols() {
             </span>
           </div>
         ))}
-        {cut > 0 && <div class="symbols-more">{i18n.t('symbols.more', { count: cut })}</div>}
+        {cut > 0 && <div class="symbols-more">{t('symbols.more', { count: cut })}</div>}
       </div>
 
       <Resizer id={LIST_ID} side="left" axis="y" limits={limits} defaultWidth={LIST_DEFAULT} />
@@ -107,7 +106,7 @@ export function Symbols() {
             path={preview.path}
             text={preview.text}
             line={preview.line}
-            settings={config.editor()}
+            settings={editor}
           />
         ) : null}
       </div>

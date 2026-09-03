@@ -1,0 +1,7 @@
+{
+  "symbols.definition": "Declarations of {word}",
+  "symbols.usages": "Usages of {word}",
+  "symbols.imports": "imports ({count})",
+  "symbols.more": "{count} more — narrow the search",
+  "symbols.imports.hint": "Hide lines that only import the symbol"
+}

@@ -1,7 +1,6 @@
 import type { JSX } from 'preact';
 
 export type IconName =
-  | 'search'
   | 'editor'
   | 'terminal'
   | 'projects'
@@ -30,13 +29,6 @@ export function Icon({ name, filled }: Props): JSX.Element {
   };
 
   switch (name) {
-    case 'search':
-      return (
-        <svg {...common}>
-          <circle cx="6.9" cy="6.9" r="4.1" fill={filled ? 'currentColor' : 'none'} />
-          <path d="M10 10l3.4 3.4" />
-        </svg>
-      );
     case 'editor':
       return (
         <svg {...common}>

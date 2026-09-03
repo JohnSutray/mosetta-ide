@@ -1,8 +1,9 @@
-import { doc, rpc } from './session.js';
-import { complain } from './notifications.js';
-import { batch, signal } from '@preact/signals';
-import { persisted } from './persist.js';
+import { definition, goTo, openDoc, peekFile, references } from '@ide/api/client';
+import type { Ide } from '@ide/api/client';
+import { batch, signal, type Signal } from '@preact/signals';
 import type { SymbolSite } from '@ide/protocol';
+import type { SymbolSpot } from '@ide/plugin-editor';
+import { activePick } from '@ide/ui';
 
 export type SymbolKind = 'definition' | 'usages';
 
@@ -21,7 +22,11 @@ export class Symbols {
   readonly list = signal<SymbolList | null>(null);
   readonly preview = signal<{ path: string; text: string; line: number } | null>(null);
 
-  readonly hideImports = persisted('symbols.imports', true);
+  readonly hideImports: Signal<boolean>;
+
+  constructor(private readonly ide: Ide) {
+    this.hideImports = ide.remember('symbols.imports', true);
+  }
 
   toggleImports(): void {
     this.hideImports.value = !this.hideImports.value;
@@ -33,7 +38,14 @@ export class Symbols {
       this.list.value = null;
       this.preview.value = null;
     });
+    if (activePick.value === this.pick) activePick.value = null;
   }
+
+  private readonly pick = {
+    next: () => this.step(1),
+    prev: () => this.step(-1),
+    accept: () => this.accept(),
+  };
 
   filtered(list: SymbolList): SymbolSite[] {
     if (!this.hideImports.value) return list.sites;
@@ -45,23 +57,23 @@ export class Symbols {
     return this.filtered(list).slice(0, this.maxSites);
   }
 
-  async ask(where: SymbolAsk): Promise<void> {
-    const file = doc.open.peek();
+  async ask(where: SymbolSpot): Promise<void> {
+    const file = openDoc.value;
     if (!file) return;
 
     const spot = { path: file.path, line: where.line, character: where.character };
     const word = this.wordAt(where.text, where.character);
     const box = where.box;
 
-    let definition: SymbolSite[] = [];
+    let declared: SymbolSite[] = [];
     try {
-      definition = await rpc.call('lsp.definition', spot);
+      declared = await definition(spot.path, spot.line, spot.character);
     } catch (err) {
-      complain(err instanceof Error ? err.message : String(err));
+      this.ide.complain(err instanceof Error ? err.message : String(err));
       return;
     }
 
-    const elsewhere = definition.filter((site) => !this.samePlace(site, spot));
+    const elsewhere = declared.filter((site) => !this.samePlace(site, spot));
     if (elsewhere.length === 1) {
       this.jumpTo(elsewhere[0]!);
       return;
@@ -72,15 +84,15 @@ export class Symbols {
     }
 
     try {
-      const sites = await rpc.call('lsp.references', spot);
+      const sites = await references(spot.path, spot.line, spot.character);
       const others = sites.filter((site) => !this.samePlace(site, spot));
       if (others.length === 0) {
-        complain(`${word || 'symbol'}: no usages`);
+        this.ide.complain(`${word || 'symbol'}: no usages`);
         return;
       }
       this.show({ kind: 'usages', word, sites: others, ...box });
     } catch (err) {
-      complain(err instanceof Error ? err.message : String(err));
+      this.ide.complain(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -95,11 +107,10 @@ export class Symbols {
       this.preview.value = null;
       return;
     }
-    void rpc
-      .call('doc.state', { path: site.path })
-      .then((doc) => {
+    void peekFile(site.path)
+      .then((file) => {
         if (this.list.peek() === null) return;
-        this.preview.value = { path: site.path, text: doc.text, line: site.line };
+        this.preview.value = { path: site.path, text: file.text, line: site.line };
       })
       .catch(() => (this.preview.value = null));
   }
@@ -121,12 +132,13 @@ export class Symbols {
 
   private show(list: Omit<SymbolList, 'at'>): void {
     this.list.value = { ...list, at: 0 };
+    activePick.value = this.pick;
     this.select(0);
   }
 
   private jumpTo(site: SymbolSite): void {
     this.close();
-    void doc.openAt(site.path).then(() => doc.reveal(site.path, site.line, site.character));
+    void goTo(site.path, site.line, site.character);
   }
 
   private samePlace(site: SymbolSite, spot: { path: string; line: number }): boolean {
@@ -139,12 +151,3 @@ export class Symbols {
     return left + right;
   }
 }
-
-export interface SymbolAsk {
-  line: number;
-  character: number;
-  text: string;
-  box: { x: number; y: number };
-}
-
-export const symbols = new Symbols();

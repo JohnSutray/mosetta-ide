@@ -1,12 +1,11 @@
-import { config } from '../state/config.js';
-import { search } from '../state/search.js';
+import { settings, t } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import { CodeView } from '@ide/code';
-import { i18n } from '../i18n/index.js';
 import type { IndexHit } from '@ide/protocol';
 import { Popup } from '@ide/ui';
+import type { Search } from './state.js';
 
-export function SearchEverywhere() {
+export function SearchEverywhere({ search }: { search: Search }) {
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
 
@@ -22,7 +21,8 @@ export function SearchEverywhere() {
       ?.scrollIntoView({ block: 'nearest' });
   }, [search.selected.value, search.hits.value]);
 
-  if (!search.open.value) return null;
+  const editor = settings.value?.editor;
+  if (!search.open.value || !editor) return null;
 
   const preview = search.preview.value;
 
@@ -42,7 +42,7 @@ export function SearchEverywhere() {
             class="se-input"
             value={search.query.value}
             spellcheck={false}
-            placeholder={i18n.t('search.placeholder')}
+            placeholder={t('search.placeholder')}
             onInput={(e) => search.setQuery((e.target as HTMLInputElement).value)}
           />
           <span class="se-count">{search.hits.value.length}</span>
@@ -53,7 +53,7 @@ export function SearchEverywhere() {
             {search.rows.value.map((row, i) =>
               'header' in row ? (
                 <div class="se-section" key={`h${i}`}>
-                  {i18n.t(row.header)}
+                  {t(row.header)}
                 </div>
               ) : (
                 <Row
@@ -66,7 +66,7 @@ export function SearchEverywhere() {
               ),
             )}
             {search.hits.value.length === 0 && search.query.value.trim() !== '' && (
-              <div class="se-empty">{i18n.t('search.empty')}</div>
+              <div class="se-empty">{t('search.empty')}</div>
             )}
           </div>
 
@@ -77,10 +77,10 @@ export function SearchEverywhere() {
                 path={preview.path}
                 text={preview.text}
                 line={preview.line}
-                settings={config.editor()}
+                settings={editor}
               />
             ) : (
-              <div class="se-empty">{i18n.t('search.preview')}</div>
+              <div class="se-empty">{t('search.preview')}</div>
             )}
           </div>
         </div>

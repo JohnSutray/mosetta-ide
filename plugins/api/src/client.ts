@@ -5,7 +5,10 @@ import type {
   DocState,
   EntryKind,
   HoverInfo,
+  IndexHit,
+  IndexKind,
   MergeSession,
+  SymbolSite,
   Settings,
   WorkspaceInfo,
 } from '@ide/protocol';
@@ -113,20 +116,20 @@ export interface HunkBox {
   bottom: number;
 }
 
-export interface SymbolAsk {
-  line: number;
-  character: number;
-  text: string;
-  box: { x: number; y: number };
-}
-
-export declare function unstable_askSymbol(where: SymbolAsk): Promise<void>;
-
 export declare function hover(
   path: string,
   line: number,
   character: number,
 ): Promise<HoverInfo | null>;
+
+export declare function definition(path: string, line: number, character: number): Promise<SymbolSite[]>;
+export declare function references(path: string, line: number, character: number): Promise<SymbolSite[]>;
+
+export declare function peekFile(path: string): Promise<{ path: string; text: string }>;
+
+export declare function searchIndex(query: string, limit?: number, kinds?: IndexKind[]): Promise<IndexHit[]>;
+
+export declare function openerFor(kind: string): ((found: Found) => void) | undefined;
 
 export declare function takeFocusOnMount(): boolean;
 
@@ -160,8 +163,12 @@ export interface ClientSurface {
   externalEpoch: typeof externalEpoch;
   pendingReveal: typeof pendingReveal;
   visit: typeof visit;
-  unstable_askSymbol: typeof unstable_askSymbol;
   hover: typeof hover;
+  definition: typeof definition;
+  references: typeof references;
+  peekFile: typeof peekFile;
+  searchIndex: typeof searchIndex;
+  openerFor: typeof openerFor;
   takeFocusOnMount: typeof takeFocusOnMount;
   wantsFocus: typeof wantsFocus;
   chordHeld: typeof chordHeld;

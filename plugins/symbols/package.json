@@ -1,0 +1,37 @@
+{
+  "name": "@ide/plugin-symbols",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "exports": {
+    ".": "./src/client.tsx"
+  },
+  "ide": {
+    "client": "src/client.tsx",
+    "strings": "src/en.json",
+    "commands": {},
+    "needs": [
+      "@ide/plugin-editor"
+    ]
+  },
+  "dependencies": {
+    "@ide/api": "workspace:*",
+    "@ide/code": "workspace:*",
+    "@ide/plugin-editor": "workspace:*",
+    "@ide/protocol": "workspace:*",
+    "@ide/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "preact": "^10.25.3",
+    "@preact/signals": "^1.3.1"
+  },
+  "devDependencies": {
+    "@preact/signals": "^1.3.1",
+    "preact": "^10.25.3",
+    "vitest": "^2.1.9",
+    "@types/node": "^22.10.5"
+  }
+}

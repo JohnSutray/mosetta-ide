@@ -5,7 +5,10 @@ import type {
   Diagnostic,
   DocState,
   HoverInfo,
+  IndexHit,
+  IndexKind,
   MergeSession,
+  SymbolSite,
   Settings,
   WorkspaceInfo,
 } from '@ide/protocol';
@@ -20,7 +23,6 @@ import type {
   Ide,
   PluginClass,
   Reveal,
-  SymbolAsk,
   RegistryHandle,
 } from './client.js';
 
@@ -54,11 +56,23 @@ export function closeFile(): Promise<void> {
 export function visit(path: string, line: number, character: number): void {
   surface().visit(path, line, character);
 }
-export function unstable_askSymbol(where: SymbolAsk): Promise<void> {
-  return surface().unstable_askSymbol(where);
-}
 export function hover(path: string, line: number, character: number): Promise<HoverInfo | null> {
   return surface().hover(path, line, character);
+}
+export function definition(path: string, line: number, character: number): Promise<SymbolSite[]> {
+  return surface().definition(path, line, character);
+}
+export function references(path: string, line: number, character: number): Promise<SymbolSite[]> {
+  return surface().references(path, line, character);
+}
+export function peekFile(path: string): Promise<{ path: string; text: string }> {
+  return surface().peekFile(path);
+}
+export function searchIndex(query: string, limit?: number, kinds?: IndexKind[]): Promise<IndexHit[]> {
+  return surface().searchIndex(query, limit, kinds);
+}
+export function openerFor(kind: string): ((found: Found) => void) | undefined {
+  return surface().openerFor(kind);
 }
 export function takeFocusOnMount(): boolean {
   return surface().takeFocusOnMount();
@@ -284,7 +298,12 @@ export class FakeSurface implements ClientSurface {
   readonly wantsFocus = signal(0);
   readonly edits: string[] = [];
   readonly visits: Array<{ path: string; line: number; character: number }> = [];
-  readonly symbols: SymbolAsk[] = [];
+  readonly definitions: SymbolSite[] = [];
+  readonly referencesFound: SymbolSite[] = [];
+  readonly texts = new Map<string, string>();
+  readonly hits: IndexHit[] = [];
+  readonly openers = new Map<string, (found: Found) => void>();
+  readonly searches: string[] = [];
   readonly hovers: Array<{ path: string; line: number; character: number }> = [];
   readonly heads = new Map<string, string>();
   readonly chords = new Set<string>();
@@ -325,13 +344,32 @@ export class FakeSurface implements ClientSurface {
     this.visits.push({ path, line, character });
   }
 
-  async unstable_askSymbol(where: SymbolAsk): Promise<void> {
-    this.symbols.push(where);
-  }
-
   async hover(path: string, line: number, character: number): Promise<HoverInfo | null> {
     this.hovers.push({ path, line, character });
     return null;
+  }
+
+  async definition(_path: string, _line: number, _character: number): Promise<SymbolSite[]> {
+    return this.definitions;
+  }
+
+  async references(_path: string, _line: number, _character: number): Promise<SymbolSite[]> {
+    return this.referencesFound;
+  }
+
+  async peekFile(path: string): Promise<{ path: string; text: string }> {
+    const text = this.texts.get(path);
+    if (text === undefined) throw new Error(`нет файла ${path}`);
+    return { path, text };
+  }
+
+  async searchIndex(query: string, _limit?: number, _kinds?: IndexKind[]): Promise<IndexHit[]> {
+    this.searches.push(query);
+    return this.hits;
+  }
+
+  openerFor(kind: string): ((found: Found) => void) | undefined {
+    return this.openers.get(kind);
   }
 
   takeFocusOnMount(): boolean {

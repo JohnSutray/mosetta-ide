@@ -112,9 +112,7 @@ describe('контракт @ide/api', () => {
   });
 
   it('взятое взаймы помечено, и список закрытый', () => {
-    const BORROWED = [
-      'askSymbol',
-    ].map((name) => `unstable_${name}`);
+    const BORROWED: string[] = [].map((name) => `unstable_${name}`);
 
     const members = surfaceMembers(source('client.ts'));
     const marked = members.filter((name) => name.startsWith('unstable_'));

@@ -6,6 +6,8 @@ export class Defaults {
       enabled: [
         '@ide/plugin-tree',
         '@ide/plugin-merge',
+        '@ide/plugin-symbols',
+        '@ide/plugin-search',
         '@ide/plugin-terminal',
         '@ide/plugin-git',
         '@ide/plugin-npm-scripts',

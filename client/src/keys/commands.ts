@@ -4,10 +4,8 @@ import { popups } from '@ide/ui';
 type Runner = () => void | Promise<void>;
 
 const OPENS: Partial<Record<CommandId, string>> = {
-  'search.everywhere': 'search',
   'projects.show': 'projects',
   'keys.show': 'keys',
-  'symbol.goto': 'symbols',
   'terminal.shell': 'tool-shell',
   'tools.packageManager': 'tool-manager',
 };

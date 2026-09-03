@@ -1,5 +1,4 @@
 import { keysHelp } from '../state/keys-help.js';
-import { search } from '../state/search.js';
 import { session } from '../state/session.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
@@ -30,13 +29,6 @@ export function registerToolbarWishes(store: Registry): void {
   const button = (wish: ButtonWish) => store.add('toolbar.button', wish, 'core');
   const widget = (wish: WidgetWish) => store.add('toolbar.widget', wish, 'core');
 
-  button({
-    id: 'search',
-    title: 'toolbar.search',
-    command: 'search.everywhere',
-    icon: ours('search'),
-    active: search.open,
-  });
   button({
     id: 'projects',
     title: 'toolbar.projects',

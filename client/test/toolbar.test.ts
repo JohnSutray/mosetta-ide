@@ -33,7 +33,6 @@ describe('тулбар', () => {
     expect(popups.sort()).toEqual([
       'keys',
       'projects',
-      'search',
     ]);
   });
 

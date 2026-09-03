@@ -3,7 +3,6 @@ import { commands } from '../keys/commands.js';
 import { keysHelp } from '../state/keys-help.js';
 import { editorFocus } from '../state/editor.js';
 import { keyHost } from '../keys/host.js';
-import { symbols } from '../state/symbols.js';
 import { config } from '../state/config.js';
 import { visits } from '../state/visits.js';
 import { complain } from '../state/notifications.js';
@@ -15,7 +14,6 @@ import { useEffect } from 'preact/hooks';
 import { chordHeld } from '../keys/chords.js';
 import { registerCommands } from '../commands.js';
 import { Dispatcher } from '../keys/dispatcher.js';
-import { SearchEverywhere } from './search-everywhere.js';
 import { Notifications } from './notifications.js';
 import { registerToolbarWishes } from './toolbar-wishes.js';
 import { Registry } from '../state/registry.js';
@@ -29,7 +27,6 @@ import { plugins } from '../state/plugins.js';
 import { goTo } from './go-to.js';
 import type { ClientSurface } from '@ide/api/client';
 import { ToolPicker } from './tool-picker.js';
-import { Symbols } from './symbols.js';
 
 const store = new Registry((message) => complain(message));
 
@@ -121,10 +118,17 @@ export function App() {
       pendingReveal: doc.pendingReveal,
       visit: (path, line, ch) => visits.visit(path, line, ch),
       hover: (path, line, character) => rpc.call('lsp.hover', { path, line, character }),
+      definition: (path, line, character) => rpc.call('lsp.definition', { path, line, character }),
+      references: (path, line, character) => rpc.call('lsp.references', { path, line, character }),
+      peekFile: async (path) => {
+        const state = await rpc.call('doc.state', { path });
+        return { path: state.path, text: state.text };
+      },
+      searchIndex: (query, limit, kinds) => rpc.call('index.search', { query, limit, kinds }),
+      openerFor: (kind) => plugins.opener(kind),
       takeFocusOnMount: () => editorFocus.takeOnMount(),
       wantsFocus: editorFocus.wanted,
       chordHeld,
-      unstable_askSymbol: (where) => symbols.ask(where),
     };
     void plugins.load(surface, store).then(() => {
       const dead = commands.missing();
@@ -175,12 +179,10 @@ export function App() {
       <Region name="chrome.top" />
       <Region name="chrome.main" fallback={<NoShell />} />
       <Projects />
-      <SearchEverywhere />
       <PluginSurfaces />
       <KeysHelp />
       <ToolPicker />
       <Notifications />
-      <Symbols />
       <Tip />
     </div>
   );

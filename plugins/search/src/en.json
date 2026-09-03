@@ -1,0 +1,13 @@
+{
+  "toolbar.search": "Search everywhere",
+  "command.search.everywhere": "Search everywhere",
+  "command.search.next": "Search: down",
+  "command.search.prev": "Search: up",
+  "command.search.accept": "Search: open",
+  "command.search.close": "Search: close",
+  "search.placeholder": "Files, ts::symbols, and what plugins index",
+  "search.empty": "Nothing found",
+  "search.preview": "Preview",
+  "search.kind.ts": "Symbols",
+  "search.kind.file": "Files"
+}

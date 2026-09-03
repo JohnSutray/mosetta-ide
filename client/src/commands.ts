@@ -1,8 +1,6 @@
 import { commands } from './keys/commands.js';
 import { keysHelp } from './state/keys-help.js';
-import { symbols } from './state/symbols.js';
 import { visits } from './state/visits.js';
-import { search } from './state/search.js';
 import { doc } from './state/session.js';
 import { projects } from './state/projects.js';
 import { tools } from './state/tools.js';
@@ -33,9 +31,9 @@ export function registerCommands(): void {
     else projects.hide();
   });
 
-  commands.register('pick.next', () => (symbols.list.value ? symbols.step(1) : activePick.value?.next()));
-  commands.register('pick.prev', () => (symbols.list.value ? symbols.step(-1) : activePick.value?.prev()));
-  commands.register('pick.accept', () => (symbols.list.value ? symbols.accept() : activePick.value?.accept()));
+  commands.register('pick.next', () => activePick.value?.next());
+  commands.register('pick.prev', () => activePick.value?.prev());
+  commands.register('pick.accept', () => activePick.value?.accept());
   commands.register('pick.expand', () => activePick.value?.expand?.());
 
   commands.register('menu.next', () => activeMenu.value?.next());
@@ -45,10 +43,4 @@ export function registerCommands(): void {
   commands.register('popup.close', () => {
     popups.closeTop();
   });
-
-  commands.register('search.everywhere', () => search.show());
-  commands.register('search.next', () => search.move(1));
-  commands.register('search.prev', () => search.move(-1));
-  commands.register('search.accept', () => search.accept());
-  commands.register('search.close', () => search.close());
 }
