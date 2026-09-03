@@ -8,7 +8,6 @@ import { config } from '../state/config.js';
 import { visits } from '../state/visits.js';
 import { complain } from '../state/notifications.js';
 import { doc, fileTree, lsp, rpc, session } from '../state/session.js';
-import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
 import type { JSX } from 'preact';
@@ -25,7 +24,6 @@ import { Projects } from './projects.js';
 import { i18n } from '../i18n/index.js';
 import { KeysHelp } from './keys-help.js';
 import { Tip } from '@ide/ui';
-import { MergeScreen } from './merge.js';
 import { PluginSurfaces } from './plugin-surfaces.js';
 import { plugins } from '../state/plugins.js';
 import { goTo } from './go-to.js';
@@ -74,6 +72,18 @@ export function App() {
       keysFor,
       settings: config.settings,
       project: session.attached,
+      merge: {
+        state: () => rpc.call('merge.state', null),
+        resolve: (path, text) => rpc.call('merge.resolve', { path, text }),
+        cancel: async () => {
+          await rpc.call('merge.cancel', null);
+        },
+        fromDisk: (path) => doc.mergeFromDisk(path),
+        onState: (handler) => rpc.on('merge.state', handler),
+        onRequested: (handler) => doc.onMergeRequested(handler),
+        expectExternal: (path) => doc.expectExternal(path),
+        forgetDiverged: (path) => doc.forgetDiverged(path),
+      },
       fileTree,
       fs: {
         create: (path, kind) => rpc.call('fs.create', { path, kind }),
@@ -152,12 +162,10 @@ export function App() {
   useEffect(() => {
     void tools.refresh();
     if (!ws) {
-      merge.reset();
       visits.forget();
       return;
     }
     void visits.load();
-    void merge.load();
   }, [ws?.id]);
 
   return (
@@ -169,7 +177,6 @@ export function App() {
       <Projects />
       <SearchEverywhere />
       <PluginSurfaces />
-      <MergeScreen />
       <KeysHelp />
       <ToolPicker />
       <Notifications />

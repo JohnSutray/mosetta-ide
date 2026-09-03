@@ -1,9 +1,8 @@
-import { doc, rpc } from './session.js';
-import { complain, say } from './notifications.js';
-import { diff3, type Region, type Choice, type SideChoice } from '../merge/diff3.js';
-import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
+import { merge as access, project, t } from '@ide/api/client';
+import type { Ide } from '@ide/api/client';
+import { diff3, type Region, type Choice, type SideChoice } from './diff3.js';
+import { batch, computed, effect, signal, type ReadonlySignal, type Signal } from '@preact/signals';
 import type { MergeFile, MergeSession } from '@ide/protocol';
-import { i18n } from '../i18n/index.js';
 
 export class Merge {
   readonly session = signal<MergeSession | null>(null);
@@ -79,10 +78,15 @@ export class Merge {
     ).length;
   });
 
-  constructor() {
-    doc.whenSaveConflicts((path) => this.openFor(path));
+  constructor(private readonly ide: Ide) {
+    access.onRequested((path) => this.openFor(path));
 
-    rpc.on('merge.state', (state) => {
+    effect(() => {
+      if (project.value) void this.load();
+      else this.reset();
+    });
+
+    access.onState((state) => {
       const had = this.session.value !== null;
       this.session.value = state;
       if (!state) {
@@ -97,7 +101,7 @@ export class Merge {
         if (this.focusOn(path)) this.promised.delete(path);
       }
 
-      if (!had) say(i18n.t('merge.appeared', { count: String(state.files.length) }));
+      if (!had) this.ide.say(t('merge.appeared', { count: String(state.files.length) }));
     });
   }
 
@@ -110,25 +114,9 @@ export class Merge {
     this.promised.add(path);
   }
 
-  async fromDisk(path: string): Promise<void> {
-    try {
-      const session = await rpc.call('doc.mergeFromDisk', { path });
-      batch(() => {
-        this.session.value = session;
-        if (session) {
-          this.path.value = path;
-          this.cursorRaw.value = null;
-          this.open.value = true;
-        }
-      });
-    } catch (err) {
-      complain(describeMerge(err));
-    }
-  }
-
   show(): void {
     if (!this.session.value) {
-      say(i18n.t('merge.none'));
+      this.ide.say(t('merge.none'));
       return;
     }
     this.open.value = true;
@@ -206,10 +194,10 @@ export class Merge {
     const file = this.file.value;
     if (!file) return;
     const payload = text === undefined ? this.result.value : text;
-    doc.expectExternal(file.path);
+    access.expectExternal(file.path);
     try {
-      const rest = await rpc.call('merge.resolve', { path: file.path, text: payload });
-      doc.forgetDiverged(file.path);
+      const rest = await access.resolve(file.path, payload);
+      access.forgetDiverged(file.path);
       batch(() => {
         this.session.value = rest;
         this.decisions.value = without(this.decisions.value, file.path);
@@ -217,17 +205,17 @@ export class Merge {
         this.path.value = rest?.files.find((item) => !item.done)?.path ?? null;
         if (!rest) this.open.value = false;
       });
-      if (!rest) say(i18n.t('merge.done'));
+      if (!rest) this.ide.say(t('merge.done'));
     } catch (err) {
-      complain(describeMerge(err));
+      this.ide.complain(describeMerge(err));
     }
   }
 
   async cancel(): Promise<void> {
     try {
-      await rpc.call('merge.cancel', null);
+      await access.cancel();
     } catch (err) {
-      complain(describeMerge(err));
+      this.ide.complain(describeMerge(err));
       return;
     }
     batch(() => {
@@ -239,7 +227,7 @@ export class Merge {
 
   async load(): Promise<void> {
     try {
-      this.session.value = await rpc.call('merge.state', null);
+      this.session.value = await access.state();
     } catch {
       this.session.value = null;
     }
@@ -291,5 +279,3 @@ function describeMerge(err: unknown): string {
   if (err && typeof err === 'object' && 'message' in err) return String(err.message);
   return String(err);
 }
-
-export const merge = new Merge();

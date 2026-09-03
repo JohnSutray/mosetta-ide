@@ -4,9 +4,9 @@ import { Decoration, EditorView, WidgetType, lineNumbers } from '@codemirror/vie
 import type { EditorSettings } from '@ide/protocol';
 import { darcula } from '@ide/code';
 import { languages } from '@ide/code';
-import type { Choice, Region } from '../merge/diff3.js';
-import { layout, type Lane, type LaneLayout } from '../merge/layout.js';
-import { i18n } from '../i18n/index.js';
+import type { Choice, Region } from './diff3.js';
+import { layout, type Lane, type LaneLayout } from './layout.js';
+import { t } from '@ide/api/client';
 
 interface Props {
   path: string;
@@ -114,7 +114,7 @@ export function MergeColumns(props: Props) {
         onDecide={props.onDecide}
         onPick={props.onPick}
       />
-      <Column label={i18n.t('merge.column.result')} host={hosts.center} side="center" />
+      <Column label={t('merge.column.result')} host={hosts.center} side="center" />
       <Rail
         side="right"
         grid={grid}
@@ -193,7 +193,7 @@ function Rail({
                 <button
                   type="button"
                   class={`merge-mark is-take ${taken ? 'is-on' : ''}`}
-                  title={i18n.t('merge.take')}
+                  title={t('merge.take')}
                   onClick={() => onDecide(spot.region, side, taken ? null : 'take')}
                 >
                   {arrow}
@@ -201,7 +201,7 @@ function Rail({
                 <button
                   type="button"
                   class={`merge-mark is-skip ${skipped ? 'is-on' : ''}`}
-                  title={i18n.t('merge.skip')}
+                  title={t('merge.skip')}
                   onClick={() => onDecide(spot.region, side, skipped ? null : 'skip')}
                 >
                   ×

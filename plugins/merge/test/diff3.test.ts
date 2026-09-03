@@ -1,4 +1,4 @@
-import { diff3, type Region } from '../src/merge/diff3.js';
+import { diff3, type Region } from '../src/diff3.js';
 import { describe, expect, it } from 'vitest';
 
 const lines = (...items: string[]) => `${items.join('\n')}\n`;

@@ -1,5 +1,14 @@
 import type { Signal } from '@preact/signals';
-import type { DirEntry, Diagnostic, DocState, EntryKind, HoverInfo, Settings, WorkspaceInfo } from '@ide/protocol';
+import type {
+  DirEntry,
+  Diagnostic,
+  DocState,
+  EntryKind,
+  HoverInfo,
+  MergeSession,
+  Settings,
+  WorkspaceInfo,
+} from '@ide/protocol';
 
 export interface Size {
   w: number;
@@ -61,6 +70,18 @@ export declare function openFile(path: string, options?: { focus?: boolean }): P
 export declare function flushDocs(): Promise<void>;
 export declare function setSetting(section: string, key: string, value: string | boolean): Promise<void>;
 export declare function primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean;
+
+export interface MergeAccess {
+  state(): Promise<MergeSession | null>;
+  resolve(path: string, text: string | null): Promise<MergeSession | null>;
+  cancel(): Promise<void>;
+  fromDisk(path: string): Promise<MergeSession | null>;
+  onState(handler: (state: MergeSession | null) => void): () => void;
+  onRequested(handler: (path: string) => void): () => void;
+  expectExternal(path: string): void;
+  forgetDiverged(path: string): void;
+}
+export declare const merge: MergeAccess;
 
 export declare const openDoc: { readonly value: DocState | null };
 
@@ -130,6 +151,7 @@ export interface ClientSurface {
   flushDocs: typeof flushDocs;
   setSetting: typeof setSetting;
   primaryHeld: typeof primaryHeld;
+  merge: typeof merge;
   openDoc: typeof openDoc;
   editDoc: typeof editDoc;
   closeFile: typeof closeFile;

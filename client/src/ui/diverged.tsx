@@ -1,6 +1,6 @@
 import { doc } from '../state/session.js';
-import { merge } from '../state/merge.js';
 import { i18n } from '../i18n/index.js';
+import { complain } from '../state/notifications.js';
 
 export function DivergedBadge() {
   const file = doc.open.value;
@@ -17,7 +17,7 @@ export function DivergedBadge() {
         type="button"
         class="diverged-button"
         title={i18n.t('diverged.merge.hint')}
-        onClick={() => void merge.fromDisk(file.path)}
+        onClick={() => void doc.mergeFromDisk(file.path).catch((err) => complain(String(err)))}
       >
         {why === 'removed' ? i18n.t('diverged.sort') : i18n.t('diverged.reload')}
       </button>

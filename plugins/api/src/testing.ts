@@ -1,11 +1,20 @@
 import Ajv, { type ValidateFunction } from 'ajv';
 import { signal, type Signal } from '@preact/signals';
-import type { DirEntry, Diagnostic, DocState, HoverInfo, Settings, WorkspaceInfo } from '@ide/protocol';
+import type {
+  DirEntry,
+  Diagnostic,
+  DocState,
+  HoverInfo,
+  MergeSession,
+  Settings,
+  WorkspaceInfo,
+} from '@ide/protocol';
 import { attach, hooksOf, registriesOf } from './client.js';
 import type {
   ClientSurface,
   FileTreeMemory,
   FsAccess,
+  MergeAccess,
   FileProblems,
   Found,
   Ide,
@@ -117,6 +126,16 @@ export function setSetting(section: string, key: string, value: string | boolean
 export function primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
   return surface().primaryHeld(event);
 }
+export const merge: MergeAccess = {
+  state: () => surface().merge.state(),
+  resolve: (path, text) => surface().merge.resolve(path, text),
+  cancel: () => surface().merge.cancel(),
+  fromDisk: (path) => surface().merge.fromDisk(path),
+  onState: (handler) => surface().merge.onState(handler),
+  onRequested: (handler) => surface().merge.onRequested(handler),
+  expectExternal: (path) => surface().merge.expectExternal(path),
+  forgetDiverged: (path) => surface().merge.forgetDiverged(path),
+};
 export const openDoc: { readonly value: DocState | null } = {
   get value() {
     return surface().openDoc.value;
@@ -218,6 +237,45 @@ export class FakeSurface implements ClientSurface {
   readonly flushes = { count: 0 };
   readonly settingWrites: Array<{ section: string; key: string; value: string | boolean }> = [];
   primary = false;
+  readonly mergeSession = { value: null as MergeSession | null };
+  readonly mergeCalls: Array<{ op: string; args: unknown[] }> = [];
+  private readonly mergeStateHandlers = new Set<(state: MergeSession | null) => void>();
+  private readonly mergeRequestHandlers = new Set<(path: string) => void>();
+  readonly merge: MergeAccess = {
+    state: async () => this.mergeSession.value,
+    resolve: async (path, text) => {
+      this.mergeCalls.push({ op: 'resolve', args: [path, text] });
+      return this.mergeSession.value;
+    },
+    cancel: async () => {
+      this.mergeCalls.push({ op: 'cancel', args: [] });
+    },
+    fromDisk: async (path) => {
+      this.mergeCalls.push({ op: 'fromDisk', args: [path] });
+      return this.mergeSession.value;
+    },
+    onState: (handler) => {
+      this.mergeStateHandlers.add(handler);
+      return () => this.mergeStateHandlers.delete(handler);
+    },
+    onRequested: (handler) => {
+      this.mergeRequestHandlers.add(handler);
+      return () => this.mergeRequestHandlers.delete(handler);
+    },
+    expectExternal: (path) => {
+      this.mergeCalls.push({ op: 'expectExternal', args: [path] });
+    },
+    forgetDiverged: (path) => {
+      this.mergeCalls.push({ op: 'forgetDiverged', args: [path] });
+    },
+  };
+  pushMergeState(state: MergeSession | null): void {
+    this.mergeSession.value = state;
+    for (const handler of this.mergeStateHandlers) handler(state);
+  }
+  requestMerge(path: string): void {
+    for (const handler of this.mergeRequestHandlers) handler(path);
+  }
   readonly dirty = signal(false);
   closed = 0;
   readonly fileDiagnostics: Signal<Diagnostic[]> = signal([]);

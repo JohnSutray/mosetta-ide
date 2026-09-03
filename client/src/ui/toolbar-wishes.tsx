@@ -1,10 +1,8 @@
 import { keysHelp } from '../state/keys-help.js';
 import { search } from '../state/search.js';
 import { session } from '../state/session.js';
-import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
-import { computed } from '@preact/signals';
 import { i18n } from '../i18n/index.js';
 import type { Registry } from '../state/registry.js';
 import { Icon, tips, type IconName } from '@ide/ui';
@@ -16,7 +14,6 @@ interface ButtonWish {
   icon: (filled: boolean) => unknown;
   active?: { readonly value: boolean };
   visible?: { readonly value: boolean };
-  badge?: { readonly value: number };
 }
 
 interface WidgetWish {
@@ -53,15 +50,6 @@ export function registerToolbarWishes(store: Registry): void {
     command: 'keys.show',
     icon: ours('keys'),
     active: keysHelp.open,
-  });
-  button({
-    id: 'merge',
-    title: 'toolbar.merge',
-    command: 'merge.show',
-    icon: ours('merge'),
-    active: merge.open,
-    visible: computed(() => merge.pending.value > 0),
-    badge: merge.pending,
   });
 
   widget({ id: 'tools', side: 'right', view: () => <Tools /> });

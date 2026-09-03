@@ -16,6 +16,7 @@
     "@ide/plugin-editor": "workspace:*",
     "@ide/plugin-git": "workspace:*",
     "@ide/plugin-layout": "workspace:*",
+    "@ide/plugin-merge": "workspace:*",
     "@ide/plugin-npm-scripts": "workspace:*",
     "@ide/plugin-problems": "workspace:*",
     "@ide/plugin-rerun": "workspace:*",

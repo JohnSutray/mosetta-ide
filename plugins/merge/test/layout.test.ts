@@ -1,6 +1,6 @@
-import { diff3 } from '../src/merge/diff3.js';
+import { diff3 } from '../src/diff3.js';
 import { describe, expect, it } from 'vitest';
-import { layout } from '../src/merge/layout.js';
+import { layout } from '../src/layout.js';
 
 const lines = (...items: string[]) => `${items.join('\n')}\n`;
 

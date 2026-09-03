@@ -1,5 +1,5 @@
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
-import type { Diagnostic, DocState } from '@ide/protocol';
+import type { Diagnostic, DocState, MergeSession } from '@ide/protocol';
 import { RpcErrorCode } from '@ide/protocol';
 import { RpcFailure, type RpcClient } from '../rpc/client.js';
 import { complain, say } from './notifications.js';
@@ -43,7 +43,7 @@ export class Doc {
 
   private readonly expected = new Set<string>();
 
-  private onConflict: ((path: string) => void) | null = null;
+  private readonly mergeRequests = new Set<(path: string) => void>();
 
   constructor(
     private readonly rpc: RpcClient,
@@ -115,8 +115,21 @@ export class Doc {
     this.edit(text);
   }
 
-  whenSaveConflicts(handler: (path: string) => void): void {
-    this.onConflict = handler;
+  onMergeRequested(handler: (path: string) => void): () => void {
+    this.mergeRequests.add(handler);
+    return () => {
+      this.mergeRequests.delete(handler);
+    };
+  }
+
+  private requestMerge(path: string): void {
+    for (const handler of this.mergeRequests) handler(path);
+  }
+
+  async mergeFromDisk(path: string): Promise<MergeSession | null> {
+    const session = await this.rpc.call('doc.mergeFromDisk', { path });
+    if (session) this.requestMerge(path);
+    return session;
   }
 
   async save(): Promise<void> {
@@ -133,7 +146,7 @@ export class Doc {
       });
     } catch (err) {
       if (err instanceof RpcFailure && err.code === RpcErrorCode.RevisionConflict) {
-        this.onConflict?.(file.path);
+        this.requestMerge(file.path);
         return;
       }
       complain(describe(err));

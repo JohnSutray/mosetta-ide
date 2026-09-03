@@ -32,7 +32,6 @@ describe('тулбар', () => {
       .map((e) => e.id);
     expect(popups.sort()).toEqual([
       'keys',
-      'merge',
       'projects',
       'search',
     ]);
@@ -70,11 +69,10 @@ describe('тулбар', () => {
     expect(empty, `пустые надписи: ${empty.join(', ')}`).toEqual([]);
   });
 
-  it('условная кнопка одна — разрешение конфликтов', () => {
+  it('условных кнопок у ядра не осталось', () => {
     const conditional = wishes().buttons.filter((entry) => entry.visible).map((entry) => entry.id);
-    expect(conditional).toEqual(['merge']);
+    expect(conditional).toEqual([]);
   });
-
   it('условной кнопки нет в порядке — иначе цифры поедут', () => {
     const order = toolbarOrder();
     const named = wishes().buttons.filter((entry) => entry.visible && order.includes(entry.command));

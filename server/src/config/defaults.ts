@@ -5,6 +5,7 @@ export class Defaults {
     plugins: {
       enabled: [
         '@ide/plugin-tree',
+        '@ide/plugin-merge',
         '@ide/plugin-terminal',
         '@ide/plugin-git',
         '@ide/plugin-npm-scripts',

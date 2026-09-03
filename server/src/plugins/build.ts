@@ -68,6 +68,7 @@ const SHARED: Record<string, { from: string; names: string[] }> = {
       'flushDocs',
       'setSetting',
       'primaryHeld',
+      'merge',
       'openDoc',
       'editDoc',
       'closeFile',

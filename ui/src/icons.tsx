@@ -9,8 +9,7 @@ export type IconName =
   | 'push'
   | 'fetch'
   | 'book'
-  | 'keys'
-  | 'merge';
+  | 'keys';
 
 interface Props {
   name: IconName;
@@ -92,15 +91,6 @@ export function Icon({ name, filled }: Props): JSX.Element {
           <circle cx="5" cy="12.6" r="1.5" fill={filled ? 'currentColor' : 'none'} />
           <circle cx="11.4" cy="5.2" r="1.5" fill={filled ? 'currentColor' : 'none'} />
           <path d="M11.4 6.7c0 2.4-2 3.2-4.4 3.6" />
-        </svg>
-      );
-    case 'merge':
-      return (
-        <svg {...common}>
-          <path d="M3.2 2.4v3.2c0 2.2 1.8 2.6 4.8 2.6h4.8" />
-          <path d="M12.8 2.4v3.2c0 2.2-1.8 2.6-4.8 2.6" />
-          <path d="M8 8.2v5.4" />
-          <circle cx="8" cy="13.4" r="1.4" fill={filled ? 'currentColor' : 'none'} />
         </svg>
       );
     case 'terminal':

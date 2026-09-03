@@ -4,7 +4,6 @@ import { symbols } from './state/symbols.js';
 import { visits } from './state/visits.js';
 import { search } from './state/search.js';
 import { doc } from './state/session.js';
-import { merge } from './state/merge.js';
 import { projects } from './state/projects.js';
 import { tools } from './state/tools.js';
 import { activeMenu, activePick, popups } from '@ide/ui';
@@ -19,17 +18,6 @@ export function registerCommands(): void {
   commands.register('key.reserved', () => {});
 
   commands.register('keys.show', () => keysHelp.toggle());
-
-  commands.register('merge.show', () => merge.toggle());
-  commands.register('merge.nextFile', () => merge.stepFile(1));
-  commands.register('merge.prevFile', () => merge.stepFile(-1));
-  commands.register('merge.next', () => merge.stepConflict(1));
-  commands.register('merge.prev', () => merge.stepConflict(-1));
-  commands.register('merge.takeLeft', () => merge.decideHere('left', 'take'));
-  commands.register('merge.takeRight', () => merge.decideHere('right', 'take'));
-  commands.register('merge.skipLeft', () => merge.decideHere('left', 'skip'));
-  commands.register('merge.skipRight', () => merge.decideHere('right', 'skip'));
-  commands.register('merge.confirm', () => void merge.resolve());
 
   commands.register('terminal.shell', () => tools.open('shell'));
   commands.register('tools.packageManager', () => tools.open('manager'));
