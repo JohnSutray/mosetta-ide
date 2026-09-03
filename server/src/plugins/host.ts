@@ -17,6 +17,7 @@ import {
 } from '@ide/api/server';
 export { type CallContext } from '@ide/api/server';
 import type { Logger } from '../log.js';
+import { processes } from '../env/processes.js';
 
 interface Loaded {
   info: PluginInfo;
@@ -185,6 +186,9 @@ export class PluginHost {
         },
         find: (provider) => this.providers.push(provider),
         shell: () => this.shellFor(),
+        run: (ask) => processes.run({ ...ask, reason: `${name}: ${ask.reason}` }),
+        stream: (ask, onChunk) =>
+          processes.stream({ ...ask, reason: `${name}: ${ask.reason}` }, onChunk),
         log: this.log,
       };
       const instance = new Ctor(ide) as object;

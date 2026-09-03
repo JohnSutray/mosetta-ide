@@ -1,5 +1,5 @@
 import type { Signal } from '@preact/signals';
-import type { Diagnostic, DocState, HoverInfo, Settings } from '@ide/protocol';
+import type { Diagnostic, DocState, HoverInfo, Settings, WorkspaceInfo } from '@ide/protocol';
 
 export interface Size {
   w: number;
@@ -31,6 +31,8 @@ export interface ResizerProps {
 
 export declare const settings: { readonly value: Settings | null };
 
+export declare const project: { readonly value: WorkspaceInfo | null };
+
 export declare const openDoc: { readonly value: DocState | null };
 
 export declare function editDoc(text: string): void;
@@ -51,8 +53,6 @@ export interface Reveal {
 }
 export declare const pendingReveal: { readonly value: Reveal | null };
 
-export declare function headFor(path: string | null): string | null;
-
 export declare function visit(path: string, line: number, character: number): void;
 
 export type HunkKind = 'added' | 'modified' | 'removed';
@@ -69,8 +69,6 @@ export interface HunkBox {
 }
 
 export declare function unstable_diffLines(before: string, after: string): Hunk[];
-
-export declare function unstable_showHunk(hunk: Hunk, box: HunkBox): void;
 
 export interface SymbolAsk {
   line: number;
@@ -152,6 +150,7 @@ export interface ClientSurface {
   runCommand: typeof runCommand;
   keysFor: typeof keysFor;
   settings: typeof settings;
+  project: typeof project;
   openDoc: typeof openDoc;
   editDoc: typeof editDoc;
   closeFile: typeof closeFile;
@@ -159,10 +158,8 @@ export interface ClientSurface {
   fileDiagnostics: typeof fileDiagnostics;
   externalEpoch: typeof externalEpoch;
   pendingReveal: typeof pendingReveal;
-  headFor: typeof headFor;
   visit: typeof visit;
   unstable_diffLines: typeof unstable_diffLines;
-  unstable_showHunk: typeof unstable_showHunk;
   unstable_askSymbol: typeof unstable_askSymbol;
   hover: typeof hover;
   takeFocusOnMount: typeof takeFocusOnMount;
@@ -202,6 +199,8 @@ export interface Ide {
   surface(view: () => unknown): void;
   open(kind: string, handler: (found: Found) => void): void;
   say(message: string): void;
+  complain(message: string): void;
+  working(text: string): (done: string, failed?: boolean) => void;
 }
 
 export type PluginClass<T = unknown> = new (ide: Ide) => T;

@@ -10,15 +10,15 @@ describe('повторное нажатие закрывает окно', () => 
   it('окно открыто — нажатие закрывает его, а не открывает второе', () => {
     let opened = 0;
     let closed = 0;
-    commands.register('git.branches', () => {
+    commands.register('projects.show', () => {
       opened += 1;
     });
 
-    commands.run('git.branches');
+    commands.run('projects.show');
     expect(opened).toBe(1);
 
-    popups.enter({ id: 'branches', close: () => (closed += 1) });
-    commands.run('git.branches');
+    popups.enter({ id: 'projects', close: () => (closed += 1) });
+    commands.run('projects.show');
     expect(closed).toBe(1);
     expect(opened).toBe(1);
   });
@@ -28,7 +28,7 @@ describe('повторное нажатие закрывает окно', () => 
     commands.registerPlugin('scripts.open', () => {
       opened += 1;
     });
-    popups.enter({ id: 'branches', close: () => {} });
+    popups.enter({ id: 'projects', close: () => {} });
     commands.run('scripts.open');
     expect(opened).toBe(1);
   });

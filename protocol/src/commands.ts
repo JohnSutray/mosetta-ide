@@ -33,9 +33,6 @@ export const COMMANDS = {
   'projects.accept': 'Проекты: открыть',
   'projects.close': 'Проекты: вернуться к дереву',
 
-  'git.branches': 'Ветки git',
-  'git.push': 'Push текущей ветки',
-  'git.fetch': 'Забрать обновления удалёнки',
   'pick.next': 'Список: вниз',
   'pick.prev': 'Список: вверх',
   'pick.accept': 'Список: выбрать',

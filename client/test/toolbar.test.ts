@@ -64,8 +64,6 @@ describe('тулбар', () => {
       .buttons.filter((entry) => !ours.has(entry.command) && entry.active)
       .map((e) => e.id);
     expect(popups.sort()).toEqual([
-      'git.branches',
-      'git.push',
       'keys',
       'merge',
       'projects',

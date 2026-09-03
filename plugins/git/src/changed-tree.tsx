@@ -1,5 +1,5 @@
-import type { GitChange } from '@ide/protocol';
-import { i18n } from '../i18n/index.js';
+import { t } from '@ide/api/client';
+import type { GitChange } from './types.js';
 import { DirIcon, FileIcon } from '@ide/ui';
 
 interface Node {
@@ -11,7 +11,7 @@ interface Node {
 
 export function ChangedTree({ changes }: { changes: GitChange[] }) {
   if (changes.length === 0) {
-    return <div class="push-empty">{i18n.t('push.noFiles')}</div>;
+    return <div class="push-empty">{t('push.noFiles')}</div>;
   }
   const root = build(changes);
   return (

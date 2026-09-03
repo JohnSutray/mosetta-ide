@@ -6,7 +6,6 @@ import { RamFs } from '../fs/ram-fs.js';
 import { SearchIndex } from '../search/search-index.js';
 import type { FindProviders } from '../search/providers.js';
 import { LspServer } from '../lsp/server.js';
-import { GitIndex } from '../git/git-index.js';
 import { MergeSessions } from '../merge/sessions.js';
 import { conflicts, type FsConflicts } from './conflicts.js';
 import { tools } from '../env/tools.js';
@@ -18,7 +17,6 @@ export class Services {
   readonly ram: RamFs;
   readonly index: SearchIndex;
   readonly watcher: OsWatcher;
-  readonly git: GitIndex;
   readonly merge = new MergeSessions();
   readonly conflicts: FsConflicts;
   readonly lsp: LspServer[] = [];
@@ -55,7 +53,6 @@ export class Services {
             });
             break;
           case 'doc.saved':
-            this.git.touch();
             break;
           case 'doc.external':
             ws.broadcast('doc.external', { path: event.path, revision: event.revision });
@@ -65,7 +62,6 @@ export class Services {
             break;
           case 'tree.changed':
             ws.broadcast('tree.changed', { path: event.path });
-            this.git.touch();
             break;
           case 'doc.removed':
             ws.broadcast('doc.removed', { path: event.path });
@@ -83,20 +79,12 @@ export class Services {
     this.conflicts = conflicts.watch(this.ram, this.os, this.merge, log);
     this.offs.push(() => this.conflicts.off());
 
-    this.git = new GitIndex(
-      ws.root,
-      log,
-      (state) => ws.broadcast('git.state', state),
-      (action, chunk) => ws.broadcast('git.output', { action, chunk }),
-    );
-
     this.offs.push(
       config.onChange((bundle) => {
         this.os.applySettings(bundle.settings.fs);
         this.ram.applySettings(bundle.settings.fs);
         this.index.applySettings(bundle.settings.index);
         this.watcher.applySettings(bundle.settings.fs);
-        this.git.startAutoFetch(bundle.settings.git.autoFetchMinutes);
       }),
     );
   }
@@ -120,9 +108,6 @@ export class Services {
       if (this.config.settings.index.enabled) return this.index.indexSymbols();
       return undefined;
     });
-
-    this.git.start();
-    this.git.startAutoFetch(this.config.settings.git.autoFetchMinutes);
 
     if (this.config.settings.lsp.startOnOpen) this.startLanguageServers();
   }
@@ -196,7 +181,6 @@ export class Services {
   dispose(): void {
     for (const off of this.offs.splice(0)) off();
     this.merge.dispose();
-    this.git.dispose();
     this.watcher.dispose();
     for (const server of this.lsp.splice(0)) server.dispose();
     this.index.dispose();

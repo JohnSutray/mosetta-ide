@@ -3,7 +3,6 @@ import { keyContexts } from '../keys/context.js';
 import { treeFollow } from '../state/tree-follow.js';
 import { commands } from '../keys/commands.js';
 import { keysHelp } from '../state/keys-help.js';
-import { gitMarks } from '../state/git-marks.js';
 import { editorFocus } from '../state/editor.js';
 import { treeMenu } from '../state/tree-menu.js';
 import { symbols } from '../state/symbols.js';
@@ -14,7 +13,6 @@ import { doc, lsp, rpc, session } from '../state/session.js';
 import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
-import { git } from '../state/git.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { chordHeld } from '../keys/chords.js';
@@ -25,18 +23,16 @@ import { lineDiff } from '../editor/line-diff.js';
 import { registerCommands } from '../commands.js';
 import { Dispatcher } from '../keys/dispatcher.js';
 import { SearchEverywhere } from './search-everywhere.js';
-import { Branches } from './branches.js';
 import { Notifications } from './notifications.js';
 import { TreeMenu } from './tree-menu.js';
 import { Prompt } from './prompt.js';
-import { Push } from './push.js';
 import { registerToolbarWishes } from './toolbar-wishes.js';
 import { registerPanelWishes } from './panel-wishes.js';
+import { TINT_SCHEMA, treeTints } from '../state/tree-tint.js';
 import { Registry } from '../state/registry.js';
 import { keysFor } from '../keys/keys-for.js';
 import { Projects } from './projects.js';
 import { i18n } from '../i18n/index.js';
-import { HunkPopup } from './hunk-popup.js';
 import { KeysHelp } from './keys-help.js';
 import { Tip } from '@ide/ui';
 import { MergeScreen } from './merge.js';
@@ -53,6 +49,8 @@ store.declare('chrome.top', 'core');
 store.declare('chrome.main', 'core');
 registerToolbarWishes(store);
 registerPanelWishes(store);
+store.declare('tree.tint', 'core', TINT_SCHEMA);
+treeTints.watch(store);
 
 function Region({ name, fallback }: { name: string; fallback?: JSX.Element }) {
   const views = store.all<() => unknown>(name).value;
@@ -88,6 +86,7 @@ export function App() {
       runCommand: (id) => commands.run(id),
       keysFor,
       settings: config.settings,
+      project: session.attached,
       openDoc: doc.open,
       editDoc: (text) => doc.edit(text),
       closeFile: () => doc.close(),
@@ -95,14 +94,12 @@ export function App() {
       fileDiagnostics: doc.diagnostics,
       externalEpoch: doc.externalEpoch,
       pendingReveal: doc.pendingReveal,
-      headFor: (path) => gitMarks.headFor(path),
       visit: (path, line, ch) => visits.visit(path, line, ch),
       hover: (path, line, character) => rpc.call('lsp.hover', { path, line, character }),
       takeFocusOnMount: () => editorFocus.takeOnMount(),
       wantsFocus: editorFocus.wanted,
       chordHeld,
       unstable_diffLines: (before, after) => lineDiff.hunks(before, after),
-      unstable_showHunk: (hunk, box) => gitMarks.show(hunk, box),
       unstable_askSymbol: (where) => symbols.ask(where),
       unstable_dc: darcula.palette,
       unstable_paintCode: (text, path) => codePainter.paint(text, path),
@@ -149,17 +146,12 @@ export function App() {
   }, [ws?.id]);
 
   useEffect(() => {
-    void gitMarks.load(file?.path ?? null);
-  }, [file?.path, git.state.value]);
-
-  useEffect(() => {
     void tools.refresh();
     if (!ws) {
       merge.reset();
       visits.forget();
       return;
     }
-    void git.refresh();
     void visits.load();
     void merge.load();
   }, [ws?.id]);
@@ -173,12 +165,8 @@ export function App() {
     >
       <Region name="chrome.top" />
       <Region name="chrome.main" fallback={<NoShell />} />
-
-      <HunkPopup />
       <Projects />
       <SearchEverywhere />
-      <Branches />
-      <Push />
       <PluginSurfaces />
       <MergeScreen />
       <KeysHelp />

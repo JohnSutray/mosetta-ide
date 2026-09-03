@@ -1,6 +1,6 @@
 import { commands } from '../keys/commands.js';
 import { rpc as socket, type RpcLike } from './session.js';
-import { complain, say } from './notifications.js';
+import { complain, notify, say, settle } from './notifications.js';
 import * as preact from 'preact';
 import * as hooks from 'preact/hooks';
 import * as signals from '@preact/signals';
@@ -190,6 +190,13 @@ export class Plugins {
         this.surfaces.value = [...this.surfaces.value, view];
       },
       say: (message: string) => say(message),
+      complain: (message: string) => complain(message),
+      working: (text: string) => {
+        const note = notify(text, 'work');
+        return (done: string, failed = false) => {
+          settle(note, done, failed ? 'error' : 'info');
+        };
+      },
     };
   }
 }

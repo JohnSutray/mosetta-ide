@@ -1,4 +1,4 @@
-import { processes, type Ran } from '../env/processes.js';
+import type { Ide, RunResult } from '@ide/api/server';
 
 export interface GitResult {
   ok: boolean;
@@ -18,24 +18,25 @@ function complaint(text: string): string {
 
 const OPTIONAL_LOCKS = { GIT_OPTIONAL_LOCKS: '0' };
 
-function said(ran: Ran, code: number | null): string {
+function said(ran: RunResult, code: number | null): string {
   if (ran.stderr) return ran.stderr;
   return ran.ok ? '' : `git завершился с кодом ${code ?? '?'}`;
 }
 
 export class GitCli {
+  constructor(private readonly ide: Ide) {}
+
   async stream(
     cwd: string,
     args: string[],
     onChunk: (text: string) => void,
     timeoutMs = 120_000,
   ): Promise<GitResult> {
-    const ran = await processes.stream(
+    const ran = await this.ide.stream(
       {
         command: 'git',
         args,
         cwd,
-        owner: cwd,
         reason: `git ${args[0] ?? ''}`.trim(),
         wants: ['no-prompts', 'machine-readable', 'user-shell'],
         env: OPTIONAL_LOCKS,
@@ -47,11 +48,10 @@ export class GitCli {
   }
 
   async run(cwd: string, args: string[], timeoutMs = 15_000): Promise<GitResult> {
-    const ran = await processes.run({
+    const ran = await this.ide.run({
       command: 'git',
       args,
       cwd,
-      owner: cwd,
       reason: `git ${args[0] ?? ''}`.trim(),
       wants: ['no-prompts', 'machine-readable', 'user-shell'],
       env: OPTIONAL_LOCKS,
@@ -61,5 +61,3 @@ export class GitCli {
     return { ok: ran.ok, stdout: ran.stdout, stderr: said(ran, ran.code).trim() };
   }
 }
-
-export const gitCli = new GitCli();

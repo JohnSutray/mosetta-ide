@@ -1,0 +1,171 @@
+import { computed, effect, type ReadonlySignal } from '@preact/signals';
+import {
+  activate,
+  openDoc,
+  project,
+  remote,
+  settings,
+  stub,
+  t,
+  keysFor,
+  runCommand,
+  type Ide,
+} from '@ide/api/client';
+import { tips } from '@ide/ui';
+import Editor from '@ide/plugin-editor';
+import { BranchesWindow, Git, PushWindow, type GitRemote, type TreeTint } from './state.js';
+import { GitMarks } from './marks.js';
+import { Branches } from './branches.js';
+import { Push } from './push.js';
+import { HunkPopup } from './hunk-popup.js';
+import { BranchIcon, PushIcon } from './icons.js';
+import { STYLE } from './style.js';
+import type {
+  GitAction,
+  GitBranch,
+  GitChange,
+  GitFileState,
+  GitState,
+  PushPreview,
+} from './types.js';
+
+export default class GitPlugin implements GitRemote {
+  private readonly git: Git;
+  private readonly branchesWindow: BranchesWindow;
+  private readonly pushWindow: PushWindow;
+  private readonly marks: GitMarks;
+
+  constructor(private readonly ide: Ide) {
+    this.git = new Git(this, ide);
+    this.branchesWindow = new BranchesWindow(this.git, ide);
+    this.pushWindow = new PushWindow(this.git, this, ide);
+    this.marks = new GitMarks(this);
+  }
+
+  @activate() protected start(): void {
+    this.ide.css(STYLE);
+
+    this.ide.command('git.branches', () =>
+      this.branchesWindow.open.value ? this.branchesWindow.close() : this.branchesWindow.show(),
+    );
+    this.ide.command('git.push', () =>
+      this.pushWindow.open.value ? this.pushWindow.close() : void this.pushWindow.show(),
+    );
+    this.ide.command('git.fetch', () => void this.branchesWindow.do('fetch'));
+
+    this.ide.registry('toolbar.button').add({
+      id: 'git.branches',
+      title: 'toolbar.branches',
+      command: 'git.branches',
+      icon: BranchIcon,
+      active: this.branchesWindow.open,
+    });
+    this.ide.registry('toolbar.button').add({
+      id: 'git.push',
+      title: 'toolbar.push',
+      command: 'git.push',
+      icon: PushIcon,
+      active: this.pushWindow.open,
+    });
+    this.ide.registry('toolbar.widget').add({
+      id: 'branch',
+      side: 'right',
+      view: () => this.branchLabel(),
+    });
+
+    this.ide.registry('tree.tint').add({ id: 'git', tint: this.git.tint });
+
+    this.ide.surface(() => (
+      <Branches git={this.git} window={this.branchesWindow} push={this.pushWindow} />
+    ));
+    this.ide.surface(() => <Push git={this.git} push={this.pushWindow} />);
+    this.ide.surface(() => <HunkPopup marks={this.marks} />);
+
+    const editor = this.ide.getPlugin(Editor);
+    editor.onHunk((hunk, box) => this.marks.show(hunk, box));
+    effect(() => {
+      const head = this.marks.head.value;
+      if (head) editor.setHead(head.path, head.text);
+    });
+
+    effect(() => {
+      const path = openDoc.value?.path ?? null;
+      void this.git.state.value;
+      void this.marks.load(project.value ? path : null);
+    });
+
+    effect(() => {
+      const current = project.value;
+      this.git.reset();
+      this.branchesWindow.reset();
+      if (current) void this.git.refresh();
+    });
+
+    effect(() => {
+      const minutes = settings.value?.git.autoFetchMinutes;
+      if (!project.value || minutes === undefined) return;
+      void this.askAutoFetch({ minutes }).catch(() => undefined);
+    });
+  }
+
+  get snapshot(): ReadonlySignal<GitState> {
+    return this.git.state;
+  }
+
+  @remote('state') state(): Promise<GitState> {
+    return stub();
+  }
+  @remote('branches') branches(): Promise<GitBranch[]> {
+    return stub();
+  }
+  @remote('outgoing') outgoing(): Promise<PushPreview> {
+    return stub();
+  }
+  @remote('changes') askChanges(_p: { commit?: string }): Promise<GitChange[]> {
+    return stub();
+  }
+  @remote('run') askRun(_p: { action: GitAction; branch?: string; name?: string }): Promise<{ error: string | null }> {
+    return stub();
+  }
+  @remote('head') protected askHead(_p: { path: string }): Promise<{ path: string; text: string | null }> {
+    return stub();
+  }
+  @remote('autoFetch') protected askAutoFetch(_p: { minutes: number }): Promise<null> {
+    return stub();
+  }
+
+  head(path: string): Promise<{ path: string; text: string | null }> {
+    return this.askHead({ path });
+  }
+  changes(commit?: string): Promise<GitChange[]> {
+    return this.askChanges(commit ? { commit } : {});
+  }
+  run(action: GitAction, branch?: string, name?: string): Promise<{ error: string | null }> {
+    return this.askRun({ action, ...(branch ? { branch } : {}), ...(name ? { name } : {}) });
+  }
+
+  private branchLabel() {
+    if (!project.value) return null;
+    const state = this.git.state.value;
+    return (
+      <button
+        class="branch-label"
+        onMouseEnter={(event) =>
+          tips.show(event.currentTarget as Element, t('toolbar.branches'), keysFor('git.branches'))
+        }
+        onMouseLeave={() => tips.hide()}
+        onClick={() => {
+          tips.hide();
+          runCommand('git.branches');
+        }}
+      >
+        {state.repo ? (state.branch ?? t('toolbar.noBranch')) : t('toolbar.noRepo')}
+        {state.ahead > 0 && <span class="branch-ahead">↑{state.ahead}</span>}
+        {state.behind > 0 && <span class="branch-behind">↓{state.behind}</span>}
+      </button>
+    );
+  }
+}
+
+export type { GitFileState, TreeTint };
+void computed;

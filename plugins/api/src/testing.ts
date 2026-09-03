@@ -1,6 +1,6 @@
 import Ajv, { type ValidateFunction } from 'ajv';
 import { signal, type Signal } from '@preact/signals';
-import type { Diagnostic, DocState, HoverInfo, Settings } from '@ide/protocol';
+import type { Diagnostic, DocState, HoverInfo, Settings, WorkspaceInfo } from '@ide/protocol';
 import { attach, hooksOf, registriesOf } from './client.js';
 import type {
   ClientSurface,
@@ -9,7 +9,6 @@ import type {
   Found,
   Ide,
   Hunk,
-  HunkBox,
   Palette,
   PluginClass,
   Reveal,
@@ -44,17 +43,11 @@ export function editDoc(text: string): void {
 export function closeFile(): Promise<void> {
   return surface().closeFile();
 }
-export function headFor(path: string | null): string | null {
-  return surface().headFor(path);
-}
 export function visit(path: string, line: number, character: number): void {
   surface().visit(path, line, character);
 }
 export function unstable_diffLines(before: string, after: string): Hunk[] {
   return surface().unstable_diffLines(before, after);
-}
-export function unstable_showHunk(hunk: Hunk, box: HunkBox): void {
-  surface().unstable_showHunk(hunk, box);
 }
 export function unstable_askSymbol(where: SymbolAsk): Promise<void> {
   return surface().unstable_askSymbol(where);
@@ -97,6 +90,11 @@ export const settings: { readonly value: Settings | null } = {
 export const dirty: { readonly value: boolean } = {
   get value() {
     return surface().dirty.value;
+  },
+};
+export const project: { readonly value: WorkspaceInfo | null } = {
+  get value() {
+    return surface().project.value;
   },
 };
 export const openDoc: { readonly value: DocState | null } = {
@@ -146,6 +144,7 @@ export class FakeSurface implements ClientSurface {
   tip: Tip | null = null;
   readonly keys = new Map<string, string[]>();
 
+  readonly project: Signal<WorkspaceInfo | null> = signal(null);
   readonly openDoc: Signal<DocState | null> = signal(null);
   readonly dirty = signal(false);
   closed = 0;
@@ -155,7 +154,6 @@ export class FakeSurface implements ClientSurface {
   readonly wantsFocus = signal(0);
   readonly edits: string[] = [];
   readonly visits: Array<{ path: string; line: number; character: number }> = [];
-  readonly hunks: Array<{ hunk: Hunk; box: HunkBox }> = [];
   readonly symbols: SymbolAsk[] = [];
   readonly hovers: Array<{ path: string; line: number; character: number }> = [];
   readonly heads = new Map<string, string>();
@@ -193,10 +191,6 @@ export class FakeSurface implements ClientSurface {
     this.closed += 1;
   }
 
-  headFor(path: string | null): string | null {
-    return path === null ? null : (this.heads.get(path) ?? null);
-  }
-
   visit(path: string, line: number, character: number): void {
     this.visits.push({ path, line, character });
   }
@@ -206,10 +200,6 @@ export class FakeSurface implements ClientSurface {
     const a = before.split('\n');
     const b = after.split('\n');
     return [{ kind: 'modified', from: 1, to: Math.max(a.length, b.length), before: a }];
-  }
-
-  unstable_showHunk(hunk: Hunk, box: HunkBox): void {
-    this.hunks.push({ hunk, box });
   }
 
   async unstable_askSymbol(where: SymbolAsk): Promise<void> {
@@ -312,6 +302,8 @@ export class FakeIde implements Ide {
   readonly surfaces: Array<() => unknown> = [];
   readonly styles: string[] = [];
   readonly said: string[] = [];
+  readonly complaints: string[] = [];
+  readonly work: Array<{ started: string; done?: string; failed?: boolean }> = [];
   readonly calls: Array<{ method: string; params: unknown }> = [];
   readonly answers = new Map<string, (params: unknown) => unknown>();
   readonly listeners = new Map<string, Set<(payload: unknown) => void>>();
@@ -332,6 +324,19 @@ export class FakeIde implements Ide {
 
   getPlugin<T>(ctor: PluginClass<T>): T {
     return this.host.plugin(ctor);
+  }
+
+  complain(message: string): void {
+    this.complaints.push(message);
+  }
+
+  working(text: string): (done: string, failed?: boolean) => void {
+    const entry: { started: string; done?: string; failed?: boolean } = { started: text };
+    this.work.push(entry);
+    return (done: string, failed = false) => {
+      entry.done = done;
+      entry.failed = failed;
+    };
   }
 
   on(event: string, handler: (payload: unknown) => void): () => void {

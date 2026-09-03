@@ -1,14 +1,13 @@
-import { gitMarks } from '../state/git-marks.js';
-import { doc } from '../state/session.js';
+import { openDoc, t } from '@ide/api/client';
+import type { GitMarks } from './marks.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import { i18n } from '../i18n/index.js';
 import { popups } from '@ide/ui';
 
-export function HunkPopup() {
-  const open = gitMarks.popup.value;
+export function HunkPopup({ marks }: { marks: GitMarks }) {
+  const open = marks.popup.value;
   const self = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(open ? open.box.bottom + 4 : 0);
-  const alive = doc.open.value !== null;
+  const alive = openDoc.value !== null;
 
   useLayoutEffect(() => {
     if (!open || !self.current) return;
@@ -20,9 +19,9 @@ export function HunkPopup() {
 
   useEffect(() => {
     if (!open || !alive) return;
-    popups.enter({ id: 'hunk', close: gitMarks.close, layer: true });
+    popups.enter({ id: 'hunk', close: () => marks.close(), layer: true });
     const away = (event: MouseEvent) => {
-      if (!(event.target as HTMLElement).closest('.hunk-popup')) gitMarks.close();
+      if (!(event.target as HTMLElement).closest('.hunk-popup')) marks.close();
     };
     window.addEventListener('mousedown', away, { capture: true });
     return () => {
@@ -36,10 +35,10 @@ export function HunkPopup() {
   const { hunk, box } = open;
   const title =
     hunk.kind === 'added'
-      ? i18n.t('git.hunk.added')
+      ? t('git.hunk.added')
       : hunk.kind === 'removed'
-        ? i18n.t('git.hunk.removed')
-        : i18n.t('git.hunk.modified');
+        ? t('git.hunk.removed')
+        : t('git.hunk.modified');
 
   return (
     <div
@@ -49,8 +48,8 @@ export function HunkPopup() {
     >
       <div class="hunk-head">
         <span class="hunk-title">{title}</span>
-        <button class="button" onClick={() => gitMarks.revertOpen()}>
-          {i18n.t('git.hunk.revert')}
+        <button class="button" onClick={() => marks.revertOpen()}>
+          {t('git.hunk.revert')}
         </button>
       </div>
       {hunk.before.length > 0 && (

@@ -1,8 +1,8 @@
-import { git, pushWindow } from '../state/git.js';
+import { t } from '@ide/api/client';
+import type { Git, PushWindow } from './state.js';
 import { useRef } from 'preact/hooks';
-import type { GitCommit } from '@ide/protocol';
+import type { GitCommit } from './types.js';
 import { ChangedTree } from './changed-tree.js';
-import { i18n } from '../i18n/index.js';
 import { Popup, Resizer, geometry } from '@ide/ui';
 
 const FILES_ID = 'push.files';
@@ -15,7 +15,12 @@ const MESSAGE_DEFAULT = 96;
 const MESSAGE_MIN = 48;
 const TREE_MIN = 120;
 
-export function Push() {
+export interface PushProps {
+  git: Git;
+  push: PushWindow;
+}
+
+export function Push({ git, push }: PushProps) {
   const split = useRef<HTMLDivElement>(null);
   const files = useRef<HTMLDivElement>(null);
 
@@ -29,11 +34,11 @@ export function Push() {
     return { min: MESSAGE_MIN, max: Math.max(MESSAGE_MIN, full - TREE_MIN) };
   };
 
-  if (!pushWindow.open.value) return null;
+  if (!push.open.value) return null;
 
-  const preview = pushWindow.preview.value;
+  const preview = push.preview.value;
   const busy = git.running.value !== null;
-  const force = pushWindow.force.value;
+  const force = push.force.value;
 
   return (
     <Popup
@@ -43,18 +48,18 @@ export function Push() {
       class="push"
       size={{ w: 1080, h: 560 }}
       min={{ w: 620, h: 320 }}
-      onClose={() => !busy && pushWindow.close()}
+      onClose={() => !busy && push.close()}
       onMouseDown={(event) => {
         if (!(event.target as HTMLElement).closest('.push-commit, .push-files, .resizer')) {
-          pushWindow.clear();
+          push.clear();
         }
       }}
     >
         <div class="branches-head">
-          <span class="branches-title">{i18n.t('push.title')}</span>
+          <span class="branches-title">{t('push.title')}</span>
           <span class="branches-meta">
             {preview
-              ? `${preview.branch ?? '—'} → ${preview.upstream ?? i18n.t('push.newBranch')}`
+              ? `${preview.branch ?? '—'} → ${preview.upstream ?? t('push.newBranch')}`
               : '…'}
           </span>
         </div>
@@ -64,14 +69,16 @@ export function Push() {
             <div class="push-body">
               <div class="push-fork">
                 <Lane
-                  title={`${i18n.t('push.local')} · ${preview.local.length}`}
+                  push={push}
+                  title={`${t('push.local')} · ${preview.local.length}`}
                   commits={preview.local}
                   kind="local"
-                  empty={i18n.t('push.nothing')}
+                  empty={t('push.nothing')}
                 />
                 {preview.remote.length > 0 && (
                   <Lane
-                    title={`${i18n.t('push.remote')} · ${preview.remote.length}`}
+                  push={push}
+                    title={`${t('push.remote')} · ${preview.remote.length}`}
                     commits={preview.remote}
                     kind={force ? 'doomed' : 'remote'}
                     empty=""
@@ -80,12 +87,13 @@ export function Push() {
               </div>
 
               <Lane
-                title={`${i18n.t('push.common')}${
+                  push={push}
+                title={`${t('push.common')}${
                   preview.common.length ? ` · ${preview.common.length}` : ''
                 }`}
                 commits={preview.common}
                 kind="common"
-                empty={i18n.t('push.noHistory')}
+                empty={t('push.noHistory')}
               />
             </div>
 
@@ -97,13 +105,13 @@ export function Push() {
               style={{ width: `${geometry.widthOf(FILES_ID, FILES_DEFAULT)}px` }}
             >
               <div class="push-lane-title">
-                {pushWindow.selected.value
-                  ? i18n.t('push.commitFiles', { sha: pushWindow.selected.value })
-                  : i18n.t('push.allChanges')}
-                {pushWindow.changes.value.length > 0 ? ` · ${pushWindow.changes.value.length}` : ''}
+                {push.selected.value
+                  ? t('push.commitFiles', { sha: push.selected.value })
+                  : t('push.allChanges')}
+                {push.changes.value.length > 0 ? ` · ${push.changes.value.length}` : ''}
               </div>
               <div class="push-files-body">
-                <ChangedTree changes={pushWindow.changes.value} />
+                <ChangedTree changes={push.changes.value} />
               </div>
 
               <Resizer
@@ -117,12 +125,12 @@ export function Push() {
                 class="push-message"
                 style={{ height: `${geometry.widthOf(MESSAGE_ID, MESSAGE_DEFAULT)}px` }}
               >
-                <Message />
+                <Message push={push} />
               </div>
             </div>
           </div>
         ) : (
-          <div class="se-empty">{i18n.t('push.counting')}</div>
+          <div class="se-empty">{t('push.counting')}</div>
         )}
 
         {git.output.value !== '' && <pre class="git-log">{git.output.value}</pre>}
@@ -133,30 +141,30 @@ export function Push() {
               type="checkbox"
               checked={force}
               disabled={busy}
-              onChange={(e) => (pushWindow.force.value = (e.target as HTMLInputElement).checked)}
+              onChange={(e) => (push.force.value = (e.target as HTMLInputElement).checked)}
             />
             {preview?.remote.length
-              ? i18n.t('push.forceWarn', { count: preview.remote.length })
-              : i18n.t('push.force')}
+              ? t('push.forceWarn', { count: preview.remote.length })
+              : t('push.force')}
           </label>
 
           <span class="push-spacer" />
 
-          <button class={`button ${busy ? 'is-running' : ''}`} disabled={busy} onClick={() => void pushWindow.send()}>
+          <button class={`button ${busy ? 'is-running' : ''}`} disabled={busy} onClick={() => void push.send()}>
             {busy && <span class="spinner" />}
-            {force ? i18n.t('push.doForce') : i18n.t('push.do')}
+            {force ? t('push.doForce') : t('push.do')}
           </button>
-          <button class="button" disabled={busy} onClick={() => pushWindow.close()}>
-            {i18n.t('push.cancel')}
+          <button class="button" disabled={busy} onClick={() => push.close()}>
+            {t('push.cancel')}
           </button>
         </div>
     </Popup>
   );
 }
 
-function Message() {
-  const commit = pushWindow.commit.value;
-  if (!commit) return <div class="push-empty">{i18n.t('push.pickCommit')}</div>;
+function Message({ push }: { push: PushWindow }) {
+  const commit = push.commit.value;
+  if (!commit) return <div class="push-empty">{t('push.pickCommit')}</div>;
   return (
     <>
       <div class="push-message-head">
@@ -171,11 +179,13 @@ function Message() {
 }
 
 function Lane({
+  push,
   title,
   commits,
   kind,
   empty,
 }: {
+  push: PushWindow;
   title: string;
   commits: GitCommit[];
   kind: 'common' | 'remote' | 'doomed' | 'local';
@@ -189,10 +199,10 @@ function Lane({
           <div
             key={commit.short}
             class={`push-commit is-pickable ${
-              pushWindow.selected.value === commit.short ? 'is-current' : ''
+              push.selected.value === commit.short ? 'is-current' : ''
             }`}
             title={`${commit.author}, ${commit.date}`}
-            onClick={() => pushWindow.select(commit.short)}
+            onClick={() => push.select(commit.short)}
           >
             <span class="push-sha">{commit.short}</span>
             <span class="push-subject">{commit.subject}</span>

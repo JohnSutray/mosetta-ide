@@ -5,6 +5,7 @@ export class Defaults {
     plugins: {
       enabled: [
         '@ide/plugin-terminal',
+        '@ide/plugin-git',
         '@ide/plugin-npm-scripts',
         '@ide/plugin-rerun',
         '@ide/plugin-problems',

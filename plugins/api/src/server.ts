@@ -28,6 +28,26 @@ export interface Project {
   ): () => void;
 }
 
+export interface RunAsk {
+  command: string;
+  args: string[];
+  cwd?: string;
+  reason: string;
+  wants?: Array<'no-prompts' | 'machine-readable' | 'user-shell'>;
+  env?: Record<string, string>;
+  timeoutMs?: number;
+  maxBuffer?: number;
+}
+
+export interface RunResult {
+  ok: boolean;
+  stdout: string;
+  stderr: string;
+  code: number | null;
+  timedOut: boolean;
+  truncated: boolean;
+}
+
 export interface ShellChoice {
   file: string;
   args: string[];
@@ -62,6 +82,8 @@ export interface Ide {
   getPlugin<T>(ctor: PluginClass<T>): T;
   find(provider: FindProvider): void;
   shell(): ShellChoice;
+  run(ask: RunAsk): Promise<RunResult>;
+  stream(ask: RunAsk, onChunk: (text: string) => void): Promise<RunResult>;
   readonly log: Logger;
 }
 

@@ -1,14 +1,11 @@
 import { treeFollow } from '../state/tree-follow.js';
-import { commands } from '../keys/commands.js';
 import { keysHelp } from '../state/keys-help.js';
 import { search } from '../state/search.js';
 import { session } from '../state/session.js';
 import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
-import { branchesWindow, git, pushWindow } from '../state/git.js';
 import { computed } from '@preact/signals';
-import { keysFor } from '../keys/keys-for.js';
 import { i18n } from '../i18n/index.js';
 import { panels } from './panels.js';
 import type { Registry } from '../state/registry.js';
@@ -53,20 +50,6 @@ export function registerToolbarWishes(store: Registry): void {
     active: search.open,
   });
   button({
-    id: 'git.branches',
-    title: 'toolbar.branches',
-    command: 'git.branches',
-    icon: ours('git'),
-    active: branchesWindow.open,
-  });
-  button({
-    id: 'git.push',
-    title: 'toolbar.push',
-    command: 'git.push',
-    icon: ours('push'),
-    active: pushWindow.open,
-  });
-  button({
     id: 'projects',
     title: 'toolbar.projects',
     command: 'projects.show',
@@ -98,7 +81,6 @@ export function registerToolbarWishes(store: Registry): void {
   });
 
   widget({ id: 'tools', side: 'right', view: () => <Tools /> });
-  widget({ id: 'branch', side: 'right', view: () => <Branch /> });
   widget({ id: 'connection', side: 'right', view: () => <Connection /> });
 }
 
@@ -119,29 +101,6 @@ function Tools() {
         />
       )}
     </>
-  );
-}
-
-function Branch() {
-  const ws = session.current.value;
-  const state = git.state.value;
-  if (!ws) return null;
-  return (
-    <button
-      class="branch-label"
-      onMouseEnter={(event) =>
-        tips.show(event.currentTarget as Element, i18n.t('toolbar.branches'), keysFor('git.branches'))
-      }
-      onMouseLeave={() => tips.hide()}
-      onClick={() => {
-        tips.hide();
-        commands.run('git.branches');
-      }}
-    >
-      {state.repo ? (state.branch ?? i18n.t('toolbar.noBranch')) : i18n.t('toolbar.noRepo')}
-      {state.ahead > 0 && <span class="branch-ahead">↑{state.ahead}</span>}
-      {state.behind > 0 && <span class="branch-behind">↓{state.behind}</span>}
-    </button>
   );
 }
 

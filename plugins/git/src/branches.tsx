@@ -1,44 +1,50 @@
-import { branchesWindow, git, pushWindow } from '../state/git.js';
+import { t } from '@ide/api/client';
+import type { BranchesWindow, Git, PushWindow } from './state.js';
 import { useEffect, useRef } from 'preact/hooks';
-import type { GitBranch } from '@ide/protocol';
-import { i18n } from '../i18n/index.js';
+import type { GitBranch } from './types.js';
 import { Chevron, Icon, Menu, Popup, activePick, type MenuItem } from '@ide/ui';
 
-export function Branches() {
+export interface BranchesProps {
+  git: Git;
+  window: BranchesWindow;
+  push: PushWindow;
+}
+
+export function Branches({ git, window, push }: BranchesProps) {
   const list = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
   const nameField = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (branchesWindow.open.value) field.current?.focus();
-  }, [branchesWindow.open.value]);
+    if (window.open.value) field.current?.focus();
+  }, [window.open.value]);
 
   useEffect(() => {
     list.current?.querySelector('.branch-row.is-current')?.scrollIntoView({ block: 'nearest' });
-  }, [branchesWindow.selected.value, git.branches.value]);
+  }, [window.selected.value, git.branches.value]);
 
-  const prompt = branchesWindow.prompt.value;
+  const prompt = window.prompt.value;
   useEffect(() => {
     if (prompt) nameField.current?.select();
   }, [prompt?.action]);
 
   useEffect(() => {
-    if (!branchesWindow.open.value) return;
+    if (!window.open.value) return;
     activePick.value = {
-      next: () => branchesWindow.move(1),
-      prev: () => branchesWindow.move(-1),
-      accept: () => branchesWindow.openMenuHere(),
-      expand: () => branchesWindow.openMenuHere(),
+      next: () => window.move(1),
+      prev: () => window.move(-1),
+      accept: () => window.openMenuHere(),
+      expand: () => window.openMenuHere(),
     };
     return () => {
       activePick.value = null;
     };
-  }, [branchesWindow.open.value]);
+  }, [window.open.value]);
 
-  if (!branchesWindow.open.value) return null;
+  if (!window.open.value) return null;
 
   const state = git.state.value;
-  const rows = branchesWindow.rows.value;
+  const rows = window.rows.value;
 
   return (
     <Popup
@@ -47,16 +53,16 @@ export function Branches() {
       class="branches"
       size={{ w: 620, h: 460 }}
       min={{ w: 420, h: 260 }}
-      onClose={() => (branchesWindow.open.value = false)}
-      onEscape={() => branchesWindow.close()}
+      onClose={() => (window.open.value = false)}
+      onEscape={() => window.close()}
       onMouseDown={(event) => {
         if (!(event.target as HTMLElement).closest('.branch-menu, .branch-row')) {
-          branchesWindow.menu.value = null;
+          window.menu.value = null;
         }
       }}
     >
       <div class="branches-head">
-        <span class="branches-title">{i18n.t('branches.title')}</span>
+        <span class="branches-title">{t('branches.title')}</span>
         <span class="branches-meta">
           {state.branch ?? '—'}
           {state.ahead > 0 ? ` ↑${state.ahead}` : ''}
@@ -64,9 +70,9 @@ export function Branches() {
         </span>
         <button
           class="tool is-fetch branches-fetch"
-          title={i18n.t('toolbar.fetch')}
+          title={t('toolbar.fetch')}
           disabled={git.running.value !== null}
-          onClick={() => void branchesWindow.do('fetch')}
+          onClick={() => void window.do('fetch')}
         >
           <Icon name="fetch" filled={false} />
         </button>
@@ -76,27 +82,27 @@ export function Branches() {
         <input
           ref={field}
           class="field"
-          placeholder={i18n.t('branches.filter')}
-          value={branchesWindow.filter.value}
+          placeholder={t('branches.filter')}
+          value={window.filter.value}
           spellcheck={false}
           autocomplete="off"
-          onInput={(e) => branchesWindow.setFilter((e.target as HTMLInputElement).value)}
+          onInput={(e) => window.setFilter((e.target as HTMLInputElement).value)}
         />
       </div>
 
       <div class="branch-list" ref={list}>
         {rows.map((row, i) =>
           row.kind === 'branch' ? (
-            <BranchRow key={row.branch.name} branch={row.branch} at={row.at} label={row.label} />
+            <BranchRow key={row.branch.name} branch={row.branch} at={row.at} label={row.label} window={window} />
           ) : (
             <div key={`${row.kind}${i}`} class={`branch-head is-${row.kind}`}>
-              {row.kind === 'head' ? i18n.t(`branches.${row.title}`) : row.title}
+              {row.kind === 'head' ? t(`branches.${row.title}`) : row.title}
             </div>
           ),
         )}
         {rows.length === 0 && (
           <div class="se-empty">
-            {git.branches.value.length === 0 ? i18n.t('branches.none') : i18n.t('branches.nothing')}
+            {git.branches.value.length === 0 ? t('branches.none') : t('branches.nothing')}
           </div>
         )}
       </div>
@@ -107,11 +113,11 @@ export function Branches() {
           data-keys="branch-name"
           onSubmit={(e) => {
             e.preventDefault();
-            void branchesWindow.do(prompt.action, prompt.value.trim());
+            void window.do(prompt.action, prompt.value.trim());
           }}
         >
           <span class="branch-prompt-title">
-            {prompt.action === 'rename' ? i18n.t('branches.newName') : i18n.t('branches.branchName')}
+            {prompt.action === 'rename' ? t('branches.newName') : t('branches.branchName')}
           </span>
           <input
             ref={nameField}
@@ -120,44 +126,54 @@ export function Branches() {
             spellcheck={false}
             autocomplete="off"
             onInput={(e) =>
-              (branchesWindow.prompt.value = {
+              (window.prompt.value = {
                 action: prompt.action,
                 value: (e.target as HTMLInputElement).value,
               })
             }
           />
           <button class="button" type="submit">
-            {i18n.t('branches.apply')}
+            {t('branches.apply')}
           </button>
         </form>
       )}
 
       <div class="branches-foot">
-        <button class="button" disabled={git.running.value !== null} onClick={() => void pushWindow.show()}>
-          {i18n.t('branches.push')}
+        <button class="button" disabled={git.running.value !== null} onClick={() => void push.show()}>
+          {t('branches.push')}
         </button>
-        <button class="button" onClick={() => branchesWindow.close()}>
-          {i18n.t('branches.close')}
+        <button class="button" onClick={() => window.close()}>
+          {t('branches.close')}
         </button>
       </div>
 
-      <BranchActions />
+      <BranchActions git={git} window={window} push={push} />
     </Popup>
   );
 }
 
-function BranchRow({ branch, at, label }: { branch: GitBranch; at: number; label: string }) {
+function BranchRow({
+  branch,
+  at,
+  label,
+  window,
+}: {
+  branch: GitBranch;
+  at: number;
+  label: string;
+  window: BranchesWindow;
+}) {
   return (
     <div
-      class={`branch-row ${at === branchesWindow.selected.value ? 'is-current' : ''} ${
+      class={`branch-row ${at === window.selected.value ? 'is-current' : ''} ${
         branch.remote ? 'is-remote' : ''
       }`}
       title={`${branch.name}${branch.subject ? ` — ${branch.subject}` : ''}`}
       onClick={(event) => {
-        branchesWindow.selected.value = at;
-        branchesWindow.openMenu(branch.name, (event.currentTarget as HTMLElement).getBoundingClientRect());
+        window.selected.value = at;
+        window.openMenu(branch.name, (event.currentTarget as HTMLElement).getBoundingClientRect());
       }}
-      onDblClick={() => void branchesWindow.do('checkout')}
+      onDblClick={() => void window.do('checkout')}
     >
       <span class="branch-mark">{branch.current ? '●' : ''}</span>
       <span class="branch-name">{label}</span>
@@ -173,26 +189,26 @@ function BranchRow({ branch, at, label }: { branch: GitBranch; at: number; label
   );
 }
 
-function BranchActions() {
-  const menu = branchesWindow.menu.value;
-  const branch = branchesWindow.current.value;
+function BranchActions({ git, window, push }: BranchesProps) {
+  const menu = window.menu.value;
+  const branch = window.current.value;
   if (!menu || !branch) return null;
 
   const items: MenuItem[] = [];
-  if (!branch.current) items.push({ label: 'branches.checkout', run: () => void branchesWindow.do('checkout') });
-  items.push({ label: 'branches.newFrom', run: () => branchesWindow.askName('create') });
+  if (!branch.current) items.push({ label: 'branches.checkout', run: () => void window.do('checkout') });
+  items.push({ label: 'branches.newFrom', run: () => window.askName('create') });
   if (!branch.remote) {
-    items.push({ label: 'branches.rename', run: () => branchesWindow.askName('rename') });
-    if (branch.current) items.push({ label: 'branches.update', run: () => void branchesWindow.do('pull') });
-    items.push({ label: 'branches.push', run: () => void pushWindow.show() });
+    items.push({ label: 'branches.rename', run: () => window.askName('rename') });
+    if (branch.current) items.push({ label: 'branches.update', run: () => void window.do('pull') });
+    items.push({ label: 'branches.push', run: () => void push.show() });
   }
-  if (!branch.current) items.push({ label: 'branches.merge', run: () => void branchesWindow.do('merge') });
+  if (!branch.current) items.push({ label: 'branches.merge', run: () => void window.do('merge') });
   if (!branch.remote && !branch.current) {
-    items.push({ label: 'branches.delete', danger: true, run: () => void branchesWindow.do('delete') });
+    items.push({ label: 'branches.delete', danger: true, run: () => void window.do('delete') });
     items.push({
       label: 'branches.forceDelete',
       danger: true,
-      run: () => void branchesWindow.do('force-delete'),
+      run: () => void window.do('force-delete'),
     });
   }
 
@@ -201,7 +217,7 @@ function BranchActions() {
       x={menu.x}
       y={menu.y}
       items={items}
-      onClose={() => (branchesWindow.menu.value = null)}
+      onClose={() => (window.menu.value = null)}
     />
   );
 }

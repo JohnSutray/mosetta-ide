@@ -1,3 +1,4 @@
+import type { Logger } from '@ide/api/server';
 import type {
   GitAction,
   GitBranch,
@@ -6,9 +7,9 @@ import type {
   GitFileState,
   GitState,
   PushPreview,
-} from '@ide/protocol';
-import type { Logger } from '../log.js';
-import { gitCli } from './cli.js';
+} from './types.js';
+import type { GitCli } from './cli.js';
+import type { GitStatus } from './status.js';
 
 const DEBOUNCE_MS = 400;
 
@@ -32,6 +33,8 @@ export class GitIndex {
   private autoFetch: ReturnType<typeof setInterval> | null = null;
 
   constructor(
+    private readonly git: GitCli,
+    private readonly status: GitStatus,
     private readonly root: string,
     private readonly log: Logger,
     private readonly onChange: (state: GitState) => void,
@@ -46,7 +49,7 @@ export class GitIndex {
     if (this.disposed || minutes <= 0) return;
     this.autoFetch = setInterval(
       () => {
-        void gitCli.run(this.root, ['fetch', '--all', '--prune'], 60_000).then((result) => {
+        void this.git.run(this.root, ['fetch', '--all', '--prune'], 60_000).then((result) => {
           if (!result.ok) {
             this.log.debug(`автофетч не удался: ${result.stderr}`);
             return;
@@ -84,7 +87,7 @@ export class GitIndex {
   }
 
   async headText(key: string): Promise<string | null> {
-    const shown = await gitCli.run(this.root, ['show', `HEAD:./${key}`]);
+    const shown = await this.git.run(this.root, ['show', `HEAD:./${key}`]);
     return shown.ok ? shown.stdout : null;
   }
 
@@ -104,7 +107,7 @@ export class GitIndex {
   }
 
   private async doRefresh(): Promise<void> {
-    const status = await gitCli.run(this.root, [
+    const status = await this.git.run(this.root, [
       'status',
       '--porcelain',
       '-z',
@@ -119,10 +122,10 @@ export class GitIndex {
       return;
     }
 
-    const files = gitStatus.parse(status.stdout);
+    const files = this.status.parse(status.stdout);
     const [head, tracking, branchList] = await Promise.all([
-      gitCli.run(this.root, ['rev-parse', '--abbrev-ref', 'HEAD']),
-      gitCli.run(this.root, ['rev-list', '--left-right', '--count', 'HEAD...@{upstream}']),
+      this.git.run(this.root, ['rev-parse', '--abbrev-ref', 'HEAD']),
+      this.git.run(this.root, ['rev-list', '--left-right', '--count', 'HEAD...@{upstream}']),
       this.readBranches(),
     ]);
 
@@ -138,7 +141,7 @@ export class GitIndex {
   }
 
   private async readBranches(): Promise<GitBranch[]> {
-    const result = await gitCli.run(this.root, [
+    const result = await this.git.run(this.root, [
       'branch',
       '--all',
       '--format=%(refname)\t%(refname:short)\t%(upstream:short)\t%(HEAD)\t%(objectname:short)\t%(upstream:track)\t%(contents:subject)',
@@ -177,10 +180,10 @@ export class GitIndex {
   }
 
   async outgoing(): Promise<PushPreview> {
-    const head = await gitCli.run(this.root, ['rev-parse', '--abbrev-ref', 'HEAD']);
+    const head = await this.git.run(this.root, ['rev-parse', '--abbrev-ref', 'HEAD']);
     const branch = head.ok ? head.stdout.trim() || null : null;
 
-    const tracking = await gitCli.run(this.root, [
+    const tracking = await this.git.run(this.root, [
       'rev-parse',
       '--abbrev-ref',
       '--symbolic-full-name',
@@ -197,7 +200,7 @@ export class GitIndex {
     const [local, remote, base] = await Promise.all([
       this.commits([`${upstream}..HEAD`]),
       this.commits([`HEAD..${upstream}`]),
-      gitCli.run(this.root, ['merge-base', 'HEAD', upstream]),
+      this.git.run(this.root, ['merge-base', 'HEAD', upstream]),
     ]);
     const common = base.ok
       ? await this.commits(['-n', `${COMMON_SHOWN}`, base.stdout.trim()])
@@ -211,7 +214,7 @@ export class GitIndex {
       return this.names(['show', '--name-status', '--format=', commit]);
     }
 
-    const tracking = await gitCli.run(this.root, [
+    const tracking = await this.git.run(this.root, [
       'rev-parse',
       '--abbrev-ref',
       '--symbolic-full-name',
@@ -224,13 +227,13 @@ export class GitIndex {
     const local = await this.commits(['--not', '--remotes', 'HEAD']);
     const oldest = local[local.length - 1];
     if (!oldest) return [];
-    const parent = await gitCli.run(this.root, ['rev-parse', `${oldest.short}^`]);
+    const parent = await this.git.run(this.root, ['rev-parse', `${oldest.short}^`]);
     const base = parent.ok ? parent.stdout.trim() : EMPTY_TREE;
     return this.names(['diff', '--name-status', base, 'HEAD']);
   }
 
   private async names(args: string[]): Promise<GitChange[]> {
-    const result = await gitCli.run(this.root, args);
+    const result = await this.git.run(this.root, args);
     if (!result.ok) return [];
     const out: GitChange[] = [];
     for (const line of result.stdout.split('\n')) {
@@ -244,7 +247,7 @@ export class GitIndex {
   }
 
   private async commits(args: string[]): Promise<GitCommit[]> {
-    const result = await gitCli.run(this.root, [
+    const result = await this.git.run(this.root, [
       'log',
       '--format=%h%x09%an%x09%ad%x09%s%x09%b%x00',
       '--date=short',
@@ -270,7 +273,7 @@ export class GitIndex {
 
   async run(action: GitAction, args: string[]): Promise<string | null> {
     this.onOutput(action, `$ git ${args.join(' ')}\n`);
-    const result = await gitCli.stream(this.root, args, (chunk) => this.onOutput(action, chunk));
+    const result = await this.git.stream(this.root, args, (chunk) => this.onOutput(action, chunk));
     await this.refresh();
     if (result.ok) {
       this.onOutput(action, '\n[готово]\n');
@@ -297,23 +300,6 @@ export class GitIndex {
     this.autoFetch = null;
   }}
 
-function byMark(mark: string): GitFileState {
-  if (mark === 'A') return 'added';
-  if (mark === 'D') return 'deleted';
-  if (mark === 'U') return 'conflict';
-  return 'modified';
-}
-
-function classify(x: string, y: string): GitFileState {
-  if (x === '?' && y === '?') return 'untracked';
-  if (x === 'U' || y === 'U' || (x === 'A' && y === 'A') || (x === 'D' && y === 'D')) {
-    return 'conflict';
-  }
-  if (x === 'D' || y === 'D') return 'deleted';
-  if (x === 'A') return 'added';
-  return 'modified';
-}
-
 function ids(commits: GitCommit[]): string[] {
   return commits.map((commit) => commit.short);
 }
@@ -332,21 +318,9 @@ function same(a: GitState, b: GitState): boolean {
   return ka.every((key) => a.files[key] === b.files[key]);
 }
 
-export class GitStatus {
-  parse(raw: string): Record<string, GitFileState> {
-    const files: Record<string, GitFileState> = {};
-    const tokens = raw.split('\0');
-    for (let i = 0; i < tokens.length; i += 1) {
-      const token = tokens[i];
-      if (!token || token.length < 4) continue;
-      const x = token[0]!;
-      const y = token[1]!;
-      const path = token.slice(3);
-      if (x === 'R' || x === 'C') i += 1;
-      files[path] = classify(x, y);
-    }
-    return files;
-  }
+function byMark(mark: string): GitFileState {
+  if (mark === 'A') return 'added';
+  if (mark === 'D') return 'deleted';
+  if (mark === 'U') return 'conflict';
+  return 'modified';
 }
-
-export const gitStatus = new GitStatus();

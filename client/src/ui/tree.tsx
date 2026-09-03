@@ -2,7 +2,7 @@ import { treeMenu } from '../state/tree-menu.js';
 import { editorFocus } from '../state/editor.js';
 import { doc, fileTree, lsp, session } from '../state/session.js';
 import { tree, treeOps } from '../state/tree-ops.js';
-import { git } from '../state/git.js';
+import { treeTints } from '../state/tree-tint.js';
 import { useEffect } from 'preact/hooks';
 import type { DirEntry } from '@ide/protocol';
 import { keyHost } from '../keys/host.js';
@@ -82,7 +82,7 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
   const isCurrent = doc.open.value?.path === entry.path;
   const kids = isOpen ? fileTree.children.value.get(entry.path) : undefined;
   const broken = lsp.brokenPaths.value.has(entry.path);
-  const tint = entry.noScan ? undefined : git.tint.value.get(entry.path);
+  const tint = entry.noScan ? undefined : treeTints.of(entry.path);
 
   return (
     <>

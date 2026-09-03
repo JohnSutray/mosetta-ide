@@ -1,5 +1,6 @@
-import { rpc, session } from './session.js';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
+import { t, type Ide } from '@ide/api/client';
+import { fuzzy, type FuzzyHit } from '@ide/ui';
 import type {
   GitAction,
   GitBranch,
@@ -7,10 +8,15 @@ import type {
   GitFileState,
   GitState,
   PushPreview,
-} from '@ide/protocol';
-import { complain, notify, settle } from './notifications.js';
-import { i18n } from '../i18n/index.js';
-import { fuzzy, type FuzzyHit } from '@ide/ui';
+} from './types.js';
+
+export interface GitRemote {
+  state(): Promise<GitState>;
+  branches(): Promise<GitBranch[]>;
+  outgoing(): Promise<PushPreview>;
+  changes(commit?: string): Promise<GitChange[]>;
+  run(action: GitAction, branch?: string, name?: string): Promise<{ error: string | null }>;
+}
 
 const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {} };
 
@@ -26,6 +32,19 @@ const FILE_TINT: Partial<Record<GitFileState, TreeTint>> = {
 };
 
 export class Git {
+  constructor(
+    private readonly remote: GitRemote,
+    private readonly ide: Pick<Ide, 'on' | 'working' | 'complain'>,
+  ) {
+    this.ide.on('output', (payload) => {
+      const { chunk } = payload as { chunk: string };
+      this.output.value = (this.output.value + chunk.replace(/\r(?!\n)/g, '\n')).slice(
+        -OUTPUT_LIMIT,
+      );
+    });
+    this.ide.on('state', (state) => (this.state.value = state as GitState));
+  }
+
   readonly state = signal<GitState>(EMPTY);
   readonly branches = signal<GitBranch[]>([]);
 
@@ -47,15 +66,6 @@ export class Git {
     return out;
   });
 
-  constructor() {
-    rpc.on('git.output', ({ chunk }) => {
-      this.output.value = (this.output.value + chunk.replace(/\r(?!\n)/g, '\n')).slice(
-        -OUTPUT_LIMIT,
-      );
-    });
-    rpc.on('git.state', (state) => (this.state.value = state));
-  }
-
   get repo(): boolean {
     return this.state.value.repo;
   }
@@ -70,8 +80,8 @@ export class Git {
   async refresh(): Promise<void> {
     try {
       const [state, branches] = await Promise.all([
-        rpc.call('git.state', null),
-        rpc.call('git.branches', null),
+        this.remote.state(),
+        this.remote.branches(),
       ]);
       batch(() => {
         this.state.value = state;
@@ -83,26 +93,22 @@ export class Git {
   async run(action: GitAction, branchName?: string, name?: string): Promise<boolean> {
     if (this.running.value) return false;
     const branch = branchName ?? null;
-    const note = notify(i18n.t(`branches.${action === 'force-push' ? 'push' : action}`) + '…', 'work');
+    const done = this.ide.working(t(`branches.${action === 'force-push' ? 'push' : action}`) + '…');
     batch(() => {
       this.running.value = action;
       this.output.value = '';
     });
     try {
-      const { error } = await rpc.call('git.run', {
-        action,
-        ...(branch ? { branch } : {}),
-        ...(name ? { name } : {}),
-      });
+      const { error } = await this.remote.run(action, branch ?? undefined, name);
       if (error) {
-        settle(note, error.split('\n')[0] ?? error, 'error');
+        done(error.split('\n')[0] ?? error, true);
         return false;
       }
-      settle(note, doneText(action, branch, name));
+      done(doneText(action, branch, name));
       await this.refresh();
       return true;
     } catch (err) {
-      settle(note, err instanceof Error ? err.message : String(err), 'error');
+      done(err instanceof Error ? err.message : String(err), true);
       return false;
     } finally {
       this.running.value = null;
@@ -171,15 +177,18 @@ export class BranchesWindow {
     return rows;
   });
 
-  constructor(private readonly git: Git) {
-    rpc.on('git.state', () => {
+  constructor(
+    private readonly git: Git,
+    private readonly ide: Pick<Ide, 'on' | 'complain'>,
+  ) {
+    this.ide.on('state', () => {
       if (this.open.value) void this.git.refresh();
     });
   }
 
   show(): void {
     if (!this.git.repo) {
-      complain(i18n.t('branches.notRepo'));
+      this.ide.complain(t('branches.notRepo'));
       return;
     }
     batch(() => {
@@ -271,6 +280,12 @@ export class BranchesWindow {
 }
 
 export class PushWindow {
+  constructor(
+    private readonly git: Git,
+    private readonly remote: GitRemote,
+    private readonly ide: Pick<Ide, 'complain'>,
+  ) {}
+
   readonly open = signal(false);
   readonly preview = signal<PushPreview | null>(null);
   readonly force = signal(false);
@@ -291,11 +306,9 @@ export class PushWindow {
 
   private token = 0;
 
-  constructor(private readonly git: Git) {}
-
   async show(): Promise<void> {
     if (!this.git.repo) {
-      complain(i18n.t('branches.notRepo'));
+      this.ide.complain(t('branches.notRepo'));
       return;
     }
     batch(() => {
@@ -307,10 +320,10 @@ export class PushWindow {
       this.git.output.value = '';
     });
     try {
-      this.preview.value = await rpc.call('git.outgoing', null);
+      this.preview.value = await this.remote.outgoing();
       await this.loadChanges();
     } catch (err) {
-      complain(err instanceof Error ? err.message : String(err));
+      this.ide.complain(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -342,7 +355,7 @@ export class PushWindow {
     const commit = this.selected.value;
     const token = ++this.token;
     try {
-      const list = await rpc.call('git.changes', commit ? { commit } : {});
+      const list = await this.remote.changes(commit ?? undefined);
       if (token === this.token) this.changes.value = list;
     } catch {
       if (token === this.token) this.changes.value = [];
@@ -354,33 +367,24 @@ function doneText(action: GitAction, branch: string | null, name?: string): stri
   const of = name ?? branch ?? '';
   switch (action) {
     case 'fetch':
-      return i18n.t('git.fetched');
+      return t('git.fetched');
     case 'pull':
-      return i18n.t('git.pulled', { branch: branch ?? '' });
+      return t('git.pulled', { branch: branch ?? '' });
     case 'push':
     case 'force-push':
-      return i18n.t('git.pushed', { branch: of });
+      return t('git.pushed', { branch: of });
     case 'checkout':
-      return i18n.t('git.checkedOut', { branch: of });
+      return t('git.checkedOut', { branch: of });
     case 'merge':
-      return i18n.t('git.merged', { branch: of });
+      return t('git.merged', { branch: of });
     case 'create':
-      return i18n.t('git.created', { branch: of });
+      return t('git.created', { branch: of });
     case 'rename':
-      return i18n.t('git.renamed', { branch: of });
+      return t('git.renamed', { branch: of });
     case 'delete':
     case 'force-delete':
-      return i18n.t('git.deleted', { branch: of });
+      return t('git.deleted', { branch: of });
     default:
-      return i18n.t('git.done', { action });
+      return t('git.done', { action });
   }
 }
-
-export const git = new Git();
-export const branchesWindow = new BranchesWindow(git);
-export const pushWindow = new PushWindow(git);
-
-session.onReset(() => {
-  git.reset();
-  branchesWindow.reset();
-});

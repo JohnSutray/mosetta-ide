@@ -1,6 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import type { GitBranch, GitState } from '@ide/protocol';
-import { BranchesWindow, Git } from '../src/state/git.js';
+import type { GitBranch, GitState } from '../src/types.js';
+import { FakeHost } from '@ide/api/testing';
+import { BranchesWindow, Git, type GitRemote } from '../src/state.js';
+
+new FakeHost();
+
+function fakeIde() {
+  const listeners = new Map<string, Array<(payload: unknown) => void>>();
+  const complaints: string[] = [];
+  return {
+    complaints,
+    on(event: string, handler: (payload: unknown) => void) {
+      const list = listeners.get(event) ?? [];
+      list.push(handler);
+      listeners.set(event, list);
+      return () => undefined;
+    },
+    working: () => () => undefined,
+    complain: (message: string) => complaints.push(message),
+  };
+}
+
+const remote: GitRemote = {
+  state: async () => ({ repo: false, branch: null, ahead: 0, behind: 0, files: {} }),
+  branches: async () => [],
+  outgoing: async () => ({ branch: null, upstream: null, local: [], remote: [], common: [] }) as never,
+  changes: async () => [],
+  run: async () => ({ error: null }),
+};
+
+function makeGit(ide = fakeIde()) {
+  return new Git(remote, ide);
+}
 
 function state(files: GitState['files']): GitState {
   return { repo: true, branch: 'main', ahead: 0, behind: 0, files };
@@ -12,15 +43,15 @@ function branch(name: string, extra: Partial<GitBranch> = {}): GitBranch {
 
 describe('git', () => {
   it('два экземпляра не делят ничего', () => {
-    const one = new Git();
-    const two = new Git();
+    const one = makeGit();
+    const two = makeGit();
     one.state.value = state({ 'a.ts': 'modified' });
     expect(two.state.value.files).toEqual({});
     expect(two.repo).toBe(false);
   });
 
   it('вся дорога до изменённого файла синяя', () => {
-    const git = new Git();
+    const git = makeGit();
     git.state.value = state({ 'src/deep/a.ts': 'modified' });
     expect([...git.tint.value.entries()].sort()).toEqual([
       ['src', 'modified'],
@@ -30,7 +61,7 @@ describe('git', () => {
   });
 
   it('новый и неверсионированный красятся одинаково', () => {
-    const git = new Git();
+    const git = makeGit();
     git.state.value = state({ 'a.ts': 'added', 'b.ts': 'untracked', 'c.ts': 'conflict' });
     expect(git.tint.value.get('a.ts')).toBe('added');
     expect(git.tint.value.get('b.ts')).toBe('added');
@@ -38,21 +69,23 @@ describe('git', () => {
   });
 
   it('удалённый файл не красится: в дереве его нет', () => {
-    const git = new Git();
+    const git = makeGit();
     git.state.value = state({ 'a.ts': 'deleted' });
     expect(git.tint.value.size).toBe(0);
   });
 
   it('окно веток берёт список у git, а не держит свой', () => {
-    const git = new Git();
-    const window = new BranchesWindow(git);
+    const ide = fakeIde();
+    const git = new Git(remote, ide);
+    const window = new BranchesWindow(git, ide);
     git.branches.value = [branch('main', { current: true }), branch('feature/x')];
     expect(window.shown.value.map((one) => one.name)).toEqual(['main', 'feature/x']);
   });
 
   it('стрелки ходят по отфильтрованному, а не по всему списку', () => {
-    const git = new Git();
-    const window = new BranchesWindow(git);
+    const ide = fakeIde();
+    const git = new Git(remote, ide);
+    const window = new BranchesWindow(git, ide);
     git.branches.value = [branch('main'), branch('feature/x'), branch('feature/y')];
     window.setFilter('fy');
     expect(window.shown.value.map((one) => one.name)).toEqual(['feature/y']);
@@ -62,8 +95,9 @@ describe('git', () => {
   });
 
   it('фильтр сбрасывает выделение на первую строку', () => {
-    const git = new Git();
-    const window = new BranchesWindow(git);
+    const ide = fakeIde();
+    const git = new Git(remote, ide);
+    const window = new BranchesWindow(git, ide);
     git.branches.value = [branch('main'), branch('feature/x')];
     window.move(1);
     expect(window.selected.value).toBe(1);
@@ -72,8 +106,9 @@ describe('git', () => {
   });
 
   it('заголовки разделов невыбираемы и стоят перед своими ветками', () => {
-    const git = new Git();
-    const window = new BranchesWindow(git);
+    const ide = fakeIde();
+    const git = new Git(remote, ide);
+    const window = new BranchesWindow(git, ide);
     git.branches.value = [branch('main'), branch('origin/main', { remote: true })];
     expect(window.rows.value.map((row) => row.kind)).toEqual([
       'head',
@@ -87,8 +122,9 @@ describe('git', () => {
   });
 
   it('Escape закрывает по одному слою', () => {
-    const git = new Git();
-    const window = new BranchesWindow(git);
+    const ide = fakeIde();
+    const git = new Git(remote, ide);
+    const window = new BranchesWindow(git, ide);
     git.branches.value = [branch('main', { current: true })];
     git.state.value = state({});
     window.show();
@@ -108,9 +144,11 @@ describe('git', () => {
   });
 
   it('без репозитория окно веток не открывается и говорит об этом', () => {
-    const git = new Git();
-    const window = new BranchesWindow(git);
+    const ide = fakeIde();
+    const git = new Git(remote, ide);
+    const window = new BranchesWindow(git, ide);
     window.show();
     expect(window.open.value).toBe(false);
+    expect(ide.complaints).toHaveLength(1);
   });
 });

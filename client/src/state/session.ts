@@ -17,6 +17,7 @@ export class Session {
   readonly connected = rpc.connected;
   readonly workspaces = signal<WorkspaceInfo[]>([]);
   readonly current = signal<WorkspaceInfo | null>(null);
+  readonly attached = signal<WorkspaceInfo | null>(null);
   readonly logs = signal<LogLine[]>([]);
 
   private readonly parts: Array<{ reset(): void }> = [];
@@ -63,11 +64,13 @@ export class Session {
   }
 
   private reset(): void {
+    this.attached.value = null;
     for (const part of this.parts) part.reset();
     for (const extra of this.extraResets) extra();
   }
 
   private async afterAttach(): Promise<void> {
+    this.attached.value = this.current.value;
     await fileTree.load('');
     lsp.statuses.value = await this.rpc.call('lsp.status', null);
     for (const file of await this.rpc.call('lsp.problems', null).catch(() => [])) {
@@ -102,6 +105,7 @@ export class Session {
 
   private listen(): void {
     this.connected.subscribe((now) => {
+      if (!now) this.attached.value = null;
       if (!now) return;
       if (this.everConnected) void this.resume();
       this.everConnected = true;
@@ -119,6 +123,7 @@ export class Session {
     this.rpc.on('workspace.attached', (info) => {
       if (info?.id !== this.current.value?.id) this.reset();
       this.current.value = info;
+      this.attached.value = info;
       if (info) rememberInUrl(info.root);
     });
 

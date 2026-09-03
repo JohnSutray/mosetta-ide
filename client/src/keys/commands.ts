@@ -6,8 +6,6 @@ type Runner = () => void | Promise<void>;
 const OPENS: Partial<Record<CommandId, string>> = {
   'search.everywhere': 'search',
   'projects.show': 'projects',
-  'git.branches': 'branches',
-  'git.push': 'push',
   'keys.show': 'keys',
   'symbol.goto': 'symbols',
   'terminal.shell': 'tool-shell',

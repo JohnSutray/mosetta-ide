@@ -16,7 +16,7 @@ import {
   toggleComment,
   undo,
 } from '@codemirror/commands';
-import { effect, type Signal } from '@preact/signals';
+import { effect, signal, type Signal } from '@preact/signals';
 import {
   activate,
   unstable_askSymbol as askSymbol,
@@ -25,17 +25,17 @@ import {
   editDoc,
   externalEpoch,
   fileDiagnostics,
-  headFor,
   hover,
   openDoc,
   pendingReveal,
   registry,
   settings,
-  unstable_showHunk as showHunk,
   t,
   visit,
   wantsFocus,
   type Ide,
+  type Hunk,
+  type HunkBox,
 } from '@ide/api/client';
 import { EMPTY_SCHEMA, type EmptyView } from './schema.js';
 import { STYLE } from './style.js';
@@ -44,6 +44,9 @@ import { CodeEditor } from './view.js';
 
 @registry({ key: 'editor.empty', schema: EMPTY_SCHEMA })
 export default class Editor {
+  private readonly head = signal<{ path: string; text: string | null } | null>(null);
+  private hunkHandler: ((hunk: Hunk, box: HunkBox) => void) | null = null;
+
   private view: EditorView | null = null;
   private open: Signal<boolean> | null = null;
   private shown: string | null = null;
@@ -147,8 +150,8 @@ export default class Editor {
     return (
       <CodeEditor
         file={file}
-        head={headFor(file.path)}
-        onHunk={showHunk}
+        head={this.headFor(file.path)}
+        onHunk={(hunk, box) => this.hunkHandler?.(hunk, box)}
         externalEpoch={externalEpoch.value}
         reveal={pendingReveal.value}
         wantsFocus={wantsFocus.value}
@@ -169,6 +172,19 @@ export default class Editor {
     const views = this.ide.registry<EmptyView>('editor.empty').all.value;
     if (views.length === 0) return <div class="editor-nothing">{t('editor.nothing')}</div>;
     return <>{views.map((one) => one.view() as never)}</>;
+  }
+
+  setHead(path: string, text: string | null): void {
+    this.head.value = { path, text };
+  }
+
+  onHunk(handler: ((hunk: Hunk, box: HunkBox) => void) | null): void {
+    this.hunkHandler = handler;
+  }
+
+  private headFor(path: string): string | null {
+    const known = this.head.value;
+    return known && known.path === path ? known.text : null;
   }
 
   toggle(): void {

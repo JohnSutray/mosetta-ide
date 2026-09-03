@@ -95,7 +95,7 @@ describe('контракт @ide/api', () => {
   it('взятое взаймы помечено, и список закрытый', () => {
     const BORROWED = [
       'darcula', 'dc', 'textStyle', 'languageFor', 'paintCode', 'inputKeymap', 'diffLines',
-      'showHunk', 'askSymbol',
+      'askSymbol',
     ].map((name) => `unstable_${name}`);
 
     const members = surfaceMembers(source('client.ts'));

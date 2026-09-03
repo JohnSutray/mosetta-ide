@@ -11,7 +11,6 @@ import { prompt, tree, treeOps } from './state/tree-ops.js';
 import { merge } from './state/merge.js';
 import { projects } from './state/projects.js';
 import { tools } from './state/tools.js';
-import { branchesWindow, pushWindow } from './state/git.js';
 import { activeMenu, activePick, popups } from '@ide/ui';
 
 export function registerCommands(): void {
@@ -74,9 +73,6 @@ export function registerCommands(): void {
     else projects.hide();
   });
 
-  commands.register('git.branches', () => branchesWindow.show());
-  commands.register('git.push', () => void pushWindow.show());
-  commands.register('git.fetch', () => void branchesWindow.do('fetch'));
   commands.register('pick.next', () => (symbols.list.value ? symbols.step(1) : activePick.value?.next()));
   commands.register('pick.prev', () => (symbols.list.value ? symbols.step(-1) : activePick.value?.prev()));
   commands.register('pick.accept', () => (symbols.list.value ? symbols.accept() : activePick.value?.accept()));

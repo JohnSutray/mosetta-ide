@@ -8,11 +8,6 @@ import type {
   DocVersion,
   FileDiagnostics,
   FileText,
-  GitAction,
-  GitBranch,
-  GitChange,
-  GitState,
-  PushPreview,
   HoverInfo,
   IndexHit,
   IndexKind,
@@ -102,17 +97,6 @@ export interface Api {
     result: SymbolSite[];
   };
 
-  'git.state': { params: null; result: GitState };
-  'git.branches': { params: null; result: GitBranch[] };
-  'git.outgoing': { params: null; result: PushPreview };
-  'git.changes': { params: { commit?: string }; result: GitChange[] };
-  'git.refresh': { params: null; result: GitState };
-  'git.head': { params: { path: string }; result: { path: string; text: string | null } };
-  'git.run': {
-    params: { action: GitAction; branch?: string; name?: string };
-    result: { error: string | null };
-  };
-
   'merge.state': { params: null; result: MergeSession | null };
   'merge.resolve': { params: { path: string; text: string | null }; result: MergeSession | null };
   'merge.cancel': { params: null; result: null };
@@ -147,9 +131,6 @@ export interface Events {
   'lsp.diagnostics': FileDiagnostics;
 
   'merge.state': MergeSession | null;
-
-  'git.state': GitState;
-  'git.output': { action: GitAction; chunk: string };
 
   'plugins.event': { name: string; event: string; payload: unknown };
 

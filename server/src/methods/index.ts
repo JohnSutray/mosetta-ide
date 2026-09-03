@@ -2,7 +2,6 @@ import type { HandlerTable } from '../rpc/context.js';
 import { configMethods } from './config.js';
 import { docMethods } from './doc.js';
 import { fsMethods } from './fs.js';
-import { gitMethods } from './git.js';
 import { lspMethods } from './lsp.js';
 import { mergeMethods } from './merge.js';
 import { pluginMethods } from './plugins.js';
@@ -67,14 +66,6 @@ export const handlers: HandlerTable = {
   'plugins.list': (p, c) => pluginMethods.list(p, c),
   'plugins.code': (p, c) => pluginMethods.code(p, c),
   'plugins.call': (p, c) => pluginMethods.call(p, c),
-
-  'git.state': (p, c) => gitMethods.state(p, c),
-  'git.branches': (p, c) => gitMethods.branches(p, c),
-  'git.outgoing': (p, c) => gitMethods.outgoing(p, c),
-  'git.changes': (p, c) => gitMethods.changes(p, c),
-  'git.refresh': (p, c) => gitMethods.refresh(p, c),
-  'git.head': (p, c) => gitMethods.head(p, c),
-  'git.run': (p, c) => gitMethods.run(p, c),
 
   'merge.state': (p, c) => mergeMethods.state(p, c),
   'merge.resolve': (p, c) => mergeMethods.resolve(p, c),
