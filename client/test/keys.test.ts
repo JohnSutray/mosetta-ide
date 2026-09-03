@@ -1,4 +1,4 @@
-import { inputMechanics } from '../src/editor/input-keymap.js';
+import { inputMechanics } from '@ide/code';
 import { reserved } from '../src/keys/reserved.js';
 import { describe, expect, it } from 'vitest';
 import { keyRules } from '../src/keys/dispatcher.js';

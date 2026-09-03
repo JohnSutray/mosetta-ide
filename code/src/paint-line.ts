@@ -7,6 +7,7 @@ export interface Chunk {
   text: string;
   color: string | null;
 }
+export type CodeChunk = Chunk;
 
 export class CodePainter {
   private readonly cache = new Map<string, Chunk[]>();

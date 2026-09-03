@@ -6,12 +6,9 @@ import type {
   ClientSurface,
   FileTreeMemory,
   FsAccess,
-  CodeChunk,
   FileProblems,
   Found,
   Ide,
-  Hunk,
-  Palette,
   PluginClass,
   Reveal,
   SymbolAsk,
@@ -48,9 +45,6 @@ export function closeFile(): Promise<void> {
 export function visit(path: string, line: number, character: number): void {
   surface().visit(path, line, character);
 }
-export function unstable_diffLines(before: string, after: string): Hunk[] {
-  return surface().unstable_diffLines(before, after);
-}
 export function unstable_askSymbol(where: SymbolAsk): Promise<void> {
   return surface().unstable_askSymbol(where);
 }
@@ -65,18 +59,6 @@ export function chordHeld(
   event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean },
 ): boolean {
   return surface().chordHeld(command, event);
-}
-export function unstable_textStyle(settings: {
-  fontFamily: string;
-  ligatures: boolean;
-}): Record<string, string> {
-  return surface().unstable_textStyle(settings);
-}
-export function unstable_languageFor(path: string): unknown {
-  return surface().unstable_languageFor(path);
-}
-export function unstable_paintCode(text: string, path: string): CodeChunk[] {
-  return surface().unstable_paintCode(text, path);
 }
 
 export const problems: { readonly value: FileProblems[] } = {
@@ -160,13 +142,6 @@ export const wantsFocus: { readonly value: number } = {
     return surface().wantsFocus.value;
   },
 };
-export const unstable_darcula: unknown = { fake: 'darcula' };
-export const unstable_dc: Palette = new Proxy(
-  {},
-  { get: (_target, key: string) => `var(--fake-${key})` },
-) as Palette;
-export const unstable_inputKeymap: readonly unknown[] = [];
-
 export { activate, registry, remote, stub } from './client.js';
 
 export interface Tip {
@@ -292,13 +267,6 @@ export class FakeSurface implements ClientSurface {
     this.visits.push({ path, line, character });
   }
 
-  unstable_diffLines(before: string, after: string): Hunk[] {
-    if (before === after) return [];
-    const a = before.split('\n');
-    const b = after.split('\n');
-    return [{ kind: 'modified', from: 1, to: Math.max(a.length, b.length), before: a }];
-  }
-
   async unstable_askSymbol(where: SymbolAsk): Promise<void> {
     this.symbols.push(where);
   }
@@ -319,14 +287,6 @@ export class FakeSurface implements ClientSurface {
     return this.chords.has(command);
   }
 
-  unstable_textStyle(settings: { fontFamily: string; ligatures: boolean }): Record<string, string> {
-    return { fontFamily: settings.fontFamily };
-  }
-
-  unstable_languageFor(path: string): unknown {
-    return { language: path.slice(path.lastIndexOf('.') + 1) };
-  }
-
   async openFile(path: string, options?: { focus?: boolean }): Promise<void> {
     this.opened.push({ path, focus: options?.focus });
   }
@@ -342,15 +302,6 @@ export class FakeSurface implements ClientSurface {
   primaryHeld(_event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
     return this.primary;
   }
-
-  unstable_paintCode(text: string, path: string): CodeChunk[] {
-    void path;
-    return [{ text, color: null }];
-  }
-
-  readonly unstable_darcula = unstable_darcula;
-  readonly unstable_dc = unstable_dc;
-  readonly unstable_inputKeymap = unstable_inputKeymap;
 }
 
 export class FakeRegistry {

@@ -1,4 +1,4 @@
-import { lineDiff, type Step } from '../editor/line-diff.js';
+import { lineDiff, type Step } from '@ide/code';
 
 export type RegionKind =
   | 'same'

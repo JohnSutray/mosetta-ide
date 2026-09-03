@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lineDiff } from '../src/editor/line-diff.js';
+import { lineDiff } from '@ide/code';
 
 const text = (...lines: string[]) => `${lines.join('\n')}\n`;
 

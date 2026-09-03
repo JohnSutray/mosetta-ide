@@ -14,7 +14,8 @@
     "strings": "src/en.json"
   },
   "dependencies": {
-    "@ide/api": "workspace:*"
+    "@ide/api": "workspace:*",
+    "@ide/code": "workspace:*"
   },
   "peerDependencies": {
     "@codemirror/commands": "^6.7.1",

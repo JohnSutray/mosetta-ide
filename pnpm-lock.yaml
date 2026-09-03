@@ -47,6 +47,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../plugins/api
+      '@ide/code':
+        specifier: workspace:*
+        version: link:../code
       '@ide/protocol':
         specifier: workspace:*
         version: link:../protocol
@@ -79,8 +82,51 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@22.20.1)
 
+  code:
+    dependencies:
+      '@codemirror/commands':
+        specifier: ^6.7.1
+        version: 6.11.0
+      '@codemirror/lang-css':
+        specifier: ^6.3.1
+        version: 6.3.1
+      '@codemirror/lang-html':
+        specifier: ^6.4.9
+        version: 6.4.12
+      '@codemirror/lang-javascript':
+        specifier: ^6.2.2
+        version: 6.2.5
+      '@codemirror/lang-json':
+        specifier: ^6.0.1
+        version: 6.0.2
+      '@codemirror/lang-markdown':
+        specifier: ^6.3.1
+        version: 6.5.2
+      '@codemirror/language':
+        specifier: ^6.10.8
+        version: 6.12.4
+      '@codemirror/state':
+        specifier: ^6.5.0
+        version: 6.7.1
+      '@codemirror/view':
+        specifier: ^6.35.3
+        version: 6.43.9
+      '@ide/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@lezer/highlight':
+        specifier: ^1.2.1
+        version: 1.2.3
+    devDependencies:
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+
   plugins/api:
     dependencies:
+      '@ide/code':
+        specifier: workspace:*
+        version: link:../../code
       '@ide/protocol':
         specifier: workspace:*
         version: link:../../protocol
@@ -100,6 +146,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
+      '@ide/code':
+        specifier: workspace:*
+        version: link:../../code
     devDependencies:
       '@codemirror/commands':
         specifier: ^6.7.1
@@ -134,6 +183,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
+      '@ide/code':
+        specifier: workspace:*
+        version: link:../../code
       '@ide/plugin-editor':
         specifier: workspace:*
         version: link:../editor
@@ -248,6 +300,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
+      '@ide/code':
+        specifier: workspace:*
+        version: link:../../code
       '@xterm/addon-fit':
         specifier: ^0.10.0
         version: 0.10.0(@xterm/xterm@5.5.0)

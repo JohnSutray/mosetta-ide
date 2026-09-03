@@ -1,4 +1,4 @@
-import { inputMechanics } from '../src/editor/input-keymap.js';
+import { inputMechanics } from '@ide/code';
 import { describe, expect, it } from 'vitest';
 import type { KeyBinding as CmBinding } from '@codemirror/view';
 import { WORLDS, inWorld, keymap } from './keymap-shared.js';

@@ -1,7 +1,10 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
-import { unstable_dc as dc, t } from '@ide/api/client';
+import { t } from '@ide/api/client';
+import { darcula } from '@ide/code';
+
+const dc = darcula.palette;
 import type { Attached } from './types.js';
 
 const FONT = "'JetBrains Mono', 'SF Mono', Menlo, monospace";

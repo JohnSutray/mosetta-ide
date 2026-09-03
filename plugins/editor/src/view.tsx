@@ -12,18 +12,9 @@ import { history } from '@codemirror/commands';
 import { activeLine } from './active-line.js';
 import { bracketMatching, indentOnInput, foldGutter } from '@codemirror/language';
 import { highlightSelectionMatches } from '@codemirror/search';
-import type { KeyBinding } from '@codemirror/view';
 import type { Diagnostic, DocState, EditorSettings, HoverInfo } from '@ide/protocol';
-import {
-  chordHeld,
-  unstable_darcula as darcula,
-  unstable_inputKeymap as inputKeymap,
-  unstable_languageFor as languageFor,
-  takeFocusOnMount,
-  unstable_textStyle as textStyle,
-  type Hunk,
-  type HunkBox,
-} from '@ide/api/client';
+import { chordHeld, takeFocusOnMount, type Hunk, type HunkBox } from '@ide/api/client';
+import { darcula, inputMechanics, languages } from '@ide/code';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
 import { gitMarks, setHeadText } from './git-marks.js';
 import { lspHover } from './hover.js';
@@ -80,7 +71,7 @@ export function CodeEditor({
       bracketMatching(),
       activeLine,
       highlightSelectionMatches(),
-      keymap.of([...(inputKeymap as KeyBinding[])]),
+      keymap.of([...inputMechanics.keymap]),
       EditorView.updateListener.of((update) => {
         if (update.selectionSet || update.docChanged) {
           const at = update.state.selection.main.head;
@@ -101,7 +92,7 @@ export function CodeEditor({
           return true;
         },
       }),
-      darcula as Extension,
+      darcula.extension,
       gitMarks.gutter((hunk, box) => handlers.current.onHunk(hunk, box)),
       diagnosticsExtension,
       lspHover(
@@ -110,11 +101,11 @@ export function CodeEditor({
       ),
       EditorView.theme({
         '&': { fontSize: `${settings.fontSize}px` },
-        '.cm-content': textStyle(settings),
+        '.cm-content': darcula.textStyle(settings),
         '.cm-cursor, .cm-dropCursor': { borderLeftWidth: `${settings.caretWidth}px` },
       }),
       EditorState.tabSize.of(settings.tabSize),
-      languageFor(file.path) as Extension,
+      languages.of(file.path),
       EditorState.readOnly.of(file.truncated),
     ];
 

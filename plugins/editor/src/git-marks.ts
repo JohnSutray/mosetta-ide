@@ -1,6 +1,7 @@
 import { StateEffect, StateField, type Extension } from '@codemirror/state';
 import { EditorView, gutter, GutterMarker } from '@codemirror/view';
-import { unstable_diffLines as diffLines, type Hunk, type HunkBox } from '@ide/api/client';
+import type { Hunk, HunkBox } from '@ide/api/client';
+import { lineDiff } from '@ide/code';
 
 export const setHeadText = StateEffect.define<string | null>();
 
@@ -25,7 +26,7 @@ export const gitField = StateField.define<GitLines>({
     }
     if (!changed && !tr.docChanged) return value;
     if (head === null) return value.hunks.length === 0 && value.head === null ? value : { head, hunks: [] };
-    return { head, hunks: diffLines(head, tr.state.doc.toString()) };
+    return { head, hunks: lineDiff.hunks(head, tr.state.doc.toString()) };
   },
 });
 

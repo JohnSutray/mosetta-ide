@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { codePainter } from '../src/editor/paint-line.js';
-import { darcula } from '../src/editor/darcula.js';
+import { codePainter } from '@ide/code';
+import { darcula } from '@ide/code';
 
 function colorOf(text: string, path: string, word: string): string | null {
   const chunk = codePainter.paint(text, path).find((item) => item.text === word);

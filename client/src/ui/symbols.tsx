@@ -1,8 +1,8 @@
 import { symbols } from '../state/symbols.js';
 import { config } from '../state/config.js';
 import { useEffect, useRef } from 'preact/hooks';
-import { codePainter } from '../editor/paint-line.js';
-import { CodeView } from '../editor/code-view.js';
+import { codePainter } from '@ide/code';
+import { CodeView } from '@ide/code';
 import { i18n } from '../i18n/index.js';
 import { Popup, Resizer, geometry } from '@ide/ui';
 

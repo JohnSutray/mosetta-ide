@@ -1,4 +1,4 @@
-import { inputMechanics } from '../editor/input-keymap.js';
+import { inputMechanics } from '@ide/code';
 import { commands } from './commands.js';
 import { keysHelp } from '../state/keys-help.js';
 import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';

@@ -2,6 +2,8 @@ import { EditorView } from '@codemirror/view';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tagHighlighter, tags as t } from '@lezer/highlight';
 
+export type Palette = typeof PALETTE;
+
 const PALETTE = {
   fg: '#A9B7C6',
   bg: '#2B2B2B',

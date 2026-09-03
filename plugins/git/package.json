@@ -24,8 +24,9 @@
   },
   "dependencies": {
     "@ide/api": "workspace:*",
-    "@ide/ui": "workspace:*",
-    "@ide/plugin-editor": "workspace:*"
+    "@ide/code": "workspace:*",
+    "@ide/plugin-editor": "workspace:*",
+    "@ide/ui": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

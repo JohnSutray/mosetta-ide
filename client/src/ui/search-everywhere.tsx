@@ -1,7 +1,7 @@
 import { config } from '../state/config.js';
 import { search } from '../state/search.js';
 import { useEffect, useRef } from 'preact/hooks';
-import { CodeView } from '../editor/code-view.js';
+import { CodeView } from '@ide/code';
 import { i18n } from '../i18n/index.js';
 import type { IndexHit } from '@ide/protocol';
 import { Popup } from '@ide/ui';

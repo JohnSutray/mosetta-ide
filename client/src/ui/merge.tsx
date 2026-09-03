@@ -2,7 +2,7 @@ import { config } from '../state/config.js';
 import { merge } from '../state/merge.js';
 import type { MergeFile } from '@ide/protocol';
 import { MergeColumns } from './merge-columns.js';
-import { CodeView } from '../editor/code-view.js';
+import { CodeView } from '@ide/code';
 import { i18n } from '../i18n/index.js';
 import { FileIcon, Popup } from '@ide/ui';
 

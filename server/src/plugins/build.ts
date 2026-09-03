@@ -26,6 +26,20 @@ const UI_NAMES = [
   'fileTypes',
 ];
 
+const CODE_NAMES = [
+  'darcula',
+  'Darcula',
+  'languages',
+  'Languages',
+  'codePainter',
+  'CodePainter',
+  'lineDiff',
+  'LineDiff',
+  'inputMechanics',
+  'InputMechanics',
+  'CodeView',
+];
+
 const SHARED: Record<string, { from: string; names: string[] }> = {
   preact: { from: 'preact', names: ['h', 'Fragment', 'createElement', 'render', 'cloneElement'] },
   'preact/hooks': {
@@ -37,6 +51,7 @@ const SHARED: Record<string, { from: string; names: string[] }> = {
     names: ['signal', 'computed', 'effect', 'batch', 'useSignal'],
   },
   '@ide/ui': { from: 'ui', names: UI_NAMES },
+  '@ide/code': { from: 'code', names: CODE_NAMES },
   '@ide/api/client': {
     from: 'api',
     names: [
@@ -61,18 +76,11 @@ const SHARED: Record<string, { from: string; names: string[] }> = {
       'externalEpoch',
       'pendingReveal',
       'visit',
-      'unstable_diffLines',
       'unstable_askSymbol',
       'hover',
       'takeFocusOnMount',
       'wantsFocus',
       'chordHeld',
-      'unstable_darcula',
-      'unstable_textStyle',
-      'unstable_dc',
-      'unstable_paintCode',
-      'unstable_languageFor',
-      'unstable_inputKeymap',
       'remote',
       'stub',
       'activate',

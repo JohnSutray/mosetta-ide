@@ -1,7 +1,9 @@
 import { hoverTooltip, type Tooltip } from '@codemirror/view';
 import type { EditorState } from '@codemirror/state';
 import type { HoverInfo, Severity } from '@ide/protocol';
-import { unstable_dc as dc, unstable_paintCode as paintCode } from '@ide/api/client';
+import { codePainter, darcula } from '@ide/code';
+
+const dc = darcula.palette;
 import { diagnostics } from './diagnostics.js';
 
 export function lspHover(
@@ -36,7 +38,7 @@ export function lspHover(
         if (info) {
           const code = document.createElement('div');
           code.className = 'cm-hover-code';
-          for (const chunk of paintCode(stripFences(info.markdown), path)) {
+          for (const chunk of codePainter.paint(stripFences(info.markdown), path)) {
             code.append(painted(chunk.text, chunk.color));
           }
           dom.append(code);

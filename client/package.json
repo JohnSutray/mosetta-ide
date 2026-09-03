@@ -22,6 +22,7 @@
     "@codemirror/state": "^6.5.0",
     "@codemirror/view": "^6.35.3",
     "@ide/api": "workspace:*",
+    "@ide/code": "workspace:*",
     "@ide/protocol": "workspace:*",
     "@ide/ui": "workspace:*",
     "@lezer/highlight": "^1.2.1",

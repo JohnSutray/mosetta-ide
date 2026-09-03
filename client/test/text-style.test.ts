@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { darcula } from '../src/editor/darcula.js';
+import { darcula } from '@ide/code';
 
 describe('шрифт редактора', () => {
   it('выключены — гасим И лигатуры, И контекстные альтернативы', () => {

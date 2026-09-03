@@ -1,4 +1,3 @@
-import { inputMechanics } from '../editor/input-keymap.js';
 import { keyContexts } from '../keys/context.js';
 import { commands } from '../keys/commands.js';
 import { keysHelp } from '../state/keys-help.js';
@@ -15,10 +14,6 @@ import { tools } from '../state/tools.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { chordHeld } from '../keys/chords.js';
-import { darcula } from '../editor/darcula.js';
-import { languages } from '../editor/languages.js';
-import { codePainter } from '../editor/paint-line.js';
-import { lineDiff } from '../editor/line-diff.js';
 import { registerCommands } from '../commands.js';
 import { Dispatcher } from '../keys/dispatcher.js';
 import { SearchEverywhere } from './search-everywhere.js';
@@ -119,14 +114,7 @@ export function App() {
       takeFocusOnMount: () => editorFocus.takeOnMount(),
       wantsFocus: editorFocus.wanted,
       chordHeld,
-      unstable_diffLines: (before, after) => lineDiff.hunks(before, after),
       unstable_askSymbol: (where) => symbols.ask(where),
-      unstable_dc: darcula.palette,
-      unstable_paintCode: (text, path) => codePainter.paint(text, path),
-      unstable_darcula: darcula.extension,
-      unstable_textStyle: (style) => darcula.textStyle(style),
-      unstable_languageFor: (path) => languages.of(path),
-      unstable_inputKeymap: inputMechanics.keymap,
     };
     void plugins.load(surface, store).then(() => {
       const dead = commands.missing();

@@ -1,6 +1,7 @@
 packages:
   - protocol
   - ui
+  - code
   - server
   - client
   - plugins/*

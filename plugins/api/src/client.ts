@@ -84,20 +84,13 @@ export declare const pendingReveal: { readonly value: Reveal | null };
 
 export declare function visit(path: string, line: number, character: number): void;
 
-export type HunkKind = 'added' | 'modified' | 'removed';
-export interface Hunk {
-  kind: HunkKind;
-  from: number;
-  to: number;
-  before: string[];
-}
+export type { Hunk, HunkKind } from '@ide/code';
+
 export interface HunkBox {
   left: number;
   top: number;
   bottom: number;
 }
-
-export declare function unstable_diffLines(before: string, after: string): Hunk[];
 
 export interface SymbolAsk {
   line: number;
@@ -123,55 +116,6 @@ export declare function chordHeld(
   event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean },
 ): boolean;
 
-export declare const unstable_darcula: unknown;
-
-export declare function unstable_textStyle(settings: {
-  fontFamily: string;
-  ligatures: boolean;
-}): Record<string, string>;
-
-export interface Palette {
-  fg: string;
-  bg: string;
-  keyword: string;
-  string: string;
-  number: string;
-  comment: string;
-  doc: string;
-  todo: string;
-  parenBg: string;
-  parenFg: string;
-  treeBg: string;
-  iconDir: string;
-  const: string;
-  class: string;
-  func: string;
-  annot: string;
-  curline: string;
-  selection: string;
-  treesel: string;
-  caret: string;
-  divider: string;
-  gutterBg: string;
-  gutterFg: string;
-  gutterHl: string;
-  errorFg: string;
-  warnFg: string;
-  tooltipBg: string;
-}
-export declare const unstable_dc: Palette;
-
-export interface CodeChunk {
-  text: string;
-  color: string | null;
-}
-
-export declare function unstable_paintCode(text: string, path: string): CodeChunk[];
-
-export declare function unstable_languageFor(path: string): unknown;
-
-export declare const unstable_inputKeymap: readonly unknown[];
-
 export interface ClientSurface {
   t: typeof t;
   problems: typeof problems;
@@ -194,18 +138,11 @@ export interface ClientSurface {
   externalEpoch: typeof externalEpoch;
   pendingReveal: typeof pendingReveal;
   visit: typeof visit;
-  unstable_diffLines: typeof unstable_diffLines;
   unstable_askSymbol: typeof unstable_askSymbol;
   hover: typeof hover;
   takeFocusOnMount: typeof takeFocusOnMount;
   wantsFocus: typeof wantsFocus;
   chordHeld: typeof chordHeld;
-  unstable_darcula: typeof unstable_darcula;
-  unstable_textStyle: typeof unstable_textStyle;
-  unstable_dc: typeof unstable_dc;
-  unstable_paintCode: typeof unstable_paintCode;
-  unstable_languageFor: typeof unstable_languageFor;
-  unstable_inputKeymap: typeof unstable_inputKeymap;
 }
 
 export interface PluginToolbarEntry {
