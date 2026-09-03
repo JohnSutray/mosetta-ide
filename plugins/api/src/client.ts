@@ -1,5 +1,5 @@
 import type { Signal } from '@preact/signals';
-import type { Diagnostic, DocState, HoverInfo, Settings, WorkspaceInfo } from '@ide/protocol';
+import type { DirEntry, Diagnostic, DocState, EntryKind, HoverInfo, Settings, WorkspaceInfo } from '@ide/protocol';
 
 export interface Size {
   w: number;
@@ -32,6 +32,35 @@ export interface ResizerProps {
 export declare const settings: { readonly value: Settings | null };
 
 export declare const project: { readonly value: WorkspaceInfo | null };
+
+export type { DirEntry, EntryKind } from '@ide/protocol';
+
+export interface FileTreeMemory {
+  readonly children: { readonly value: ReadonlyMap<string, DirEntry[]> };
+  readonly expanded: Signal<Set<string>>;
+  readonly rootExpanded: Signal<boolean>;
+  load(path: string): Promise<void>;
+  ensureExpanded(path: string): Promise<void>;
+  toggle(path: string): Promise<void>;
+}
+export declare const fileTree: FileTreeMemory;
+
+export interface FsAccess {
+  create(path: string, kind: EntryKind): Promise<DirEntry>;
+  move(from: string, to: string): Promise<DirEntry>;
+  copy(from: string, to: string): Promise<DirEntry>;
+  remove(path: string): Promise<void>;
+  write(path: string, text: string): Promise<void>;
+  writeBytes(path: string, base64: string): Promise<DirEntry>;
+  absolute(path: string): Promise<string>;
+  reveal(path: string): Promise<void>;
+}
+export declare const fs: FsAccess;
+
+export declare function openFile(path: string, options?: { focus?: boolean }): Promise<void>;
+export declare function flushDocs(): Promise<void>;
+export declare function setSetting(section: string, key: string, value: string | boolean): Promise<void>;
+export declare function primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean;
 
 export declare const openDoc: { readonly value: DocState | null };
 
@@ -151,6 +180,12 @@ export interface ClientSurface {
   keysFor: typeof keysFor;
   settings: typeof settings;
   project: typeof project;
+  fileTree: typeof fileTree;
+  fs: typeof fs;
+  openFile: typeof openFile;
+  flushDocs: typeof flushDocs;
+  setSetting: typeof setSetting;
+  primaryHeld: typeof primaryHeld;
   openDoc: typeof openDoc;
   editDoc: typeof editDoc;
   closeFile: typeof closeFile;

@@ -19,7 +19,6 @@ export const COMMANDS = {
   'nav.forward': 'Вперёд по местам каретки',
   'edit.indent': 'Отступ вправо',
   'edit.unindent': 'Отступ влево',
-  'panel.tree': 'Панель: дерево проекта',
   'panel.editor': 'Панель редактора',
 
   'terminal.shell': 'Чем запускать терминал',
@@ -43,25 +42,6 @@ export const COMMANDS = {
   'menu.accept': 'Меню: выбрать',
 
   'popup.close': 'Закрыть верхний попап',
-
-  'prompt.confirm': 'Модалка: подтвердить',
-
-  'tree.next': 'Дерево: вниз',
-  'tree.prev': 'Дерево: вверх',
-  'tree.expand': 'Дерево: раскрыть или войти',
-  'tree.collapse': 'Дерево: свернуть или выйти',
-
-  'tree.newFile': 'Дерево: новый файл',
-  'tree.newFolder': 'Дерево: новая папка',
-  'tree.open': 'Дерево: открыть и уйти в редактор',
-  'tree.rename': 'Дерево: переименовать',
-  'tree.delete': 'Дерево: удалить',
-  'tree.copy': 'Дерево: копировать',
-  'tree.cut': 'Дерево: вырезать',
-  'tree.paste': 'Дерево: вставить',
-  'tree.copyPath': 'Дерево: скопировать путь',
-  'tree.reveal': 'Дерево: показать в файловом менеджере',
-  'tree.follow': 'Дерево: следовать за кареткой',
 
   'search.everywhere': 'Найти всё',
   'search.next': 'Поиск: вниз',

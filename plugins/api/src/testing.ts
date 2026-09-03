@@ -1,9 +1,11 @@
 import Ajv, { type ValidateFunction } from 'ajv';
 import { signal, type Signal } from '@preact/signals';
-import type { Diagnostic, DocState, HoverInfo, Settings, WorkspaceInfo } from '@ide/protocol';
+import type { DirEntry, Diagnostic, DocState, HoverInfo, Settings, WorkspaceInfo } from '@ide/protocol';
 import { attach, hooksOf, registriesOf } from './client.js';
 import type {
   ClientSurface,
+  FileTreeMemory,
+  FsAccess,
   CodeChunk,
   FileProblems,
   Found,
@@ -97,6 +99,42 @@ export const project: { readonly value: WorkspaceInfo | null } = {
     return surface().project.value;
   },
 };
+export const fileTree: FileTreeMemory = {
+  get children() {
+    return surface().fileTree.children;
+  },
+  get expanded() {
+    return surface().fileTree.expanded;
+  },
+  get rootExpanded() {
+    return surface().fileTree.rootExpanded;
+  },
+  load: (path) => surface().fileTree.load(path),
+  ensureExpanded: (path) => surface().fileTree.ensureExpanded(path),
+  toggle: (path) => surface().fileTree.toggle(path),
+};
+export const fs: FsAccess = {
+  create: (path, kind) => surface().fs.create(path, kind),
+  move: (from, to) => surface().fs.move(from, to),
+  copy: (from, to) => surface().fs.copy(from, to),
+  remove: (path) => surface().fs.remove(path),
+  write: (path, text) => surface().fs.write(path, text),
+  writeBytes: (path, base64) => surface().fs.writeBytes(path, base64),
+  absolute: (path) => surface().fs.absolute(path),
+  reveal: (path) => surface().fs.reveal(path),
+};
+export function openFile(path: string, options?: { focus?: boolean }): Promise<void> {
+  return surface().openFile(path, options);
+}
+export function flushDocs(): Promise<void> {
+  return surface().flushDocs();
+}
+export function setSetting(section: string, key: string, value: string | boolean): Promise<void> {
+  return surface().setSetting(section, key, value);
+}
+export function primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
+  return surface().primaryHeld(event);
+}
 export const openDoc: { readonly value: DocState | null } = {
   get value() {
     return surface().openDoc.value;
@@ -136,6 +174,31 @@ export interface Tip {
   keys: string[];
 }
 
+export class FakeFileTree implements FileTreeMemory {
+  readonly children = signal<Map<string, DirEntry[]>>(new Map());
+  readonly expanded = signal<Set<string>>(new Set());
+  readonly rootExpanded = signal(true);
+  readonly loads: string[] = [];
+
+  async load(path: string): Promise<void> {
+    this.loads.push(path);
+    if (!this.children.value.has(path)) {
+      this.children.value = new Map(this.children.value).set(path, []);
+    }
+  }
+  async ensureExpanded(path: string): Promise<void> {
+    if (path === '' || this.expanded.value.has(path)) return;
+    await this.toggle(path);
+  }
+  async toggle(path: string): Promise<void> {
+    const next = new Set(this.expanded.value);
+    if (next.has(path)) next.delete(path);
+    else next.add(path);
+    this.expanded.value = next;
+    if (!this.children.value.has(path)) await this.load(path);
+  }
+}
+
 export class FakeSurface implements ClientSurface {
   readonly problems: Signal<FileProblems[]> = signal([]);
   readonly settings: Signal<Settings | null> = signal(null);
@@ -146,6 +209,40 @@ export class FakeSurface implements ClientSurface {
 
   readonly project: Signal<WorkspaceInfo | null> = signal(null);
   readonly openDoc: Signal<DocState | null> = signal(null);
+  readonly fileTree: FakeFileTree = new FakeFileTree();
+  readonly fsCalls: Array<{ op: string; args: unknown[] }> = [];
+  readonly fs: FsAccess = {
+    create: async (path, kind) => {
+      this.fsCalls.push({ op: 'create', args: [path, kind] });
+      return { path, name: path.split('/').pop() ?? path, kind } as DirEntry;
+    },
+    move: async (from, to) => {
+      this.fsCalls.push({ op: 'move', args: [from, to] });
+      return { path: to, name: to.split('/').pop() ?? to, kind: 'file' } as DirEntry;
+    },
+    copy: async (from, to) => {
+      this.fsCalls.push({ op: 'copy', args: [from, to] });
+      return { path: to, name: to.split('/').pop() ?? to, kind: 'file' } as DirEntry;
+    },
+    remove: async (path) => {
+      this.fsCalls.push({ op: 'remove', args: [path] });
+    },
+    write: async (path, text) => {
+      this.fsCalls.push({ op: 'write', args: [path, text] });
+    },
+    writeBytes: async (path, base64) => {
+      this.fsCalls.push({ op: 'writeBytes', args: [path, base64] });
+      return { path, name: path.split('/').pop() ?? path, kind: 'file' } as DirEntry;
+    },
+    absolute: async (path) => `/абсолютно/${path}`,
+    reveal: async (path) => {
+      this.fsCalls.push({ op: 'reveal', args: [path] });
+    },
+  };
+  readonly opened: Array<{ path: string; focus: boolean | undefined }> = [];
+  readonly flushes = { count: 0 };
+  readonly settingWrites: Array<{ section: string; key: string; value: string | boolean }> = [];
+  primary = false;
   readonly dirty = signal(false);
   closed = 0;
   readonly fileDiagnostics: Signal<Diagnostic[]> = signal([]);
@@ -228,6 +325,22 @@ export class FakeSurface implements ClientSurface {
 
   unstable_languageFor(path: string): unknown {
     return { language: path.slice(path.lastIndexOf('.') + 1) };
+  }
+
+  async openFile(path: string, options?: { focus?: boolean }): Promise<void> {
+    this.opened.push({ path, focus: options?.focus });
+  }
+
+  async flushDocs(): Promise<void> {
+    this.flushes.count += 1;
+  }
+
+  async setSetting(section: string, key: string, value: string | boolean): Promise<void> {
+    this.settingWrites.push({ section, key, value });
+  }
+
+  primaryHeld(_event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
+    return this.primary;
   }
 
   unstable_paintCode(text: string, path: string): CodeChunk[] {

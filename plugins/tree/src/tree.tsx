@@ -1,18 +1,23 @@
-import { treeMenu } from '../state/tree-menu.js';
-import { editorFocus } from '../state/editor.js';
-import { doc, fileTree, lsp, session } from '../state/session.js';
-import { tree, treeOps } from '../state/tree-ops.js';
-import { treeTints } from '../state/tree-tint.js';
+import { fileTree, openDoc, openFile, primaryHeld, project, t } from '@ide/api/client';
 import { useEffect } from 'preact/hooks';
-import type { DirEntry } from '@ide/protocol';
-import { keyHost } from '../keys/host.js';
-import { i18n } from '../i18n/index.js';
+import type { DirEntry } from '@ide/api/client';
 import { Chevron, DirIcon, FileIcon, RootIcon } from '@ide/ui';
+import type { TreeMenuState } from './menu.js';
+import type { TreeOps, TreeSelection } from './state.js';
+import type { TreeTints } from './tints.js';
 
-export function Tree() {
-  const ws = session.current.value;
+export interface TreeProps {
+  selection: TreeSelection;
+  ops: TreeOps;
+  menu: TreeMenuState;
+  tints: TreeTints;
+  broken: { readonly value: ReadonlySet<string> };
+}
+
+export function Tree(props: TreeProps) {
+  const ws = project.value;
   const children = fileTree.children.value.get('');
-  const focused = tree.focus.value;
+  const focused = props.selection.focus.value;
 
   useEffect(() => {
     if (!focused) return;
@@ -35,8 +40,8 @@ export function Tree() {
         onClick={() => (fileTree.rootExpanded.value = !fileTree.rootExpanded.value)}
         onContextMenu={(event) => {
           event.preventDefault();
-          tree.focus.value = '';
-          treeMenu.show('', true, event.clientX, event.clientY);
+          props.selection.focus.value = '';
+          props.menu.show('', true, event.clientX, event.clientY);
         }}
         onDragOver={(event) => {
           event.preventDefault();
@@ -48,7 +53,7 @@ export function Tree() {
           event.preventDefault();
           clearDrop();
           const raw = event.dataTransfer?.getData('application/x-ide-paths');
-          if (raw) void treeOps.dropInto(JSON.parse(raw) as string[], '', event.altKey);
+          if (raw) void props.ops.dropInto(JSON.parse(raw) as string[], '', event.altKey);
         }}
         title={ws.root}
       >
@@ -61,41 +66,42 @@ export function Tree() {
         <span class="tree-name is-root">{ws.name}</span>
         <span class="tree-note">{shortenHome(ws.root)}</span>
       </div>
-      {open && <Level entries={children} depth={1} />}
+      {open && <Level entries={children} depth={1} {...props} />}
     </div>
   );
 }
 
-function Level({ entries, depth }: { entries: DirEntry[]; depth: number }) {
+function Level({ entries, depth, ...props }: { entries: DirEntry[]; depth: number } & TreeProps) {
   return (
     <>
       {entries.map((entry) => (
-        <Row key={entry.path} entry={entry} depth={depth} />
+        <Row key={entry.path} entry={entry} depth={depth} {...props} />
       ))}
     </>
   );
 }
 
-function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
+function Row({ entry, depth, ...props }: { entry: DirEntry; depth: number } & TreeProps) {
+  const { selection, ops, menu, tints } = props;
   const isDir = entry.kind === 'dir';
   const isOpen = fileTree.expanded.value.has(entry.path);
-  const isCurrent = doc.open.value?.path === entry.path;
+  const isCurrent = openDoc.value?.path === entry.path;
   const kids = isOpen ? fileTree.children.value.get(entry.path) : undefined;
-  const broken = lsp.brokenPaths.value.has(entry.path);
-  const tint = entry.noScan ? undefined : treeTints.of(entry.path);
+  const broken = props.broken.value.has(entry.path);
+  const tint = entry.noScan ? undefined : tints.of(entry.path);
 
   return (
     <>
       <div
         class={`tree-row ${isCurrent ? 'is-current' : ''} ${entry.noScan ? 'is-excluded' : ''} ${
-          tree.picked.value.has(entry.path) ? 'is-picked' : ''
-        } ${tree.focus.value === entry.path ? 'is-focused' : ''}`}
+          selection.picked.value.has(entry.path) ? 'is-picked' : ''
+        } ${selection.focus.value === entry.path ? 'is-focused' : ''}`}
         style={{ paddingLeft: `${6 + depth * 14}px` }}
         data-path={entry.path}
         draggable
         onDragStart={(event) => {
-          const paths = tree.picked.value.has(entry.path)
-            ? [...tree.picked.value]
+          const paths = selection.picked.value.has(entry.path)
+            ? [...selection.picked.value]
             : [entry.path];
           event.dataTransfer?.setData('application/x-ide-paths', JSON.stringify(paths));
           if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copyMove';
@@ -113,34 +119,33 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
           clearDrop();
           const raw = event.dataTransfer?.getData('application/x-ide-paths');
           if (!raw) return;
-          void treeOps.dropInto(JSON.parse(raw) as string[], folderFor(entry), event.altKey);
+          void ops.dropInto(JSON.parse(raw) as string[], folderFor(entry), event.altKey);
         }}
         onClick={(event) => {
-          const additive = keyHost.primaryHeld(event);
+          const additive = primaryHeld(event);
           if (event.shiftKey) {
-            tree.range(entry.path, tree.visibleOrder());
+            selection.range(entry.path, selection.visibleOrder());
             return;
           }
           if (additive) {
-            tree.toggle(entry.path);
+            selection.toggle(entry.path);
             return;
           }
-          tree.only(entry.path);
+          selection.only(entry.path);
           if (isDir) {
             void fileTree.toggle(entry.path);
             return;
           }
-          editorFocus.openWithoutFocus();
-          void doc.openAt(entry.path);
+          void openFile(entry.path, { focus: false });
         }}
         onDblClick={() => {
-          if (!isDir) void doc.openAt(entry.path).then(editorFocus.focus);
+          if (!isDir) void openFile(entry.path, { focus: true });
         }}
         onContextMenu={(event) => {
           event.preventDefault();
-          if (!tree.picked.value.has(entry.path)) tree.only(entry.path);
-          else tree.focus.value = entry.path;
-          treeMenu.show(entry.path, isDir, event.clientX, event.clientY);
+          if (!selection.picked.value.has(entry.path)) selection.only(entry.path);
+          else selection.focus.value = entry.path;
+          menu.show(entry.path, isDir, event.clientX, event.clientY);
         }}
         title={entry.path}
       >
@@ -153,9 +158,9 @@ function Row({ entry, depth }: { entry: DirEntry; depth: number }) {
         <span class={`tree-name ${broken ? 'is-broken' : ''} ${tint ? `git-${tint}` : ''}`}>
           {entry.name}
         </span>
-        {entry.noScan && <span class="tree-note">{i18n.t('tree.noScan')}</span>}
+        {entry.noScan && <span class="tree-note">{t('tree.noScan')}</span>}
       </div>
-      {kids ? <Level entries={kids} depth={depth + 1} /> : null}
+      {kids ? <Level entries={kids} depth={depth + 1} {...props} /> : null}
     </>
   );
 }

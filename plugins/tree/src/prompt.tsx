@@ -1,7 +1,7 @@
-import { prompt, tree, type Ask } from '../state/tree-ops.js';
+import { t } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import { i18n } from '../i18n/index.js';
 import { Popup } from '@ide/ui';
+import type { Ask, Prompt as PromptState, TreeSelection } from './state.js';
 
 const LINE = 18;
 const CHROME = 86;
@@ -17,7 +17,7 @@ function heightFor(ask: Ask): number {
   return Math.min(CEILING, CHROME + (ask.field ? FIELD : 0) + lines * LINE);
 }
 
-export function Prompt() {
+export function Prompt({ prompt, selection }: { prompt: PromptState; selection: TreeSelection }) {
   const field = useRef<HTMLInputElement>(null);
   const ask = prompt.ask.value;
 
@@ -30,7 +30,7 @@ export function Prompt() {
   }, [ask?.id]);
 
   useEffect(() => {
-    if (!ask) tree.takeKeyboard();
+    if (!ask) selection.takeKeyboard();
   }, [ask === null]);
 
   if (!ask) return null;
@@ -44,8 +44,8 @@ export function Prompt() {
       min={{ w: 320, h: 140 }}
       onClose={() => prompt.cancel()}
     >
-      <div class="branches-head">
-        <span class="branches-title">{ask.title}</span>
+      <div class="prompt-head">
+        <span class="prompt-title">{ask.title}</span>
       </div>
 
       <form
@@ -70,7 +70,7 @@ export function Prompt() {
 
         <div class="prompt-foot">
           <button class="button" type="button" onClick={() => prompt.cancel()}>
-            {i18n.t('prompt.cancel')}
+            {t('prompt.cancel')}
           </button>
           <button class={`button ${ask.danger ? 'is-danger' : ''}`} type="submit">
             {ask.confirm}

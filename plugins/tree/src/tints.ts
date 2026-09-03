@@ -1,5 +1,4 @@
-import { computed, type ReadonlySignal } from '@preact/signals';
-import type { Registry } from './registry.js';
+import type { RegistryHandle } from '@ide/api/client';
 
 export type TreeTint = 'modified' | 'added' | 'conflict';
 
@@ -16,19 +15,13 @@ export const TINT_SCHEMA = {
 } as const;
 
 export class TreeTints {
-  private all: ReadonlySignal<TintSource[]> = computed(() => []);
-
-  watch(store: Registry): void {
-    this.all = store.all<TintSource>('tree.tint');
-  }
+  constructor(private readonly sources: RegistryHandle<TintSource>) {}
 
   of(path: string): TreeTint | undefined {
-    for (const source of this.all.value) {
+    for (const source of this.sources.all.value) {
       const tint = source.tint.value.get(path);
       if (tint) return tint;
     }
     return undefined;
   }
 }
-
-export const treeTints = new TreeTints();

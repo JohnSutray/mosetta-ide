@@ -1,4 +1,3 @@
-import { treeFollow } from '../state/tree-follow.js';
 import { keysHelp } from '../state/keys-help.js';
 import { search } from '../state/search.js';
 import { session } from '../state/session.js';
@@ -7,7 +6,6 @@ import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
 import { computed } from '@preact/signals';
 import { i18n } from '../i18n/index.js';
-import { panels } from './panels.js';
 import type { Registry } from '../state/registry.js';
 import { Icon, tips, type IconName } from '@ide/ui';
 
@@ -31,17 +29,10 @@ function ours(name: IconName) {
   return (filled: boolean) => <Icon name={name} filled={filled} />;
 }
 
-function panelWish(id: string, icon: IconName): ButtonWish {
-  const panel = panels.all.find((item) => item.id === id);
-  if (!panel) throw new Error(`нет панели ${id}`);
-  return { id, title: panel.tooltip, command: panel.command, icon: ours(icon), active: panel.open };
-}
-
 export function registerToolbarWishes(store: Registry): void {
   const button = (wish: ButtonWish) => store.add('toolbar.button', wish, 'core');
   const widget = (wish: WidgetWish) => store.add('toolbar.widget', wish, 'core');
 
-  button(panelWish('tree', 'tree'));
   button({
     id: 'search',
     title: 'toolbar.search',
@@ -62,13 +53,6 @@ export function registerToolbarWishes(store: Registry): void {
     command: 'keys.show',
     icon: ours('keys'),
     active: keysHelp.open,
-  });
-  button({
-    id: 'tree.follow',
-    title: 'toolbar.follow',
-    command: 'tree.follow',
-    icon: ours('follow'),
-    active: treeFollow.on,
   });
   button({
     id: 'merge',

@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 
-export class TreeMenu {
+export class TreeMenuState {
   readonly open = signal<{ path: string; isDir: boolean; x: number; y: number } | null>(null);
 
   private readonly width = 210;
@@ -19,5 +19,3 @@ export class TreeMenu {
     this.open.value = null;
   }
 }
-
-export const treeMenu = new TreeMenu();

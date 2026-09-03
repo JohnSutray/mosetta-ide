@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COMMAND_IDS, COMMANDS, isCommandId, type CommandId } from '@ide/protocol';
-import { panels } from '../src/ui/panels.js';
+import { COMMAND_IDS, isCommandId } from '@ide/protocol';
 import { Registry } from '../src/state/registry.js';
 import { registerToolbarWishes } from '../src/ui/toolbar-wishes.js';
 import { WORLDS, inWorld, keymap, toolbarOrder } from './keymap-shared.js';
@@ -27,48 +26,15 @@ function wishes(): { buttons: Wish[]; widgets: Array<{ id: string; side: string 
 }
 
 describe('тулбар', () => {
-  it('каждая панель как-то представлена', () => {
-    const asked = new Set(wishes().buttons.map((entry) => entry.command));
-    const missing = panels.all.filter((panel) => !asked.has(panel.command)).map((p) => p.id);
-    expect(missing, `панели, которые никак не просят себя показать: ${missing.join(', ')}`).toEqual(
-      [],
-    );
-  });
-
-  it('кнопка панели показывает ТОТ ЖЕ сигнал, а не копию', () => {
-    const buttons = wishes().buttons;
-    for (const panel of panels.all) {
-      const entry = buttons.find((item) => item.command === panel.command);
-      if (!entry) continue;
-      expect(entry.active, `${panel.id}: кнопка без состояния`).toBeDefined();
-      expect(entry.active).toBe(panel.open);
-    }
-  });
-
-  it('у каждой панели есть сторона и разумная ширина', () => {
-    for (const panel of panels.all) {
-      expect(['left', 'right']).toContain(panel.side);
-      expect(panel.defaultWidth).toBeGreaterThanOrEqual(panel.minWidth);
-      expect(panel.minWidth).toBeGreaterThan(80);
-    }
-  });
-
-  it('рабочие панели открываются справа, навигация — слева', () => {
-    const side = (id: string) => panels.all.find((panel) => panel.id === id)?.side;
-    expect(side('tree')).toBe('left');
-  });
-
   it('кнопка тулбара показывает панель, попап или настройку — но всегда состояние', () => {
-    const ours = new Set<string>(panels.all.map((panel) => panel.command));
     const popups = wishes()
-      .buttons.filter((entry) => !ours.has(entry.command) && entry.active)
+      .buttons.filter((entry) => entry.active)
       .map((e) => e.id);
     expect(popups.sort()).toEqual([
       'keys',
       'merge',
       'projects',
       'search',
-      'tree.follow',
     ]);
   });
 
@@ -86,10 +52,7 @@ describe('тулбар', () => {
 
   it('надписи реестра — ключи словаря, и все они в словаре есть', () => {
     const dictionary = en as Record<string, string>;
-    const keys = [
-      ...panels.all.flatMap((p) => [p.title, p.tooltip]),
-      ...wishes().buttons.map((e) => e.title),
-    ];
+    const keys = wishes().buttons.map((e) => e.title);
     const missing = keys.filter((key) => dictionary[key] === undefined);
     expect(missing, `нет в en.json: ${missing.join(', ')}`).toEqual([]);
   });
@@ -162,17 +125,5 @@ describe('тулбар', () => {
     const bound = keymap().bindings.filter((b) => b.key.endsWith('+backquote'));
     expect(bound.length, 'клавиша под Escape потерялась').toBeGreaterThan(0);
     for (const binding of bound) expect(binding.command).toBe('git.branches');
-  });
-
-  it('панельные команды объявлены в протоколе с человеческим именем', () => {
-    for (const panel of panels.all) {
-      const title = COMMANDS[panel.command as CommandId];
-      expect(title, `${panel.command}: нет названия`).toBeTruthy();
-    }
-  });
-
-  it('у каждой панели своя команда', () => {
-    const commands = panels.all.map((panel) => panel.command);
-    expect(new Set(commands).size, 'две панели на одной команде').toBe(commands.length);
   });
 });

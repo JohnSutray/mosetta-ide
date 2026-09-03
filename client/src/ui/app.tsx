@@ -1,15 +1,14 @@
 import { inputMechanics } from '../editor/input-keymap.js';
 import { keyContexts } from '../keys/context.js';
-import { treeFollow } from '../state/tree-follow.js';
 import { commands } from '../keys/commands.js';
 import { keysHelp } from '../state/keys-help.js';
 import { editorFocus } from '../state/editor.js';
-import { treeMenu } from '../state/tree-menu.js';
+import { keyHost } from '../keys/host.js';
 import { symbols } from '../state/symbols.js';
 import { config } from '../state/config.js';
 import { visits } from '../state/visits.js';
 import { complain } from '../state/notifications.js';
-import { doc, lsp, rpc, session } from '../state/session.js';
+import { doc, fileTree, lsp, rpc, session } from '../state/session.js';
 import { merge } from '../state/merge.js';
 import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
@@ -24,11 +23,7 @@ import { registerCommands } from '../commands.js';
 import { Dispatcher } from '../keys/dispatcher.js';
 import { SearchEverywhere } from './search-everywhere.js';
 import { Notifications } from './notifications.js';
-import { TreeMenu } from './tree-menu.js';
-import { Prompt } from './prompt.js';
 import { registerToolbarWishes } from './toolbar-wishes.js';
-import { registerPanelWishes } from './panel-wishes.js';
-import { TINT_SCHEMA, treeTints } from '../state/tree-tint.js';
 import { Registry } from '../state/registry.js';
 import { keysFor } from '../keys/keys-for.js';
 import { Projects } from './projects.js';
@@ -48,9 +43,6 @@ const store = new Registry((message) => complain(message));
 store.declare('chrome.top', 'core');
 store.declare('chrome.main', 'core');
 registerToolbarWishes(store);
-registerPanelWishes(store);
-store.declare('tree.tint', 'core', TINT_SCHEMA);
-treeTints.watch(store);
 
 function Region({ name, fallback }: { name: string; fallback?: JSX.Element }) {
   const views = store.all<() => unknown>(name).value;
@@ -87,6 +79,34 @@ export function App() {
       keysFor,
       settings: config.settings,
       project: session.attached,
+      fileTree,
+      fs: {
+        create: (path, kind) => rpc.call('fs.create', { path, kind }),
+        move: (from, to) => rpc.call('fs.move', { from, to }),
+        copy: (from, to) => rpc.call('fs.copy', { from, to }),
+        remove: async (path) => {
+          await rpc.call('fs.remove', { path });
+        },
+        write: async (path, text) => {
+          await rpc.call('fs.write', { path, text });
+        },
+        writeBytes: (path, base64) => rpc.call('fs.writeBytes', { path, base64 }),
+        absolute: async (path) => (await rpc.call('fs.absolute', { path })).path,
+        reveal: async (path) => {
+          await rpc.call('fs.reveal', { path });
+        },
+      },
+      openFile: (path, options) => {
+        if (options?.focus === false) editorFocus.openWithoutFocus();
+        const opened = doc.openAt(path);
+        if (options?.focus) void opened.then(() => editorFocus.focus());
+        return opened;
+      },
+      flushDocs: () => doc.sync.flush(),
+      setSetting: async (section, key, value) => {
+        await rpc.call('config.set', { section, key, value });
+      },
+      primaryHeld: (event) => keyHost.primaryHeld(event),
       openDoc: doc.open,
       editDoc: (text) => doc.edit(text),
       closeFile: () => doc.close(),
@@ -137,10 +157,6 @@ export function App() {
   }, [file?.path]);
 
   useEffect(() => {
-    void treeFollow.now();
-  }, [file?.path, treeFollow.on.value]);
-
-  useEffect(() => {
     if (ws) projects.hide();
     else projects.show();
   }, [ws?.id]);
@@ -159,9 +175,6 @@ export function App() {
   return (
     <div
       class="app"
-      onMouseDown={(event) => {
-        if (!(event.target as HTMLElement).closest('.tree-menu')) treeMenu.close();
-      }}
     >
       <Region name="chrome.top" />
       <Region name="chrome.main" fallback={<NoShell />} />
@@ -171,8 +184,6 @@ export function App() {
       <MergeScreen />
       <KeysHelp />
       <ToolPicker />
-      <TreeMenu />
-      <Prompt />
       <Notifications />
       <Symbols />
       <Tip />

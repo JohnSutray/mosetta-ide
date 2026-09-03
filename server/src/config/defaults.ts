@@ -4,6 +4,7 @@ export class Defaults {
   readonly settings: Settings = {
     plugins: {
       enabled: [
+        '@ide/plugin-tree',
         '@ide/plugin-terminal',
         '@ide/plugin-git',
         '@ide/plugin-npm-scripts',
