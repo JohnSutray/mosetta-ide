@@ -10,15 +10,15 @@ describe('повторное нажатие закрывает окно', () => 
   it('окно открыто — нажатие закрывает его, а не открывает второе', () => {
     let opened = 0;
     let closed = 0;
-    commands.register('projects.show', () => {
+    commands.register('keys.show', () => {
       opened += 1;
     });
 
-    commands.run('projects.show');
+    commands.run('keys.show');
     expect(opened).toBe(1);
 
-    popups.enter({ id: 'projects', close: () => (closed += 1) });
-    commands.run('projects.show');
+    popups.enter({ id: 'keys', close: () => (closed += 1) });
+    commands.run('keys.show');
     expect(closed).toBe(1);
     expect(opened).toBe(1);
   });

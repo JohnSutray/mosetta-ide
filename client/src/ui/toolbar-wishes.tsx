@@ -1,6 +1,5 @@
 import { keysHelp } from '../state/keys-help.js';
 import { session } from '../state/session.js';
-import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
 import { i18n } from '../i18n/index.js';
 import type { Registry } from '../state/registry.js';
@@ -29,13 +28,6 @@ export function registerToolbarWishes(store: Registry): void {
   const button = (wish: ButtonWish) => store.add('toolbar.button', wish, 'core');
   const widget = (wish: WidgetWish) => store.add('toolbar.widget', wish, 'core');
 
-  button({
-    id: 'projects',
-    title: 'toolbar.projects',
-    command: 'projects.show',
-    icon: ours('projects'),
-    active: projects.visible,
-  });
   button({
     id: 'keys',
     title: 'toolbar.keys',

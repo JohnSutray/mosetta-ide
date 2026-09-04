@@ -32,7 +32,6 @@ describe('тулбар', () => {
       .map((e) => e.id);
     expect(popups.sort()).toEqual([
       'keys',
-      'projects',
     ]);
   });
 

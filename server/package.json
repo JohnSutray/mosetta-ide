@@ -19,6 +19,7 @@
     "@ide/plugin-merge": "workspace:*",
     "@ide/plugin-npm-scripts": "workspace:*",
     "@ide/plugin-problems": "workspace:*",
+    "@ide/plugin-projects": "workspace:*",
     "@ide/plugin-rerun": "workspace:*",
     "@ide/plugin-search": "workspace:*",
     "@ide/plugin-sheep": "workspace:*",

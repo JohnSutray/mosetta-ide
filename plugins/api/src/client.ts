@@ -1,6 +1,7 @@
 import type { Signal } from '@preact/signals';
 import type {
   DirEntry,
+  DirSuggestion,
   Diagnostic,
   DocState,
   EntryKind,
@@ -8,8 +9,9 @@ import type {
   IndexHit,
   IndexKind,
   MergeSession,
-  SymbolSite,
+  RecentProject,
   Settings,
+  SymbolSite,
   WorkspaceInfo,
 } from '@ide/protocol';
 
@@ -86,6 +88,17 @@ export interface MergeAccess {
 }
 export declare const merge: MergeAccess;
 
+export interface WorkspacesAccess {
+  readonly current: { readonly value: WorkspaceInfo | null };
+  readonly live: { readonly value: WorkspaceInfo[] };
+  open(root: string): Promise<void>;
+  switchTo(id: string): Promise<void>;
+  roots(): Promise<DirSuggestion[]>;
+  recent(): Promise<RecentProject[]>;
+  browse(prefix: string, options?: { depth?: number; limit?: number }): Promise<DirSuggestion[]>;
+}
+export declare const workspaces: WorkspacesAccess;
+
 export declare const openDoc: { readonly value: DocState | null };
 
 export declare function editDoc(text: string): void;
@@ -155,6 +168,7 @@ export interface ClientSurface {
   setSetting: typeof setSetting;
   primaryHeld: typeof primaryHeld;
   merge: typeof merge;
+  workspaces: typeof workspaces;
   openDoc: typeof openDoc;
   editDoc: typeof editDoc;
   closeFile: typeof closeFile;

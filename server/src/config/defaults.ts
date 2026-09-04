@@ -8,6 +8,7 @@ export class Defaults {
         '@ide/plugin-merge',
         '@ide/plugin-symbols',
         '@ide/plugin-search',
+        '@ide/plugin-projects',
         '@ide/plugin-terminal',
         '@ide/plugin-git',
         '@ide/plugin-npm-scripts',

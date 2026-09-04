@@ -297,6 +297,31 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@22.20.1)
 
+  plugins/projects:
+    dependencies:
+      '@ide/api':
+        specifier: workspace:*
+        version: link:../api
+      '@ide/protocol':
+        specifier: workspace:*
+        version: link:../../protocol
+      '@ide/ui':
+        specifier: workspace:*
+        version: link:../../ui
+    devDependencies:
+      '@preact/signals':
+        specifier: ^1.3.1
+        version: 1.3.4(preact@10.29.8)
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.20.1
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
+
   plugins/rerun:
     dependencies:
       '@ide/api':
@@ -485,6 +510,9 @@ importers:
       '@ide/plugin-problems':
         specifier: workspace:*
         version: link:../plugins/problems
+      '@ide/plugin-projects':
+        specifier: workspace:*
+        version: link:../plugins/projects
       '@ide/plugin-rerun':
         specifier: workspace:*
         version: link:../plugins/rerun

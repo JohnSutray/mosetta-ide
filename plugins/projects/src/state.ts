@@ -1,5 +1,5 @@
-import { rpc, session } from './session.js';
-import { batch, signal } from '@preact/signals';
+import { workspaces } from '@ide/api/client';
+import { batch, effect, signal } from '@preact/signals';
 import type { DirSuggestion, RecentProject } from '@ide/protocol';
 
 export class Projects {
@@ -21,6 +21,13 @@ export class Projects {
   private token = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
 
+  constructor() {
+    effect(() => {
+      if (workspaces.current.value) this.hide();
+      else this.show();
+    });
+  }
+
   show(): void {
     this.visible.value = true;
     void this.load();
@@ -32,7 +39,7 @@ export class Projects {
   }
 
   hide(): void {
-    if (!session.current.value) return;
+    if (!workspaces.current.value) return;
     batch(() => {
       this.visible.value = false;
       this.closeSuggest();
@@ -42,8 +49,8 @@ export class Projects {
   async load(): Promise<void> {
     try {
       const [roots, history] = await Promise.all([
-        rpc.call('workspace.roots', null),
-        rpc.call('workspace.recent', null),
+        workspaces.roots(),
+        workspaces.recent(),
       ]);
       const children = new Map(this.children.value);
       for (const root of roots) this.absorb(children, root);
@@ -129,13 +136,13 @@ export class Projects {
 
   choose(root: string, liveId?: string): void {
     if (root === '' && !liveId) return;
-    if (liveId && session.current.value?.id === liveId) {
+    if (liveId && workspaces.current.value?.id === liveId) {
       this.hide();
       return;
     }
-    const going = liveId ? session.switchProject(liveId) : session.openProject(root);
+    const going = liveId ? workspaces.switchTo(liveId) : workspaces.open(root);
     void going.then(() => {
-      if (!session.current.value) return;
+      if (!workspaces.current.value) return;
       this.hide();
       void this.load();
     });
@@ -150,7 +157,7 @@ export class Projects {
   private async loadChildren(dir: string): Promise<void> {
     const next = new Map(this.children.value);
     try {
-      next.set(dir, await rpc.call('workspace.browse', { prefix: `${dir}/`, depth: 1 }));
+      next.set(dir, await workspaces.browse(`${dir}/`, { depth: 1 }));
     } catch {
       next.set(dir, []);
     }
@@ -160,7 +167,7 @@ export class Projects {
   private async refreshSuggestions(prefix: string): Promise<void> {
     const token = ++this.token;
     try {
-      const list = await rpc.call('workspace.browse', { prefix, limit: 24 });
+      const list = await workspaces.browse(prefix, { limit: 24 });
       if (token !== this.token) return;
       this.suggestions.value = list;
     } catch {
@@ -168,5 +175,3 @@ export class Projects {
     }
   }
 }
-
-export const projects = new Projects();

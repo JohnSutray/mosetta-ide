@@ -1,0 +1,15 @@
+{
+  "panel.projects": "Projects",
+  "toolbar.projects": "Open project",
+  "projects.more": "{count} more folders — click to show",
+  "command.projects.show": "Open project",
+  "command.projects.next": "Projects: next suggestion",
+  "command.projects.prev": "Projects: previous suggestion",
+  "command.projects.suggest": "Projects: list folders here",
+  "command.projects.complete": "Projects: complete path",
+  "command.projects.accept": "Projects: open",
+  "command.projects.close": "Projects: back to the tree",
+  "projects.placeholder": "Path to a project",
+  "projects.open": "open",
+  "projects.empty": "empty"
+}

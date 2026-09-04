@@ -3,7 +3,6 @@ import type { JSX } from 'preact';
 export type IconName =
   | 'editor'
   | 'terminal'
-  | 'projects'
   | 'git'
   | 'push'
   | 'fetch'
@@ -66,13 +65,6 @@ export function Icon({ name, filled }: Props): JSX.Element {
             d="M4 6.6h.01M6.6 6.6h.01M9.2 6.6h.01M11.8 6.6h.01M5 9.4h6"
             stroke={filled ? 'var(--bg)' : 'currentColor'}
           />
-        </svg>
-      );
-    case 'projects':
-      return (
-        <svg {...common}>
-          <path d="M2 4.4h3.4l1 1.3h5.2v5.6H2z" fill={filled ? 'currentColor' : 'none'} />
-          <path d="M5.2 13.4h8.6V7.9" />
         </svg>
       );
     case 'git':

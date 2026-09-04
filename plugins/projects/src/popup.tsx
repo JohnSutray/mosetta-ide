@@ -1,11 +1,10 @@
-import { session } from '../state/session.js';
-import { projects } from '../state/projects.js';
+import { t, workspaces } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import type { DirSuggestion } from '@ide/protocol';
-import { i18n } from '../i18n/index.js';
 import { Chevron, DirIcon, Icon, Popup } from '@ide/ui';
+import type { Projects } from './state.js';
 
-export function Projects() {
+export function ProjectsPopup({ projects }: { projects: Projects }) {
   const input = useRef<HTMLInputElement>(null);
   const shown = projects.visible.value;
 
@@ -26,12 +25,12 @@ export function Projects() {
       min={{ w: 460, h: 320 }}
       onClose={() => projects.hide()}
     >
-      <div class="branches-head">
-        <span class="branches-title">{i18n.t('panel.projects')}</span>
+      <div class="projects-head">
+        <span class="projects-title">{t('panel.projects')}</span>
       </div>
 
       <div class="projects" data-keys="projects">
-        <Recent />
+        <Recent projects={projects} />
 
         <form
           class="open-form"
@@ -44,23 +43,23 @@ export function Projects() {
             <input
               ref={input}
               class="field"
-              placeholder={i18n.t('projects.placeholder')}
+              placeholder={t('projects.placeholder')}
               value={projects.draft.value}
               spellcheck={false}
               autocomplete="off"
               onInput={(e) => projects.setDraft((e.target as HTMLInputElement).value)}
             />
             <button class="button" type="submit">
-              {i18n.t('projects.open')}
+              {t('projects.open')}
             </button>
 
-            {projects.suggestOpen.value && <Suggestions />}
+            {projects.suggestOpen.value && <Suggestions projects={projects} />}
           </div>
         </form>
 
         <div class="picker">
           {projects.roots.value.map((root) => (
-            <PickerNode key={root.path} item={root} depth={0} />
+            <PickerNode key={root.path} item={root} depth={0} projects={projects} />
           ))}
         </div>
       </div>
@@ -68,10 +67,10 @@ export function Projects() {
   );
 }
 
-function Recent() {
+function Recent({ projects }: { projects: Projects }) {
   const list = projects.recent.value;
-  const live = session.workspaces.value;
-  const active = session.current.value;
+  const live = workspaces.live.value;
+  const active = workspaces.current.value;
   if (list.length === 0) return null;
 
   return (
@@ -103,9 +102,9 @@ function shortenHome(root: string): string {
   return root;
 }
 
-function Suggestions() {
+function Suggestions({ projects }: { projects: Projects }) {
   const list = projects.suggestions.value;
-  if (list.length === 0) return <div class="suggest is-empty">{i18n.t('projects.empty')}</div>;
+  if (list.length === 0) return <div class="suggest is-empty">{t('projects.empty')}</div>;
   return (
     <div class="suggest">
       {list.map((item, at) => (
@@ -125,7 +124,7 @@ function Suggestions() {
   );
 }
 
-function PickerNode({ item, depth }: { item: DirSuggestion; depth: number }) {
+function PickerNode({ item, depth, projects }: { item: DirSuggestion; depth: number; projects: Projects }) {
   const isOpen = projects.expanded.value.has(item.path);
   const kids = projects.children.value.get(item.path);
   const shown = projects.showingAll.value.has(item.path) ? kids : kids?.slice(0, projects.page);
@@ -150,14 +149,16 @@ function PickerNode({ item, depth }: { item: DirSuggestion; depth: number }) {
         <span class="picker-name">{item.name}</span>
       </div>
       {isOpen &&
-        shown?.map((child) => <PickerNode key={child.path} item={child} depth={depth + 1} />)}
+        shown?.map((child) => (
+          <PickerNode key={child.path} item={child} depth={depth + 1} projects={projects} />
+        ))}
       {isOpen && hidden > 0 && (
         <div
           class="picker-more"
           style={{ paddingLeft: `${6 + (depth + 1) * 14}px` }}
           onClick={() => projects.showAllIn(item.path)}
         >
-          {i18n.t('projects.more', { count: hidden })}
+          {t('projects.more', { count: hidden })}
         </div>
       )}
     </>

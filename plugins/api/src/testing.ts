@@ -2,14 +2,16 @@ import Ajv, { type ValidateFunction } from 'ajv';
 import { signal, type Signal } from '@preact/signals';
 import type {
   DirEntry,
+  DirSuggestion,
   Diagnostic,
   DocState,
   HoverInfo,
   IndexHit,
   IndexKind,
   MergeSession,
-  SymbolSite,
+  RecentProject,
   Settings,
+  SymbolSite,
   WorkspaceInfo,
 } from '@ide/protocol';
 import { attach, hooksOf, registriesOf } from './client.js';
@@ -18,6 +20,7 @@ import type {
   FileTreeMemory,
   FsAccess,
   MergeAccess,
+  WorkspacesAccess,
   FileProblems,
   Found,
   Ide,
@@ -150,6 +153,19 @@ export const merge: MergeAccess = {
   expectExternal: (path) => surface().merge.expectExternal(path),
   forgetDiverged: (path) => surface().merge.forgetDiverged(path),
 };
+export const workspaces: WorkspacesAccess = {
+  get current() {
+    return surface().workspaces.current;
+  },
+  get live() {
+    return surface().workspaces.live;
+  },
+  open: (root) => surface().workspaces.open(root),
+  switchTo: (id) => surface().workspaces.switchTo(id),
+  roots: () => surface().workspaces.roots(),
+  recent: () => surface().workspaces.recent(),
+  browse: (prefix, options) => surface().workspaces.browse(prefix, options),
+};
 export const openDoc: { readonly value: DocState | null } = {
   get value() {
     return surface().openDoc.value;
@@ -281,6 +297,28 @@ export class FakeSurface implements ClientSurface {
     },
     forgetDiverged: (path) => {
       this.mergeCalls.push({ op: 'forgetDiverged', args: [path] });
+    },
+  };
+  readonly workspaceCurrent: Signal<WorkspaceInfo | null> = signal(null);
+  readonly workspaceLive: Signal<WorkspaceInfo[]> = signal([]);
+  readonly workspaceRoots: DirSuggestion[] = [];
+  readonly workspaceRecent: RecentProject[] = [];
+  readonly browsed = new Map<string, DirSuggestion[]>();
+  readonly workspaceCalls: Array<{ op: string; args: unknown[] }> = [];
+  readonly workspaces: WorkspacesAccess = {
+    current: this.workspaceCurrent,
+    live: this.workspaceLive,
+    open: async (root) => {
+      this.workspaceCalls.push({ op: 'open', args: [root] });
+    },
+    switchTo: async (id) => {
+      this.workspaceCalls.push({ op: 'switchTo', args: [id] });
+    },
+    roots: async () => this.workspaceRoots,
+    recent: async () => this.workspaceRecent,
+    browse: async (prefix, options) => {
+      this.workspaceCalls.push({ op: 'browse', args: [prefix, options] });
+      return this.browsed.get(prefix) ?? [];
     },
   };
   pushMergeState(state: MergeSession | null): void {

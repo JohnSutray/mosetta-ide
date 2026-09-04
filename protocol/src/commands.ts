@@ -24,14 +24,6 @@ export const COMMANDS = {
   'terminal.shell': 'Чем запускать терминал',
   'tools.packageManager': 'Чем запускать скрипты',
 
-  'projects.show': 'Открывашка проектов',
-  'projects.next': 'Проекты: вниз по подсказкам',
-  'projects.prev': 'Проекты: вверх по подсказкам',
-  'projects.suggest': 'Проекты: показать папки текущей папки',
-  'projects.complete': 'Проекты: дописать путь',
-  'projects.accept': 'Проекты: открыть',
-  'projects.close': 'Проекты: вернуться к дереву',
-
   'pick.next': 'Список: вниз',
   'pick.prev': 'Список: вверх',
   'pick.accept': 'Список: выбрать',

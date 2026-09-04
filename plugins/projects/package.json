@@ -1,0 +1,40 @@
+{
+  "name": "@ide/plugin-projects",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "exports": {
+    ".": "./src/client.tsx"
+  },
+  "ide": {
+    "client": "src/client.tsx",
+    "strings": "src/en.json",
+    "commands": {
+      "projects.show": "Открывашка проектов",
+      "projects.next": "Проекты: вниз по подсказкам",
+      "projects.prev": "Проекты: вверх по подсказкам",
+      "projects.suggest": "Проекты: показать папки текущей папки",
+      "projects.complete": "Проекты: дописать путь",
+      "projects.accept": "Проекты: открыть",
+      "projects.close": "Проекты: вернуться к дереву"
+    }
+  },
+  "dependencies": {
+    "@ide/api": "workspace:*",
+    "@ide/protocol": "workspace:*",
+    "@ide/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "preact": "^10.25.3",
+    "@preact/signals": "^1.3.1"
+  },
+  "devDependencies": {
+    "@preact/signals": "^1.3.1",
+    "preact": "^10.25.3",
+    "vitest": "^2.1.9",
+    "@types/node": "^22.10.5"
+  }
+}

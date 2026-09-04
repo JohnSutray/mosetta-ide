@@ -7,7 +7,6 @@ import { config } from '../state/config.js';
 import { visits } from '../state/visits.js';
 import { complain } from '../state/notifications.js';
 import { doc, fileTree, lsp, rpc, session } from '../state/session.js';
-import { projects } from '../state/projects.js';
 import { tools } from '../state/tools.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
@@ -18,7 +17,6 @@ import { Notifications } from './notifications.js';
 import { registerToolbarWishes } from './toolbar-wishes.js';
 import { Registry } from '../state/registry.js';
 import { keysFor } from '../keys/keys-for.js';
-import { Projects } from './projects.js';
 import { i18n } from '../i18n/index.js';
 import { KeysHelp } from './keys-help.js';
 import { Tip } from '@ide/ui';
@@ -69,6 +67,15 @@ export function App() {
       keysFor,
       settings: config.settings,
       project: session.attached,
+      workspaces: {
+        current: session.current,
+        live: session.workspaces,
+        open: (root) => session.openProject(root),
+        switchTo: (id) => session.switchProject(id),
+        roots: () => rpc.call('workspace.roots', null),
+        recent: () => rpc.call('workspace.recent', null),
+        browse: (prefix, options) => rpc.call('workspace.browse', { prefix, ...options }),
+      },
       merge: {
         state: () => rpc.call('merge.state', null),
         resolve: (path, text) => rpc.call('merge.resolve', { path, text }),
@@ -159,11 +166,6 @@ export function App() {
   }, [file?.path]);
 
   useEffect(() => {
-    if (ws) projects.hide();
-    else projects.show();
-  }, [ws?.id]);
-
-  useEffect(() => {
     void tools.refresh();
     if (!ws) {
       visits.forget();
@@ -178,7 +180,6 @@ export function App() {
     >
       <Region name="chrome.top" />
       <Region name="chrome.main" fallback={<NoShell />} />
-      <Projects />
       <PluginSurfaces />
       <KeysHelp />
       <ToolPicker />
