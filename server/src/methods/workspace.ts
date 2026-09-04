@@ -3,8 +3,6 @@ import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
 import { browse } from '../env/browse.js';
 import { recent } from '../env/recent.js';
-import { shells } from '../env/shell.js';
-import { tools } from '../env/tools.js';
 import { visitsStore } from '../env/visits.js';
 
 export class WorkspaceMethods {
@@ -70,22 +68,6 @@ export class WorkspaceMethods {
 }
 
 export const workspaceMethods = new WorkspaceMethods();
-
-export class EnvMethods {
-  readonly shells: Handler<'env.shells'> = (_params, ctx) =>
-    shells.detect(shells.loginShell(ctx.config.settings.terminal).file);
-
-  readonly packageManagers: Handler<'env.packageManagers'> = (_params, ctx) => {
-    const ws = ctx.session.requireWorkspace();
-    return tools.detect(
-      ws.services.suggestedManager(),
-      ctx.config.settings.tools.packageManager,
-      ws.root,
-    );
-  };
-}
-
-export const envMethods = new EnvMethods();
 
 export class VisitsMethods {
   readonly get: Handler<'visits.get'> = (_params, ctx) => {

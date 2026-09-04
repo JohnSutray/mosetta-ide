@@ -7,7 +7,7 @@ import { mergeMethods } from './merge.js';
 import { pluginMethods } from './plugins.js';
 import { searchMethods } from './search.js';
 import { treeMethods } from './tree.js';
-import { envMethods, visitsMethods, workspaceMethods } from './workspace.js';
+import { visitsMethods, workspaceMethods } from './workspace.js';
 
 export const handlers: HandlerTable = {
   'server.ping': (_params, ctx) => ({
@@ -25,8 +25,6 @@ export const handlers: HandlerTable = {
   'workspace.current': (p, c) => workspaceMethods.current(p, c),
   'workspace.close': (p, c) => workspaceMethods.close(p, c),
   'workspace.browse': (p, c) => workspaceMethods.browse(p, c),
-  'env.shells': (p, c) => envMethods.shells(p, c),
-  'env.packageManagers': (p, c) => envMethods.packageManagers(p, c),
   'visits.get': (p, c) => visitsMethods.get(p, c),
   'visits.set': (p, c) => visitsMethods.set(p, c),
   'workspace.roots': (p, c) => workspaceMethods.roots(p, c),

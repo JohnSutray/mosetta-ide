@@ -7,6 +7,7 @@ import { WebSocketServer } from 'ws';
 import { DEFAULT_PORT, WS_PATH } from '@ide/protocol';
 import { ConfigStore } from './config/store.js';
 import { recent } from './env/recent.js';
+import { tools } from './env/tools.js';
 import { shells } from './env/shell.js';
 import { shellEnv } from './env/shell-env.js';
 import { processes } from './env/processes.js';
@@ -66,14 +67,19 @@ export class Boot {
         harvest();
       });
     }
-    const plugins = new PluginHost(log, path.join(stateDir, 'plugins-build'), () => {
-      const chosen = shells.loginShell(config.settings.terminal);
-      return {
-        file: chosen.file,
-        args: chosen.args,
-        env: shellEnv.current ?? {},
-        ...(chosen.problem ? { problem: chosen.problem } : {}),
-      };
+    const plugins = new PluginHost(log, path.join(stateDir, 'plugins-build'), {
+      shell: () => {
+        const chosen = shells.loginShell(config.settings.terminal);
+        return {
+          file: chosen.file,
+          args: chosen.args,
+          env: shellEnv.current ?? {},
+          ...(chosen.problem ? { problem: chosen.problem } : {}),
+        };
+      },
+      shells: () => shells.detect(shells.loginShell(config.settings.terminal).file),
+      packageManagers: (ws) =>
+        tools.detect(ws.services.suggestedManager(), config.settings.tools.packageManager, ws.root),
     });
     await plugins.load(config.settings.plugins.enabled, fileURLToPath(new URL('..', import.meta.url)));
 

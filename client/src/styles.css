@@ -256,26 +256,26 @@ body {
   cursor: default;
 }
 
-.tools { padding: 10px 12px; gap: 8px; }
-.tools-title { font-size: 13px; color: var(--fg); flex: none; }
-.tools-note { color: var(--muted); font-size: 11px; line-height: 1.45; flex: none; }
-.tools-list { flex: 1; min-height: 0; overflow: auto; margin-top: 4px; }
-.tools-row {
+.choice { padding: 10px 12px; gap: 8px; }
+.choice-title { font-size: 13px; color: var(--fg); flex: none; }
+.choice-note { color: var(--muted); font-size: 11px; line-height: 1.45; flex: none; }
+.choice-list { flex: 1; min-height: 0; overflow: auto; margin-top: 4px; }
+.choice-row {
   display: flex;
   align-items: baseline;
   gap: 8px;
   padding: 3px 6px;
   cursor: pointer;
 }
-.tools-row:hover { background: var(--control-bg); }
-.tools-row.is-current { background: var(--treesel); }
-.tools-name { color: var(--fg); font-size: 12px; flex: none; }
-.tools-path { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tools-mark { margin-left: auto; color: var(--accent); font-size: 11px; flex: none; }
-.tools-empty { padding: 4px 6px; color: var(--muted); font-style: italic; }
+.choice-row:hover { background: var(--control-bg); }
+.choice-row.is-current { background: var(--treesel); }
+.choice-name { color: var(--fg); font-size: 12px; flex: none; }
+.choice-path { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.choice-mark { margin-left: auto; color: var(--accent); font-size: 11px; flex: none; }
+.choice-empty { padding: 4px 6px; color: var(--muted); font-style: italic; }
 
-.tools-custom { display: flex; gap: 6px; flex: none; }
-.tools-input {
+.choice-custom { display: flex; gap: 6px; flex: none; }
+.choice-input {
   flex: 1;
   min-width: 0;
   padding: 4px 6px;
@@ -286,8 +286,8 @@ body {
   font-family: var(--mono, monospace);
   font-size: 12px;
 }
-.tools-input:focus { outline: none; border-color: var(--treesel); }
-.tools-apply {
+.choice-input:focus { outline: none; border-color: var(--treesel); }
+.choice-apply {
   flex: none;
   padding: 4px 10px;
   background: var(--control-bg);
@@ -296,9 +296,9 @@ body {
   color: var(--fg);
   cursor: pointer;
 }
-.tools-apply:hover { background: var(--control-bg-hover); }
-.tools-reset { flex: none; color: var(--muted); font-size: 11px; cursor: pointer; }
-.tools-reset:hover { color: var(--fg); text-decoration: underline; }
+.choice-apply:hover { background: var(--control-bg-hover); }
+.choice-reset { flex: none; color: var(--muted); font-size: 11px; cursor: pointer; }
+.choice-reset:hover { color: var(--fg); text-decoration: underline; }
 
 .pick-head {
   padding: 6px 8px 2px;

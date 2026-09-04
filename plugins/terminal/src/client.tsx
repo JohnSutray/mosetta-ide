@@ -1,5 +1,7 @@
 import { batch, signal } from '@preact/signals';
-import { activate, remote, stub, t, type Ide } from '@ide/api/client';
+import { activate, remote, runCommand, setSetting, stub, t, type Ide } from '@ide/api/client';
+import { ChoicePopup } from '@ide/ui';
+import type { ShellInfo } from '@ide/protocol';
 import { TerminalIcon } from './icon.js';
 import { TerminalView } from './view.js';
 import { Chips } from './chips.js';
@@ -13,6 +15,9 @@ export default class TerminalPlugin {
 
   private readonly sinks = new Map<string, Set<(data: string) => void>>();
 
+  readonly shells = signal<ShellInfo[]>([]);
+  readonly shellPicker = signal(false);
+
   constructor(private readonly ide: Ide) {}
 
   @activate() protected start(): void {
@@ -20,6 +25,10 @@ export default class TerminalPlugin {
     this.listen();
 
     this.ide.command('terminal.create', () => void this.create());
+    this.ide.command('terminal.shell', () => {
+      this.shellPicker.value = !this.shellPicker.value;
+      if (this.shellPicker.value) void this.refreshShells();
+    });
     this.ide.command('panel.terminal', () => {
       this.shown.value = !this.shown.value;
     });
@@ -30,6 +39,47 @@ export default class TerminalPlugin {
       command: 'terminal.create',
       icon: TerminalIcon,
     });
+    this.ide.registry('toolbar.widget').add({
+      id: 'terminal.shell',
+      side: 'right',
+      view: () => {
+        const current = this.shells.value.find((one) => one.current)?.name ?? '';
+        if (current === '') return null;
+        return (
+          <button
+            class="terminal-shell-label"
+            title={t('terminal.shell.hint')}
+            onClick={() => runCommand('terminal.shell')}
+          >
+            {current}
+          </button>
+        );
+      },
+    });
+    this.ide.registry<() => unknown>('chrome.top').add(() =>
+      this.shellPicker.value ? (
+        <ChoicePopup
+          id="terminal.shell"
+          title={t('terminal.shell.title')}
+          note={t('terminal.shell.note')}
+          rows={this.shells.value.map((one) => ({
+            path: one.path,
+            name: one.name,
+            ref: one.ref,
+            current: one.current,
+            mark: one.current ? t('terminal.shell.inUse') : undefined,
+          }))}
+          empty={t('terminal.shell.empty')}
+          customPlaceholder={t('terminal.shell.custom')}
+          apply={t('terminal.shell.apply')}
+          reset={t('terminal.shell.default')}
+          onChoose={(ref) => void this.chooseShell(ref)}
+          onClose={() => (this.shellPicker.value = false)}
+        />
+      ) : null,
+    );
+    void this.refreshShells();
+
     this.ide.registry('toolbar.widget').add({
       id: 'terminals',
       side: 'left',
@@ -78,6 +128,30 @@ export default class TerminalPlugin {
 
   showing(): string | null {
     return this.active.value;
+  }
+
+  async refreshShells(): Promise<void> {
+    try {
+      this.shells.value = await this.askShells();
+    } catch (err) {
+      this.shells.value = [];
+      this.ide.complain(`shells: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  async chooseShell(ref: string): Promise<void> {
+    try {
+      await setSetting('terminal', 'shell', ref);
+      this.shellPicker.value = false;
+      await this.refreshShells();
+      this.ide.say(ref === '' ? 'shell: default' : `shell: ${ref}`);
+    } catch (err) {
+      this.ide.complain(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  @remote('shells') protected askShells(): Promise<ShellInfo[]> {
+    return stub();
   }
 
   @remote('list') protected askList(): Promise<TerminalInfo[]> {

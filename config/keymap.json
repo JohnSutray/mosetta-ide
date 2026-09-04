@@ -96,8 +96,8 @@
     { "command": "tree.follow", "key": "meta+shift+f", "where": ["browser:mac", "electron:mac"] },
     { "command": "tree.follow", "key": "meta+0", "where": ["browser:mac", "electron:mac"] },
     { "command": "tree.follow", "key": "control+shift+f", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
-    { "command": "tools.packageManager", "key": "meta+shift+p", "where": ["browser:mac", "electron:mac"] },
-    { "command": "tools.packageManager", "key": "control+shift+p", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "scripts.packageManager", "key": "meta+shift+p", "where": ["browser:mac", "electron:mac"] },
+    { "command": "scripts.packageManager", "key": "control+shift+p", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "search.everywhere", "key": "meta+p", "where": ["browser:mac", "electron:mac"] },
     { "command": "search.everywhere", "key": "control+p", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
 

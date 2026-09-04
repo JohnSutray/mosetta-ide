@@ -3,6 +3,7 @@ export { installUi, type UiHost } from './host.js';
 
 export { Popup } from './popup.js';
 export { PickPopup, grouped, matches, type PickItem, type PickProps } from './pick-popup.js';
+export { ChoicePopup, type ChoiceRow, type ChoiceProps } from './choice-popup.js';
 export { Menu, type MenuItem } from './menu.js';
 export { activeMenu, type MenuApi } from './menu-state.js';
 export { Resizer } from './resizer.js';

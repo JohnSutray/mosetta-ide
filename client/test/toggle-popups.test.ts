@@ -10,15 +10,15 @@ describe('повторное нажатие закрывает окно', () => 
   it('окно открыто — нажатие закрывает его, а не открывает второе', () => {
     let opened = 0;
     let closed = 0;
-    commands.register('terminal.shell', () => {
+    commands.registerPlugin('git.branches', () => {
       opened += 1;
     });
 
-    commands.run('terminal.shell');
+    commands.run('git.branches');
     expect(opened).toBe(1);
 
-    popups.enter({ id: 'tool-shell', close: () => (closed += 1) });
-    commands.run('terminal.shell');
+    popups.enter({ id: 'git.branches', close: () => (closed += 1) });
+    commands.run('git.branches');
     expect(closed).toBe(1);
     expect(opened).toBe(1);
   });
@@ -28,37 +28,38 @@ describe('повторное нажатие закрывает окно', () => 
     commands.registerPlugin('scripts.open', () => {
       opened += 1;
     });
-    popups.enter({ id: 'projects', close: () => {} });
+    popups.enter({ id: 'git.branches', close: () => {} });
     commands.run('scripts.open');
     expect(opened).toBe(1);
   });
 
   it('закрытое окно снова открывается', () => {
     let opened = 0;
-    commands.register('tools.packageManager', () => {
+    commands.registerPlugin('keys.show', () => {
       opened += 1;
     });
-    popups.enter({ id: 'tool-manager', close: () => popups.leave('tool-manager') });
-    commands.run('tools.packageManager');
+    popups.enter({ id: 'keys.show', close: () => popups.leave('keys.show') });
+    commands.run('keys.show');
     expect(popups.stack.value).toHaveLength(0);
-    commands.run('tools.packageManager');
+    commands.run('keys.show');
     expect(opened).toBe(1);
   });
 
-  it('окно «Keys» узнаётся снаружи: оно ловит клавиши и должно закрыться', () => {
+  it('окно узнаётся снаружи только по имени команды', () => {
     commands.registerPlugin('keys.show', () => {});
     expect(commands.opensOpenPopup('keys.show')).toBe(false);
     popups.enter({ id: 'keys.show', close: () => {} });
     expect(commands.opensOpenPopup('keys.show')).toBe(true);
+    popups.enter({ id: 'push-window', close: () => {} });
     expect(commands.opensOpenPopup('git.push')).toBe(false);
   });
 
-  it('команда без окна работает как раньше', () => {
+  it('команда ядра без окна работает как раньше', () => {
     let ran = 0;
     commands.register('file.save', () => {
       ran += 1;
     });
-    popups.enter({ id: 'search', close: () => {} });
+    popups.enter({ id: 'search.everywhere', close: () => {} });
     commands.run('file.save');
     expect(ran).toBe(1);
   });

@@ -7,6 +7,7 @@ const UI_NAMES = [
   'installUi',
   'Popup',
   'PickPopup',
+  'ChoicePopup',
   'grouped',
   'matches',
   'Menu',

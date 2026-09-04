@@ -1,5 +1,5 @@
 import { activate, command, type CallContext, type Ide } from '@ide/api/server';
-import type { IndexHit } from '@ide/protocol';
+import type { IndexHit, PackageManagerInfo } from '@ide/protocol';
 import { ScriptsInPackageJson } from './scripts.js';
 import { scriptId } from './script-id.js';
 
@@ -31,6 +31,10 @@ export default class NpmScriptsServer {
 
   @activate() protected start(): void {
     this.ide.find(new ScriptsInPackageJson());
+  }
+
+  @command() protected managers(_params: unknown, call: CallContext): PackageManagerInfo[] {
+    return this.ide.packageManagers(call.project);
   }
 
   @command() protected list(_params: unknown, call: CallContext): ScriptInfo[] {

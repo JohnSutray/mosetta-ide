@@ -1,3 +1,4 @@
+import type { ShellInfo } from '@ide/protocol';
 import { command, type CallContext, type Ide } from '@ide/api/server';
 import { TerminalHost } from './host.js';
 import type { Attached, OpenAsk, TerminalInfo } from './types.js';
@@ -10,6 +11,10 @@ export default class TerminalServer {
       'host',
       () => new TerminalHost(call.project, this.ide.log, () => this.ide.shell()),
     );
+  }
+
+  @command() protected shells(): ShellInfo[] {
+    return this.ide.shells();
   }
 
   @command() protected list(_params: unknown, call: CallContext): TerminalInfo[] {

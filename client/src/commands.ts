@@ -1,7 +1,6 @@
 import { commands } from './keys/commands.js';
 import { visits } from './state/visits.js';
 import { doc } from './state/session.js';
-import { tools } from './state/tools.js';
 import { activeMenu, activePick, popups } from '@ide/ui';
 
 export function registerCommands(): void {
@@ -12,9 +11,6 @@ export function registerCommands(): void {
   commands.register('nav.forward', () => visits.forward());
 
   commands.register('key.reserved', () => {});
-
-  commands.register('terminal.shell', () => tools.open('shell'));
-  commands.register('tools.packageManager', () => tools.open('manager'));
 
   commands.register('pick.next', () => activePick.value?.next());
   commands.register('pick.prev', () => activePick.value?.prev());

@@ -3,11 +3,6 @@ import { popups } from '@ide/ui';
 
 type Runner = () => void | Promise<void>;
 
-const OPENS: Partial<Record<CommandId, string>> = {
-  'terminal.shell': 'tool-shell',
-  'tools.packageManager': 'tool-manager',
-};
-
 export class Commands {
   private readonly registry = new Map<string, Runner>();
 
@@ -59,7 +54,7 @@ export class Commands {
   }
 
   private opensPopup(id: string): string | undefined {
-    return OPENS[id as CommandId] ?? (this.fromPlugin.has(id) ? id : undefined);
+    return this.fromPlugin.has(id) ? id : undefined;
   }
 }
 

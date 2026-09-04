@@ -14,7 +14,8 @@
     "server": "src/server.ts",
     "strings": "src/en.json",
     "commands": {
-      "scripts.open": "Скрипты package.json"
+      "scripts.open": "Скрипты package.json",
+      "scripts.packageManager": "Чем запускать скрипты"
     },
     "needs": [
       "@ide/plugin-terminal"

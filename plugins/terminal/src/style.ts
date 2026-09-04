@@ -51,4 +51,15 @@ export const STYLE = `
 .term-host .xterm { height: 100%; }
 .term-host .xterm-screen { cursor: text; }
 .term-host .xterm .xterm-viewport { background: transparent !important; }
+
+.terminal-shell-label {
+  background: var(--control-bg);
+  border: 0;
+  color: var(--muted);
+  font: 11px var(--ui-font);
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.terminal-shell-label:hover { background: var(--control-bg-hover); color: var(--fg); }
 `;

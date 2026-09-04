@@ -9,7 +9,6 @@ import { config } from '../state/config.js';
 import { visits } from '../state/visits.js';
 import { complain } from '../state/notifications.js';
 import { doc, fileTree, lsp, rpc, session } from '../state/session.js';
-import { tools } from '../state/tools.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { chordHeld } from '../keys/chords.js';
@@ -25,7 +24,6 @@ import { PluginSurfaces } from './plugin-surfaces.js';
 import { plugins } from '../state/plugins.js';
 import { goTo } from './go-to.js';
 import type { ClientSurface } from '@ide/api/client';
-import { ToolPicker } from './tool-picker.js';
 
 const store = new Registry((message) => complain(message));
 
@@ -175,7 +173,6 @@ export function App() {
   }, [file?.path]);
 
   useEffect(() => {
-    void tools.refresh();
     if (!ws) {
       visits.forget();
       return;
@@ -190,7 +187,6 @@ export function App() {
       <Region name="chrome.top" />
       <Region name="chrome.main" fallback={<NoShell />} />
       <PluginSurfaces />
-      <ToolPicker />
       <Notifications />
       <Tip />
     </div>

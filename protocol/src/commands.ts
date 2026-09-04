@@ -21,9 +21,6 @@ export const COMMANDS = {
   'edit.unindent': 'Отступ влево',
   'panel.editor': 'Панель редактора',
 
-  'terminal.shell': 'Чем запускать терминал',
-  'tools.packageManager': 'Чем запускать скрипты',
-
   'pick.next': 'Список: вниз',
   'pick.prev': 'Список: вверх',
   'pick.accept': 'Список: выбрать',

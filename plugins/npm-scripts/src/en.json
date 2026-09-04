@@ -4,5 +4,15 @@
   "scripts.title": "Scripts",
   "scripts.filter": "filter scripts",
   "scripts.empty": "no scripts in this project",
-  "search.kind.npm": "Scripts"
+  "search.kind.npm": "Scripts",
+  "scripts.manager.title": "Package manager",
+  "scripts.manager.note": "What runs package.json scripts. Found on this machine and in this workspace; the project's own choice (lockfile or the packageManager field) is marked.",
+  "scripts.manager.custom": "Name or full path",
+  "scripts.manager.default": "Use whatever the project picks",
+  "scripts.manager.inUse": "in use",
+  "scripts.manager.byProject": "by project",
+  "scripts.manager.apply": "use",
+  "scripts.manager.empty": "Nothing found — type a path below",
+  "scripts.manager.hint": "Package manager",
+  "command.scripts.packageManager": "Package manager"
 }

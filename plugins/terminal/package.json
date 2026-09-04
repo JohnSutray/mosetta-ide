@@ -15,12 +15,15 @@
     "strings": "src/en.json",
     "commands": {
       "terminal.create": "Новый терминал",
-      "panel.terminal": "Панель терминала"
+      "panel.terminal": "Панель терминала",
+      "terminal.shell": "Чем запускать терминал"
     }
   },
   "dependencies": {
     "@ide/api": "workspace:*",
     "@ide/code": "workspace:*",
+    "@ide/protocol": "workspace:*",
+    "@ide/ui": "workspace:*",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "node-pty": "^1.1.0"

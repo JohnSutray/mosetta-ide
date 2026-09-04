@@ -446,6 +446,12 @@ importers:
       '@ide/code':
         specifier: workspace:*
         version: link:../../code
+      '@ide/protocol':
+        specifier: workspace:*
+        version: link:../../protocol
+      '@ide/ui':
+        specifier: workspace:*
+        version: link:../../ui
       '@xterm/addon-fit':
         specifier: ^0.10.0
         version: 0.10.0(@xterm/xterm@5.5.0)

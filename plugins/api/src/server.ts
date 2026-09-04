@@ -1,3 +1,4 @@
+import type { PackageManagerInfo, ShellInfo } from '@ide/protocol';
 
 export interface Logger {
   debug(message: string): void;
@@ -82,6 +83,8 @@ export interface Ide {
   getPlugin<T>(ctor: PluginClass<T>): T;
   find(provider: FindProvider): void;
   shell(): ShellChoice;
+  shells(): ShellInfo[];
+  packageManagers(project: Project): PackageManagerInfo[];
   run(ask: RunAsk): Promise<RunResult>;
   stream(ask: RunAsk, onChunk: (text: string) => void): Promise<RunResult>;
   readonly log: Logger;

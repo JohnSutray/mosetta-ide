@@ -24,6 +24,7 @@ describe('скрипты', () => {
     host = new FakeHost();
     terminal = host.add(TerminalPlugin, '@ide/plugin-terminal');
     host.ide('@ide/plugin-terminal').answers.set('list', () => []);
+    host.ide('@ide/plugin-terminal').answers.set('shells', () => []);
     npm = host.add(NpmScripts, NAME);
     host.ide(NAME).answers.set('list', () => SCRIPTS);
     host.ide(NAME).answers.set('run', () => ({

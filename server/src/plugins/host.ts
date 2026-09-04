@@ -16,6 +16,9 @@ import {
   type ShellChoice,
 } from '@ide/api/server';
 export { type CallContext } from '@ide/api/server';
+import { workspaceOf } from './project.js';
+import type { Workspace } from '../workspace/workspace.js';
+import type { PackageManagerInfo, ShellInfo } from '@ide/protocol';
 import type { Logger } from '../log.js';
 import { processes } from '../env/processes.js';
 
@@ -25,6 +28,12 @@ interface Loaded {
   manifest: PluginManifest;
   clientCode?: string;
   methods: Map<string, CommandHandler>;
+}
+
+export interface Machine {
+  shell(): ShellChoice;
+  shells(): ShellInfo[];
+  packageManagers(ws: Workspace): PackageManagerInfo[];
 }
 
 export class PluginHost {
@@ -37,7 +46,11 @@ export class PluginHost {
   constructor(
     private readonly log: Logger,
     private readonly buildDir: string,
-    private readonly shellFor: () => ShellChoice = () => ({ file: '', args: [], env: {} }),
+    private readonly machine: Machine = {
+      shell: () => ({ file: '', args: [], env: {} }),
+      shells: () => [],
+      packageManagers: () => [],
+    },
   ) {}
 
   finds(): readonly FindProvider[] {
@@ -185,7 +198,13 @@ export class PluginHost {
           return found as T;
         },
         find: (provider) => this.providers.push(provider),
-        shell: () => this.shellFor(),
+        shell: () => this.machine.shell(),
+        shells: () => this.machine.shells(),
+        packageManagers: (project) => {
+          const ws = workspaceOf.get(project);
+          if (!ws) throw new Error('проект не из этого сервера');
+          return this.machine.packageManagers(ws);
+        },
         run: (ask) => processes.run({ ...ask, reason: `${name}: ${ask.reason}` }),
         stream: (ask, onChunk) =>
           processes.stream({ ...ask, reason: `${name}: ${ask.reason}` }, onChunk),

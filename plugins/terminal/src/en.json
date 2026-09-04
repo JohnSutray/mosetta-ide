@@ -9,5 +9,14 @@
   "terminal.busy": "running {what}",
   "terminal.busyUnknown": "cannot tell if it is busy — {why}",
   "terminal.dead": "finished, code {code}",
-  "terminal.close": "Close terminal"
+  "terminal.close": "Close terminal",
+  "terminal.shell.title": "Terminal shell",
+  "terminal.shell.note": "Pick one found on this machine, or type a path. The choice goes to config/settings.json and applies to the next terminal — running ones keep their process.",
+  "terminal.shell.custom": "Full path to a shell",
+  "terminal.shell.default": "Use whatever the system picks",
+  "terminal.shell.inUse": "in use",
+  "terminal.shell.apply": "use",
+  "terminal.shell.empty": "Nothing found — type a path below",
+  "terminal.shell.hint": "Terminal shell",
+  "command.terminal.shell": "Terminal shell"
 }
