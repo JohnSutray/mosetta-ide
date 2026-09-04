@@ -70,6 +70,7 @@ const SHARED: Record<string, { from: string; names: string[] }> = {
       'primaryHeld',
       'merge',
       'workspaces',
+      'keys',
       'openDoc',
       'editDoc',
       'closeFile',

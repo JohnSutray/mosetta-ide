@@ -93,7 +93,7 @@ describe('тулбар', () => {
   });
 
   it('подсказка берёт клавиши из раскладки, а не из словаря', () => {
-    host.surface.keys.set('panel.tree', ['Cmd+1']);
+    host.surface.keyLists.set('panel.tree', ['Cmd+1']);
     host.registry.add('toolbar.button', wish('tree'), 'core');
     const button = of(top(), 'button')[0]!;
     (button.props['onMouseEnter'] as (e: unknown) => void)({

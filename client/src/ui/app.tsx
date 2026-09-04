@@ -1,7 +1,9 @@
 import { keyContexts } from '../keys/context.js';
 import { commands } from '../keys/commands.js';
-import { keysHelp } from '../state/keys-help.js';
+import { keysEcho } from '../keys/echo.js';
+import { reserved } from '../keys/reserved.js';
 import { editorFocus } from '../state/editor.js';
+import { computed } from '@preact/signals';
 import { keyHost } from '../keys/host.js';
 import { config } from '../state/config.js';
 import { visits } from '../state/visits.js';
@@ -18,7 +20,6 @@ import { registerToolbarWishes } from './toolbar-wishes.js';
 import { Registry } from '../state/registry.js';
 import { keysFor } from '../keys/keys-for.js';
 import { i18n } from '../i18n/index.js';
-import { KeysHelp } from './keys-help.js';
 import { Tip } from '@ide/ui';
 import { PluginSurfaces } from './plugin-surfaces.js';
 import { plugins } from '../state/plugins.js';
@@ -67,6 +68,14 @@ export function App() {
       keysFor,
       settings: config.settings,
       project: session.attached,
+      keys: {
+        host: keyHost.host,
+        os: keyHost.os,
+        bindings: computed(() => config.keymap.value.bindings),
+        humanize: (key) => keyHost.humanize(key),
+        taken: (scopes) => reserved.in(scopes),
+        echo: keysEcho.lastKey,
+      },
       workspaces: {
         current: session.current,
         live: session.workspaces,
@@ -143,7 +152,7 @@ export function App() {
     });
     const dispatcher = new Dispatcher(
       () => keyContexts.here(),
-      (key) => keysHelp.noteUnbound(key),
+      (key) => keysEcho.noteUnbound(key),
     );
     dispatcher.setKeymap(config.keymap.peek());
     const stop = config.keymap.subscribe((value) => dispatcher.setKeymap(value));
@@ -181,7 +190,6 @@ export function App() {
       <Region name="chrome.top" />
       <Region name="chrome.main" fallback={<NoShell />} />
       <PluginSurfaces />
-      <KeysHelp />
       <ToolPicker />
       <Notifications />
       <Tip />

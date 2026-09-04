@@ -1,5 +1,4 @@
 import { commands } from './keys/commands.js';
-import { keysHelp } from './state/keys-help.js';
 import { visits } from './state/visits.js';
 import { doc } from './state/session.js';
 import { tools } from './state/tools.js';
@@ -13,8 +12,6 @@ export function registerCommands(): void {
   commands.register('nav.forward', () => visits.forward());
 
   commands.register('key.reserved', () => {});
-
-  commands.register('keys.show', () => keysHelp.toggle());
 
   commands.register('terminal.shell', () => tools.open('shell'));
   commands.register('tools.packageManager', () => tools.open('manager'));

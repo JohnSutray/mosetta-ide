@@ -1,9 +1,9 @@
 import { signal } from '@preact/signals';
-import type { KeyContext, KeyHost } from '@ide/protocol';
-import { settle } from './notifications.js';
-import { config } from './config.js';
-import { keyHost } from '../keys/host.js';
-import { keyRules } from '../keys/dispatcher.js';
+import type { KeyContext } from '@ide/protocol';
+import { settle } from '../state/notifications.js';
+import { config } from '../state/config.js';
+import { keyHost } from './host.js';
+import { keyRules } from './dispatcher.js';
 import { i18n } from '../i18n/index.js';
 
 export interface KeyEcho {
@@ -13,11 +13,7 @@ export interface KeyEcho {
   seq: number;
 }
 
-export class KeysHelp {
-  readonly open = signal(false);
-
-  readonly viewHost = signal<KeyHost | null>(null);
-
+export class KeysEcho {
   readonly lastKey = signal<KeyEcho | null>(null);
 
   private seq = 0;
@@ -35,20 +31,12 @@ export class KeysHelp {
     );
   }
 
-  toggle(): void {
-    this.open.value = !this.open.value;
-  }
-
-  close(): void {
-    this.open.value = false;
-  }
-
   private helpKey(): string {
     const bound = config.keymap
       .peek()
       .bindings.find((binding) => binding.command === 'keys.show' && keyRules.appliesHere(binding));
-    return bound ? keyHost.humanize(bound.key) : i18n.t('keys.title');
+    return bound ? keyHost.humanize(bound.key) : 'keys.show';
   }
 }
 
-export const keysHelp = new KeysHelp();
+export const keysEcho = new KeysEcho();

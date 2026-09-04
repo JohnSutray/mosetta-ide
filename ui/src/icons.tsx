@@ -6,8 +6,7 @@ export type IconName =
   | 'git'
   | 'push'
   | 'fetch'
-  | 'book'
-  | 'keys';
+  | 'book';
 
 interface Props {
   name: IconName;
@@ -55,16 +54,6 @@ export function Icon({ name, filled }: Props): JSX.Element {
         <svg {...common}>
           <path d="M2.4 3.2h3.9c1 0 1.7.5 1.7 1.2v8.2c0-.6-.7-1-1.7-1H2.4z" fill={filled ? 'currentColor' : 'none'} />
           <path d="M13.6 3.2H9.7c-1 0-1.7.5-1.7 1.2v8.2c0-.6.7-1 1.7-1h3.9z" fill={filled ? 'currentColor' : 'none'} />
-        </svg>
-      );
-    case 'keys':
-      return (
-        <svg {...common}>
-          <rect x="1.4" y="4" width="13.2" height="8" rx="1.4" fill={filled ? 'currentColor' : 'none'} />
-          <path
-            d="M4 6.6h.01M6.6 6.6h.01M9.2 6.6h.01M11.8 6.6h.01M5 9.4h6"
-            stroke={filled ? 'var(--bg)' : 'currentColor'}
-          />
         </svg>
       );
     case 'git':

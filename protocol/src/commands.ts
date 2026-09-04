@@ -35,8 +35,6 @@ export const COMMANDS = {
 
   'popup.close': 'Закрыть верхний попап',
 
-  'keys.show': 'Все клавиши',
-
   'key.reserved': 'Занято: пока ничего не делает',
 } as const;
 

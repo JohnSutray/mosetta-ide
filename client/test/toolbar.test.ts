@@ -30,9 +30,7 @@ describe('тулбар', () => {
     const popups = wishes()
       .buttons.filter((entry) => entry.active)
       .map((e) => e.id);
-    expect(popups.sort()).toEqual([
-      'keys',
-    ]);
+    expect(popups.sort()).toEqual([]);
   });
 
   it('каждая кнопка зовёт существующую команду', () => {

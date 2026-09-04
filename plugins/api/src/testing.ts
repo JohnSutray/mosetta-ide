@@ -7,6 +7,7 @@ import type {
   DocState,
   HoverInfo,
   IndexHit,
+  KeyBinding,
   IndexKind,
   MergeSession,
   RecentProject,
@@ -21,6 +22,9 @@ import type {
   FsAccess,
   MergeAccess,
   WorkspacesAccess,
+  KeysAccess,
+  KeyEcho,
+  TakenKey,
   FileProblems,
   Found,
   Ide,
@@ -166,6 +170,22 @@ export const workspaces: WorkspacesAccess = {
   recent: () => surface().workspaces.recent(),
   browse: (prefix, options) => surface().workspaces.browse(prefix, options),
 };
+export const keys: KeysAccess = {
+  get host() {
+    return surface().keys.host;
+  },
+  get os() {
+    return surface().keys.os;
+  },
+  get bindings() {
+    return surface().keys.bindings;
+  },
+  humanize: (key) => surface().keys.humanize(key),
+  taken: (scopes) => surface().keys.taken(scopes),
+  get echo() {
+    return surface().keys.echo;
+  },
+};
 export const openDoc: { readonly value: DocState | null } = {
   get value() {
     return surface().openDoc.value;
@@ -229,7 +249,7 @@ export class FakeSurface implements ClientSurface {
 
   readonly jumps: Array<{ path: string; line: number; character?: number }> = [];
   tip: Tip | null = null;
-  readonly keys = new Map<string, string[]>();
+  readonly keyLists = new Map<string, string[]>();
 
   readonly project: Signal<WorkspaceInfo | null> = signal(null);
   readonly openDoc: Signal<DocState | null> = signal(null);
@@ -321,6 +341,17 @@ export class FakeSurface implements ClientSurface {
       return this.browsed.get(prefix) ?? [];
     },
   };
+  readonly keyBindings: Signal<KeyBinding[]> = signal([]);
+  readonly keyEcho: Signal<KeyEcho | null> = signal(null);
+  readonly takenKeys: TakenKey[] = [];
+  readonly keys: KeysAccess = {
+    host: 'browser',
+    os: 'mac',
+    bindings: this.keyBindings,
+    humanize: (key) => key,
+    taken: (scopes) => this.takenKeys.filter((one) => one.scopes.some((scope) => scopes.includes(scope))),
+    echo: this.keyEcho,
+  };
   pushMergeState(state: MergeSession | null): void {
     this.mergeSession.value = state;
     for (const handler of this.mergeStateHandlers) handler(state);
@@ -366,7 +397,7 @@ export class FakeSurface implements ClientSurface {
   }
 
   keysFor(command: string): string[] {
-    return this.keys.get(command) ?? [];
+    return this.keyLists.get(command) ?? [];
   }
 
   editDoc(text: string): void {

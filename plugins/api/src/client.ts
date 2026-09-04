@@ -7,6 +7,11 @@ import type {
   EntryKind,
   HoverInfo,
   IndexHit,
+  KeyBinding,
+  KeyContext,
+  KeyHost,
+  KeyOs,
+  KeyScope,
   IndexKind,
   MergeSession,
   RecentProject,
@@ -99,6 +104,29 @@ export interface WorkspacesAccess {
 }
 export declare const workspaces: WorkspacesAccess;
 
+export interface KeyEcho {
+  key: string;
+  context: KeyContext;
+  command: string | null;
+  seq: number;
+}
+export interface TakenKey {
+  key: string;
+  scopes: KeyScope[];
+  who: string;
+  what: string;
+  soft?: boolean;
+}
+export interface KeysAccess {
+  readonly host: KeyHost;
+  readonly os: KeyOs;
+  readonly bindings: { readonly value: KeyBinding[] };
+  humanize(key: string): string;
+  taken(scopes: KeyScope[]): TakenKey[];
+  readonly echo: { readonly value: KeyEcho | null };
+}
+export declare const keys: KeysAccess;
+
 export declare const openDoc: { readonly value: DocState | null };
 
 export declare function editDoc(text: string): void;
@@ -169,6 +197,7 @@ export interface ClientSurface {
   primaryHeld: typeof primaryHeld;
   merge: typeof merge;
   workspaces: typeof workspaces;
+  keys: typeof keys;
   openDoc: typeof openDoc;
   editDoc: typeof editDoc;
   closeFile: typeof closeFile;

@@ -15,6 +15,7 @@
     "@ide/api": "workspace:*",
     "@ide/plugin-editor": "workspace:*",
     "@ide/plugin-git": "workspace:*",
+    "@ide/plugin-keys": "workspace:*",
     "@ide/plugin-layout": "workspace:*",
     "@ide/plugin-merge": "workspace:*",
     "@ide/plugin-npm-scripts": "workspace:*",

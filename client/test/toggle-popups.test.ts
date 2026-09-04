@@ -10,15 +10,15 @@ describe('повторное нажатие закрывает окно', () => 
   it('окно открыто — нажатие закрывает его, а не открывает второе', () => {
     let opened = 0;
     let closed = 0;
-    commands.register('keys.show', () => {
+    commands.register('terminal.shell', () => {
       opened += 1;
     });
 
-    commands.run('keys.show');
+    commands.run('terminal.shell');
     expect(opened).toBe(1);
 
-    popups.enter({ id: 'keys', close: () => (closed += 1) });
-    commands.run('keys.show');
+    popups.enter({ id: 'tool-shell', close: () => (closed += 1) });
+    commands.run('terminal.shell');
     expect(closed).toBe(1);
     expect(opened).toBe(1);
   });
@@ -35,19 +35,20 @@ describe('повторное нажатие закрывает окно', () => 
 
   it('закрытое окно снова открывается', () => {
     let opened = 0;
-    commands.register('keys.show', () => {
+    commands.register('tools.packageManager', () => {
       opened += 1;
     });
-    popups.enter({ id: 'keys', close: () => popups.leave('keys') });
-    commands.run('keys.show');
+    popups.enter({ id: 'tool-manager', close: () => popups.leave('tool-manager') });
+    commands.run('tools.packageManager');
     expect(popups.stack.value).toHaveLength(0);
-    commands.run('keys.show');
+    commands.run('tools.packageManager');
     expect(opened).toBe(1);
   });
 
   it('окно «Keys» узнаётся снаружи: оно ловит клавиши и должно закрыться', () => {
+    commands.registerPlugin('keys.show', () => {});
     expect(commands.opensOpenPopup('keys.show')).toBe(false);
-    popups.enter({ id: 'keys', close: () => {} });
+    popups.enter({ id: 'keys.show', close: () => {} });
     expect(commands.opensOpenPopup('keys.show')).toBe(true);
     expect(commands.opensOpenPopup('git.push')).toBe(false);
   });

@@ -1,6 +1,6 @@
 import { inputMechanics } from '@ide/code';
 import { commands } from './commands.js';
-import { keysHelp } from '../state/keys-help.js';
+import { keysEcho } from './echo.js';
 import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
 import { keyHost } from './host.js';
 import { reserved } from './reserved.js';
@@ -141,7 +141,7 @@ export class Dispatcher {
         ? undefined
         : this.bindings.find((b) => (b.when ?? 'global') === 'global' && b.key === key));
 
-    keysHelp.echo(key, context, binding?.command ?? null);
+    keysEcho.echo(key, context, binding?.command ?? null);
     if (!binding) {
       if (!CAPTURING.has(context) && keyRules.complains(key, { repeat: event.repeat, clip: this.clipKeys })) {
         this.onUnbound(key);

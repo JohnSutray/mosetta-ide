@@ -4,7 +4,6 @@ import { popups } from '@ide/ui';
 type Runner = () => void | Promise<void>;
 
 const OPENS: Partial<Record<CommandId, string>> = {
-  'keys.show': 'keys',
   'terminal.shell': 'tool-shell',
   'tools.packageManager': 'tool-manager',
 };

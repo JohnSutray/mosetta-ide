@@ -1,18 +1,8 @@
-import { keysHelp } from '../state/keys-help.js';
 import { session } from '../state/session.js';
 import { tools } from '../state/tools.js';
 import { i18n } from '../i18n/index.js';
 import type { Registry } from '../state/registry.js';
-import { Icon, tips, type IconName } from '@ide/ui';
-
-interface ButtonWish {
-  id: string;
-  title: string;
-  command: string;
-  icon: (filled: boolean) => unknown;
-  active?: { readonly value: boolean };
-  visible?: { readonly value: boolean };
-}
+import { tips } from '@ide/ui';
 
 interface WidgetWish {
   id: string;
@@ -20,21 +10,8 @@ interface WidgetWish {
   view: () => unknown;
 }
 
-function ours(name: IconName) {
-  return (filled: boolean) => <Icon name={name} filled={filled} />;
-}
-
 export function registerToolbarWishes(store: Registry): void {
-  const button = (wish: ButtonWish) => store.add('toolbar.button', wish, 'core');
   const widget = (wish: WidgetWish) => store.add('toolbar.widget', wish, 'core');
-
-  button({
-    id: 'keys',
-    title: 'toolbar.keys',
-    command: 'keys.show',
-    icon: ours('keys'),
-    active: keysHelp.open,
-  });
 
   widget({ id: 'tools', side: 'right', view: () => <Tools /> });
   widget({ id: 'connection', side: 'right', view: () => <Connection /> });
