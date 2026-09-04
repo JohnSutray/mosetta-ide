@@ -19,7 +19,6 @@ import { registerToolbarWishes } from './toolbar-wishes.js';
 import { Registry } from '../state/registry.js';
 import { keysFor } from '../keys/keys-for.js';
 import { i18n } from '../i18n/index.js';
-import { Tip } from '@ide/ui';
 import { PluginSurfaces } from './plugin-surfaces.js';
 import { plugins } from '../state/plugins.js';
 import { goTo } from './go-to.js';
@@ -188,7 +187,6 @@ export function App() {
       <Region name="chrome.main" fallback={<NoShell />} />
       <PluginSurfaces />
       <Notifications />
-      <Tip />
     </div>
   );
 }

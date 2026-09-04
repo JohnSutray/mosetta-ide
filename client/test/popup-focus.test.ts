@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { popups } from '@ide/ui';
+import { popups } from '@ide/windows';
 
 interface FakeEl {
   isConnected: boolean;

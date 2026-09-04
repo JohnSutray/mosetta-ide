@@ -1,6 +1,6 @@
+import { type Size, activePick, host } from '@ide/windows';
 import { Fragment } from 'preact';
 import type { ComponentChildren, JSX } from 'preact';
-import type { Size } from './geometry.js';
 
 export interface PickItem<T> {
   key: string;
@@ -26,10 +26,8 @@ export interface PickProps<T> {
   onMouseDown?: (event: MouseEvent) => void;
 }
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { activePick } from './pick.js';
 import { fuzzy } from './fuzzy.js';
 import { Popup } from './popup.js';
-import { host } from './host.js';
 
 export function PickPopup<T>({
   id,

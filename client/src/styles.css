@@ -58,17 +58,6 @@ body {
 
 .column-tree { background: var(--panel-bg); }
 
-.resizer {
-  flex: none;
-  width: 5px;
-  margin: 0 -2px;
-  z-index: 2;
-  cursor: col-resize;
-  background: transparent;
-  transition: background-color 120ms linear;
-}
-.resizer:hover, .resizer:active { background: var(--treesel); }
-
 .no-shell {
   flex: 1;
   display: flex;
@@ -207,40 +196,6 @@ body {
 }
 .note-close:hover { color: var(--error); }
 
-.pick { display: flex; flex-direction: column; }
-
-.pick-list {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding: 4px 0;
-  border-top: 1px solid var(--divider);
-}
-
-.pick-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 3px 10px;
-  white-space: nowrap;
-  font: 13px/1.4 var(--ui-font);
-}
-.pick-row:not(.is-current):hover { background: #45494a; }
-.pick-row.is-current { background: var(--treesel); color: #dbe6ef; }
-
-.pick-name { flex: none; overflow: hidden; text-overflow: ellipsis; }
-.pick-name b { color: var(--accent); font-weight: 700; }
-.pick-row.is-current .pick-name b { color: #ffe9bd; }
-.pick-detail {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--muted);
-  font: 11px var(--font);
-}
-.pick-row.is-current .pick-detail { color: #c6d3dd; }
-
 .placeholder {
   padding: 12px;
   color: var(--muted);
@@ -254,100 +209,6 @@ body {
   height: 100%;
   overflow: hidden;
   cursor: default;
-}
-
-.choice { padding: 10px 12px; gap: 8px; }
-.choice-title { font-size: 13px; color: var(--fg); flex: none; }
-.choice-note { color: var(--muted); font-size: 11px; line-height: 1.45; flex: none; }
-.choice-list { flex: 1; min-height: 0; overflow: auto; margin-top: 4px; }
-.choice-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 3px 6px;
-  cursor: pointer;
-}
-.choice-row:hover { background: var(--control-bg); }
-.choice-row.is-current { background: var(--treesel); }
-.choice-name { color: var(--fg); font-size: 12px; flex: none; }
-.choice-path { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.choice-mark { margin-left: auto; color: var(--accent); font-size: 11px; flex: none; }
-.choice-empty { padding: 4px 6px; color: var(--muted); font-style: italic; }
-
-.choice-custom { display: flex; gap: 6px; flex: none; }
-.choice-input {
-  flex: 1;
-  min-width: 0;
-  padding: 4px 6px;
-  background: var(--bg);
-  border: 1px solid var(--divider);
-  border-radius: 4px;
-  color: var(--fg);
-  font-family: var(--mono, monospace);
-  font-size: 12px;
-}
-.choice-input:focus { outline: none; border-color: var(--treesel); }
-.choice-apply {
-  flex: none;
-  padding: 4px 10px;
-  background: var(--control-bg);
-  border: none;
-  border-radius: 4px;
-  color: var(--fg);
-  cursor: pointer;
-}
-.choice-apply:hover { background: var(--control-bg-hover); }
-.choice-reset { flex: none; color: var(--muted); font-size: 11px; cursor: pointer; }
-.choice-reset:hover { color: var(--fg); text-decoration: underline; }
-
-.pick-head {
-  padding: 6px 8px 2px;
-  color: var(--muted);
-  font-size: 11px;
-  text-transform: none;
-  letter-spacing: 0.02em;
-  border-bottom: 1px solid var(--divider);
-  margin-bottom: 2px;
-  cursor: default;
-  user-select: none;
-}
-.pick-head:first-child { padding-top: 2px; }
-
-.pick-list.is-sectioned .pick-row { padding-left: 16px; }
-.pick-list.is-sectioned .pick-name {
-  flex: none;
-  min-width: 16ch;
-}
-
-.tip {
-  position: fixed;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 8px;
-  max-width: min(42ch, calc(100vw - 24px));
-  padding: 5px 9px;
-  background: #1f2224;
-  border: 1px solid var(--divider);
-  border-radius: 5px;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
-  color: var(--fg);
-  font: 12px var(--ui-font);
-  pointer-events: none;
-}
-
-.tip-title { color: var(--fg); }
-
-.tip-key {
-  flex: none;
-  white-space: nowrap;
-  padding: 1px 5px;
-  background: var(--control-bg);
-  border-radius: 3px;
-  color: var(--accent);
-  font-family: var(--mono, monospace);
-  font-size: 11px;
 }
 
 .diverged {

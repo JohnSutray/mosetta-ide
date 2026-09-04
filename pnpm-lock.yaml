@@ -53,9 +53,9 @@ importers:
       '@ide/protocol':
         specifier: workspace:*
         version: link:../protocol
-      '@ide/ui':
+      '@ide/windows':
         specifier: workspace:*
-        version: link:../ui
+        version: link:../windows
       '@lezer/highlight':
         specifier: ^1.2.1
         version: 1.2.3
@@ -191,7 +191,7 @@ importers:
         version: link:../editor
       '@ide/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1
@@ -216,7 +216,7 @@ importers:
         version: link:../../protocol
       '@ide/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1
@@ -238,7 +238,7 @@ importers:
         version: link:../api
       '@ide/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
     devDependencies:
       preact:
         specifier: ^10.25.3
@@ -260,7 +260,7 @@ importers:
         version: link:../../protocol
       '@ide/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
     devDependencies:
       '@codemirror/state':
         specifier: ^6.5.0
@@ -294,7 +294,7 @@ importers:
         version: link:../../protocol
       '@ide/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1
@@ -332,7 +332,7 @@ importers:
         version: link:../../protocol
       '@ide/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1
@@ -379,7 +379,7 @@ importers:
         version: link:../../protocol
       '@ide/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1
@@ -423,7 +423,7 @@ importers:
         version: link:../../protocol
       '@ide/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1
@@ -451,7 +451,7 @@ importers:
         version: link:../../protocol
       '@ide/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
       '@xterm/addon-fit':
         specifier: ^0.10.0
         version: 0.10.0(@xterm/xterm@5.5.0)
@@ -485,7 +485,7 @@ importers:
         version: link:../../protocol
       '@ide/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
     devDependencies:
       preact:
         specifier: ^10.25.3
@@ -501,7 +501,32 @@ importers:
         version: link:../api
       '@ide/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
+    devDependencies:
+      '@preact/signals':
+        specifier: ^1.3.1
+        version: 1.3.4(preact@10.29.8)
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.20.1
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
+
+  plugins/ui:
+    dependencies:
+      '@ide/api':
+        specifier: workspace:*
+        version: link:../api
+      '@ide/protocol':
+        specifier: workspace:*
+        version: link:../../protocol
+      '@ide/windows':
+        specifier: workspace:*
+        version: link:../../windows
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1
@@ -571,6 +596,9 @@ importers:
       '@ide/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@ide/ui':
+        specifier: workspace:*
+        version: link:../plugins/ui
       esbuild:
         specifier: 0.25.12
         version: 0.25.12
@@ -594,7 +622,7 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.1)
 
-  ui:
+  windows:
     dependencies:
       '@ide/protocol':
         specifier: workspace:*

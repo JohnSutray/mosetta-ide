@@ -29,6 +29,7 @@
     "@ide/plugin-toolbar": "workspace:*",
     "@ide/plugin-tree": "workspace:*",
     "@ide/protocol": "workspace:*",
+    "@ide/ui": "workspace:*",
     "esbuild": "0.25.12",
     "typescript": "^5.7.2",
     "ws": "^8.18.0"

@@ -64,32 +64,6 @@ export const STYLE = `
 .branches-fetch { flex: none; margin-left: auto; }
 .branch-row.is-current .branch-sha { color: #c6d3dd; }
 
-.branch-action {
-  text-align: left;
-  padding: 3px 12px;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  color: var(--fg);
-  font: 13px/1.5 var(--ui-font);
-  white-space: nowrap;
-}
-.branch-action:hover,
-.branch-action.is-current { background: var(--treesel); color: #dbe6ef; }
-.branch-action.is-danger { color: #e0a0a0; }
-.branch-action.is-danger:hover,
-.branch-action.is-danger.is-current { background: #6b3a39; color: #ffd7d6; }
-
-.branch-prompt { display: flex; flex-direction: column; gap: 6px; }
-
-.branches-foot {
-  display: flex;
-  gap: 6px;
-  padding: 7px 12px;
-  padding-right: 22px;
-  border-top: 1px solid var(--divider);
-  flex: none;
-}
 .branches-foot .button { padding: 3px 10px; }
 
 .git-log {
@@ -361,19 +335,6 @@ export const STYLE = `
 
 .branches-filter { flex: none; padding: 6px 8px; }
 .branches-filter .field { width: 100%; }
-
-.branch-menu:focus, .branch-menu:focus-visible { outline: none; }
-.branch-menu {
-  position: fixed;
-  z-index: 90;
-  display: flex;
-  flex-direction: column;
-  min-width: 190px;
-  padding: 2px 0;
-  border: 1px solid var(--divider);
-  background: var(--panel-bg);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
-}
 
 .branch-prompt {
   flex: none;

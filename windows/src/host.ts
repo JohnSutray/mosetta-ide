@@ -23,6 +23,6 @@ export const host: UiHost = {
   recall: (key, fallback) => installed.recall(key, fallback),
 };
 
-export function installUi(next: UiHost): void {
+export function installHost(next: UiHost): void {
   installed = next;
 }

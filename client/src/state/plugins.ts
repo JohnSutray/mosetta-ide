@@ -4,7 +4,7 @@ import { complain, notify, say, settle } from './notifications.js';
 import * as preact from 'preact';
 import * as hooks from 'preact/hooks';
 import * as signals from '@preact/signals';
-import * as ui from '@ide/ui';
+import * as windows from '@ide/windows';
 import * as code from '@ide/code';
 import * as jsxRuntime from 'preact/jsx-runtime';
 import * as cm from '@codemirror/state';
@@ -38,6 +38,8 @@ interface Built {
   instance: object;
 }
 
+const SLOTS: Record<string, string> = { '@ide/ui': 'ui' };
+
 export class Plugins {
   constructor(private readonly rpc: RpcLike = socket) {}
 
@@ -67,7 +69,7 @@ export class Plugins {
       jsx: jsxRuntime,
       hooks,
       signals,
-      ui,
+      windows,
       code,
       cm,
       cmView,
@@ -129,6 +131,11 @@ export class Plugins {
     const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
     try {
       const mod = (await import(/* @vite-ignore */ url)) as { default?: PluginClass };
+      if (info.provides) {
+        const slot = SLOTS[info.provides];
+        if (!slot) throw new Error(`не знаю, куда класть ${info.provides}`);
+        (globalThis as unknown as { __ideApi: Record<string, unknown> }).__ideApi[slot] = mod;
+      }
       const Ctor = mod.default;
       if (typeof Ctor !== 'function') {
         throw new Error('нет export default class');

@@ -117,8 +117,11 @@ export class PluginHost {
 
   private async ordered(names: string[], resolveFrom: string): Promise<string[]> {
     const needs = new Map<string, string[]>();
+    const provides = new Set<string>();
     for (const name of names) {
-      needs.set(name, await this.needsOf(name, resolveFrom).catch(() => []));
+      const meta = await this.needsOf(name, resolveFrom).catch(() => ({ needs: [], provides: false }));
+      needs.set(name, meta.needs);
+      if (meta.provides) provides.add(name);
     }
     const out: string[] = [];
     const done = new Set<string>();
@@ -135,15 +138,19 @@ export class PluginHost {
       done.add(name);
       out.push(name);
     };
+    for (const name of names) if (provides.has(name)) visit(name);
     for (const name of names) visit(name);
     return out;
   }
 
-  private async needsOf(name: string, resolveFrom: string): Promise<string[]> {
+  private async needsOf(
+    name: string,
+    resolveFrom: string,
+  ): Promise<{ needs: string[]; provides: boolean }> {
     const pkg = JSON.parse(await fs.readFile(await manifestOf(name, resolveFrom), 'utf8')) as {
-      ide?: { needs?: string[] };
+      ide?: { needs?: string[]; provides?: string };
     };
-    return pkg.ide?.needs ?? [];
+    return { needs: pkg.ide?.needs ?? [], provides: Boolean(pkg.ide?.provides) };
   }
 
   private async one(name: string, resolveFrom: string): Promise<void> {
@@ -228,6 +235,7 @@ export class PluginHost {
         hasServer: Boolean(manifest.server),
         commands: manifest.commands ?? {},
         needs: peers,
+        ...(manifest.provides ? { provides: manifest.provides } : {}),
         strings,
       },
       dir,

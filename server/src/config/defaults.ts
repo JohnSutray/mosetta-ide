@@ -4,6 +4,7 @@ export class Defaults {
   readonly settings: Settings = {
     plugins: {
       enabled: [
+        '@ide/ui',
         '@ide/plugin-tree',
         '@ide/plugin-merge',
         '@ide/plugin-symbols',

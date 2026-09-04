@@ -1,9 +1,7 @@
-import { geometry, type Size } from './geometry.js';
-import { popups } from './popups.js';
+import { geometry, type Size, popups, host } from '@ide/windows';
 import type { ComponentChildren } from 'preact';
 import type { KeyContext } from '@ide/protocol';
 import { useEffect, useRef } from 'preact/hooks';
-import { host } from './host.js';
 
 export function Popup({
   id,

@@ -1,6 +1,6 @@
 packages:
   - protocol
-  - ui
+  - windows
   - code
   - server
   - client

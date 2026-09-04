@@ -56,7 +56,7 @@ describe('контракт @ide/api', () => {
 
   it('@ide/ui подменяется ровно тем, что он отдаёт', () => {
     const index = fs.readFileSync(
-      path.resolve(here, '../../ui/src/index.ts'),
+      path.resolve(here, '../../plugins/ui/src/index.ts'),
       'utf8',
     );
     const exported = [...index.matchAll(/^export \{([^}]*)\} from/gm)]
@@ -85,6 +85,25 @@ describe('контракт @ide/api', () => {
 
     const shared = source('../../../server/src/plugins/build.ts');
     const listed = [...shared.matchAll(/^const CODE_NAMES = \[([^\]]*)\]/gm)]
+      .flatMap((m) => m[1]!.split(','))
+      .map((one) => one.trim().replace(/^'|',?$/g, ''))
+      .filter((one) => one !== '');
+
+    expect([...listed].sort()).toEqual([...exported].sort());
+  });
+
+  it('@ide/windows отдаёт ровно то, что подменяет сборка', () => {
+    const index = fs.readFileSync(
+      path.resolve(here, '../../windows/src/index.ts'),
+      'utf8',
+    );
+    const exported = [...index.matchAll(/^export \{([^}]*)\} from/gm)]
+      .flatMap((m) => m[1]!.split(','))
+      .map((one) => one.trim())
+      .filter((one) => one !== '' && !one.startsWith('type '));
+
+    const shared = source('../../../server/src/plugins/build.ts');
+    const listed = [...shared.matchAll(/^const WINDOWS_NAMES = \[([^\]]*)\]/gm)]
       .flatMap((m) => m[1]!.split(','))
       .map((one) => one.trim().replace(/^'|',?$/g, ''))
       .filter((one) => one !== '');

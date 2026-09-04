@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fileTypes } from '@ide/ui';
+import { fileTypes } from '../src/index.js';
 
 describe('тип файла по имени', () => {
   it('расширение узнаётся в любом регистре', () => {

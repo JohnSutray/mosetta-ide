@@ -4,7 +4,6 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 
 const UI_NAMES = [
-  'installUi',
   'Popup',
   'PickPopup',
   'ChoicePopup',
@@ -25,6 +24,16 @@ const UI_NAMES = [
   'RootIcon',
   'Chevron',
   'fileTypes',
+];
+
+const WINDOWS_NAMES = [
+  'host',
+  'installHost',
+  'popups',
+  'activePick',
+  'activeMenu',
+  'tips',
+  'geometry',
 ];
 
 const CODE_NAMES = [
@@ -52,6 +61,7 @@ const SHARED: Record<string, { from: string; names: string[] }> = {
     names: ['signal', 'computed', 'effect', 'batch', 'useSignal'],
   },
   '@ide/ui': { from: 'ui', names: UI_NAMES },
+  '@ide/windows': { from: 'windows', names: WINDOWS_NAMES },
   '@ide/code': { from: 'code', names: CODE_NAMES },
   '@ide/api/client': {
     from: 'api',
@@ -154,12 +164,10 @@ export interface BuiltPlugin {
 function shim(name: string): string {
   const spec = SHARED[name];
   if (!spec) throw new Error(`нет заглушки для ${name}`);
-  const lines = spec.names.map(
-    (item) => `export const ${item} = globalThis.__ideApi.${spec.from}.${item};`,
-  );
+  const lines = spec.names.map((item) => `export const ${item} = slot.${item};`);
   return [
-    `const missing = () => { throw new Error('${name}: приложение не отдало это наружу'); };`,
-    `void missing;`,
+    `const slot = globalThis.__ideApi.${spec.from};`,
+    `if (!slot) throw new Error('${name}: никто не поставляет этот пакет — включён ли его плагин в settings.json?');`,
     ...lines,
   ].join('\n');
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { grouped, matches, type PickItem } from '@ide/ui';
+import { grouped, matches, type PickItem } from '../src/index.js';
 
 function row(id: string): { item: PickItem<string>; matches: number[] } {
   return { item: { key: id, text: id, value: id }, matches: [] };

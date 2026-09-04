@@ -1,7 +1,5 @@
-import { popups } from './popups.js';
+import { popups, activeMenu, host } from '@ide/windows';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { activeMenu } from './menu-state.js';
-import { host } from './host.js';
 
 export interface MenuItem {
   label: string;

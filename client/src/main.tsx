@@ -1,6 +1,6 @@
 import { rpc } from './state/session.js';
 import { render } from 'preact';
-import { installUi } from '@ide/ui';
+import { installHost } from '@ide/windows';
 import { App } from './ui/app.js';
 import { i18n } from './i18n/index.js';
 import { keyRules } from './keys/dispatcher.js';
@@ -10,7 +10,7 @@ import './styles.css';
 const root = document.getElementById('root');
 if (!root) throw new Error('нет #root');
 
-installUi({
+installHost({
   t: (key, params) => i18n.t(key, params),
   catchesKeys: (context) => context !== undefined && keyRules.catchesKeys(context),
   keep: (key, value) => keep(key, value),

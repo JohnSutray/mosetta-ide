@@ -1,5 +1,5 @@
 import { COMMAND_IDS, COMMANDS, type CommandId } from '@ide/protocol';
-import { popups } from '@ide/ui';
+import { popups } from '@ide/windows';
 
 type Runner = () => void | Promise<void>;
 
