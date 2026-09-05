@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "@ide/api": "workspace:*",
-    "@ide/ui": "workspace:*"
+    "@ide/ui": "workspace:*",
+    "@ide/windows": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3"

@@ -2,7 +2,8 @@ import { t } from '@ide/api/client';
 import type { BranchesWindow, Git, PushWindow } from './state.js';
 import { useEffect, useRef } from 'preact/hooks';
 import type { GitBranch } from './types.js';
-import { Chevron, Icon, Menu, Popup, activePick, type MenuItem } from '@ide/ui';
+import { Chevron, Icon, Menu, Popup, type MenuItem } from '@ide/ui';
+import { activePick } from '@ide/windows';
 
 export interface BranchesProps {
   git: Git;

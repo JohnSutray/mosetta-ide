@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SymbolSite } from '@ide/protocol';
 import { FakeHost } from '@ide/api/testing';
-import { activePick } from '@ide/ui';
+import { activePick } from '@ide/windows';
 import Editor from '@ide/plugin-editor';
 import SymbolsPlugin from '../src/client.js';
 

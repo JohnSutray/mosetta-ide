@@ -1,7 +1,4 @@
 
-export { popups, activePick, activeMenu, tips, geometry } from '@ide/windows';
-export type { OpenPopup, PickApi, MenuApi, TipSpot, Size } from '@ide/windows';
-
 export { Popup } from './popup.js';
 export { PickPopup, grouped, matches, type PickItem, type PickProps } from './pick-popup.js';
 export { ChoicePopup, type ChoiceRow, type ChoiceProps } from './choice-popup.js';

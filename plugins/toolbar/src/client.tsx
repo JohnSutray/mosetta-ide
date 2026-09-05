@@ -7,7 +7,7 @@ import {
   t,
   type Ide,
 } from '@ide/api/client';
-import { tips } from '@ide/ui';
+import { tips } from '@ide/windows';
 import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarWidget } from './schema.js';
 import { STYLE } from './style.js';
 

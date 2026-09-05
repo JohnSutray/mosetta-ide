@@ -3,7 +3,7 @@ import type { Ide } from '@ide/api/client';
 import { batch, signal, type Signal } from '@preact/signals';
 import type { SymbolSite } from '@ide/protocol';
 import type { SymbolSpot } from '@ide/plugin-editor';
-import { activePick } from '@ide/ui';
+import { activePick } from '@ide/windows';
 
 export type SymbolKind = 'definition' | 'usages';
 

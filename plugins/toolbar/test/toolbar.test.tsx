@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, of, nodes } from '@ide/api/testing';
-import { tips } from '@ide/ui';
+import { tips } from '@ide/windows';
 import Toolbar from '../src/client.js';
 
 const NAME = '@ide/plugin-toolbar';

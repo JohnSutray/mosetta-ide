@@ -1,6 +1,7 @@
 import { Fragment } from 'preact';
 import { activate, registry, t, type Ide } from '@ide/api/client';
-import { Resizer, geometry } from '@ide/ui';
+import { Resizer } from '@ide/ui';
+import { geometry } from '@ide/windows';
 import { PANEL_SCHEMA, type PanelWish } from './schema.js';
 import { STYLE } from './style.js';
 

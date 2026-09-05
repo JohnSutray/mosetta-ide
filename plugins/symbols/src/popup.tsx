@@ -1,7 +1,8 @@
 import { settings, t } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import { CodeView, codePainter } from '@ide/code';
-import { Popup, Resizer, geometry } from '@ide/ui';
+import { Popup, Resizer } from '@ide/ui';
+import { geometry } from '@ide/windows';
 import type { Symbols } from './state.js';
 
 const SIZE = { w: 620, h: 420 };

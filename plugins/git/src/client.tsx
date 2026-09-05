@@ -11,7 +11,7 @@ import {
   runCommand,
   type Ide,
 } from '@ide/api/client';
-import { tips } from '@ide/ui';
+import { tips } from '@ide/windows';
 import Editor from '@ide/plugin-editor';
 import { BranchesWindow, Git, PushWindow, type GitRemote, type TreeTint } from './state.js';
 import { GitMarks } from './marks.js';

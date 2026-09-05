@@ -1,7 +1,7 @@
 import { openDoc, t } from '@ide/api/client';
 import type { GitMarks } from './marks.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import { popups } from '@ide/ui';
+import { popups } from '@ide/windows';
 
 export function HunkPopup({ marks }: { marks: GitMarks }) {
   const open = marks.popup.value;
