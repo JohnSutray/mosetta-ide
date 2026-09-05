@@ -10,8 +10,7 @@
     ".": "./src/index.ts"
   },
   "ide": {
-    "client": "src/client.tsx",
-    "provides": "@ide/ui"
+    "client": "src/client.tsx"
   },
   "dependencies": {
     "@ide/api": "workspace:*",

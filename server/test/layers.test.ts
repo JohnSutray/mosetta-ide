@@ -16,6 +16,7 @@ const MAY_TOUCH_DISK = [
   'env/tools.ts',
   'env/visits.ts',
   'plugins/host.ts',
+  'plugins/shared.ts',
 ];
 
 const MAY_SPAWN = [

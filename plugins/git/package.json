@@ -17,10 +17,7 @@
       "git.branches": "Ветки git",
       "git.push": "Push текущей ветки",
       "git.fetch": "Забрать обновления удалёнки"
-    },
-    "needs": [
-      "@ide/plugin-editor"
-    ]
+    }
   },
   "dependencies": {
     "@ide/api": "workspace:*",

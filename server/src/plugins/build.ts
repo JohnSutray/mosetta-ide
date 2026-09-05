@@ -2,169 +2,12 @@ import { build } from 'esbuild';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
-
-const UI_NAMES = [
-  'Popup',
-  'PickPopup',
-  'ChoicePopup',
-  'grouped',
-  'matches',
-  'Menu',
-  'Resizer',
-  'Tip',
-  'fuzzy',
-  'Icon',
-  'FileIcon',
-  'DirIcon',
-  'RootIcon',
-  'Chevron',
-  'fileTypes',
-];
-
-const WINDOWS_NAMES = [
-  'host',
-  'installHost',
-  'popups',
-  'activePick',
-  'activeMenu',
-  'tips',
-  'geometry',
-];
-
-const CODE_NAMES = [
-  'darcula',
-  'Darcula',
-  'languages',
-  'Languages',
-  'codePainter',
-  'CodePainter',
-  'lineDiff',
-  'LineDiff',
-  'inputMechanics',
-  'InputMechanics',
-  'CodeView',
-];
-
-const SHARED: Record<string, { from: string; names: string[] }> = {
-  preact: { from: 'preact', names: ['h', 'Fragment', 'createElement', 'render', 'cloneElement'] },
-  'preact/hooks': {
-    from: 'hooks',
-    names: ['useState', 'useEffect', 'useRef', 'useMemo', 'useCallback', 'useLayoutEffect'],
-  },
-  '@preact/signals': {
-    from: 'signals',
-    names: ['signal', 'computed', 'effect', 'batch', 'useSignal'],
-  },
-  '@ide/ui': { from: 'ui', names: UI_NAMES },
-  '@ide/windows': { from: 'windows', names: WINDOWS_NAMES },
-  '@ide/code': { from: 'code', names: CODE_NAMES },
-  '@ide/api/client': {
-    from: 'api',
-    names: [
-      't',
-      'problems',
-      'goTo',
-      'runCommand',
-      'keysFor',
-      'settings',
-      'project',
-      'fileTree',
-      'fs',
-      'openFile',
-      'flushDocs',
-      'setSetting',
-      'primaryHeld',
-      'merge',
-      'workspaces',
-      'keys',
-      'openDoc',
-      'editDoc',
-      'closeFile',
-      'dirty',
-      'fileDiagnostics',
-      'externalEpoch',
-      'pendingReveal',
-      'visit',
-      'hover',
-      'definition',
-      'references',
-      'peekFile',
-      'searchIndex',
-      'openerFor',
-      'takeFocusOnMount',
-      'wantsFocus',
-      'chordHeld',
-      'remote',
-      'stub',
-      'activate',
-      'registry',
-    ],
-  },
-  '@ide/api/server': { from: 'api', names: ['command', 'activate'] },
-
-  '@codemirror/state': {
-    from: 'cm',
-    names: ['EditorState', 'StateEffect', 'StateField', 'Annotation', 'RangeSetBuilder', 'Facet'],
-  },
-  '@codemirror/view': {
-    from: 'cmView',
-    names: [
-      'EditorView',
-      'Decoration',
-      'ViewPlugin',
-      'WidgetType',
-      'GutterMarker',
-      'gutter',
-      'keymap',
-      'lineNumbers',
-      'highlightActiveLineGutter',
-      'drawSelection',
-      'highlightSpecialChars',
-      'hoverTooltip',
-    ],
-  },
-  '@codemirror/commands': {
-    from: 'cmCommands',
-    names: [
-      'history',
-      'undo',
-      'redo',
-      'deleteLine',
-      'copyLineDown',
-      'toggleComment',
-      'moveLineUp',
-      'moveLineDown',
-      'addCursorAbove',
-      'addCursorBelow',
-      'cursorGroupLeft',
-      'cursorGroupRight',
-      'selectGroupLeft',
-      'selectGroupRight',
-      'indentMore',
-      'indentLess',
-    ],
-  },
-  '@codemirror/language': {
-    from: 'cmLanguage',
-    names: ['bracketMatching', 'indentOnInput', 'foldGutter'],
-  },
-  '@codemirror/search': { from: 'cmSearch', names: ['highlightSelectionMatches'] },
-};
+import type { SharedModules, Side } from './shared.js';
 
 export interface BuiltPlugin {
   code: string;
+  exports: string[];
   ms: number;
-}
-
-function shim(name: string): string {
-  const spec = SHARED[name];
-  if (!spec) throw new Error(`нет заглушки для ${name}`);
-  const lines = spec.names.map((item) => `export const ${item} = slot.${item};`);
-  return [
-    `const slot = globalThis.__ideApi.${spec.from};`,
-    `if (!slot) throw new Error('${name}: никто не поставляет этот пакет — включён ли его плагин в settings.json?');`,
-    ...lines,
-  ].join('\n');
 }
 
 function escape(value: string): string {
@@ -172,20 +15,36 @@ function escape(value: string): string {
 }
 
 export class PluginBuild {
-  shared(name: string): string[] {
-    return SHARED[name]?.names ?? [];
-  }
+  constructor(private readonly shared: SharedModules) {}
 
-  async entry(
-    entry: string,
-    side: 'client' | 'server',
-    peers: string[] = [],
-  ): Promise<BuiltPlugin> {
-    const started = Date.now();
+  async imports(entry: string, side: Side): Promise<string[]> {
     const result = await build({
       entryPoints: [entry],
       bundle: true,
       write: false,
+      metafile: true,
+      format: 'esm',
+      platform: side === 'client' ? 'browser' : 'node',
+      packages: 'external',
+      jsx: 'automatic',
+      jsxImportSource: 'preact',
+      logLevel: 'silent',
+    });
+    const out = new Set<string>();
+    for (const input of Object.values(result.metafile?.inputs ?? {})) {
+      for (const one of input.imports) if (one.external) out.add(one.path);
+    }
+    return [...out];
+  }
+
+  async entry(entry: string, side: Side): Promise<BuiltPlugin> {
+    const started = Date.now();
+    const shared = this.shared;
+    const result = await build({
+      entryPoints: [entry],
+      bundle: true,
+      write: false,
+      metafile: true,
       format: 'esm',
       platform: side === 'client' ? 'browser' : 'node',
       target: 'es2022',
@@ -202,7 +61,7 @@ export class PluginBuild {
             if (side !== 'server') return;
             api.onResolve({ filter: /^[^./]/ }, (args) => {
               if (args.kind === 'entry-point') return null;
-              if (SHARED[args.path] || peers.includes(args.path)) return null;
+              if (shared.knows(args.path, side)) return null;
               if (args.path.startsWith('node:')) return { path: args.path, external: true };
               try {
                 const found = createRequire(path.join(path.dirname(entry), 'noop.js')).resolve(
@@ -216,27 +75,15 @@ export class PluginBuild {
           },
         },
         {
-          name: 'ide-peers',
-          setup(api) {
-            if (peers.length === 0) return;
-            const filter = new RegExp(`^(${peers.map(escape).join('|')})$`);
-            api.onResolve({ filter }, (args) => ({ path: args.path, namespace: 'ide-peer' }));
-            api.onLoad({ filter: /.*/, namespace: 'ide-peer' }, (args) => ({
-              contents: `const found = globalThis.__ideApi.plugins.get(${JSON.stringify(args.path)});
-  if (!found) throw new Error('плагин ${args.path} не поднят — объявите его в "needs"');
-  export default found;`,
-              loader: 'js',
-            }));
-          },
-        },
-        {
           name: 'ide-shared',
           setup(api) {
-            const keys = Object.keys(SHARED);
-            const filter = new RegExp(`^(${keys.map(escape).join('|')})$`);
-            api.onResolve({ filter }, (args) => ({ path: args.path, namespace: 'ide-shared' }));
-            api.onLoad({ filter: /.*/, namespace: 'ide-shared' }, (args) => ({
-              contents: shim(args.path),
+            api.onResolve({ filter: /^[^./]/ }, (args) => {
+              if (args.kind === 'entry-point') return null;
+              if (!shared.knows(args.path, side)) return null;
+              return { path: args.path, namespace: 'ide-shared' };
+            });
+            api.onLoad({ filter: /.*/, namespace: 'ide-shared' }, async (args) => ({
+              contents: await shared.shim(args.path, side),
               loader: 'js',
             }));
           },
@@ -244,12 +91,12 @@ export class PluginBuild {
         {
           name: 'ide-jsx',
           setup(api) {
-            api.onResolve({ filter: /^preact\/jsx-(dev-)?runtime$/ }, (args) => ({
+            api.onResolve({ filter: new RegExp(`^${escape('preact/jsx-')}(dev-)?runtime$`) }, (args) => ({
               path: args.path,
               namespace: 'ide-jsx',
             }));
             api.onLoad({ filter: /.*/, namespace: 'ide-jsx' }, () => ({
-              contents: `const r = globalThis.__ideApi.jsx;
+              contents: `const r = globalThis.__ideApi.modules['preact/jsx-runtime'];
   export const jsx = r.jsx;
   export const jsxs = r.jsxs;
   export const jsxDEV = r.jsxDEV ?? r.jsx;
@@ -263,8 +110,7 @@ export class PluginBuild {
 
     const file = result.outputFiles?.[0];
     if (!file) throw new Error('сборка не дала файла');
-    return { code: file.text, ms: Date.now() - started };
+    const out = Object.values(result.metafile?.outputs ?? {})[0];
+    return { code: file.text, exports: out?.exports ?? [], ms: Date.now() - started };
   }
 }
-
-export const pluginBuild = new PluginBuild();

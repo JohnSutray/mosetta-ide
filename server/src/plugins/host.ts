@@ -2,7 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { PluginInfo, PluginManifest } from '@ide/protocol';
-import { pluginBuild } from './build.js';
+import { PluginBuild } from './build.js';
+import type { SharedModules } from './shared.js';
 import {
   activate,
   command,
@@ -39,19 +40,23 @@ export interface Machine {
 export class PluginHost {
   private readonly loaded = new Map<string, Loaded>();
   private readonly instances = new Map<unknown, unknown>();
-  private readonly classes = new Map<string, unknown>();
 
   private readonly providers: FindProvider[] = [];
+
+  private readonly build: PluginBuild;
 
   constructor(
     private readonly log: Logger,
     private readonly buildDir: string,
+    private readonly shared: SharedModules,
     private readonly machine: Machine = {
       shell: () => ({ file: '', args: [], env: {} }),
       shells: () => [],
       packageManagers: () => [],
     },
-  ) {}
+  ) {
+    this.build = new PluginBuild(shared);
+  }
 
   finds(): readonly FindProvider[] {
     return this.providers;
@@ -59,11 +64,16 @@ export class PluginHost {
 
   private expose(): void {
     const global_ = globalThis as Record<string, unknown>;
+    const had = (global_.__ideApi as { modules?: Record<string, unknown> } | undefined)?.modules ?? {};
     global_.__ideApi = {
       ...((global_.__ideApi as object) ?? {}),
-      api: { command, activate },
-      plugins: this.classes,
+      modules: { ...had, '@ide/api/server': { command, activate } },
     };
+  }
+
+  private serve(name: string, mod: unknown): void {
+    const table = (globalThis as { __ideApi?: { modules: Record<string, unknown> } }).__ideApi;
+    if (table) table.modules[name] = mod;
   }
 
   list(): PluginInfo[] {
@@ -88,11 +98,12 @@ export class PluginHost {
     return handler(params, ctx);
   }
 
-  async load(names: string[], resolveFrom: string): Promise<void> {
+  async load(names: string[]): Promise<void> {
     this.expose();
-    for (const name of await this.ordered(names, resolveFrom)) {
+    const { order, needs } = await this.ordered(names);
+    for (const name of order) {
       try {
-        await this.one(name, resolveFrom);
+        await this.one(name, needs.get(name) ?? []);
       } catch (err) {
         this.log.warn(`плагин ${name} не поднялся: ${String(err)}`);
         this.loaded.set(name, {
@@ -115,46 +126,44 @@ export class PluginHost {
     }
   }
 
-  private async ordered(names: string[], resolveFrom: string): Promise<string[]> {
+  private async ordered(names: string[]): Promise<{ order: string[]; needs: Map<string, string[]> }> {
     const needs = new Map<string, string[]>();
-    const provides = new Set<string>();
     for (const name of names) {
-      const meta = await this.needsOf(name, resolveFrom).catch(() => ({ needs: [], provides: false }));
-      needs.set(name, meta.needs);
-      if (meta.provides) provides.add(name);
+      needs.set(name, await this.importsOf(name).then((all) => all.filter((one) => names.includes(one))).catch(() => []));
     }
     const out: string[] = [];
     const done = new Set<string>();
-    const path: string[] = [];
+    const path_: string[] = [];
     const visit = (name: string): void => {
       if (done.has(name)) return;
-      if (path.includes(name)) {
-        this.log.warn(`круг в зависимостях плагинов: ${[...path, name].join(' → ')}`);
+      if (path_.includes(name)) {
+        this.log.warn(`круг в зависимостях плагинов: ${[...path_, name].join(' → ')}`);
         return;
       }
-      path.push(name);
-      for (const dep of needs.get(name) ?? []) if (names.includes(dep)) visit(dep);
-      path.pop();
+      path_.push(name);
+      for (const dep of needs.get(name) ?? []) visit(dep);
+      path_.pop();
       done.add(name);
       out.push(name);
     };
-    for (const name of names) if (provides.has(name)) visit(name);
     for (const name of names) visit(name);
-    return out;
+    return { order: out, needs };
   }
 
-  private async needsOf(
-    name: string,
-    resolveFrom: string,
-  ): Promise<{ needs: string[]; provides: boolean }> {
-    const pkg = JSON.parse(await fs.readFile(await manifestOf(name, resolveFrom), 'utf8')) as {
-      ide?: { needs?: string[]; provides?: string };
-    };
-    return { needs: pkg.ide?.needs ?? [], provides: Boolean(pkg.ide?.provides) };
+  private async importsOf(name: string): Promise<string[]> {
+    const pkgPath = await this.shared.manifestOf(name);
+    const dir = path.dirname(pkgPath);
+    const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf8')) as { ide?: { client?: string; server?: string } };
+    const out = new Set<string>();
+    for (const [entry, side] of [[pkg.ide?.client, 'client'], [pkg.ide?.server, 'server']] as const) {
+      if (!entry) continue;
+      for (const one of await this.build.imports(path.join(dir, entry), side)) out.add(one);
+    }
+    return [...out];
   }
 
-  private async one(name: string, resolveFrom: string): Promise<void> {
-    const pkgPath = await manifestOf(name, resolveFrom);
+  private async one(name: string, needs: string[]): Promise<void> {
+    const pkgPath = await this.shared.manifestOf(name);
     const dir = path.dirname(pkgPath);
     const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf8')) as {
       name: string;
@@ -176,16 +185,17 @@ export class PluginHost {
       }
     }
 
-    const peers = manifest.needs ?? [];
     let clientCode: string | undefined;
     if (manifest.client) {
-      const built = await pluginBuild.entry(path.join(dir, manifest.client), 'client', peers);
+      const built = await this.build.entry(path.join(dir, manifest.client), 'client');
       clientCode = built.code;
+      this.shared.register(name, 'client', built.exports);
       this.log.debug(`плагин ${name}: клиент собран за ${built.ms} мс`);
     }
 
     if (manifest.server) {
-      const built = await pluginBuild.entry(path.join(dir, manifest.server), 'server', peers);
+      const built = await this.build.entry(path.join(dir, manifest.server), 'server');
+      this.shared.register(name, 'server', built.exports);
       await fs.mkdir(this.buildDir, { recursive: true });
       const out = path.join(this.buildDir, `${name.replace(/[^\w.-]/g, '_')}.server.mjs`);
       const before = await fs.readFile(out, 'utf8').catch(() => null);
@@ -195,6 +205,7 @@ export class PluginHost {
       };
       const Ctor = mod.default;
       if (typeof Ctor !== 'function') throw new Error('нет export default class');
+      this.serve(name, mod);
 
       const ide: Ide = {
         name,
@@ -218,7 +229,6 @@ export class PluginHost {
         log: this.log,
       };
       const instance = new Ctor(ide) as object;
-      this.classes.set(name, Ctor);
       this.instances.set(Ctor, instance);
       this.expose();
       for (const [method, handler] of declaredOf(instance)) methods.set(method, handler);
@@ -234,8 +244,7 @@ export class PluginHost {
         hasClient: Boolean(manifest.client),
         hasServer: Boolean(manifest.server),
         commands: manifest.commands ?? {},
-        needs: peers,
-        ...(manifest.provides ? { provides: manifest.provides } : {}),
+        needs,
         strings,
       },
       dir,
@@ -245,19 +254,4 @@ export class PluginHost {
     });
     this.log.info(`плагин ${name}@${manifest.version} готов`);
   }
-}
-
-async function manifestOf(name: string, resolveFrom: string): Promise<string> {
-  let dir = path.resolve(resolveFrom);
-  for (;;) {
-    const at = path.join(dir, 'node_modules', ...name.split('/'), 'package.json');
-    try {
-      await fs.access(at);
-      return at;
-    } catch {}
-    const up = path.dirname(dir);
-    if (up === dir) break;
-    dir = up;
-  }
-  throw new Error(`не нашёл пакет ${name} рядом с ${resolveFrom}`);
 }

@@ -12,10 +12,7 @@
   "ide": {
     "client": "src/client.tsx",
     "strings": "src/en.json",
-    "commands": {},
-    "needs": [
-      "@ide/plugin-editor"
-    ]
+    "commands": {}
   },
   "dependencies": {
     "@ide/api": "workspace:*",

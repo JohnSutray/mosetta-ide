@@ -1,6 +1,7 @@
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SharedModules } from './plugins/shared.js';
 import { PluginHost } from './plugins/host.js';
 import { FindProviders, type FindProvider } from './search/providers.js';
 import { WebSocketServer } from 'ws';
@@ -67,7 +68,9 @@ export class Boot {
         harvest();
       });
     }
-    const plugins = new PluginHost(log, path.join(stateDir, 'plugins-build'), {
+    const here = fileURLToPath(new URL('..', import.meta.url));
+    const shared = new SharedModules(here, path.resolve(here, '../client'));
+    const plugins = new PluginHost(log, path.join(stateDir, 'plugins-build'), shared, {
       shell: () => {
         const chosen = shells.loginShell(config.settings.terminal);
         return {
@@ -81,7 +84,7 @@ export class Boot {
       packageManagers: (ws) =>
         tools.detect(ws.services.suggestedManager(), config.settings.tools.packageManager, ws.root),
     });
-    await plugins.load(config.settings.plugins.enabled, fileURLToPath(new URL('..', import.meta.url)));
+    await plugins.load(config.settings.plugins.enabled);
 
     const finds = new FindProviders();
     for (const provider of [...plugins.finds(), ...(options.finds ?? [])]) finds.add(provider);

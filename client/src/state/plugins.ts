@@ -1,17 +1,6 @@
 import { commands } from '../keys/commands.js';
 import { rpc as socket, type RpcLike } from './session.js';
 import { complain, notify, say, settle } from './notifications.js';
-import * as preact from 'preact';
-import * as hooks from 'preact/hooks';
-import * as signals from '@preact/signals';
-import * as windows from '@ide/windows';
-import * as code from '@ide/code';
-import * as jsxRuntime from 'preact/jsx-runtime';
-import * as cm from '@codemirror/state';
-import * as cmView from '@codemirror/view';
-import * as cmCommands from '@codemirror/commands';
-import * as cmLanguage from '@codemirror/language';
-import * as cmSearch from '@codemirror/search';
 import { signal, type Signal } from '@preact/signals';
 import type { PluginInfo } from '@ide/protocol';
 import {
@@ -29,6 +18,7 @@ import {
   type RegistryHandle,
 } from '@ide/api/client';
 import { persisted } from './persist.js';
+import { sharedModules } from './shared-modules.js';
 import type { Registry } from './registry.js';
 import { i18n } from '../i18n/index.js';
 
@@ -38,15 +28,11 @@ interface Built {
   instance: object;
 }
 
-const SLOTS: Record<string, string> = { '@ide/ui': 'ui' };
-
 export class Plugins {
   constructor(private readonly rpc: RpcLike = socket) {}
 
   readonly list = signal<PluginInfo[]>([]);
   readonly surfaces = signal<Array<() => unknown>>([]);
-
-  private readonly classes = new Map<string, unknown>();
 
   private readonly openers = new Map<string, (found: Found) => void>();
 
@@ -58,27 +44,15 @@ export class Plugins {
 
   private expose(surface: ClientSurface): void {
     (globalThis as Record<string, unknown>).__ideApi = {
-      preact: {
-        h: preact.h,
-        jsx: preact.h,
-        Fragment: preact.Fragment,
-        createElement: preact.createElement,
-        render: preact.render,
-        cloneElement: preact.cloneElement,
+      modules: {
+        ...sharedModules,
+        '@ide/api/client': { ...surface, remote, stub, activate: activateHook, registry: registryHook },
       },
-      jsx: jsxRuntime,
-      hooks,
-      signals,
-      windows,
-      code,
-      cm,
-      cmView,
-      cmCommands,
-      cmLanguage,
-      cmSearch,
-      api: { ...surface, remote, stub, activate: activateHook, registry: registryHook },
-      plugins: this.classes,
     };
+  }
+
+  private serve(name: string, mod: unknown): void {
+    (globalThis as unknown as { __ideApi: { modules: Record<string, unknown> } }).__ideApi.modules[name] = mod;
   }
 
   async load(surface: ClientSurface, registry: Registry): Promise<void> {
@@ -131,11 +105,7 @@ export class Plugins {
     const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
     try {
       const mod = (await import(/* @vite-ignore */ url)) as { default?: PluginClass };
-      if (info.provides) {
-        const slot = SLOTS[info.provides];
-        if (!slot) throw new Error(`не знаю, куда класть ${info.provides}`);
-        (globalThis as unknown as { __ideApi: Record<string, unknown> }).__ideApi[slot] = mod;
-      }
+      this.serve(info.name, mod);
       const Ctor = mod.default;
       if (typeof Ctor !== 'function') {
         throw new Error('нет export default class');
@@ -145,7 +115,6 @@ export class Plugins {
       const instance = new Ctor(ide) as object;
       attach(instance, ide);
 
-      this.classes.set(info.name, Ctor);
       this.instances.set(Ctor, instance);
       return { name: info.name, ctor: Ctor, instance };
     } finally {
