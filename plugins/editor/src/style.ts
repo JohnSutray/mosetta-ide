@@ -82,4 +82,38 @@ export const STYLE = `
   text-align: center;
   color: var(--muted);
 }
+
+.diverged {
+  position: absolute;
+  top: 6px;
+  right: 18px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border: 1px solid #6b5a2a;
+  border-radius: 5px;
+  background: #3a3524;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  font-family: var(--ui-font);
+  font-size: 12px;
+  color: #d6c98a;
+}
+.diverged-sign { color: var(--accent); font-size: 13px; line-height: 1; }
+.diverged-text { white-space: nowrap; }
+.diverged-button {
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  background: var(--control-bg);
+  color: var(--fg);
+  font-size: 12px;
+  cursor: pointer;
+}
+.diverged-button:hover { background: var(--control-bg-hover); }
+.diverged-button.is-quiet { background: transparent; color: var(--muted); }
+.diverged-button.is-quiet:hover { background: var(--control-bg); color: var(--fg); }
+
+.editor-host { position: relative; height: 100%; min-height: 0; }
 `;

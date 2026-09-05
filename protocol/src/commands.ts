@@ -15,8 +15,6 @@ export const COMMANDS = {
   'edit.selectWordLeft': 'Выделить слово слева',
   'edit.selectWordRight': 'Выделить слово справа',
   'symbol.goto': 'К объявлению или к использованиям',
-  'nav.back': 'Назад по местам каретки',
-  'nav.forward': 'Вперёд по местам каретки',
   'edit.indent': 'Отступ вправо',
   'edit.unindent': 'Отступ влево',
   'panel.editor': 'Панель редактора',

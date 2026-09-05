@@ -1,14 +1,10 @@
 import { commands } from './keys/commands.js';
-import { visits } from './state/visits.js';
 import { doc } from './state/session.js';
 import { activeMenu, activePick, popups } from '@ide/windows';
 
 export function registerCommands(): void {
   commands.register('file.save', () => doc.save());
   commands.register('file.reload', () => doc.reload());
-
-  commands.register('nav.back', () => visits.back());
-  commands.register('nav.forward', () => visits.forward());
 
   commands.register('key.reserved', () => {});
 

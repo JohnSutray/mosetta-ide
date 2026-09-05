@@ -28,6 +28,7 @@
     "@ide/plugin-terminal": "workspace:*",
     "@ide/plugin-toolbar": "workspace:*",
     "@ide/plugin-tree": "workspace:*",
+    "@ide/plugin-visits": "workspace:*",
     "@ide/protocol": "workspace:*",
     "@ide/ui": "workspace:*",
     "esbuild": "0.25.12",

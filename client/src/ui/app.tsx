@@ -6,7 +6,6 @@ import { editorFocus } from '../state/editor.js';
 import { computed } from '@preact/signals';
 import { keyHost } from '../keys/host.js';
 import { config } from '../state/config.js';
-import { visits } from '../state/visits.js';
 import { complain } from '../state/notifications.js';
 import { doc, fileTree, lsp, rpc, session } from '../state/session.js';
 import type { JSX } from 'preact';
@@ -52,9 +51,6 @@ function NoShell() {
 }
 
 export function App() {
-  const ws = session.current.value;
-  const file = doc.open.value;
-
   useEffect(() => {
     registerCommands();
     const surface: ClientSurface = {
@@ -123,13 +119,14 @@ export function App() {
       },
       primaryHeld: (event) => keyHost.primaryHeld(event),
       openDoc: doc.open,
+      diverged: doc.diverged,
+      reloadFile: () => doc.reload(),
       editDoc: (text) => doc.edit(text),
       closeFile: () => doc.close(),
       dirty: doc.dirty,
       fileDiagnostics: doc.diagnostics,
       externalEpoch: doc.externalEpoch,
       pendingReveal: doc.pendingReveal,
-      visit: (path, line, ch) => visits.visit(path, line, ch),
       hover: (path, line, character) => rpc.call('lsp.hover', { path, line, character }),
       definition: (path, line, character) => rpc.call('lsp.definition', { path, line, character }),
       references: (path, line, character) => rpc.call('lsp.references', { path, line, character }),
@@ -153,31 +150,15 @@ export function App() {
     );
     dispatcher.setKeymap(config.keymap.peek());
     const stop = config.keymap.subscribe((value) => dispatcher.setKeymap(value));
-    const mouse = visits.installMouseNav();
     return () => {
       stop();
       dispatcher.dispose();
-      mouse();
     };
   }, []);
 
   useEffect(() => {
     document.title = doc.title.value;
   }, [doc.title.value]);
-
-  useEffect(() => {
-    if (!file) return;
-    const at = doc.pendingReveal.value;
-    visits.visit(file.path, at?.path === file.path ? at.line : 0, at?.character ?? 0);
-  }, [file?.path]);
-
-  useEffect(() => {
-    if (!ws) {
-      visits.forget();
-      return;
-    }
-    void visits.load();
-  }, [ws?.id]);
 
   return (
     <div

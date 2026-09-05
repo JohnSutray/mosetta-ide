@@ -62,4 +62,6 @@ export const STYLE = `
   cursor: pointer;
 }
 .terminal-shell-label:hover { background: var(--control-bg-hover); color: var(--fg); }
+
+.column-terminal { background: var(--bg); }
 `;

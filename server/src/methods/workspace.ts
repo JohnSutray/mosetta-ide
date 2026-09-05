@@ -3,7 +3,6 @@ import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
 import { browse } from '../env/browse.js';
 import { recent } from '../env/recent.js';
-import { visitsStore } from '../env/visits.js';
 
 export class WorkspaceMethods {
   readonly open: Handler<'workspace.open'> = async (params, ctx) => {
@@ -68,22 +67,3 @@ export class WorkspaceMethods {
 }
 
 export const workspaceMethods = new WorkspaceMethods();
-
-export class VisitsMethods {
-  readonly get: Handler<'visits.get'> = (_params, ctx) => {
-    const ws = ctx.session.requireWorkspace();
-    return visitsStore.load(ctx.stateDir, ws.root);
-  };
-
-  readonly set: Handler<'visits.set'> = async (params, ctx) => {
-    if (!params || !Array.isArray(params.visits)) {
-      throw RpcError.invalidParams('нужен visits: Visit[]');
-    }
-    const ws = ctx.session.requireWorkspace();
-    const visits = params.visits.slice(-visitsStore.limit);
-    await visitsStore.save(ctx.stateDir, ws.root, visits);
-    return { saved: visits.length };
-  };
-}
-
-export const visitsMethods = new VisitsMethods();

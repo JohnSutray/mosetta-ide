@@ -18,7 +18,6 @@ import type {
   MergeSession,
   RecentProject,
   SymbolSite,
-  Visit,
   WorkspaceId,
   WorkspaceInfo,
   WriteResult,
@@ -43,8 +42,6 @@ export interface Api {
     params: { section: string; key: string; value: string | boolean };
     result: { section: string; key: string; value: string | boolean };
   };
-  'visits.get': { params: null; result: Visit[] };
-  'visits.set': { params: { visits: Visit[] }; result: { saved: number } };
   'workspace.roots': { params: null; result: DirSuggestion[] };
   'workspace.recent': { params: null; result: RecentProject[] };
 

@@ -553,6 +553,28 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@22.20.1)
 
+  plugins/visits:
+    dependencies:
+      '@ide/api':
+        specifier: workspace:*
+        version: link:../api
+      '@ide/plugin-editor':
+        specifier: workspace:*
+        version: link:../editor
+    devDependencies:
+      '@preact/signals':
+        specifier: ^1.3.1
+        version: 1.3.4(preact@10.29.8)
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.20.1
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
+
   protocol: {}
 
   server:
@@ -605,6 +627,9 @@ importers:
       '@ide/plugin-tree':
         specifier: workspace:*
         version: link:../plugins/tree
+      '@ide/plugin-visits':
+        specifier: workspace:*
+        version: link:../plugins/visits
       '@ide/protocol':
         specifier: workspace:*
         version: link:../protocol

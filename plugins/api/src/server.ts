@@ -88,6 +88,7 @@ export interface Ide {
   run(ask: RunAsk): Promise<RunResult>;
   stream(ask: RunAsk, onChunk: (text: string) => void): Promise<RunResult>;
   readonly log: Logger;
+  readonly state: string;
 }
 
 export type PluginClass<T = unknown> = new (ide: Ide) => T;

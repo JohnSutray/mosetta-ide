@@ -60,9 +60,6 @@ export function editDoc(text: string): void {
 export function closeFile(): Promise<void> {
   return surface().closeFile();
 }
-export function visit(path: string, line: number, character: number): void {
-  surface().visit(path, line, character);
-}
 export function hover(path: string, line: number, character: number): Promise<HoverInfo | null> {
   return surface().hover(path, line, character);
 }
@@ -186,6 +183,14 @@ export const keys: KeysAccess = {
     return surface().keys.echo;
   },
 };
+export const diverged: { readonly value: ReadonlyMap<string, 'changed' | 'removed'> } = {
+  get value() {
+    return surface().diverged.value;
+  },
+};
+export function reloadFile(): Promise<void> {
+  return surface().reloadFile();
+}
 export const openDoc: { readonly value: DocState | null } = {
   get value() {
     return surface().openDoc.value;
@@ -253,6 +258,8 @@ export class FakeSurface implements ClientSurface {
 
   readonly project: Signal<WorkspaceInfo | null> = signal(null);
   readonly openDoc: Signal<DocState | null> = signal(null);
+  readonly diverged: Signal<Map<string, 'changed' | 'removed'>> = signal(new Map());
+  readonly reloads = { count: 0 };
   readonly fileTree: FakeFileTree = new FakeFileTree();
   readonly fsCalls: Array<{ op: string; args: unknown[] }> = [];
   readonly fs: FsAccess = {
@@ -366,7 +373,6 @@ export class FakeSurface implements ClientSurface {
   readonly pendingReveal: Signal<Reveal | null> = signal(null);
   readonly wantsFocus = signal(0);
   readonly edits: string[] = [];
-  readonly visits: Array<{ path: string; line: number; character: number }> = [];
   readonly definitions: SymbolSite[] = [];
   readonly referencesFound: SymbolSite[] = [];
   readonly texts = new Map<string, string>();
@@ -407,10 +413,6 @@ export class FakeSurface implements ClientSurface {
   async closeFile(): Promise<void> {
     this.openDoc.value = null;
     this.closed += 1;
-  }
-
-  visit(path: string, line: number, character: number): void {
-    this.visits.push({ path, line, character });
   }
 
   async hover(path: string, line: number, character: number): Promise<HoverInfo | null> {
@@ -454,6 +456,10 @@ export class FakeSurface implements ClientSurface {
 
   async openFile(path: string, options?: { focus?: boolean }): Promise<void> {
     this.opened.push({ path, focus: options?.focus });
+  }
+
+  async reloadFile(): Promise<void> {
+    this.reloads.count += 1;
   }
 
   async flushDocs(): Promise<void> {

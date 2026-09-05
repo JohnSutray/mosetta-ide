@@ -47,7 +47,7 @@ export class PluginHost {
 
   constructor(
     private readonly log: Logger,
-    private readonly buildDir: string,
+    private readonly stateDir: string,
     private readonly shared: SharedModules,
     private readonly machine: Machine = {
       shell: () => ({ file: '', args: [], env: {} }),
@@ -196,8 +196,9 @@ export class PluginHost {
     if (manifest.server) {
       const built = await this.build.entry(path.join(dir, manifest.server), 'server');
       this.shared.register(name, 'server', built.exports);
-      await fs.mkdir(this.buildDir, { recursive: true });
-      const out = path.join(this.buildDir, `${name.replace(/[^\w.-]/g, '_')}.server.mjs`);
+      const buildDir = path.join(this.stateDir, 'plugins-build');
+      await fs.mkdir(buildDir, { recursive: true });
+      const out = path.join(buildDir, `${name.replace(/[^\w.-]/g, '_')}.server.mjs`);
       const before = await fs.readFile(out, 'utf8').catch(() => null);
       if (before !== built.code) await fs.writeFile(out, built.code, 'utf8');
       const mod = (await import(`${pathToFileURL(out).href}?v=${Date.now()}`)) as {
@@ -227,6 +228,7 @@ export class PluginHost {
         stream: (ask, onChunk) =>
           processes.stream({ ...ask, reason: `${name}: ${ask.reason}` }, onChunk),
         log: this.log,
+        state: path.join(this.stateDir, 'plugins', name.replace(/[^\w.-]/g, '_')),
       };
       const instance = new Ctor(ide) as object;
       this.instances.set(Ctor, instance);

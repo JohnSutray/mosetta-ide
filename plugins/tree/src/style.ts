@@ -104,4 +104,11 @@ export const STYLE = `
   flex: none;
 }
 .prompt-title { font-size: 14px; }
+
+.column-tree { background: var(--panel-bg); }
+.tree-name.is-broken {
+  text-decoration: underline wavy var(--error);
+  text-decoration-skip-ink: none;
+  text-underline-offset: 3px;
+}
 `;

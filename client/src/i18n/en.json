@@ -25,8 +25,6 @@
   "command.edit.selectWordLeft": "Select word left",
   "command.edit.selectWordRight": "Select word right",
   "command.symbol.goto": "Go to declaration or usages",
-  "command.nav.back": "Back",
-  "command.nav.forward": "Forward",
   "command.edit.indent": "Indent",
   "command.edit.unindent": "Unindent",
   "command.key.reserved": "Reserved — does nothing yet",
@@ -52,12 +50,5 @@
   "file.saved": "{path} saved",
   "file.external": "{path} changed on disk — reloaded",
   "file.gone": "{path} is gone from disk. Saving will recreate it.",
-  "rpc.closed": "Connection closed",
-  "diverged.changed": "this file changed on disk",
-  "diverged.removed": "this file was deleted on disk",
-  "diverged.reload": "pull the disk in",
-  "diverged.sort": "sort it out",
-  "diverged.merge.hint": "merge the disk into your text — your edits are kept",
-  "diverged.discard": "drop my edits",
-  "diverged.discard.hint": "re-read the file from disk, losing what you typed"
+  "rpc.closed": "Connection closed"
 }

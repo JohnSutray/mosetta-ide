@@ -127,6 +127,9 @@ export interface KeysAccess {
 }
 export declare const keys: KeysAccess;
 
+export declare const diverged: { readonly value: ReadonlyMap<string, 'changed' | 'removed'> };
+export declare function reloadFile(): Promise<void>;
+
 export declare const openDoc: { readonly value: DocState | null };
 
 export declare function editDoc(text: string): void;
@@ -146,8 +149,6 @@ export interface Reveal {
   epoch: number;
 }
 export declare const pendingReveal: { readonly value: Reveal | null };
-
-export declare function visit(path: string, line: number, character: number): void;
 
 export type { Hunk, HunkKind } from '@ide/code';
 
@@ -198,6 +199,8 @@ export interface ClientSurface {
   merge: typeof merge;
   workspaces: typeof workspaces;
   keys: typeof keys;
+  diverged: typeof diverged;
+  reloadFile: typeof reloadFile;
   openDoc: typeof openDoc;
   editDoc: typeof editDoc;
   closeFile: typeof closeFile;
@@ -205,7 +208,6 @@ export interface ClientSurface {
   fileDiagnostics: typeof fileDiagnostics;
   externalEpoch: typeof externalEpoch;
   pendingReveal: typeof pendingReveal;
-  visit: typeof visit;
   hover: typeof hover;
   definition: typeof definition;
   references: typeof references;

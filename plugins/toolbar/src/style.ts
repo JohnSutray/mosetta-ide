@@ -42,4 +42,22 @@ export const STYLE = `
   line-height: 12px;
   text-align: center;
 }
+
+.tool {
+  position: relative; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: var(--control-bg);
+  color: var(--muted);
+  border-radius: 5px;
+  transition: background-color 90ms linear, color 90ms linear;
+}
+.tool:hover { background: var(--control-bg-hover); color: var(--fg); }
+.tool.is-active { background: var(--treesel); color: #dbe6ef; }
+.tool.is-active:hover { background: #36699e; }
 `;

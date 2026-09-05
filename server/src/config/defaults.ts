@@ -11,6 +11,7 @@ export class Defaults {
         '@ide/plugin-search',
         '@ide/plugin-projects',
         '@ide/plugin-keys',
+        '@ide/plugin-visits',
         '@ide/plugin-terminal',
         '@ide/plugin-git',
         '@ide/plugin-npm-scripts',

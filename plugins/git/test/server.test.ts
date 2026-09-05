@@ -84,6 +84,7 @@ function fakeIde(): Ide {
     shell: () => ({ file: '/bin/sh', args: [], env: {} }),
     shells: () => [],
     packageManagers: () => [],
+    state: '',
     run: (ask) => running(ask),
     stream: (ask, onChunk) => running(ask, onChunk),
     log: silent,

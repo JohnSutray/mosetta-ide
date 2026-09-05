@@ -1,5 +1,12 @@
 {
   "panel.editor.empty": "Nothing open",
   "toolbar.editor": "Editor panel",
-  "editor.nothing": "Nothing open. Pick a file in the tree, or search."
+  "editor.nothing": "Nothing open. Pick a file in the tree, or search.",
+  "diverged.changed": "this file changed on disk",
+  "diverged.removed": "this file was deleted on disk",
+  "diverged.reload": "pull the disk in",
+  "diverged.sort": "sort it out",
+  "diverged.merge.hint": "merge the disk into your text — your edits are kept",
+  "diverged.discard": "drop my edits",
+  "diverged.discard.hint": "re-read the file from disk, losing what you typed"
 }

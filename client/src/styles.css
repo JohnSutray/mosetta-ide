@@ -56,8 +56,6 @@ body {
 .dot.is-on { background: #6a8759; }
 .dot.is-off { background: var(--error); }
 
-.column-tree { background: var(--panel-bg); }
-
 .no-shell {
   flex: 1;
   display: flex;
@@ -93,64 +91,6 @@ body {
   border-radius: 2px;
 }
 .button:hover { background: #55595b; }
-
-.chip {
-  flex: none;
-  padding: 0 6px;
-  border-radius: 2px;
-  border: 1px solid var(--divider);
-  color: var(--muted);
-  white-space: nowrap;
-}
-.chip.is-ready { color: #6a8759; border-color: #4a5a44; }
-.chip.is-starting { color: var(--accent); border-color: #6b5a37; }
-.chip.is-failed { color: var(--error); border-color: #6b3a39; }
-.chip.is-error { color: var(--error); border-color: #6b3a39; }
-
-.tree-name.is-broken {
-  text-decoration: underline wavy var(--error);
-  text-decoration-skip-ink: none;
-  text-underline-offset: 3px;
-}
-
-.tool {
-  position: relative; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  background: var(--control-bg);
-  color: var(--muted);
-  border-radius: 5px;
-  transition: background-color 90ms linear, color 90ms linear;
-}
-.tool:hover { background: var(--control-bg-hover); color: var(--fg); }
-.tool.is-active { background: var(--treesel); color: #dbe6ef; }
-.tool.is-active:hover { background: #36699e; }
-
-.scripts { padding: 3px 0; }
-.scripts-package {
-  padding: 6px 10px 2px;
-  color: var(--muted);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.script {
-  display: flex;
-  flex-direction: column;
-  padding: 3px 10px;
-  border-left: 2px solid transparent;
-}
-.script:hover { background: #45494a; }
-.script-command { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.script.has-terminal { border-left-color: #6a8759; }
-.script.terminal-dead { border-left-color: var(--divider); }
-
-.column-terminal { background: var(--bg); }
 
 .notes {
   position: fixed;
@@ -203,42 +143,3 @@ body {
 
 .button.is-danger { background: #6b3a39; color: #ffd7d6; }
 .button.is-danger:hover { background: #7d4443; }
-
-.empty-editor {
-  position: relative;
-  height: 100%;
-  overflow: hidden;
-  cursor: default;
-}
-
-.diverged {
-  position: absolute;
-  top: 6px;
-  right: 18px;
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  border: 1px solid #6b5a2a;
-  border-radius: 5px;
-  background: #3a3524;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-  font-family: var(--ui-font);
-  font-size: 12px;
-  color: #d6c98a;
-}
-.diverged-sign { color: var(--accent); font-size: 13px; line-height: 1; }
-.diverged-text { white-space: nowrap; }
-.diverged-button {
-  border: none;
-  border-radius: 4px;
-  padding: 2px 8px;
-  background: var(--control-bg);
-  color: var(--fg);
-  font-size: 12px;
-  cursor: pointer;
-}
-.diverged-button:hover { background: var(--control-bg-hover); }
-.diverged-button.is-quiet { background: transparent; color: var(--muted); }
-.diverged-button.is-quiet:hover { background: var(--control-bg); color: var(--fg); }

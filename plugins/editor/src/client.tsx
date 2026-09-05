@@ -30,7 +30,6 @@ import {
   registry,
   settings,
   t,
-  visit,
   wantsFocus,
   type Ide,
   type Hunk,
@@ -40,6 +39,7 @@ import { EMPTY_SCHEMA, type EmptyView } from './schema.js';
 import { STYLE } from './style.js';
 import { EditorIcon } from './icon.js';
 import { CodeEditor } from './view.js';
+import { DivergedBadge } from './diverged.js';
 
 export interface SymbolSpot {
   line: number;
@@ -53,6 +53,7 @@ export default class Editor {
   private readonly head = signal<{ path: string; text: string | null } | null>(null);
   private hunkHandler: ((hunk: Hunk, box: HunkBox) => void) | null = null;
   private symbolHandler: ((spot: SymbolSpot) => void) | null = null;
+  private caretHandler: ((path: string, line: number, character: number) => void) | null = null;
 
   private view: EditorView | null = null;
   private open: Signal<boolean> | null = null;
@@ -138,6 +139,10 @@ export default class Editor {
     });
   }
 
+  onCaret(handler: ((path: string, line: number, character: number) => void) | null): void {
+    this.caretHandler = handler;
+  }
+
   onSymbolAsk(handler: ((spot: SymbolSpot) => void) | null): void {
     this.symbolHandler = handler;
   }
@@ -159,23 +164,26 @@ export default class Editor {
     const config = settings.value;
     if (!config) return null;
     return (
-      <CodeEditor
-        file={file}
-        head={this.headFor(file.path)}
-        onHunk={(hunk, box) => this.hunkHandler?.(hunk, box)}
-        externalEpoch={externalEpoch.value}
-        reveal={pendingReveal.value}
-        wantsFocus={wantsFocus.value}
-        settings={config.editor}
-        diagnostics={fileDiagnostics.value}
-        onEdit={editDoc}
-        onCaret={(line, character) => visit(file.path, line, character)}
-        onModClick={(pos) => {
-          if (this.view) this.ask(this.view, pos);
-        }}
-        onHover={hover}
-        onMount={(view) => (this.view = view)}
-      />
+      <div class="editor-host">
+        <DivergedBadge path={file.path} ide={this.ide} />
+        <CodeEditor
+          file={file}
+          head={this.headFor(file.path)}
+          onHunk={(hunk, box) => this.hunkHandler?.(hunk, box)}
+          externalEpoch={externalEpoch.value}
+          reveal={pendingReveal.value}
+          wantsFocus={wantsFocus.value}
+          settings={config.editor}
+          diagnostics={fileDiagnostics.value}
+          onEdit={editDoc}
+          onCaret={(line, character) => this.caretHandler?.(file.path, line, character)}
+          onModClick={(pos) => {
+            if (this.view) this.ask(this.view, pos);
+          }}
+          onHover={hover}
+          onMount={(view) => (this.view = view)}
+        />
+      </div>
     );
   }
 

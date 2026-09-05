@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { Visit } from '@ide/protocol';
+import type { Visit } from './types.js';
 
 function fileFor(stateDir: string, root: string): string {
   const name = path.basename(root).replace(/[^\w.-]+/g, '_').slice(0, 32) || 'project';
   const hash = createHash('sha1').update(root).digest('hex').slice(0, 12);
-  return path.join(stateDir, 'visits', `${name}-${hash}.json`);
+  return path.join(stateDir, `${name}-${hash}.json`);
 }
 
 function valid(item: unknown): item is Visit {
@@ -57,5 +57,3 @@ export class VisitsStore {
     await fs.writeFile(file, JSON.stringify(visits.slice(-this.limit), null, 2), 'utf8');
   }
 }
-
-export const visitsStore = new VisitsStore();

@@ -2,7 +2,9 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { visitsStore } from '../src/env/visits.js';
+import { VisitsStore } from '../src/store.js';
+
+const visitsStore = new VisitsStore();
 
 let state: string;
 let root: string;
@@ -49,9 +51,8 @@ describe('история посещений', () => {
   });
 
   it('битый файл не роняет чтение', async () => {
-    const dir = path.join(state, 'visits');
-    for (const file of await fs.readdir(dir)) {
-      await fs.writeFile(path.join(dir, file), 'не json', 'utf8');
+    for (const file of await fs.readdir(state)) {
+      await fs.writeFile(path.join(state, file), 'не json', 'utf8');
     }
     expect(await visitsStore.load(state, root)).toEqual([]);
   });

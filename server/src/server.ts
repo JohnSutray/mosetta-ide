@@ -70,7 +70,7 @@ export class Boot {
     }
     const here = fileURLToPath(new URL('..', import.meta.url));
     const shared = new SharedModules(here, path.resolve(here, '../client'));
-    const plugins = new PluginHost(log, path.join(stateDir, 'plugins-build'), shared, {
+    const plugins = new PluginHost(log, stateDir, shared, {
       shell: () => {
         const chosen = shells.loginShell(config.settings.terminal);
         return {

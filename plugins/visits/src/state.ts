@@ -1,6 +1,11 @@
-import { doc, rpc } from './session.js';
+import { goTo } from '@ide/api/client';
 import { signal } from '@preact/signals';
-import type { Visit } from '@ide/protocol';
+import type { Visit } from './types.js';
+
+export interface VisitsRemote {
+  list(): Promise<Visit[]>;
+  save(visits: Visit[]): Promise<unknown>;
+}
 
 export class Visits {
   readonly list = signal<Visit[]>([]);
@@ -14,6 +19,8 @@ export class Visits {
   private walking = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
 
+  constructor(private readonly remote: VisitsRemote) {}
+
   canGoBack(): boolean {
     return this.at.value > 0;
   }
@@ -24,7 +31,7 @@ export class Visits {
 
   async load(): Promise<void> {
     try {
-      const list = await rpc.call('visits.get', null);
+      const list = await this.remote.list();
       this.list.value = list;
       this.at.value = list.length - 1;
     } catch {
@@ -107,8 +114,7 @@ export class Visits {
     this.walking = true;
     this.at.value = to;
     try {
-      if (doc.open.peek()?.path !== target.path) await doc.openAt(target.path);
-      doc.reveal(target.path, target.line, target.character);
+      await goTo(target.path, target.line, target.character);
     } finally {
       setTimeout(() => {
         this.walking = false;
@@ -120,9 +126,7 @@ export class Visits {
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => {
       this.timer = null;
-      void rpc.call('visits.set', { visits: this.list.peek() }).catch(() => undefined);
+      void this.remote.save(this.list.peek()).catch(() => undefined);
     }, this.saveDelay);
   }
 }
-
-export const visits = new Visits();

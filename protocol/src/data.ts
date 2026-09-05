@@ -24,12 +24,6 @@ export interface SymbolSite {
   isImport: boolean;
 }
 
-export interface Visit {
-  path: string;
-  line: number;
-  character?: number;
-}
-
 export interface ShellInfo {
   path: string;
   name: string;
