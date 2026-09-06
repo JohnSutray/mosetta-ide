@@ -1,5 +1,6 @@
 import { flushDocs, fs, openFile, t } from '@ide/api/client';
-import type { FileTreeMemory, Ide } from '@ide/api/client';
+import type { Ide } from '@ide/api/client';
+import type { FileTree } from './file-tree.js';
 import { batch, signal } from '@preact/signals';
 import type { EntryKind } from '@ide/api/client';
 
@@ -48,7 +49,7 @@ export class Prompt {
 }
 
 export class TreeSelection {
-  constructor(private readonly files: FileTreeMemory) {}
+  constructor(private readonly files: FileTree) {}
 
   readonly focus = signal<string | null>(null);
 
@@ -194,7 +195,7 @@ export class TreeOps {
   constructor(
     private readonly selection: TreeSelection,
     private readonly prompt: Prompt,
-    private readonly files: FileTreeMemory,
+    private readonly files: FileTree,
     private readonly ide: Ide,
   ) {}
 

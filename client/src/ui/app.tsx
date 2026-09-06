@@ -7,7 +7,7 @@ import { computed } from '@preact/signals';
 import { keyHost } from '../keys/host.js';
 import { config } from '../state/config.js';
 import { complain } from '../state/notifications.js';
-import { doc, fileTree, lsp, rpc, session } from '../state/session.js';
+import { doc, lsp, rpc, session } from '../state/session.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { chordHeld } from '../keys/chords.js';
@@ -90,7 +90,10 @@ export function App() {
         expectExternal: (path) => doc.expectExternal(path),
         forgetDiverged: (path) => doc.forgetDiverged(path),
       },
-      fileTree,
+      tree: {
+        list: (path) => rpc.call('tree.list', { path }),
+        onChanged: (handler) => rpc.on('tree.changed', handler),
+      },
       fs: {
         create: (path, kind) => rpc.call('fs.create', { path, kind }),
         move: (from, to) => rpc.call('fs.move', { from, to }),

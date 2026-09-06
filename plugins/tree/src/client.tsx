@@ -1,7 +1,8 @@
-import { activate, fileTree, openDoc, openFile, problems, registry } from '@ide/api/client';
+import { activate, openDoc, openFile, problems, project, registry, tree, workspaces } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { computed, effect } from '@preact/signals';
 import { FollowIcon, TreeIcon } from './icons.js';
+import { FileTree } from './file-tree.js';
 import { TreeFollow } from './follow.js';
 import { TreeMenuState } from './menu.js';
 import { Prompt as PromptState, TreeOps, TreeSelection } from './state.js';
@@ -13,6 +14,7 @@ import { TreeMenu } from './tree-menu.js';
 
 @registry({ key: 'tree.tint', schema: TINT_SCHEMA })
 export default class TreePlugin {
+  readonly files: FileTree;
   readonly prompt = new PromptState();
   readonly selection: TreeSelection;
   readonly ops: TreeOps;
@@ -36,8 +38,9 @@ export default class TreePlugin {
   });
 
   constructor(private readonly ide: Ide) {
-    this.selection = new TreeSelection(fileTree);
-    this.ops = new TreeOps(this.selection, this.prompt, fileTree, ide);
+    this.files = new FileTree(tree, (message) => ide.complain(message));
+    this.selection = new TreeSelection(this.files);
+    this.ops = new TreeOps(this.selection, this.prompt, this.files, ide);
     this.follow = new TreeFollow(this.selection, ide);
     this.tints = new TreeTints(ide.registry<TintSource>('tree.tint'));
     this.shown = ide.remember('panel.tree', true);
@@ -45,6 +48,15 @@ export default class TreePlugin {
 
   @activate() protected start(): void {
     this.ide.css(STYLE);
+
+    effect(() => {
+      workspaces.current.value;
+      this.files.reset();
+    });
+    effect(() => {
+      if (project.value) void this.files.load('').catch((err) => this.ide.complain(describe(err)));
+    });
+    tree.onChanged((event) => this.files.refresh(event.path));
 
     this.ide.command('panel.tree', () => {
       this.shown.value = !this.shown.value;
@@ -59,7 +71,7 @@ export default class TreePlugin {
     this.ide.command('tree.newFolder', () => this.onFocused((path, isDir) => ops.create(path, isDir, 'dir')));
     this.ide.command('tree.open', () =>
       this.onPicked((path, isDir) => {
-        if (isDir) void fileTree.toggle(path);
+        if (isDir) void this.files.toggle(path);
         else void openFile(path, { focus: true });
       }),
     );
@@ -95,6 +107,7 @@ export default class TreePlugin {
       open: this.shown,
       view: () => (
         <Tree
+          files={this.files}
           selection={this.selection}
           ops={this.ops}
           menu={this.menu}
@@ -129,7 +142,7 @@ export default class TreePlugin {
   private onFocused(run: (path: string, isDir: boolean) => void): void {
     const path = this.selection.focus.value ?? '';
     const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
-    const entry = fileTree.children.value.get(parent)?.find((item) => item.path === path);
+    const entry = this.files.children.value.get(parent)?.find((item) => item.path === path);
     run(path, path === '' ? true : entry?.kind === 'dir');
   }
 
@@ -138,4 +151,8 @@ export default class TreePlugin {
     if (!path) return;
     this.onFocused(run);
   }
+}
+
+function describe(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
 }

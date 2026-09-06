@@ -18,8 +18,8 @@ import type {
 import { attach, hooksOf, registriesOf } from './client.js';
 import type {
   ClientSurface,
-  FileTreeMemory,
   FsAccess,
+  TreeWire,
   MergeAccess,
   WorkspacesAccess,
   KeysAccess,
@@ -108,19 +108,9 @@ export const project: { readonly value: WorkspaceInfo | null } = {
     return surface().project.value;
   },
 };
-export const fileTree: FileTreeMemory = {
-  get children() {
-    return surface().fileTree.children;
-  },
-  get expanded() {
-    return surface().fileTree.expanded;
-  },
-  get rootExpanded() {
-    return surface().fileTree.rootExpanded;
-  },
-  load: (path) => surface().fileTree.load(path),
-  ensureExpanded: (path) => surface().fileTree.ensureExpanded(path),
-  toggle: (path) => surface().fileTree.toggle(path),
+export const tree: TreeWire = {
+  list: (path) => surface().tree.list(path),
+  onChanged: (handler) => surface().tree.onChanged(handler),
 };
 export const fs: FsAccess = {
   create: (path, kind) => surface().fs.create(path, kind),
@@ -223,31 +213,6 @@ export interface Tip {
   keys: string[];
 }
 
-export class FakeFileTree implements FileTreeMemory {
-  readonly children = signal<Map<string, DirEntry[]>>(new Map());
-  readonly expanded = signal<Set<string>>(new Set());
-  readonly rootExpanded = signal(true);
-  readonly loads: string[] = [];
-
-  async load(path: string): Promise<void> {
-    this.loads.push(path);
-    if (!this.children.value.has(path)) {
-      this.children.value = new Map(this.children.value).set(path, []);
-    }
-  }
-  async ensureExpanded(path: string): Promise<void> {
-    if (path === '' || this.expanded.value.has(path)) return;
-    await this.toggle(path);
-  }
-  async toggle(path: string): Promise<void> {
-    const next = new Set(this.expanded.value);
-    if (next.has(path)) next.delete(path);
-    else next.add(path);
-    this.expanded.value = next;
-    if (!this.children.value.has(path)) await this.load(path);
-  }
-}
-
 export class FakeSurface implements ClientSurface {
   readonly problems: Signal<FileProblems[]> = signal([]);
   readonly settings: Signal<Settings | null> = signal(null);
@@ -260,7 +225,22 @@ export class FakeSurface implements ClientSurface {
   readonly openDoc: Signal<DocState | null> = signal(null);
   readonly diverged: Signal<Map<string, 'changed' | 'removed'>> = signal(new Map());
   readonly reloads = { count: 0 };
-  readonly fileTree: FakeFileTree = new FakeFileTree();
+  readonly dirs = new Map<string, DirEntry[]>();
+  readonly treeLoads: string[] = [];
+  private readonly treeWatchers = new Set<(event: { path: string }) => void>();
+  readonly tree: TreeWire = {
+    list: async (path) => {
+      this.treeLoads.push(path);
+      return this.dirs.get(path) ?? [];
+    },
+    onChanged: (handler) => {
+      this.treeWatchers.add(handler);
+      return () => this.treeWatchers.delete(handler);
+    },
+  };
+  changeTree(path: string): void {
+    for (const handler of this.treeWatchers) handler({ path });
+  }
   readonly fsCalls: Array<{ op: string; args: unknown[] }> = [];
   readonly fs: FsAccess = {
     create: async (path, kind) => {

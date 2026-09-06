@@ -1,12 +1,14 @@
-import { fileTree, openDoc, openFile, primaryHeld, project, t } from '@ide/api/client';
+import { openDoc, openFile, primaryHeld, project, t } from '@ide/api/client';
 import { useEffect } from 'preact/hooks';
 import type { DirEntry } from '@ide/api/client';
 import { Chevron, DirIcon, FileIcon, RootIcon } from '@ide/ui';
+import type { FileTree } from './file-tree.js';
 import type { TreeMenuState } from './menu.js';
 import type { TreeOps, TreeSelection } from './state.js';
 import type { TreeTints } from './tints.js';
 
 export interface TreeProps {
+  files: FileTree;
   selection: TreeSelection;
   ops: TreeOps;
   menu: TreeMenuState;
@@ -16,7 +18,7 @@ export interface TreeProps {
 
 export function Tree(props: TreeProps) {
   const ws = project.value;
-  const children = fileTree.children.value.get('');
+  const children = props.files.children.value.get('');
   const focused = props.selection.focus.value;
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export function Tree(props: TreeProps) {
   }, [focused]);
 
   if (!ws || !children) return <div class="tree-empty">…</div>;
-  const open = fileTree.rootExpanded.value;
+  const open = props.files.rootExpanded.value;
   return (
     <div
       class="tree"
@@ -37,7 +39,7 @@ export function Tree(props: TreeProps) {
       <div
         class="tree-row is-root"
         data-path=""
-        onClick={() => (fileTree.rootExpanded.value = !fileTree.rootExpanded.value)}
+        onClick={() => (props.files.rootExpanded.value = !props.files.rootExpanded.value)}
         onContextMenu={(event) => {
           event.preventDefault();
           props.selection.focus.value = '';
@@ -82,11 +84,11 @@ function Level({ entries, depth, ...props }: { entries: DirEntry[]; depth: numbe
 }
 
 function Row({ entry, depth, ...props }: { entry: DirEntry; depth: number } & TreeProps) {
-  const { selection, ops, menu, tints } = props;
+  const { files, selection, ops, menu, tints } = props;
   const isDir = entry.kind === 'dir';
-  const isOpen = fileTree.expanded.value.has(entry.path);
+  const isOpen = files.expanded.value.has(entry.path);
   const isCurrent = openDoc.value?.path === entry.path;
-  const kids = isOpen ? fileTree.children.value.get(entry.path) : undefined;
+  const kids = isOpen ? files.children.value.get(entry.path) : undefined;
   const broken = props.broken.value.has(entry.path);
   const tint = entry.noScan ? undefined : tints.of(entry.path);
 
@@ -133,7 +135,7 @@ function Row({ entry, depth, ...props }: { entry: DirEntry; depth: number } & Tr
           }
           selection.only(entry.path);
           if (isDir) {
-            void fileTree.toggle(entry.path);
+            void files.toggle(entry.path);
             return;
           }
           void openFile(entry.path, { focus: false });

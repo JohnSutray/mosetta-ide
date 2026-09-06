@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FakeFileTree } from '@ide/api/testing';
+import type { DirEntry } from '@ide/api/client';
+import { FileTree } from '../src/file-tree.js';
 import { TreeSelection } from '../src/state.js';
 
-let files: FakeFileTree;
+let files: FileTree;
 let tree: TreeSelection;
+let loads: string[];
 
 const FILE = 'client/src/state/persist.ts';
 const DIRS = ['client', 'client/src', 'client/src/state'];
@@ -15,7 +17,17 @@ function known(): void {
 }
 
 beforeEach(() => {
-  files = new FakeFileTree();
+  loads = [];
+  files = new FileTree(
+    {
+      list: async (path) => {
+        loads.push(path);
+        return [] as DirEntry[];
+      },
+      onChanged: () => () => {},
+    },
+    () => {},
+  );
   tree = new TreeSelection(files);
 });
 
@@ -62,7 +74,7 @@ describe('наведение дерева', () => {
   it('папки, которых память ещё не читала, дочитываются', async () => {
     files.children.value = new Map([['', []]]) as never;
     await tree.reveal(FILE);
-    expect(files.loads).toEqual(DIRS);
+    expect(loads).toEqual(DIRS);
     expect(tree.focus.value).toBe(FILE);
   });
 });

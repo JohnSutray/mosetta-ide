@@ -54,15 +54,11 @@ export declare const project: { readonly value: WorkspaceInfo | null };
 
 export type { DirEntry, EntryKind } from '@ide/protocol';
 
-export interface FileTreeMemory {
-  readonly children: { readonly value: ReadonlyMap<string, DirEntry[]> };
-  readonly expanded: Signal<Set<string>>;
-  readonly rootExpanded: Signal<boolean>;
-  load(path: string): Promise<void>;
-  ensureExpanded(path: string): Promise<void>;
-  toggle(path: string): Promise<void>;
+export interface TreeWire {
+  list(path: string): Promise<DirEntry[]>;
+  onChanged(handler: (event: { path: string }) => void): () => void;
 }
-export declare const fileTree: FileTreeMemory;
+export declare const tree: TreeWire;
 
 export interface FsAccess {
   create(path: string, kind: EntryKind): Promise<DirEntry>;
@@ -190,7 +186,7 @@ export interface ClientSurface {
   keysFor: typeof keysFor;
   settings: typeof settings;
   project: typeof project;
-  fileTree: typeof fileTree;
+  tree: typeof tree;
   fs: typeof fs;
   openFile: typeof openFile;
   flushDocs: typeof flushDocs;

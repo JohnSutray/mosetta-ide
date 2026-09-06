@@ -1,17 +1,18 @@
+import type { DirEntry, TreeWire } from '@ide/api/client';
 import { signal } from '@preact/signals';
-import type { DirEntry } from '@ide/protocol';
-import type { RpcClient } from '../rpc/client.js';
-import { complain } from './notifications.js';
 
 export class FileTree {
   readonly children = signal<Map<string, DirEntry[]>>(new Map());
   readonly expanded = signal<Set<string>>(new Set());
   readonly rootExpanded = signal(true);
 
-  constructor(private readonly rpc: RpcClient) {}
+  constructor(
+    private readonly wire: TreeWire,
+    private readonly complain: (message: string) => void,
+  ) {}
 
   async load(path: string): Promise<void> {
-    const entries = await this.rpc.call('tree.list', { path });
+    const entries = await this.wire.list(path);
     const next = new Map(this.children.value);
     next.set(path, entries);
     this.children.value = next;
@@ -35,7 +36,7 @@ export class FileTree {
       try {
         await this.load(path);
       } catch (err) {
-        complain(err instanceof Error ? err.message : String(err));
+        this.complain(err instanceof Error ? err.message : String(err));
       }
     }
   }

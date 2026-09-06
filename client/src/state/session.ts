@@ -3,7 +3,6 @@ import type { LogLine, WorkspaceInfo } from '@ide/protocol';
 import { RpcClient, RpcFailure } from '../rpc/client.js';
 import { complain } from './notifications.js';
 import { config } from './config.js';
-import { FileTree } from './file-tree.js';
 import { Lsp } from './lsp.js';
 import { Doc } from './doc.js';
 import { say } from './notifications.js';
@@ -71,7 +70,6 @@ export class Session {
 
   private async afterAttach(): Promise<void> {
     this.attached.value = this.current.value;
-    await fileTree.load('');
     lsp.statuses.value = await this.rpc.call('lsp.status', null);
     for (const file of await this.rpc.call('lsp.problems', null).catch(() => [])) {
       lsp.set(file.path, file.diagnostics);
@@ -133,8 +131,6 @@ export class Session {
       this.current.value = null;
     });
 
-    this.rpc.on('tree.changed', (event) => fileTree.refresh(event.path));
-
     this.rpc.on('lsp.diagnostics', (event) => lsp.set(event.path, event.diagnostics));
     this.rpc.on('lsp.status', (status) => lsp.setStatus(status));
 
@@ -165,8 +161,7 @@ function describe(err: unknown): string {
 }
 
 export const session = new Session(rpc);
-export const fileTree = new FileTree(rpc);
 export const lsp = new Lsp();
 export const doc = new Doc(rpc, session, lsp);
 
-session.owns(fileTree, doc, lsp);
+session.owns(doc, lsp);
