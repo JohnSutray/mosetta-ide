@@ -2,15 +2,12 @@ import Ajv, { type ValidateFunction } from 'ajv';
 import { signal, type Signal } from '@preact/signals';
 import type {
   DirEntry,
-  Diagnostic,
   DocState,
-  HoverInfo,
   IndexHit,
   KeyBinding,
   IndexKind,
   MergeSession,
   Settings,
-  SymbolSite,
   WorkspaceInfo,
 } from '@ide/protocol';
 import { attach, hooksOf, registriesOf } from './client.js';
@@ -23,7 +20,6 @@ import type {
   KeysAccess,
   KeyEcho,
   TakenKey,
-  FileProblems,
   Found,
   Ide,
   PluginClass,
@@ -58,15 +54,6 @@ export function editDoc(text: string): void {
 export function closeFile(): Promise<void> {
   return surface().closeFile();
 }
-export function hover(path: string, line: number, character: number): Promise<HoverInfo | null> {
-  return surface().hover(path, line, character);
-}
-export function definition(path: string, line: number, character: number): Promise<SymbolSite[]> {
-  return surface().definition(path, line, character);
-}
-export function references(path: string, line: number, character: number): Promise<SymbolSite[]> {
-  return surface().references(path, line, character);
-}
 export function peekFile(path: string): Promise<{ path: string; text: string }> {
   return surface().peekFile(path);
 }
@@ -86,11 +73,6 @@ export function chordHeld(
   return surface().chordHeld(command, event);
 }
 
-export const problems: { readonly value: FileProblems[] } = {
-  get value() {
-    return surface().problems.value;
-  },
-};
 export const settings: { readonly value: Settings | null } = {
   get value() {
     return surface().settings.value;
@@ -180,11 +162,6 @@ export const openDoc: { readonly value: DocState | null } = {
     return surface().openDoc.value;
   },
 };
-export const fileDiagnostics: { readonly value: Diagnostic[] } = {
-  get value() {
-    return surface().fileDiagnostics.value;
-  },
-};
 export const externalEpoch: { readonly value: number } = {
   get value() {
     return surface().externalEpoch.value;
@@ -208,7 +185,6 @@ export interface Tip {
 }
 
 export class FakeSurface implements ClientSurface {
-  readonly problems: Signal<FileProblems[]> = signal([]);
   readonly settings: Signal<Settings | null> = signal(null);
 
   readonly jumps: Array<{ path: string; line: number; character?: number }> = [];
@@ -330,18 +306,14 @@ export class FakeSurface implements ClientSurface {
   }
   readonly dirty = signal(false);
   closed = 0;
-  readonly fileDiagnostics: Signal<Diagnostic[]> = signal([]);
   readonly externalEpoch = signal(0);
   readonly pendingReveal: Signal<Reveal | null> = signal(null);
   readonly wantsFocus = signal(0);
   readonly edits: string[] = [];
-  readonly definitions: SymbolSite[] = [];
-  readonly referencesFound: SymbolSite[] = [];
   readonly texts = new Map<string, string>();
   readonly hits: IndexHit[] = [];
   readonly openers = new Map<string, (found: Found) => void>();
   readonly searches: string[] = [];
-  readonly hovers: Array<{ path: string; line: number; character: number }> = [];
   readonly heads = new Map<string, string>();
   readonly chords = new Set<string>();
   focusOnMount = true;
@@ -375,19 +347,6 @@ export class FakeSurface implements ClientSurface {
   async closeFile(): Promise<void> {
     this.openDoc.value = null;
     this.closed += 1;
-  }
-
-  async hover(path: string, line: number, character: number): Promise<HoverInfo | null> {
-    this.hovers.push({ path, line, character });
-    return null;
-  }
-
-  async definition(_path: string, _line: number, _character: number): Promise<SymbolSite[]> {
-    return this.definitions;
-  }
-
-  async references(_path: string, _line: number, _character: number): Promise<SymbolSite[]> {
-    return this.referencesFound;
   }
 
   async peekFile(path: string): Promise<{ path: string; text: string }> {

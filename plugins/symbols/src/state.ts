@@ -1,7 +1,7 @@
-import { definition, goTo, openDoc, peekFile, references } from '@ide/api/client';
+import { goTo, openDoc, peekFile } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { batch, signal, type Signal } from '@preact/signals';
-import type { SymbolSite } from '@ide/protocol';
+import type { SymbolSite } from '@ide/plugin-lsp';
 import type { SymbolSpot } from '@ide/plugin-editor';
 import { activePick } from '@ide/windows';
 
@@ -24,7 +24,13 @@ export class Symbols {
 
   readonly hideImports: Signal<boolean>;
 
-  constructor(private readonly ide: Ide) {
+  constructor(
+    private readonly ide: Ide,
+    private readonly lsp: {
+      definition(path: string, line: number, character: number): Promise<SymbolSite[]>;
+      references(path: string, line: number, character: number): Promise<SymbolSite[]>;
+    },
+  ) {
     this.hideImports = ide.remember('symbols.imports', true);
   }
 
@@ -67,7 +73,7 @@ export class Symbols {
 
     let declared: SymbolSite[] = [];
     try {
-      declared = await definition(spot.path, spot.line, spot.character);
+      declared = await this.lsp.definition(spot.path, spot.line, spot.character);
     } catch (err) {
       this.ide.complain(err instanceof Error ? err.message : String(err));
       return;
@@ -84,7 +90,7 @@ export class Symbols {
     }
 
     try {
-      const sites = await references(spot.path, spot.line, spot.character);
+      const sites = await this.lsp.references(spot.path, spot.line, spot.character);
       const others = sites.filter((site) => !this.samePlace(site, spot));
       if (others.length === 0) {
         this.ide.complain(`${word || 'symbol'}: no usages`);

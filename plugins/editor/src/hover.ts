@@ -1,6 +1,6 @@
 import { hoverTooltip, type Tooltip } from '@codemirror/view';
 import type { EditorState } from '@codemirror/state';
-import type { HoverInfo, Severity } from '@ide/protocol';
+import type { HoverInfo, Severity } from '@ide/plugin-lsp';
 import { codePainter, darcula } from '@ide/code';
 
 const dc = darcula.palette;

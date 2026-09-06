@@ -11,6 +11,42 @@ export interface ProjectResource {
   dispose(): void | Promise<void>;
 }
 
+export interface MemoryDoc {
+  path: string;
+  text: string;
+  version: number;
+  openCount: number;
+}
+
+export type MemoryEvent =
+  | { type: 'doc.opened' | 'doc.changed' | 'doc.saved' | 'doc.external' | 'doc.closed' | 'doc.removed'; path: string }
+  | { type: 'doc.moved'; path: string; from: string }
+  | { type: 'tree.changed'; path: string };
+
+export interface ProjectMemory {
+  on(listener: (event: MemoryEvent) => void): () => void;
+  files(): Iterable<{ path: string }>;
+  docSync(path: string): MemoryDoc | null;
+  peekDoc(path: string): Promise<MemoryDoc>;
+}
+
+export interface ProcessStream {
+  on(event: 'data', handler: (chunk: Uint8Array) => void): unknown;
+}
+
+export interface ProcessChild {
+  readonly stdin: { readonly writable: boolean; write(data: Uint8Array | string): boolean; end(): void };
+  readonly stdout: ProcessStream;
+  readonly stderr: ProcessStream;
+  on(event: 'error', handler: (err: Error) => void): unknown;
+  on(event: 'exit', handler: (code: number | null, signal: string | null) => void): unknown;
+}
+
+export interface ProcessHandle {
+  readonly child: ProcessChild;
+  kill(signal?: string): void;
+}
+
 export interface Project {
   readonly root: string;
   readonly name: string;
@@ -27,6 +63,10 @@ export interface Project {
     info: { pid: number | undefined; command: string; reason: string },
     kill: () => void,
   ): () => void;
+
+  start(ask: RunAsk): ProcessHandle;
+
+  readonly memory: ProjectMemory;
 }
 
 export interface RunAsk {
@@ -75,12 +115,14 @@ export interface Ide {
   method(name: string, handler: CommandHandler): void;
   getPlugin<T>(ctor: PluginClass<T>): T;
   find(provider: FindProvider): void;
+  onProject(handler: (project: Project) => void): void;
   settings(): Settings;
   environment(): Record<string, string>;
   which(name: string): string | null;
   run(ask: RunAsk): Promise<RunResult>;
   stream(ask: RunAsk, onChunk: (text: string) => void): Promise<RunResult>;
   readonly log: Logger;
+  readonly dir: string;
   readonly state: string;
 }
 

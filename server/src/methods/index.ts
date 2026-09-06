@@ -2,7 +2,6 @@ import type { HandlerTable } from '../rpc/context.js';
 import { configMethods } from './config.js';
 import { docMethods } from './doc.js';
 import { fsMethods } from './fs.js';
-import { lspMethods } from './lsp.js';
 import { mergeMethods } from './merge.js';
 import { pluginMethods } from './plugins.js';
 import { searchMethods } from './search.js';
@@ -47,13 +46,6 @@ export const handlers: HandlerTable = {
 
   'index.search': (p, c) => searchMethods.search(p, c),
   'index.stats': (p, c) => searchMethods.stats(p, c),
-
-  'lsp.status': (p, c) => lspMethods.status(p, c),
-  'lsp.hover': (p, c) => lspMethods.hover(p, c),
-  'lsp.problems': (p, c) => lspMethods.problems(p, c),
-  'lsp.diagnostics': (p, c) => lspMethods.diagnostics(p, c),
-  'lsp.definition': (p, c) => lspMethods.definition(p, c),
-  'lsp.references': (p, c) => lspMethods.references(p, c),
 
   'plugins.list': (p, c) => pluginMethods.list(p, c),
   'plugins.code': (p, c) => pluginMethods.code(p, c),

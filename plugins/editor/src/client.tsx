@@ -23,8 +23,6 @@ import {
   dirty,
   editDoc,
   externalEpoch,
-  fileDiagnostics,
-  hover,
   openDoc,
   pendingReveal,
   registry,
@@ -35,6 +33,7 @@ import {
   type Hunk,
   type HunkBox,
 } from '@ide/api/client';
+import LspPlugin from '@ide/plugin-lsp';
 import { EMPTY_SCHEMA, type EmptyView } from './schema.js';
 import { STYLE } from './style.js';
 import { EditorIcon } from './icon.js';
@@ -60,6 +59,10 @@ export default class Editor {
   private shown: string | null = null;
 
   constructor(private readonly ide: Ide) {}
+
+  private get lsp(): LspPlugin {
+    return this.ide.getPlugin(LspPlugin);
+  }
 
   @activate() protected start(): void {
     this.ide.css(STYLE);
@@ -174,13 +177,13 @@ export default class Editor {
           reveal={pendingReveal.value}
           wantsFocus={wantsFocus.value}
           settings={config.editor}
-          diagnostics={fileDiagnostics.value}
+          diagnostics={this.lsp.fileDiagnostics.value}
           onEdit={editDoc}
           onCaret={(line, character) => this.caretHandler?.(file.path, line, character)}
           onModClick={(pos) => {
             if (this.view) this.ask(this.view, pos);
           }}
-          onHover={hover}
+          onHover={(path, line, character) => this.lsp.hover(path, line, character)}
           onMount={(view) => (this.view = view)}
         />
       </div>

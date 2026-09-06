@@ -70,6 +70,7 @@ export class Boot {
     for (const provider of [...plugins.finds(), ...(options.finds ?? [])]) finds.add(provider);
 
     const registry = new WorkspaceRegistry(config, finds, { idleMs: options.idleMs });
+    registry.onOpen((ws) => plugins.projectOpened(ws));
 
     const http_ = http.createServer((req, res) => {
       if (req.url === '/health') {

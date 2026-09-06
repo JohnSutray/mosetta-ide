@@ -14,9 +14,12 @@ import {
   type FindProvider,
   type Ide,
   type PluginClass,
+  type Project,
 } from '@ide/api/server';
 export { type CallContext } from '@ide/api/server';
 import type { Settings } from '@ide/protocol';
+import { PluginProject } from './project.js';
+import type { Workspace } from '../workspace/workspace.js';
 import type { Logger } from '../log.js';
 import { processes } from '../env/processes.js';
 
@@ -40,6 +43,8 @@ export class PluginHost {
 
   private readonly providers: FindProvider[] = [];
 
+  private readonly projectHandlers = new Map<string, Array<(project: Project) => void>>();
+
   private readonly build: PluginBuild;
 
   constructor(
@@ -59,6 +64,18 @@ export class PluginHost {
 
   finds(): readonly FindProvider[] {
     return this.providers;
+  }
+
+  projectOpened(ws: Workspace): void {
+    for (const [name, handlers] of this.projectHandlers) {
+      for (const handler of handlers) {
+        try {
+          handler(new PluginProject(ws, name));
+        } catch (err) {
+          this.log.warn(`плагин ${name} не принял проект ${ws.name}: ${String(err)}`);
+        }
+      }
+    }
   }
 
   private expose(): void {
@@ -216,6 +233,11 @@ export class PluginHost {
           return found as T;
         },
         find: (provider) => this.providers.push(provider),
+        onProject: (handler) => {
+          const list = this.projectHandlers.get(name) ?? [];
+          list.push(handler);
+          this.projectHandlers.set(name, list);
+        },
         settings: () => this.machine.settings(),
         environment: () => this.machine.environment(),
         which: (name) => this.machine.which(name),
@@ -223,6 +245,7 @@ export class PluginHost {
         stream: (ask, onChunk) =>
           processes.stream({ ...ask, reason: `${name}: ${ask.reason}` }, onChunk),
         log: this.log,
+        dir,
         state: path.join(this.stateDir, 'plugins', name.replace(/[^\w.-]/g, '_')),
       };
       const instance = new Ctor(ide) as object;

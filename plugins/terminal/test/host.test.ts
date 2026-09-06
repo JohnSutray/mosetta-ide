@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import os from 'node:os';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { Project, ProjectResource } from '@ide/api/server';
+import type { ProcessHandle, Project, ProjectMemory, ProjectResource } from '@ide/api/server';
 import { TerminalHost } from '../src/host.js';
 
 class FakeProject implements Project {
@@ -27,6 +27,17 @@ class FakeProject implements Project {
   emit(event: string, payload: unknown): void {
     this.heard.push({ event, payload });
   }
+
+  start(): ProcessHandle {
+    throw new Error('долгоживущих процессов в этом тесте нет: pty рождается сам');
+  }
+
+  readonly memory: ProjectMemory = {
+    on: () => () => undefined,
+    files: () => [],
+    docSync: () => null,
+    peekDoc: async (path) => ({ path, text: '', version: 0, openCount: 0 }),
+  };
 
   hold(reason: string): () => void {
     this.holds.push(reason);

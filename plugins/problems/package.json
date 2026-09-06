@@ -14,7 +14,8 @@
     }
   },
   "dependencies": {
-    "@ide/api": "workspace:*"
+    "@ide/api": "workspace:*",
+    "@ide/plugin-lsp": "workspace:*"
   },
   "peerDependencies": {
     "@ide/protocol": "workspace:*",

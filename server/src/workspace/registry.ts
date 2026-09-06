@@ -18,6 +18,7 @@ export class WorkspaceRegistry {
   private readonly byRoot = new Map<string, Workspace>();
   private readonly timers = new Map<string, NodeJS.Timeout>();
   private readonly listeners = new Set<(list: WorkspaceInfo[]) => void>();
+  private readonly openers = new Set<(ws: Workspace) => void>();
   private readonly idleMs: number;
 
   constructor(
@@ -42,6 +43,7 @@ export class WorkspaceRegistry {
     this.byId.set(ws.id, ws);
     log.info(`открыт ${real} (${ws.id})`);
     await ws.boot();
+    for (const opener of this.openers) opener(ws);
     this.announce();
     return ws;
   }
@@ -85,6 +87,11 @@ export class WorkspaceRegistry {
 
   async closeAll(): Promise<void> {
     await Promise.all([...this.byId.keys()].map((id) => this.close(id)));
+  }
+
+  onOpen(listener: (ws: Workspace) => void): () => void {
+    this.openers.add(listener);
+    return () => this.openers.delete(listener);
   }
 
   onChange(listener: (list: WorkspaceInfo[]) => void): () => void {

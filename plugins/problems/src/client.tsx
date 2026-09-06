@@ -1,5 +1,5 @@
-import type { Diagnostic } from '@ide/protocol';
-import { activate, goTo, openDoc, problems, t, type Ide } from '@ide/api/client';
+import { activate, goTo, openDoc, t, type Ide } from '@ide/api/client';
+import LspPlugin, { type Diagnostic } from '@ide/plugin-lsp';
 import { STYLE } from './style.js';
 import { ProblemsIcon } from './icon.js';
 
@@ -38,7 +38,7 @@ export default class Problems {
   }
 
   private view() {
-    const files = problems.value;
+    const files = this.ide.getPlugin(LspPlugin).problems.value;
     if (files.length === 0) {
       return <div class="placeholder">{t('problems.empty')}</div>;
     }

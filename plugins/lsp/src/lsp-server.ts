@@ -1,22 +1,10 @@
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import path from 'node:path';
-import type {
-  Diagnostic,
-  HoverInfo,
-  LspServerSettings,
-  LspState,
-  LspStatus,
-  Severity,
-  SymbolSite,
-} from '@ide/protocol';
-import { RpcErrorCode } from '@ide/protocol';
-import { RpcError } from '../errors.js';
-import type { Logger } from '../log.js';
-import type { RamEvent, RamFs } from '../fs/ram-fs.js';
-import { paths } from '../workspace/paths.js';
+import type { LspServerSettings } from '@ide/protocol';
+import type { Logger, MemoryEvent, ProcessChild, ProcessHandle, ProjectMemory, RunAsk } from '@ide/api/server';
 import { FrameDecoder } from './codec.js';
-import { toolchain } from '../env/toolchain.js';
-import { processes, type Handle } from '../env/processes.js';
+import type { Toolchain } from './toolchain.js';
+import type { Diagnostic, HoverInfo, LspState, LspStatus, Severity, SymbolSite } from './types.js';
 
 export type LspEvent =
   | { type: 'status'; status: LspStatus }
@@ -26,9 +14,15 @@ const SEVERITY: Record<number, Severity> = { 1: 'error', 2: 'warning', 3: 'info'
 
 const TYPED = ['ts', 'tsx', 'mts', 'cts'];
 
+function extensionOf(key: string): string {
+  const name = key.slice(key.lastIndexOf('/') + 1);
+  const at = name.lastIndexOf('.');
+  return at <= 0 ? '' : name.slice(at + 1).toLowerCase();
+}
+
 export class LspServer {
-  private child: Handle['child'] | null = null;
-  private process: Handle | null = null;
+  private child: ProcessChild | null = null;
+  private process: ProcessHandle | null = null;
   private readonly decoder = new FrameDecoder();
   private readonly pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: unknown) => void }>();
   private readonly diagnostics = new Map<string, Diagnostic[]>();
@@ -46,7 +40,9 @@ export class LspServer {
     readonly name: string,
     private readonly settings: LspServerSettings,
     private readonly root: string,
-    private readonly ram: RamFs,
+    private readonly memory: ProjectMemory,
+    private readonly launch: (ask: RunAsk) => ProcessHandle,
+    private readonly toolchain: Toolchain,
     private readonly log: Logger,
   ) {
     this.extensions = new Set(settings.extensions);
@@ -62,11 +58,10 @@ export class LspServer {
 
   private async boot(): Promise<void> {
     this.setState('starting');
-    const handle = processes.start({
+    const handle = this.launch({
       command: this.settings.command,
       args: this.settings.args,
       cwd: this.root,
-      owner: this.root,
       reason: `${this.name} для ${path.basename(this.root)}`,
       wants: ['user-shell'],
     });
@@ -81,11 +76,11 @@ export class LspServer {
       if (this.state === 'off') return;
       this.setState('failed', `процесс завершился (${code ?? signal})`);
     });
-    child.stderr.on('data', (chunk: Buffer) => {
-      const text = chunk.toString('utf8').trim();
+    child.stderr.on('data', (chunk) => {
+      const text = Buffer.from(chunk).toString('utf8').trim();
       if (text) this.log.debug(`${this.name} stderr: ${text}`);
     });
-    child.stdout.on('data', (chunk: Buffer) => {
+    child.stdout.on('data', (chunk) => {
       for (const message of this.decoder.push(chunk)) this.handle(message);
     });
 
@@ -103,14 +98,14 @@ export class LspServer {
         },
         workspace: { workspaceFolders: true, configuration: false },
       },
-      initializationOptions: toolchain.optionsFor(this.name, this.root, this.log),
+      initializationOptions: this.toolchain.optionsFor(this.name, this.root, this.log),
     });
     this.notify('initialized', {});
     this.setState('ready');
 
-    this.offRam = this.ram.on((event) => this.onRam(event));
-    for (const doc of this.ram.files()) {
-      const resident = this.ram.docSync(doc.path);
+    this.offRam = this.memory.on((event) => this.onMemory(event));
+    for (const doc of this.memory.files()) {
+      const resident = this.memory.docSync(doc.path);
       if (resident && resident.openCount > 0) this.didOpen(doc.path);
     }
   }
@@ -147,7 +142,7 @@ export class LspServer {
   }
 
   handles(key: string): boolean {
-    return this.extensions.has(paths.extensionOf(key));
+    return this.extensions.has(extensionOf(key));
   }
 
   async checkProject(
@@ -159,8 +154,8 @@ export class LspServer {
 
     const checked = new Set(this.settings.checkExtensions ?? TYPED);
     const queue: string[] = [];
-    for (const file of this.ram.files()) {
-      if (!checked.has(paths.extensionOf(file.path)) || skip(file.path)) continue;
+    for (const file of this.memory.files()) {
+      if (!checked.has(extensionOf(file.path)) || skip(file.path)) continue;
       if (this.openDocs.has(file.path)) continue;
       queue.push(file.path);
     }
@@ -178,7 +173,7 @@ export class LspServer {
     for (let at = 0; at < take.length; at += batch) {
       if (this.state !== 'ready') return;
       const slice = take.slice(at, at + batch);
-      await Promise.all(slice.map((key) => this.ram.peekDoc(key).catch(() => null)));
+      await Promise.all(slice.map((key) => this.memory.peekDoc(key).catch(() => null)));
       const answers = slice.map((key) => this.expectDiagnostics(key));
       for (const key of slice) this.didOpen(key);
       await Promise.all(answers);
@@ -224,9 +219,7 @@ export class LspServer {
   }
 
   async hover(key: string, line: number, character: number): Promise<HoverInfo | null> {
-    if (this.state !== 'ready') {
-      throw new RpcError(RpcErrorCode.LspUnavailable, `${this.name} не готов (${this.state})`);
-    }
+    if (this.state !== 'ready') throw new Error(`${this.name} не готов (${this.state})`);
     this.didOpen(key);
     const result = (await this.request('textDocument/hover', {
       textDocument: { uri: this.uri(key) },
@@ -256,9 +249,7 @@ export class LspServer {
     character: number,
     extra: Record<string, unknown> = {},
   ): Promise<SymbolSite[]> {
-    if (this.state !== 'ready') {
-      throw new RpcError(RpcErrorCode.LspUnavailable, `${this.name} не готов (${this.state})`);
-    }
+    if (this.state !== 'ready') throw new Error(`${this.name} не готов (${this.state})`);
     this.didOpen(key);
     const result = await this.request(method, {
       textDocument: { uri: this.uri(key) },
@@ -281,13 +272,13 @@ export class LspServer {
         path,
         line: place.line,
         character: place.character,
-        ...describe(this.ram.docSync(path)?.text ?? '', place.line),
+        ...describe(this.memory.docSync(path)?.text ?? '', place.line),
       });
     }
     return out;
   }
 
-  private onRam(event: RamEvent): void {
+  private onMemory(event: MemoryEvent): void {
     const key = event.path;
     if (event.type === 'doc.moved') {
       this.didClose(event.from);
@@ -315,7 +306,7 @@ export class LspServer {
 
   private didOpen(key: string): void {
     if (this.openDocs.has(key) || this.state !== 'ready' || !this.handles(key)) return;
-    const doc = this.ram.docSync(key);
+    const doc = this.memory.docSync(key);
     if (!doc) return;
     this.openDocs.add(key);
     this.notify('textDocument/didOpen', {
@@ -336,7 +327,7 @@ export class LspServer {
   }
 
   private didChange(key: string): void {
-    const doc = this.ram.docSync(key);
+    const doc = this.memory.docSync(key);
     if (!doc) return;
     this.notify('textDocument/didChange', {
       textDocument: { uri: this.uri(key), version: doc.version + 1 },
@@ -457,7 +448,7 @@ interface PublishDiagnostics {
 }
 
 function languageIdFor(key: string): string {
-  switch (paths.extensionOf(key)) {
+  switch (extensionOf(key)) {
     case 'ts':
     case 'mts':
     case 'cts':

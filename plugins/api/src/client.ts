@@ -1,10 +1,8 @@
 import type { Signal } from '@preact/signals';
 import type {
   DirEntry,
-  Diagnostic,
   DocState,
   EntryKind,
-  HoverInfo,
   IndexHit,
   KeyBinding,
   KeyContext,
@@ -14,7 +12,6 @@ import type {
   IndexKind,
   MergeSession,
   Settings,
-  SymbolSite,
   WorkspaceInfo,
 } from '@ide/protocol';
 
@@ -24,13 +21,6 @@ export interface Size {
 }
 
 export declare function t(key: string, params?: Record<string, string | number>): string;
-
-export interface FileProblems {
-  path: string;
-  diagnostics: Diagnostic[];
-}
-
-export declare const problems: { readonly value: FileProblems[] };
 
 export declare function goTo(path: string, line: number, character?: number): Promise<void>;
 
@@ -128,8 +118,6 @@ export declare function closeFile(): Promise<void>;
 
 export declare const dirty: { readonly value: boolean };
 
-export declare const fileDiagnostics: { readonly value: Diagnostic[] };
-
 export declare const externalEpoch: { readonly value: number };
 
 export interface Reveal {
@@ -148,15 +136,6 @@ export interface HunkBox {
   bottom: number;
 }
 
-export declare function hover(
-  path: string,
-  line: number,
-  character: number,
-): Promise<HoverInfo | null>;
-
-export declare function definition(path: string, line: number, character: number): Promise<SymbolSite[]>;
-export declare function references(path: string, line: number, character: number): Promise<SymbolSite[]>;
-
 export declare function peekFile(path: string): Promise<{ path: string; text: string }>;
 
 export declare function searchIndex(query: string, limit?: number, kinds?: IndexKind[]): Promise<IndexHit[]>;
@@ -174,7 +153,6 @@ export declare function chordHeld(
 
 export interface ClientSurface {
   t: typeof t;
-  problems: typeof problems;
   goTo: typeof goTo;
   runCommand: typeof runCommand;
   keysFor: typeof keysFor;
@@ -195,12 +173,8 @@ export interface ClientSurface {
   editDoc: typeof editDoc;
   closeFile: typeof closeFile;
   dirty: typeof dirty;
-  fileDiagnostics: typeof fileDiagnostics;
   externalEpoch: typeof externalEpoch;
   pendingReveal: typeof pendingReveal;
-  hover: typeof hover;
-  definition: typeof definition;
-  references: typeof references;
   peekFile: typeof peekFile;
   searchIndex: typeof searchIndex;
   openerFor: typeof openerFor;

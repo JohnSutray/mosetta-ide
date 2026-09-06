@@ -1,4 +1,5 @@
-import { activate, openDoc, openFile, problems, project, registry, remote, stub, tree, workspaces } from '@ide/api/client';
+import { activate, openDoc, openFile, project, registry, remote, stub, tree, workspaces } from '@ide/api/client';
+import LspPlugin from '@ide/plugin-lsp';
 import type { Ide } from '@ide/api/client';
 import { computed, effect } from '@preact/signals';
 import { FollowIcon, TreeIcon } from './icons.js';
@@ -25,7 +26,7 @@ export default class TreePlugin {
 
   readonly broken = computed(() => {
     const out = new Set<string>();
-    for (const file of problems.value) {
+    for (const file of this.ide.getPlugin(LspPlugin).problems.value) {
       if (!file.diagnostics.some((item) => item.severity === 'error')) continue;
       out.add(file.path);
       let at = file.path.lastIndexOf('/');

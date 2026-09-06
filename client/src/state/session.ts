@@ -3,7 +3,6 @@ import type { LogLine, WorkspaceInfo } from '@ide/protocol';
 import { RpcClient, RpcFailure } from '../rpc/client.js';
 import { complain } from './notifications.js';
 import { config } from './config.js';
-import { Lsp } from './lsp.js';
 import { Doc } from './doc.js';
 import { say } from './notifications.js';
 import { i18n } from '../i18n/index.js';
@@ -70,10 +69,6 @@ export class Session {
 
   private async afterAttach(): Promise<void> {
     this.attached.value = this.current.value;
-    lsp.statuses.value = await this.rpc.call('lsp.status', null);
-    for (const file of await this.rpc.call('lsp.problems', null).catch(() => [])) {
-      lsp.set(file.path, file.diagnostics);
-    }
     await doc.reopen();
   }
 
@@ -131,9 +126,6 @@ export class Session {
       this.current.value = null;
     });
 
-    this.rpc.on('lsp.diagnostics', (event) => lsp.set(event.path, event.diagnostics));
-    this.rpc.on('lsp.status', (status) => lsp.setStatus(status));
-
     this.rpc.on('log', (line) => {
       this.logs.value = [...this.logs.value.slice(-499), line];
     });
@@ -161,7 +153,6 @@ function describe(err: unknown): string {
 }
 
 export const session = new Session(rpc);
-export const lsp = new Lsp();
-export const doc = new Doc(rpc, session, lsp);
+export const doc = new Doc(rpc, session);
 
-session.owns(doc, lsp);
+session.owns(doc);

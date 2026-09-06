@@ -1,10 +1,9 @@
-
-
 export class FrameDecoder {
-  private buffer: Buffer<ArrayBufferLike> = Buffer.alloc(0);
+  private buffer: Buffer = Buffer.alloc(0);
 
-  push(chunk: Buffer): unknown[] {
-    this.buffer = this.buffer.length === 0 ? chunk : Buffer.concat([this.buffer, chunk]);
+  push(chunk: Uint8Array): unknown[] {
+    const piece = Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+    this.buffer = this.buffer.length === 0 ? piece : Buffer.concat([this.buffer, piece]);
     const out: unknown[] = [];
 
     for (;;) {

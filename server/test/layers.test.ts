@@ -9,7 +9,6 @@ const MAY_TOUCH_DISK = [
   'fs/os-fs.ts',
   'fs/watcher.ts',
   'config/store.ts',
-  'env/toolchain.ts',
   'env/which.ts',
   'plugins/host.ts',
   'plugins/shared.ts',
@@ -32,33 +31,28 @@ const FORBIDDEN: Array<{ from: RegExp; importing: RegExp; why: string }> = [
     why: 'слой памяти ходит вниз только через OsFs',
   },
   {
-    from: /^lsp\//,
-    importing: /(node:fs\b|os-fs)/,
-    why: 'языковой сервер берёт текст из памяти, иначе диагностика будет только после сохранения',
-  },
-  {
     from: /^fs\//,
-    importing: /(\.\.\/search\/|\.\.\/lsp\/)/,
+    importing: /(\.\.\/search\/)/,
     why: 'зависимость строго вниз: нижний слой не знает про верхние',
   },
   {
-    from: /^(fs|search|lsp)\//,
+    from: /^(fs|search)\//,
     importing: /(\.\.\/rpc\/|\.\.\/methods\/)/,
     why: 'слои не знают ни про сессии, ни про транспорт',
   },
   {
     from: /^git\//,
-    importing: /(node:fs|ram-fs|os-fs|\.\.\/search\/|\.\.\/lsp\/|\.\.\/rpc\/|\.\.\/methods\/)/,
+    importing: /(node:fs|ram-fs|os-fs|\.\.\/search\/|\.\.\/rpc\/|\.\.\/methods\/)/,
     why: 'git — своя ось: у него собственный источник правды (.git) и собственный процесс, наши слои он не читает',
   },
   {
     from: /^merge\//,
-    importing: /(node:fs|node:child_process|ram-fs|os-fs|\.\.\/git\/|\.\.\/search\/|\.\.\/lsp\/|\.\.\/rpc\/|\.\.\/methods\/|\.\.\/workspace\/)/,
+    importing: /(node:fs|node:child_process|ram-fs|os-fs|\.\.\/git\/|\.\.\/search\/|\.\.\/rpc\/|\.\.\/methods\/|\.\.\/workspace\/)/,
     why: 'сеанс слияния держит тексты и телефон поставщика — знать, откуда они и куда уедут, он не имеет права (ADR-0134)',
   },
   {
     from: /^plugins\//,
-    importing: /(ram-fs|os-fs|file-index|\.\.\/search\/|\.\.\/lsp\/|\.\.\/git\/)/,
+    importing: /(ram-fs|os-fs|file-index|\.\.\/search\/|\.\.\/git\/)/,
     why: 'дом плагинов знает про машину и про сборку, а данные проекта приезжают к плагину в момент вызова (ADR-0140)',
   },
   {

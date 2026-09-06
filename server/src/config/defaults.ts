@@ -5,6 +5,7 @@ export class Defaults {
     plugins: {
       enabled: [
         '@ide/ui',
+        '@ide/plugin-lsp',
         '@ide/plugin-tree',
         '@ide/plugin-merge',
         '@ide/plugin-symbols',

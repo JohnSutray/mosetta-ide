@@ -7,7 +7,7 @@ import { computed } from '@preact/signals';
 import { keyHost } from '../keys/host.js';
 import { config } from '../state/config.js';
 import { complain } from '../state/notifications.js';
-import { doc, lsp, rpc, session } from '../state/session.js';
+import { doc, rpc, session } from '../state/session.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { chordHeld } from '../keys/chords.js';
@@ -55,7 +55,6 @@ export function App() {
     registerCommands();
     const surface: ClientSurface = {
       t: (key, params) => i18n.t(key, params),
-      problems: lsp.problems,
       goTo,
       runCommand: (id) => commands.run(id),
       keysFor,
@@ -121,12 +120,8 @@ export function App() {
       editDoc: (text) => doc.edit(text),
       closeFile: () => doc.close(),
       dirty: doc.dirty,
-      fileDiagnostics: doc.diagnostics,
       externalEpoch: doc.externalEpoch,
       pendingReveal: doc.pendingReveal,
-      hover: (path, line, character) => rpc.call('lsp.hover', { path, line, character }),
-      definition: (path, line, character) => rpc.call('lsp.definition', { path, line, character }),
-      references: (path, line, character) => rpc.call('lsp.references', { path, line, character }),
       peekFile: async (path) => {
         const state = await rpc.call('doc.state', { path });
         return { path: state.path, text: state.text };

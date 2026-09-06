@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Diagnostic } from '@ide/protocol';
 import { FakeHost, nodes, of } from '@ide/api/testing';
+import LspPlugin, { type Diagnostic, type FileDiagnostics } from '@ide/plugin-lsp';
 import Problems from '../src/client.js';
 
 const NAME = '@ide/plugin-problems';
@@ -18,8 +18,13 @@ describe('панель ошибок', () => {
   let host: FakeHost;
   let view: () => unknown;
 
+  function setProblems(files: FileDiagnostics[]): void {
+    host.plugin(LspPlugin).lsp.diagnostics.value = new Map(files.map((f) => [f.path, f.diagnostics]));
+  }
+
   beforeEach(async () => {
     host = new FakeHost();
+    host.add(LspPlugin, '@ide/plugin-lsp');
     host.add(Problems, NAME);
     await host.start();
     view = wish().view;
@@ -75,10 +80,10 @@ describe('панель ошибок', () => {
   });
 
   it('показывает файлы целиком, а не только открытый', () => {
-    host.surface.problems.value = [
+    setProblems([
       { path: 'a.ts', diagnostics: [problem(0, 'раз')] },
       { path: 'b.ts', diagnostics: [problem(1, 'два'), problem(2, 'три')] },
-    ];
+    ]);
     host.surface.openDoc.value = { path: 'a.ts' } as never;
     const paths = of(view(), 'span')
       .filter((n) => n.props['class'] === 'problems-path')
@@ -88,10 +93,10 @@ describe('панель ошибок', () => {
   });
 
   it('открытый файл помечен', () => {
-    host.surface.problems.value = [
+    setProblems([
       { path: 'a.ts', diagnostics: [problem(0, 'раз')] },
       { path: 'b.ts', diagnostics: [problem(0, 'два')] },
-    ];
+    ]);
     host.surface.openDoc.value = { path: 'b.ts' } as never;
     const marked = of(view(), 'div')
       .filter((n) => String(n.props['class']).startsWith('problems-where'))
@@ -100,16 +105,16 @@ describe('панель ошибок', () => {
   });
 
   it('нажатие ведёт в строку и колонку', async () => {
-    host.surface.problems.value = [{ path: 'a.ts', diagnostics: [problem(7, 'вот тут')] }];
+    setProblems([{ path: 'a.ts', diagnostics: [problem(7, 'вот тут')] }]);
     const row = of(view(), 'li')[0]!;
     await (row.props['onClick'] as () => Promise<void>)();
     expect(host.surface.jumps).toEqual([{ path: 'a.ts', line: 7, character: 4 }]);
   });
 
   it('нажатие на путь ведёт к первой ошибке файла', async () => {
-    host.surface.problems.value = [
+    setProblems([
       { path: 'a.ts', diagnostics: [problem(3, 'первая'), problem(9, 'вторая')] },
-    ];
+    ]);
     const head = of(view(), 'div').find((n) =>
       String(n.props['class']).startsWith('problems-where'),
     )!;
@@ -119,24 +124,24 @@ describe('панель ошибок', () => {
 
   it('усечение ВИДНО строкой, а не молчит', () => {
     const many = Array.from({ length: 600 }, (_, i) => problem(i, `ошибка ${i}`));
-    host.surface.problems.value = [{ path: 'a.ts', diagnostics: many }];
+    setProblems([{ path: 'a.ts', diagnostics: many }]);
     expect(of(view(), 'li')).toHaveLength(500);
     const more = of(view(), 'div').find((n) => n.props['class'] === 'problems-more')!;
     expect(more.props['children']).toBe('problems.more(count=100)');
   });
 
   it('пока всё влезло — про усечение ни слова', () => {
-    host.surface.problems.value = [{ path: 'a.ts', diagnostics: [problem(0, 'одна')] }];
+    setProblems([{ path: 'a.ts', diagnostics: [problem(0, 'одна')] }]);
     expect(of(view(), 'div').filter((n) => n.props['class'] === 'problems-more')).toHaveLength(0);
   });
 
   it('сорт проблемы виден классом строки', () => {
-    host.surface.problems.value = [
+    setProblems([
       {
         path: 'a.ts',
         diagnostics: [problem(0, 'красная'), problem(1, 'жёлтая', { severity: 'warning' })],
       },
-    ];
+    ]);
     expect(of(view(), 'li').map((n) => n.props['class'])).toEqual([
       'problem is-error',
       'problem is-warning',

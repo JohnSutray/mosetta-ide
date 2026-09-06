@@ -1,12 +1,11 @@
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
-import type { Diagnostic, DocState, MergeSession } from '@ide/protocol';
+import type { DocState, MergeSession } from '@ide/protocol';
 import { RpcErrorCode } from '@ide/protocol';
 import { RpcFailure, type RpcClient } from '../rpc/client.js';
 import { complain, say } from './notifications.js';
 import { forget, keep, recall } from './persist.js';
 import { DocSync } from './doc-sync.js';
 import { i18n } from '../i18n/index.js';
-import type { Lsp } from './lsp.js';
 import type { Session } from './session.js';
 
 export class Doc {
@@ -30,10 +29,6 @@ export class Doc {
 
   readonly path: ReadonlySignal<string | null> = computed(() => this.open.value?.path ?? null);
 
-  readonly diagnostics: ReadonlySignal<Diagnostic[]> = computed(() =>
-    this.lsp.of(this.path.value),
-  );
-
   readonly title: ReadonlySignal<string> = computed(() => {
     const ws = this.session.current.value;
     const file = this.open.value;
@@ -48,7 +43,6 @@ export class Doc {
   constructor(
     private readonly rpc: RpcClient,
     private readonly session: Session,
-    private readonly lsp: Lsp,
   ) {
     this.sync = new DocSync(rpc, (message) => complain(message));
     this.listen();
@@ -77,8 +71,6 @@ export class Doc {
         this.dirty.value = doc.dirty;
       });
       this.remember(path);
-      const known = await this.rpc.call('lsp.diagnostics', { path }).catch(() => null);
-      if (known) this.lsp.set(known.path, known.diagnostics);
     } catch (err) {
       complain(describe(err));
     }

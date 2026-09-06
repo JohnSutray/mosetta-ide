@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { DocState } from '@ide/protocol';
 import { FakeHost, nodes, of } from '@ide/api/testing';
+import LspPlugin from '@ide/plugin-lsp';
 import Editor from '../src/client.js';
 
 const NAME = '@ide/plugin-editor';
@@ -14,6 +15,7 @@ describe('редактор', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
+    host.add(LspPlugin, '@ide/plugin-lsp');
     host.add(Editor, NAME);
     await host.start();
   });

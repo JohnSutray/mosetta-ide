@@ -10,6 +10,8 @@ import {
   type CommandHandler,
   type Ide,
   type Project,
+  type ProcessHandle,
+  type ProjectMemory,
   type ProjectResource,
   type RunAsk,
   type RunResult,
@@ -44,6 +46,15 @@ class FakeProject implements Project {
   spawned(): () => void {
     return () => undefined;
   }
+  start(): ProcessHandle {
+    throw new Error('долгоживущих процессов в этом тесте нет');
+  }
+  readonly memory: ProjectMemory = {
+    on: () => () => undefined,
+    files: () => [],
+    docSync: () => null,
+    peekDoc: async (path) => ({ path, text: '', version: 0, openCount: 0 }),
+  };
   async dispose(): Promise<void> {
     for (const one of this.resources.values()) await one.dispose();
   }
@@ -81,11 +92,13 @@ function fakeIde(): Ide {
       throw new Error('соседей в этом тесте нет');
     },
     find: () => undefined,
+    onProject: () => undefined,
     settings: () => {
       throw new Error('настроек в этом тесте нет');
     },
     environment: () => ({}),
     which: () => null,
+    dir: '',
     state: '',
     run: (ask) => running(ask),
     stream: (ask, onChunk) => running(ask, onChunk),

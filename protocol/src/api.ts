@@ -5,17 +5,13 @@ import type {
   EntryKind,
   DocState,
   DocVersion,
-  FileDiagnostics,
   FileText,
-  HoverInfo,
   IndexHit,
   IndexKind,
   IndexStats,
   SearchStats,
   LogLine,
-  LspStatus,
   MergeSession,
-  SymbolSite,
   WorkspaceId,
   WorkspaceInfo,
   WriteResult,
@@ -68,19 +64,6 @@ export interface Api {
   };
   'index.stats': { params: null; result: SearchStats };
 
-  'lsp.status': { params: null; result: LspStatus[] };
-  'lsp.hover': { params: { path: string; line: number; character: number }; result: HoverInfo | null };
-  'lsp.problems': { params: null; result: FileDiagnostics[] };
-  'lsp.diagnostics': { params: { path: string }; result: FileDiagnostics };
-  'lsp.definition': {
-    params: { path: string; line: number; character: number };
-    result: SymbolSite[];
-  };
-  'lsp.references': {
-    params: { path: string; line: number; character: number };
-    result: SymbolSite[];
-  };
-
   'merge.state': { params: null; result: MergeSession | null };
   'merge.resolve': { params: { path: string; text: string | null }; result: MergeSession | null };
   'merge.cancel': { params: null; result: null };
@@ -110,9 +93,6 @@ export interface Events {
   'tree.changed': { path: string };
   'doc.removed': { path: string };
   'doc.moved': { from: string; path: string };
-
-  'lsp.status': LspStatus;
-  'lsp.diagnostics': FileDiagnostics;
 
   'merge.state': MergeSession | null;
 

@@ -1,11 +1,9 @@
-import type { Diagnostic, LspStatus } from '@ide/protocol';
 import type { ConfigStore } from '../config/store.js';
 import { OsFs } from '../fs/os-fs.js';
 import { OsWatcher } from '../fs/watcher.js';
 import { RamFs } from '../fs/ram-fs.js';
 import { SearchIndex } from '../search/search-index.js';
 import type { FindProviders } from '../search/providers.js';
-import { LspServer } from '../lsp/server.js';
 import { MergeSessions } from '../merge/sessions.js';
 import { conflicts, type FsConflicts } from './conflicts.js';
 import type { Logger } from '../log.js';
@@ -18,15 +16,14 @@ export class Services {
   readonly watcher: OsWatcher;
   readonly merge = new MergeSessions();
   readonly conflicts: FsConflicts;
-  readonly lsp: LspServer[] = [];
 
   private readonly offs: Array<() => void> = [];
   private booted = false;
 
   constructor(
-    private readonly ws: Workspace,
+    ws: Workspace,
     private readonly config: ConfigStore,
-    private readonly log: Logger,
+    log: Logger,
     finds: FindProviders,
   ) {
     const settings = config.settings;
@@ -107,21 +104,6 @@ export class Services {
       if (this.config.settings.index.enabled) return this.index.indexSymbols();
       return undefined;
     });
-
-    if (this.config.settings.lsp.startOnOpen) this.startLanguageServers();
-  }
-
-  private async checkProject(server: LspServer): Promise<void> {
-    const { checkProject, checkProjectLimit } = this.config.settings.lsp;
-    if (!checkProject) return;
-    const skipped = new Set(this.config.settings.fs.noScan);
-    const skip = (key: string): boolean =>
-      key.split('/').some((part) => skipped.has(part));
-    try {
-      await server.checkProject(skip, checkProjectLimit);
-    } catch (err) {
-      this.log.warn(`обход проекта не дошёл до конца: ${String(err)}`);
-    }
   }
 
   private async primeManifests(): Promise<void> {
@@ -131,46 +113,10 @@ export class Services {
     }
   }
 
-  private startLanguageServers(): void {
-    for (const [name, settings] of Object.entries(this.config.settings.lsp.servers)) {
-      if (!settings.enabled) continue;
-      const server = new LspServer(name, settings, this.ws.root, this.ram, this.log);
-      this.lsp.push(server);
-      this.offs.push(
-        server.on((event) => {
-          if (event.type === 'status') {
-            this.ws.broadcast('lsp.status', event.status);
-          } else {
-            this.ws.broadcast('lsp.diagnostics', {
-              path: event.path,
-              diagnostics: event.diagnostics,
-            });
-          }
-        }),
-      );
-      const release = this.ws.hold(`lsp:${name}`);
-      this.offs.push(release);
-      void server.start().then(() => this.checkProject(server));
-    }
-  }
-
-  lspFor(key: string): LspServer | null {
-    return this.lsp.find((server) => server.handles(key)) ?? null;
-  }
-
-  statuses(): LspStatus[] {
-    return this.lsp.map((server) => server.status());
-  }
-
-  knownDiagnostics(): Array<{ path: string; diagnostics: Diagnostic[] }> {
-    return this.lsp.flatMap((server) => server.knownDiagnostics());
-  }
-
   dispose(): void {
     for (const off of this.offs.splice(0)) off();
     this.merge.dispose();
     this.watcher.dispose();
-    for (const server of this.lsp.splice(0)) server.dispose();
     this.index.dispose();
     this.ram.dispose();
   }
