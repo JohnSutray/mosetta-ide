@@ -49,34 +49,11 @@ export interface DocVersion {
   dirty: boolean;
 }
 
-export type IndexKind = string;
-
-export const CORE_KINDS = ['file', 'ts'] as const;
-
-export interface IndexHit {
-  kind: IndexKind;
-  label: string;
-  path: string;
-  line?: number;
-  detail?: string;
-  id?: string;
-  score: number;
-  matches: number[];
-}
-
 export interface IndexStats {
   files: number;
   dirs: number;
   bytesResident: number;
   builtMs: number;
-}
-
-export interface SearchStats {
-  files: number;
-  provided: number;
-  symbols: number;
-  vocabulary: number;
-  pending: number;
 }
 
 export interface NpmScriptInfo {

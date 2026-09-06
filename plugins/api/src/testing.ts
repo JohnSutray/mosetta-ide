@@ -3,9 +3,7 @@ import { signal, type Signal } from '@preact/signals';
 import type {
   DirEntry,
   DocState,
-  IndexHit,
   KeyBinding,
-  IndexKind,
   MergeSession,
   Settings,
   WorkspaceInfo,
@@ -20,7 +18,6 @@ import type {
   KeysAccess,
   KeyEcho,
   TakenKey,
-  Found,
   Ide,
   PluginClass,
   Reveal,
@@ -56,12 +53,6 @@ export function closeFile(): Promise<void> {
 }
 export function peekFile(path: string): Promise<{ path: string; text: string }> {
   return surface().peekFile(path);
-}
-export function searchIndex(query: string, limit?: number, kinds?: IndexKind[]): Promise<IndexHit[]> {
-  return surface().searchIndex(query, limit, kinds);
-}
-export function openerFor(kind: string): ((found: Found) => void) | undefined {
-  return surface().openerFor(kind);
 }
 export function takeFocusOnMount(): boolean {
   return surface().takeFocusOnMount();
@@ -311,9 +302,6 @@ export class FakeSurface implements ClientSurface {
   readonly wantsFocus = signal(0);
   readonly edits: string[] = [];
   readonly texts = new Map<string, string>();
-  readonly hits: IndexHit[] = [];
-  readonly openers = new Map<string, (found: Found) => void>();
-  readonly searches: string[] = [];
   readonly heads = new Map<string, string>();
   readonly chords = new Set<string>();
   focusOnMount = true;
@@ -353,15 +341,6 @@ export class FakeSurface implements ClientSurface {
     const text = this.texts.get(path);
     if (text === undefined) throw new Error(`нет файла ${path}`);
     return { path, text };
-  }
-
-  async searchIndex(query: string, _limit?: number, _kinds?: IndexKind[]): Promise<IndexHit[]> {
-    this.searches.push(query);
-    return this.hits;
-  }
-
-  openerFor(kind: string): ((found: Found) => void) | undefined {
-    return this.openers.get(kind);
   }
 
   takeFocusOnMount(): boolean {
@@ -454,7 +433,6 @@ export class FakeRegistry {
 export class FakeIde implements Ide {
   readonly commands = new Map<string, () => void>();
   readonly remembered = new Map<string, Signal<unknown>>();
-  readonly openers = new Map<string, (found: Found) => void>();
   readonly surfaces: Array<() => unknown> = [];
   readonly styles: string[] = [];
   readonly said: string[] = [];
@@ -535,10 +513,6 @@ export class FakeIde implements Ide {
 
   surface(view: () => unknown): void {
     this.surfaces.push(view);
-  }
-
-  open(kind: string, handler: (found: Found) => void): void {
-    this.openers.set(kind, handler);
   }
 
   say(message: string): void {

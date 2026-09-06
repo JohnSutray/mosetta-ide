@@ -1,7 +1,7 @@
 import { settings, t } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import { CodeView } from '@ide/code';
-import type { IndexHit } from '@ide/protocol';
+import type { IndexHit } from './types.js';
 import { Popup } from '@ide/ui';
 import type { Search } from './state.js';
 

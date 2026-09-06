@@ -19,7 +19,10 @@ export interface MemoryDoc {
 }
 
 export type MemoryEvent =
-  | { type: 'doc.opened' | 'doc.changed' | 'doc.saved' | 'doc.external' | 'doc.closed' | 'doc.removed'; path: string }
+  | {
+      type: 'doc.resident' | 'doc.opened' | 'doc.changed' | 'doc.saved' | 'doc.external' | 'doc.closed' | 'doc.removed';
+      path: string;
+    }
   | { type: 'doc.moved'; path: string; from: string }
   | { type: 'tree.changed'; path: string };
 
@@ -28,6 +31,7 @@ export interface ProjectMemory {
   files(): Iterable<{ path: string }>;
   docSync(path: string): MemoryDoc | null;
   peekDoc(path: string): Promise<MemoryDoc>;
+  isTextual(path: string): boolean;
 }
 
 export interface ProcessStream {
@@ -96,25 +100,10 @@ export interface CallContext {
 
 export type CommandHandler = (params: unknown, call: CallContext) => unknown;
 
-export interface Found {
-  label: string;
-  path?: string;
-  line?: number;
-  detail?: string;
-  id?: string;
-}
-
-export interface FindProvider {
-  kind: string;
-  wants(path: string): boolean;
-  finds(path: string, text: string): Found[];
-}
-
 export interface Ide {
   readonly name: string;
   method(name: string, handler: CommandHandler): void;
   getPlugin<T>(ctor: PluginClass<T>): T;
-  find(provider: FindProvider): void;
   onProject(handler: (project: Project) => void): void;
   settings(): Settings;
   environment(): Record<string, string>;

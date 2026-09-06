@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { layout } from '../src/search/layout.js';
+import { layout } from '../src/layout.js';
 
 describe('раскладка', () => {
   it('русский набор читается английской раскладкой', () => {

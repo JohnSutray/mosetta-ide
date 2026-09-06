@@ -2,8 +2,6 @@ import type { ConfigStore } from '../config/store.js';
 import { OsFs } from '../fs/os-fs.js';
 import { OsWatcher } from '../fs/watcher.js';
 import { RamFs } from '../fs/ram-fs.js';
-import { SearchIndex } from '../search/search-index.js';
-import type { FindProviders } from '../search/providers.js';
 import { MergeSessions } from '../merge/sessions.js';
 import { conflicts, type FsConflicts } from './conflicts.js';
 import type { Logger } from '../log.js';
@@ -12,7 +10,6 @@ import type { Workspace } from './workspace.js';
 export class Services {
   readonly os: OsFs;
   readonly ram: RamFs;
-  readonly index: SearchIndex;
   readonly watcher: OsWatcher;
   readonly merge = new MergeSessions();
   readonly conflicts: FsConflicts;
@@ -24,12 +21,10 @@ export class Services {
     ws: Workspace,
     private readonly config: ConfigStore,
     log: Logger,
-    finds: FindProviders,
   ) {
     const settings = config.settings;
     this.os = new OsFs(ws.root, settings.fs);
     this.ram = new RamFs(this.os, settings.fs, log);
-    this.index = new SearchIndex(this.ram, settings.index, log, finds);
     this.watcher = new OsWatcher(
       ws.root,
       settings.fs,
@@ -79,7 +74,6 @@ export class Services {
       config.onChange((bundle) => {
         this.os.applySettings(bundle.settings.fs);
         this.ram.applySettings(bundle.settings.fs);
-        this.index.applySettings(bundle.settings.index);
         this.watcher.applySettings(bundle.settings.fs);
       }),
     );
@@ -96,14 +90,9 @@ export class Services {
 
     await this.primeManifests();
 
-    if (this.config.settings.index.enabled) this.index.rebuild();
-
     if (watching) this.watcher.release();
 
-    void this.ram.preload().then(() => {
-      if (this.config.settings.index.enabled) return this.index.indexSymbols();
-      return undefined;
-    });
+    void this.ram.preload();
   }
 
   private async primeManifests(): Promise<void> {
@@ -117,7 +106,6 @@ export class Services {
     for (const off of this.offs.splice(0)) off();
     this.merge.dispose();
     this.watcher.dispose();
-    this.index.dispose();
     this.ram.dispose();
   }
 }

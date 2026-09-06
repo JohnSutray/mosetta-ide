@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { EventName, EventPayload } from '@ide/protocol';
 import { ConfigStore } from '../src/config/store.js';
-import { FindProviders } from '../src/search/providers.js';
 import { PluginProject } from '../src/plugins/project.js';
 import { Workspace } from '../src/workspace/workspace.js';
 import { makeProject, removeProject, TEST_CONFIG_DIR } from './helpers.js';
@@ -30,7 +29,7 @@ describe('проект, отданный плагину', () => {
   beforeEach(async () => {
     root = await makeProject('plugin-project', { 'один.txt': 'раз' });
     const config = await ConfigStore.load(TEST_CONFIG_DIR);
-    ws = new Workspace(root, config, new FindProviders());
+    ws = new Workspace(root, config);
     tab = new FakeTab();
     ws.attach(tab);
   });

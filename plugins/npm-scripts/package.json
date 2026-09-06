@@ -16,13 +16,11 @@
     "commands": {
       "scripts.open": "Скрипты package.json",
       "scripts.packageManager": "Чем запускать скрипты"
-    },
-    "needs": [
-      "@ide/plugin-terminal"
-    ]
+    }
   },
   "dependencies": {
     "@ide/api": "workspace:*",
+    "@ide/plugin-search": "workspace:*",
     "@ide/plugin-terminal": "workspace:*",
     "@ide/ui": "workspace:*"
   },

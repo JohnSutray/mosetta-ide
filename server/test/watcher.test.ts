@@ -5,6 +5,17 @@ import { fileURLToPath } from 'node:url';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
+interface Hit {
+  kind: string;
+  label: string;
+  path: string;
+  line?: number;
+  matches: number[];
+}
+function search(c: TestClient, params: { query: string; limit?: number; kinds?: string[] }): Promise<Hit[]> {
+  return c.call('plugins.call', { name: '@ide/plugin-search', method: 'search', params }) as Promise<Hit[]>;
+}
+
 const CONFIG = fileURLToPath(new URL('./fixtures/config-watch', import.meta.url));
 
 describe('слежение за диском', () => {
@@ -42,7 +53,7 @@ describe('слежение за диском', () => {
     await fs.writeFile(path.join(root, 'src', 'находка.ts'), 'export const y = 1;\n', 'utf8');
     await waiting;
 
-    const hits = await c.call('index.search', { query: 'находка' });
+    const hits = await search(c, { query: 'находка' });
     expect(hits.map((h) => h.path)).toContain('src/находка.ts');
   });
 
@@ -65,7 +76,7 @@ describe('слежение за диском', () => {
     await waiting;
     await settle();
 
-    const hits = await c.call('index.search', { query: 'far' });
+    const hits = await search(c, { query: 'far' });
     expect(hits.map((h) => h.path)).toContain('src/deep/nested/far.ts');
   });
 
@@ -74,13 +85,13 @@ describe('слежение за диском', () => {
     await fs.writeFile(path.join(root, 'src', 'temp', 'inner.ts'), 'export {};\n', 'utf8');
     await treeChanged(c, 'src/temp');
     await settle();
-    expect((await c.call('index.search', { query: 'inner' })).length).toBeGreaterThan(0);
+    expect((await search(c, { query: 'inner' })).length).toBeGreaterThan(0);
 
     await fs.rm(path.join(root, 'src', 'temp'), { recursive: true, force: true });
     await treeChanged(c, 'src');
     await settle();
 
-    expect(await c.call('index.search', { query: 'inner' })).toEqual([]);
+    expect(await search(c, { query: 'inner' })).toEqual([]);
   });
 
   it('чужая правка подтягивается, пока в памяти чисто', async () => {

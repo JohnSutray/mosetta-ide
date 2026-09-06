@@ -126,8 +126,6 @@ export function App() {
         const state = await rpc.call('doc.state', { path });
         return { path: state.path, text: state.text };
       },
-      searchIndex: (query, limit, kinds) => rpc.call('index.search', { query, limit, kinds }),
-      openerFor: (kind) => plugins.opener(kind),
       takeFocusOnMount: () => editorFocus.takeOnMount(),
       wantsFocus: editorFocus.wanted,
       chordHeld,

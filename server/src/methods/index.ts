@@ -4,7 +4,6 @@ import { docMethods } from './doc.js';
 import { fsMethods } from './fs.js';
 import { mergeMethods } from './merge.js';
 import { pluginMethods } from './plugins.js';
-import { searchMethods } from './search.js';
 import { treeMethods } from './tree.js';
 import { workspaceMethods } from './workspace.js';
 
@@ -43,9 +42,6 @@ export const handlers: HandlerTable = {
   'doc.state': (p, c) => docMethods.state(p, c),
   'doc.mergeFromDisk': (p, c) => docMethods.mergeFromDisk(p, c),
   'doc.close': (p, c) => docMethods.close(p, c),
-
-  'index.search': (p, c) => searchMethods.search(p, c),
-  'index.stats': (p, c) => searchMethods.stats(p, c),
 
   'plugins.list': (p, c) => pluginMethods.list(p, c),
   'plugins.code': (p, c) => pluginMethods.code(p, c),

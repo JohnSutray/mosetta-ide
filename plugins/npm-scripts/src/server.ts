@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { activate, command, type CallContext, type Ide, type Project } from '@ide/api/server';
-import type { IndexHit } from '@ide/protocol';
+import SearchServer, { type IndexHit } from '@ide/plugin-search/server';
 import { PackageManagers, type PackageManagerInfo } from './managers.js';
 import { ScriptsInPackageJson } from './scripts.js';
 import { scriptId } from './script-id.js';
@@ -18,13 +18,6 @@ export interface RunPlan {
   name: string;
   command: string;
   cwd: string;
-}
-
-interface Services {
-  index: {
-    byKind(kind: string): IndexHit[];
-    oneOf(kind: string, id: string): IndexHit | undefined;
-  };
 }
 
 export default class NpmScriptsServer {
@@ -49,7 +42,11 @@ export default class NpmScriptsServer {
   }
 
   @activate() protected start(): void {
-    this.ide.find(new ScriptsInPackageJson());
+    this.ide.getPlugin(SearchServer).find(new ScriptsInPackageJson());
+  }
+
+  private index(project: Project) {
+    return this.ide.getPlugin(SearchServer).indexOf(project);
   }
 
   @command('managers') protected listManagers(_params: unknown, call: CallContext): PackageManagerInfo[] {
@@ -61,8 +58,8 @@ export default class NpmScriptsServer {
   }
 
   @command() protected list(_params: unknown, call: CallContext): ScriptInfo[] {
-    return services(call)
-      .index.byKind(KIND)
+    return this.index(call.project)
+      .byKind(KIND)
       .map((hit) => toScript(hit));
   }
 
@@ -70,7 +67,7 @@ export default class NpmScriptsServer {
     const asked = params as { id?: unknown } | null;
     if (!asked || typeof asked.id !== 'string') throw new Error('нужен id: string');
 
-    const hit = services(call).index.oneOf(KIND, asked.id);
+    const hit = this.index(call.project).oneOf(KIND, asked.id);
     if (!hit) throw new Error(`нет скрипта ${asked.id}`);
     const script = toScript(hit);
 
@@ -85,10 +82,6 @@ export default class NpmScriptsServer {
 function toScript(hit: IndexHit): ScriptInfo {
   const id = hit.id ?? '';
   return { id, script: scriptId.scriptOf(id), command: hit.detail ?? '', path: hit.path };
-}
-
-function services(call: CallContext): Services {
-  return call.services as Services;
 }
 
 function parentOf(path: string): string {

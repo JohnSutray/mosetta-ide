@@ -54,6 +54,7 @@ class FakeProject implements Project {
     files: () => [],
     docSync: () => null,
     peekDoc: async (path) => ({ path, text: '', version: 0, openCount: 0 }),
+    isTextual: () => false,
   };
   async dispose(): Promise<void> {
     for (const one of this.resources.values()) await one.dispose();
@@ -91,7 +92,6 @@ function fakeIde(): Ide {
     getPlugin: () => {
       throw new Error('соседей в этом тесте нет');
     },
-    find: () => undefined,
     onProject: () => undefined,
     settings: () => {
       throw new Error('настроек в этом тесте нет');

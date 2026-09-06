@@ -21,38 +21,33 @@ const MAY_SPAWN = [
 
 const FORBIDDEN: Array<{ from: RegExp; importing: RegExp; why: string }> = [
   {
-    from: /^search\//,
-    importing: /(node:fs|node:child_process|os-fs)/,
-    why: 'производный слой обязан жить на событиях памяти, а не читать диск',
-  },
-  {
     from: /^fs\/ram-fs\.ts$/,
     importing: /node:fs/,
     why: 'слой памяти ходит вниз только через OsFs',
   },
   {
     from: /^fs\//,
-    importing: /(\.\.\/search\/)/,
+    importing: /(\.\.\/plugins\/)/,
     why: 'зависимость строго вниз: нижний слой не знает про верхние',
   },
   {
-    from: /^(fs|search)\//,
+    from: /^fs\//,
     importing: /(\.\.\/rpc\/|\.\.\/methods\/)/,
     why: 'слои не знают ни про сессии, ни про транспорт',
   },
   {
     from: /^git\//,
-    importing: /(node:fs|ram-fs|os-fs|\.\.\/search\/|\.\.\/rpc\/|\.\.\/methods\/)/,
+    importing: /(node:fs|ram-fs|os-fs|\.\.\/rpc\/|\.\.\/methods\/)/,
     why: 'git — своя ось: у него собственный источник правды (.git) и собственный процесс, наши слои он не читает',
   },
   {
     from: /^merge\//,
-    importing: /(node:fs|node:child_process|ram-fs|os-fs|\.\.\/git\/|\.\.\/search\/|\.\.\/rpc\/|\.\.\/methods\/|\.\.\/workspace\/)/,
+    importing: /(node:fs|node:child_process|ram-fs|os-fs|\.\.\/git\/|\.\.\/rpc\/|\.\.\/methods\/|\.\.\/workspace\/)/,
     why: 'сеанс слияния держит тексты и телефон поставщика — знать, откуда они и куда уедут, он не имеет права (ADR-0134)',
   },
   {
     from: /^plugins\//,
-    importing: /(ram-fs|os-fs|file-index|\.\.\/search\/|\.\.\/git\/)/,
+    importing: /(ram-fs|os-fs|file-index|\.\.\/git\/)/,
     why: 'дом плагинов знает про машину и про сборку, а данные проекта приезжают к плагину в момент вызова (ADR-0140)',
   },
   {
@@ -126,7 +121,7 @@ describe('слои не растекаются', () => {
     const files = await sources();
     expect(files.length).toBeGreaterThan(10);
     expect(files.some((f) => f.rel === 'fs/os-fs.ts')).toBe(true);
-    expect(files.some((f) => f.rel === 'search/search-index.ts')).toBe(true);
+    expect(files.some((f) => f.rel === 'fs/ram-fs.ts')).toBe(true);
   });
 });
 

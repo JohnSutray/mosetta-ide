@@ -21,6 +21,7 @@ export class PluginProject implements Project {
       files: () => ram.files(),
       docSync: (path) => lend(ram.docSync(path)),
       peekDoc: async (path) => lend(await ram.peekDoc(path)) as MemoryDoc,
+      isTextual: (path) => ram.isTextual(path),
     };
   }
 
@@ -68,6 +69,7 @@ export class PluginProject implements Project {
 
 function asMemoryEvent(event: { type: string; path: string; from?: string }): MemoryEvent | null {
   switch (event.type) {
+    case 'doc.resident':
     case 'doc.opened':
     case 'doc.changed':
     case 'doc.saved':

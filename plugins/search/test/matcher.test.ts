@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Vocabulary, textIndex } from '../src/search/text.js';
-import { matcher } from '../src/search/matcher.js';
+import { Vocabulary, textIndex } from '../src/text.js';
+import { matcher } from '../src/matcher.js';
 
 function rank(query: string, items: string[], vocabulary?: Vocabulary): string[] {
   return items

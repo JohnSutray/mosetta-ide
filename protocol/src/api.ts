@@ -6,10 +6,7 @@ import type {
   DocState,
   DocVersion,
   FileText,
-  IndexHit,
-  IndexKind,
   IndexStats,
-  SearchStats,
   LogLine,
   MergeSession,
   WorkspaceId,
@@ -57,12 +54,6 @@ export interface Api {
   'doc.state': { params: { path: string }; result: DocState };
   'doc.close': { params: { path: string }; result: null };
   'doc.mergeFromDisk': { params: { path: string }; result: MergeSession | null };
-
-  'index.search': {
-    params: { query: string; limit?: number; kinds?: IndexKind[] };
-    result: IndexHit[];
-  };
-  'index.stats': { params: null; result: SearchStats };
 
   'merge.state': { params: null; result: MergeSession | null };
   'merge.resolve': { params: { path: string; text: string | null }; result: MergeSession | null };

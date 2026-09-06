@@ -320,6 +320,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
+      '@ide/plugin-search':
+        specifier: workspace:*
+        version: link:../search
       '@ide/plugin-terminal':
         specifier: workspace:*
         version: link:../terminal
@@ -417,6 +420,9 @@ importers:
       '@ide/ui':
         specifier: workspace:*
         version: link:../ui
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1

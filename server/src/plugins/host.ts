@@ -11,7 +11,6 @@ import {
   hooksOf,
   type CallContext,
   type CommandHandler,
-  type FindProvider,
   type Ide,
   type PluginClass,
   type Project,
@@ -41,8 +40,6 @@ export class PluginHost {
   private readonly loaded = new Map<string, Loaded>();
   private readonly instances = new Map<unknown, unknown>();
 
-  private readonly providers: FindProvider[] = [];
-
   private readonly projectHandlers = new Map<string, Array<(project: Project) => void>>();
 
   private readonly build: PluginBuild;
@@ -60,10 +57,6 @@ export class PluginHost {
     },
   ) {
     this.build = new PluginBuild(shared);
-  }
-
-  finds(): readonly FindProvider[] {
-    return this.providers;
   }
 
   projectOpened(ws: Workspace): void {
@@ -145,7 +138,12 @@ export class PluginHost {
   private async ordered(names: string[]): Promise<{ order: string[]; needs: Map<string, string[]> }> {
     const needs = new Map<string, string[]>();
     for (const name of names) {
-      needs.set(name, await this.importsOf(name).then((all) => all.filter((one) => names.includes(one))).catch(() => []));
+      needs.set(
+        name,
+        await this.importsOf(name)
+          .then((all) => all.map(serverHalfOf).filter((one) => names.includes(one)))
+          .catch(() => []),
+      );
     }
     const out: string[] = [];
     const done = new Set<string>();
@@ -212,6 +210,7 @@ export class PluginHost {
     if (manifest.server) {
       const built = await this.build.entry(path.join(dir, manifest.server), 'server');
       this.shared.register(name, 'server', built.exports);
+      this.shared.register(`${name}/server`, 'server', built.exports);
       const buildDir = path.join(this.stateDir, 'plugins-build');
       await fs.mkdir(buildDir, { recursive: true });
       const out = path.join(buildDir, `${name.replace(/[^\w.-]/g, '_')}.server.mjs`);
@@ -223,6 +222,7 @@ export class PluginHost {
       const Ctor = mod.default;
       if (typeof Ctor !== 'function') throw new Error('нет export default class');
       this.serve(name, mod);
+      this.serve(`${name}/server`, mod);
 
       const ide: Ide = {
         name,
@@ -232,7 +232,6 @@ export class PluginHost {
           if (!found) throw new Error(`плагин не поднят: ${ctor.name}`);
           return found as T;
         },
-        find: (provider) => this.providers.push(provider),
         onProject: (handler) => {
           const list = this.projectHandlers.get(name) ?? [];
           list.push(handler);
@@ -274,4 +273,8 @@ export class PluginHost {
     });
     this.log.info(`плагин ${name}@${manifest.version} готов`);
   }
+}
+
+function serverHalfOf(spec: string): string {
+  return spec.endsWith('/server') ? spec.slice(0, -'/server'.length) : spec;
 }

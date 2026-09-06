@@ -11,6 +11,7 @@ import {
 } from '@ide/api/client';
 import { ChoicePopup, PickPopup, matches as pickMatches } from '@ide/ui';
 import type { PackageManagerInfo } from './managers.js';
+import type { Opener } from '@ide/plugin-search';
 import { NpmIcon } from './icon.js';
 import { STYLE } from './style.js';
 import { scriptId } from './script-id.js';
@@ -100,8 +101,11 @@ export default class NpmScripts {
       active: this.open,
     });
 
-    this.ide.open('npm', (found) => {
-      if (found.id) void this.run(found.id);
+    this.ide.registry<Opener>('search.opener').add({
+      kind: 'npm',
+      open: (found) => {
+        if (found.id) void this.run(found.id);
+      },
     });
 
     this.ide.surface(() => this.popup());

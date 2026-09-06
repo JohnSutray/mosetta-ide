@@ -4,6 +4,17 @@ import path from 'node:path';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
+interface Hit {
+  kind: string;
+  label: string;
+  path: string;
+  line?: number;
+  matches: number[];
+}
+function search(c: TestClient, params: { query: string; limit?: number; kinds?: string[] }): Promise<Hit[]> {
+  return c.call('plugins.call', { name: '@ide/plugin-search', method: 'search', params }) as Promise<Hit[]>;
+}
+
 describe('RAM FS', () => {
   let server: RunningServer;
   let root: string;
@@ -125,10 +136,10 @@ describe('RAM FS', () => {
   });
 
   it('индекс ищет по памяти', async () => {
-    const hits = await c.call('index.search', { query: 'helper' });
+    const hits = await search(c, { query: 'helper' });
     expect(hits[0]?.path).toBe('src/util/helper.ts');
 
-    const fuzzy = await c.call('index.search', { query: 'srmn' });
+    const fuzzy = await search(c, { query: 'srmn' });
     expect(fuzzy.map((h) => h.path)).toContain('src/main.ts');
   });
 });

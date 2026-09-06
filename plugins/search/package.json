@@ -7,10 +7,12 @@
     "test": "vitest run"
   },
   "exports": {
-    ".": "./src/client.tsx"
+    ".": "./src/client.tsx",
+    "./server": "./src/server.ts"
   },
   "ide": {
     "client": "src/client.tsx",
+    "server": "src/server.ts",
     "strings": "src/en.json",
     "commands": {
       "search.everywhere": "Найти всё",
@@ -24,7 +26,8 @@
     "@ide/api": "workspace:*",
     "@ide/code": "workspace:*",
     "@ide/protocol": "workspace:*",
-    "@ide/ui": "workspace:*"
+    "@ide/ui": "workspace:*",
+    "typescript": "^5.7.2"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

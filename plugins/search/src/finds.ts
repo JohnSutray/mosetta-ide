@@ -1,5 +1,4 @@
-import type { FindProvider } from '@ide/api/server';
-export type { FindProvider, Found } from '@ide/api/server';
+import type { FindProvider } from './types.js';
 
 export class FindProviders {
   private readonly list: FindProvider[] = [];

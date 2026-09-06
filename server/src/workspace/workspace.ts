@@ -6,7 +6,6 @@ import type { ConfigStore } from '../config/store.js';
 import { paths } from './paths.js';
 import { processes } from '../env/processes.js';
 import { Services } from './services.js';
-import type { FindProviders } from '../search/providers.js';
 
 export interface WorkspaceResource {
   dispose(): void | Promise<void>;
@@ -32,7 +31,6 @@ export class Workspace {
   constructor(
     root: string,
     private readonly config: ConfigStore,
-    private readonly finds: FindProviders,
   ) {
     this.root = root;
     this.name = path.basename(root) || root;
@@ -45,7 +43,7 @@ export class Workspace {
   }
 
   get services(): Services {
-    return this.use('services', (ws) => new Services(ws, this.config, this.log, this.finds));
+    return this.use('services', (ws) => new Services(ws, this.config, this.log));
   }
 
   async boot(): Promise<void> {

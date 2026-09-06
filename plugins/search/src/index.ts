@@ -1,18 +1,17 @@
-import {
-  CORE_KINDS,
-  type IndexHit,
-  type IndexKind,
-  type IndexSettings,
-  type SearchStats,
-} from '@ide/protocol';
-import type { Logger } from '../log.js';
-import { paths } from '../workspace/paths.js';
-import type { RamFs } from '../fs/ram-fs.js';
+import type { IndexSettings } from '@ide/protocol';
+import type { Logger, ProjectMemory } from '@ide/api/server';
 import { matcher } from './matcher.js';
 import { layout } from './layout.js';
 import { Vocabulary, textIndex, type Indexed } from './text.js';
-import type { FindProviders } from './providers.js';
+import type { FindProviders } from './finds.js';
 import { tsSymbols, type SymbolKind } from './ts-symbols.js';
+import { OWN_KINDS, type IndexHit, type IndexKind, type SearchStats } from './types.js';
+
+function extensionOf(key: string): string {
+  const name = key.slice(key.lastIndexOf('/') + 1);
+  const at = name.lastIndexOf('.');
+  return at <= 0 ? '' : name.slice(at + 1).toLowerCase();
+}
 
 interface Entry {
   kind: IndexKind;
@@ -51,8 +50,8 @@ export class SearchIndex {
   private readonly off: () => void;
 
   constructor(
-    private readonly ram: RamFs,
-    private settings: IndexSettings,
+    private readonly ram: ProjectMemory,
+    private readonly settingsOf: () => IndexSettings,
     private readonly log: Logger,
     private readonly providers: FindProviders,
   ) {
@@ -83,8 +82,8 @@ export class SearchIndex {
     });
   }
 
-  applySettings(settings: IndexSettings): void {
-    this.settings = settings;
+  private get settings(): IndexSettings {
+    return this.settingsOf();
   }
 
   dispose(): void {
@@ -189,7 +188,7 @@ export class SearchIndex {
   private enqueue(path: string): void {
     if (!this.settings.enabled) return;
     if (this.providers.wants(path)) this.staleTree = true;
-    if (!tsSymbols.canParse(paths.extensionOf(path))) return;
+    if (!tsSymbols.canParse(extensionOf(path))) return;
     this.pending.add(path);
     this.schedule();
   }
@@ -197,7 +196,7 @@ export class SearchIndex {
   indexSymbols(): Promise<void> {
     if (!this.settings.enabled) return Promise.resolve();
     for (const file of this.ram.files()) {
-      if (tsSymbols.canParse(paths.extensionOf(file.path)) && this.ram.docSync(file.path)) {
+      if (tsSymbols.canParse(extensionOf(file.path)) && this.ram.docSync(file.path)) {
         this.pending.add(file.path);
       }
     }
@@ -225,7 +224,7 @@ export class SearchIndex {
         continue;
       }
       try {
-        const found = tsSymbols.parse(api, path, doc.text, paths.extensionOf(path));
+        const found = tsSymbols.parse(api, path, doc.text, extensionOf(path));
         this.symbols.set(
           path,
           found.map((symbol) => {
@@ -294,8 +293,8 @@ export class SearchIndex {
   }
 
   private knows(kind: string): boolean {
-    const core: readonly string[] = CORE_KINDS;
-    return core.includes(kind) || this.providers.kinds().includes(kind);
+    const own: readonly string[] = OWN_KINDS;
+    return own.includes(kind) || this.providers.kinds().includes(kind);
   }
 
   private *everything(): Generator<Entry> {

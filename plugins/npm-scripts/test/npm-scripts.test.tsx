@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
 import NpmScripts, { type ScriptInfo } from '../src/client.js';
 import TerminalPlugin from '@ide/plugin-terminal';
+import type { Opener } from '@ide/plugin-search';
 
 const NAME = '@ide/plugin-npm-scripts';
 
@@ -83,15 +84,15 @@ describe('скрипты', () => {
   });
 
   it('находку своего сорта открывает сам', async () => {
-    const opener = host.ide(NAME).openers.get('npm');
+    const opener = host.registry.all<Opener>('search.opener').find((one) => one.kind === 'npm');
     expect(opener).toBeDefined();
-    opener!({ path: 'package.json', id: 'ui::dev' });
+    opener!.open({ path: 'package.json', id: 'ui::dev' });
     await tick();
     expect(host.ide(NAME).calls).toContainEqual({ method: 'run', params: { id: 'ui::dev' } });
   });
 
   it('находка без id ничего не запускает', () => {
-    host.ide(NAME).openers.get('npm')!({ path: 'package.json' });
+    host.registry.all<Opener>('search.opener').find((one) => one.kind === 'npm')!.open({ path: 'package.json' });
     expect(host.ide(NAME).calls).toEqual([]);
   });
 

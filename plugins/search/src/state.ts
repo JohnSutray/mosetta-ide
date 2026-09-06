@@ -1,8 +1,18 @@
-import { goTo, openerFor, peekFile, searchIndex } from '@ide/api/client';
+import { goTo, peekFile } from '@ide/api/client';
+import type { RegistryHandle } from '@ide/api/client';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
-import type { IndexHit, IndexKind } from '@ide/protocol';
+import type { IndexHit, IndexKind, Opener } from './types.js';
+
+export interface SearchRemote {
+  find(query: string, limit?: number, kinds?: IndexKind[]): Promise<IndexHit[]>;
+}
 
 export class Search {
+  constructor(
+    private readonly remote: SearchRemote,
+    private readonly openers: RegistryHandle<Opener>,
+  ) {}
+
   readonly open = signal(false);
   readonly query = signal('');
   readonly hits = signal<IndexHit[]>([]);
@@ -79,9 +89,9 @@ export class Search {
     if (!hit) return;
     this.close();
 
-    const opener = openerFor(hit.kind);
+    const opener = this.openers.all.value.find((one) => one.kind === hit.kind);
     if (opener) {
-      opener(hit);
+      opener.open(hit);
       return;
     }
 
@@ -99,7 +109,7 @@ export class Search {
       return;
     }
     try {
-      const hits = await searchIndex(value, this.limit);
+      const hits = await this.remote.find(value, this.limit);
       if (token !== this.token) return;
       batch(() => {
         this.hits.value = this.groupByKind(hits);

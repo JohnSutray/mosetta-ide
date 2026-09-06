@@ -3,13 +3,11 @@ import type {
   DirEntry,
   DocState,
   EntryKind,
-  IndexHit,
   KeyBinding,
   KeyContext,
   KeyHost,
   KeyOs,
   KeyScope,
-  IndexKind,
   MergeSession,
   Settings,
   WorkspaceInfo,
@@ -138,10 +136,6 @@ export interface HunkBox {
 
 export declare function peekFile(path: string): Promise<{ path: string; text: string }>;
 
-export declare function searchIndex(query: string, limit?: number, kinds?: IndexKind[]): Promise<IndexHit[]>;
-
-export declare function openerFor(kind: string): ((found: Found) => void) | undefined;
-
 export declare function takeFocusOnMount(): boolean;
 
 export declare const wantsFocus: { readonly value: number };
@@ -176,8 +170,6 @@ export interface ClientSurface {
   externalEpoch: typeof externalEpoch;
   pendingReveal: typeof pendingReveal;
   peekFile: typeof peekFile;
-  searchIndex: typeof searchIndex;
-  openerFor: typeof openerFor;
   takeFocusOnMount: typeof takeFocusOnMount;
   wantsFocus: typeof wantsFocus;
   chordHeld: typeof chordHeld;
@@ -191,11 +183,6 @@ export interface PluginToolbarEntry {
   active?: { readonly value: boolean };
 }
 
-export interface Found {
-  path: string;
-  id?: string;
-}
-
 export interface Ide {
   readonly name: string;
   readonly rpc: { call(method: string, params?: unknown): Promise<unknown> };
@@ -207,7 +194,6 @@ export interface Ide {
   on(event: string, handler: (payload: unknown) => void): () => void;
 
   surface(view: () => unknown): void;
-  open(kind: string, handler: (found: Found) => void): void;
   say(message: string): void;
   complain(message: string): void;
   working(text: string): (done: string, failed?: boolean) => void;

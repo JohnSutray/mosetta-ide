@@ -37,6 +37,7 @@ class FakeProject implements Project {
     files: () => [],
     docSync: () => null,
     peekDoc: async (path) => ({ path, text: '', version: 0, openCount: 0 }),
+    isTextual: () => false,
   };
 
   hold(reason: string): () => void {

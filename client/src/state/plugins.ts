@@ -12,7 +12,6 @@ import {
   remote,
   stub,
   type ClientSurface,
-  type Found,
   type Ide,
   type PluginClass,
   type RegistryHandle,
@@ -34,13 +33,7 @@ export class Plugins {
   readonly list = signal<PluginInfo[]>([]);
   readonly surfaces = signal<Array<() => unknown>>([]);
 
-  private readonly openers = new Map<string, (found: Found) => void>();
-
   private readonly instances = new Map<unknown, unknown>();
-
-  opener(kind: string) {
-    return this.openers.get(kind);
-  }
 
   private expose(surface: ClientSurface): void {
     (globalThis as Record<string, unknown>).__ideApi = {
@@ -150,9 +143,6 @@ export class Plugins {
         tag.dataset.plugin = name;
         tag.textContent = text;
         document.head.append(tag);
-      },
-      open: (kind: string, handler: (found: Found) => void) => {
-        this.openers.set(kind, handler);
       },
       on: (event: string, handler: (payload: unknown) => void) =>
         this.rpc.on('plugins.event', (frame) => {

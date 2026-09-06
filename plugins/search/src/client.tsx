@@ -1,14 +1,32 @@
-import { activate } from '@ide/api/client';
+import { activate, registry, remote, stub } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { SearchIcon } from './icons.js';
 import { SearchEverywhere } from './popup.js';
-import { Search } from './state.js';
+import { Search, type SearchRemote } from './state.js';
 import { STYLE } from './style.js';
+import { OPENER_SCHEMA, type IndexHit, type IndexKind, type Opener } from './types.js';
 
-export default class SearchPlugin {
-  readonly search = new Search();
+export type { Found, IndexHit, IndexKind, Opener, SearchStats } from './types.js';
 
-  constructor(private readonly ide: Ide) {}
+@registry({ key: 'search.opener', schema: OPENER_SCHEMA })
+export default class SearchPlugin implements SearchRemote {
+  readonly search: Search;
+
+  constructor(private readonly ide: Ide) {
+    this.search = new Search(this, ide.registry<Opener>('search.opener'));
+  }
+
+  find(query: string, limit?: number, kinds?: IndexKind[]): Promise<IndexHit[]> {
+    return this.askSearch({ query, limit, kinds });
+  }
+
+  @remote('search') protected askSearch(_params: {
+    query: string;
+    limit?: number;
+    kinds?: IndexKind[];
+  }): Promise<IndexHit[]> {
+    return stub();
+  }
 
   @activate() protected start(): void {
     this.ide.css(STYLE);

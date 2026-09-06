@@ -1,7 +1,27 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { IndexHit } from '@ide/protocol';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
+
+interface Hit {
+  kind: string;
+  label: string;
+  path: string;
+  line?: number;
+  matches: number[];
+}
+interface Stats {
+  files: number;
+  provided: number;
+  symbols: number;
+  vocabulary: number;
+  pending: number;
+}
+function search(c: TestClient, params: { query: string; limit?: number; kinds?: string[] }): Promise<Hit[]> {
+  return c.call('plugins.call', { name: '@ide/plugin-search', method: 'search', params }) as Promise<Hit[]>;
+}
+function indexStats(c: TestClient): Promise<Stats> {
+  return c.call('plugins.call', { name: '@ide/plugin-search', method: 'stats', params: null }) as Promise<Stats>;
+}
 
 describe('поиск всего', () => {
   let server: RunningServer;
@@ -54,7 +74,7 @@ describe('поиск всего', () => {
   });
 
   it('видит все три сорта', async () => {
-    const stats = await c.call('index.stats', null);
+    const stats = await indexStats(c);
     expect(stats.files).toBeGreaterThan(0);
     expect(stats.provided).toBe(3);
     expect(stats.symbols).toBeGreaterThan(8);
@@ -62,17 +82,17 @@ describe('поиск всего', () => {
   });
 
   it('находит npm-скрипт монорепы по имени пакета и скрипта', async () => {
-    const hits = await c.call('index.search', { query: '@distrojs/core::dev' });
+    const hits = await search(c, { query: '@distrojs/core::dev' });
     expect(labels(hits)[0]).toBe('npm::@distrojs/core::dev');
   });
 
   it('::dev вытаскивает скрипт, а не переменную с теми же буквами', async () => {
-    const hits = await c.call('index.search', { query: '::dev' });
+    const hits = await search(c, { query: '::dev' });
     expect(labels(hits)[0]).toBe('npm::@distrojs/core::dev');
   });
 
   it('npm:: без хвоста показывает все скрипты', async () => {
-    const hits = await c.call('index.search', { query: 'npm::' });
+    const hits = await search(c, { query: 'npm::' });
     expect(labels(hits).sort()).toEqual([
       'npm::@distrojs/core::dev',
       'npm::@distrojs/core::test',
@@ -81,7 +101,7 @@ describe('поиск всего', () => {
   });
 
   it('разбирает функции, классы, методы, енумы, типы и стрелки', async () => {
-    const all = await c.call('index.search', { query: 'ts::', limit: 200 });
+    const all = await search(c, { query: 'ts::', limit: 200 });
     const found = labels(all);
     expect(found).toContain('ts::DesktopCreditCardForm()');
     expect(found).toContain('ts::MY_VARIABLE');
@@ -95,35 +115,35 @@ describe('поиск всего', () => {
   });
 
   it('dccf ловит и символ, и файл, и метод', async () => {
-    const found = labels(await c.call('index.search', { query: 'dccf' }));
+    const found = labels(await search(c, { query: 'dccf' }));
     expect(found).toContain('ts::DesktopCreditCardForm()');
     expect(found).toContain('packages/core/src/desktop/creditCardForm.ts');
     expect(found).toContain('ts::Desktop.creditCardForm()');
   });
 
   it('русская раскладка находит то же, что английская', async () => {
-    const wrong = labels(await c.call('index.search', { query: 'всса' }));
+    const wrong = labels(await search(c, { query: 'всса' }));
     expect(wrong).toContain('ts::DesktopCreditCardForm()');
 
-    const narrowed = await c.call('index.search', { query: 'ts::всса' });
+    const narrowed = await search(c, { query: 'ts::всса' });
     expect(narrowed.every((h) => h.kind === 'ts')).toBe(true);
     expect(labels(narrowed)[0]).toBe('ts::DesktopCreditCardForm()');
   });
 
   it('ts::dccf сужает до символов', async () => {
-    const hits = await c.call('index.search', { query: 'ts::dccf' });
+    const hits = await search(c, { query: 'ts::dccf' });
     expect(hits.every((h) => h.kind === 'ts')).toBe(true);
     expect(labels(hits)[0]).toBe('ts::DesktopCreditCardForm()');
   });
 
   it('символ знает, где он лежит', async () => {
-    const hit = (await c.call('index.search', { query: 'ts::EMyRoleEnum.role' }))[0]!;
+    const hit = (await search(c, { query: 'ts::EMyRoleEnum.role' }))[0]!;
     expect(hit.path).toBe('packages/core/src/desktop/creditCardForm.ts');
     expect(hit.line).toBe(12);
   });
 
   it('подсветка указывает на настоящие буквы', async () => {
-    const hit = (await c.call('index.search', { query: 'dccf', kinds: ['ts'] }))[0]!;
+    const hit = (await search(c, { query: 'dccf', kinds: ['ts'] }))[0]!;
     expect(hit.matches.map((i) => hit.label[i])).toEqual(['D', 'C', 'C', 'F']);
   });
 
@@ -138,19 +158,19 @@ describe('поиск всего', () => {
     await c.call('doc.save', { path });
     await waitForSymbols(c);
 
-    const found = labels(await c.call('index.search', { query: 'свежая' }));
+    const found = labels(await search(c, { query: 'свежая' }));
     expect(found).toContain('ts::свежаяФункция()');
   });
 });
 
-function labels(hits: IndexHit[]): string[] {
+function labels(hits: Hit[]): string[] {
   return hits.map((h) => h.label);
 }
 
 async function waitForSymbols(client: TestClient, timeoutMs = 20_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    const stats = await client.call('index.stats', null);
+    const stats = await indexStats(client);
     if (stats.pending === 0 && stats.symbols > 0) return;
     if (Date.now() > deadline) throw new Error('символы так и не разобрались');
     await new Promise((r) => setTimeout(r, 50));
