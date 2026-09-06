@@ -1,4 +1,5 @@
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SharedModules } from './plugins/shared.js';
@@ -7,9 +8,7 @@ import { FindProviders, type FindProvider } from './search/providers.js';
 import { WebSocketServer } from 'ws';
 import { DEFAULT_PORT, WS_PATH } from '@ide/protocol';
 import { ConfigStore } from './config/store.js';
-import { recent } from './env/recent.js';
-import { tools } from './env/tools.js';
-import { shells } from './env/shell.js';
+import { which } from './env/which.js';
 import { shellEnv } from './env/shell-env.js';
 import { processes } from './env/processes.js';
 import { journal } from './log.js';
@@ -51,38 +50,19 @@ export class Boot {
     const host = options.host ?? '127.0.0.1';
     const port = options.port ?? DEFAULT_PORT;
     const startedAt = Date.now();
-    const stateDir = options.stateDir ?? recent.defaultStateDir;
+    const stateDir = options.stateDir ?? path.join(os.homedir(), '.web-ide');
     const config = await ConfigStore.load(options.configDir);
     if (options.watchConfig ?? true) config.watch();
 
     if (options.shellEnv ?? true) {
-      const harvest = () =>
-        void shellEnv.prime(
-          (spec) => processes.run(spec),
-          shells.loginShell(config.settings.terminal),
-          shells.homeDirectory(),
-        );
-      harvest();
-      config.onChange(() => {
-        shellEnv.forget();
-        harvest();
-      });
+      void shellEnv.prime((spec) => processes.run(spec), shellEnv.loginShell(), os.homedir());
     }
     const here = fileURLToPath(new URL('..', import.meta.url));
     const shared = new SharedModules(here, path.resolve(here, '../client'));
     const plugins = new PluginHost(log, stateDir, shared, {
-      shell: () => {
-        const chosen = shells.loginShell(config.settings.terminal);
-        return {
-          file: chosen.file,
-          args: chosen.args,
-          env: shellEnv.current ?? {},
-          ...(chosen.problem ? { problem: chosen.problem } : {}),
-        };
-      },
-      shells: () => shells.detect(shells.loginShell(config.settings.terminal).file),
-      packageManagers: (ws) =>
-        tools.detect(ws.services.suggestedManager(), config.settings.tools.packageManager, ws.root),
+      settings: () => config.settings,
+      environment: () => shellEnv.current ?? {},
+      which: (name) => which.onPath(name),
     });
     await plugins.load(config.settings.plugins.enabled);
 
@@ -114,7 +94,7 @@ export class Boot {
         return;
       }
       wss.handleUpgrade(req, socket, head, (ws) => {
-        const session = new Session(ws, registry, config, stateDir, startedAt, plugins);
+        const session = new Session(ws, registry, config, startedAt, plugins);
         log.debug(`подключилась вкладка ${session.id}`);
       });
     });

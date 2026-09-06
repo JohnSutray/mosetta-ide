@@ -47,6 +47,11 @@ export class ShellEnv {
     this.harvested = null;
   }
 
+  loginShell(): Asked {
+    const file = process.env.SHELL ?? (process.platform === 'darwin' ? '/bin/zsh' : '/bin/bash');
+    return { file, args: ['-l', '-i'] };
+  }
+
   private async harvest(run: Harvester, shell: Asked, home: string): Promise<void> {
     if (process.platform === 'win32') return;
 

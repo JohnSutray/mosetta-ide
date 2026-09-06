@@ -1,5 +1,4 @@
 import type { Handler } from '../rpc/context.js';
-import { reveal } from '../env/reveal.js';
 import { RpcError } from '../errors.js';
 
 function pathOf(params: { path?: unknown } | null): string {
@@ -56,13 +55,6 @@ export class FsMethods {
       throw RpcError.invalidParams('нужны path и base64');
     }
     return ctx.session.requireWorkspace().services.os.writeBytes(params.path, params.base64);
-  };
-
-  readonly reveal: Handler<'fs.reveal'> = async (params, ctx) => {
-    if (!params || typeof params.path !== 'string') throw RpcError.invalidParams('нужен path');
-    const ws = ctx.session.requireWorkspace();
-    await reveal.inFileManager(ws.resolve(params.path));
-    return null;
   };
 
   readonly absolute: Handler<'fs.absolute'> = (params, ctx) => {

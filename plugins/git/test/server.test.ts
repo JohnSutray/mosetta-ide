@@ -81,9 +81,11 @@ function fakeIde(): Ide {
       throw new Error('соседей в этом тесте нет');
     },
     find: () => undefined,
-    shell: () => ({ file: '/bin/sh', args: [], env: {} }),
-    shells: () => [],
-    packageManagers: () => [],
+    settings: () => {
+      throw new Error('настроек в этом тесте нет');
+    },
+    environment: () => ({}),
+    which: () => null,
     state: '',
     run: (ask) => running(ask),
     stream: (ask, onChunk) => running(ask, onChunk),

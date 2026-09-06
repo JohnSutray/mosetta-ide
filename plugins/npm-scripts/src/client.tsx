@@ -10,7 +10,7 @@ import {
   type Ide,
 } from '@ide/api/client';
 import { ChoicePopup, PickPopup, matches as pickMatches } from '@ide/ui';
-import type { PackageManagerInfo } from '@ide/protocol';
+import type { PackageManagerInfo } from './managers.js';
 import { NpmIcon } from './icon.js';
 import { STYLE } from './style.js';
 import { scriptId } from './script-id.js';

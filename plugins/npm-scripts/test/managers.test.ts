@@ -2,9 +2,11 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { tools } from '../src/env/tools.js';
+import { PackageManagers } from '../src/managers.js';
 
 let root: string;
+const onPath = new Set(['pnpm', 'npm']);
+const tools = new PackageManagers((name) => (onPath.has(name) ? `/usr/bin/${name}` : null));
 
 beforeAll(async () => {
   root = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-tools-'));
@@ -17,10 +19,12 @@ afterAll(async () => {
 
 describe('чем запускать скрипты', () => {
   it('локфайл решает, когда человек не выбрал', () => {
-    expect(tools.packageManager((file) => file === 'pnpm-lock.yaml')).toBe('pnpm');
-    expect(tools.packageManager((file) => file === 'yarn.lock')).toBe('yarn');
-    expect(tools.packageManager((file) => file === 'bun.lockb')).toBe('bun');
-    expect(tools.packageManager(() => false)).toBe('npm');
+    expect(tools.suggested((file) => file === 'pnpm-lock.yaml')).toBe('pnpm');
+    expect(tools.suggested((file) => file === 'yarn.lock')).toBe('yarn');
+    expect(tools.suggested((file) => file === 'bun.lockb')).toBe('bun');
+    expect(tools.suggested(() => false)).toBe('npm');
+    expect(tools.chosen('pnpm', '')).toBe('pnpm');
+    expect(tools.chosen('pnpm', ' yarn ')).toBe('yarn');
   });
 
   it('выбор человека сильнее локфайла', () => {

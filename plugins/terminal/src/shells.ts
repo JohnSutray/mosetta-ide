@@ -1,13 +1,10 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import type { ShellInfo, TerminalSettings } from '@ide/protocol';
-import { tools } from './tools.js';
+import type { ShellChoice, ShellInfo } from './types.js';
 
-export interface ShellChoice {
-  file: string;
-  args: string[];
-  problem?: string;
+export interface ShellSettings {
+  shell?: string;
+  args?: string[];
 }
 
 function sameFile(a: string, b: string): boolean {
@@ -59,9 +56,11 @@ function windowsCandidates(): string[] {
 }
 
 export class Shells {
+  constructor(private readonly which: (name: string) => string | null) {}
+
   ref(file: string): string {
     const bare = path.basename(file).replace(/\.exe$/i, '');
-    const found = tools.onPath(bare);
+    const found = this.which(bare);
     return found && sameFile(found, file) ? bare : file;
   }
 
@@ -71,10 +70,10 @@ export class Shells {
     if (wanted.includes('/') || wanted.includes('\\')) {
       return this.exists(wanted) ? wanted : null;
     }
-    return tools.onPath(wanted);
+    return this.which(wanted);
   }
 
-  loginShell(chosen?: Partial<TerminalSettings>): ShellChoice {
+  loginShell(chosen?: ShellSettings): Omit<ShellChoice, 'env'> {
     const picked = chosen?.shell?.trim();
     if (picked) {
       const file = this.resolveShell(picked);
@@ -88,7 +87,7 @@ export class Shells {
     return this.systemShell();
   }
 
-  private systemShell(): ShellChoice {
+  private systemShell(): Omit<ShellChoice, 'env'> {
     if (process.platform === 'win32') {
       return { file: process.env.COMSPEC ?? 'powershell.exe', args: [] };
     }
@@ -110,11 +109,7 @@ export class Shells {
       if (full === '') return;
       const key = process.platform === 'win32' ? full.toLowerCase() : full;
       if (seen.has(key)) return;
-      try {
-        if (!fs.statSync(full).isFile()) return;
-      } catch {
-        return;
-      }
+      if (!this.exists(full)) return;
       seen.set(key, {
         path: full,
         name: path.basename(full),
@@ -135,24 +130,4 @@ export class Shells {
       return false;
     }
   }
-
-  terminalEnv(extra: Record<string, string> = {}): Record<string, string> {
-    const env: Record<string, string> = {};
-    for (const [key, value] of Object.entries(process.env)) {
-      if (typeof value === 'string') env[key] = value;
-    }
-    return {
-      ...env,
-      TERM: 'xterm-256color',
-      COLORTERM: 'truecolor',
-      FORCE_COLOR: '1',
-      ...extra,
-    };
-  }
-
-  homeDirectory(): string {
-    return os.homedir();
-  }
 }
-
-export const shells = new Shells();

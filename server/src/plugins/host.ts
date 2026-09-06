@@ -14,12 +14,9 @@ import {
   type FindProvider,
   type Ide,
   type PluginClass,
-  type ShellChoice,
 } from '@ide/api/server';
 export { type CallContext } from '@ide/api/server';
-import { workspaceOf } from './project.js';
-import type { Workspace } from '../workspace/workspace.js';
-import type { PackageManagerInfo, ShellInfo } from '@ide/protocol';
+import type { Settings } from '@ide/protocol';
 import type { Logger } from '../log.js';
 import { processes } from '../env/processes.js';
 
@@ -32,9 +29,9 @@ interface Loaded {
 }
 
 export interface Machine {
-  shell(): ShellChoice;
-  shells(): ShellInfo[];
-  packageManagers(ws: Workspace): PackageManagerInfo[];
+  settings(): Settings;
+  environment(): Record<string, string>;
+  which(name: string): string | null;
 }
 
 export class PluginHost {
@@ -50,9 +47,11 @@ export class PluginHost {
     private readonly stateDir: string,
     private readonly shared: SharedModules,
     private readonly machine: Machine = {
-      shell: () => ({ file: '', args: [], env: {} }),
-      shells: () => [],
-      packageManagers: () => [],
+      settings: () => {
+        throw new Error('настройки этому дому плагинов не дали');
+      },
+      environment: () => ({}),
+      which: () => null,
     },
   ) {
     this.build = new PluginBuild(shared);
@@ -217,13 +216,9 @@ export class PluginHost {
           return found as T;
         },
         find: (provider) => this.providers.push(provider),
-        shell: () => this.machine.shell(),
-        shells: () => this.machine.shells(),
-        packageManagers: (project) => {
-          const ws = workspaceOf.get(project);
-          if (!ws) throw new Error('проект не из этого сервера');
-          return this.machine.packageManagers(ws);
-        },
+        settings: () => this.machine.settings(),
+        environment: () => this.machine.environment(),
+        which: (name) => this.machine.which(name),
         run: (ask) => processes.run({ ...ask, reason: `${name}: ${ask.reason}` }),
         stream: (ask, onChunk) =>
           processes.stream({ ...ask, reason: `${name}: ${ask.reason}` }, onChunk),

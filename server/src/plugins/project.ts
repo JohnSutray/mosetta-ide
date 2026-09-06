@@ -2,15 +2,11 @@ import type { Project, ProjectResource } from '@ide/api/server';
 import { processes } from '../env/processes.js';
 import type { Workspace } from '../workspace/workspace.js';
 
-export const workspaceOf = new WeakMap<Project, Workspace>();
-
 export class PluginProject implements Project {
   constructor(
     private readonly ws: Workspace,
     private readonly plugin: string,
-  ) {
-    workspaceOf.set(this, ws);
-  }
+  ) {}
 
   get root(): string {
     return this.ws.root;

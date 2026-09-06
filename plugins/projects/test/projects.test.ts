@@ -7,9 +7,16 @@ function ws(id: string, root: string): WorkspaceInfo {
   return { id, root, name: root.slice(root.lastIndexOf('/') + 1), sessions: 1, held: [], openedAt: 0 };
 }
 
+const NAME = '@ide/plugin-projects';
+
 async function raise() {
   const host = new FakeHost();
-  const plugin = host.add(ProjectsPlugin, '@ide/plugin-projects');
+  const plugin = host.add(ProjectsPlugin, NAME);
+  const ide = host.ide(NAME);
+  ide.answers.set('roots', () => []);
+  ide.answers.set('recent', () => []);
+  ide.answers.set('browse', () => []);
+  ide.answers.set('remember', () => null);
   await host.start();
   return { host, projects: plugin.projects };
 }
@@ -54,10 +61,14 @@ describe('открывашка', () => {
 
   it('подсказки ходят по кругу через «ничего не выбрано»', async () => {
     const { host, projects } = await raise();
-    host.surface.browsed.set('/home/me/', [
-      { path: '/home/me/a', name: 'a' },
-      { path: '/home/me/b', name: 'b' },
-    ]);
+    host.ide(NAME).answers.set('browse', (params) =>
+      (params as { prefix: string }).prefix === '/home/me/'
+        ? [
+            { path: '/home/me/a', name: 'a' },
+            { path: '/home/me/b', name: 'b' },
+          ]
+        : [],
+    );
     projects.setDraft('/home/me/');
     projects.openSuggest();
     await new Promise((r) => setTimeout(r, 0));

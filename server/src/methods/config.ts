@@ -1,16 +1,17 @@
 import { RpcError } from '../errors.js';
-import { shells } from '../env/shell.js';
+import { defaults } from '../config/defaults.js';
 import type { Handler } from '../rpc/context.js';
 
-const WRITABLE: Record<string, (value: string | boolean) => string | null> = {
-  'terminal.shell': (value) =>
-    value === '' || (typeof value === 'string' && shells.resolveShell(value) !== null)
-      ? null
-      : `не нашёл такую оболочку: ${String(value)}`,
-  'tools.packageManager': () => null,
-  'tree.followEditor': (value) =>
-    typeof value === 'boolean' ? null : 'здесь ждут true или false',
-};
+function complaintFor(section: string, key: string, value: string | boolean): string | null {
+  const table = defaults.settings as unknown as Record<string, Record<string, unknown> | undefined>;
+  const known = table[section]?.[key];
+  if (known === undefined) return `такой настройки нет: ${section}.${key}`;
+  if (typeof known !== 'string' && typeof known !== 'boolean') {
+    return `${section}.${key} правят руками: это не строка и не флаг`;
+  }
+  if (typeof known !== typeof value) return `${section}.${key} ждёт ${typeof known}`;
+  return null;
+}
 
 export class ConfigMethods {
   readonly get: Handler<'config.get'> = (_params, ctx) => ctx.config.current;
@@ -24,12 +25,8 @@ export class ConfigMethods {
     ) {
       throw RpcError.invalidParams('нужны section, key и value: string либо boolean');
     }
-    const full = `${params.section}.${params.key}`;
-    const check = WRITABLE[full];
-    if (!check) throw RpcError.invalidParams(`эту настройку правят руками: ${full}`);
-
     const value = typeof params.value === 'string' ? params.value.trim() : params.value;
-    const complaint = check(value);
+    const complaint = complaintFor(params.section, params.key, value);
     if (complaint) throw RpcError.invalidParams(complaint);
 
     await ctx.config.set(params.section, params.key, value);

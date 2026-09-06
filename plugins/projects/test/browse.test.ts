@@ -2,10 +2,11 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { browse } from '../src/env/browse.js';
+import { Browse } from '../src/browse.js';
 
 let home: string;
 const COUNT = 40;
+const browse = new Browse();
 
 beforeAll(async () => {
   home = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-browse-'));

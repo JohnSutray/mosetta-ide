@@ -28,7 +28,6 @@ export class Session implements SessionContext {
     private readonly socket: WebSocket,
     private readonly registry: WorkspaceRegistry,
     private readonly config: ConfigStore,
-    private readonly stateDir: string,
     private readonly startedAt: number,
     private readonly plugins: PluginHost,
   ) {
@@ -123,7 +122,6 @@ export class Session implements SessionContext {
       session: this,
       registry: this.registry,
       config: this.config,
-      stateDir: this.stateDir,
       plugins: this.plugins,
       startedAt: this.startedAt,
     };

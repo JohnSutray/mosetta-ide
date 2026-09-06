@@ -10,10 +10,7 @@ const MAY_TOUCH_DISK = [
   'fs/watcher.ts',
   'config/store.ts',
   'env/toolchain.ts',
-  'env/browse.ts',
-  'env/recent.ts',
-  'env/shell.ts',
-  'env/tools.ts',
+  'env/which.ts',
   'plugins/host.ts',
   'plugins/shared.ts',
 ];

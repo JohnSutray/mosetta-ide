@@ -1,20 +1,28 @@
-import type { ShellInfo } from '@ide/protocol';
 import { command, type CallContext, type Ide } from '@ide/api/server';
 import { TerminalHost } from './host.js';
-import type { Attached, OpenAsk, TerminalInfo } from './types.js';
+import { Shells } from './shells.js';
+import type { Attached, OpenAsk, ShellChoice, ShellInfo, TerminalInfo } from './types.js';
 
 export default class TerminalServer {
-  constructor(private readonly ide: Ide) {}
+  private readonly shells: Shells;
+
+  constructor(private readonly ide: Ide) {
+    this.shells = new Shells((name) => ide.which(name));
+  }
+
+  private shell(): ShellChoice {
+    return { ...this.shells.loginShell(this.ide.settings().terminal), env: this.ide.environment() };
+  }
 
   private host(call: CallContext): TerminalHost {
     return call.project.use(
       'host',
-      () => new TerminalHost(call.project, this.ide.log, () => this.ide.shell()),
+      () => new TerminalHost(call.project, this.ide.log, () => this.shell()),
     );
   }
 
-  @command() protected shells(): ShellInfo[] {
-    return this.ide.shells();
+  @command('shells') protected detectShells(): ShellInfo[] {
+    return this.shells.detect(this.shell().file);
   }
 
   @command() protected list(_params: unknown, call: CallContext): TerminalInfo[] {

@@ -1,8 +1,9 @@
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { shells } from '../src/env/shell.js';
+import { Shells } from '../src/shells.js';
 
 const WIN = process.platform === 'win32';
 const EXT = WIN ? '.cmd' : '';
@@ -10,6 +11,20 @@ const EXT = WIN ? '.cmd' : '';
 let dir: string;
 let shell: string;
 let hidden: string;
+
+function which(name: string): string | null {
+  for (const at of (process.env.PATH ?? '').split(path.delimiter)) {
+    for (const suffix of WIN ? ['', '.cmd', '.exe'] : ['']) {
+      const full = path.join(at, name + suffix);
+      try {
+        if (fsSync.statSync(full).isFile()) return full;
+      } catch {}
+    }
+  }
+  return null;
+}
+
+const shells = new Shells(which);
 let savedPath: string | undefined;
 
 beforeAll(async () => {

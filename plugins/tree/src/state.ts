@@ -197,6 +197,7 @@ export class TreeOps {
     private readonly prompt: Prompt,
     private readonly files: FileTree,
     private readonly ide: Ide,
+    private readonly reveal: (path: string) => Promise<void>,
   ) {}
 
   create(at: string, isDir: boolean, kind: EntryKind): void {
@@ -280,7 +281,7 @@ export class TreeOps {
 
   async revealInOs(path: string): Promise<void> {
     try {
-      await fs.reveal(path);
+      await this.reveal(path);
     } catch (err) {
       this.ide.complain(describe(err));
     }

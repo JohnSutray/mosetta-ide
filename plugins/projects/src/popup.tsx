@@ -1,6 +1,6 @@
 import { t, workspaces } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import type { DirSuggestion } from '@ide/protocol';
+import type { DirSuggestion } from './types.js';
 import { Chevron, DirIcon, Icon, Popup } from '@ide/ui';
 import type { Projects } from './state.js';
 

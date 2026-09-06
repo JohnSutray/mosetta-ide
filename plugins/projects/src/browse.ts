@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import type { DirSuggestion } from '@ide/protocol';
+import type { DirSuggestion } from './types.js';
 
 const PREFETCH = 24;
 
@@ -26,8 +26,6 @@ function split(value: string): { dir: string; partial: string } {
 }
 
 export class Browse {
-  readonly suggestLimit = 24;
-
   async roots(): Promise<DirSuggestion[]> {
     const home = os.homedir();
     const [homeKids, diskKids] = await Promise.all([
@@ -40,15 +38,9 @@ export class Browse {
     ];
   }
 
-  async suggestDirectories(
-    prefix: string,
-    limit = ALL,
-    depth = 1,
-  ): Promise<DirSuggestion[]> {
+  async suggestDirectories(prefix: string, limit = ALL, depth = 1): Promise<DirSuggestion[]> {
     const raw = this.expandHome(prefix.trim());
-    const { dir, partial } = await resolve(
-      split(raw === '' ? `${os.homedir()}${path.sep}` : raw),
-    );
+    const { dir, partial } = await resolve(split(raw === '' ? `${os.homedir()}${path.sep}` : raw));
 
     let entries;
     try {
@@ -87,5 +79,3 @@ export class Browse {
     return value;
   }
 }
-
-export const browse = new Browse();

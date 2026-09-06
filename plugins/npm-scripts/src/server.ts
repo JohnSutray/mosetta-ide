@@ -1,5 +1,7 @@
-import { activate, command, type CallContext, type Ide } from '@ide/api/server';
-import type { IndexHit, PackageManagerInfo } from '@ide/protocol';
+import fs from 'node:fs';
+import { activate, command, type CallContext, type Ide, type Project } from '@ide/api/server';
+import type { IndexHit } from '@ide/protocol';
+import { PackageManagers, type PackageManagerInfo } from './managers.js';
 import { ScriptsInPackageJson } from './scripts.js';
 import { scriptId } from './script-id.js';
 
@@ -23,18 +25,39 @@ interface Services {
     byKind(kind: string): IndexHit[];
     oneOf(kind: string, id: string): IndexHit | undefined;
   };
-  packageManager(): string;
 }
 
 export default class NpmScriptsServer {
-  constructor(private readonly ide: Ide) {}
+  private readonly managers: PackageManagers;
+
+  constructor(private readonly ide: Ide) {
+    this.managers = new PackageManagers((name) => ide.which(name));
+  }
+
+  private suggested(project: Project): string {
+    return this.managers.suggested((file) => {
+      try {
+        return fs.statSync(project.resolve(file)).isFile();
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  private manager(project: Project): string {
+    return this.managers.chosen(this.suggested(project), this.ide.settings().tools.packageManager);
+  }
 
   @activate() protected start(): void {
     this.ide.find(new ScriptsInPackageJson());
   }
 
-  @command() protected managers(_params: unknown, call: CallContext): PackageManagerInfo[] {
-    return this.ide.packageManagers(call.project);
+  @command('managers') protected listManagers(_params: unknown, call: CallContext): PackageManagerInfo[] {
+    return this.managers.detect(
+      this.suggested(call.project),
+      this.ide.settings().tools.packageManager,
+      call.project.root,
+    );
   }
 
   @command() protected list(_params: unknown, call: CallContext): ScriptInfo[] {
@@ -53,7 +76,7 @@ export default class NpmScriptsServer {
 
     return {
       name: script.id,
-      command: `${services(call).packageManager()} run ${script.script}`,
+      command: `${this.manager(call.project)} run ${script.script}`,
       cwd: parentOf(script.path),
     };
   }

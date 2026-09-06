@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { tools } from './tools.js';
+import { which } from './which.js';
 
 export interface LaunchPlan {
   command: string;
@@ -19,7 +19,7 @@ export class Exec {
   plan(command: string, args: string[]): LaunchPlan {
     if (process.platform !== 'win32') return { command, args, shell: false };
 
-    const resolved = path.isAbsolute(command) ? command : tools.onPath(command);
+    const resolved = path.isAbsolute(command) ? command : which.onPath(command);
     if (resolved && !BATCH.has(path.extname(resolved).toLowerCase())) {
       return { command: resolved, args, shell: false };
     }

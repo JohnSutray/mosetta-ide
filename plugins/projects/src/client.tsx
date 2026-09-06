@@ -1,14 +1,39 @@
-import { activate } from '@ide/api/client';
+import { activate, remote, stub } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { ProjectsIcon } from './icons.js';
 import { ProjectsPopup } from './popup.js';
-import { Projects } from './state.js';
+import { Projects, type ProjectsRemote } from './state.js';
 import { STYLE } from './style.js';
+import type { DirSuggestion, RecentProject } from './types.js';
 
-export default class ProjectsPlugin {
-  readonly projects = new Projects();
+export default class ProjectsPlugin implements ProjectsRemote {
+  readonly projects = new Projects(this);
 
   constructor(private readonly ide: Ide) {}
+
+  @remote() roots(): Promise<DirSuggestion[]> {
+    return stub();
+  }
+
+  @remote() recent(): Promise<RecentProject[]> {
+    return stub();
+  }
+
+  @remote('browse') protected askBrowse(_params: {
+    prefix: string;
+    depth?: number;
+    limit?: number;
+  }): Promise<DirSuggestion[]> {
+    return stub();
+  }
+
+  browse(prefix: string, options?: { depth?: number; limit?: number }): Promise<DirSuggestion[]> {
+    return this.askBrowse({ prefix, ...options });
+  }
+
+  @remote() remember(): Promise<void> {
+    return stub();
+  }
 
   @activate() protected start(): void {
     this.ide.css(STYLE);

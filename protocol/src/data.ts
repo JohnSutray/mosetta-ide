@@ -10,39 +10,12 @@ export interface WorkspaceInfo {
   openedAt: number;
 }
 
-export interface DirSuggestion {
-  path: string;
-  name: string;
-  children?: DirSuggestion[];
-}
-
 export interface SymbolSite {
   path: string;
   line: number;
   character: number;
   preview: string;
   isImport: boolean;
-}
-
-export interface ShellInfo {
-  path: string;
-  name: string;
-  ref: string;
-  current: boolean;
-}
-
-export interface PackageManagerInfo {
-  path: string;
-  name: string;
-  version: string;
-  suggested: boolean;
-  current: boolean;
-}
-
-export interface RecentProject {
-  root: string;
-  name: string;
-  openedAt: number;
 }
 
 export type EntryKind = 'file' | 'dir';

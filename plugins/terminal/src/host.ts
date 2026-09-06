@@ -1,6 +1,6 @@
 import { spawn, type IPty } from 'node-pty';
-import type { Logger, Project, ShellChoice } from '@ide/api/server';
-import type { TerminalInfo, TerminalKind } from './types.js';
+import type { Logger, Project } from '@ide/api/server';
+import type { ShellChoice, TerminalInfo, TerminalKind } from './types.js';
 
 function noForeground(): { who: string; why: string } | null {
   if (process.platform !== 'win32') return null;

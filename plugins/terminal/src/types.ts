@@ -36,3 +36,17 @@ export interface TerminalEvents {
   data: { name: string; data: string };
   exit: { name: string; exitCode: number };
 }
+
+export interface ShellInfo {
+  path: string;
+  name: string;
+  ref: string;
+  current: boolean;
+}
+
+export interface ShellChoice {
+  file: string;
+  args: string[];
+  env: Record<string, string>;
+  problem?: string;
+}

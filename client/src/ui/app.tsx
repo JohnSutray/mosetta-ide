@@ -74,9 +74,6 @@ export function App() {
         live: session.workspaces,
         open: (root) => session.openProject(root),
         switchTo: (id) => session.switchProject(id),
-        roots: () => rpc.call('workspace.roots', null),
-        recent: () => rpc.call('workspace.recent', null),
-        browse: (prefix, options) => rpc.call('workspace.browse', { prefix, ...options }),
       },
       merge: {
         state: () => rpc.call('merge.state', null),
@@ -106,9 +103,6 @@ export function App() {
         },
         writeBytes: (path, base64) => rpc.call('fs.writeBytes', { path, base64 }),
         absolute: async (path) => (await rpc.call('fs.absolute', { path })).path,
-        reveal: async (path) => {
-          await rpc.call('fs.reveal', { path });
-        },
       },
       openFile: (path, options) => {
         if (options?.focus === false) editorFocus.openWithoutFocus();

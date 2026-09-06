@@ -1,19 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { PackageManagerInfo } from '@ide/protocol';
-import { shellEnv } from './shell-env.js';
+
+export interface PackageManagerInfo {
+  path: string;
+  name: string;
+  version: string;
+  suggested: boolean;
+  current: boolean;
+}
 
 const KNOWN = ['pnpm', 'yarn', 'npm', 'bun'] as const;
-
-function suffixesFor(name: string): string[] {
-  if (process.platform !== 'win32') return [''];
-  const exts = (process.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD')
-    .split(';')
-    .map((ext) => ext.trim().toLowerCase())
-    .filter((ext) => ext !== '');
-  const named = exts.includes(path.extname(name).toLowerCase());
-  return named ? ['', ...exts] : exts;
-}
 
 function exists(file: string): boolean {
   try {
@@ -23,19 +19,22 @@ function exists(file: string): boolean {
   }
 }
 
-export class Tools {
-  packageManager(has: (file: string) => boolean): string {
+export class PackageManagers {
+  constructor(private readonly which: (name: string) => string | null) {}
+
+  suggested(has: (file: string) => boolean): string {
     if (has('pnpm-lock.yaml')) return 'pnpm';
     if (has('yarn.lock')) return 'yarn';
     if (has('bun.lockb')) return 'bun';
     return 'npm';
   }
 
-  detect(
-    suggested: string,
-    chosen: string,
-    root: string,
-  ): PackageManagerInfo[] {
+  chosen(suggested: string, setting: string): string {
+    const wanted = setting.trim();
+    return wanted === '' ? suggested : wanted;
+  }
+
+  detect(suggested: string, chosen: string, root: string): PackageManagerInfo[] {
     const wanted = chosen.trim();
     const effective = wanted === '' ? suggested : wanted;
 
@@ -55,7 +54,7 @@ export class Tools {
     };
 
     for (const name of KNOWN) {
-      const found = this.onPath(name);
+      const found = this.which(name);
       if (found) add(name, name);
       else if (name === suggested) {
         add(name, name);
@@ -72,18 +71,4 @@ export class Tools {
     }
     return out;
   }
-
-  onPath(name: string): string | null {
-    const search = shellEnv.path ?? process.env.PATH ?? '';
-    const dirs = search.split(path.delimiter).filter((dir) => dir !== '');
-    for (const dir of dirs) {
-      for (const suffix of suffixesFor(name)) {
-        const full = path.join(dir, name + suffix);
-        if (exists(full)) return full;
-      }
-    }
-    return null;
-  }
 }
-
-export const tools = new Tools();

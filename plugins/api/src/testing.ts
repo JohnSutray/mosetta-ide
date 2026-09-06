@@ -2,7 +2,6 @@ import Ajv, { type ValidateFunction } from 'ajv';
 import { signal, type Signal } from '@preact/signals';
 import type {
   DirEntry,
-  DirSuggestion,
   Diagnostic,
   DocState,
   HoverInfo,
@@ -10,7 +9,6 @@ import type {
   KeyBinding,
   IndexKind,
   MergeSession,
-  RecentProject,
   Settings,
   SymbolSite,
   WorkspaceInfo,
@@ -120,7 +118,6 @@ export const fs: FsAccess = {
   write: (path, text) => surface().fs.write(path, text),
   writeBytes: (path, base64) => surface().fs.writeBytes(path, base64),
   absolute: (path) => surface().fs.absolute(path),
-  reveal: (path) => surface().fs.reveal(path),
 };
 export function openFile(path: string, options?: { focus?: boolean }): Promise<void> {
   return surface().openFile(path, options);
@@ -153,9 +150,6 @@ export const workspaces: WorkspacesAccess = {
   },
   open: (root) => surface().workspaces.open(root),
   switchTo: (id) => surface().workspaces.switchTo(id),
-  roots: () => surface().workspaces.roots(),
-  recent: () => surface().workspaces.recent(),
-  browse: (prefix, options) => surface().workspaces.browse(prefix, options),
 };
 export const keys: KeysAccess = {
   get host() {
@@ -266,9 +260,6 @@ export class FakeSurface implements ClientSurface {
       return { path, name: path.split('/').pop() ?? path, kind: 'file' } as DirEntry;
     },
     absolute: async (path) => `/абсолютно/${path}`,
-    reveal: async (path) => {
-      this.fsCalls.push({ op: 'reveal', args: [path] });
-    },
   };
   readonly opened: Array<{ path: string; focus: boolean | undefined }> = [];
   readonly flushes = { count: 0 };
@@ -308,9 +299,6 @@ export class FakeSurface implements ClientSurface {
   };
   readonly workspaceCurrent: Signal<WorkspaceInfo | null> = signal(null);
   readonly workspaceLive: Signal<WorkspaceInfo[]> = signal([]);
-  readonly workspaceRoots: DirSuggestion[] = [];
-  readonly workspaceRecent: RecentProject[] = [];
-  readonly browsed = new Map<string, DirSuggestion[]>();
   readonly workspaceCalls: Array<{ op: string; args: unknown[] }> = [];
   readonly workspaces: WorkspacesAccess = {
     current: this.workspaceCurrent,
@@ -320,12 +308,6 @@ export class FakeSurface implements ClientSurface {
     },
     switchTo: async (id) => {
       this.workspaceCalls.push({ op: 'switchTo', args: [id] });
-    },
-    roots: async () => this.workspaceRoots,
-    recent: async () => this.workspaceRecent,
-    browse: async (prefix, options) => {
-      this.workspaceCalls.push({ op: 'browse', args: [prefix, options] });
-      return this.browsed.get(prefix) ?? [];
     },
   };
   readonly keyBindings: Signal<KeyBinding[]> = signal([]);

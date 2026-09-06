@@ -2,7 +2,6 @@ import type { ConfigBundle } from './config.js';
 import type { PluginInfo } from './plugins.js';
 import type {
   DirEntry,
-  DirSuggestion,
   EntryKind,
   DocState,
   DocVersion,
@@ -16,7 +15,6 @@ import type {
   LogLine,
   LspStatus,
   MergeSession,
-  RecentProject,
   SymbolSite,
   WorkspaceId,
   WorkspaceInfo,
@@ -34,16 +32,10 @@ export interface Api {
   'workspace.list': { params: null; result: WorkspaceInfo[] };
   'workspace.current': { params: null; result: WorkspaceInfo | null };
   'workspace.close': { params: { id: WorkspaceId }; result: null };
-  'workspace.browse': {
-    params: { prefix: string; depth?: number; limit?: number };
-    result: DirSuggestion[];
-  };
   'config.set': {
     params: { section: string; key: string; value: string | boolean };
     result: { section: string; key: string; value: string | boolean };
   };
-  'workspace.roots': { params: null; result: DirSuggestion[] };
-  'workspace.recent': { params: null; result: RecentProject[] };
 
   'fs.list': { params: { path: string }; result: DirEntry[] };
   'fs.read': { params: { path: string }; result: FileText };
@@ -57,7 +49,6 @@ export interface Api {
   'fs.copy': { params: { from: string; to: string }; result: DirEntry };
   'fs.remove': { params: { path: string }; result: null };
   'fs.writeBytes': { params: { path: string; base64: string }; result: DirEntry };
-  'fs.reveal': { params: { path: string }; result: null };
   'fs.absolute': { params: { path: string }; result: { path: string } };
 
   'tree.list': { params: { path: string }; result: DirEntry[] };

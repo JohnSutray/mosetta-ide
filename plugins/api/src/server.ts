@@ -1,4 +1,4 @@
-import type { PackageManagerInfo, ShellInfo } from '@ide/protocol';
+import type { Settings } from '@ide/protocol';
 
 export interface Logger {
   debug(message: string): void;
@@ -49,13 +49,6 @@ export interface RunResult {
   truncated: boolean;
 }
 
-export interface ShellChoice {
-  file: string;
-  args: string[];
-  env: Record<string, string>;
-  problem?: string;
-}
-
 export interface CallContext {
   project: Project;
   services: unknown;
@@ -82,9 +75,9 @@ export interface Ide {
   method(name: string, handler: CommandHandler): void;
   getPlugin<T>(ctor: PluginClass<T>): T;
   find(provider: FindProvider): void;
-  shell(): ShellChoice;
-  shells(): ShellInfo[];
-  packageManagers(project: Project): PackageManagerInfo[];
+  settings(): Settings;
+  environment(): Record<string, string>;
+  which(name: string): string | null;
   run(ask: RunAsk): Promise<RunResult>;
   stream(ask: RunAsk, onChunk: (text: string) => void): Promise<RunResult>;
   readonly log: Logger;

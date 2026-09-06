@@ -1,4 +1,4 @@
-import { activate, openDoc, openFile, problems, project, registry, tree, workspaces } from '@ide/api/client';
+import { activate, openDoc, openFile, problems, project, registry, remote, stub, tree, workspaces } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { computed, effect } from '@preact/signals';
 import { FollowIcon, TreeIcon } from './icons.js';
@@ -40,7 +40,7 @@ export default class TreePlugin {
   constructor(private readonly ide: Ide) {
     this.files = new FileTree(tree, (message) => ide.complain(message));
     this.selection = new TreeSelection(this.files);
-    this.ops = new TreeOps(this.selection, this.prompt, this.files, ide);
+    this.ops = new TreeOps(this.selection, this.prompt, this.files, ide, (path) => this.askReveal({ path }));
     this.follow = new TreeFollow(this.selection, ide);
     this.tints = new TreeTints(ide.registry<TintSource>('tree.tint'));
     this.shown = ide.remember('panel.tree', true);
@@ -137,6 +137,10 @@ export default class TreePlugin {
     document.addEventListener('mousedown', (event) => {
       if (!(event.target as HTMLElement).closest('.tree-menu')) this.menu.close();
     });
+  }
+
+  @remote('reveal') protected askReveal(_params: { path: string }): Promise<void> {
+    return stub();
   }
 
   private onFocused(run: (path: string, isDir: boolean) => void): void {

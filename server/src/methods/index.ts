@@ -24,9 +24,6 @@ export const handlers: HandlerTable = {
   'workspace.list': (p, c) => workspaceMethods.list(p, c),
   'workspace.current': (p, c) => workspaceMethods.current(p, c),
   'workspace.close': (p, c) => workspaceMethods.close(p, c),
-  'workspace.browse': (p, c) => workspaceMethods.browse(p, c),
-  'workspace.roots': (p, c) => workspaceMethods.roots(p, c),
-  'workspace.recent': (p, c) => workspaceMethods.recent(p, c),
 
   'fs.list': (p, c) => fsMethods.list(p, c),
   'fs.read': (p, c) => fsMethods.read(p, c),
@@ -36,7 +33,6 @@ export const handlers: HandlerTable = {
   'fs.copy': (p, c) => fsMethods.copy(p, c),
   'fs.remove': (p, c) => fsMethods.remove(p, c),
   'fs.writeBytes': (p, c) => fsMethods.writeBytes(p, c),
-  'fs.reveal': (p, c) => fsMethods.reveal(p, c),
   'fs.absolute': (p, c) => fsMethods.absolute(p, c),
 
   'tree.list': (p, c) => treeMethods.list(p, c),

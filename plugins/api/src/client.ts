@@ -1,7 +1,6 @@
 import type { Signal } from '@preact/signals';
 import type {
   DirEntry,
-  DirSuggestion,
   Diagnostic,
   DocState,
   EntryKind,
@@ -14,7 +13,6 @@ import type {
   KeyScope,
   IndexKind,
   MergeSession,
-  RecentProject,
   Settings,
   SymbolSite,
   WorkspaceInfo,
@@ -68,7 +66,6 @@ export interface FsAccess {
   write(path: string, text: string): Promise<void>;
   writeBytes(path: string, base64: string): Promise<DirEntry>;
   absolute(path: string): Promise<string>;
-  reveal(path: string): Promise<void>;
 }
 export declare const fs: FsAccess;
 
@@ -94,9 +91,6 @@ export interface WorkspacesAccess {
   readonly live: { readonly value: WorkspaceInfo[] };
   open(root: string): Promise<void>;
   switchTo(id: string): Promise<void>;
-  roots(): Promise<DirSuggestion[]>;
-  recent(): Promise<RecentProject[]>;
-  browse(prefix: string, options?: { depth?: number; limit?: number }): Promise<DirSuggestion[]>;
 }
 export declare const workspaces: WorkspacesAccess;
 

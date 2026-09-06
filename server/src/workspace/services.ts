@@ -8,7 +8,6 @@ import type { FindProviders } from '../search/providers.js';
 import { LspServer } from '../lsp/server.js';
 import { MergeSessions } from '../merge/sessions.js';
 import { conflicts, type FsConflicts } from './conflicts.js';
-import { tools } from '../env/tools.js';
 import type { Logger } from '../log.js';
 import type { Workspace } from './workspace.js';
 
@@ -153,17 +152,6 @@ export class Services {
       this.offs.push(release);
       void server.start().then(() => this.checkProject(server));
     }
-  }
-
-  packageManager(): string {
-    const chosen = this.config.settings.tools.packageManager.trim();
-    return chosen === '' ? this.suggestedManager() : chosen;
-  }
-
-  suggestedManager(): string {
-    const top = this.ram.listSync('') ?? [];
-    const names = new Set(top.map((entry) => entry.name));
-    return tools.packageManager((file) => names.has(file));
   }
 
   lspFor(key: string): LspServer | null {

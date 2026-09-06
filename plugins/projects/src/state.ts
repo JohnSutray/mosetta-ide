@@ -1,6 +1,13 @@
 import { workspaces } from '@ide/api/client';
 import { batch, effect, signal } from '@preact/signals';
-import type { DirSuggestion, RecentProject } from '@ide/protocol';
+import type { DirSuggestion, RecentProject } from './types.js';
+
+export interface ProjectsRemote {
+  roots(): Promise<DirSuggestion[]>;
+  recent(): Promise<RecentProject[]>;
+  browse(prefix: string, options?: { depth?: number; limit?: number }): Promise<DirSuggestion[]>;
+  remember(): Promise<void>;
+}
 
 export class Projects {
   readonly visible = signal(false);
@@ -21,7 +28,7 @@ export class Projects {
   private token = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor() {
+  constructor(private readonly remote: ProjectsRemote) {
     effect(() => {
       if (workspaces.current.value) this.hide();
       else this.show();
@@ -48,10 +55,7 @@ export class Projects {
 
   async load(): Promise<void> {
     try {
-      const [roots, history] = await Promise.all([
-        workspaces.roots(),
-        workspaces.recent(),
-      ]);
+      const [roots, history] = await Promise.all([this.remote.roots(), this.remote.recent()]);
       const children = new Map(this.children.value);
       for (const root of roots) this.absorb(children, root);
       batch(() => {
@@ -141,8 +145,9 @@ export class Projects {
       return;
     }
     const going = liveId ? workspaces.switchTo(liveId) : workspaces.open(root);
-    void going.then(() => {
+    void going.then(async () => {
       if (!workspaces.current.value) return;
+      if (!liveId) await this.remote.remember().catch(() => undefined);
       this.hide();
       void this.load();
     });
@@ -157,7 +162,7 @@ export class Projects {
   private async loadChildren(dir: string): Promise<void> {
     const next = new Map(this.children.value);
     try {
-      next.set(dir, await workspaces.browse(`${dir}/`, { depth: 1 }));
+      next.set(dir, await this.remote.browse(`${dir}/`, { depth: 1 }));
     } catch {
       next.set(dir, []);
     }
@@ -167,7 +172,7 @@ export class Projects {
   private async refreshSuggestions(prefix: string): Promise<void> {
     const token = ++this.token;
     try {
-      const list = await workspaces.browse(prefix, { limit: 24 });
+      const list = await this.remote.browse(prefix, { limit: 24 });
       if (token !== this.token) return;
       this.suggestions.value = list;
     } catch {

@@ -1,8 +1,6 @@
 import type { WorkspaceInfo } from '@ide/protocol';
 import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
-import { browse } from '../env/browse.js';
-import { recent } from '../env/recent.js';
 
 export class WorkspaceMethods {
   readonly open: Handler<'workspace.open'> = async (params, ctx) => {
@@ -12,7 +10,6 @@ export class WorkspaceMethods {
     const ws = await ctx.registry.open(params.root);
     ctx.session.attachTo(ws);
     ctx.registry.announce();
-    await recent.remember(ctx.stateDir, ws.root, ws.name);
     return ws.info();
   };
 
@@ -49,21 +46,6 @@ export class WorkspaceMethods {
     await ctx.registry.close(params.id);
     return null;
   };
-
-  readonly browse: Handler<'workspace.browse'> = (params) => {
-    if (!params || typeof params.prefix !== 'string') {
-      throw RpcError.invalidParams('нужен prefix: string');
-    }
-    const depth = Math.min(2, Math.max(1, params.depth ?? 1));
-    const limit =
-      typeof params.limit === 'number' && params.limit > 0 ? params.limit : Number.POSITIVE_INFINITY;
-    return browse.suggestDirectories(params.prefix, limit, depth);
-  };
-
-  readonly roots: Handler<'workspace.roots'> = () => browse.roots();
-
-  readonly recent: Handler<'workspace.recent'> = (_params, ctx) =>
-    recent.list(ctx.stateDir);
 }
 
 export const workspaceMethods = new WorkspaceMethods();
