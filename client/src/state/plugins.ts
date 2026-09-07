@@ -34,6 +34,7 @@ export class Plugins {
   readonly surfaces = signal<Array<() => unknown>>([]);
 
   private readonly instances = new Map<unknown, unknown>();
+  private readonly slots = new Map<string, number>();
 
   private expose(surface: ClientSurface): void {
     (globalThis as Record<string, unknown>).__ideApi = {
@@ -159,6 +160,9 @@ export class Plugins {
       },
       say: (message: string) => say(message),
       complain: (message: string) => complain(message),
+      sayOnce: (slot: string, message: string) => {
+        this.slots.set(slot, settle(this.slots.get(slot) ?? 0, message));
+      },
       working: (text: string) => {
         const note = notify(text, 'work');
         return (done: string, failed = false) => {

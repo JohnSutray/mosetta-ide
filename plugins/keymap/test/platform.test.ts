@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { KeyHostInfo } from '../src/keys/host.js';
+import { KeyHostInfo } from '../src/host.js';
 
 describe('какая под нами система', () => {
   it('мак опознаётся во всех трёх видах', () => {

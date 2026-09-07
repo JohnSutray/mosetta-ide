@@ -1,12 +1,5 @@
-import {
-  activate,
-  keysFor,
-  registry,
-  runCommand,
-  settings,
-  t,
-  type Ide,
-} from '@ide/api/client';
+import { activate, registry, runCommand, settings, t, type Ide } from '@ide/api/client';
+import { keysFor } from '@ide/plugin-keymap';
 import { tips } from '@ide/windows';
 import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarWidget } from './schema.js';
 import { STYLE } from './style.js';

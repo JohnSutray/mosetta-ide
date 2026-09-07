@@ -26,3 +26,7 @@ export const host: UiHost = {
 export function installHost(next: UiHost): void {
   installed = next;
 }
+
+export function updateHost(part: Partial<UiHost>): void {
+  installed = { ...installed, ...part };
+}

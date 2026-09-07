@@ -4,7 +4,7 @@ import type {
   DirEntry,
   DocState,
   DocVersion,
-  KeyBinding,
+  Keymap,
   Settings,
   WorkspaceInfo,
 } from '@ide/protocol';
@@ -15,9 +15,6 @@ import type {
   FsAccess,
   TreeWire,
   WorkspacesAccess,
-  KeysAccess,
-  KeyEcho,
-  TakenKey,
   Ide,
   PluginClass,
   RegistryHandle,
@@ -37,15 +34,6 @@ export function t(key: string, params?: Record<string, string | number>): string
 }
 export function runCommand(id: string): boolean {
   return surface().runCommand(id);
-}
-export function keysFor(command: string): string[] {
-  return surface().keysFor(command);
-}
-export function chordHeld(
-  command: string,
-  event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean },
-): boolean {
-  return surface().chordHeld(command, event);
 }
 
 export const settings: { readonly value: Settings | null } = {
@@ -87,9 +75,6 @@ export const docs: DocWire = {
 export function setSetting(section: string, key: string, value: string | boolean): Promise<void> {
   return surface().setSetting(section, key, value);
 }
-export function primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
-  return surface().primaryHeld(event);
-}
 export const workspaces: WorkspacesAccess = {
   get current() {
     return surface().workspaces.current;
@@ -100,20 +85,9 @@ export const workspaces: WorkspacesAccess = {
   open: (root) => surface().workspaces.open(root),
   switchTo: (id) => surface().workspaces.switchTo(id),
 };
-export const keys: KeysAccess = {
-  get host() {
-    return surface().keys.host;
-  },
-  get os() {
-    return surface().keys.os;
-  },
-  get bindings() {
-    return surface().keys.bindings;
-  },
-  humanize: (key) => surface().keys.humanize(key),
-  taken: (scopes) => surface().keys.taken(scopes),
-  get echo() {
-    return surface().keys.echo;
+export const keymap: { readonly value: Keymap } = {
+  get value() {
+    return surface().keymap.value;
   },
 };
 export { activate, registry, remote, stub } from './client.js';
@@ -209,7 +183,7 @@ export class FakeSurface implements ClientSurface {
   readonly settings: Signal<Settings | null> = signal(null);
 
   tip: Tip | null = null;
-  readonly keyLists = new Map<string, string[]>();
+  readonly keymap: Signal<Keymap> = signal({ version: 1, bindings: [] });
 
   readonly project: Signal<WorkspaceInfo | null> = signal(null);
   readonly dirs = new Map<string, DirEntry[]>();
@@ -256,7 +230,6 @@ export class FakeSurface implements ClientSurface {
   };
   readonly docs = new FakeDocWire();
   readonly settingWrites: Array<{ section: string; key: string; value: string | boolean }> = [];
-  primary = false;
   readonly workspaceCurrent: Signal<WorkspaceInfo | null> = signal(null);
   readonly workspaceLive: Signal<WorkspaceInfo[]> = signal([]);
   readonly workspaceCalls: Array<{ op: string; args: unknown[] }> = [];
@@ -270,19 +243,7 @@ export class FakeSurface implements ClientSurface {
       this.workspaceCalls.push({ op: 'switchTo', args: [id] });
     },
   };
-  readonly keyBindings: Signal<KeyBinding[]> = signal([]);
-  readonly keyEcho: Signal<KeyEcho | null> = signal(null);
-  readonly takenKeys: TakenKey[] = [];
-  readonly keys: KeysAccess = {
-    host: 'browser',
-    os: 'mac',
-    bindings: this.keyBindings,
-    humanize: (key) => key,
-    taken: (scopes) => this.takenKeys.filter((one) => one.scopes.some((scope) => scopes.includes(scope))),
-    echo: this.keyEcho,
-  };
   readonly heads = new Map<string, string>();
-  readonly chords = new Set<string>();
   constructor(private readonly host: FakeHost) {}
 
   t(key: string, params?: Record<string, string | number>): string {
@@ -297,21 +258,8 @@ export class FakeSurface implements ClientSurface {
     return this.host.run(id);
   }
 
-  keysFor(command: string): string[] {
-    return this.keyLists.get(command) ?? [];
-  }
-
-  chordHeld(command: string, event: { metaKey: boolean }): boolean {
-    void event;
-    return this.chords.has(command);
-  }
-
   async setSetting(section: string, key: string, value: string | boolean): Promise<void> {
     this.settingWrites.push({ section, key, value });
-  }
-
-  primaryHeld(_event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
-    return this.primary;
   }
 }
 
@@ -402,6 +350,12 @@ export class FakeIde implements Ide {
 
   complain(message: string): void {
     this.complaints.push(message);
+  }
+
+  readonly slots = new Map<string, string>();
+  sayOnce(slot: string, message: string): void {
+    this.slots.set(slot, message);
+    this.said.push(message);
   }
 
   working(text: string): (done: string, failed?: boolean) => void {

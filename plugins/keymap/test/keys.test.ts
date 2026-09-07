@@ -1,8 +1,8 @@
 import { inputMechanics } from '@ide/code';
-import { reserved } from '../src/keys/reserved.js';
+import { reserved } from '../src/reserved.js';
 import { describe, expect, it } from 'vitest';
-import { keyRules } from '../src/keys/dispatcher.js';
-import { keyHost } from '../src/keys/host.js';
+import { keyRules } from '../src/dispatcher.js';
+import { keyHost } from '../src/host.js';
 import { WORLDS, inWorld, keymap } from './keymap-shared.js';
 
 function press(key: string, target: unknown, mods: Record<string, boolean> = {}) {

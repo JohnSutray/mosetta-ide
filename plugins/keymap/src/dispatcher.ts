@@ -1,6 +1,7 @@
 import { inputMechanics } from '@ide/code';
-import { commands } from './commands.js';
-import { keysEcho } from './echo.js';
+import { runCommand } from '@ide/api/client';
+import { popups } from '@ide/windows';
+import type { KeysEcho } from './echo.js';
 import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
 import { keyHost } from './host.js';
 import { reserved } from './reserved.js';
@@ -115,6 +116,7 @@ export class Dispatcher {
   constructor(
     private readonly resolveContext: ContextResolver,
     private readonly onUnbound: (key: string) => void,
+    private readonly echo: KeysEcho,
   ) {
     window.addEventListener('keydown', this.onKeyDown, { capture: true });
     window.addEventListener('keyup', this.onKeyUp, { capture: true });
@@ -141,7 +143,7 @@ export class Dispatcher {
         ? undefined
         : this.bindings.find((b) => (b.when ?? 'global') === 'global' && b.key === key));
 
-    keysEcho.echo(key, context, binding?.command ?? null);
+    this.echo.echo(key, context, binding?.command ?? null);
     if (!binding) {
       if (!CAPTURING.has(context) && keyRules.complains(key, { repeat: event.repeat, clip: this.clipKeys })) {
         this.onUnbound(key);
@@ -152,14 +154,14 @@ export class Dispatcher {
     if (
       CAPTURING.has(context) &&
       (binding.when ?? 'global') !== context &&
-      !commands.opensOpenPopup(binding.command)
+      !popups.stack.value.some((item) => item.id === binding.command)
     ) {
       event.preventDefault();
       event.stopPropagation();
       return;
     }
 
-    if (commands.run(binding.command)) {
+    if (runCommand(binding.command)) {
       event.preventDefault();
       event.stopPropagation();
     }

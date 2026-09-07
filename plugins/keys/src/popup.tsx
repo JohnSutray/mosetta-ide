@@ -1,4 +1,5 @@
-import { keys, t } from '@ide/api/client';
+import { t } from '@ide/api/client';
+import { keys } from '@ide/plugin-keymap';
 import { Fragment } from 'preact';
 import type { KeyBinding, KeyContext, KeyScope } from '@ide/protocol';
 import { Popup } from '@ide/ui';

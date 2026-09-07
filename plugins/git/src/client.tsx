@@ -6,10 +6,10 @@ import {
   settings,
   stub,
   t,
-  keysFor,
   runCommand,
   type Ide,
 } from '@ide/api/client';
+import { keysFor } from '@ide/plugin-keymap';
 import { openDoc } from '@ide/plugin-doc';
 import { tips } from '@ide/windows';
 import Editor from '@ide/plugin-editor';

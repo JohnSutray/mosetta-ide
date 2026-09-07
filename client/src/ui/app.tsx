@@ -1,21 +1,13 @@
-import { keyContexts } from '../keys/context.js';
 import { commands } from '../keys/commands.js';
-import { keysEcho } from '../keys/echo.js';
-import { reserved } from '../keys/reserved.js';
-import { computed } from '@preact/signals';
-import { keyHost } from '../keys/host.js';
 import { config } from '../state/config.js';
 import { complain } from '../state/notifications.js';
 import { rpc, session } from '../state/session.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
-import { chordHeld } from '../keys/chords.js';
 import { registerCommands } from '../commands.js';
-import { Dispatcher } from '../keys/dispatcher.js';
 import { Notifications } from './notifications.js';
 import { registerToolbarWishes } from './toolbar-wishes.js';
 import { Registry } from '../state/registry.js';
-import { keysFor } from '../keys/keys-for.js';
 import { i18n } from '../i18n/index.js';
 import { PluginSurfaces } from './plugin-surfaces.js';
 import { plugins } from '../state/plugins.js';
@@ -54,17 +46,9 @@ export function App() {
     const surface: ClientSurface = {
       t: (key, params) => i18n.t(key, params),
       runCommand: (id) => commands.run(id),
-      keysFor,
+      keymap: config.keymap,
       settings: config.settings,
       project: session.attached,
-      keys: {
-        host: keyHost.host,
-        os: keyHost.os,
-        bindings: computed(() => config.keymap.value.bindings),
-        humanize: (key) => keyHost.humanize(key),
-        taken: (scopes) => reserved.in(scopes),
-        echo: keysEcho.lastKey,
-      },
       workspaces: {
         current: session.current,
         live: session.workspaces,
@@ -106,23 +90,11 @@ export function App() {
       setSetting: async (section, key, value) => {
         await rpc.call('config.set', { section, key, value });
       },
-      primaryHeld: (event) => keyHost.primaryHeld(event),
-      chordHeld,
     };
     void plugins.load(surface, store).then(() => {
       const dead = commands.missing();
       if (dead.length) console.warn('[web-ide] команды без реализации:', dead.join(', '));
     });
-    const dispatcher = new Dispatcher(
-      () => keyContexts.here(),
-      (key) => keysEcho.noteUnbound(key),
-    );
-    dispatcher.setKeymap(config.keymap.peek());
-    const stop = config.keymap.subscribe((value) => dispatcher.setKeymap(value));
-    return () => {
-      stop();
-      dispatcher.dispose();
-    };
   }, []);
 
   return (

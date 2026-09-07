@@ -36,6 +36,7 @@
   "dependencies": {
     "@ide/api": "workspace:*",
     "@ide/plugin-doc": "workspace:*",
+    "@ide/plugin-keymap": "workspace:*",
     "@ide/plugin-lsp": "workspace:*",
     "@ide/ui": "workspace:*"
   },

@@ -5,6 +5,7 @@ export class Defaults {
     plugins: {
       enabled: [
         '@ide/ui',
+        '@ide/plugin-keymap',
         '@ide/plugin-doc',
         '@ide/plugin-lsp',
         '@ide/plugin-tree',

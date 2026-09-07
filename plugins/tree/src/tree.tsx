@@ -1,4 +1,5 @@
-import { primaryHeld, project, t } from '@ide/api/client';
+import { project, t } from '@ide/api/client';
+import { primaryHeld } from '@ide/plugin-keymap';
 import { openDoc, openFile } from '@ide/plugin-doc';
 import { useEffect } from 'preact/hooks';
 import type { DirEntry } from '@ide/api/client';

@@ -3,7 +3,6 @@ import { render } from 'preact';
 import { installHost } from '@ide/windows';
 import { App } from './ui/app.js';
 import { i18n } from './i18n/index.js';
-import { keyRules } from './keys/dispatcher.js';
 import { keep, recall } from './state/persist.js';
 import './styles.css';
 
@@ -12,7 +11,7 @@ if (!root) throw new Error('нет #root');
 
 installHost({
   t: (key, params) => i18n.t(key, params),
-  catchesKeys: (context) => context !== undefined && keyRules.catchesKeys(context),
+  catchesKeys: () => false,
   keep: (key, value) => keep(key, value),
   recall: (key, fallback) => recall(key, fallback),
 });

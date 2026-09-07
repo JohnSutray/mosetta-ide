@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, of, nodes } from '@ide/api/testing';
 import { tips } from '@ide/windows';
 import Toolbar from '../src/client.js';
+import KeymapPlugin, { keys } from '@ide/plugin-keymap';
 
 const NAME = '@ide/plugin-toolbar';
 
@@ -27,6 +28,7 @@ describe('тулбар', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
+    host.add(KeymapPlugin, '@ide/plugin-keymap');
     host.add(Toolbar, NAME);
     await host.start();
     top = host.registry.all<() => unknown>('chrome.top')[0]!;
@@ -93,7 +95,7 @@ describe('тулбар', () => {
   });
 
   it('подсказка берёт клавиши из раскладки, а не из словаря', () => {
-    host.surface.keyLists.set('panel.tree', ['Cmd+1']);
+    host.surface.keymap.value = { version: 1, bindings: [{ command: 'panel.tree', key: 'meta+1' }] };
     host.registry.add('toolbar.button', wish('tree'), 'core');
     const button = of(top(), 'button')[0]!;
     (button.props['onMouseEnter'] as (e: unknown) => void)({
@@ -103,7 +105,7 @@ describe('тулбар', () => {
       x: 0,
       y: 6,
       title: 'toolbar.tree',
-      keys: ['Cmd+1'],
+      keys: [keys.humanize('meta+1')],
     });
     (button.props['onMouseLeave'] as () => void)();
     expect(tips.spot.value).toBeNull();

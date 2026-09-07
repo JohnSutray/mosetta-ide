@@ -4,11 +4,7 @@ import type {
   DocState,
   DocVersion,
   EntryKind,
-  KeyBinding,
-  KeyContext,
-  KeyHost,
-  KeyOs,
-  KeyScope,
+  Keymap,
   Settings,
   WorkspaceInfo,
 } from '@ide/protocol';
@@ -21,8 +17,6 @@ export interface Size {
 export declare function t(key: string, params?: Record<string, string | number>): string;
 
 export declare function runCommand(id: string): boolean;
-
-export declare function keysFor(command: string): string[];
 
 export interface ResizerProps {
   id: string;
@@ -70,7 +64,6 @@ export interface DocWire {
 }
 export declare const docs: DocWire;
 export declare function setSetting(section: string, key: string, value: string | boolean): Promise<void>;
-export declare function primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean;
 
 export interface WorkspacesAccess {
   readonly current: { readonly value: WorkspaceInfo | null };
@@ -80,28 +73,7 @@ export interface WorkspacesAccess {
 }
 export declare const workspaces: WorkspacesAccess;
 
-export interface KeyEcho {
-  key: string;
-  context: KeyContext;
-  command: string | null;
-  seq: number;
-}
-export interface TakenKey {
-  key: string;
-  scopes: KeyScope[];
-  who: string;
-  what: string;
-  soft?: boolean;
-}
-export interface KeysAccess {
-  readonly host: KeyHost;
-  readonly os: KeyOs;
-  readonly bindings: { readonly value: KeyBinding[] };
-  humanize(key: string): string;
-  taken(scopes: KeyScope[]): TakenKey[];
-  readonly echo: { readonly value: KeyEcho | null };
-}
-export declare const keys: KeysAccess;
+export declare const keymap: { readonly value: Keymap };
 
 export type { Hunk, HunkKind } from '@ide/code';
 
@@ -111,25 +83,17 @@ export interface HunkBox {
   bottom: number;
 }
 
-export declare function chordHeld(
-  command: string,
-  event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean },
-): boolean;
-
 export interface ClientSurface {
   t: typeof t;
   runCommand: typeof runCommand;
-  keysFor: typeof keysFor;
+  keymap: typeof keymap;
   settings: typeof settings;
   project: typeof project;
   tree: typeof tree;
   fs: typeof fs;
   docs: typeof docs;
   setSetting: typeof setSetting;
-  primaryHeld: typeof primaryHeld;
   workspaces: typeof workspaces;
-  keys: typeof keys;
-  chordHeld: typeof chordHeld;
 }
 
 export interface PluginToolbarEntry {
@@ -153,6 +117,7 @@ export interface Ide {
   surface(view: () => unknown): void;
   say(message: string): void;
   complain(message: string): void;
+  sayOnce(slot: string, message: string): void;
   working(text: string): (done: string, failed?: boolean) => void;
 }
 

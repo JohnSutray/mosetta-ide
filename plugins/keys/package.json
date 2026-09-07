@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@ide/api": "workspace:*",
+    "@ide/plugin-keymap": "workspace:*",
     "@ide/protocol": "workspace:*",
     "@ide/ui": "workspace:*"
   },

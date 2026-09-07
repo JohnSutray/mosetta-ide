@@ -1,8 +1,8 @@
-import { config } from '../state/config.js';
+import { keymap } from '@ide/api/client';
 import { keyRules } from './dispatcher.js';
 
 function modifiersOf(command: string): Set<string>[] {
-  return config.keymap.value.bindings
+  return keymap.value.bindings
     .filter((binding) => binding.command === command && keyRules.appliesHere(binding))
     .map((binding) => new Set(binding.key.split('+').slice(0, -1)))
     .filter((mods) => mods.size > 0);

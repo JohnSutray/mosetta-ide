@@ -2,8 +2,6 @@ import { commands } from './keys/commands.js';
 import { activeMenu, activePick, popups } from '@ide/windows';
 
 export function registerCommands(): void {
-  commands.register('key.reserved', () => {});
-
   commands.register('pick.next', () => activePick.value?.next());
   commands.register('pick.prev', () => activePick.value?.prev());
   commands.register('pick.accept', () => activePick.value?.accept());

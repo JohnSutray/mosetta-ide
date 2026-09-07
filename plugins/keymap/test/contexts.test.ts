@@ -1,12 +1,12 @@
-import { keyContexts } from '../src/keys/context.js';
+import { keyContexts } from '../src/context.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { Keymap } from '@ide/protocol';
 
-const SRC = fileURLToPath(new URL('../src', import.meta.url));
-const PLUGINS = fileURLToPath(new URL('../../plugins', import.meta.url));
+const SRC = fileURLToPath(new URL('../../../client/src', import.meta.url));
+const PLUGINS = fileURLToPath(new URL('../..', import.meta.url));
 
 function pluginSources(): string[] {
   return fs
@@ -14,8 +14,8 @@ function pluginSources(): string[] {
     .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(PLUGINS, entry.name, 'src')))
     .flatMap((entry) => sources(path.join(PLUGINS, entry.name, 'src')));
 }
-const KEYMAP = fileURLToPath(new URL('../../config/keymap.json', import.meta.url));
-const PROTOCOL = fileURLToPath(new URL('../../protocol/src/config.ts', import.meta.url));
+const KEYMAP = fileURLToPath(new URL('../../../config/keymap.json', import.meta.url));
+const PROTOCOL = fileURLToPath(new URL('../../../protocol/src/config.ts', import.meta.url));
 
 function sources(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

@@ -8,7 +8,6 @@
   "toolbar.fetch": "Fetch from remote",
   "toolbar.connection": "Backend connection",
   "session.resumed": "Reconnected — the project is attached again",
-  "keys.unbound": "{key} does nothing. {help} lists every key.",
   "command.file.save": "Save file",
   "command.file.reload": "Reload file from disk",
   "command.edit.undo": "Undo",

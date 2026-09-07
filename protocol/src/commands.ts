@@ -27,8 +27,6 @@ export const COMMANDS = {
   'menu.accept': 'Меню: выбрать',
 
   'popup.close': 'Закрыть верхний попап',
-
-  'key.reserved': 'Занято: пока ничего не делает',
 } as const;
 
 export type CommandId = keyof typeof COMMANDS;

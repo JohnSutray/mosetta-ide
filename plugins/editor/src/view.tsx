@@ -14,7 +14,8 @@ import { bracketMatching, indentOnInput, foldGutter } from '@codemirror/language
 import { highlightSelectionMatches } from '@codemirror/search';
 import type { DocState, EditorSettings } from '@ide/protocol';
 import type { Diagnostic, HoverInfo } from '@ide/plugin-lsp';
-import { chordHeld, type Hunk, type HunkBox } from '@ide/api/client';
+import { type Hunk, type HunkBox } from '@ide/api/client';
+import { chordHeld } from '@ide/plugin-keymap';
 import { takeFocusOnMount } from '@ide/plugin-doc';
 import { darcula, inputMechanics, languages } from '@ide/code';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';

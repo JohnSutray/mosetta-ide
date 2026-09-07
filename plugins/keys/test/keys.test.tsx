@@ -1,17 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import { FakeHost, nodes, of } from '@ide/api/testing';
+import KeymapPlugin, { keys } from '@ide/plugin-keymap';
 import KeysPlugin from '../src/client.js';
 import { KeysPopup } from '../src/popup.js';
 
 async function raise() {
   const host = new FakeHost();
+  host.add(KeymapPlugin, '@ide/plugin-keymap');
   const plugin = host.add(KeysPlugin, '@ide/plugin-keys');
   await host.start();
-  host.surface.keyBindings.value = [
-    { command: 'file.save', key: 'meta+s', where: ['browser:mac', 'electron:mac'] },
-    { command: 'file.save', key: 'control+s', where: ['browser:win', 'electron:win'] },
-    { command: 'tree.next', key: 'arrowdown', when: 'tree' },
-  ];
+  const mine = `${keys.host}:${keys.os}` as const;
+  const alien = keys.os === 'win' ? 'browser:mac' : 'browser:win';
+  host.surface.keymap.value = {
+    version: 1,
+    bindings: [
+      { command: 'file.save', key: 'meta+s', where: [mine] },
+      { command: 'file.save', key: 'control+s', where: [alien] },
+      { command: 'tree.next', key: 'arrowdown', when: 'tree' },
+    ],
+  };
   return { host, plugin };
 }
 
@@ -42,9 +49,9 @@ describe('окно клавиш', () => {
     const { host, plugin } = await raise();
     host.run('keys.show');
     const kbds = of(rendered(plugin), 'kbd').map((one) => String(one.props.children));
-    expect(kbds).toContain('meta+s');
-    expect(kbds).not.toContain('control+s');
-    expect(kbds).toContain('arrowdown');
+    expect(kbds).toContain(keys.humanize('meta+s'));
+    expect(kbds).not.toContain(keys.humanize('control+s'));
+    expect(kbds).toContain(keys.humanize('arrowdown'));
   });
 
   it('переключатель показывает чужую раскладку и говорит об этом', async () => {
@@ -57,8 +64,8 @@ describe('окно клавиш', () => {
   it('эхо нажатия приходит от ядра и видно сразу', async () => {
     const { host, plugin } = await raise();
     host.run('keys.show');
-    host.surface.keyEcho.value = { key: 'meta+k', context: 'global', command: null, seq: 1 };
+    host.plugin(KeymapPlugin).echo.lastKey.value = { key: 'meta+k', context: 'global', command: null, seq: 1 };
     const kbds = of(rendered(plugin), 'kbd').map((one) => String(one.props.children));
-    expect(kbds[0]).toBe('meta+k');
+    expect(kbds[0]).toBe(keys.humanize('meta+k'));
   });
 });

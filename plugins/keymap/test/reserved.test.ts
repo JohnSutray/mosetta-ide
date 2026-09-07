@@ -1,4 +1,4 @@
-import { reserved } from '../src/keys/reserved.js';
+import { reserved } from '../src/reserved.js';
 import { describe, expect, it } from 'vitest';
 import { WORLDS, inWorld, keymap } from './keymap-shared.js';
 

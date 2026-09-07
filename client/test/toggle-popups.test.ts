@@ -56,11 +56,11 @@ describe('повторное нажатие закрывает окно', () => 
 
   it('команда ядра без окна работает как раньше', () => {
     let ran = 0;
-    commands.register('key.reserved', () => {
+    commands.register('pick.next', () => {
       ran += 1;
     });
     popups.enter({ id: 'search.everywhere', close: () => {} });
-    commands.run('key.reserved');
+    commands.run('pick.next');
     expect(ran).toBe(1);
   });
 });

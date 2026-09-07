@@ -24,6 +24,7 @@
     "@ide/code": "workspace:*",
     "@ide/plugin-doc": "workspace:*",
     "@ide/plugin-editor": "workspace:*",
+    "@ide/plugin-keymap": "workspace:*",
     "@ide/ui": "workspace:*",
     "@ide/windows": "workspace:*"
   },

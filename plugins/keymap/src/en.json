@@ -1,0 +1,4 @@
+{
+  "command.key.reserved": "Reserved key (does nothing)",
+  "keys.unbound": "{key} does nothing. {help} lists every key."
+}
