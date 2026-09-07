@@ -27,6 +27,8 @@ async function raise() {
   lsp.answers.set('diagnostics', (params) => ({ path: (params as { path: string }).path, diagnostics: [] }));
   host.add(Editor, '@ide/plugin-editor');
   const plugin = host.add(SymbolsPlugin, '@ide/plugin-symbols');
+  host.surface.docs.texts.set('b.ts', '');
+  host.surface.docs.texts.set('d.ts', '');
   await host.start();
   host.plugin(DocPlugin).doc.open.value = {
     path: 'a.ts',
@@ -45,6 +47,7 @@ describe('символы', () => {
     const { host, symbols } = await raise();
     fake.definitions.push(site('b.ts', 7));
     await symbols.ask(HERE);
+    await new Promise((r) => setTimeout(r, 0));
     expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'b.ts', line: 7, character: 0 });
     expect(symbols.list.value).toBeNull();
   });
@@ -64,6 +67,7 @@ describe('символы', () => {
     activePick.value!.next();
     expect(symbols.list.value!.at).toBe(1);
     activePick.value!.accept();
+    await new Promise((r) => setTimeout(r, 0));
     expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'd.ts', line: 9, character: 0 });
     expect(activePick.value).toBeNull();
   });

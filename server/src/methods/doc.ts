@@ -39,9 +39,6 @@ export class DocMethods {
     return ram.toDocState(await ram.peekDoc(pathOf(params)));
   };
 
-  readonly mergeFromDisk: Handler<'doc.mergeFromDisk'> = (params, ctx) =>
-    ctx.session.requireWorkspace().services.conflicts.forReload(pathOf(params));
-
   readonly close: Handler<'doc.close'> = (params, ctx) => {
     ctx.session.requireWorkspace().services.ram.closeDoc(pathOf(params));
     return null;

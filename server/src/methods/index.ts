@@ -2,7 +2,6 @@ import type { HandlerTable } from '../rpc/context.js';
 import { configMethods } from './config.js';
 import { docMethods } from './doc.js';
 import { fsMethods } from './fs.js';
-import { mergeMethods } from './merge.js';
 import { pluginMethods } from './plugins.js';
 import { treeMethods } from './tree.js';
 import { workspaceMethods } from './workspace.js';
@@ -40,14 +39,9 @@ export const handlers: HandlerTable = {
   'doc.save': (p, c) => docMethods.save(p, c),
   'doc.reload': (p, c) => docMethods.reload(p, c),
   'doc.state': (p, c) => docMethods.state(p, c),
-  'doc.mergeFromDisk': (p, c) => docMethods.mergeFromDisk(p, c),
   'doc.close': (p, c) => docMethods.close(p, c),
 
   'plugins.list': (p, c) => pluginMethods.list(p, c),
   'plugins.code': (p, c) => pluginMethods.code(p, c),
   'plugins.call': (p, c) => pluginMethods.call(p, c),
-
-  'merge.state': (p, c) => mergeMethods.state(p, c),
-  'merge.resolve': (p, c) => mergeMethods.resolve(p, c),
-  'merge.cancel': (p, c) => mergeMethods.cancel(p, c),
 };

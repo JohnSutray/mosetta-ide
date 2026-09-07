@@ -9,7 +9,6 @@ import type {
   KeyHost,
   KeyOs,
   KeyScope,
-  MergeSession,
   Settings,
   WorkspaceInfo,
 } from '@ide/protocol';
@@ -63,7 +62,6 @@ export interface DocWire {
   save(path: string): Promise<DocState>;
   reload(path: string): Promise<DocState>;
   state(path: string): Promise<DocState>;
-  mergeFromDisk(path: string): Promise<MergeSession | null>;
   onChanged(handler: (event: DocVersion) => void): () => void;
   onExternal(handler: (event: { path: string; revision: string }) => void): () => void;
   onDiverged(handler: (event: { path: string; reason: 'changed' | 'removed' }) => void): () => void;
@@ -73,14 +71,6 @@ export interface DocWire {
 export declare const docs: DocWire;
 export declare function setSetting(section: string, key: string, value: string | boolean): Promise<void>;
 export declare function primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean;
-
-export interface MergeAccess {
-  state(): Promise<MergeSession | null>;
-  resolve(path: string, text: string | null): Promise<MergeSession | null>;
-  cancel(): Promise<void>;
-  onState(handler: (state: MergeSession | null) => void): () => void;
-}
-export declare const merge: MergeAccess;
 
 export interface WorkspacesAccess {
   readonly current: { readonly value: WorkspaceInfo | null };
@@ -137,7 +127,6 @@ export interface ClientSurface {
   docs: typeof docs;
   setSetting: typeof setSetting;
   primaryHeld: typeof primaryHeld;
-  merge: typeof merge;
   workspaces: typeof workspaces;
   keys: typeof keys;
   chordHeld: typeof chordHeld;

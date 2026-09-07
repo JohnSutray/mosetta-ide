@@ -1,5 +1,5 @@
 import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
-import type { DocState, MergeSession } from '@ide/protocol';
+import type { DocState } from '@ide/protocol';
 import { RpcErrorCode } from '@ide/protocol';
 import type { DocWire } from '@ide/api/client';
 import { DocSync } from './sync.js';
@@ -102,12 +102,6 @@ export class Doc {
 
   requestMerge(path: string): void {
     for (const handler of this.mergeRequests) handler(path);
-  }
-
-  async mergeFromDisk(path: string): Promise<MergeSession | null> {
-    const session = await this.wire.mergeFromDisk(path);
-    if (session) this.requestMerge(path);
-    return session;
   }
 
   async save(): Promise<void> {

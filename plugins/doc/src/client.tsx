@@ -1,6 +1,6 @@
 import { activate, docs, project, t, workspaces } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
-import type { DocState, MergeSession } from '@ide/protocol';
+import type { DocState } from '@ide/protocol';
 import { effect } from '@preact/signals';
 import { Doc, type Reveal } from './doc.js';
 import { EditorFocus } from './focus.js';
@@ -123,9 +123,6 @@ export function reloadFile(): Promise<void> {
 }
 export function takeFocusOnMount(): boolean {
   return live().focus.takeOnMount();
-}
-export function mergeFromDisk(path: string): Promise<MergeSession | null> {
-  return live().doc.mergeFromDisk(path);
 }
 export function onMergeRequested(handler: (path: string) => void): () => void {
   return live().doc.onMergeRequested(handler);

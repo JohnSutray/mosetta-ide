@@ -98,13 +98,15 @@ describe('редактор', () => {
     expect(tags()).toEqual(['read-only', 'modified']);
   });
 
-  it('крестик значит разное: с файлом закрывает файл, без файла — панель', () => {
+  it('крестик значит разное: с файлом закрывает файл, без файла — панель', async () => {
     host.plugin(DocPlugin).doc.open.value = doc('a.ts');
     head().close!();
+    await new Promise((r) => setTimeout(r, 0));
     expect(host.surface.docs.closed).toHaveLength(1);
     expect(open().value).toBe(true);
 
     head().close!();
+    await new Promise((r) => setTimeout(r, 0));
     expect(host.surface.docs.closed).toHaveLength(1);
     expect(open().value).toBe(false);
   });

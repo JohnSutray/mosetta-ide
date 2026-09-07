@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { MergeSession } from '@ide/protocol';
 import { FakeHost } from '@ide/api/testing';
 import DocPlugin from '@ide/plugin-doc';
-import MergePlugin from '../src/client.js';
+import MergePlugin, { type MergeSession } from '../src/client.js';
 
 function session(paths: string[], done: string[] = []): MergeSession {
   return {
@@ -24,6 +23,7 @@ async function raise() {
   (globalThis as Record<string, unknown>)['document'] ??= {};
   host.add(DocPlugin, '@ide/plugin-doc');
   const plugin = host.add(MergePlugin, '@ide/plugin-merge');
+  host.ide('@ide/plugin-merge').answers.set('state', () => null);
   await host.start();
   return { host, plugin };
 }
@@ -31,7 +31,7 @@ async function raise() {
 describe('экран слияния', () => {
   it('просьба ядра открывает экран, когда сеанс уже есть', async () => {
     const { host, plugin } = await raise();
-    host.surface.pushMergeState(session(['a.ts', 'b.ts']));
+    host.ide('@ide/plugin-merge').emit('state', session(['a.ts', 'b.ts']));
     expect(plugin.merge.open.value).toBe(false);
 
     host.plugin(DocPlugin).doc.requestMerge('b.ts');
@@ -44,14 +44,14 @@ describe('экран слияния', () => {
     host.plugin(DocPlugin).doc.requestMerge('a.ts');
     expect(plugin.merge.open.value).toBe(false);
 
-    host.surface.pushMergeState(session(['a.ts']));
+    host.ide('@ide/plugin-merge').emit('state', session(['a.ts']));
     expect(plugin.merge.open.value).toBe(true);
     expect(plugin.merge.file.value?.path).toBe('a.ts');
   });
 
   it('сеанс сам по себе экран НЕ открывает', async () => {
     const { host, plugin } = await raise();
-    host.surface.pushMergeState(session(['a.ts']));
+    host.ide('@ide/plugin-merge').emit('state', session(['a.ts']));
     expect(plugin.merge.open.value).toBe(false);
   });
 
@@ -65,18 +65,18 @@ describe('экран слияния', () => {
     expect(button?.id).toBe('merge');
     expect(button!.visible.value).toBe(false);
 
-    host.surface.pushMergeState(session(['a.ts', 'b.ts'], ['a.ts']));
+    host.ide('@ide/plugin-merge').emit('state', session(['a.ts', 'b.ts'], ['a.ts']));
     expect(button!.visible.value).toBe(true);
     expect(button!.badge.value).toBe(1);
 
-    host.surface.pushMergeState(null);
+    host.ide('@ide/plugin-merge').emit('state', null);
     expect(button!.visible.value).toBe(false);
     expect(plugin.merge.open.value).toBe(false);
   });
 
   it('клавиша, открывшая экран, его и закрывает', async () => {
     const { host, plugin } = await raise();
-    host.surface.pushMergeState(session(['a.ts']));
+    host.ide('@ide/plugin-merge').emit('state', session(['a.ts']));
     host.run('merge.show');
     expect(plugin.merge.open.value).toBe(true);
     host.run('merge.show');

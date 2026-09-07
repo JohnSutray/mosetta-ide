@@ -37,6 +37,11 @@ class FakeMemory implements ProjectMemory {
   isTextual(path: string): boolean {
     return /\.(toml|ts|md)$/.test(path);
   }
+  async disk(): Promise<null> {
+    return null;
+  }
+  async settle(): Promise<void> {}
+  async adopt(): Promise<void> {}
   fire(event: MemoryEvent): void {
     for (const listener of this.listeners) listener(event);
   }

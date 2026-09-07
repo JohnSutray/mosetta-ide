@@ -1,9 +1,16 @@
-import { merge as access, project, t } from '@ide/api/client';
+import { project, t } from '@ide/api/client';
 import { expectExternal, forgetDiverged, onMergeRequested } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { diff3, type Region, type Choice, type SideChoice } from './diff3.js';
 import { batch, computed, effect, signal, type ReadonlySignal, type Signal } from '@preact/signals';
-import type { MergeFile, MergeSession } from '@ide/protocol';
+import type { MergeFile, MergeSession } from './types.js';
+
+export interface MergeRemote {
+  state(): Promise<MergeSession | null>;
+  resolve(path: string, text: string | null): Promise<MergeSession | null>;
+  cancel(): Promise<void>;
+  onState(handler: (state: MergeSession | null) => void): () => void;
+}
 
 export class Merge {
   readonly session = signal<MergeSession | null>(null);
@@ -79,7 +86,10 @@ export class Merge {
     ).length;
   });
 
-  constructor(private readonly ide: Ide) {
+  constructor(
+    private readonly ide: Ide,
+    private readonly access: MergeRemote,
+  ) {
     onMergeRequested((path) => this.openFor(path));
 
     effect(() => {
@@ -87,7 +97,7 @@ export class Merge {
       else this.reset();
     });
 
-    access.onState((state) => {
+    this.access.onState((state) => {
       const had = this.session.value !== null;
       this.session.value = state;
       if (!state) {
@@ -197,7 +207,7 @@ export class Merge {
     const payload = text === undefined ? this.result.value : text;
     expectExternal(file.path);
     try {
-      const rest = await access.resolve(file.path, payload);
+      const rest = await this.access.resolve(file.path, payload);
       forgetDiverged(file.path);
       batch(() => {
         this.session.value = rest;
@@ -214,7 +224,7 @@ export class Merge {
 
   async cancel(): Promise<void> {
     try {
-      await access.cancel();
+      await this.access.cancel();
     } catch (err) {
       this.ide.complain(describeMerge(err));
       return;
@@ -228,7 +238,7 @@ export class Merge {
 
   async load(): Promise<void> {
     try {
-      this.session.value = await access.state();
+      this.session.value = await this.access.state();
     } catch {
       this.session.value = null;
     }

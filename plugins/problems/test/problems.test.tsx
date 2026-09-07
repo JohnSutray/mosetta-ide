@@ -29,6 +29,7 @@ describe('панель ошибок', () => {
     host.add(DocPlugin, '@ide/plugin-doc');
     host.add(LspPlugin, '@ide/plugin-lsp');
     host.add(Problems, NAME);
+    host.surface.docs.texts.set('a.ts', '');
     await host.start();
     view = wish().view;
   });
@@ -111,6 +112,7 @@ describe('панель ошибок', () => {
     setProblems([{ path: 'a.ts', diagnostics: [problem(7, 'вот тут')] }]);
     const row = of(view(), 'li')[0]!;
     await (row.props['onClick'] as () => Promise<void>)();
+    await new Promise((r) => setTimeout(r, 0));
     expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'a.ts', line: 7, character: 4 });
   });
 
@@ -122,6 +124,7 @@ describe('панель ошибок', () => {
       String(n.props['class']).startsWith('problems-where'),
     )!;
     await (head.props['onClick'] as () => Promise<void>)();
+    await new Promise((r) => setTimeout(r, 0));
     expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'a.ts', line: 3, character: 4 });
   });
 

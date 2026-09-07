@@ -5,6 +5,22 @@ import { fileURLToPath } from 'node:url';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
+const MERGE = '@ide/plugin-merge';
+interface Session {
+  source: string;
+  title: string;
+  files: Array<{ path: string; base: string | null; left: { text: string | null }; right: { text: string | null } }>;
+}
+function merge(c: TestClient, method: string, params: unknown = null): Promise<Session | null> {
+  return c.call('plugins.call', { name: MERGE, method, params }) as Promise<Session | null>;
+}
+async function nextState(c: TestClient, match: (state: Session | null) => boolean): Promise<Session> {
+  const event = (await c.nextEvent('plugins.event', 8000, (e) => e.name === MERGE && e.event === 'state' && match(e.payload))) as {
+    payload: Session;
+  };
+  return event.payload;
+}
+
 const CONFIG = fileURLToPath(new URL('./fixtures/config-watch', import.meta.url));
 
 describe('слияние', () => {
@@ -38,12 +54,12 @@ describe('слияние', () => {
   });
 
   it('конфликтов нет — и сеанса нет', async () => {
-    expect(await c.call('merge.state', null)).toBeNull();
+    expect(await merge(c, 'state')).toBeNull();
   });
 
   it('РАСХОЖДЕНИЕ спора не заводит: никто ничем не заблокирован', async () => {
     await diverge();
-    expect(await c.call('merge.state', null)).toBeNull();
+    expect(await merge(c, 'state')).toBeNull();
     const state = await c.call('doc.state', { path: 'src/main.ts' });
     expect(state.text).toBe('ОДИН\nдва\nтри\n');
     expect(state.dirty).toBe(true);
@@ -52,13 +68,13 @@ describe('слияние', () => {
   it('спор заводит ОТКАЗ СОХРАНЕНИЯ, и предок в нём настоящий', async () => {
     await diverge();
 
-    const waiting = c.nextEvent('merge.state', 8000, (state) => state !== null);
+    const waiting = nextState(c, (state) => state !== null);
     await c.expectError('doc.save', { path: 'src/main.ts' });
     const state = await waiting;
 
     expect(state.source).toBe('fs');
     expect(state.title).toBe('merge.title.fs.save');
-    const file = state.files[0];
+    const file = state.files[0]!;
     expect(file.base).toBe('один\nдва\nтри\n');
     expect(file.left.text).toBe('ОДИН\nдва\nтри\n');
     expect(file.right.text).toBe('один\nдва\nТРИ\n');
@@ -67,10 +83,10 @@ describe('слияние', () => {
   it('решение спора о сохранении уезжает НА ДИСК', async () => {
     await diverge();
     await c.expectError('doc.save', { path: 'src/main.ts' });
-    await c.nextEvent('merge.state', 8000, (state) => state !== null);
+    await nextState(c, (state) => state !== null);
 
     const merged = 'ОДИН\nдва\nТРИ\n';
-    expect(await c.call('merge.resolve', { path: 'src/main.ts', text: merged })).toBeNull();
+    expect(await merge(c, 'resolve', { path: 'src/main.ts', text: merged })).toBeNull();
 
     expect(await fs.readFile(path.join(root, 'src', 'main.ts'), 'utf8')).toBe(merged);
     const state = await c.call('doc.state', { path: 'src/main.ts' });
@@ -81,11 +97,11 @@ describe('слияние', () => {
   it('решение спора о перезагрузке остаётся В ПАМЯТИ', async () => {
     await diverge();
 
-    const session = await c.call('doc.mergeFromDisk', { path: 'src/main.ts' });
+    const session = await merge(c, 'fromDisk', { path: 'src/main.ts' });
     expect(session?.title).toBe('merge.title.fs.reload');
 
     const merged = 'ОДИН\nдва\nТРИ\n';
-    await c.call('merge.resolve', { path: 'src/main.ts', text: merged });
+    await merge(c, 'resolve', { path: 'src/main.ts', text: merged });
 
     expect(await fs.readFile(path.join(root, 'src', 'main.ts'), 'utf8')).toBe('один\nдва\nТРИ\n');
     const state = await c.call('doc.state', { path: 'src/main.ts' });
@@ -95,8 +111,8 @@ describe('слияние', () => {
 
   it('слияние догоняет ревизию: следующее сохранение проходит', async () => {
     await diverge();
-    await c.call('doc.mergeFromDisk', { path: 'src/main.ts' });
-    await c.call('merge.resolve', { path: 'src/main.ts', text: 'ОДИН\nдва\nТРИ\n' });
+    await merge(c, 'fromDisk', { path: 'src/main.ts' });
+    await merge(c, 'resolve', { path: 'src/main.ts', text: 'ОДИН\nдва\nТРИ\n' });
 
     const saved = await c.call('doc.save', { path: 'src/main.ts' });
     expect(saved.dirty).toBe(false);
@@ -116,7 +132,7 @@ describe('слияние', () => {
     await waiting;
 
     expect((await c.call('doc.state', { path: 'src/main.ts' })).text).toBe('моя работа\n');
-    expect(await c.call('merge.state', null)).toBeNull();
+    expect(await merge(c, 'state')).toBeNull();
   });
 
   it('сохранение поверх удалённого спрашивает ЯВНО, а не воскрешает молча', async () => {
@@ -130,21 +146,21 @@ describe('слияние', () => {
     await fs.rm(path.join(root, 'src', 'main.ts'));
     await gone;
 
-    const waiting = c.nextEvent('merge.state', 8000, (state) => state !== null);
+    const waiting = nextState(c, (state) => state !== null);
     await c.expectError('doc.save', { path: 'src/main.ts' });
     const state = await waiting;
 
-    expect(state.files[0].right.text).toBeNull();
-    expect(state.files[0].left.text).toBe('моя работа\n');
+    expect(state.files[0]!.right.text).toBeNull();
+    expect(state.files[0]!.left.text).toBe('моя работа\n');
   });
 
   it('отказ закрывает сеанс и ничего не пишет', async () => {
     await diverge('чужое\n');
     await c.expectError('doc.save', { path: 'src/main.ts' });
-    await c.nextEvent('merge.state', 8000, (state) => state !== null);
+    await nextState(c, (state) => state !== null);
 
-    await c.call('merge.cancel', null);
-    expect(await c.call('merge.state', null)).toBeNull();
+    await merge(c, 'cancel');
+    expect(await merge(c, 'state')).toBeNull();
     expect(await fs.readFile(path.join(root, 'src', 'main.ts'), 'utf8')).toBe('чужое\n');
     expect((await c.call('doc.state', { path: 'src/main.ts' })).text).toBe('ОДИН\nдва\nтри\n');
   });

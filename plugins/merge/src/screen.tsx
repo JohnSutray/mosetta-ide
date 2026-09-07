@@ -1,5 +1,5 @@
 import { settings, t } from '@ide/api/client';
-import type { MergeFile } from '@ide/protocol';
+import type { MergeFile } from './types.js';
 import { MergeColumns } from './columns.js';
 import { CodeView } from '@ide/code';
 import { FileIcon, Popup } from '@ide/ui';

@@ -71,14 +71,6 @@ export function App() {
         open: (root) => session.openProject(root),
         switchTo: (id) => session.switchProject(id),
       },
-      merge: {
-        state: () => rpc.call('merge.state', null),
-        resolve: (path, text) => rpc.call('merge.resolve', { path, text }),
-        cancel: async () => {
-          await rpc.call('merge.cancel', null);
-        },
-        onState: (handler) => rpc.on('merge.state', handler),
-      },
       tree: {
         list: (path) => rpc.call('tree.list', { path }),
         onChanged: (handler) => rpc.on('tree.changed', handler),
@@ -105,7 +97,6 @@ export function App() {
         save: (path) => rpc.call('doc.save', { path }),
         reload: (path) => rpc.call('doc.reload', { path }),
         state: (path) => rpc.call('doc.state', { path }),
-        mergeFromDisk: (path) => rpc.call('doc.mergeFromDisk', { path }),
         onChanged: (handler) => rpc.on('doc.changed', handler),
         onExternal: (handler) => rpc.on('doc.external', handler),
         onDiverged: (handler) => rpc.on('doc.diverged', handler),

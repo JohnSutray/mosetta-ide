@@ -1,5 +1,6 @@
 import { t } from '@ide/api/client';
-import { diverged, mergeFromDisk, reloadFile } from '@ide/plugin-doc';
+import { diverged, reloadFile } from '@ide/plugin-doc';
+import { mergeFromDisk } from '@ide/plugin-merge';
 import type { Ide } from '@ide/api/client';
 
 export function DivergedBadge({ path, ide }: { path: string; ide: Ide }) {

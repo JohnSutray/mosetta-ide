@@ -5,7 +5,6 @@ import type {
   DocState,
   DocVersion,
   KeyBinding,
-  MergeSession,
   Settings,
   WorkspaceInfo,
 } from '@ide/protocol';
@@ -15,7 +14,6 @@ import type {
   DocWire,
   FsAccess,
   TreeWire,
-  MergeAccess,
   WorkspacesAccess,
   KeysAccess,
   KeyEcho,
@@ -80,7 +78,6 @@ export const docs: DocWire = {
   save: (path) => surface().docs.save(path),
   reload: (path) => surface().docs.reload(path),
   state: (path) => surface().docs.state(path),
-  mergeFromDisk: (path) => surface().docs.mergeFromDisk(path),
   onChanged: (handler) => surface().docs.onChanged(handler),
   onExternal: (handler) => surface().docs.onExternal(handler),
   onDiverged: (handler) => surface().docs.onDiverged(handler),
@@ -93,12 +90,6 @@ export function setSetting(section: string, key: string, value: string | boolean
 export function primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
   return surface().primaryHeld(event);
 }
-export const merge: MergeAccess = {
-  state: () => surface().merge.state(),
-  resolve: (path, text) => surface().merge.resolve(path, text),
-  cancel: () => surface().merge.cancel(),
-  onState: (handler) => surface().merge.onState(handler),
-};
 export const workspaces: WorkspacesAccess = {
   get current() {
     return surface().workspaces.current;
@@ -139,9 +130,7 @@ export class FakeDocWire implements DocWire {
   readonly edits: Array<{ path: string; text: string }> = [];
   readonly saved: string[] = [];
   readonly reloaded: string[] = [];
-  readonly merges: string[] = [];
   saveFails: { code: number; message: string } | null = null;
-  readonly mergeSession = { value: null as MergeSession | null };
   private version = 1;
   private readonly changed = new Set<(event: DocVersion) => void>();
   private readonly external = new Set<(event: { path: string; revision: string }) => void>();
@@ -178,10 +167,6 @@ export class FakeDocWire implements DocWire {
   }
   async state(path: string): Promise<DocState> {
     return this.stateOf(path);
-  }
-  async mergeFromDisk(path: string): Promise<MergeSession | null> {
-    this.merges.push(path);
-    return this.mergeSession.value;
   }
   onChanged(handler: (event: DocVersion) => void): () => void {
     this.changed.add(handler);
@@ -272,23 +257,6 @@ export class FakeSurface implements ClientSurface {
   readonly docs = new FakeDocWire();
   readonly settingWrites: Array<{ section: string; key: string; value: string | boolean }> = [];
   primary = false;
-  readonly mergeSession = { value: null as MergeSession | null };
-  readonly mergeCalls: Array<{ op: string; args: unknown[] }> = [];
-  private readonly mergeStateHandlers = new Set<(state: MergeSession | null) => void>();
-  readonly merge: MergeAccess = {
-    state: async () => this.mergeSession.value,
-    resolve: async (path, text) => {
-      this.mergeCalls.push({ op: 'resolve', args: [path, text] });
-      return this.mergeSession.value;
-    },
-    cancel: async () => {
-      this.mergeCalls.push({ op: 'cancel', args: [] });
-    },
-    onState: (handler) => {
-      this.mergeStateHandlers.add(handler);
-      return () => this.mergeStateHandlers.delete(handler);
-    },
-  };
   readonly workspaceCurrent: Signal<WorkspaceInfo | null> = signal(null);
   readonly workspaceLive: Signal<WorkspaceInfo[]> = signal([]);
   readonly workspaceCalls: Array<{ op: string; args: unknown[] }> = [];
@@ -313,10 +281,6 @@ export class FakeSurface implements ClientSurface {
     taken: (scopes) => this.takenKeys.filter((one) => one.scopes.some((scope) => scopes.includes(scope))),
     echo: this.keyEcho,
   };
-  pushMergeState(state: MergeSession | null): void {
-    this.mergeSession.value = state;
-    for (const handler of this.mergeStateHandlers) handler(state);
-  }
   readonly heads = new Map<string, string>();
   readonly chords = new Set<string>();
   constructor(private readonly host: FakeHost) {}

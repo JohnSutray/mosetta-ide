@@ -177,6 +177,9 @@ importers:
       '@ide/plugin-lsp':
         specifier: workspace:*
         version: link:../lsp
+      '@ide/plugin-merge':
+        specifier: workspace:*
+        version: link:../merge
     devDependencies:
       '@codemirror/commands':
         specifier: ^6.7.1

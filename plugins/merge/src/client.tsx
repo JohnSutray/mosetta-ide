@@ -1,16 +1,54 @@
-import { activate } from '@ide/api/client';
+import { activate, remote, stub } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { computed } from '@preact/signals';
 import { MergeIcon } from './icons.js';
 import { MergeScreen } from './screen.js';
-import { Merge } from './state.js';
+import { Merge, type MergeRemote } from './state.js';
+import type { MergeSession } from './types.js';
+
+export type { MergeFile, MergeSession, MergeSide, MergeSource } from './types.js';
 import { STYLE } from './style.js';
 
-export default class MergePlugin {
+export default class MergePlugin implements MergeRemote {
   readonly merge: Merge;
 
   constructor(private readonly ide: Ide) {
-    this.merge = new Merge(ide);
+    this.merge = new Merge(ide, this);
+    current = this;
+  }
+
+  async fromDisk(path: string): Promise<MergeSession | null> {
+    const session = await this.askFromDisk({ path });
+    if (session) this.merge.openFor(path);
+    return session;
+  }
+
+  @remote('state') state(): Promise<MergeSession | null> {
+    return stub();
+  }
+
+  @remote('resolve') protected askResolve(_params: { path: string; text: string | null }): Promise<MergeSession | null> {
+    return stub();
+  }
+
+  resolve(path: string, text: string | null): Promise<MergeSession | null> {
+    return this.askResolve({ path, text });
+  }
+
+  @remote('cancel') protected askCancel(): Promise<null> {
+    return stub();
+  }
+
+  async cancel(): Promise<void> {
+    await this.askCancel();
+  }
+
+  onState(handler: (state: MergeSession | null) => void): () => void {
+    return this.ide.on('state', (payload) => handler(payload as MergeSession | null));
+  }
+
+  @remote('fromDisk') protected askFromDisk(_params: { path: string }): Promise<MergeSession | null> {
+    return stub();
   }
 
   @activate() protected start(): void {
@@ -41,3 +79,10 @@ export default class MergePlugin {
     this.ide.registry<() => unknown>('chrome.top').add(() => <MergeScreen merge={merge} />);
   }
 }
+
+export function mergeFromDisk(path: string): Promise<MergeSession | null> {
+  if (!current) throw new Error('@ide/plugin-merge не поднят');
+  return current.fromDisk(path);
+}
+
+let current: MergePlugin | null = null;

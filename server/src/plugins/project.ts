@@ -10,8 +10,18 @@ export class PluginProject implements Project {
     private readonly plugin: string,
   ) {
     const ram = ws.services.ram;
-    const lend = (doc: { path: string; text: string; version: number; openCount: number } | undefined): MemoryDoc | null =>
-      doc ? { path: doc.path, text: doc.text, version: doc.version, openCount: doc.openCount } : null;
+    const lend = (
+      doc: { path: string; text: string; version: number; openCount: number; savedText?: string } | undefined,
+    ): MemoryDoc | null =>
+      doc
+        ? {
+            path: doc.path,
+            text: doc.text,
+            version: doc.version,
+            openCount: doc.openCount,
+            ...(doc.savedText !== undefined ? { savedText: doc.savedText } : {}),
+          }
+        : null;
     this.memory = {
       on: (listener) =>
         ram.on((event) => {
@@ -22,6 +32,15 @@ export class PluginProject implements Project {
       docSync: (path) => lend(ram.docSync(path)),
       peekDoc: async (path) => lend(await ram.peekDoc(path)) as MemoryDoc,
       isTextual: (path) => ram.isTextual(path),
+      disk: async (path) => {
+        const os = ws.services.os;
+        const stat = await os.stat(path);
+        if (!stat || stat.kind !== 'file') return null;
+        const file = await os.read(path);
+        return { text: file.text, revision: file.revision };
+      },
+      settle: (path, text) => ram.resolveDoc(path, text),
+      adopt: (path, text) => ram.adoptDoc(path, text),
     };
   }
 
@@ -76,6 +95,7 @@ function asMemoryEvent(event: { type: string; path: string; from?: string }): Me
     case 'doc.external':
     case 'doc.closed':
     case 'doc.removed':
+    case 'doc.saveBlocked':
     case 'tree.changed':
       return { type: event.type, path: event.path };
     case 'doc.moved':

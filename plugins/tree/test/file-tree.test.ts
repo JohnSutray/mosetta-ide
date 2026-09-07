@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, type FakeSurface } from '@ide/api/testing';
 import type { DirEntry } from '@ide/api/client';
 import TreePlugin from '../src/client.js';
+import DocPlugin from '@ide/plugin-doc';
 
 let surface: FakeSurface;
 let plugin: TreePlugin;
@@ -20,6 +21,8 @@ async function settle(): Promise<void> {
 beforeEach(async () => {
   (globalThis as Record<string, unknown>)['document'] ??= { addEventListener: () => {} };
   const host = new FakeHost();
+  (globalThis as Record<string, unknown>)['document'] ??= {};
+  host.add(DocPlugin, '@ide/plugin-doc');
   surface = host.surface;
   surface.dirs.set('', [entry('src', 'dir'), entry('README.md')]);
   surface.dirs.set('src', [entry('src/a.ts')]);

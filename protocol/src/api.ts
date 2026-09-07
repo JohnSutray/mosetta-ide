@@ -8,7 +8,6 @@ import type {
   FileText,
   IndexStats,
   LogLine,
-  MergeSession,
   WorkspaceId,
   WorkspaceInfo,
   WriteResult,
@@ -53,11 +52,6 @@ export interface Api {
   'doc.reload': { params: { path: string }; result: DocState };
   'doc.state': { params: { path: string }; result: DocState };
   'doc.close': { params: { path: string }; result: null };
-  'doc.mergeFromDisk': { params: { path: string }; result: MergeSession | null };
-
-  'merge.state': { params: null; result: MergeSession | null };
-  'merge.resolve': { params: { path: string; text: string | null }; result: MergeSession | null };
-  'merge.cancel': { params: null; result: null };
 
   'plugins.list': { params: null; result: PluginInfo[] };
   'plugins.code': { params: { name: string }; result: { code: string } };
@@ -84,8 +78,6 @@ export interface Events {
   'tree.changed': { path: string };
   'doc.removed': { path: string };
   'doc.moved': { from: string; path: string };
-
-  'merge.state': MergeSession | null;
 
   'plugins.event': { name: string; event: string; payload: unknown };
 

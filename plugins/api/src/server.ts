@@ -16,11 +16,20 @@ export interface MemoryDoc {
   text: string;
   version: number;
   openCount: number;
+  savedText?: string;
 }
 
 export type MemoryEvent =
   | {
-      type: 'doc.resident' | 'doc.opened' | 'doc.changed' | 'doc.saved' | 'doc.external' | 'doc.closed' | 'doc.removed';
+      type:
+        | 'doc.resident'
+        | 'doc.opened'
+        | 'doc.changed'
+        | 'doc.saved'
+        | 'doc.external'
+        | 'doc.closed'
+        | 'doc.removed'
+        | 'doc.saveBlocked';
       path: string;
     }
   | { type: 'doc.moved'; path: string; from: string }
@@ -32,6 +41,9 @@ export interface ProjectMemory {
   docSync(path: string): MemoryDoc | null;
   peekDoc(path: string): Promise<MemoryDoc>;
   isTextual(path: string): boolean;
+  disk(path: string): Promise<{ text: string; revision: string } | null>;
+  settle(path: string, text: string | null): Promise<void>;
+  adopt(path: string, text: string | null): Promise<void>;
 }
 
 export interface ProcessStream {

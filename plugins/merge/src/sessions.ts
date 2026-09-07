@@ -1,14 +1,4 @@
-import type { MergeFile, MergeSession, MergeSource } from '@ide/protocol';
-import { RpcError } from '../errors.js';
-
-export interface MergeSupply {
-  source: MergeSource;
-  title: string;
-  files: MergeFile[];
-  apply(path: string, text: string | null): Promise<void>;
-  finish?(): Promise<void>;
-  cancel?(): Promise<void>;
-}
+import type { MergeSession, MergeSupply } from './types.js';
 
 interface Live extends MergeSupply {
   id: string;
@@ -38,7 +28,6 @@ export class MergeSessions {
       this.announce();
       return;
     }
-
     this.counter += 1;
     this.queue.push({ ...supply, id: `merge-${this.counter}` });
     this.announce();
@@ -52,9 +41,9 @@ export class MergeSessions {
 
   async resolve(path: string, text: string | null): Promise<MergeSession | null> {
     const live = this.queue[0];
-    if (!live) throw RpcError.invalidParams('конфликтов нет');
+    if (!live) throw new Error('конфликтов нет');
     const file = live.files.find((item) => item.path === path);
-    if (!file) throw RpcError.invalidParams(`не в этом сеансе: ${path}`);
+    if (!file) throw new Error(`не в этом сеансе: ${path}`);
 
     await live.apply(path, text);
     file.done = true;
@@ -68,7 +57,6 @@ export class MergeSessions {
       }
       return this.state();
     }
-
     this.announce();
     return this.state();
   }

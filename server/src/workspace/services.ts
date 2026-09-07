@@ -2,8 +2,6 @@ import type { ConfigStore } from '../config/store.js';
 import { OsFs } from '../fs/os-fs.js';
 import { OsWatcher } from '../fs/watcher.js';
 import { RamFs } from '../fs/ram-fs.js';
-import { MergeSessions } from '../merge/sessions.js';
-import { conflicts, type FsConflicts } from './conflicts.js';
 import type { Logger } from '../log.js';
 import type { Workspace } from './workspace.js';
 
@@ -11,8 +9,6 @@ export class Services {
   readonly os: OsFs;
   readonly ram: RamFs;
   readonly watcher: OsWatcher;
-  readonly merge = new MergeSessions();
-  readonly conflicts: FsConflicts;
 
   private readonly offs: Array<() => void> = [];
   private booted = false;
@@ -66,10 +62,6 @@ export class Services {
       }),
     );
 
-    this.offs.push(this.merge.on((state) => ws.broadcast('merge.state', state)));
-    this.conflicts = conflicts.watch(this.ram, this.os, this.merge, log);
-    this.offs.push(() => this.conflicts.off());
-
     this.offs.push(
       config.onChange((bundle) => {
         this.os.applySettings(bundle.settings.fs);
@@ -104,7 +96,6 @@ export class Services {
 
   dispose(): void {
     for (const off of this.offs.splice(0)) off();
-    this.merge.dispose();
     this.watcher.dispose();
     this.ram.dispose();
   }

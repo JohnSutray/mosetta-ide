@@ -41,11 +41,6 @@ const FORBIDDEN: Array<{ from: RegExp; importing: RegExp; why: string }> = [
     why: 'git — своя ось: у него собственный источник правды (.git) и собственный процесс, наши слои он не читает',
   },
   {
-    from: /^merge\//,
-    importing: /(node:fs|node:child_process|ram-fs|os-fs|\.\.\/git\/|\.\.\/rpc\/|\.\.\/methods\/|\.\.\/workspace\/)/,
-    why: 'сеанс слияния держит тексты и телефон поставщика — знать, откуда они и куда уедут, он не имеет права (ADR-0134)',
-  },
-  {
     from: /^plugins\//,
     importing: /(ram-fs|os-fs|file-index|\.\.\/git\/)/,
     why: 'дом плагинов знает про машину и про сборку, а данные проекта приезжают к плагину в момент вызова (ADR-0140)',
