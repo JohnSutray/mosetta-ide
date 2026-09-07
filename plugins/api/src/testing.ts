@@ -8,7 +8,8 @@ import type {
   Settings,
   WorkspaceInfo,
 } from '@ide/protocol';
-import { attach, hooksOf, registriesOf } from './client.js';
+import { attach, hooksOf, registriesOf, sectionsOf } from './client.js';
+import { sectionOf } from './section.js';
 import type {
   ClientSurface,
   DocWire,
@@ -41,6 +42,13 @@ export const settings: { readonly value: Settings | null } = {
     return surface().settings.value;
   },
 };
+export function settingsOf<T extends object>(section: string, defaults: T): { readonly value: T } {
+  return {
+    get value() {
+      return sectionOf(surface().settings.value, section, defaults);
+    },
+  };
+}
 export const project: { readonly value: WorkspaceInfo | null } = {
   get value() {
     return surface().project.value;
@@ -90,7 +98,7 @@ export const keymap: { readonly value: Keymap } = {
     return surface().keymap.value;
   },
 };
-export { activate, registry, remote, stub } from './client.js';
+export { activate, configSection, registry, remote, stub } from './client.js';
 
 export interface Tip {
   text: string;
@@ -181,6 +189,14 @@ export class FakeDocWire implements DocWire {
 
 export class FakeSurface implements ClientSurface {
   readonly settings: Signal<Settings | null> = signal(null);
+  settingsOf<T extends object>(section: string, defaults: T): { readonly value: T } {
+    const all = this.settings;
+    return {
+      get value() {
+        return sectionOf(all.value, section, defaults);
+      },
+    };
+  }
 
   tip: Tip | null = null;
   readonly keymap: Signal<Keymap> = signal({ version: 1, bindings: [] });
@@ -436,6 +452,7 @@ export class FakeHost {
     for (const spec of registriesOf(ctor)) {
       this.registry.declare(spec.key, name, spec.schema);
     }
+    for (const spec of sectionsOf(ctor)) this.registry.add('settings', spec, name);
     this.ides.set(name, ide);
     this.instances.set(ctor, instance);
     this.built.push({ name, instance });

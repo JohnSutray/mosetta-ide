@@ -1,6 +1,7 @@
 import { activate, command, type CallContext, type Ide, type Project } from '@ide/api/server';
 import { FindProviders } from './finds.js';
 import { SearchIndex } from './index.js';
+import { INDEX_DEFAULTS } from './settings.js';
 import type { FindProvider, IndexHit, IndexKind, SearchStats } from './types.js';
 
 export type { FindProvider, Found, IndexHit, IndexKind, SearchStats } from './types.js';
@@ -17,7 +18,7 @@ export default class SearchServer {
   @activate() protected start(): void {
     this.ide.onProject((project) => {
       const index = this.indexOf(project);
-      if (!this.ide.settings().index.enabled) return;
+      if (!this.ide.settings('index', INDEX_DEFAULTS).enabled) return;
       index.rebuild();
       void index.indexSymbols();
     });
@@ -26,7 +27,8 @@ export default class SearchServer {
   indexOf(project: Project): SearchIndex {
     return project.use(
       'index',
-      () => new SearchIndex(project.memory, () => this.ide.settings().index, this.ide.log, this.finds),
+      () =>
+        new SearchIndex(project.memory, () => this.ide.settings('index', INDEX_DEFAULTS), this.ide.log, this.finds),
     );
   }
 

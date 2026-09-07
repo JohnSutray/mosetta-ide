@@ -1,5 +1,6 @@
 import { command, type CallContext, type Ide } from '@ide/api/server';
 import { TerminalHost } from './host.js';
+import { TERMINAL_DEFAULTS } from './settings.js';
 import { Shells } from './shells.js';
 import type { Attached, OpenAsk, ShellChoice, ShellInfo, TerminalInfo } from './types.js';
 
@@ -11,7 +12,10 @@ export default class TerminalServer {
   }
 
   private shell(): ShellChoice {
-    return { ...this.shells.loginShell(this.ide.settings().terminal), env: this.ide.environment() };
+    return {
+      ...this.shells.loginShell(this.ide.settings('terminal', TERMINAL_DEFAULTS)),
+      env: this.ide.environment(),
+    };
   }
 
   private host(call: CallContext): TerminalHost {

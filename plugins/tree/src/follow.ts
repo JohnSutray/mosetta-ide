@@ -1,11 +1,12 @@
-import { setSetting, settings } from '@ide/api/client';
+import { setSetting, settingsOf } from '@ide/api/client';
+import { TREE_DEFAULTS } from './settings.js';
 import { openDoc } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { computed } from '@preact/signals';
 import type { TreeSelection } from './state.js';
 
 export class TreeFollow {
-  readonly on = computed(() => settings.value !== null && settings.value.tree.followEditor);
+  readonly on = computed(() => settingsOf('tree', TREE_DEFAULTS).value.followEditor);
 
   constructor(
     private readonly selection: TreeSelection,

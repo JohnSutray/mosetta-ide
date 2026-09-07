@@ -1,12 +1,16 @@
-import { activate, project, remote, stub, workspaces } from '@ide/api/client';
+import { activate, configSection, project, remote, stub, workspaces } from '@ide/api/client';
 import { openDoc } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
+import { LSP_DEFAULTS } from './settings.js';
 import { Lsp } from './state.js';
+
+export { LSP_DEFAULTS, type LspServerSettings, type LspSettings } from './settings.js';
 import type { Diagnostic, FileDiagnostics, HoverInfo, LspStatus, SymbolSite } from './types.js';
 
 export type { Diagnostic, FileDiagnostics, HoverInfo, LspState, LspStatus, Position, Range, Severity, SymbolSite } from './types.js';
 
+@configSection({ section: 'lsp', defaults: LSP_DEFAULTS })
 export default class LspPlugin {
   readonly lsp = new Lsp();
 

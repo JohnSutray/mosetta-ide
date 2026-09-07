@@ -1,6 +1,7 @@
 import { effect, signal } from '@preact/signals';
 import {
   activate,
+  configSection,
   project,
   remote,
   runCommand,
@@ -13,6 +14,7 @@ import { ChoicePopup, PickPopup, matches as pickMatches } from '@ide/ui';
 import type { PackageManagerInfo } from './managers.js';
 import type { Opener } from '@ide/plugin-search';
 import { NpmIcon } from './icon.js';
+import { TOOLS_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
 import { scriptId } from './script-id.js';
 import TerminalPlugin from '@ide/plugin-terminal';
@@ -25,6 +27,7 @@ export interface ScriptInfo {
   path: string;
 }
 
+@configSection({ section: 'tools', defaults: TOOLS_DEFAULTS })
 export default class NpmScripts {
   private readonly open = signal(false);
   private readonly known = signal<ScriptInfo[]>([]);

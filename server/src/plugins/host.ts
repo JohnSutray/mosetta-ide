@@ -17,6 +17,7 @@ import {
 } from '@ide/api/server';
 export { type CallContext } from '@ide/api/server';
 import type { Settings } from '@ide/protocol';
+import { sectionOf } from '@ide/api/section';
 import { PluginProject } from './project.js';
 import type { Workspace } from '../workspace/workspace.js';
 import type { Logger } from '../log.js';
@@ -237,7 +238,7 @@ export class PluginHost {
           list.push(handler);
           this.projectHandlers.set(name, list);
         },
-        settings: () => this.machine.settings(),
+        settings: (section, defaults) => sectionOf(this.machine.settings(), section, defaults),
         environment: () => this.machine.environment(),
         which: (name) => this.machine.which(name),
         run: (ask) => processes.run({ ...ask, reason: `${name}: ${ask.reason}` }),

@@ -3,6 +3,7 @@ import { activate, command, type CallContext, type Ide, type Project } from '@id
 import SearchServer, { type IndexHit } from '@ide/plugin-search/server';
 import { PackageManagers, type PackageManagerInfo } from './managers.js';
 import { ScriptsInPackageJson } from './scripts.js';
+import { TOOLS_DEFAULTS } from './settings.js';
 import { scriptId } from './script-id.js';
 
 export interface ScriptInfo {
@@ -38,7 +39,7 @@ export default class NpmScriptsServer {
   }
 
   private manager(project: Project): string {
-    return this.managers.chosen(this.suggested(project), this.ide.settings().tools.packageManager);
+    return this.managers.chosen(this.suggested(project), this.ide.settings('tools', TOOLS_DEFAULTS).packageManager);
   }
 
   @activate() protected start(): void {
@@ -52,7 +53,7 @@ export default class NpmScriptsServer {
   @command('managers') protected listManagers(_params: unknown, call: CallContext): PackageManagerInfo[] {
     return this.managers.detect(
       this.suggested(call.project),
-      this.ide.settings().tools.packageManager,
+      this.ide.settings('tools', TOOLS_DEFAULTS).packageManager,
       call.project.root,
     );
   }

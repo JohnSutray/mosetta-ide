@@ -1,5 +1,6 @@
 import { activate, command, type CallContext, type Ide } from '@ide/api/server';
 import { LspHost } from './host.js';
+import { LSP_DEFAULTS } from './settings.js';
 import type { FileDiagnostics, HoverInfo, LspStatus, SymbolSite } from './types.js';
 
 export default class LspServerPlugin {
@@ -8,7 +9,7 @@ export default class LspServerPlugin {
   @activate() protected start(): void {
     this.ide.onProject((project) => {
       const host = project.use('servers', () => new LspHost(project, this.ide));
-      if (this.ide.settings().lsp.startOnOpen) host.start();
+      if (this.ide.settings('lsp', LSP_DEFAULTS).startOnOpen) host.start();
     });
   }
 

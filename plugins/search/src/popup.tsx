@@ -1,6 +1,6 @@
-import { settings, t } from '@ide/api/client';
+import { settingsOf, t } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import { CodeView } from '@ide/code';
+import { CodeView, EDITOR_DEFAULTS } from '@ide/code';
 import type { IndexHit } from './types.js';
 import { Popup } from '@ide/ui';
 import type { Search } from './state.js';
@@ -21,8 +21,8 @@ export function SearchEverywhere({ search }: { search: Search }) {
       ?.scrollIntoView({ block: 'nearest' });
   }, [search.selected.value, search.hits.value]);
 
-  const editor = settings.value?.editor;
-  if (!search.open.value || !editor) return null;
+  const editor = settingsOf('editor', EDITOR_DEFAULTS).value;
+  if (!search.open.value) return null;
 
   const preview = search.preview.value;
 

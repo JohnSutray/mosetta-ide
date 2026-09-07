@@ -1,14 +1,16 @@
-import { activate, registry, remote, stub } from '@ide/api/client';
+import { activate, configSection, registry, remote, stub } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { SearchIcon } from './icons.js';
 import { SearchEverywhere } from './popup.js';
 import { Search, type SearchRemote } from './state.js';
+import { INDEX_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
 import { OPENER_SCHEMA, type IndexHit, type IndexKind, type Opener } from './types.js';
 
 export type { Found, IndexHit, IndexKind, Opener, SearchStats } from './types.js';
 
 @registry({ key: 'search.opener', schema: OPENER_SCHEMA })
+@configSection({ section: 'index', defaults: INDEX_DEFAULTS })
 export default class SearchPlugin implements SearchRemote {
   readonly search: Search;
 

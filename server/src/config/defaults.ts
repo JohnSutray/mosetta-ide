@@ -26,30 +26,6 @@ export class Defaults {
         '@ide/plugin-sheep',
       ],
     },
-    toolbar: {
-      order: [
-        'panel.tree',
-        'search.everywhere',
-        'git.branches',
-        'git.push',
-        'terminal.create',
-        'projects.show',
-        'panel.editor',
-        'keys.show',
-        'tree.follow',
-      ],
-    },
-    editor: {
-      fontFamily: 'JetBrains Mono',
-      fontSize: 13,
-      tabSize: 2,
-      lineNumbers: true,
-      caretWidth: 2,
-      ligatures: false,
-    },
-    tree: {
-      followEditor: true,
-    },
     fs: {
       hidden: ['.DS_Store'],
       noScan: ['node_modules', '.git', 'dist', 'build', 'coverage'],
@@ -62,26 +38,6 @@ export class Defaults {
       ],
       watch: true,
       watchDebounceMs: 60,
-    },
-    index: {
-      enabled: true,
-      maxResults: 50,
-    },
-    lsp: {
-      startOnOpen: true,
-      checkProject: true,
-      checkProjectLimit: 2000,
-      servers: {},
-    },
-    git: {
-      autoFetchMinutes: 10,
-    },
-    tools: {
-      packageManager: '',
-    },
-    terminal: {
-      shell: '',
-      args: [],
     },
   };
 

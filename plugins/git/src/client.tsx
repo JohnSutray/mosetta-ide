@@ -1,12 +1,13 @@
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
 import {
   activate,
+  configSection,
   project,
   remote,
-  settings,
+  runCommand,
+  settingsOf,
   stub,
   t,
-  runCommand,
   type Ide,
 } from '@ide/api/client';
 import { keysFor } from '@ide/plugin-keymap';
@@ -19,6 +20,7 @@ import { Branches } from './branches.js';
 import { Push } from './push.js';
 import { HunkPopup } from './hunk-popup.js';
 import { BranchIcon, PushIcon } from './icons.js';
+import { GIT_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
 import type {
   GitAction,
@@ -29,6 +31,7 @@ import type {
   PushPreview,
 } from './types.js';
 
+@configSection({ section: 'git', defaults: GIT_DEFAULTS })
 export default class GitPlugin implements GitRemote {
   private readonly git: Git;
   private readonly branchesWindow: BranchesWindow;
@@ -102,8 +105,8 @@ export default class GitPlugin implements GitRemote {
     });
 
     effect(() => {
-      const minutes = settings.value?.git.autoFetchMinutes;
-      if (!project.value || minutes === undefined) return;
+      const { autoFetchMinutes: minutes } = settingsOf('git', GIT_DEFAULTS).value;
+      if (!project.value) return;
       void this.askAutoFetch({ minutes }).catch(() => undefined);
     });
   }

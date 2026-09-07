@@ -1,12 +1,23 @@
 import { batch, signal } from '@preact/signals';
-import { activate, remote, runCommand, setSetting, stub, t, type Ide } from '@ide/api/client';
+import {
+  activate,
+  configSection,
+  remote,
+  runCommand,
+  setSetting,
+  stub,
+  t,
+  type Ide,
+} from '@ide/api/client';
 import { ChoicePopup } from '@ide/ui';
 import { TerminalIcon } from './icon.js';
 import { TerminalView } from './view.js';
 import { Chips } from './chips.js';
+import { TERMINAL_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
 import type { Attached, OpenAsk, ShellInfo, TerminalInfo } from './types.js';
 
+@configSection({ section: 'terminal', defaults: TERMINAL_DEFAULTS })
 export default class TerminalPlugin {
   private readonly list = signal<TerminalInfo[]>([]);
   private readonly active = signal<string | null>(null);

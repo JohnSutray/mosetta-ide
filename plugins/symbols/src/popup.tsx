@@ -1,6 +1,6 @@
-import { settings, t } from '@ide/api/client';
+import { settingsOf, t } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import { CodeView, codePainter } from '@ide/code';
+import { CodeView, EDITOR_DEFAULTS, codePainter } from '@ide/code';
 import { Popup, Resizer } from '@ide/ui';
 import { geometry } from '@ide/windows';
 import type { Symbols } from './state.js';
@@ -15,7 +15,7 @@ const PREVIEW_MIN = 120;
 
 export function SymbolsPopup({ symbols }: { symbols: Symbols }) {
   const list = symbols.list.value;
-  const editor = settings.value?.editor;
+  const editor = settingsOf('editor', EDITOR_DEFAULTS).value;
   const preview = symbols.preview.value;
   const body = useRef<HTMLDivElement>(null);
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { EditorState, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, lineNumbers, highlightSpecialChars } from '@codemirror/view';
-import type { EditorSettings } from '@ide/protocol';
+import type { EditorSettings } from './settings.js';
 import { darcula } from './darcula.js';
 import { languages } from './languages.js';
 

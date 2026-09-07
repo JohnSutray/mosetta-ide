@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { EditorState, StateEffect, StateField, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType, lineNumbers } from '@codemirror/view';
-import type { EditorSettings } from '@ide/protocol';
+import type { EditorSettings } from '@ide/code';
 import { darcula } from '@ide/code';
 import { languages } from '@ide/code';
 import type { Choice, Region } from './diff3.js';

@@ -93,7 +93,8 @@ describe('боевой конфиг в app/config', () => {
   it('settings.json разбирается и накрывает дефолты', async () => {
     const store = await ConfigStore.load(SHIPPED);
     expect(store.settings.fs.noScan).toContain('node_modules');
-    expect(store.settings.editor.caretWidth).toBe(2);
+    expect(store.settings.fs.maxFileMb).toBe(8);
+    expect((store.settings.editor as { fontSize: number }).fontSize).toBe(13);
     expect(store.current.sources).toHaveLength(2);
     store.dispose();
   });
@@ -127,9 +128,9 @@ describe('слежение за конфигом', () => {
     };
 
     await save(21);
-    expect(store.settings.editor.fontSize).toBe(21);
+    expect((store.settings.editor as { fontSize: number }).fontSize).toBe(21);
     await save(19);
-    expect(store.settings.editor.fontSize).toBe(19);
+    expect((store.settings.editor as { fontSize: number }).fontSize).toBe(19);
 
     store.dispose();
     await fs.rm(dir, { recursive: true, force: true });
@@ -141,7 +142,8 @@ describe('сломанный конфиг', () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-'));
     await fs.writeFile(path.join(dir, 'settings.json'), '{ это не json', 'utf8');
     const store = await ConfigStore.load(dir);
-    expect(store.settings.editor.fontSize).toBe(13);
+    expect(store.settings.fs.maxFileMb).toBe(8);
+    expect(store.settings.editor).toBeUndefined();
     expect(store.current.sources).toEqual([]);
     store.dispose();
     await fs.rm(dir, { recursive: true, force: true });
@@ -160,9 +162,9 @@ describe('запись настройки', () => {
 
     const { rewritten } = await store.set('terminal', 'shell', '/bin/zsh');
     expect(rewritten).toBe(false);
-    expect(store.settings.terminal.shell).toBe('/bin/zsh');
-    expect(store.settings.editor.fontSize).toBe(15);
-    expect(store.settings.terminal.args).toEqual([]);
+    expect((store.settings.terminal as { shell: string }).shell).toBe('/bin/zsh');
+    expect((store.settings.editor as { fontSize: number }).fontSize).toBe(15);
+    expect((store.settings.terminal as { args?: string[] }).args).toBeUndefined();
     const raw = await fs.readFile(path.join(dir, 'settings.json'), 'utf8');
     expect(raw).toContain('// шрифт руками');
 

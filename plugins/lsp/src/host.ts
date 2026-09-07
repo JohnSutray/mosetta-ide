@@ -1,5 +1,6 @@
 import type { Ide, Project, ProjectResource } from '@ide/api/server';
 import { LspServer } from './lsp-server.js';
+import { LSP_DEFAULTS } from './settings.js';
 import { Toolchain } from './toolchain.js';
 import type { Diagnostic, FileDiagnostics, LspStatus } from './types.js';
 
@@ -16,7 +17,7 @@ export class LspHost implements ProjectResource {
   }
 
   start(): void {
-    const { servers } = this.ide.settings().lsp;
+    const { servers } = this.ide.settings('lsp', LSP_DEFAULTS);
     for (const [name, settings] of Object.entries(servers)) {
       if (!settings.enabled) continue;
       const server = new LspServer(
@@ -41,10 +42,9 @@ export class LspHost implements ProjectResource {
   }
 
   private async checkProject(server: LspServer): Promise<void> {
-    const settings = this.ide.settings();
-    const { checkProject, checkProjectLimit } = settings.lsp;
+    const { checkProject, checkProjectLimit } = this.ide.settings('lsp', LSP_DEFAULTS);
     if (!checkProject) return;
-    const skipped = new Set(settings.fs.noScan);
+    const skipped = new Set(this.ide.settings('fs', { noScan: [] as string[] }).noScan);
     const skip = (key: string): boolean => key.split('/').some((part) => skipped.has(part));
     try {
       await server.checkProject(skip, checkProjectLimit);

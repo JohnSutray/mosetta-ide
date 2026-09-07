@@ -3,6 +3,8 @@ import { config } from '../state/config.js';
 import { complain } from '../state/notifications.js';
 import { rpc, session } from '../state/session.js';
 import type { JSX } from 'preact';
+import { SETTINGS_SCHEMA, type SettingsSection } from '@ide/api/client';
+import { sectionOf } from '@ide/api/section';
 import { useEffect } from 'preact/hooks';
 import { registerCommands } from '../commands.js';
 import { Notifications } from './notifications.js';
@@ -17,6 +19,7 @@ const store = new Registry((message) => complain(message));
 
 store.declare('chrome.top', 'core');
 store.declare('chrome.main', 'core');
+store.declare('settings', 'core', SETTINGS_SCHEMA);
 registerToolbarWishes(store);
 
 function Region({ name, fallback }: { name: string; fallback?: JSX.Element }) {
@@ -48,6 +51,11 @@ export function App() {
       runCommand: (id) => commands.run(id),
       keymap: config.keymap,
       settings: config.settings,
+      settingsOf: (section, defaults) => ({
+        get value() {
+          return sectionOf(config.settings.value, section, defaults);
+        },
+      }),
       project: session.attached,
       workspaces: {
         current: session.current,
@@ -88,6 +96,11 @@ export function App() {
         onRemoved: (handler) => rpc.on('doc.removed', handler),
       },
       setSetting: async (section, key, value) => {
+        const own = store.all<SettingsSection>('settings').value.find((one) => one.section === section);
+        if (!own) throw new Error(`раздел настроек никто не объявил: ${section}`);
+        const known = (own.defaults as Record<string, unknown>)[key];
+        if (known === undefined) throw new Error(`такой настройки нет: ${section}.${key}`);
+        if (typeof known !== typeof value) throw new Error(`${section}.${key} ждёт ${typeof known}`);
         await rpc.call('config.set', { section, key, value });
       },
     };

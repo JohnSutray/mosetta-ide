@@ -27,6 +27,7 @@ export interface ResizerProps {
 }
 
 export declare const settings: { readonly value: Settings | null };
+export declare function settingsOf<T extends object>(section: string, defaults: T): { readonly value: T };
 
 export declare const project: { readonly value: WorkspaceInfo | null };
 
@@ -88,6 +89,7 @@ export interface ClientSurface {
   runCommand: typeof runCommand;
   keymap: typeof keymap;
   settings: typeof settings;
+  settingsOf: typeof settingsOf;
   project: typeof project;
   tree: typeof tree;
   fs: typeof fs;
@@ -148,6 +150,33 @@ const declared = new WeakMap<object, RegistrySpec[]>();
 export function registriesOf(ctor: object): RegistrySpec[] {
   return declared.get(ctor) ?? [];
 }
+
+export interface SettingsSection {
+  section: string;
+  defaults: object;
+}
+
+export function configSection(spec: SettingsSection) {
+  return function (target: object, ctx: ClassDecoratorContext): void {
+    void ctx;
+    const list = sections.get(target) ?? [];
+    list.push(spec);
+    sections.set(target, list);
+  };
+}
+
+const sections = new WeakMap<object, SettingsSection[]>();
+
+export function sectionsOf(ctor: object): SettingsSection[] {
+  return sections.get(ctor) ?? [];
+}
+
+export const SETTINGS_SCHEMA = {
+  type: 'object',
+  required: ['section', 'defaults'],
+  additionalProperties: false,
+  properties: { section: { type: 'string' }, defaults: { type: 'object' } },
+} as const;
 
 export function activate() {
   return function (method: () => unknown, ctx: ClassMethodDecoratorContext): void {

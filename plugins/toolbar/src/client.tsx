@@ -1,11 +1,21 @@
-import { activate, registry, runCommand, settings, t, type Ide } from '@ide/api/client';
+import {
+  activate,
+  configSection,
+  registry,
+  runCommand,
+  settingsOf,
+  t,
+  type Ide,
+} from '@ide/api/client';
 import { keysFor } from '@ide/plugin-keymap';
 import { tips } from '@ide/windows';
 import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarWidget } from './schema.js';
+import { TOOLBAR_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
 
 @registry({ key: 'toolbar.button', schema: BUTTON_SCHEMA })
 @registry({ key: 'toolbar.widget', schema: WIDGET_SCHEMA })
+@configSection({ section: 'toolbar', defaults: TOOLBAR_DEFAULTS })
 export default class Toolbar {
   constructor(private readonly ide: Ide) {}
 
@@ -52,7 +62,7 @@ export default class Toolbar {
   }
 
   private buttons(): ToolbarButton[] {
-    const order = settings.value?.toolbar.order ?? [];
+    const order = settingsOf('toolbar', TOOLBAR_DEFAULTS).value.order;
     const all = this.ide
       .registry<ToolbarButton>('toolbar.button')
       .all.value.filter((one) => one.visible?.value ?? true);

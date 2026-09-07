@@ -19,15 +19,18 @@ import {
 import { effect, signal, type Signal } from '@preact/signals';
 import {
   activate,
+  configSection,
   registry,
   settings,
+  settingsOf,
   t,
-  type Ide,
   type Hunk,
   type HunkBox,
+  type Ide,
 } from '@ide/api/client';
 import { closeFile, dirty, editDoc, externalEpoch, openDoc, pendingReveal, wantsFocus } from '@ide/plugin-doc';
 import LspPlugin from '@ide/plugin-lsp';
+import { EDITOR_DEFAULTS } from '@ide/code';
 import { EMPTY_SCHEMA, type EmptyView } from './schema.js';
 import { STYLE } from './style.js';
 import { EditorIcon } from './icon.js';
@@ -42,6 +45,7 @@ export interface SymbolSpot {
 }
 
 @registry({ key: 'editor.empty', schema: EMPTY_SCHEMA })
+@configSection({ section: 'editor', defaults: EDITOR_DEFAULTS })
 export default class Editor {
   private readonly head = signal<{ path: string; text: string | null } | null>(null);
   private hunkHandler: ((hunk: Hunk, box: HunkBox) => void) | null = null;
@@ -158,8 +162,8 @@ export default class Editor {
   private body() {
     const file = openDoc.value;
     if (!file) return this.empty();
-    const config = settings.value;
-    if (!config) return null;
+    if (!settings.value) return null;
+    const config = settingsOf('editor', EDITOR_DEFAULTS).value;
     return (
       <div class="editor-host">
         <DivergedBadge path={file.path} ide={this.ide} />
@@ -170,7 +174,7 @@ export default class Editor {
           externalEpoch={externalEpoch.value}
           reveal={pendingReveal.value}
           wantsFocus={wantsFocus.value}
-          settings={config.editor}
+          settings={config}
           diagnostics={this.lsp.fileDiagnostics.value}
           onEdit={editDoc}
           onCaret={(line, character) => this.caretHandler?.(file.path, line, character)}

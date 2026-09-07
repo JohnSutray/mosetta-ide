@@ -1,4 +1,4 @@
-import { activate, project, registry, remote, stub, tree, workspaces } from '@ide/api/client';
+import { activate, configSection, project, registry, remote, stub, tree, workspaces } from '@ide/api/client';
 import { openDoc, openFile } from '@ide/plugin-doc';
 import LspPlugin from '@ide/plugin-lsp';
 import type { Ide } from '@ide/api/client';
@@ -8,6 +8,7 @@ import { FileTree } from './file-tree.js';
 import { TreeFollow } from './follow.js';
 import { TreeMenuState } from './menu.js';
 import { Prompt as PromptState, TreeOps, TreeSelection } from './state.js';
+import { TREE_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
 import { TINT_SCHEMA, TreeTints, type TintSource } from './tints.js';
 import { Prompt } from './prompt.js';
@@ -15,6 +16,7 @@ import { Tree } from './tree.js';
 import { TreeMenu } from './tree-menu.js';
 
 @registry({ key: 'tree.tint', schema: TINT_SCHEMA })
+@configSection({ section: 'tree', defaults: TREE_DEFAULTS })
 export default class TreePlugin {
   readonly files: FileTree;
   readonly prompt = new PromptState();

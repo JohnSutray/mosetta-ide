@@ -1,7 +1,7 @@
-import { settings, t } from '@ide/api/client';
+import { settingsOf, t } from '@ide/api/client';
 import type { MergeFile } from './types.js';
 import { MergeColumns } from './columns.js';
-import { CodeView } from '@ide/code';
+import { CodeView, EDITOR_DEFAULTS } from '@ide/code';
 import { FileIcon, Popup } from '@ide/ui';
 import type { Merge } from './state.js';
 
@@ -9,8 +9,8 @@ export function MergeScreen({ merge }: { merge: Merge }) {
   if (!merge.open.value) return null;
   const session = merge.session.value;
   const file = merge.file.value;
-  const editor = settings.value?.editor;
-  if (!session || !file || !editor) return null;
+  const editor = settingsOf('editor', EDITOR_DEFAULTS).value;
+  if (!session || !file) return null;
 
   const whole = file.left.text === null || file.right.text === null;
   const left = merge.left.value;
@@ -124,8 +124,7 @@ function WholeFile({ file, merge }: { file: MergeFile; merge: Merge }) {
   const survivor = file.left.text === null ? 'right' : 'left';
   const side = file[survivor];
   const gone = file[survivor === 'left' ? 'right' : 'left'];
-  const editor = settings.value?.editor;
-  if (!editor) return null;
+  const editor = settingsOf('editor', EDITOR_DEFAULTS).value;
 
   return (
     <div class="merge-whole">

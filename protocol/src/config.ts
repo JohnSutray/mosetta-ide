@@ -1,14 +1,5 @@
 
 
-export interface EditorSettings {
-  fontFamily: string;
-  fontSize: number;
-  tabSize: number;
-  lineNumbers: boolean;
-  caretWidth: number;
-  ligatures: boolean;
-}
-
 export interface FsSettings {
   hidden: string[];
   noScan: string[];
@@ -19,62 +10,14 @@ export interface FsSettings {
   watchDebounceMs: number;
 }
 
-export interface IndexSettings {
-  enabled: boolean;
-  maxResults: number;
-}
-
-export interface LspServerSettings {
-  enabled: boolean;
-  command: string;
-  args: string[];
-  extensions: string[];
-  checkExtensions?: string[];
-}
-
-export interface LspSettings {
-  startOnOpen: boolean;
-  checkProject: boolean;
-  checkProjectLimit: number;
-  servers: Record<string, LspServerSettings>;
-}
-
-export interface TreeSettings {
-  followEditor: boolean;
-}
-
 export interface PluginSettings {
   enabled: string[];
 }
 
 export interface Settings {
   plugins: PluginSettings;
-  toolbar: ToolbarSettings;
-  editor: EditorSettings;
-  tree: TreeSettings;
   fs: FsSettings;
-  index: IndexSettings;
-  lsp: LspSettings;
-  git: GitSettings;
-  terminal: TerminalSettings;
-  tools: ToolSettings;
-}
-
-export interface ToolbarSettings {
-  order: string[];
-}
-
-export interface ToolSettings {
-  packageManager: string;
-}
-
-export interface TerminalSettings {
-  shell: string;
-  args: string[];
-}
-
-export interface GitSettings {
-  autoFetchMinutes: number;
+  [section: string]: unknown;
 }
 
 export type KeyContext =

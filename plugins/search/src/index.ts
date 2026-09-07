@@ -1,4 +1,4 @@
-import type { IndexSettings } from '@ide/protocol';
+import type { IndexSettings } from './settings.js';
 import type { Logger, ProjectMemory } from '@ide/api/server';
 import { matcher } from './matcher.js';
 import { layout } from './layout.js';

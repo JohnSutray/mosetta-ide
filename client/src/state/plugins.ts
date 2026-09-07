@@ -8,6 +8,8 @@ import {
   attach,
   hooksOf,
   registriesOf,
+  sectionsOf,
+  configSection,
   registry as registryHook,
   remote,
   stub,
@@ -40,7 +42,14 @@ export class Plugins {
     (globalThis as Record<string, unknown>).__ideApi = {
       modules: {
         ...sharedModules,
-        '@ide/api/client': { ...surface, remote, stub, activate: activateHook, registry: registryHook },
+        '@ide/api/client': {
+          ...surface,
+          remote,
+          stub,
+          activate: activateHook,
+          registry: registryHook,
+          configSection,
+        },
       },
     };
   }
@@ -77,6 +86,7 @@ export class Plugins {
 
     for (const one of built) {
       for (const spec of registriesOf(one.ctor)) registry.declare(spec.key, one.name, spec.schema);
+      for (const spec of sectionsOf(one.ctor)) registry.add('settings', spec, one.name);
     }
     for (const one of built) {
       try {

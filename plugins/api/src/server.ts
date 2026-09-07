@@ -1,4 +1,4 @@
-import type { Settings } from '@ide/protocol';
+
 
 export interface Logger {
   debug(message: string): void;
@@ -117,7 +117,7 @@ export interface Ide {
   method(name: string, handler: CommandHandler): void;
   getPlugin<T>(ctor: PluginClass<T>): T;
   onProject(handler: (project: Project) => void): void;
-  settings(): Settings;
+  settings<T extends object>(section: string, defaults: T): T;
   environment(): Record<string, string>;
   which(name: string): string | null;
   run(ask: RunAsk): Promise<RunResult>;
