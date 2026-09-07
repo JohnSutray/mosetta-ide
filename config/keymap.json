@@ -42,6 +42,8 @@
 
     { "command": "key.reserved", "key": "meta+f", "where": ["browser:mac", "electron:mac"] },
     { "command": "key.reserved", "key": "control+f", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "key.reserved", "key": "meta+r", "where": ["browser:mac"] },
+    { "command": "key.reserved", "key": "meta+shift+r", "where": ["browser:mac"] },
     { "command": "key.reserved", "key": "tab" },
     { "command": "key.reserved", "key": "shift+tab" },
 
