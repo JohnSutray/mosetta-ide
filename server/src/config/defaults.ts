@@ -4,7 +4,9 @@ export class Defaults {
   readonly settings: Settings = {
     plugins: {
       enabled: [
+        '@ide/plugin-theme',
         '@ide/ui',
+        '@ide/plugin-notifications',
         '@ide/plugin-keymap',
         '@ide/plugin-doc',
         '@ide/plugin-lsp',

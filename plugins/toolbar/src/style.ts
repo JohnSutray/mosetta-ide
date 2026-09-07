@@ -1,4 +1,8 @@
 export const STYLE = `
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.is-on { background: #6a8759; }
+.dot.is-off { background: var(--error); }
+
 .toolbar {
   display: flex;
   align-items: flex-start;

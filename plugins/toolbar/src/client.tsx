@@ -1,6 +1,7 @@
 import {
   activate,
   configSection,
+  connected,
   registry,
   runCommand,
   settingsOf,
@@ -22,6 +23,13 @@ export default class Toolbar {
   @activate() protected start(): void {
     this.ide.css(STYLE);
     this.ide.registry<() => unknown>('chrome.top').add(() => this.view());
+    this.ide.registry<ToolbarWidget>('toolbar.widget').add({
+      id: 'connection',
+      side: 'right',
+      view: () => (
+        <span class={`dot ${connected.value ? 'is-on' : 'is-off'}`} title={t('toolbar.connection')} />
+      ),
+    });
   }
 
   private view() {

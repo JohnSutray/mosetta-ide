@@ -12,6 +12,9 @@ import { attach, hooksOf, registriesOf, sectionsOf } from './client.js';
 import { sectionOf } from './section.js';
 import type {
   ClientSurface,
+  Note,
+  NoteKind,
+  NotesAccess,
   DocWire,
   FsAccess,
   TreeWire,
@@ -92,6 +95,20 @@ export const workspaces: WorkspacesAccess = {
   },
   open: (root) => surface().workspaces.open(root),
   switchTo: (id) => surface().workspaces.switchTo(id),
+};
+export const connected: { readonly value: boolean } = {
+  get value() {
+    return surface().connected.value;
+  },
+};
+export const notes: NotesAccess = {
+  get all() {
+    return surface().notes.all;
+  },
+  notify: (text, kind) => surface().notes.notify(text, kind),
+  settle: (id, text, kind) => surface().notes.settle(id, text, kind),
+  dismiss: (id) => surface().notes.dismiss(id),
+  dismissAll: () => surface().notes.dismissAll(),
 };
 export const keymap: { readonly value: Keymap } = {
   get value() {
@@ -187,6 +204,30 @@ export class FakeDocWire implements DocWire {
   }
 }
 
+export class FakeNotes implements NotesAccess {
+  readonly all = signal<Note[]>([]);
+  private nextId = 1;
+  notify(text: string, kind: NoteKind = 'info'): number {
+    const id = this.nextId++;
+    this.all.value = [...this.all.value, { id, kind, text, at: 0 }];
+    return id;
+  }
+  settle(id: number, text: string, kind: NoteKind = 'info'): number {
+    const at = this.all.value.findIndex((note) => note.id === id);
+    if (at === -1) return this.notify(text, kind);
+    const next = [...this.all.value];
+    next[at] = { ...next[at]!, text, kind };
+    this.all.value = next;
+    return id;
+  }
+  dismiss(id: number): void {
+    this.all.value = this.all.value.filter((note) => note.id !== id);
+  }
+  dismissAll(): void {
+    this.all.value = [];
+  }
+}
+
 export class FakeSurface implements ClientSurface {
   readonly settings: Signal<Settings | null> = signal(null);
   settingsOf<T extends object>(section: string, defaults: T): { readonly value: T } {
@@ -200,6 +241,8 @@ export class FakeSurface implements ClientSurface {
 
   tip: Tip | null = null;
   readonly keymap: Signal<Keymap> = signal({ version: 1, bindings: [] });
+  readonly connected: Signal<boolean> = signal(true);
+  readonly notes = new FakeNotes();
 
   readonly project: Signal<WorkspaceInfo | null> = signal(null);
   readonly dirs = new Map<string, DirEntry[]>();

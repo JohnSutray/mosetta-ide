@@ -1,14 +1,12 @@
 import { commands } from '../keys/commands.js';
 import { config } from '../state/config.js';
-import { complain } from '../state/notifications.js';
+import { complain, notifications } from '../state/notifications.js';
 import { rpc, session } from '../state/session.js';
 import type { JSX } from 'preact';
 import { SETTINGS_SCHEMA, type SettingsSection } from '@ide/api/client';
 import { sectionOf } from '@ide/api/section';
 import { useEffect } from 'preact/hooks';
 import { registerCommands } from '../commands.js';
-import { Notifications } from './notifications.js';
-import { registerToolbarWishes } from './toolbar-wishes.js';
 import { Registry } from '../state/registry.js';
 import { i18n } from '../i18n/index.js';
 import { PluginSurfaces } from './plugin-surfaces.js';
@@ -20,7 +18,6 @@ const store = new Registry((message) => complain(message));
 store.declare('chrome.top', 'core');
 store.declare('chrome.main', 'core');
 store.declare('settings', 'core', SETTINGS_SCHEMA);
-registerToolbarWishes(store);
 
 function Region({ name, fallback }: { name: string; fallback?: JSX.Element }) {
   const views = store.all<() => unknown>(name).value;
@@ -50,6 +47,14 @@ export function App() {
       t: (key, params) => i18n.t(key, params),
       runCommand: (id) => commands.run(id),
       keymap: config.keymap,
+      connected: session.connected,
+      notes: {
+        all: notifications.notes,
+        notify: (text, kind) => notifications.notify(text, kind),
+        settle: (id, text, kind) => notifications.settle(id, text, kind),
+        dismiss: (id) => notifications.dismiss(id),
+        dismissAll: () => notifications.dismissAll(),
+      },
       settings: config.settings,
       settingsOf: (section, defaults) => ({
         get value() {
@@ -117,7 +122,6 @@ export function App() {
       <Region name="chrome.top" />
       <Region name="chrome.main" fallback={<NoShell />} />
       <PluginSurfaces />
-      <Notifications />
     </div>
   );
 }

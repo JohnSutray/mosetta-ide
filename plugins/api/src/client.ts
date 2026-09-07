@@ -76,6 +76,24 @@ export declare const workspaces: WorkspacesAccess;
 
 export declare const keymap: { readonly value: Keymap };
 
+export declare const connected: { readonly value: boolean };
+
+export type NoteKind = 'info' | 'error' | 'work';
+export interface Note {
+  id: number;
+  kind: NoteKind;
+  text: string;
+  at: number;
+}
+export interface NotesAccess {
+  readonly all: { readonly value: Note[] };
+  notify(text: string, kind?: NoteKind): number;
+  settle(id: number, text: string, kind?: NoteKind): number;
+  dismiss(id: number): void;
+  dismissAll(): void;
+}
+export declare const notes: NotesAccess;
+
 export type { Hunk, HunkKind } from '@ide/code';
 
 export interface HunkBox {
@@ -88,6 +106,8 @@ export interface ClientSurface {
   t: typeof t;
   runCommand: typeof runCommand;
   keymap: typeof keymap;
+  connected: typeof connected;
+  notes: typeof notes;
   settings: typeof settings;
   settingsOf: typeof settingsOf;
   project: typeof project;

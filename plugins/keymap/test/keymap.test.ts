@@ -30,4 +30,10 @@ describe('раскладка сама с собой не спорит', () => {
     }
     expect(twins, `строки-дубли:\n${twins.join('\n')}`).toEqual([]);
   });
+
+  it('ветки git висят на клавише под Escape, а не на символе', () => {
+    const bound = keymap().bindings.filter((b) => b.key.endsWith('+backquote'));
+    expect(bound.length, 'клавиша под Escape потерялась').toBeGreaterThan(0);
+    for (const binding of bound) expect(binding.command).toBe('git.branches');
+  });
 });

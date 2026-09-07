@@ -12,7 +12,7 @@ export function toolbarOrder(): string[] {
 
 function jsonc<T>(name: string): T {
   const raw = fs.readFileSync(
-    fileURLToPath(new URL(`../../config/${name}`, import.meta.url)),
+    fileURLToPath(new URL(`../../../config/${name}`, import.meta.url)),
     'utf8',
   );
   const clean = raw
