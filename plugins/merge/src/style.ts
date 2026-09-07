@@ -1,4 +1,5 @@
 export const STYLE = `
+.merge-reason { color: var(--error); font: 12px var(--ui-font); }
 
 .popup.is-full { border-radius: 0; border: none; }
 

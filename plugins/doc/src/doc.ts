@@ -26,6 +26,8 @@ export class Doc {
 
   readonly externalEpoch = signal(0);
 
+  readonly openEpoch = signal(0);
+
   readonly pendingReveal = signal<Reveal | null>(null);
 
   readonly diverged = signal<Map<string, 'changed' | 'removed'>>(new Map());
@@ -43,7 +45,11 @@ export class Doc {
     private readonly wire: DocWire,
     private readonly services: DocServices,
   ) {
-    this.sync = new DocSync(wire, (message) => services.complain(message));
+    this.sync = new DocSync(
+      wire,
+      (message) => services.complain(message),
+      () => void this.adoptFromServer(),
+    );
     this.listen();
   }
 
@@ -61,6 +67,7 @@ export class Doc {
       }
       const doc = await this.wire.open(path);
       this.sync.attach(doc);
+      if (previous?.path !== path) this.openEpoch.value += 1;
       batch(() => {
         this.history.value = [path, ...this.history.value.filter((item) => item !== path)].slice(0, 20);
         this.open.value = doc;
@@ -91,6 +98,23 @@ export class Doc {
   edit(text: string): void {
     this.dirty.value = true;
     this.sync.edit(text);
+  }
+
+  private async adoptFromServer(): Promise<void> {
+    const file = this.open.value;
+    if (!file) return;
+    try {
+      const doc = await this.wire.state(file.path);
+      if (this.open.value?.path !== file.path) return;
+      this.sync.attach(doc);
+      batch(() => {
+        this.open.value = doc;
+        this.dirty.value = doc.dirty;
+        this.externalEpoch.value += 1;
+      });
+    } catch (err) {
+      this.services.complain(describe(err));
+    }
   }
 
   onMergeRequested(handler: (path: string) => void): () => void {
@@ -182,6 +206,7 @@ export class Doc {
       this.wire.onChanged((event) => {
         if (this.open.value?.path !== event.path) return;
         this.dirty.value = event.dirty;
+        if (event.version !== this.sync.version && !this.sync.busy) void this.adoptFromServer();
       }),
       this.wire.onExternal((event) => {
         const asked = this.expected.delete(event.path);

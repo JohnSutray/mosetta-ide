@@ -84,6 +84,11 @@ export const externalEpoch: { readonly value: number } = {
     return live().doc.externalEpoch.value;
   },
 };
+export const openEpoch: { readonly value: number } = {
+  get value() {
+    return live().doc.openEpoch.value;
+  },
+};
 export const pendingReveal: { readonly value: Reveal | null } = {
   get value() {
     return live().doc.pendingReveal.value;

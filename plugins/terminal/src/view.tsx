@@ -1,3 +1,6 @@
+import { settingsOf } from '@ide/api/client';
+import { EDITOR_DEFAULTS } from '@ide/code';
+import { TERMINAL_DEFAULTS } from './settings.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
@@ -7,7 +10,11 @@ import { darcula } from '@ide/code';
 const dc = darcula.palette;
 import type { Attached } from './types.js';
 
-const FONT = "'JetBrains Mono', 'SF Mono', Menlo, monospace";
+function fontOf(): string {
+  const own = settingsOf('terminal', TERMINAL_DEFAULTS).value.fontFamily.trim();
+  const family = own || settingsOf('editor', EDITOR_DEFAULTS).value.fontFamily;
+  return `'${family}', 'SF Mono', Menlo, monospace`;
+}
 
 export interface Screen {
   name: string | null;
@@ -26,7 +33,7 @@ export function TerminalView({ screen }: { screen: Screen }) {
     let disposed = false;
 
     const term = new Terminal({
-      fontFamily: FONT,
+      fontFamily: fontOf(),
       fontSize: 12.5,
       lineHeight: 1.2,
       cursorBlink: true,

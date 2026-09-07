@@ -1,9 +1,9 @@
-import type { DocState } from '@ide/protocol';
+import { RpcErrorCode, type DocState } from '@ide/protocol';
 import type { DocWire } from '@ide/api/client';
 
 export class DocSync {
   private path: string | null = null;
-  private version = 0;
+  private version_ = 0;
   private pending: string | null = null;
   private inFlight = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -11,13 +11,22 @@ export class DocSync {
   constructor(
     private readonly wire: Pick<DocWire, 'edit'>,
     private readonly onError: (message: string) => void,
+    private readonly onStale: () => void = () => undefined,
     private readonly debounceMs = 150,
   ) {}
+
+  get version(): number {
+    return this.version_;
+  }
+
+  get busy(): boolean {
+    return this.inFlight || this.pending !== null || this.timer !== null;
+  }
 
   attach(doc: DocState): void {
     this.cancel();
     this.path = doc.path;
-    this.version = doc.version;
+    this.version_ = doc.version;
   }
 
   detach(): void {
@@ -49,9 +58,15 @@ export class DocSync {
     this.pending = null;
     this.inFlight = true;
     try {
-      const result = await this.wire.edit(this.path, text, this.version);
-      this.version = result.version;
+      const result = await this.wire.edit(this.path, text, this.version_);
+      this.version_ = result.version;
     } catch (err) {
+      const code = err && typeof err === 'object' && 'code' in err ? (err as { code?: number }).code : undefined;
+      if (code === RpcErrorCode.StaleVersion) {
+        this.pending = null;
+        this.onStale();
+        return;
+      }
       this.onError(err instanceof Error ? err.message : String(err));
     } finally {
       this.inFlight = false;

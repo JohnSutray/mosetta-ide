@@ -1,7 +1,16 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
 import { RpcErrorCode } from '@ide/protocol';
-import DocPlugin, { dirty, editDoc, goTo, openDoc, openFile, pendingReveal } from '../src/client.js';
+import DocPlugin, {
+  dirty,
+  editDoc,
+  externalEpoch,
+  goTo,
+  openDoc,
+  openEpoch,
+  openFile,
+  pendingReveal,
+} from '../src/client.js';
 
 const NAME = '@ide/plugin-doc';
 const PROJECT = { id: 'p1', root: '/один', name: 'один' } as never;
@@ -98,5 +107,43 @@ describe('документ', () => {
     host.surface.docs.fireExternal({ path: 'a.ts', revision: 'r3' });
     await settle();
     expect(host.ide(NAME).said.filter((one) => one.includes('file.external'))).toHaveLength(1);
+  });
+
+  it('чужая вкладка правила тот же файл — берём текст сервера, свою версию не выдумываем', async () => {
+    await openFile('a.ts');
+    const epoch = externalEpoch.value;
+    host.surface.docs.fireChanged({ path: 'a.ts', version: openDoc.value!.version, dirty: false });
+    await settle();
+    expect(externalEpoch.value).toBe(epoch);
+    host.surface.docs.texts.set('a.ts', 'из соседней вкладки');
+    host.surface.docs.fireChanged({ path: 'a.ts', version: openDoc.value!.version + 1, dirty: true });
+    await settle();
+    expect(openDoc.value?.text).toBe('из соседней вкладки');
+    expect(externalEpoch.value).toBe(epoch + 1);
+  });
+
+  it('устаревшая версия при отправке — тоже подтягиваем сервер, а не жалуемся', async () => {
+    await openFile('a.ts');
+    const epoch = externalEpoch.value;
+    host.surface.docs.editFails = { code: RpcErrorCode.StaleVersion, message: 'stale' };
+    host.surface.docs.texts.set('a.ts', 'сервер знает лучше');
+    editDoc('моё');
+    await plugin.doc.sync.flush();
+    await settle();
+    expect(openDoc.value?.text).toBe('сервер знает лучше');
+    expect(externalEpoch.value).toBe(epoch + 1);
+    expect(host.ide(NAME).complaints).toEqual([]);
+  });
+
+  it('номер открытия растёт на другом файле и не растёт на переезде того же', async () => {
+    await openFile('a.ts');
+    const epoch = openEpoch.value;
+    host.surface.docs.texts.set('c.ts', 'раз');
+    host.surface.docs.fireMoved({ from: 'a.ts', path: 'c.ts' });
+    await settle();
+    expect(openDoc.value?.path).toBe('c.ts');
+    expect(openEpoch.value).toBe(epoch);
+    await openFile('b.ts');
+    expect(openEpoch.value).toBe(epoch + 1);
   });
 });

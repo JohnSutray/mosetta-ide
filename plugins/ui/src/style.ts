@@ -227,7 +227,7 @@ export const STYLE = `
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 
-.branches-head {
+.pick-top {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -235,10 +235,10 @@ export const STYLE = `
   border-bottom: 1px solid var(--divider);
   flex: none;
 }
-.branches-title { font-size: 14px; }
-.branches-meta { color: var(--muted); font-size: 12px; }
-.branches-filter { flex: none; padding: 6px 8px; }
-.branches-filter .field { width: 100%; }
+.pick-title { font-size: 14px; }
+.pick-meta { color: var(--muted); font-size: 12px; }
+.pick-filter { flex: none; padding: 6px 8px; }
+.pick-filter .field { width: 100%; }
 
 .chevron {
   flex: none;

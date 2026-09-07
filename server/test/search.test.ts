@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { RunningServer } from '../src/server.js';
-import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
+import { connect, makeProject, removeProject, type TestClient, waitFor, withServer } from './helpers.js';
 
 interface Hit {
   kind: string;
@@ -167,12 +167,13 @@ function labels(hits: Hit[]): string[] {
   return hits.map((h) => h.label);
 }
 
-async function waitForSymbols(client: TestClient, timeoutMs = 20_000): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  for (;;) {
-    const stats = await indexStats(client);
-    if (stats.pending === 0 && stats.symbols > 0) return;
-    if (Date.now() > deadline) throw new Error('символы так и не разобрались');
-    await new Promise((r) => setTimeout(r, 50));
-  }
+function waitForSymbols(client: TestClient): Promise<void> {
+  return waitFor(
+    async () => {
+      const stats = await indexStats(client);
+      return stats.pending === 0 && stats.symbols > 0;
+    },
+    'символы разобрались',
+    20_000,
+  );
 }

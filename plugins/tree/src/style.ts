@@ -25,19 +25,6 @@ export const STYLE = `
 .tree-row.is-excluded:hover { background: rgba(190, 120, 40, 0.16); }
 .tree-row.is-excluded.is-current { background: var(--treesel); }
 
-.chevron {
-  flex: none;
-  width: 12px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #8b9296;
-  transition: transform 90ms linear;
-}
-.chevron.is-open { transform: rotate(90deg); }
-.chevron.is-hidden { visibility: hidden; }
-
 .tree-icon {
   flex: none;
   width: 16px;

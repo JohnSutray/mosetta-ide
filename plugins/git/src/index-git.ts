@@ -41,24 +41,25 @@ export class GitIndex {
     private readonly onOutput: (action: GitAction, chunk: string) => void = () => {},
   ) {}
 
-  startAutoFetch(minutes: number): void {
+  startAutoFetch(minutesOf: () => number): void {
     if (this.autoFetch) {
       clearInterval(this.autoFetch);
       this.autoFetch = null;
     }
-    if (this.disposed || minutes <= 0) return;
-    this.autoFetch = setInterval(
-      () => {
-        void this.git.run(this.root, ['fetch', '--all', '--prune'], 60_000).then((result) => {
-          if (!result.ok) {
-            this.log.debug(`автофетч не удался: ${result.stderr}`);
-            return;
-          }
-          return this.refresh();
-        });
-      },
-      minutes * 60_000,
-    );
+    if (this.disposed) return;
+    let last = Date.now();
+    this.autoFetch = setInterval(() => {
+      const minutes = minutesOf();
+      if (minutes <= 0 || Date.now() - last < minutes * 60_000) return;
+      last = Date.now();
+      void this.git.run(this.root, ['fetch', '--all', '--prune'], 60_000).then((result) => {
+        if (!result.ok) {
+          this.log.debug(`автофетч не удался: ${result.stderr}`);
+          return;
+        }
+        return this.refresh();
+      });
+    }, 30_000);
     this.autoFetch.unref?.();
   }
 

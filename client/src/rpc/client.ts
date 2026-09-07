@@ -38,6 +38,9 @@ export class RpcClient {
   private closed = false;
   private reopenTimer: ReturnType<typeof setTimeout> | null = null;
   private watching = false;
+  private heartbeat: ReturnType<typeof setInterval> | null = null;
+  private readonly pulseMs = 15_000;
+  private readonly pulseTimeoutMs = 10_000;
 
   constructor(private readonly url = defaultUrl()) {}
 
@@ -110,6 +113,7 @@ export class RpcClient {
       this.retry = 0;
       this.connected.value = true;
       for (const frame of this.queue.splice(0)) socket.send(frame);
+      this.startPulse(socket);
     });
 
     socket.addEventListener('message', (event) => {
@@ -124,6 +128,7 @@ export class RpcClient {
 
     socket.addEventListener('close', () => {
       if (!mine()) return;
+      this.stopPulse();
       this.connected.value = false;
       for (const [, slot] of this.pending) {
         slot.reject(new RpcFailure({ code: RpcErrorCode.ConnectionLost, message: 'Соединение закрыто' }));
@@ -131,6 +136,27 @@ export class RpcClient {
       this.pending.clear();
       if (!this.closed) this.scheduleReopen();
     });
+  }
+
+  private startPulse(socket: WebSocket): void {
+    this.stopPulse();
+    this.heartbeat = setInterval(() => {
+      if (this.socket !== socket || socket.readyState !== WebSocket.OPEN) return;
+      const answered = this.call('server.ping', null).then(
+        () => true,
+        () => true,
+      );
+      const late = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), this.pulseTimeoutMs));
+      void Promise.race([answered, late]).then((alive) => {
+        if (alive || this.socket !== socket) return;
+        socket.close();
+      });
+    }, this.pulseMs);
+  }
+
+  private stopPulse(): void {
+    if (this.heartbeat) clearInterval(this.heartbeat);
+    this.heartbeat = null;
   }
 
   private scheduleReopen(): void {

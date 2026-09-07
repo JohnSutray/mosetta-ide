@@ -111,6 +111,15 @@ export async function connect(server: RunningServer): Promise<TestClient> {
   };
 }
 
+export async function waitFor(check: () => boolean | Promise<boolean>, what: string, timeoutMs = 10_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    if (await check()) return;
+    if (Date.now() > deadline) throw new Error(`не дождались: ${what}`);
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+}
+
 export async function makeProject(name: string, files: Record<string, string>) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), `ide-${name}-`));
   for (const [rel, content] of Object.entries(files)) {

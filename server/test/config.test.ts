@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { isCommandId, type Keymap } from '@ide/protocol';
 import { jsonc } from '../src/config/jsonc.js';
 import { ConfigStore, keymapRules } from '../src/config/store.js';
+import { waitFor } from './helpers.js';
 
 const SHIPPED = fileURLToPath(new URL('../../config', import.meta.url));
 
@@ -110,21 +111,13 @@ describe('слежение за конфигом', () => {
     store.watch();
 
     const save = async (size: number) => {
-      const waiting = new Promise<void>((resolve) => {
-        const off = store.onChange(() => {
-          off();
-          resolve();
-        });
-      });
       const temp = path.join(dir, '.settings.json.tmp');
       await fs.writeFile(temp, JSON.stringify({ editor: { fontSize: size } }), 'utf8');
       await fs.rename(temp, target);
-      await Promise.race([
-        waiting,
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error(`конфиг не перечитан после сохранения ${size}`)), 3000),
-        ),
-      ]);
+      await waitFor(
+        () => (store.settings.editor as { fontSize?: number } | undefined)?.fontSize === size,
+        `конфиг перечитан после сохранения ${size}`,
+      );
     };
 
     await save(21);

@@ -17,6 +17,8 @@
   "merge.title.fs.reload": "pulling the disk in — build the version to keep in the editor",
   "merge.side.editor": "in the editor",
   "merge.side.disk": "on disk",
+  "merge.reason.diskGone": "— the file is gone from disk",
+  "merge.reason.editorGone": "— the file is gone in the editor",
   "merge.column.result": "result",
   "merge.take": "take this side",
   "merge.skip": "leave this side out",

@@ -28,6 +28,11 @@ export function MergeScreen({ merge }: { merge: Merge }) {
       <div class="merge-head">
         <span class="merge-title">{t(session.title)}</span>
         <span class="merge-path">{file.path}</span>
+        {whole && (
+          <span class="merge-reason">
+            {t(file.right.text === null ? 'merge.reason.diskGone' : 'merge.reason.editorGone')}
+          </span>
+        )}
       </div>
 
       <div class="merge-body">

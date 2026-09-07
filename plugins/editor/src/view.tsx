@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { Annotation, EditorState, type Extension } from '@codemirror/state';
+import { Annotation, Compartment, EditorState, type Extension } from '@codemirror/state';
 import {
   EditorView,
   keymap,
@@ -29,6 +29,7 @@ interface Props {
   file: DocState;
   head: string | null;
   onHunk: (hunk: Hunk, box: HunkBox) => void;
+  docKey: number;
   externalEpoch: number;
   reveal: { path: string; line: number; character?: number; epoch: number } | null;
   wantsFocus: number;
@@ -43,6 +44,7 @@ interface Props {
 
 export function CodeEditor({
   file,
+  docKey,
   head,
   onHunk,
   externalEpoch,
@@ -62,6 +64,7 @@ export function CodeEditor({
   handlers.current = { onEdit, onHover, onHunk, onCaret, onModClick };
   const pathRef = useRef(file.path);
   pathRef.current = file.path;
+  const language = useRef(new Compartment());
 
   useEffect(() => {
     if (!host.current) return;
@@ -109,7 +112,7 @@ export function CodeEditor({
         '.cm-cursor, .cm-dropCursor': { borderLeftWidth: `${settings.caretWidth}px` },
       }),
       EditorState.tabSize.of(settings.tabSize),
-      languages.of(file.path),
+      language.current.of(languages.of(file.path)),
       EditorState.readOnly.of(file.truncated),
     ];
 
@@ -127,7 +130,11 @@ export function CodeEditor({
       instance.destroy();
       view.current = null;
     };
-  }, [file.path, settings.fontSize, settings.fontFamily, settings.tabSize, settings.lineNumbers, settings.caretWidth]);
+  }, [docKey, settings.fontSize, settings.fontFamily, settings.tabSize, settings.lineNumbers, settings.caretWidth]);
+
+  useEffect(() => {
+    view.current?.dispatch({ effects: language.current.reconfigure(languages.of(file.path)) });
+  }, [file.path]);
 
   useEffect(() => {
     view.current?.dispatch({ effects: setDiagnostics.of(diagnostics) });

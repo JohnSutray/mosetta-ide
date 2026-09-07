@@ -91,12 +91,12 @@ export function PickPopup<T>({
 
   return (
     <Popup id={id} keys="pick" class="pick" size={size} min={min} onClose={onClose} onMouseDown={onMouseDown}>
-      <div class="branches-head">
-        <span class="branches-title">{title}</span>
-        {meta && <span class="branches-meta">{meta}</span>}
+      <div class="pick-top">
+        <span class="pick-title">{title}</span>
+        {meta && <span class="pick-meta">{meta}</span>}
       </div>
 
-      <div class="branches-filter">
+      <div class="pick-filter">
         <input
           ref={field}
           class="field"

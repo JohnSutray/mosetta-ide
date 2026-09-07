@@ -1,5 +1,6 @@
-import { command, type CallContext, type Ide } from '@ide/api/server';
+import { activate, command, type CallContext, type Ide, type Project } from '@ide/api/server';
 import { GitCli } from './cli.js';
+import { GIT_DEFAULTS } from './settings.js';
 import { GitIndex } from './index-git.js';
 import { GitStatus } from './status.js';
 import type { GitAction, GitState } from './types.js';
@@ -12,26 +13,36 @@ export default class GitServer {
     this.cli = new GitCli(ide);
   }
 
+  @activate() protected start(): void {
+    this.ide.onProject((project) => {
+      const index = this.indexOf(project);
+      index.startAutoFetch(() => this.ide.settings('git', GIT_DEFAULTS).autoFetchMinutes);
+      const off = project.memory.on((event) => {
+        if (['doc.saved', 'doc.removed', 'doc.moved', 'tree.changed', 'doc.external'].includes(event.type)) {
+          index.touch();
+        }
+      });
+      project.use('memory-watch', () => ({ dispose: off }));
+    });
+  }
+
   private index(call: CallContext): GitIndex {
-    return call.project.use('index', () => {
+    return this.indexOf(call.project);
+  }
+
+  private indexOf(project: Project): GitIndex {
+    return project.use('index', () => {
       const index = new GitIndex(
         this.cli,
         this.status,
-        call.project.root,
+        project.root,
         this.ide.log,
-        (state) => call.project.emit('state', state),
-        (action, chunk) => call.project.emit('output', { action, chunk }),
+        (state) => project.emit('state', state),
+        (action, chunk) => project.emit('output', { action, chunk }),
       );
       index.start();
       return index;
     });
-  }
-
-  @command() protected autoFetch(params: unknown, call: CallContext): null {
-    const asked = params as { minutes?: unknown } | null;
-    const minutes = typeof asked?.minutes === 'number' ? asked.minutes : 0;
-    this.index(call).startAutoFetch(minutes);
-    return null;
   }
 
   @command() protected state(_p: unknown, call: CallContext): GitState {

@@ -130,6 +130,7 @@ export class FakeDocWire implements DocWire {
   readonly saved: string[] = [];
   readonly reloaded: string[] = [];
   saveFails: { code: number; message: string } | null = null;
+  editFails: { code: number; message: string } | null = null;
   private version = 1;
   private readonly changed = new Set<(event: DocVersion) => void>();
   private readonly external = new Set<(event: { path: string; revision: string }) => void>();
@@ -150,6 +151,7 @@ export class FakeDocWire implements DocWire {
     this.closed.push(path);
   }
   async edit(path: string, text: string, _baseVersion: number): Promise<DocVersion> {
+    if (this.editFails) throw Object.assign(new Error(this.editFails.message), { code: this.editFails.code });
     this.edits.push({ path, text });
     this.texts.set(path, text);
     this.version += 1;

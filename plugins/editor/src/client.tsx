@@ -28,7 +28,7 @@ import {
   type HunkBox,
   type Ide,
 } from '@ide/api/client';
-import { closeFile, dirty, editDoc, externalEpoch, openDoc, pendingReveal, wantsFocus } from '@ide/plugin-doc';
+import { closeFile, dirty, editDoc, externalEpoch, openDoc, openEpoch, pendingReveal, wantsFocus } from '@ide/plugin-doc';
 import LspPlugin from '@ide/plugin-lsp';
 import { EDITOR_DEFAULTS } from '@ide/code';
 import { EMPTY_SCHEMA, type EmptyView } from './schema.js';
@@ -171,6 +171,7 @@ export default class Editor {
           file={file}
           head={this.headFor(file.path)}
           onHunk={(hunk, box) => this.hunkHandler?.(hunk, box)}
+          docKey={openEpoch.value}
           externalEpoch={externalEpoch.value}
           reveal={pendingReveal.value}
           wantsFocus={wantsFocus.value}

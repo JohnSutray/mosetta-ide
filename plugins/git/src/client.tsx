@@ -5,7 +5,6 @@ import {
   project,
   remote,
   runCommand,
-  settingsOf,
   stub,
   t,
   type Ide,
@@ -103,12 +102,6 @@ export default class GitPlugin implements GitRemote {
       this.branchesWindow.reset();
       if (current) void this.git.refresh();
     });
-
-    effect(() => {
-      const { autoFetchMinutes: minutes } = settingsOf('git', GIT_DEFAULTS).value;
-      if (!project.value) return;
-      void this.askAutoFetch({ minutes }).catch(() => undefined);
-    });
   }
 
   get snapshot(): ReadonlySignal<GitState> {
@@ -131,9 +124,6 @@ export default class GitPlugin implements GitRemote {
     return stub();
   }
   @remote('head') protected askHead(_p: { path: string }): Promise<{ path: string; text: string | null }> {
-    return stub();
-  }
-  @remote('autoFetch') protected askAutoFetch(_p: { minutes: number }): Promise<null> {
     return stub();
   }
 

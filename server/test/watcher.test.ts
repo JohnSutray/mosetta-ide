@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { RunningServer } from '../src/server.js';
-import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
+import { connect, makeProject, removeProject, type TestClient, waitFor, withServer } from './helpers.js';
 
 interface Hit {
   kind: string;
@@ -49,12 +49,11 @@ describe('слежение за диском', () => {
   });
 
   it('новый файл сразу ищется индексом', async () => {
-    const waiting = treeChanged(c, 'src');
     await fs.writeFile(path.join(root, 'src', 'находка.ts'), 'export const y = 1;\n', 'utf8');
-    await waiting;
-
-    const hits = await search(c, { query: 'находка' });
-    expect(hits.map((h) => h.path)).toContain('src/находка.ts');
+    await waitFor(
+      async () => (await search(c, { query: 'находка' })).some((h) => h.path === 'src/находка.ts'),
+      'новый файл в индексе',
+    );
   });
 
   it('удалённый файл уходит из памяти', async () => {

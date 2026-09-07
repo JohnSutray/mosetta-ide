@@ -6,9 +6,11 @@ import { promisify } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   declaredOf,
+  hooksOf,
   type CallContext,
   type CommandHandler,
   type Ide,
+  type MemoryEvent,
   type Project,
   type ProcessHandle,
   type ProjectMemory,
@@ -49,8 +51,15 @@ class FakeProject implements Project {
   start(): ProcessHandle {
     throw new Error('долгоживущих процессов в этом тесте нет');
   }
+  readonly listeners = new Set<(event: MemoryEvent) => void>();
+  remember(event: MemoryEvent): void {
+    for (const one of this.listeners) one(event);
+  }
   readonly memory: ProjectMemory = {
-    on: () => () => undefined,
+    on: (handler) => {
+      this.listeners.add(handler);
+      return () => this.listeners.delete(handler);
+    },
     files: () => [],
     docSync: () => null,
     peekDoc: async (path) => ({ path, text: '', version: 0, openCount: 0 }),
@@ -88,17 +97,17 @@ function running(spec: RunAsk, onChunk?: (text: string) => void): Promise<RunRes
 
 const silent = { debug() {}, info() {}, warn() {}, error() {} };
 
-function fakeIde(): Ide {
+function fakeIde(projects: Array<(project: Project) => void>): Ide {
   return {
     name: '@ide/plugin-git',
     method: () => undefined,
     getPlugin: () => {
       throw new Error('соседей в этом тесте нет');
     },
-    onProject: () => undefined,
-    settings: () => {
-      throw new Error('настроек в этом тесте нет');
+    onProject: (handler) => {
+      projects.push(handler);
     },
+    settings: <T>(_section: string, defaults: T) => defaults,
     environment: () => ({}),
     which: () => null,
     dir: '',
@@ -131,7 +140,10 @@ describe('git', () => {
     await git('commit', '-m', 'первый');
 
     project = new FakeProject(root);
-    const server = new GitServer(fakeIde());
+    const projects: Array<(project: Project) => void> = [];
+    const server = new GitServer(fakeIde(projects));
+    await hooksOf(server).start?.();
+    for (const handler of projects) handler(project);
     const methods = new Map<string, CommandHandler>(declaredOf(server));
     const ctx: CallContext = { project, services: null };
     call = (method, params = null) => {
@@ -180,6 +192,20 @@ describe('git', () => {
     await fs.writeFile(path.join(root, 'src/fresh.ts'), 'export const three = 3;\n');
     const head = (await call('head', { path: 'src/fresh.ts' })) as { text: string | null };
     expect(head.text).toBeNull();
+  });
+
+  it('индекс слышит память: сохранили файл — покраска обновилась без опроса (ADR-0188)', async () => {
+    await state();
+    await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 11;\n');
+    project.remember({ type: 'doc.saved', path: 'src/main.ts' });
+    const started = Date.now();
+    for (;;) {
+      const now = await state();
+      if (now.files['src/main.ts']) break;
+      if (Date.now() - started > 2000) throw new Error('индекс не услышал память');
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    expect(Date.now() - started).toBeLessThan(2000);
   });
 
   it('состояние отдаётся из памяти, а не считается на запрос', async () => {
