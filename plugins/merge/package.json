@@ -28,6 +28,7 @@
   "dependencies": {
     "@ide/api": "workspace:*",
     "@ide/code": "workspace:*",
+    "@ide/plugin-doc": "workspace:*",
     "@ide/protocol": "workspace:*",
     "@ide/ui": "workspace:*"
   },

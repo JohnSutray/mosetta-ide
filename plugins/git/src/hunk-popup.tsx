@@ -1,4 +1,5 @@
-import { openDoc, t } from '@ide/api/client';
+import { t } from '@ide/api/client';
+import { openDoc } from '@ide/plugin-doc';
 import type { GitMarks } from './marks.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { popups } from '@ide/windows';

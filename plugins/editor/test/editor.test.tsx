@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { DocState } from '@ide/protocol';
 import { FakeHost, nodes, of } from '@ide/api/testing';
 import LspPlugin from '@ide/plugin-lsp';
+import DocPlugin from '@ide/plugin-doc';
 import Editor from '../src/client.js';
 
 const NAME = '@ide/plugin-editor';
@@ -15,6 +16,8 @@ describe('редактор', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
+    (globalThis as Record<string, unknown>)['document'] ??= {};
+    host.add(DocPlugin, '@ide/plugin-doc');
     host.add(LspPlugin, '@ide/plugin-lsp');
     host.add(Editor, NAME);
     await host.start();
@@ -73,7 +76,7 @@ describe('редактор', () => {
 
   it('заголовок — путь открытого файла, а пусто — имя панели', () => {
     expect(head().heading!()).toBeNull();
-    host.surface.openDoc.value = doc('src/app.tsx');
+    host.plugin(DocPlugin).doc.open.value = doc('src/app.tsx');
     expect(head().heading!()).toBe('src/app.tsx');
     expect(head().title).toBe('panel.editor.empty');
   });
@@ -85,37 +88,37 @@ describe('редактор', () => {
         .map((one) => one.props['children']);
     expect(head().badges!()).toBeNull();
 
-    host.surface.openDoc.value = doc('a.ts');
+    host.plugin(DocPlugin).doc.open.value = doc('a.ts');
     expect(tags()).toEqual([]);
 
-    host.surface.dirty.value = true;
+    host.plugin(DocPlugin).doc.dirty.value = true;
     expect(tags()).toEqual(['modified']);
 
-    host.surface.openDoc.value = doc('a.ts', { truncated: true });
+    host.plugin(DocPlugin).doc.open.value = doc('a.ts', { truncated: true });
     expect(tags()).toEqual(['read-only', 'modified']);
   });
 
   it('крестик значит разное: с файлом закрывает файл, без файла — панель', () => {
-    host.surface.openDoc.value = doc('a.ts');
+    host.plugin(DocPlugin).doc.open.value = doc('a.ts');
     head().close!();
-    expect(host.surface.closed).toBe(1);
+    expect(host.surface.docs.closed).toHaveLength(1);
     expect(open().value).toBe(true);
 
     head().close!();
-    expect(host.surface.closed).toBe(1);
+    expect(host.surface.docs.closed).toHaveLength(1);
     expect(open().value).toBe(false);
   });
 
   it('открыли файл — показывается сам', () => {
     open().value = false;
-    host.surface.openDoc.value = doc('a.ts');
+    host.plugin(DocPlugin).doc.open.value = doc('a.ts');
     expect(open().value).toBe(true);
   });
 
   it('закрыли панель при открытом файле — сама не лезет обратно', () => {
-    host.surface.openDoc.value = doc('a.ts');
+    host.plugin(DocPlugin).doc.open.value = doc('a.ts');
     open().value = false;
-    host.surface.dirty.value = true;
+    host.plugin(DocPlugin).doc.dirty.value = true;
     expect(open().value).toBe(false);
   });
 
@@ -164,12 +167,12 @@ describe('редактор', () => {
   });
 
   it('без настроек не рисует ничего: шрифт и табы приезжают с сервера', () => {
-    host.surface.openDoc.value = doc('a.ts');
+    host.plugin(DocPlugin).doc.open.value = doc('a.ts');
     expect(head().view()).toBeNull();
   });
 
   it('есть настройки — отдаёт редактор с документом', () => {
-    host.surface.openDoc.value = doc('a.ts');
+    host.plugin(DocPlugin).doc.open.value = doc('a.ts');
     host.setSettings({ editor: { fontFamily: 'JetBrains Mono', fontSize: 13, tabSize: 2 } });
     const drawn = of(head().view(), 'CodeEditor');
     expect(drawn.length + nodes(head().view()).length).toBeGreaterThan(0);

@@ -1,4 +1,5 @@
 import { merge as access, project, t } from '@ide/api/client';
+import { expectExternal, forgetDiverged, onMergeRequested } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { diff3, type Region, type Choice, type SideChoice } from './diff3.js';
 import { batch, computed, effect, signal, type ReadonlySignal, type Signal } from '@preact/signals';
@@ -79,7 +80,7 @@ export class Merge {
   });
 
   constructor(private readonly ide: Ide) {
-    access.onRequested((path) => this.openFor(path));
+    onMergeRequested((path) => this.openFor(path));
 
     effect(() => {
       if (project.value) void this.load();
@@ -194,10 +195,10 @@ export class Merge {
     const file = this.file.value;
     if (!file) return;
     const payload = text === undefined ? this.result.value : text;
-    access.expectExternal(file.path);
+    expectExternal(file.path);
     try {
       const rest = await access.resolve(file.path, payload);
-      access.forgetDiverged(file.path);
+      forgetDiverged(file.path);
       batch(() => {
         this.session.value = rest;
         this.decisions.value = without(this.decisions.value, file.path);

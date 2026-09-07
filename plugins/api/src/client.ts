@@ -2,6 +2,7 @@ import type { Signal } from '@preact/signals';
 import type {
   DirEntry,
   DocState,
+  DocVersion,
   EntryKind,
   KeyBinding,
   KeyContext,
@@ -19,8 +20,6 @@ export interface Size {
 }
 
 export declare function t(key: string, params?: Record<string, string | number>): string;
-
-export declare function goTo(path: string, line: number, character?: number): Promise<void>;
 
 export declare function runCommand(id: string): boolean;
 
@@ -57,8 +56,21 @@ export interface FsAccess {
 }
 export declare const fs: FsAccess;
 
-export declare function openFile(path: string, options?: { focus?: boolean }): Promise<void>;
-export declare function flushDocs(): Promise<void>;
+export interface DocWire {
+  open(path: string): Promise<DocState>;
+  close(path: string): Promise<void>;
+  edit(path: string, text: string, baseVersion: number): Promise<DocVersion>;
+  save(path: string): Promise<DocState>;
+  reload(path: string): Promise<DocState>;
+  state(path: string): Promise<DocState>;
+  mergeFromDisk(path: string): Promise<MergeSession | null>;
+  onChanged(handler: (event: DocVersion) => void): () => void;
+  onExternal(handler: (event: { path: string; revision: string }) => void): () => void;
+  onDiverged(handler: (event: { path: string; reason: 'changed' | 'removed' }) => void): () => void;
+  onMoved(handler: (event: { from: string; path: string }) => void): () => void;
+  onRemoved(handler: (event: { path: string }) => void): () => void;
+}
+export declare const docs: DocWire;
 export declare function setSetting(section: string, key: string, value: string | boolean): Promise<void>;
 export declare function primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean;
 
@@ -66,11 +78,7 @@ export interface MergeAccess {
   state(): Promise<MergeSession | null>;
   resolve(path: string, text: string | null): Promise<MergeSession | null>;
   cancel(): Promise<void>;
-  fromDisk(path: string): Promise<MergeSession | null>;
   onState(handler: (state: MergeSession | null) => void): () => void;
-  onRequested(handler: (path: string) => void): () => void;
-  expectExternal(path: string): void;
-  forgetDiverged(path: string): void;
 }
 export declare const merge: MergeAccess;
 
@@ -105,27 +113,6 @@ export interface KeysAccess {
 }
 export declare const keys: KeysAccess;
 
-export declare const diverged: { readonly value: ReadonlyMap<string, 'changed' | 'removed'> };
-export declare function reloadFile(): Promise<void>;
-
-export declare const openDoc: { readonly value: DocState | null };
-
-export declare function editDoc(text: string): void;
-
-export declare function closeFile(): Promise<void>;
-
-export declare const dirty: { readonly value: boolean };
-
-export declare const externalEpoch: { readonly value: number };
-
-export interface Reveal {
-  path: string;
-  line: number;
-  character?: number;
-  epoch: number;
-}
-export declare const pendingReveal: { readonly value: Reveal | null };
-
 export type { Hunk, HunkKind } from '@ide/code';
 
 export interface HunkBox {
@@ -134,12 +121,6 @@ export interface HunkBox {
   bottom: number;
 }
 
-export declare function peekFile(path: string): Promise<{ path: string; text: string }>;
-
-export declare function takeFocusOnMount(): boolean;
-
-export declare const wantsFocus: { readonly value: number };
-
 export declare function chordHeld(
   command: string,
   event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean },
@@ -147,31 +128,18 @@ export declare function chordHeld(
 
 export interface ClientSurface {
   t: typeof t;
-  goTo: typeof goTo;
   runCommand: typeof runCommand;
   keysFor: typeof keysFor;
   settings: typeof settings;
   project: typeof project;
   tree: typeof tree;
   fs: typeof fs;
-  openFile: typeof openFile;
-  flushDocs: typeof flushDocs;
+  docs: typeof docs;
   setSetting: typeof setSetting;
   primaryHeld: typeof primaryHeld;
   merge: typeof merge;
   workspaces: typeof workspaces;
   keys: typeof keys;
-  diverged: typeof diverged;
-  reloadFile: typeof reloadFile;
-  openDoc: typeof openDoc;
-  editDoc: typeof editDoc;
-  closeFile: typeof closeFile;
-  dirty: typeof dirty;
-  externalEpoch: typeof externalEpoch;
-  pendingReveal: typeof pendingReveal;
-  peekFile: typeof peekFile;
-  takeFocusOnMount: typeof takeFocusOnMount;
-  wantsFocus: typeof wantsFocus;
   chordHeld: typeof chordHeld;
 }
 
@@ -189,7 +157,7 @@ export interface Ide {
   getPlugin<T>(ctor: PluginClass<T>): T;
   command(id: string, run: () => void): void;
   registry<T>(key: string): RegistryHandle<T>;
-  remember<T>(key: string, initial: T): Signal<T>;
+  remember<T>(key: string, initial: T, scope?: 'tab' | 'both'): Signal<T>;
   css(text: string): void;
   on(event: string, handler: (payload: unknown) => void): () => void;
 

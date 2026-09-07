@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
 import { activePick } from '@ide/windows';
 import Editor from '@ide/plugin-editor';
+import DocPlugin from '@ide/plugin-doc';
 import LspPlugin, { type SymbolSite } from '@ide/plugin-lsp';
 import SymbolsPlugin from '../src/client.js';
 
@@ -15,6 +16,8 @@ async function raise() {
   fake.definitions = [];
   fake.referencesFound = [];
   const host = new FakeHost();
+  (globalThis as Record<string, unknown>)['document'] ??= {};
+  host.add(DocPlugin, '@ide/plugin-doc');
   host.add(LspPlugin, '@ide/plugin-lsp');
   const lsp = host.ide('@ide/plugin-lsp');
   lsp.answers.set('definition', () => fake.definitions);
@@ -25,7 +28,7 @@ async function raise() {
   host.add(Editor, '@ide/plugin-editor');
   const plugin = host.add(SymbolsPlugin, '@ide/plugin-symbols');
   await host.start();
-  host.surface.openDoc.value = {
+  host.plugin(DocPlugin).doc.open.value = {
     path: 'a.ts',
     text: '',
     version: 1,
@@ -42,7 +45,7 @@ describe('символы', () => {
     const { host, symbols } = await raise();
     fake.definitions.push(site('b.ts', 7));
     await symbols.ask(HERE);
-    expect(host.surface.jumps).toEqual([{ path: 'b.ts', line: 7, character: 0 }]);
+    expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'b.ts', line: 7, character: 0 });
     expect(symbols.list.value).toBeNull();
   });
 
@@ -50,7 +53,7 @@ describe('символы', () => {
     const { host, symbols } = await raise();
     fake.definitions.push(site('a.ts', 3));
     fake.referencesFound.push(site('a.ts', 3), site('c.ts', 1), site('d.ts', 9));
-    host.surface.texts.set('c.ts', 'один\nдва');
+    host.surface.docs.texts.set('c.ts', 'один\nдва');
     await symbols.ask(HERE);
 
     const list = symbols.list.value!;
@@ -61,7 +64,7 @@ describe('символы', () => {
     activePick.value!.next();
     expect(symbols.list.value!.at).toBe(1);
     activePick.value!.accept();
-    expect(host.surface.jumps.at(-1)).toEqual({ path: 'd.ts', line: 9, character: 0 });
+    expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'd.ts', line: 9, character: 0 });
     expect(activePick.value).toBeNull();
   });
 

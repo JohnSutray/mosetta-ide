@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
+import DocPlugin from '@ide/plugin-doc';
 import SearchPlugin, { type IndexHit } from '../src/client.js';
 
 function hit(kind: string, label: string, path = `${label}.ts`, line?: number): IndexHit {
@@ -10,6 +11,8 @@ const NAME = '@ide/plugin-search';
 
 async function raise() {
   const host = new FakeHost();
+  (globalThis as Record<string, unknown>)['document'] ??= {};
+  host.add(DocPlugin, '@ide/plugin-doc');
   const plugin = host.add(SearchPlugin, NAME);
   const hits: IndexHit[] = [];
   host.ide(NAME).answers.set('search', () => hits);
@@ -40,19 +43,21 @@ describe('найти всё', () => {
 
     search.accept();
     expect(ran).toEqual(['package.json']);
-    expect(host.surface.jumps).toEqual([]);
+    expect(host.plugin(DocPlugin).doc.pendingReveal.value).toBeNull();
     expect(search.open.value).toBe(false);
   });
 
   it('Enter по файлу открывает его на найденной строке', async () => {
     const { host, search, hits } = await raise();
     hits.push(hit('ts', 'Foo', 'src/foo.ts', 41));
+    host.surface.docs.texts.set('src/foo.ts', '');
     search.show();
     search.setQuery('Foo');
     await new Promise((r) => setTimeout(r, 0));
 
     search.accept();
-    expect(host.surface.jumps).toMatchObject([{ path: 'src/foo.ts', line: 41 }]);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'src/foo.ts', line: 41 });
   });
 
   it('клавиша, открывшая окно, его и закрывает', async () => {

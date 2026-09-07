@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-visits",
+  "name": "@ide/plugin-doc",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,17 +11,15 @@
   },
   "ide": {
     "client": "src/client.tsx",
-    "server": "src/server.ts",
     "strings": "src/en.json",
     "commands": {
-      "nav.back": "Назад по местам каретки",
-      "nav.forward": "Вперёд по местам каретки"
+      "file.save": "Сохранить файл",
+      "file.reload": "Перечитать файл с диска"
     }
   },
   "dependencies": {
     "@ide/api": "workspace:*",
-    "@ide/plugin-doc": "workspace:*",
-    "@ide/plugin-editor": "workspace:*"
+    "@ide/protocol": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

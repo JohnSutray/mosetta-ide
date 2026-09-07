@@ -1,4 +1,5 @@
-import { diverged, merge, reloadFile, t } from '@ide/api/client';
+import { t } from '@ide/api/client';
+import { diverged, mergeFromDisk, reloadFile } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 
 export function DivergedBadge({ path, ide }: { path: string; ide: Ide }) {
@@ -16,7 +17,7 @@ export function DivergedBadge({ path, ide }: { path: string; ide: Ide }) {
         type="button"
         class="diverged-button"
         title={t('diverged.merge.hint')}
-        onClick={() => void merge.fromDisk(path).catch(say)}
+        onClick={() => void mergeFromDisk(path).catch(say)}
       >
         {why === 'removed' ? t('diverged.sort') : t('diverged.reload')}
       </button>

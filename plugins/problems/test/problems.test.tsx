@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, nodes, of } from '@ide/api/testing';
 import LspPlugin, { type Diagnostic, type FileDiagnostics } from '@ide/plugin-lsp';
+import DocPlugin from '@ide/plugin-doc';
 import Problems from '../src/client.js';
 
 const NAME = '@ide/plugin-problems';
@@ -24,6 +25,8 @@ describe('панель ошибок', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
+    (globalThis as Record<string, unknown>)['document'] ??= {};
+    host.add(DocPlugin, '@ide/plugin-doc');
     host.add(LspPlugin, '@ide/plugin-lsp');
     host.add(Problems, NAME);
     await host.start();
@@ -84,7 +87,7 @@ describe('панель ошибок', () => {
       { path: 'a.ts', diagnostics: [problem(0, 'раз')] },
       { path: 'b.ts', diagnostics: [problem(1, 'два'), problem(2, 'три')] },
     ]);
-    host.surface.openDoc.value = { path: 'a.ts' } as never;
+    host.plugin(DocPlugin).doc.open.value = { path: 'a.ts' } as never;
     const paths = of(view(), 'span')
       .filter((n) => n.props['class'] === 'problems-path')
       .map((n) => n.props['children']);
@@ -97,7 +100,7 @@ describe('панель ошибок', () => {
       { path: 'a.ts', diagnostics: [problem(0, 'раз')] },
       { path: 'b.ts', diagnostics: [problem(0, 'два')] },
     ]);
-    host.surface.openDoc.value = { path: 'b.ts' } as never;
+    host.plugin(DocPlugin).doc.open.value = { path: 'b.ts' } as never;
     const marked = of(view(), 'div')
       .filter((n) => String(n.props['class']).startsWith('problems-where'))
       .map((n) => String(n.props['class']).includes('is-current'));
@@ -108,7 +111,7 @@ describe('панель ошибок', () => {
     setProblems([{ path: 'a.ts', diagnostics: [problem(7, 'вот тут')] }]);
     const row = of(view(), 'li')[0]!;
     await (row.props['onClick'] as () => Promise<void>)();
-    expect(host.surface.jumps).toEqual([{ path: 'a.ts', line: 7, character: 4 }]);
+    expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'a.ts', line: 7, character: 4 });
   });
 
   it('нажатие на путь ведёт к первой ошибке файла', async () => {
@@ -119,7 +122,7 @@ describe('панель ошибок', () => {
       String(n.props['class']).startsWith('problems-where'),
     )!;
     await (head.props['onClick'] as () => Promise<void>)();
-    expect(host.surface.jumps).toEqual([{ path: 'a.ts', line: 3, character: 4 }]);
+    expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'a.ts', line: 3, character: 4 });
   });
 
   it('усечение ВИДНО строкой, а не молчит', () => {

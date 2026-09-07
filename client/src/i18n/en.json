@@ -44,11 +44,8 @@
   "popup.resize": "Drag to resize",
   "note.close": "Dismiss",
   "note.closeAll": "Dismiss all",
-  "file.reloaded": "{path} reloaded from disk",
   "file.conflict": "{path} changed on disk and here — pick one",
   "file.removed": "{path} is gone from disk",
   "file.saved": "{path} saved",
-  "file.external": "{path} changed on disk — reloaded",
-  "file.gone": "{path} is gone from disk. Saving will recreate it.",
   "rpc.closed": "Connection closed"
 }

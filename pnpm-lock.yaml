@@ -141,6 +141,28 @@ importers:
         specifier: ^10.25.3
         version: 10.29.8
 
+  plugins/doc:
+    dependencies:
+      '@ide/api':
+        specifier: workspace:*
+        version: link:../api
+      '@ide/protocol':
+        specifier: workspace:*
+        version: link:../../protocol
+    devDependencies:
+      '@preact/signals':
+        specifier: ^1.3.1
+        version: 1.3.4(preact@10.29.8)
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.20.1
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
+
   plugins/editor:
     dependencies:
       '@ide/api':
@@ -149,6 +171,9 @@ importers:
       '@ide/code':
         specifier: workspace:*
         version: link:../../code
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
       '@ide/plugin-lsp':
         specifier: workspace:*
         version: link:../lsp
@@ -189,6 +214,9 @@ importers:
       '@ide/code':
         specifier: workspace:*
         version: link:../../code
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
       '@ide/plugin-editor':
         specifier: workspace:*
         version: link:../editor
@@ -261,6 +289,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
       '@ide/protocol':
         specifier: workspace:*
         version: link:../../protocol
@@ -289,6 +320,9 @@ importers:
       '@ide/code':
         specifier: workspace:*
         version: link:../../code
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
       '@ide/protocol':
         specifier: workspace:*
         version: link:../../protocol
@@ -348,6 +382,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
       '@ide/plugin-lsp':
         specifier: workspace:*
         version: link:../lsp
@@ -414,6 +451,9 @@ importers:
       '@ide/code':
         specifier: workspace:*
         version: link:../../code
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
       '@ide/protocol':
         specifier: workspace:*
         version: link:../../protocol
@@ -458,6 +498,9 @@ importers:
       '@ide/code':
         specifier: workspace:*
         version: link:../../code
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
       '@ide/plugin-editor':
         specifier: workspace:*
         version: link:../editor
@@ -551,6 +594,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
       '@ide/plugin-lsp':
         specifier: workspace:*
         version: link:../lsp
@@ -601,6 +647,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
       '@ide/plugin-editor':
         specifier: workspace:*
         version: link:../editor
@@ -625,6 +674,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../plugins/api
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../plugins/doc
       '@ide/plugin-editor':
         specifier: workspace:*
         version: link:../plugins/editor

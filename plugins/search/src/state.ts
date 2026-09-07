@@ -1,4 +1,4 @@
-import { goTo, peekFile } from '@ide/api/client';
+import { goTo, peekFile } from '@ide/plugin-doc';
 import type { RegistryHandle } from '@ide/api/client';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
 import type { IndexHit, IndexKind, Opener } from './types.js';

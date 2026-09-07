@@ -1,4 +1,5 @@
-import { activate, openDoc, pendingReveal, remote, stub, workspaces } from '@ide/api/client';
+import { activate, remote, stub, workspaces } from '@ide/api/client';
+import { openDoc, pendingReveal } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { effect } from '@preact/signals';
 import Editor from '@ide/plugin-editor';

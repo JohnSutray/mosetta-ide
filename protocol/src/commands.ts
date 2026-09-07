@@ -1,6 +1,4 @@
 export const COMMANDS = {
-  'file.save': 'Сохранить файл',
-  'file.reload': 'Перечитать файл с диска',
   'edit.undo': 'Отменить',
   'edit.redo': 'Повторить',
   'edit.deleteLine': 'Удалить строку',

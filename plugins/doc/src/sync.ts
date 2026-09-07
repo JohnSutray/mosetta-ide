@@ -1,5 +1,5 @@
 import type { DocState } from '@ide/protocol';
-import type { RpcClient } from '../rpc/client.js';
+import type { DocWire } from '@ide/api/client';
 
 export class DocSync {
   private path: string | null = null;
@@ -9,7 +9,7 @@ export class DocSync {
   private timer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
-    private readonly rpc: RpcClient,
+    private readonly wire: Pick<DocWire, 'edit'>,
     private readonly onError: (message: string) => void,
     private readonly debounceMs = 150,
   ) {}
@@ -49,11 +49,7 @@ export class DocSync {
     this.pending = null;
     this.inFlight = true;
     try {
-      const result = await this.rpc.call('doc.edit', {
-        path: this.path,
-        text,
-        baseVersion: this.version,
-      });
+      const result = await this.wire.edit(this.path, text, this.version);
       this.version = result.version;
     } catch (err) {
       this.onError(err instanceof Error ? err.message : String(err));

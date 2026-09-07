@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MergeSession } from '@ide/protocol';
 import { FakeHost } from '@ide/api/testing';
+import DocPlugin from '@ide/plugin-doc';
 import MergePlugin from '../src/client.js';
 
 function session(paths: string[], done: string[] = []): MergeSession {
@@ -20,6 +21,8 @@ function session(paths: string[], done: string[] = []): MergeSession {
 
 async function raise() {
   const host = new FakeHost();
+  (globalThis as Record<string, unknown>)['document'] ??= {};
+  host.add(DocPlugin, '@ide/plugin-doc');
   const plugin = host.add(MergePlugin, '@ide/plugin-merge');
   await host.start();
   return { host, plugin };
@@ -31,14 +34,14 @@ describe('экран слияния', () => {
     host.surface.pushMergeState(session(['a.ts', 'b.ts']));
     expect(plugin.merge.open.value).toBe(false);
 
-    host.surface.requestMerge('b.ts');
+    host.plugin(DocPlugin).doc.requestMerge('b.ts');
     expect(plugin.merge.open.value).toBe(true);
     expect(plugin.merge.file.value?.path).toBe('b.ts');
   });
 
   it('просьба, пришедшая РАНЬШЕ сеанса, ждёт его и открывается сама', async () => {
     const { host, plugin } = await raise();
-    host.surface.requestMerge('a.ts');
+    host.plugin(DocPlugin).doc.requestMerge('a.ts');
     expect(plugin.merge.open.value).toBe(false);
 
     host.surface.pushMergeState(session(['a.ts']));

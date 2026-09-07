@@ -1,4 +1,5 @@
-import { flushDocs, fs, openFile, t } from '@ide/api/client';
+import { fs, t } from '@ide/api/client';
+import { flushDocs, openFile } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import type { FileTree } from './file-tree.js';
 import { batch, signal } from '@preact/signals';

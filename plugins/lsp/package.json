@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@ide/api": "workspace:*",
+    "@ide/plugin-doc": "workspace:*",
     "@ide/protocol": "workspace:*",
     "typescript": "^5.7.2"
   },

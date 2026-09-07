@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ide/api": "workspace:*",
+    "@ide/plugin-doc": "workspace:*",
     "@ide/plugin-editor": "workspace:*",
     "@ide/plugin-git": "workspace:*",
     "@ide/plugin-keys": "workspace:*",

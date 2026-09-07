@@ -3,6 +3,7 @@ import { signal, type Signal } from '@preact/signals';
 import type {
   DirEntry,
   DocState,
+  DocVersion,
   KeyBinding,
   MergeSession,
   Settings,
@@ -11,6 +12,7 @@ import type {
 import { attach, hooksOf, registriesOf } from './client.js';
 import type {
   ClientSurface,
+  DocWire,
   FsAccess,
   TreeWire,
   MergeAccess,
@@ -20,7 +22,6 @@ import type {
   TakenKey,
   Ide,
   PluginClass,
-  Reveal,
   RegistryHandle,
 } from './client.js';
 
@@ -36,26 +37,11 @@ function surface(): FakeSurface {
 export function t(key: string, params?: Record<string, string | number>): string {
   return surface().t(key, params);
 }
-export function goTo(path: string, line: number, character?: number): Promise<void> {
-  return surface().goTo(path, line, character);
-}
 export function runCommand(id: string): boolean {
   return surface().runCommand(id);
 }
 export function keysFor(command: string): string[] {
   return surface().keysFor(command);
-}
-export function editDoc(text: string): void {
-  surface().editDoc(text);
-}
-export function closeFile(): Promise<void> {
-  return surface().closeFile();
-}
-export function peekFile(path: string): Promise<{ path: string; text: string }> {
-  return surface().peekFile(path);
-}
-export function takeFocusOnMount(): boolean {
-  return surface().takeFocusOnMount();
 }
 export function chordHeld(
   command: string,
@@ -67,11 +53,6 @@ export function chordHeld(
 export const settings: { readonly value: Settings | null } = {
   get value() {
     return surface().settings.value;
-  },
-};
-export const dirty: { readonly value: boolean } = {
-  get value() {
-    return surface().dirty.value;
   },
 };
 export const project: { readonly value: WorkspaceInfo | null } = {
@@ -92,12 +73,20 @@ export const fs: FsAccess = {
   writeBytes: (path, base64) => surface().fs.writeBytes(path, base64),
   absolute: (path) => surface().fs.absolute(path),
 };
-export function openFile(path: string, options?: { focus?: boolean }): Promise<void> {
-  return surface().openFile(path, options);
-}
-export function flushDocs(): Promise<void> {
-  return surface().flushDocs();
-}
+export const docs: DocWire = {
+  open: (path) => surface().docs.open(path),
+  close: (path) => surface().docs.close(path),
+  edit: (path, text, baseVersion) => surface().docs.edit(path, text, baseVersion),
+  save: (path) => surface().docs.save(path),
+  reload: (path) => surface().docs.reload(path),
+  state: (path) => surface().docs.state(path),
+  mergeFromDisk: (path) => surface().docs.mergeFromDisk(path),
+  onChanged: (handler) => surface().docs.onChanged(handler),
+  onExternal: (handler) => surface().docs.onExternal(handler),
+  onDiverged: (handler) => surface().docs.onDiverged(handler),
+  onMoved: (handler) => surface().docs.onMoved(handler),
+  onRemoved: (handler) => surface().docs.onRemoved(handler),
+};
 export function setSetting(section: string, key: string, value: string | boolean): Promise<void> {
   return surface().setSetting(section, key, value);
 }
@@ -108,11 +97,7 @@ export const merge: MergeAccess = {
   state: () => surface().merge.state(),
   resolve: (path, text) => surface().merge.resolve(path, text),
   cancel: () => surface().merge.cancel(),
-  fromDisk: (path) => surface().merge.fromDisk(path),
   onState: (handler) => surface().merge.onState(handler),
-  onRequested: (handler) => surface().merge.onRequested(handler),
-  expectExternal: (path) => surface().merge.expectExternal(path),
-  forgetDiverged: (path) => surface().merge.forgetDiverged(path),
 };
 export const workspaces: WorkspacesAccess = {
   get current() {
@@ -140,34 +125,6 @@ export const keys: KeysAccess = {
     return surface().keys.echo;
   },
 };
-export const diverged: { readonly value: ReadonlyMap<string, 'changed' | 'removed'> } = {
-  get value() {
-    return surface().diverged.value;
-  },
-};
-export function reloadFile(): Promise<void> {
-  return surface().reloadFile();
-}
-export const openDoc: { readonly value: DocState | null } = {
-  get value() {
-    return surface().openDoc.value;
-  },
-};
-export const externalEpoch: { readonly value: number } = {
-  get value() {
-    return surface().externalEpoch.value;
-  },
-};
-export const pendingReveal: { readonly value: Reveal | null } = {
-  get value() {
-    return surface().pendingReveal.value;
-  },
-};
-export const wantsFocus: { readonly value: number } = {
-  get value() {
-    return surface().wantsFocus.value;
-  },
-};
 export { activate, registry, remote, stub } from './client.js';
 
 export interface Tip {
@@ -175,17 +132,101 @@ export interface Tip {
   keys: string[];
 }
 
+export class FakeDocWire implements DocWire {
+  readonly texts = new Map<string, string>();
+  readonly opened: string[] = [];
+  readonly closed: string[] = [];
+  readonly edits: Array<{ path: string; text: string }> = [];
+  readonly saved: string[] = [];
+  readonly reloaded: string[] = [];
+  readonly merges: string[] = [];
+  saveFails: { code: number; message: string } | null = null;
+  readonly mergeSession = { value: null as MergeSession | null };
+  private version = 1;
+  private readonly changed = new Set<(event: DocVersion) => void>();
+  private readonly external = new Set<(event: { path: string; revision: string }) => void>();
+  private readonly diverged = new Set<(event: { path: string; reason: 'changed' | 'removed' }) => void>();
+  private readonly moved = new Set<(event: { from: string; path: string }) => void>();
+  private readonly removed = new Set<(event: { path: string }) => void>();
+
+  private stateOf(path: string): DocState {
+    const text = this.texts.get(path);
+    if (text === undefined) throw new Error(`нет файла ${path}`);
+    return { path, text, version: this.version, revision: 'r1', dirty: false, truncated: false };
+  }
+  async open(path: string): Promise<DocState> {
+    this.opened.push(path);
+    return this.stateOf(path);
+  }
+  async close(path: string): Promise<void> {
+    this.closed.push(path);
+  }
+  async edit(path: string, text: string, _baseVersion: number): Promise<DocVersion> {
+    this.edits.push({ path, text });
+    this.texts.set(path, text);
+    this.version += 1;
+    return { path, version: this.version, dirty: true };
+  }
+  async save(path: string): Promise<DocState> {
+    if (this.saveFails) throw Object.assign(new Error(this.saveFails.message), { code: this.saveFails.code });
+    this.saved.push(path);
+    return this.stateOf(path);
+  }
+  async reload(path: string): Promise<DocState> {
+    this.reloaded.push(path);
+    return this.stateOf(path);
+  }
+  async state(path: string): Promise<DocState> {
+    return this.stateOf(path);
+  }
+  async mergeFromDisk(path: string): Promise<MergeSession | null> {
+    this.merges.push(path);
+    return this.mergeSession.value;
+  }
+  onChanged(handler: (event: DocVersion) => void): () => void {
+    this.changed.add(handler);
+    return () => this.changed.delete(handler);
+  }
+  onExternal(handler: (event: { path: string; revision: string }) => void): () => void {
+    this.external.add(handler);
+    return () => this.external.delete(handler);
+  }
+  onDiverged(handler: (event: { path: string; reason: 'changed' | 'removed' }) => void): () => void {
+    this.diverged.add(handler);
+    return () => this.diverged.delete(handler);
+  }
+  onMoved(handler: (event: { from: string; path: string }) => void): () => void {
+    this.moved.add(handler);
+    return () => this.moved.delete(handler);
+  }
+  onRemoved(handler: (event: { path: string }) => void): () => void {
+    this.removed.add(handler);
+    return () => this.removed.delete(handler);
+  }
+  fireChanged(event: DocVersion): void {
+    for (const handler of this.changed) handler(event);
+  }
+  fireExternal(event: { path: string; revision: string }): void {
+    for (const handler of this.external) handler(event);
+  }
+  fireDiverged(event: { path: string; reason: 'changed' | 'removed' }): void {
+    for (const handler of this.diverged) handler(event);
+  }
+  fireMoved(event: { from: string; path: string }): void {
+    for (const handler of this.moved) handler(event);
+  }
+  fireRemoved(event: { path: string }): void {
+    for (const handler of this.removed) handler(event);
+  }
+}
+
 export class FakeSurface implements ClientSurface {
   readonly settings: Signal<Settings | null> = signal(null);
 
-  readonly jumps: Array<{ path: string; line: number; character?: number }> = [];
   tip: Tip | null = null;
   readonly keyLists = new Map<string, string[]>();
 
   readonly project: Signal<WorkspaceInfo | null> = signal(null);
-  readonly openDoc: Signal<DocState | null> = signal(null);
-  readonly diverged: Signal<Map<string, 'changed' | 'removed'>> = signal(new Map());
-  readonly reloads = { count: 0 };
   readonly dirs = new Map<string, DirEntry[]>();
   readonly treeLoads: string[] = [];
   private readonly treeWatchers = new Set<(event: { path: string }) => void>();
@@ -228,14 +269,12 @@ export class FakeSurface implements ClientSurface {
     },
     absolute: async (path) => `/абсолютно/${path}`,
   };
-  readonly opened: Array<{ path: string; focus: boolean | undefined }> = [];
-  readonly flushes = { count: 0 };
+  readonly docs = new FakeDocWire();
   readonly settingWrites: Array<{ section: string; key: string; value: string | boolean }> = [];
   primary = false;
   readonly mergeSession = { value: null as MergeSession | null };
   readonly mergeCalls: Array<{ op: string; args: unknown[] }> = [];
   private readonly mergeStateHandlers = new Set<(state: MergeSession | null) => void>();
-  private readonly mergeRequestHandlers = new Set<(path: string) => void>();
   readonly merge: MergeAccess = {
     state: async () => this.mergeSession.value,
     resolve: async (path, text) => {
@@ -245,23 +284,9 @@ export class FakeSurface implements ClientSurface {
     cancel: async () => {
       this.mergeCalls.push({ op: 'cancel', args: [] });
     },
-    fromDisk: async (path) => {
-      this.mergeCalls.push({ op: 'fromDisk', args: [path] });
-      return this.mergeSession.value;
-    },
     onState: (handler) => {
       this.mergeStateHandlers.add(handler);
       return () => this.mergeStateHandlers.delete(handler);
-    },
-    onRequested: (handler) => {
-      this.mergeRequestHandlers.add(handler);
-      return () => this.mergeRequestHandlers.delete(handler);
-    },
-    expectExternal: (path) => {
-      this.mergeCalls.push({ op: 'expectExternal', args: [path] });
-    },
-    forgetDiverged: (path) => {
-      this.mergeCalls.push({ op: 'forgetDiverged', args: [path] });
     },
   };
   readonly workspaceCurrent: Signal<WorkspaceInfo | null> = signal(null);
@@ -292,20 +317,8 @@ export class FakeSurface implements ClientSurface {
     this.mergeSession.value = state;
     for (const handler of this.mergeStateHandlers) handler(state);
   }
-  requestMerge(path: string): void {
-    for (const handler of this.mergeRequestHandlers) handler(path);
-  }
-  readonly dirty = signal(false);
-  closed = 0;
-  readonly externalEpoch = signal(0);
-  readonly pendingReveal: Signal<Reveal | null> = signal(null);
-  readonly wantsFocus = signal(0);
-  readonly edits: string[] = [];
-  readonly texts = new Map<string, string>();
   readonly heads = new Map<string, string>();
   readonly chords = new Set<string>();
-  focusOnMount = true;
-
   constructor(private readonly host: FakeHost) {}
 
   t(key: string, params?: Record<string, string | number>): string {
@@ -316,10 +329,6 @@ export class FakeSurface implements ClientSurface {
     return `${key}(${tail})`;
   }
 
-  async goTo(path: string, line: number, character?: number): Promise<void> {
-    this.jumps.push({ path, line, character });
-  }
-
   runCommand(id: string): boolean {
     return this.host.run(id);
   }
@@ -328,42 +337,9 @@ export class FakeSurface implements ClientSurface {
     return this.keyLists.get(command) ?? [];
   }
 
-  editDoc(text: string): void {
-    this.edits.push(text);
-  }
-
-  async closeFile(): Promise<void> {
-    this.openDoc.value = null;
-    this.closed += 1;
-  }
-
-  async peekFile(path: string): Promise<{ path: string; text: string }> {
-    const text = this.texts.get(path);
-    if (text === undefined) throw new Error(`нет файла ${path}`);
-    return { path, text };
-  }
-
-  takeFocusOnMount(): boolean {
-    const wanted = this.focusOnMount;
-    this.focusOnMount = true;
-    return wanted;
-  }
-
   chordHeld(command: string, event: { metaKey: boolean }): boolean {
     void event;
     return this.chords.has(command);
-  }
-
-  async openFile(path: string, options?: { focus?: boolean }): Promise<void> {
-    this.opened.push({ path, focus: options?.focus });
-  }
-
-  async reloadFile(): Promise<void> {
-    this.reloads.count += 1;
-  }
-
-  async flushDocs(): Promise<void> {
-    this.flushes.count += 1;
   }
 
   async setSetting(section: string, key: string, value: string | boolean): Promise<void> {
@@ -499,7 +475,7 @@ export class FakeIde implements Ide {
     };
   }
 
-  remember<T>(key: string, initial: T): Signal<T> {
+  remember<T>(key: string, initial: T, _scope?: 'tab' | 'both'): Signal<T> {
     const known = this.remembered.get(key);
     if (known) return known as Signal<T>;
     const made = signal(initial);

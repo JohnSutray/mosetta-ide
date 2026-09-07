@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@ide/api": "workspace:*",
+    "@ide/plugin-doc": "workspace:*",
     "@ide/plugin-lsp": "workspace:*",
     "@ide/ui": "workspace:*"
   },

@@ -1,4 +1,5 @@
-import { activate, goTo, openDoc, t, type Ide } from '@ide/api/client';
+import { activate, t, type Ide } from '@ide/api/client';
+import { goTo, openDoc } from '@ide/plugin-doc';
 import LspPlugin, { type Diagnostic } from '@ide/plugin-lsp';
 import { STYLE } from './style.js';
 import { ProblemsIcon } from './icon.js';

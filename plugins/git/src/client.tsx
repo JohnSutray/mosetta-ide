@@ -1,7 +1,6 @@
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
 import {
   activate,
-  openDoc,
   project,
   remote,
   settings,
@@ -11,6 +10,7 @@ import {
   runCommand,
   type Ide,
 } from '@ide/api/client';
+import { openDoc } from '@ide/plugin-doc';
 import { tips } from '@ide/windows';
 import Editor from '@ide/plugin-editor';
 import { BranchesWindow, Git, PushWindow, type GitRemote, type TreeTint } from './state.js';

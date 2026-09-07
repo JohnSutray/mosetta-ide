@@ -1,4 +1,5 @@
-import { openDoc, openFile, primaryHeld, project, t } from '@ide/api/client';
+import { primaryHeld, project, t } from '@ide/api/client';
+import { openDoc, openFile } from '@ide/plugin-doc';
 import { useEffect } from 'preact/hooks';
 import type { DirEntry } from '@ide/api/client';
 import { Chevron, DirIcon, FileIcon, RootIcon } from '@ide/ui';

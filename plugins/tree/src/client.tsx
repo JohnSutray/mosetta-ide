@@ -1,4 +1,5 @@
-import { activate, openDoc, openFile, project, registry, remote, stub, tree, workspaces } from '@ide/api/client';
+import { activate, project, registry, remote, stub, tree, workspaces } from '@ide/api/client';
+import { openDoc, openFile } from '@ide/plugin-doc';
 import LspPlugin from '@ide/plugin-lsp';
 import type { Ide } from '@ide/api/client';
 import { computed, effect } from '@preact/signals';

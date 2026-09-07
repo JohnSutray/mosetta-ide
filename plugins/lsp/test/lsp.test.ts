@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
+import DocPlugin from '@ide/plugin-doc';
 import LspPlugin, { type Diagnostic } from '../src/client.js';
 
 const NAME = '@ide/plugin-lsp';
@@ -20,6 +21,8 @@ let known: Array<{ path: string; diagnostics: Diagnostic[] }>;
 
 beforeEach(async () => {
   host = new FakeHost();
+  (globalThis as Record<string, unknown>)['document'] ??= {};
+  host.add(DocPlugin, '@ide/plugin-doc');
   plugin = host.add(LspPlugin, NAME);
   known = [{ path: 'b.ts', diagnostics: [problem(1, 'сломано')] }];
   const ide = host.ide(NAME);
@@ -54,7 +57,7 @@ describe('языковой сервер у плагина', () => {
     host.surface.project.value = PROJECT;
     await settle();
     expect(plugin.fileDiagnostics.value).toEqual([]);
-    host.surface.openDoc.value = { path: 'b.ts', text: '', version: 1, revision: null, readOnly: false } as never;
+    host.plugin(DocPlugin).doc.open.value = { path: 'b.ts', text: '', version: 1, revision: null, readOnly: false } as never;
     expect(plugin.fileDiagnostics.value.map((d) => d.message)).toEqual(['сломано']);
   });
 

@@ -1,4 +1,5 @@
-import { openDoc, setSetting, settings } from '@ide/api/client';
+import { setSetting, settings } from '@ide/api/client';
+import { openDoc } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { computed } from '@preact/signals';
 import type { TreeSelection } from './state.js';

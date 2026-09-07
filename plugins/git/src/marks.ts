@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
-import { editDoc, openDoc, type Hunk, type HunkBox } from '@ide/api/client';
+import { type Hunk, type HunkBox } from '@ide/api/client';
+import { editDoc, openDoc } from '@ide/plugin-doc';
 
 export class GitMarks {
   constructor(private readonly remote: { head(path: string): Promise<{ path: string; text: string | null }> }) {}

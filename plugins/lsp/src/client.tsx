@@ -1,4 +1,5 @@
-import { activate, openDoc, project, remote, stub, workspaces } from '@ide/api/client';
+import { activate, project, remote, stub, workspaces } from '@ide/api/client';
+import { openDoc } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
 import { Lsp } from './state.js';

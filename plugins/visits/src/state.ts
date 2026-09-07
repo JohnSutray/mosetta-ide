@@ -1,4 +1,4 @@
-import { goTo } from '@ide/api/client';
+import { goTo } from '@ide/plugin-doc';
 import { signal } from '@preact/signals';
 import type { Visit } from './types.js';
 

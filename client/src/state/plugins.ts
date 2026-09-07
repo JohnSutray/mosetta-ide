@@ -134,8 +134,8 @@ export class Plugins {
           },
         };
       },
-      remember<T>(key: string, initial: T): Signal<T> {
-        return persisted(`${name}/${key}`, initial);
+      remember<T>(key: string, initial: T, scope: 'tab' | 'both' = 'both'): Signal<T> {
+        return persisted(`${name}/${key}`, initial, scope);
       },
 
       css(text: string) {

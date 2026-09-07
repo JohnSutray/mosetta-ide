@@ -1,4 +1,4 @@
-import { goTo, openDoc, peekFile } from '@ide/api/client';
+import { goTo, openDoc, peekFile } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { batch, signal, type Signal } from '@preact/signals';
 import type { SymbolSite } from '@ide/plugin-lsp';

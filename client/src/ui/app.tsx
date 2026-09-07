@@ -2,12 +2,11 @@ import { keyContexts } from '../keys/context.js';
 import { commands } from '../keys/commands.js';
 import { keysEcho } from '../keys/echo.js';
 import { reserved } from '../keys/reserved.js';
-import { editorFocus } from '../state/editor.js';
 import { computed } from '@preact/signals';
 import { keyHost } from '../keys/host.js';
 import { config } from '../state/config.js';
 import { complain } from '../state/notifications.js';
-import { doc, rpc, session } from '../state/session.js';
+import { rpc, session } from '../state/session.js';
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { chordHeld } from '../keys/chords.js';
@@ -20,7 +19,6 @@ import { keysFor } from '../keys/keys-for.js';
 import { i18n } from '../i18n/index.js';
 import { PluginSurfaces } from './plugin-surfaces.js';
 import { plugins } from '../state/plugins.js';
-import { goTo } from './go-to.js';
 import type { ClientSurface } from '@ide/api/client';
 
 const store = new Registry((message) => complain(message));
@@ -55,7 +53,6 @@ export function App() {
     registerCommands();
     const surface: ClientSurface = {
       t: (key, params) => i18n.t(key, params),
-      goTo,
       runCommand: (id) => commands.run(id),
       keysFor,
       settings: config.settings,
@@ -80,11 +77,7 @@ export function App() {
         cancel: async () => {
           await rpc.call('merge.cancel', null);
         },
-        fromDisk: (path) => doc.mergeFromDisk(path),
         onState: (handler) => rpc.on('merge.state', handler),
-        onRequested: (handler) => doc.onMergeRequested(handler),
-        expectExternal: (path) => doc.expectExternal(path),
-        forgetDiverged: (path) => doc.forgetDiverged(path),
       },
       tree: {
         list: (path) => rpc.call('tree.list', { path }),
@@ -103,31 +96,26 @@ export function App() {
         writeBytes: (path, base64) => rpc.call('fs.writeBytes', { path, base64 }),
         absolute: async (path) => (await rpc.call('fs.absolute', { path })).path,
       },
-      openFile: (path, options) => {
-        if (options?.focus === false) editorFocus.openWithoutFocus();
-        const opened = doc.openAt(path);
-        if (options?.focus) void opened.then(() => editorFocus.focus());
-        return opened;
+      docs: {
+        open: (path) => rpc.call('doc.open', { path }),
+        close: async (path) => {
+          await rpc.call('doc.close', { path });
+        },
+        edit: (path, text, baseVersion) => rpc.call('doc.edit', { path, text, baseVersion }),
+        save: (path) => rpc.call('doc.save', { path }),
+        reload: (path) => rpc.call('doc.reload', { path }),
+        state: (path) => rpc.call('doc.state', { path }),
+        mergeFromDisk: (path) => rpc.call('doc.mergeFromDisk', { path }),
+        onChanged: (handler) => rpc.on('doc.changed', handler),
+        onExternal: (handler) => rpc.on('doc.external', handler),
+        onDiverged: (handler) => rpc.on('doc.diverged', handler),
+        onMoved: (handler) => rpc.on('doc.moved', handler),
+        onRemoved: (handler) => rpc.on('doc.removed', handler),
       },
-      flushDocs: () => doc.sync.flush(),
       setSetting: async (section, key, value) => {
         await rpc.call('config.set', { section, key, value });
       },
       primaryHeld: (event) => keyHost.primaryHeld(event),
-      openDoc: doc.open,
-      diverged: doc.diverged,
-      reloadFile: () => doc.reload(),
-      editDoc: (text) => doc.edit(text),
-      closeFile: () => doc.close(),
-      dirty: doc.dirty,
-      externalEpoch: doc.externalEpoch,
-      pendingReveal: doc.pendingReveal,
-      peekFile: async (path) => {
-        const state = await rpc.call('doc.state', { path });
-        return { path: state.path, text: state.text };
-      },
-      takeFocusOnMount: () => editorFocus.takeOnMount(),
-      wantsFocus: editorFocus.wanted,
       chordHeld,
     };
     void plugins.load(surface, store).then(() => {
@@ -145,10 +133,6 @@ export function App() {
       dispatcher.dispose();
     };
   }, []);
-
-  useEffect(() => {
-    document.title = doc.title.value;
-  }, [doc.title.value]);
 
   return (
     <div

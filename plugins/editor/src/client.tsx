@@ -19,20 +19,14 @@ import {
 import { effect, signal, type Signal } from '@preact/signals';
 import {
   activate,
-  closeFile,
-  dirty,
-  editDoc,
-  externalEpoch,
-  openDoc,
-  pendingReveal,
   registry,
   settings,
   t,
-  wantsFocus,
   type Ide,
   type Hunk,
   type HunkBox,
 } from '@ide/api/client';
+import { closeFile, dirty, editDoc, externalEpoch, openDoc, pendingReveal, wantsFocus } from '@ide/plugin-doc';
 import LspPlugin from '@ide/plugin-lsp';
 import { EMPTY_SCHEMA, type EmptyView } from './schema.js';
 import { STYLE } from './style.js';

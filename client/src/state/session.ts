@@ -3,7 +3,6 @@ import type { LogLine, WorkspaceInfo } from '@ide/protocol';
 import { RpcClient, RpcFailure } from '../rpc/client.js';
 import { complain } from './notifications.js';
 import { config } from './config.js';
-import { Doc } from './doc.js';
 import { say } from './notifications.js';
 import { i18n } from '../i18n/index.js';
 
@@ -69,18 +68,15 @@ export class Session {
 
   private async afterAttach(): Promise<void> {
     this.attached.value = this.current.value;
-    await doc.reopen();
   }
 
   private async resume(): Promise<void> {
     const ws = this.current.peek();
     if (!ws) return;
-    const path = doc.open.peek()?.path ?? null;
     try {
       const info = await this.rpc.call('workspace.open', { root: ws.root });
       this.current.value = info;
       await this.afterAttach();
-      if (path) await doc.openAt(path);
       say(i18n.t('session.resumed'));
     } catch (err) {
       complain(describe(err));
@@ -153,6 +149,3 @@ function describe(err: unknown): string {
 }
 
 export const session = new Session(rpc);
-export const doc = new Doc(rpc, session);
-
-session.owns(doc);

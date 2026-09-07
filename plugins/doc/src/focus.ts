@@ -19,5 +19,3 @@ export class EditorFocus {
     this.wanted.value += 1;
   }
 }
-
-export const editorFocus = new EditorFocus();
