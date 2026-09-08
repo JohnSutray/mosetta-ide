@@ -15,6 +15,7 @@
     "@ide/api": "workspace:*",
     "@ide/plugin-doc": "workspace:*",
     "@ide/plugin-editor": "workspace:*",
+    "@ide/plugin-find": "workspace:*",
     "@ide/plugin-git": "workspace:*",
     "@ide/plugin-keymap": "workspace:*",
     "@ide/plugin-keys": "workspace:*",

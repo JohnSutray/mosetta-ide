@@ -33,7 +33,9 @@ export type KeyContext =
   | 'push'
   | 'terminal'
   | 'keys'
-  | 'merge';
+  | 'merge'
+  | 'find'
+  | 'find-replace';
 
 export type KeyHost = 'browser' | 'electron';
 

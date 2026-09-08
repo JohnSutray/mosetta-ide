@@ -1,0 +1,53 @@
+{
+  "name": "@ide/plugin-find",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "exports": {
+    ".": "./src/client.tsx"
+  },
+  "ide": {
+    "client": "src/client.tsx",
+    "strings": "src/en.json",
+    "commands": {
+      "find.open": "Поиск в файле",
+      "find.replace": "Замена в файле",
+      "find.next": "Поиск: следующее",
+      "find.prev": "Поиск: предыдущее",
+      "find.close": "Поиск: закрыть",
+      "find.newline": "Поиск: перенос строки в поле",
+      "find.toggleCase": "Поиск: учитывать регистр",
+      "find.toggleWords": "Поиск: целые слова",
+      "find.toggleRegex": "Поиск: регулярное выражение",
+      "find.replaceOne": "Замена: заменить текущее",
+      "find.replaceAll": "Замена: заменить все"
+    }
+  },
+  "dependencies": {
+    "@ide/api": "workspace:*",
+    "@ide/plugin-editor": "workspace:*",
+    "@ide/plugin-keymap": "workspace:*",
+    "@ide/windows": "workspace:*"
+  },
+  "peerDependencies": {
+    "@codemirror/search": "^6.5.8",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.35.3",
+    "@preact/signals": "^1.3.1",
+    "preact": "^10.25.3"
+  },
+  "devDependencies": {
+    "@codemirror/search": "^6.5.8",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.35.3",
+    "@ide/plugin-doc": "workspace:*",
+    "@ide/plugin-lsp": "workspace:*",
+    "@preact/signals": "^1.3.1",
+    "@types/node": "^22.10.5",
+    "preact": "^10.25.3",
+    "vitest": "^2.1.9"
+  }
+}

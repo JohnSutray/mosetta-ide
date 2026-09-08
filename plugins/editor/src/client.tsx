@@ -1,4 +1,5 @@
 import type { EditorView } from '@codemirror/view';
+import type { Extension } from '@codemirror/state';
 import {
   addCursorAbove,
   addCursorBelow,
@@ -16,7 +17,7 @@ import {
   toggleComment,
   undo,
 } from '@codemirror/commands';
-import { effect, signal, type Signal } from '@preact/signals';
+import { computed, effect, signal, type ReadonlySignal, type Signal } from '@preact/signals';
 import {
   activate,
   configSection,
@@ -31,7 +32,7 @@ import {
 import { closeFile, dirty, editDoc, externalEpoch, openDoc, openEpoch, pendingReveal, wantsFocus } from '@ide/plugin-doc';
 import LspPlugin from '@ide/plugin-lsp';
 import { EDITOR_DEFAULTS } from '@ide/code';
-import { EMPTY_SCHEMA, type EmptyView } from './schema.js';
+import { EMPTY_SCHEMA, EXTENSION_SCHEMA, type EditorExtension, type EmptyView } from './schema.js';
 import { STYLE } from './style.js';
 import { EditorIcon } from './icon.js';
 import { CodeEditor } from './view.js';
@@ -45,6 +46,7 @@ export interface SymbolSpot {
 }
 
 @registry({ key: 'editor.empty', schema: EMPTY_SCHEMA })
+@registry({ key: 'editor.extension', schema: EXTENSION_SCHEMA })
 @configSection({ section: 'editor', defaults: EDITOR_DEFAULTS })
 export default class Editor {
   private readonly head = signal<{ path: string; text: string | null } | null>(null);
@@ -55,6 +57,7 @@ export default class Editor {
   private view: EditorView | null = null;
   private open: Signal<boolean> | null = null;
   private shown: string | null = null;
+  private extras: ReadonlySignal<Extension[]> | null = null;
 
   constructor(private readonly ide: Ide) {}
 
@@ -64,6 +67,8 @@ export default class Editor {
 
   @activate() protected start(): void {
     this.ide.css(STYLE);
+    const registered = this.ide.registry<EditorExtension>('editor.extension').all;
+    this.extras = computed(() => registered.value.map((one) => one.extension as Extension));
 
     const open = this.ide.remember('panel.open', true);
     this.open = open;
@@ -184,6 +189,7 @@ export default class Editor {
           }}
           onHover={(path, line, character) => this.lsp.hover(path, line, character)}
           onMount={(view) => (this.view = view)}
+          extra={this.extras?.value ?? []}
         />
       </div>
     );

@@ -40,6 +40,7 @@ interface Props {
   onModClick: (pos: number) => void;
   onHover: (path: string, line: number, character: number) => Promise<HoverInfo | null>;
   onMount: (view: EditorView | null) => void;
+  extra: Extension[];
 }
 
 export function CodeEditor({
@@ -57,6 +58,7 @@ export function CodeEditor({
   onModClick,
   onHover,
   onMount,
+  extra,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
@@ -65,6 +67,7 @@ export function CodeEditor({
   const pathRef = useRef(file.path);
   pathRef.current = file.path;
   const language = useRef(new Compartment());
+  const extras = useRef(new Compartment());
 
   useEffect(() => {
     if (!host.current) return;
@@ -114,6 +117,7 @@ export function CodeEditor({
       EditorState.tabSize.of(settings.tabSize),
       language.current.of(languages.of(file.path)),
       EditorState.readOnly.of(file.truncated),
+      extras.current.of(extra),
     ];
 
     const instance = new EditorView({
@@ -135,6 +139,10 @@ export function CodeEditor({
   useEffect(() => {
     view.current?.dispatch({ effects: language.current.reconfigure(languages.of(file.path)) });
   }, [file.path]);
+
+  useEffect(() => {
+    view.current?.dispatch({ effects: extras.current.reconfigure(extra) });
+  }, [extra]);
 
   useEffect(() => {
     view.current?.dispatch({ effects: setDiagnostics.of(diagnostics) });

@@ -41,7 +41,7 @@ describe('редактор', () => {
   it('объявляет, чем можно занять пустое место, до всякой активации', () => {
     const early = new FakeHost();
     early.add(Editor, NAME);
-    expect(early.registry.declared()).toEqual(['editor.empty']);
+    expect([...early.registry.declared()].sort()).toEqual(['editor.empty', 'editor.extension']);
   });
 
   it('занимает середину и не имеет ширины', () => {
