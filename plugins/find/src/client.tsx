@@ -10,6 +10,7 @@ import { FindFilesPopup } from './files-popup.js';
 import type { GrepResult } from './grep.js';
 import { FIND_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
+import { FindFilesIcon } from './icons.js';
 
 export type { FileHit, GrepResult } from './grep.js';
 
@@ -22,7 +23,9 @@ export default class FindPlugin implements FindFilesRemote {
     this.files = new FindFiles(
       this,
       computed(() => settingsOf('find', FIND_DEFAULTS).value.masks),
+      computed(() => settingsOf('find', FIND_DEFAULTS).value.masksOff),
       (list) => setSetting('find', 'masks', list),
+      (list) => setSetting('find', 'masksOff', list),
       (message) => ide.complain(message),
     );
   }
@@ -49,6 +52,13 @@ export default class FindPlugin implements FindFilesRemote {
     this.ide.css(STYLE);
     this.ide.registry('editor.extension').add({ id: 'find', extension: this.extension() });
     this.ide.registry<() => unknown>('chrome.top').add(() => <FindFilesPopup files={this.files} />);
+    this.ide.registry('toolbar.button').add({
+      id: 'find.files',
+      title: 'toolbar.findFiles',
+      command: 'find.files',
+      icon: (filled: boolean) => <FindFilesIcon filled={filled} />,
+      active: this.files.open,
+    });
 
     const { find, files } = this;
     this.ide.command('find.open', () => find.open('find'));

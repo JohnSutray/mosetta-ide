@@ -28,5 +28,10 @@
   "keys.context.push": "Push window",
   "keys.context.terminal": "Terminal",
   "keys.context.keys": "This window",
-  "keys.context.merge": "Resolve conflicts"
+  "keys.context.merge": "Resolve conflicts",
+  "keys.context.find": "Find in file",
+  "keys.context.find-replace": "Replace in file",
+  "keys.context.find-files": "Find in files",
+  "keys.context.find-files-mask": "File masks",
+  "keys.context.editable": "Any text field"
 }

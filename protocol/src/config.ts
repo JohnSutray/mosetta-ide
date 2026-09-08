@@ -39,7 +39,8 @@ export type KeyContext =
   | 'find'
   | 'find-replace'
   | 'find-files'
-  | 'find-files-mask';
+  | 'find-files-mask'
+  | 'editable';
 
 export type KeyHost = 'browser' | 'electron';
 

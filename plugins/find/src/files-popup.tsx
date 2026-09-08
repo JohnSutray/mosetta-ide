@@ -113,8 +113,10 @@ export function FindFilesPopup({ files }: { files: FindFiles }) {
         )}
         <div class="fif-row fif-masks" data-keys="find-files-mask">
           {files.masks.value.map((one) => (
-            <span class="fif-chip" key={one}>
-              <span class="fif-chip-name">{one}</span>
+            <span class={`fif-chip ${files.isOff(one) ? 'is-off' : ''}`} key={one}>
+              <button type="button" class="fif-chip-name" onMouseDown={(event) => event.preventDefault()} onClick={() => files.toggleMask(one)}>
+                {one}
+              </button>
               <button type="button" class="fif-chip-close" onMouseDown={(event) => event.preventDefault()} onClick={() => files.removeMask(one)}>
                 ×
               </button>

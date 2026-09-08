@@ -47,9 +47,28 @@ export class FindFiles {
   constructor(
     private readonly remote: FindFilesRemote,
     readonly masks: ReadonlySignal<string[]>,
+    readonly masksOff: ReadonlySignal<string[]>,
     private readonly saveMasks: (list: string[]) => Promise<void>,
+    private readonly saveMasksOff: (list: string[]) => Promise<void>,
     private readonly complain: (message: string) => void,
   ) {}
+
+  readonly activeMasks: ReadonlySignal<string[]> = computed(() => {
+    const off = new Set(this.masksOff.value);
+    return this.masks.value.filter((one) => !off.has(one));
+  });
+
+  isOff(mask: string): boolean {
+    return this.masksOff.value.includes(mask);
+  }
+
+  toggleMask(mask: string): void {
+    const off = this.masksOff.value;
+    const next = off.includes(mask) ? off.filter((one) => one !== mask) : [...off, mask];
+    void this.saveMasksOff(next)
+      .then(() => this.run())
+      .catch((err) => this.complain(describe(err)));
+  }
 
   readonly rows: ReadonlySignal<FilesRow[]> = computed(() => {
     const rows: FilesRow[] = [];
@@ -127,7 +146,9 @@ export class FindFiles {
   }
 
   removeMask(mask: string): void {
+    const off = this.masksOff.value;
     void this.saveMasks(this.masks.value.filter((one) => one !== mask))
+      .then(() => (off.includes(mask) ? this.saveMasksOff(off.filter((one) => one !== mask)) : undefined))
       .then(() => this.run())
       .catch((err) => this.complain(describe(err)));
   }
@@ -177,7 +198,7 @@ export class FindFiles {
       regex: this.regex.value,
       caseSensitive: this.caseSensitive.value,
       words: this.words.value,
-      masks: this.masks.value,
+      masks: this.activeMasks.value,
     };
   }
 

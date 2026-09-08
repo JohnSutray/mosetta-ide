@@ -18,6 +18,8 @@ const MECHANICS = inputMechanics.keys(keyHost.isMac);
 
 const TAKEN = reserved.in(keyHost.scopes);
 
+const NATIVE = 'field.native';
+
 const SOFT_TAKEN = new Set(TAKEN.filter((item) => item.soft).map((item) => item.key));
 
 const LEFT_ALONE = new Set(TAKEN.filter((item) => !item.soft).map((item) => item.key));
@@ -80,11 +82,20 @@ export class KeyRules {
   }
 
   typedIntoField(event: KeyboardEvent): boolean {
+    if (!isTextField(event.target)) return false;
     if (event.metaKey || event.ctrlKey || event.altKey) return false;
     const erases = event.key === 'Backspace' || event.key === 'Delete';
     if (event.key.length !== 1 && !erases) return false;
-    if (!isTextField(event.target)) return false;
     return !(erases && isEmptyField(event.target));
+  }
+
+  inPlainField(target: EventTarget | null): boolean {
+    return isTextField(target) && !isContentEditable(target);
+  }
+
+  pick(bindings: readonly KeyBinding[], context: KeyContext, key: string, editable: boolean): KeyBinding | undefined {
+    const at = (when: KeyContext) => bindings.find((b) => (b.when ?? 'global') === when && b.key === key);
+    return at(context) ?? (editable ? at('editable') : undefined) ?? (OWNING.has(context) ? undefined : at('global'));
   }
 
   eventToKey(event: KeyboardEvent): string | null {
@@ -134,21 +145,17 @@ export class Dispatcher {
     window.removeEventListener('keyup', this.onKeyUp, { capture: true });
   }
 
-  private fire(key: string, event: KeyboardEvent): void {
+  private fire(key: string, event: KeyboardEvent): boolean {
     const context = this.resolveContext();
-    const own = this.bindings.find((b) => (b.when ?? 'global') === context && b.key === key);
-    const binding =
-      own ??
-      (OWNING.has(context)
-        ? undefined
-        : this.bindings.find((b) => (b.when ?? 'global') === 'global' && b.key === key));
+    const binding = keyRules.pick(this.bindings, context, key, keyRules.inPlainField(event.target));
 
     this.echo.echo(key, context, binding?.command ?? null);
+    if (binding?.command === NATIVE) return true;
     if (!binding) {
       if (!CAPTURING.has(context) && keyRules.complains(key, { repeat: event.repeat, clip: this.clipKeys })) {
         this.onUnbound(key);
       }
-      return;
+      return false;
     }
 
     if (
@@ -158,13 +165,14 @@ export class Dispatcher {
     ) {
       event.preventDefault();
       event.stopPropagation();
-      return;
+      return false;
     }
 
     if (runCommand(binding.command)) {
       event.preventDefault();
       event.stopPropagation();
     }
+    return false;
   };
 
   private onKeyDown = (event: KeyboardEvent): void => {
@@ -178,7 +186,7 @@ export class Dispatcher {
 
     const key = keyRules.eventToKey(event);
     if (!key || keyRules.typedIntoField(event)) return;
-    this.fire(key, event);
+    if (this.fire(key, event)) return;
     if (!event.defaultPrevented && keyRules.swallows(key, this.clipKeys)) event.preventDefault();
   };
 
@@ -201,6 +209,10 @@ export class Dispatcher {
     this.lastTapKey = name;
     this.lastTapAt = now;
   };
+}
+
+function isContentEditable(target: EventTarget | null): boolean {
+  return Boolean((target as { isContentEditable?: boolean } | null)?.isContentEditable);
 }
 
 function isEmptyField(target: EventTarget | null): boolean {

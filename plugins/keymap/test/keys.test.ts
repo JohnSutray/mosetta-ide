@@ -48,6 +48,20 @@ describe('раскладка и поля ввода', () => {
     expect(keyRules.typedIntoField(press('Backspace', null))).toBe(false);
   });
 
+  it('контекст editable стоит между своим и глобальным и даётся только полю (ADR-0194)', () => {
+    const bindings = [
+      { command: 'field.native', key: 'meta+z', when: 'editable' as const },
+      { command: 'edit.undo', key: 'meta+z' },
+      { command: 'find.next', key: 'enter', when: 'find' as const },
+    ];
+    expect(keyRules.pick(bindings, 'find', 'meta+z', true)?.command).toBe('field.native');
+    expect(keyRules.pick(bindings, 'tree', 'meta+z', false)?.command).toBe('edit.undo');
+    expect(keyRules.pick(bindings, 'find', 'enter', true)?.command).toBe('find.next');
+    expect(keyRules.inPlainField(INPUT as never)).toBe(true);
+    expect(keyRules.inPlainField(EDITOR as never)).toBe(false);
+    expect(keyRules.inPlainField(ROW as never)).toBe(false);
+  });
+
   it('в ПУСТОМ поле стирать нечего — Backspace достаётся раскладке (ADR-0193)', () => {
     expect(keyRules.typedIntoField(press('Backspace', EMPTY))).toBe(false);
     expect(keyRules.typedIntoField(press('Delete', EMPTY))).toBe(false);

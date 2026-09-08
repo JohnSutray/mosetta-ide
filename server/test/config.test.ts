@@ -144,6 +144,18 @@ describe('сломанный конфиг', () => {
 });
 
 describe('запись настройки', () => {
+  it('две записи разом не теряют друг друга (ADR-0194)', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-race-'));
+    await fs.writeFile(path.join(dir, 'settings.json'), '{\n  "find": { "masks": ["*.ts"] }\n}\n', 'utf8');
+    const store = await ConfigStore.load(dir);
+    await Promise.all([store.set('find', 'masks', ['*.tsx']), store.set('find', 'masksOff', ['*.tsx'])]);
+    const find = store.settings.find as { masks: string[]; masksOff: string[] };
+    expect(find.masks).toEqual(['*.tsx']);
+    expect(find.masksOff).toEqual(['*.tsx']);
+    store.dispose();
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
   it('доезжает до бандла и не сносит комментарии', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-set-'));
     await fs.writeFile(

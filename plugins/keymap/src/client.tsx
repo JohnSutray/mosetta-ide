@@ -33,6 +33,7 @@ export default class KeymapPlugin {
 
   @activate() protected start(): void {
     this.ide.command('key.reserved', () => {});
+    this.ide.command('field.native', () => {});
 
     if (typeof window !== 'undefined') {
       this.dispatcher = new Dispatcher(

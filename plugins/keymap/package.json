@@ -13,7 +13,8 @@
     "client": "src/client.tsx",
     "strings": "src/en.json",
     "commands": {
-      "key.reserved": "Занято: пока ничего не делает"
+      "key.reserved": "Занято: пока ничего не делает",
+      "field.native": "Поле само: браузер делает своё"
     }
   },
   "dependencies": {

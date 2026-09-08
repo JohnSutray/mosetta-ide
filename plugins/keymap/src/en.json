@@ -1,4 +1,5 @@
 {
   "command.key.reserved": "Reserved key (does nothing)",
-  "keys.unbound": "{key} does nothing. {help} lists every key."
+  "keys.unbound": "{key} does nothing. {help} lists every key.",
+  "command.field.native": "Field: the browser handles it"
 }

@@ -46,5 +46,6 @@
   "findFiles.truncated": "showing the first matches only — narrow the search",
   "findFiles.replaced": "replaced:",
   "findFiles.replaceAll": "replace all",
-  "findFiles.replaceFile": "replace in this file"
+  "findFiles.replaceFile": "replace in this file",
+  "toolbar.findFiles": "Find in files"
 }

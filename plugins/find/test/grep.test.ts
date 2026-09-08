@@ -73,12 +73,17 @@ describe('чипы масок', () => {
       grep: async () => ({ hits: [], files: 0, total: 0, truncated: false }),
       replace: async () => ({ files: 0, replaced: 0 }),
     };
+    const off = signal<string[]>([]);
     const files = new FindFiles(
       remote,
       masks,
+      off,
       async (list) => {
         saved.push(list);
         masks.value = list;
+      },
+      async (list) => {
+        off.value = list;
       },
       () => undefined,
     );
@@ -96,12 +101,21 @@ describe('чипы масок', () => {
     await Promise.resolve();
     expect(masks.value).toEqual(['*.tsx']);
     expect(files.ask().masks).toEqual(['*.tsx']);
+    files.toggleMask('*.tsx');
+    await Promise.resolve();
+    expect(files.isOff('*.tsx')).toBe(true);
+    expect(files.ask().masks).toEqual([]);
+    files.toggleMask('*.tsx');
+    await Promise.resolve();
+    expect(files.ask().masks).toEqual(['*.tsx']);
   });
 
   it('Tab ходит по полям, в режиме замены — через поле замены', () => {
     const files = new FindFiles(
       { grep: async () => ({ hits: [], files: 0, total: 0, truncated: false }), replace: async () => ({ files: 0, replaced: 0 }) },
       signal<string[]>([]),
+      signal<string[]>([]),
+      async () => undefined,
       async () => undefined,
       () => undefined,
     );

@@ -1,9 +1,9 @@
 export const STYLE = `
 .editor .cm-panels.cm-panels-top { border-bottom: 1px solid var(--divider); background: var(--panel-bg); }
-.find-bar { display: flex; flex-direction: column; gap: 4px; padding: 4px 6px; font: 12px var(--ui-font); color: var(--fg); }
+.find-bar { display: flex; flex-direction: column; gap: 3px; padding: 3px 6px; font: 12px var(--ui-font); color: var(--fg); }
 .find-row { display: flex; align-items: center; gap: 4px; }
-.find-field { flex: 1; min-width: 0; font: 12px var(--ui-font); resize: none; }
-textarea.find-field { font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; line-height: 1.3; }
+.find-field { flex: 1; min-width: 0; height: 22px; padding: 0 6px; box-sizing: border-box; font: 12px var(--ui-font); resize: none; }
+textarea.find-field { height: auto; padding: 3px 6px; font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; line-height: 1.3; }
 .find-tool {
   flex: none;
   height: 22px;
@@ -55,7 +55,10 @@ textarea.find-field { font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace
   color: var(--fg);
   font: 12px var(--ui-font);
 }
-.fif-chip-name { display: flex; align-items: center; padding: 0 7px; white-space: nowrap; font-family: 'JetBrains Mono', Menlo, monospace; }
+.fif-chip-name { display: flex; align-items: center; padding: 0 7px; border: 0; background: transparent; color: inherit; white-space: nowrap; font: 12px 'JetBrains Mono', Menlo, monospace; cursor: default; }
+.fif-chip-name:hover { background: #454a4b; }
+.fif-chip.is-off { color: var(--muted); border-style: dashed; }
+.fif-chip.is-off .fif-chip-name { text-decoration: line-through; }
 .fif-chip-close {
   display: flex;
   align-items: center;

@@ -26,7 +26,7 @@ function sources(dir: string): string[] {
 }
 
 function declared(): Set<string> {
-  const found = new Set<string>();
+  const found = new Set<string>(['editable']);
   for (const text of [...sources(SRC), ...pluginSources()]) {
     for (const [, name] of text.matchAll(/\bdata-keys="([\w-]+)"/g)) if (name) found.add(name);
     for (const [, name] of text.matchAll(/\bkeys="([\w-]+)"/g)) if (name) found.add(name);

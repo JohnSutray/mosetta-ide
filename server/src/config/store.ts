@@ -61,11 +61,15 @@ export class ConfigStore {
     } catch {}
   }
 
-  async set(
-    section: string,
-    key: string,
-    value: SettingValue,
-  ): Promise<{ rewritten: boolean }> {
+  private writing: Promise<unknown> = Promise.resolve();
+
+  set(section: string, key: string, value: SettingValue): Promise<{ rewritten: boolean }> {
+    const next = this.writing.then(() => this.write(section, key, value));
+    this.writing = next.catch(() => undefined);
+    return next;
+  }
+
+  private async write(section: string, key: string, value: SettingValue): Promise<{ rewritten: boolean }> {
     const file = path.join(this.dir, 'settings.json');
     let raw = '';
     try {
