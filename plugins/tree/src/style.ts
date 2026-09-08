@@ -1,4 +1,15 @@
 export const STYLE = `
+.tree-typeahead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  pointer-events: none;
+}
+.tree-name b { color: var(--accent); font-weight: 700; }
 
 .tree {
   padding: 3px 0;

@@ -176,7 +176,7 @@ export class TreeSelection {
 
   takeKeyboard(): void {
     if (document.activeElement !== document.body) return;
-    (document.querySelector('.tree') as HTMLElement | null)?.focus();
+    (document.querySelector('.tree-typeahead') as HTMLElement | null)?.focus();
   }
 
   private shown(path: string, dirs: string[]): boolean {

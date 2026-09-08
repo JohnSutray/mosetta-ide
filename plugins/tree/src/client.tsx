@@ -6,6 +6,7 @@ import { computed, effect, untracked } from '@preact/signals';
 import { FollowIcon, TreeIcon } from './icons.js';
 import { FileTree } from './file-tree.js';
 import { TreeFollow } from './follow.js';
+import { TreeTypeahead } from './typeahead.js';
 import { TreeMenuState } from './menu.js';
 import { Prompt as PromptState, TreeOps, TreeSelection } from './state.js';
 import { TREE_DEFAULTS } from './settings.js';
@@ -23,6 +24,7 @@ export default class TreePlugin {
   readonly selection: TreeSelection;
   readonly ops: TreeOps;
   readonly follow: TreeFollow;
+  readonly typeahead: TreeTypeahead;
   readonly menu = new TreeMenuState();
   readonly tints: TreeTints;
   readonly shown;
@@ -46,6 +48,7 @@ export default class TreePlugin {
     this.selection = new TreeSelection(this.files);
     this.ops = new TreeOps(this.selection, this.prompt, this.files, ide, (path) => this.askReveal({ path }));
     this.follow = new TreeFollow(this.selection, ide);
+    this.typeahead = new TreeTypeahead(this.selection);
     this.tints = new TreeTints(ide.registry<TintSource>('tree.tint'));
     this.shown = ide.remember('panel.tree', true);
   }
@@ -66,9 +69,10 @@ export default class TreePlugin {
       this.shown.value = !this.shown.value;
     });
 
-    const { selection, ops } = this;
-    this.ide.command('tree.next', () => selection.step(1));
-    this.ide.command('tree.prev', () => selection.step(-1));
+    const { selection, ops, typeahead } = this;
+    this.ide.command('tree.next', () => (typeahead.term.value ? typeahead.move(1) : selection.step(1)));
+    this.ide.command('tree.prev', () => (typeahead.term.value ? typeahead.move(-1) : selection.step(-1)));
+    this.ide.command('tree.findClear', () => typeahead.clear());
     this.ide.command('tree.expand', () => selection.openBranch());
     this.ide.command('tree.collapse', () => selection.closeBranch());
     this.ide.command('tree.newFile', () => this.onFocused((path, isDir) => ops.create(path, isDir, 'file')));
@@ -109,8 +113,10 @@ export default class TreePlugin {
       title: 'panel.tree',
       side: 'left',
       open: this.shown,
+      badges: () => (this.typeahead.term.value ? <span class="tag tree-find">⌕ {this.typeahead.term.value}</span> : null),
       view: () => (
         <Tree
+          typeahead={this.typeahead}
           files={this.files}
           selection={this.selection}
           ops={this.ops}

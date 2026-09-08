@@ -162,6 +162,7 @@
     { "command": "tree.expand", "key": "arrowright", "when": "tree" },
     { "command": "tree.collapse", "key": "arrowleft", "when": "tree" },
     { "command": "tree.open", "key": "enter", "when": "tree" },
+    { "command": "tree.findClear", "key": "escape", "when": "tree" },
     { "command": "tree.rename", "key": "f2", "when": "tree" },
     { "command": "tree.delete", "key": "backspace", "when": "tree" },
     { "command": "tree.newFile", "key": "alt+n", "when": "tree", "where": ["browser:mac"] },

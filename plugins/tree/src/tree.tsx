@@ -1,13 +1,14 @@
 import { project, t } from '@ide/api/client';
 import { primaryHeld } from '@ide/plugin-keymap';
 import { openDoc, openFile } from '@ide/plugin-doc';
-import { useEffect } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
 import type { DirEntry } from '@ide/api/client';
 import { Chevron, DirIcon, FileIcon, RootIcon } from '@ide/ui';
 import type { FileTree } from './file-tree.js';
 import type { TreeMenuState } from './menu.js';
 import type { TreeOps, TreeSelection } from './state.js';
 import type { TreeTints } from './tints.js';
+import type { TreeTypeahead } from './typeahead.js';
 
 export interface TreeProps {
   files: FileTree;
@@ -16,12 +17,14 @@ export interface TreeProps {
   menu: TreeMenuState;
   tints: TreeTints;
   broken: { readonly value: ReadonlySet<string> };
+  typeahead: TreeTypeahead;
 }
 
 export function Tree(props: TreeProps) {
   const ws = project.value;
   const children = props.files.children.value.get('');
   const focused = props.selection.focus.value;
+  const field = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!focused) return;
@@ -31,13 +34,19 @@ export function Tree(props: TreeProps) {
 
   if (!ws || !children) return <div class="tree-empty">…</div>;
   const open = props.files.rootExpanded.value;
+  const term = props.typeahead.term.value;
   return (
-    <div
-      class="tree"
-      data-keys="tree"
-      tabIndex={-1}
-      onMouseDown={(event) => event.currentTarget.focus()}
-    >
+    <div class="tree" data-keys="tree" onMouseDown={() => field.current?.focus()}>
+      <input
+        ref={field}
+        class={`tree-typeahead ${term ? 'is-on' : ''}`}
+        value={term}
+        spellcheck={false}
+        autocomplete="off"
+        aria-label={t('tree.find')}
+        onInput={(event) => props.typeahead.type(event.currentTarget.value)}
+        onBlur={() => props.typeahead.clear()}
+      />
       <div
         class="tree-row is-root"
         data-path=""
@@ -160,7 +169,7 @@ function Row({ entry, depth, ...props }: { entry: DirEntry; depth: number } & Tr
           {isDir ? <DirIcon excluded={entry.noScan} /> : <FileIcon name={entry.name} />}
         </span>
         <span class={`tree-name ${broken ? 'is-broken' : ''} ${tint ? `git-${tint}` : ''}`}>
-          {entry.name}
+          {found(entry.name, props.typeahead.match(entry.name))}
         </span>
         {entry.noScan && <span class="tree-note">{t('tree.noScan')}</span>}
       </div>
@@ -200,4 +209,15 @@ function shortenHome(root: string): string {
 
 function cssEscape(path: string): string {
   return typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(path) : path.replace(/"/g, '\\"');
+}
+
+function found(name: string, at: [number, number] | null) {
+  if (!at) return name;
+  return (
+    <>
+      {name.slice(0, at[0])}
+      <b>{name.slice(at[0], at[1])}</b>
+      {name.slice(at[1])}
+    </>
+  );
 }

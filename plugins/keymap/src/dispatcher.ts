@@ -81,10 +81,10 @@ export class KeyRules {
 
   typedIntoField(event: KeyboardEvent): boolean {
     if (event.metaKey || event.ctrlKey || event.altKey) return false;
-    const edits =
-      event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete';
-    if (!edits) return false;
-    return isTextField(event.target);
+    const erases = event.key === 'Backspace' || event.key === 'Delete';
+    if (event.key.length !== 1 && !erases) return false;
+    if (!isTextField(event.target)) return false;
+    return !(erases && isEmptyField(event.target));
   }
 
   eventToKey(event: KeyboardEvent): string | null {
@@ -201,6 +201,12 @@ export class Dispatcher {
     this.lastTapKey = name;
     this.lastTapAt = now;
   };
+}
+
+function isEmptyField(target: EventTarget | null): boolean {
+  const el = target as { value?: string; isContentEditable?: boolean } | null;
+  if (!el || el.isContentEditable) return false;
+  return typeof el.value === 'string' && el.value === '';
 }
 
 function isTextField(target: EventTarget | null): boolean {

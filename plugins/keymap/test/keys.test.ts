@@ -30,8 +30,9 @@ function stroke(code: string, key: string, mods: Record<string, boolean> = {}) {
   } as unknown as KeyboardEvent;
 }
 
-const INPUT = { tagName: 'INPUT', isContentEditable: false };
-const AREA = { tagName: 'TEXTAREA', isContentEditable: false };
+const INPUT = { tagName: 'INPUT', isContentEditable: false, value: 'x' };
+const AREA = { tagName: 'TEXTAREA', isContentEditable: false, value: 'x' };
+const EMPTY = { tagName: 'INPUT', isContentEditable: false, value: '' };
 const EDITOR = { tagName: 'DIV', isContentEditable: true };
 const ROW = { tagName: 'DIV', isContentEditable: false };
 
@@ -45,6 +46,12 @@ describe('раскладка и поля ввода', () => {
   it('вне поля они достаются раскладке', () => {
     expect(keyRules.typedIntoField(press('Backspace', ROW))).toBe(false);
     expect(keyRules.typedIntoField(press('Backspace', null))).toBe(false);
+  });
+
+  it('в ПУСТОМ поле стирать нечего — Backspace достаётся раскладке (ADR-0193)', () => {
+    expect(keyRules.typedIntoField(press('Backspace', EMPTY))).toBe(false);
+    expect(keyRules.typedIntoField(press('Delete', EMPTY))).toBe(false);
+    expect(keyRules.typedIntoField(press('x', EMPTY))).toBe(true);
   });
 
   it('аккорд с модификатором текстом не является', () => {
