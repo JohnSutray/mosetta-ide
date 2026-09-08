@@ -1,3 +1,4 @@
+/// <reference path="./raw.d.ts" />
 import { batch, signal } from '@preact/signals';
 import {
   activate,
@@ -14,6 +15,7 @@ import { TerminalIcon } from './icon.js';
 import { TerminalView } from './view.js';
 import { Chips } from './chips.js';
 import { TERMINAL_DEFAULTS } from './settings.js';
+import xtermCss from '@xterm/xterm/css/xterm.css?raw';
 import { STYLE } from './style.js';
 import type { Attached, OpenAsk, ShellInfo, TerminalInfo } from './types.js';
 
@@ -31,7 +33,7 @@ export default class TerminalPlugin {
   constructor(private readonly ide: Ide) {}
 
   @activate() protected start(): void {
-    this.ide.css(STYLE);
+    this.ide.css(xtermCss + STYLE);
     this.listen();
 
     this.ide.command('terminal.create', () => void this.create());

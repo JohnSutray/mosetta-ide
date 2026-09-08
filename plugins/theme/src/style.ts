@@ -31,6 +31,11 @@ export const STYLE = `
 ::-webkit-scrollbar-thumb:hover { background: #6e7476; background-clip: content-box; }
 ::-webkit-scrollbar-corner { background: transparent; }
 
+body, input, textarea, select, button {
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0, 'liga' 0, 'dlig' 0;
+}
+
 .field {
   background: var(--bg);
   border: 1px solid var(--divider);

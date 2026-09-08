@@ -8,10 +8,10 @@ describe('шрифт редактора', () => {
     expect(style.fontFeatureSettings).toContain("'calt' 0");
   });
 
-  it('включены — не пишем в стиль ничего лишнего', () => {
+  it('включены — пишем включение явно', () => {
     const style = darcula.textStyle({ fontFamily: 'JetBrains Mono', ligatures: true });
-    expect(style.fontVariantLigatures).toBeUndefined();
-    expect(style.fontFeatureSettings).toBeUndefined();
+    expect(style.fontVariantLigatures).toBe('normal');
+    expect(style.fontFeatureSettings).toBe('normal');
   });
 
   it('имя шрифта в кавычках — в нём бывают пробелы', () => {

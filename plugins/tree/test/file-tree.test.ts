@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, type FakeSurface } from '@ide/api/testing';
 import type { DirEntry } from '@ide/api/client';
 import TreePlugin from '../src/client.js';
-import DocPlugin from '@ide/plugin-doc';
+import DocPlugin, { openFile } from '@ide/plugin-doc';
 
 let surface: FakeSurface;
 let plugin: TreePlugin;
@@ -31,6 +31,23 @@ beforeEach(async () => {
 });
 
 describe('память дерева у плагина', () => {
+  it('папку открытого файла можно свернуть и выбрать: наведение не дёргается (ADR-0190)', async () => {
+    surface.workspaceCurrent.value = PROJECT;
+    surface.project.value = PROJECT;
+    surface.docs.texts.set('src/a.ts', 'раз');
+    await settle();
+    await openFile('src/a.ts');
+    await settle();
+    expect(plugin.files.expanded.value.has('src')).toBe(true);
+    expect([...plugin.selection.picked.value]).toEqual(['src/a.ts']);
+
+    plugin.selection.only('src');
+    await plugin.files.toggle('src');
+    await settle();
+    expect(plugin.files.expanded.value.has('src')).toBe(false);
+    expect([...plugin.selection.picked.value]).toEqual(['src']);
+  });
+
   it('корень читается, когда вкладка ПРИКРЕПИЛАСЬ к проекту', async () => {
     expect(surface.treeLoads).toEqual([]);
     surface.workspaceCurrent.value = PROJECT;

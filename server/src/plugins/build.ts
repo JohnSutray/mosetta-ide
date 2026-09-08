@@ -54,6 +54,7 @@ export class PluginBuild {
       jsxImportSource: 'preact',
       logLevel: 'silent',
       ...(side === 'server' ? { packages: 'external' as const } : {}),
+      loader: { '.css': 'text' },
       plugins: [
         {
           name: 'ide-externals',
@@ -86,6 +87,17 @@ export class PluginBuild {
               contents: await shared.shim(args.path, side),
               loader: 'js',
             }));
+          },
+        },
+        {
+          name: 'ide-raw',
+          setup(api) {
+            api.onResolve({ filter: /\?raw$/ }, (args) => {
+              const bare = args.path.slice(0, -'?raw'.length);
+              const from = createRequire(path.join(args.resolveDir, 'noop.js'));
+              const found = bare.startsWith('.') ? path.resolve(args.resolveDir, bare) : from.resolve(bare);
+              return { path: found };
+            });
           },
         },
         {

@@ -2,7 +2,7 @@ import { activate, configSection, project, registry, remote, stub, tree, workspa
 import { openDoc, openFile } from '@ide/plugin-doc';
 import LspPlugin from '@ide/plugin-lsp';
 import type { Ide } from '@ide/api/client';
-import { computed, effect } from '@preact/signals';
+import { computed, effect, untracked } from '@preact/signals';
 import { FollowIcon, TreeIcon } from './icons.js';
 import { FileTree } from './file-tree.js';
 import { TreeFollow } from './follow.js';
@@ -135,7 +135,7 @@ export default class TreePlugin {
 
     effect(() => {
       const path = openDoc.value?.path;
-      if (path) void this.follow.now();
+      if (path) untracked(() => void this.follow.now());
     });
 
     document.addEventListener('mousedown', (event) => {

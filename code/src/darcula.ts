@@ -38,9 +38,10 @@ const FONT = "'JetBrains Mono', 'SF Mono', Menlo, monospace";
 
 function textStyle(settings: { fontFamily: string; ligatures: boolean }) {
   const off = { fontVariantLigatures: 'none', fontFeatureSettings: "'calt' 0, 'liga' 0, 'dlig' 0" };
+  const on = { fontVariantLigatures: 'normal', fontFeatureSettings: 'normal' };
   return {
     fontFamily: `'${settings.fontFamily}', monospace`,
-    ...(settings.ligatures ? {} : off),
+    ...(settings.ligatures ? on : off),
   };
 }
 
@@ -52,6 +53,7 @@ const darculaTheme = EditorView.theme(
       height: '100%',
       fontSize: '13px',
     },
+    '.cm-content .cm-method-name, .cm-content .cm-method-name span': { color: PALETTE.func },
     '.cm-content': {
       fontFamily: FONT,
       lineHeight: '1.35',
