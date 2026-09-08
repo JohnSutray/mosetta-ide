@@ -8,15 +8,19 @@ export function Tip() {
   useLayoutEffect(() => {
     const el = box.current;
     if (!el || !shown) return;
-    const width = el.offsetWidth;
-    const max = window.innerWidth - width - 8;
-    el.style.left = `${Math.max(8, Math.min(shown.x, max))}px`;
+    el.style.left = '0px';
+    el.style.top = '0px';
+    const tip = { width: el.offsetWidth, height: el.offsetHeight };
+    const view = { width: window.innerWidth, height: window.innerHeight };
+    const { left, top } = tips.place(shown, tip, view);
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
   }, [shown]);
 
   if (!shown) return null;
 
   return (
-    <div ref={box} class="tip" style={{ left: `${shown.x}px`, top: `${shown.y}px` }}>
+    <div ref={box} class="tip" style={{ left: '0px', top: '0px' }}>
       <span class="tip-title">{shown.title}</span>
       {shown.keys.map((key) => (
         <span key={key} class="tip-key">

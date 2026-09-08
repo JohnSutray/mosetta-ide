@@ -82,12 +82,18 @@ describe('плагин поиска', () => {
     expect(plugin.find.mode.value).toBe('off');
   });
 
-  it('перенос строки делает поле многострочным и дописывает перенос', async () => {
+  it('многострочность — тумблер: включается переносом и выключается им же (ADR-0195)', async () => {
     const { host, plugin } = await up();
     host.surface.runCommand('find.open');
     plugin.find.setTerm('a');
+    expect(plugin.find.multiline.value).toBe(false);
     host.surface.runCommand('find.newline');
     expect(plugin.find.multiline.value).toBe(true);
     expect(plugin.find.term.value).toBe('a\n');
+    host.surface.runCommand('find.newline');
+    expect(plugin.find.multiline.value).toBe(false);
+    expect(plugin.find.term.value).toBe('a');
+    plugin.find.setTerm('a\nb');
+    expect(plugin.find.multiline.value).toBe(true);
   });
 });

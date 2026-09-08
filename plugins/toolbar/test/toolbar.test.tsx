@@ -99,11 +99,12 @@ describe('тулбар', () => {
     host.registry.add('toolbar.button', wish('tree'), 'core');
     const button = of(top(), 'button')[0]!;
     (button.props['onMouseEnter'] as (e: unknown) => void)({
-      currentTarget: { getBoundingClientRect: () => ({ left: 0, bottom: 0 }) },
+      currentTarget: { getBoundingClientRect: () => ({ left: 0, top: 0, bottom: 0 }) },
     });
     expect(tips.spot.value).toEqual({
       x: 0,
       y: 6,
+      above: -6,
       title: 'toolbar.tree',
       keys: [keys.humanize('meta+1')],
     });

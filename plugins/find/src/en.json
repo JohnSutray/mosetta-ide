@@ -4,7 +4,7 @@
   "command.find.next": "Next match",
   "command.find.prev": "Previous match",
   "command.find.close": "Close find",
-  "command.find.newline": "New line in the search field",
+  "command.find.newline": "Toggle multi-line search",
   "command.find.toggleCase": "Find: match case",
   "command.find.toggleWords": "Find: whole words",
   "command.find.toggleRegex": "Find: regular expression",

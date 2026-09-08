@@ -10,7 +10,7 @@ import {
   replaceNext,
   setSearchQuery,
 } from '@codemirror/search';
-import { signal } from '@preact/signals';
+import { computed, signal, type ReadonlySignal } from '@preact/signals';
 
 export type FindMode = 'off' | 'find' | 'replace';
 
@@ -26,7 +26,7 @@ export class FindState {
   readonly caseSensitive = signal(false);
   readonly words = signal(false);
   readonly regex = signal(false);
-  readonly multiline = signal(false);
+  readonly multiline: ReadonlySignal<boolean> = computed(() => this.term.value.includes('\n'));
   readonly count = signal<FindCount | null>(null);
   readonly valid = signal(true);
   readonly focusEpoch = signal(0);
@@ -106,8 +106,8 @@ export class FindState {
   }
 
   newline(): void {
-    this.multiline.value = true;
-    this.term.value = `${this.term.value}\n`;
+    const term = this.term.value;
+    this.term.value = term.includes('\n') ? term.replace(/\n/g, '') : `${term}\n`;
     this.apply();
     this.focusEpoch.value += 1;
   }
