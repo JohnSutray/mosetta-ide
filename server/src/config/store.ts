@@ -9,6 +9,7 @@ import {
   type Keymap,
   type Settings,
 } from '@ide/protocol';
+import type { SettingValue } from '@ide/protocol';
 import { journal } from '../log.js';
 import { defaults } from './defaults.js';
 import { jsonc } from './jsonc.js';
@@ -63,7 +64,7 @@ export class ConfigStore {
   async set(
     section: string,
     key: string,
-    value: string | boolean,
+    value: SettingValue,
   ): Promise<{ rewritten: boolean }> {
     const file = path.join(this.dir, 'settings.json');
     let raw = '';

@@ -7,6 +7,7 @@ import type {
   Keymap,
   Settings,
   WorkspaceInfo,
+  SettingValue,
 } from '@ide/protocol';
 
 export interface Size {
@@ -64,7 +65,7 @@ export interface DocWire {
   onRemoved(handler: (event: { path: string }) => void): () => void;
 }
 export declare const docs: DocWire;
-export declare function setSetting(section: string, key: string, value: string | boolean): Promise<void>;
+export declare function setSetting(section: string, key: string, value: SettingValue): Promise<void>;
 
 export interface WorkspacesAccess {
   readonly current: { readonly value: WorkspaceInfo | null };

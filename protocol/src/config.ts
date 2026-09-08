@@ -14,6 +14,8 @@ export interface PluginSettings {
   enabled: string[];
 }
 
+export type SettingValue = string | number | boolean | string[];
+
 export interface Settings {
   plugins: PluginSettings;
   fs: FsSettings;
@@ -35,7 +37,9 @@ export type KeyContext =
   | 'keys'
   | 'merge'
   | 'find'
-  | 'find-replace';
+  | 'find-replace'
+  | 'find-files'
+  | 'find-files-mask';
 
 export type KeyHost = 'browser' | 'electron';
 

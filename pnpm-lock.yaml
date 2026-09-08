@@ -217,12 +217,21 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
+      '@ide/code':
+        specifier: workspace:*
+        version: link:../../code
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
       '@ide/plugin-editor':
         specifier: workspace:*
         version: link:../editor
       '@ide/plugin-keymap':
         specifier: workspace:*
         version: link:../keymap
+      '@ide/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@ide/windows':
         specifier: workspace:*
         version: link:../../windows
@@ -236,9 +245,6 @@ importers:
       '@codemirror/view':
         specifier: ^6.35.3
         version: 6.43.9
-      '@ide/plugin-doc':
-        specifier: workspace:*
-        version: link:../doc
       '@ide/plugin-lsp':
         specifier: workspace:*
         version: link:../lsp

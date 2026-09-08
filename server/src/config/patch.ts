@@ -1,3 +1,4 @@
+import type { SettingValue } from '@ide/protocol';
 import { jsonc } from './jsonc.js';
 
 export interface PatchResult {
@@ -5,10 +6,10 @@ export interface PatchResult {
   rewritten: boolean;
 }
 
-function applied(text: string, section: string, key: string, value: string | boolean): boolean {
+function applied(text: string, section: string, key: string, value: SettingValue): boolean {
   try {
     const parsed = jsonc.parse<Record<string, Record<string, unknown>>>(text, 'settings.json');
-    return parsed?.[section]?.[key] === value;
+    return JSON.stringify(parsed?.[section]?.[key]) === JSON.stringify(value);
   } catch {
     return false;
   }
@@ -18,7 +19,7 @@ function tryMinimal(
   text: string,
   section: string,
   key: string,
-  value: string | boolean,
+  value: SettingValue,
 ): string | null {
   const quoted = JSON.stringify(value);
   const head = new RegExp(`("${section}"\\s*:\\s*\\{)`);
@@ -33,7 +34,9 @@ function tryMinimal(
   }
 
   const body = text.slice(at.index + at[0].length);
-  const field = new RegExp(`("${key}"\\s*:\\s*)("(?:[^"\\\\]|\\\\.)*"|true|false)`);
+  const field = new RegExp(
+    `("${key}"\\s*:\\s*)("(?:[^"\\\\]|\\\\.)*"|true|false|-?\\d+(?:\\.\\d+)?|\\[[^\\]]*\\])`,
+  );
   const found = field.exec(body);
   if (found) {
     const prefix = found[1] ?? '';
@@ -46,7 +49,7 @@ function tryMinimal(
   return `${text.slice(0, start)} "${key}": ${quoted}${tail}${text.slice(start)}`;
 }
 
-function rewrite(text: string, section: string, key: string, value: string | boolean): string {
+function rewrite(text: string, section: string, key: string, value: SettingValue): string {
   let parsed: Record<string, unknown> = {};
   try {
     parsed = jsonc.parse<Record<string, unknown>>(text, 'settings.json') ?? {};
@@ -66,7 +69,7 @@ export class Patch {
     raw: string,
     section: string,
     key: string,
-    value: string | boolean,
+    value: SettingValue,
   ): PatchResult {
     const text = raw.trim() === '' ? '{\n}\n' : raw;
     const minimal = tryMinimal(text, section, key, value);

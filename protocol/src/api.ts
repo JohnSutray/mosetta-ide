@@ -1,4 +1,4 @@
-import type { ConfigBundle } from './config.js';
+import type { ConfigBundle, SettingValue } from './config.js';
 import type { PluginInfo } from './plugins.js';
 import type {
   DirEntry,
@@ -25,8 +25,8 @@ export interface Api {
   'workspace.current': { params: null; result: WorkspaceInfo | null };
   'workspace.close': { params: { id: WorkspaceId }; result: null };
   'config.set': {
-    params: { section: string; key: string; value: string | boolean };
-    result: { section: string; key: string; value: string | boolean };
+    params: { section: string; key: string; value: SettingValue };
+    result: { section: string; key: string; value: SettingValue };
   };
 
   'fs.list': { params: { path: string }; result: DirEntry[] };

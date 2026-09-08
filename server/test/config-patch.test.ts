@@ -45,6 +45,18 @@ describe('точечная правка настроек', () => {
     expect(read(text).terminal!.args).toEqual(['-l']);
   });
 
+  it('список строк правится на месте и не заводит второй ключ (ADR-0192)', () => {
+    const raw = '{\n  // маски\n  "find": { "masks": ["*.ts"] }\n}\n';
+    const once = patch.setting(raw, 'find', 'masks', ['*.ts', '*.tsx']);
+    expect(once.rewritten).toBe(false);
+    expect(once.text).toContain('// маски');
+    expect(jsonc.parse<{ find: { masks: string[] } }>(once.text, 'x')?.find.masks).toEqual(['*.ts', '*.tsx']);
+    const twice = patch.setting(once.text, 'find', 'masks', []);
+    expect(twice.rewritten).toBe(false);
+    expect(twice.text.split('"masks"').length).toBe(2);
+    expect(jsonc.parse<{ find: { masks: string[] } }>(twice.text, 'x')?.find.masks).toEqual([]);
+  });
+
   it('пустой файл — законный вход', () => {
     const { text } = patch.setting('', 'terminal', 'shell', '/bin/sh');
     expect(read(text).terminal!.shell).toBe('/bin/sh');

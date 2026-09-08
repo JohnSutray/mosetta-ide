@@ -7,7 +7,8 @@
     "test": "vitest run"
   },
   "exports": {
-    ".": "./src/client.tsx"
+    ".": "./src/client.tsx",
+    "./server": "./src/server.ts"
   },
   "ide": {
     "client": "src/client.tsx",
@@ -23,14 +24,31 @@
       "find.toggleWords": "Поиск: целые слова",
       "find.toggleRegex": "Поиск: регулярное выражение",
       "find.replaceOne": "Замена: заменить текущее",
-      "find.replaceAll": "Замена: заменить все"
-    }
+      "find.replaceAll": "Замена: заменить все",
+      "find.files": "Поиск по проекту",
+      "find.filesReplace": "Замена по проекту",
+      "findFiles.next": "Поиск по проекту: вниз",
+      "findFiles.prev": "Поиск по проекту: вверх",
+      "findFiles.accept": "Поиск по проекту: открыть",
+      "findFiles.close": "Поиск по проекту: закрыть",
+      "findFiles.nextField": "Поиск по проекту: следующее поле",
+      "findFiles.toggleCase": "Поиск по проекту: учитывать регистр",
+      "findFiles.toggleWords": "Поиск по проекту: целые слова",
+      "findFiles.toggleRegex": "Поиск по проекту: регулярное выражение",
+      "findFiles.addMask": "Поиск по проекту: добавить маску",
+      "findFiles.replaceAll": "Замена по проекту: заменить все",
+      "findFiles.replaceFile": "Замена по проекту: заменить в этом файле"
+    },
+    "server": "src/server.ts"
   },
   "dependencies": {
     "@ide/api": "workspace:*",
     "@ide/plugin-editor": "workspace:*",
     "@ide/plugin-keymap": "workspace:*",
-    "@ide/windows": "workspace:*"
+    "@ide/windows": "workspace:*",
+    "@ide/plugin-doc": "workspace:*",
+    "@ide/ui": "workspace:*",
+    "@ide/code": "workspace:*"
   },
   "peerDependencies": {
     "@codemirror/search": "^6.5.8",
@@ -43,7 +61,6 @@
     "@codemirror/search": "^6.5.8",
     "@codemirror/state": "^6.5.0",
     "@codemirror/view": "^6.35.3",
-    "@ide/plugin-doc": "workspace:*",
     "@ide/plugin-lsp": "workspace:*",
     "@preact/signals": "^1.3.1",
     "@types/node": "^22.10.5",

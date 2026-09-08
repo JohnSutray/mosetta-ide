@@ -7,6 +7,7 @@ import type {
   Keymap,
   Settings,
   WorkspaceInfo,
+  SettingValue,
 } from '@ide/protocol';
 import { attach, hooksOf, registriesOf, sectionsOf } from './client.js';
 import { sectionOf } from './section.js';
@@ -83,7 +84,7 @@ export const docs: DocWire = {
   onMoved: (handler) => surface().docs.onMoved(handler),
   onRemoved: (handler) => surface().docs.onRemoved(handler),
 };
-export function setSetting(section: string, key: string, value: string | boolean): Promise<void> {
+export function setSetting(section: string, key: string, value: SettingValue): Promise<void> {
   return surface().setSetting(section, key, value);
 }
 export const workspaces: WorkspacesAccess = {
@@ -290,7 +291,7 @@ export class FakeSurface implements ClientSurface {
     absolute: async (path) => `/абсолютно/${path}`,
   };
   readonly docs = new FakeDocWire();
-  readonly settingWrites: Array<{ section: string; key: string; value: string | boolean }> = [];
+  readonly settingWrites: Array<{ section: string; key: string; value: SettingValue }> = [];
   readonly workspaceCurrent: Signal<WorkspaceInfo | null> = signal(null);
   readonly workspaceLive: Signal<WorkspaceInfo[]> = signal([]);
   readonly workspaceCalls: Array<{ op: string; args: unknown[] }> = [];
@@ -319,7 +320,7 @@ export class FakeSurface implements ClientSurface {
     return this.host.run(id);
   }
 
-  async setSetting(section: string, key: string, value: string | boolean): Promise<void> {
+  async setSetting(section: string, key: string, value: SettingValue): Promise<void> {
     this.settingWrites.push({ section, key, value });
   }
 }
