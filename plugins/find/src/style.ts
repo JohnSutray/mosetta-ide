@@ -1,4 +1,5 @@
 export const STYLE = `
+.editor .cm-panels { z-index: 4; }
 .editor .cm-panels.cm-panels-top { border-bottom: 1px solid var(--divider); background: var(--panel-bg); }
 .find-bar { display: flex; flex-direction: column; gap: 3px; padding: 3px 6px; font: 12px var(--ui-font); color: var(--fg); }
 .find-row { display: flex; align-items: center; gap: 4px; }

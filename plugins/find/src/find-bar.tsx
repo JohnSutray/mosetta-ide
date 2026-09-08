@@ -72,7 +72,7 @@ export function FindBar({ find }: { find: FindState }) {
           {replace ? '▾' : '▸'}
         </Tool>
         {multiline ? (
-          <textarea ref={field as never} rows={3} {...fieldProps} />
+          <textarea ref={field as never} rows={3} data-keys="find-multiline" {...fieldProps} />
         ) : (
           <input ref={field as never} {...fieldProps} />
         )}

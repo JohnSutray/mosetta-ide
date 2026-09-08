@@ -33,5 +33,6 @@
   "keys.context.find-replace": "Replace in file",
   "keys.context.find-files": "Find in files",
   "keys.context.find-files-mask": "File masks",
-  "keys.context.editable": "Any text field"
+  "keys.context.editable": "Any text field",
+  "keys.context.find-multiline": "Find in file (multi-line)"
 }

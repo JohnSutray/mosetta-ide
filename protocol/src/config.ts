@@ -37,6 +37,7 @@ export type KeyContext =
   | 'keys'
   | 'merge'
   | 'find'
+  | 'find-multiline'
   | 'find-replace'
   | 'find-files'
   | 'find-files-mask'
