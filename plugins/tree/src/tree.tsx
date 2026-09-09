@@ -25,6 +25,11 @@ export function Tree(props: TreeProps) {
   const children = props.files.children.value.get('');
   const focused = props.selection.focus.value;
   const field = useRef<HTMLInputElement>(null);
+  const wanted = props.selection.wantsKeyboard.value;
+
+  useEffect(() => {
+    field.current?.focus();
+  }, [wanted]);
 
   useEffect(() => {
     if (!focused) return;

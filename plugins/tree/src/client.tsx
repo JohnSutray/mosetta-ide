@@ -66,7 +66,12 @@ export default class TreePlugin {
     tree.onChanged((event) => this.files.refresh(event.path));
 
     this.ide.command('panel.tree', () => {
-      this.shown.value = !this.shown.value;
+      if (this.shown.value && this.selection.hasKeyboard()) {
+        this.shown.value = false;
+        return;
+      }
+      this.shown.value = true;
+      this.selection.focusTree();
     });
 
     const { selection, ops, typeahead } = this;

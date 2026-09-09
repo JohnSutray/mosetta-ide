@@ -15,6 +15,8 @@ export const STYLE = `
   padding: 3px 0;
   width: max-content;
   min-width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
   font: 13px/1.35 var(--ui-font);
 }
 .tree:focus, .tree:focus-visible { outline: none; }

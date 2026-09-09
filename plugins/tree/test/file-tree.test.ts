@@ -31,6 +31,23 @@ beforeEach(async () => {
 });
 
 describe('память дерева у плагина', () => {
+  it('панель отдаёт клавиатуру дереву, а закрывается только когда она уже там (ADR-0197)', () => {
+    const fake = globalThis.document as unknown as { activeElement: unknown };
+    fake.activeElement = null;
+    expect(plugin.shown.value).toBe(true);
+    const asked = plugin.selection.wantsKeyboard.value;
+    surface.runCommand('panel.tree');
+    expect(plugin.shown.value).toBe(true);
+    expect(plugin.selection.wantsKeyboard.value).toBe(asked + 1);
+    fake.activeElement = { closest: (selector: string) => (selector === '.tree' ? {} : null) };
+    surface.runCommand('panel.tree');
+    expect(plugin.shown.value).toBe(false);
+    surface.runCommand('panel.tree');
+    expect(plugin.shown.value).toBe(true);
+    expect(plugin.selection.wantsKeyboard.value).toBe(asked + 2);
+    fake.activeElement = null;
+  });
+
   it('папку открытого файла можно свернуть и выбрать: наведение не дёргается (ADR-0190)', async () => {
     surface.workspaceCurrent.value = PROJECT;
     surface.project.value = PROJECT;

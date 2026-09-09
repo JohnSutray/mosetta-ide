@@ -174,9 +174,20 @@ export class TreeSelection {
     this.only(path);
   }
 
+  readonly wantsKeyboard = signal(0);
+
+  hasKeyboard(): boolean {
+    const active = document.activeElement as { closest?: (selector: string) => unknown } | null;
+    return Boolean(active?.closest?.('.tree'));
+  }
+
+  focusTree(): void {
+    this.wantsKeyboard.value += 1;
+  }
+
   takeKeyboard(): void {
     if (document.activeElement !== document.body) return;
-    (document.querySelector('.tree-typeahead') as HTMLElement | null)?.focus();
+    this.focusTree();
   }
 
   private shown(path: string, dirs: string[]): boolean {
