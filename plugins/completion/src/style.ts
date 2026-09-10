@@ -1,5 +1,5 @@
 export const STYLE = `
-.cm-tooltip:has(> .cmp-host) { background: transparent; border: none; }
+.cm-tooltip.cmp-host { background: transparent; border: none; }
 .cmp-host { margin-left: -28px; }
 .cmp { display: flex; align-items: flex-start; gap: 4px; font: 12px var(--font); color: var(--fg); }
 .cmp-main {
