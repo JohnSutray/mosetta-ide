@@ -25,10 +25,12 @@ export function Tree(props: TreeProps) {
   const children = props.files.children.value.get('');
   const focused = props.selection.focus.value;
   const field = useRef<HTMLInputElement>(null);
+  const host = useRef<HTMLDivElement>(null);
   const wanted = props.selection.wantsKeyboard.value;
+  const grabKeyboard = () => field.current?.focus({ preventScroll: true });
 
   useEffect(() => {
-    field.current?.focus();
+    grabKeyboard();
   }, [wanted]);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export function Tree(props: TreeProps) {
   const open = props.files.rootExpanded.value;
   const term = props.typeahead.term.value;
   return (
-    <div class="tree" data-keys="tree" onMouseDown={() => field.current?.focus()}>
+    <div class="tree" data-keys="tree" ref={host} onClick={() => grabKeyboard()}>
       <input
         ref={field}
         class={`tree-typeahead ${term ? 'is-on' : ''}`}
@@ -50,7 +52,10 @@ export function Tree(props: TreeProps) {
         autocomplete="off"
         aria-label={t('tree.find')}
         onInput={(event) => props.typeahead.type(event.currentTarget.value)}
-        onBlur={() => props.typeahead.clear()}
+        onBlur={(event) => {
+          const next = event.relatedTarget as Node | null;
+          if (!next || !host.current?.contains(next)) props.typeahead.clear();
+        }}
       />
       <div
         class="tree-row is-root"
