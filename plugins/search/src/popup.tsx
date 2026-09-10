@@ -1,3 +1,4 @@
+import type { Windows } from '@ide/windows';
 import { settingsOf, t } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import type CodePlugin from '@ide/plugin-code';
@@ -6,7 +7,7 @@ import type { IndexHit } from './types.js';
 import { Popup } from '@ide/ui';
 import type { Search } from './state.js';
 
-export function SearchEverywhere({ search, code }: { search: Search; code: CodePlugin }) {
+export function SearchEverywhere({ windows, search, code }: { windows: Windows; search: Search; code: CodePlugin }) {
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
 
@@ -28,7 +29,7 @@ export function SearchEverywhere({ search, code }: { search: Search; code: CodeP
   const preview = search.preview.value;
 
   return (
-    <Popup
+    <Popup windows={windows}
       id="search"
       keys="search"
       class="se"

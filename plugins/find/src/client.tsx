@@ -52,7 +52,7 @@ export default class FindPlugin implements FindFilesRemote {
   @activate() protected start(): void {
     this.ide.css(STYLE);
     this.ide.registry('editor.extension').add({ id: 'find', extension: this.extension() });
-    this.ide.registry<() => unknown>('chrome.top').add(() => <FindFilesPopup files={this.files} code={this.ide.getPlugin(CodePlugin)} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <FindFilesPopup windows={this.ide.windows} files={this.files} code={this.ide.getPlugin(CodePlugin)} />);
     this.ide.registry('toolbar.button').add({
       id: 'find.files',
       title: 'toolbar.findFiles',
@@ -97,7 +97,7 @@ export default class FindPlugin implements FindFilesRemote {
         createPanel: () => {
           const dom = document.createElement('div');
           dom.className = 'find-host';
-          render(<FindBar find={find} />, dom);
+          render(<FindBar windows={this.ide.windows} find={find} />, dom);
           return { dom, top: true, destroy: () => render(null, dom) };
         },
       }),

@@ -1,12 +1,13 @@
+import type { Windows } from '@ide/windows';
 import { Menu, type MenuItem } from '@ide/ui';
 import type { TreeMenuState } from './menu.js';
 import type { TreeOps, TreeSelection } from './state.js';
 
-export function TreeMenu({
+export function TreeMenu({ windows,
   menu,
   selection,
   ops,
-}: {
+}: { windows: Windows;
   menu: TreeMenuState;
   selection: TreeSelection;
   ops: TreeOps;
@@ -36,7 +37,7 @@ export function TreeMenu({
   ];
 
   return (
-    <Menu
+    <Menu windows={windows}
       class="tree-menu"
       x={open.x}
       y={open.y}

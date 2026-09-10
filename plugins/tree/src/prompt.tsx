@@ -1,3 +1,4 @@
+import type { Windows } from '@ide/windows';
 import { t } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import { Popup } from '@ide/ui';
@@ -17,7 +18,7 @@ function heightFor(ask: Ask): number {
   return Math.min(CEILING, CHROME + (ask.field ? FIELD : 0) + lines * LINE);
 }
 
-export function Prompt({ prompt, selection }: { prompt: PromptState; selection: TreeSelection }) {
+export function Prompt({ windows, prompt, selection }: { windows: Windows; prompt: PromptState; selection: TreeSelection }) {
   const field = useRef<HTMLInputElement>(null);
   const ask = prompt.ask.value;
 
@@ -36,7 +37,7 @@ export function Prompt({ prompt, selection }: { prompt: PromptState; selection: 
   if (!ask) return null;
 
   return (
-    <Popup
+    <Popup windows={windows}
       id={ask.field ? 'prompt-name' : 'prompt-confirm'}
       keys="prompt"
       class="prompt"

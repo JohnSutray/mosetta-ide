@@ -11,7 +11,6 @@ import {
 } from '@ide/api/client';
 import { keysFor } from '@ide/plugin-keymap';
 import { openDoc } from '@ide/plugin-doc';
-import { tips } from '@ide/windows';
 import Editor from '@ide/plugin-editor';
 import { BranchesWindow, Git, PushWindow, type GitRemote, type TreeTint } from './state.js';
 import { GitMarks } from './marks.js';
@@ -78,10 +77,10 @@ export default class GitPlugin implements GitRemote {
     this.ide.registry('tree.tint').add({ id: 'git', tint: this.git.tint });
 
     this.ide.surface(() => (
-      <Branches git={this.git} window={this.branchesWindow} push={this.pushWindow} />
+      <Branches windows={this.ide.windows} git={this.git} window={this.branchesWindow} push={this.pushWindow} />
     ));
-    this.ide.surface(() => <Push git={this.git} push={this.pushWindow} />);
-    this.ide.surface(() => <HunkPopup marks={this.marks} />);
+    this.ide.surface(() => <Push windows={this.ide.windows} git={this.git} push={this.pushWindow} />);
+    this.ide.surface(() => <HunkPopup windows={this.ide.windows} marks={this.marks} />);
 
     const editor = this.ide.getPlugin(Editor);
     editor.onHunk((hunk, box) => this.marks.show(hunk, box));
@@ -144,11 +143,11 @@ export default class GitPlugin implements GitRemote {
       <button
         class="branch-label"
         onMouseEnter={(event) =>
-          tips.show(event.currentTarget as Element, t('toolbar.branches'), keysFor('git.branches'))
+          this.ide.windows.tips.show(event.currentTarget as Element, t('toolbar.branches'), keysFor('git.branches'))
         }
-        onMouseLeave={() => tips.hide()}
+        onMouseLeave={() => this.ide.windows.tips.hide()}
         onClick={() => {
-          tips.hide();
+          this.ide.windows.tips.hide();
           runCommand('git.branches');
         }}
       >

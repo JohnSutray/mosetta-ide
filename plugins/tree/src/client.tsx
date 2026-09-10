@@ -138,8 +138,8 @@ export default class TreePlugin {
 
     this.ide.registry<() => unknown>('chrome.top').add(() => (
       <>
-        <Prompt prompt={this.prompt} selection={this.selection} />
-        <TreeMenu menu={this.menu} selection={this.selection} ops={this.ops} />
+        <Prompt windows={this.ide.windows} prompt={this.prompt} selection={this.selection} />
+        <TreeMenu windows={this.ide.windows} menu={this.menu} selection={this.selection} ops={this.ops} />
       </>
     ));
 

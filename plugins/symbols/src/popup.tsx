@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import type CodePlugin from '@ide/plugin-code';
 import { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import { Popup, Resizer } from '@ide/ui';
-import { geometry } from '@ide/windows';
+import type { Windows } from '@ide/windows';
 import type { Symbols } from './state.js';
 
 const SIZE = { w: 620, h: 420 };
@@ -14,7 +14,7 @@ const LIST_DEFAULT = 150;
 const LIST_MIN = 60;
 const PREVIEW_MIN = 120;
 
-export function SymbolsPopup({ symbols, code }: { symbols: Symbols; code: CodePlugin }) {
+export function SymbolsPopup({ windows, symbols, code }: { windows: Windows; symbols: Symbols; code: CodePlugin }) {
   const list = symbols.list.value;
   const editor = settingsOf('editor', EDITOR_DEFAULTS).value;
   const preview = symbols.preview.value;
@@ -38,7 +38,7 @@ export function SymbolsPopup({ symbols, code }: { symbols: Symbols; code: CodePl
   const cut = passed.length - sites.length;
 
   return (
-    <Popup
+    <Popup windows={windows}
       id="symbols"
       keys="pick"
       class="symbols"
@@ -68,7 +68,7 @@ export function SymbolsPopup({ symbols, code }: { symbols: Symbols; code: CodePl
       <div
         class="symbols-list"
         ref={body}
-        style={{ height: `${geometry.widthOf(LIST_ID, LIST_DEFAULT)}px` }}
+        style={{ height: `${windows.geometry.widthOf(LIST_ID, LIST_DEFAULT)}px` }}
       >
         {sites.map((site, at) => (
           <div
@@ -99,7 +99,7 @@ export function SymbolsPopup({ symbols, code }: { symbols: Symbols; code: CodePl
         {cut > 0 && <div class="symbols-more">{t('symbols.more', { count: cut })}</div>}
       </div>
 
-      <Resizer id={LIST_ID} side="left" axis="y" limits={limits} defaultWidth={LIST_DEFAULT} />
+      <Resizer windows={windows} id={LIST_ID} side="left" axis="y" limits={limits} defaultWidth={LIST_DEFAULT} />
 
       <div class="symbols-preview">
         {preview ? (

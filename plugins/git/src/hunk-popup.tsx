@@ -2,9 +2,9 @@ import { t } from '@ide/api/client';
 import { openDoc } from '@ide/plugin-doc';
 import type { GitMarks } from './marks.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import { popups } from '@ide/windows';
+import type { Windows } from '@ide/windows';
 
-export function HunkPopup({ marks }: { marks: GitMarks }) {
+export function HunkPopup({ windows, marks }: { windows: Windows; marks: GitMarks }) {
   const open = marks.popup.value;
   const self = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(open ? open.box.bottom + 4 : 0);
@@ -20,13 +20,13 @@ export function HunkPopup({ marks }: { marks: GitMarks }) {
 
   useEffect(() => {
     if (!open || !alive) return;
-    popups.enter({ id: 'hunk', close: () => marks.close(), layer: true });
+    windows.popups.enter({ id: 'hunk', close: () => marks.close(), layer: true });
     const away = (event: MouseEvent) => {
       if (!(event.target as HTMLElement).closest('.hunk-popup')) marks.close();
     };
     window.addEventListener('mousedown', away, { capture: true });
     return () => {
-      popups.leave('hunk');
+      windows.popups.leave('hunk');
       window.removeEventListener('mousedown', away, { capture: true });
     };
   }, [open, alive]);

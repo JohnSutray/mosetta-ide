@@ -2,26 +2,27 @@ import { useEffect, useRef } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
 import { runCommand, t } from '@ide/api/client';
 import { keysFor } from '@ide/plugin-keymap';
-import { tips } from '@ide/windows';
+import type { Windows } from '@ide/windows';
 import type { FindState } from './find.js';
 
 interface ToolProps {
+  windows: Windows;
   command: string;
   title: string;
   on?: boolean;
   children: ComponentChildren;
 }
 
-function Tool({ command, title, on, children }: ToolProps) {
+function Tool({ windows, command, title, on, children }: ToolProps) {
   return (
     <button
       type="button"
       class={`find-tool ${on ? 'is-on' : ''}`}
-      onMouseEnter={(event) => tips.show(event.currentTarget as Element, t(title), keysFor(command))}
-      onMouseLeave={() => tips.hide()}
+      onMouseEnter={(event) => windows.tips.show(event.currentTarget as Element, t(title), keysFor(command))}
+      onMouseLeave={() => windows.tips.hide()}
       onMouseDown={(event) => event.preventDefault()}
       onClick={() => {
-        tips.hide();
+        windows.tips.hide();
         runCommand(command);
       }}
     >
@@ -30,7 +31,7 @@ function Tool({ command, title, on, children }: ToolProps) {
   );
 }
 
-export function FindBar({ find }: { find: FindState }) {
+export function FindBar({ windows, find }: { windows: Windows; find: FindState }) {
   const field = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const epoch = find.focusEpoch.value;
   const multiline = find.multiline.value;
@@ -68,7 +69,7 @@ export function FindBar({ find }: { find: FindState }) {
   return (
     <div class="find-bar">
       <div class="find-row" data-keys="find">
-        <Tool command={replace ? 'find.open' : 'find.replace'} title={replace ? 'find.hideReplace' : 'find.showReplace'}>
+        <Tool windows={windows} command={replace ? 'find.open' : 'find.replace'} title={replace ? 'find.hideReplace' : 'find.showReplace'}>
           {replace ? '▾' : '▸'}
         </Tool>
         {multiline ? (
@@ -76,26 +77,26 @@ export function FindBar({ find }: { find: FindState }) {
         ) : (
           <input ref={field as never} {...fieldProps} />
         )}
-        <Tool command="find.toggleCase" title="find.case" on={find.caseSensitive.value}>
+        <Tool windows={windows} command="find.toggleCase" title="find.case" on={find.caseSensitive.value}>
           Cc
         </Tool>
-        <Tool command="find.toggleWords" title="find.words" on={find.words.value}>
+        <Tool windows={windows} command="find.toggleWords" title="find.words" on={find.words.value}>
           W
         </Tool>
-        <Tool command="find.toggleRegex" title="find.regex" on={find.regex.value}>
+        <Tool windows={windows} command="find.toggleRegex" title="find.regex" on={find.regex.value}>
           .*
         </Tool>
         <span class={`find-count ${none || bad ? 'is-none' : ''}`}>{counter}</span>
-        <Tool command="find.prev" title="find.prev">
+        <Tool windows={windows} command="find.prev" title="find.prev">
           ↑
         </Tool>
-        <Tool command="find.next" title="find.next">
+        <Tool windows={windows} command="find.next" title="find.next">
           ↓
         </Tool>
-        <Tool command="find.newline" title="find.newline" on={multiline}>
+        <Tool windows={windows} command="find.newline" title="find.newline" on={multiline}>
           ⏎
         </Tool>
-        <Tool command="find.close" title="find.close">
+        <Tool windows={windows} command="find.close" title="find.close">
           ×
         </Tool>
       </div>
@@ -109,10 +110,10 @@ export function FindBar({ find }: { find: FindState }) {
             spellcheck={false}
             onInput={(event) => find.setReplacement(event.currentTarget.value)}
           />
-          <Tool command="find.replaceOne" title="find.replaceOne">
+          <Tool windows={windows} command="find.replaceOne" title="find.replaceOne">
             {t('find.replaceOne')}
           </Tool>
-          <Tool command="find.replaceAll" title="find.replaceAll">
+          <Tool windows={windows} command="find.replaceAll" title="find.replaceAll">
             {t('find.replaceAll')}
           </Tool>
         </div>

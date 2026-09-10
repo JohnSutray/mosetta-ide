@@ -52,6 +52,6 @@ export default class SearchPlugin implements SearchRemote {
       active: search.open,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <SearchEverywhere search={search} code={this.ide.getPlugin(CodePlugin)} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <SearchEverywhere windows={this.ide.windows} search={search} code={this.ide.getPlugin(CodePlugin)} />);
   }
 }

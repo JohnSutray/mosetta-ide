@@ -17,6 +17,6 @@ export default class SymbolsPlugin {
   @activate() protected start(): void {
     this.ide.css(STYLE);
     this.ide.getPlugin(Editor).onSymbolAsk((spot) => void this.symbols.ask(spot));
-    this.ide.registry<() => unknown>('chrome.top').add(() => <SymbolsPopup symbols={this.symbols} code={this.ide.getPlugin(CodePlugin)} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <SymbolsPopup windows={this.ide.windows} symbols={this.symbols} code={this.ide.getPlugin(CodePlugin)} />);
   }
 }

@@ -6,7 +6,7 @@ import { BORDER_DEBT } from './borders.debt.js';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
-const CORE = new Set(['@ide/protocol', '@ide/api', '@ide/client', '@ide/server']);
+const CORE = new Set(['@ide/protocol', '@ide/api', '@ide/client', '@ide/server', '@ide/windows']);
 
 const LANGUAGE: Record<string, readonly string[]> = {
   '@ide/api': ['activate', 'command', 'configSection', 'registry', 'remote', 'stub'],

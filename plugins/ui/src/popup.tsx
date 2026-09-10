@@ -1,9 +1,9 @@
-import { geometry, type Size, popups, host } from '@ide/windows';
+import type { Size, Windows } from '@ide/windows';
 import type { ComponentChildren } from 'preact';
 import type { KeyContext } from '@ide/protocol';
 import { useEffect, useRef } from 'preact/hooks';
 
-export function Popup({
+export function Popup({ windows,
   id,
   keys,
   class: extra = '',
@@ -18,7 +18,7 @@ export function Popup({
   onEscape,
   onMouseDown,
   children,
-}: {
+}: { windows: Windows;
   id: string;
   keys: KeyContext;
   class?: string;
@@ -36,15 +36,15 @@ export function Popup({
 }) {
   const box = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
-  const want = full ? geometry.viewport.value : geometry.sizeOf(id, size);
-  const at = anchor ? geometry.fitAnchored(want, anchor, geometry.viewport.value, min) : null;
+  const want = full ? windows.geometry.viewport.value : windows.geometry.sizeOf(id, size);
+  const at = anchor ? windows.geometry.fitAnchored(want, anchor, windows.geometry.viewport.value, min) : null;
   const current = at ? { w: at.w, h: at.h } : want;
 
   const closing = useRef(onEscape ?? onClose);
   closing.current = onEscape ?? onClose;
   useEffect(() => {
-    popups.enter({ id, close: () => closing.current(), over, layer, el: box.current });
-    return () => popups.leave(id);
+    windows.popups.enter({ id, close: () => closing.current(), over, layer, el: box.current });
+    return () => windows.popups.leave(id);
   }, [id, over, layer]);
 
   useEffect(() => {
@@ -73,12 +73,12 @@ export function Popup({
         }}
       >
         <span class="popup-exit">
-          {!host.catchesKeys(keys) && (
-            <span class="popup-esc" title={host.t('popup.escape')}>
-              {host.t('popup.esc')}
+          {!windows.host.catchesKeys(keys) && (
+            <span class="popup-esc" title={windows.host.t('popup.escape')}>
+              {windows.host.t('popup.esc')}
             </span>
           )}
-          <span class="popup-close" title={host.t('popup.close')} onClick={onClose}>
+          <span class="popup-close" title={windows.host.t('popup.close')} onClick={onClose}>
             ×
           </span>
         </span>
@@ -88,7 +88,7 @@ export function Popup({
         {!full && (
         <span
           class="popup-grip"
-          title={host.t('popup.resize')}
+          title={windows.host.t('popup.resize')}
           onPointerDown={(event) => {
             event.preventDefault();
             const rect = box.current?.getBoundingClientRect();
@@ -103,7 +103,7 @@ export function Popup({
           onPointerMove={(event) => {
             const started = drag.current;
             if (!started) return;
-            geometry.setPopupSize(
+            windows.geometry.setPopupSize(
               id,
               {
                 w: started.w + (event.clientX - started.x),
@@ -116,7 +116,7 @@ export function Popup({
             drag.current = null;
             (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
           }}
-          onDblClick={() => geometry.resetPopupSize(id)}
+          onDblClick={() => windows.geometry.resetPopupSize(id)}
         />
         )}
       </div>

@@ -1,7 +1,6 @@
 import { Fragment } from 'preact';
 import { activate, registry, t, type Ide } from '@ide/api/client';
 import { Resizer } from '@ide/ui';
-import { geometry } from '@ide/windows';
 import { PANEL_SCHEMA, type PanelWish } from './schema.js';
 import { STYLE } from './style.js';
 
@@ -72,7 +71,7 @@ export default class Layout {
 
   private grip(panel: PanelWish, side: 'left' | 'right') {
     return (
-      <Resizer
+      <Resizer windows={this.ide.windows}
         id={panel.id}
         side={side}
         defaultWidth={panel.defaultWidth ?? this.fallbackWidth}
@@ -88,6 +87,6 @@ export default class Layout {
   }
 
   private width(panel: PanelWish): number {
-    return geometry.widthOf(panel.id, panel.defaultWidth ?? this.fallbackWidth);
+    return this.ide.windows.geometry.widthOf(panel.id, panel.defaultWidth ?? this.fallbackWidth);
   }
 }

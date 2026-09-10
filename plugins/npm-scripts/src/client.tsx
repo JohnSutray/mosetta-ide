@@ -71,7 +71,7 @@ export default class NpmScripts {
     });
     this.ide.registry<() => unknown>('chrome.top').add(() =>
       this.managerPicker.value ? (
-        <ChoicePopup
+        <ChoicePopup windows={this.ide.windows}
           id="scripts.packageManager"
           title={t('scripts.manager.title')}
           note={t('scripts.manager.note')}
@@ -176,7 +176,7 @@ export default class NpmScripts {
     }));
 
     return (
-      <PickPopup
+      <PickPopup windows={this.ide.windows}
         id="scripts"
         title={t('scripts.title')}
         items={items}

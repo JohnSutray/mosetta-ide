@@ -71,7 +71,7 @@ export default class TerminalPlugin {
     });
     this.ide.registry<() => unknown>('chrome.top').add(() =>
       this.shellPicker.value ? (
-        <ChoicePopup
+        <ChoicePopup windows={this.ide.windows}
           id="terminal.shell"
           title={t('terminal.shell.title')}
           note={t('terminal.shell.note')}

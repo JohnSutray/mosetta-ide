@@ -1,3 +1,4 @@
+import { windows, type Windows } from '@ide/windows';
 import Ajv, { type ValidateFunction } from 'ajv';
 import { signal, type Signal } from '@preact/signals';
 import type {
@@ -381,6 +382,7 @@ export class FakeRegistry {
 }
 
 export class FakeIde implements Ide {
+  readonly windows: Windows = windows;
   readonly commands = new Map<string, () => void>();
   readonly remembered = new Map<string, Signal<unknown>>();
   readonly surfaces: Array<() => unknown> = [];

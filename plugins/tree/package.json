@@ -40,7 +40,8 @@
     "@ide/plugin-keymap": "workspace:*",
     "@ide/plugin-lsp": "workspace:*",
     "@ide/plugin-search": "workspace:*",
-    "@ide/ui": "workspace:*"
+    "@ide/ui": "workspace:*",
+    "@ide/windows": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

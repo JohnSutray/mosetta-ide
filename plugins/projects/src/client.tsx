@@ -58,6 +58,6 @@ export default class ProjectsPlugin implements ProjectsRemote {
       active: projects.visible,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <ProjectsPopup projects={projects} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <ProjectsPopup windows={this.ide.windows} projects={projects} />);
   }
 }

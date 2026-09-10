@@ -3,15 +3,16 @@ import type { BranchesWindow, Git, PushWindow } from './state.js';
 import { useEffect, useRef } from 'preact/hooks';
 import type { GitBranch } from './types.js';
 import { Chevron, Icon, Menu, Popup, type MenuItem } from '@ide/ui';
-import { activePick } from '@ide/windows';
+import type { Windows } from '@ide/windows';
 
 export interface BranchesProps {
+  windows: Windows;
   git: Git;
   window: BranchesWindow;
   push: PushWindow;
 }
 
-export function Branches({ git, window, push }: BranchesProps) {
+export function Branches({ windows, git, window, push }: BranchesProps) {
   const list = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
   const nameField = useRef<HTMLInputElement>(null);
@@ -31,14 +32,14 @@ export function Branches({ git, window, push }: BranchesProps) {
 
   useEffect(() => {
     if (!window.open.value) return;
-    activePick.value = {
+    windows.activePick.value = {
       next: () => window.move(1),
       prev: () => window.move(-1),
       accept: () => window.openMenuHere(),
       expand: () => window.openMenuHere(),
     };
     return () => {
-      activePick.value = null;
+      windows.activePick.value = null;
     };
   }, [window.open.value]);
 
@@ -48,7 +49,7 @@ export function Branches({ git, window, push }: BranchesProps) {
   const rows = window.rows.value;
 
   return (
-    <Popup
+    <Popup windows={windows}
       id="branches"
       keys="pick"
       class="branches"
@@ -148,7 +149,7 @@ export function Branches({ git, window, push }: BranchesProps) {
         </button>
       </div>
 
-      <BranchActions git={git} window={window} push={push} />
+      <BranchActions windows={windows} git={git} window={window} push={push} />
     </Popup>
   );
 }
@@ -190,7 +191,7 @@ function BranchRow({
   );
 }
 
-function BranchActions({ git, window, push }: BranchesProps) {
+function BranchActions({ windows, git, window, push }: BranchesProps) {
   const menu = window.menu.value;
   const branch = window.current.value;
   if (!menu || !branch) return null;
@@ -214,7 +215,7 @@ function BranchActions({ git, window, push }: BranchesProps) {
   }
 
   return (
-    <Menu
+    <Menu windows={windows}
       x={menu.x}
       y={menu.y}
       items={items}

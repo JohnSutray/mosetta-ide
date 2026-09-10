@@ -10,6 +10,6 @@ export default class UiPlugin {
 
   @activate() protected start(): void {
     this.ide.css(STYLE);
-    this.ide.registry<() => unknown>('chrome.top').add(() => <Tip />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <Tip tips={this.ide.windows.tips} />);
   }
 }

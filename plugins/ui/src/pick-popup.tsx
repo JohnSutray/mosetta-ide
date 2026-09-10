@@ -1,4 +1,4 @@
-import { type Size, activePick, host } from '@ide/windows';
+import type { Size, Windows } from '@ide/windows';
 import { Fragment } from 'preact';
 import type { ComponentChildren, JSX } from 'preact';
 
@@ -9,6 +9,7 @@ export interface PickItem<T> {
 }
 
 export interface PickProps<T> {
+  windows: Windows;
   id: string;
   title: string;
   meta?: ComponentChildren;
@@ -29,7 +30,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { fuzzy } from './fuzzy.js';
 import { Popup } from './popup.js';
 
-export function PickPopup<T>({
+export function PickPopup<T>({ windows,
   id,
   title,
   meta,
@@ -76,7 +77,7 @@ export function PickPopup<T>({
   }, [at, shown.length]);
 
   useEffect(() => {
-    activePick.value = {
+    windows.activePick.value = {
       next: () => setAt((was) => (shown.length ? (was + 1) % shown.length : 0)),
       prev: () => setAt((was) => (shown.length ? (was - 1 + shown.length) % shown.length : 0)),
       accept: () => {
@@ -85,12 +86,12 @@ export function PickPopup<T>({
       },
     };
     return () => {
-      activePick.value = null;
+      windows.activePick.value = null;
     };
   }, [shown, at, onPick]);
 
   return (
-    <Popup id={id} keys="pick" class="pick" size={size} min={min} onClose={onClose} onMouseDown={onMouseDown}>
+    <Popup windows={windows} id={id} keys="pick" class="pick" size={size} min={min} onClose={onClose} onMouseDown={onMouseDown}>
       <div class="pick-top">
         <span class="pick-title">{title}</span>
         {meta && <span class="pick-meta">{meta}</span>}
@@ -130,7 +131,7 @@ export function PickPopup<T>({
           );
         })}
         {shown.length === 0 && (
-          <div class="se-empty">{items.length === 0 ? empty : host.t('pick.nothing')}</div>
+          <div class="se-empty">{items.length === 0 ? empty : windows.host.t('pick.nothing')}</div>
         )}
       </div>
 

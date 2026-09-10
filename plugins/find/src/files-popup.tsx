@@ -5,11 +5,12 @@ import type CodePlugin from '@ide/plugin-code';
 import { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import { keysFor } from '@ide/plugin-keymap';
 import { Popup } from '@ide/ui';
-import { tips } from '@ide/windows';
+import type { Windows } from '@ide/windows';
 import type { FileHit } from './grep.js';
 import type { FindFiles } from './files.js';
 
 interface ToolProps {
+  windows: Windows;
   command: string;
   title: string;
   on?: boolean;
@@ -17,17 +18,17 @@ interface ToolProps {
   children: ComponentChildren;
 }
 
-function Tool({ command, title, on, disabled, children }: ToolProps) {
+function Tool({ windows, command, title, on, disabled, children }: ToolProps) {
   return (
     <button
       type="button"
       class={`find-tool ${on ? 'is-on' : ''}`}
       disabled={disabled}
-      onMouseEnter={(event) => tips.show(event.currentTarget as Element, t(title), keysFor(command))}
-      onMouseLeave={() => tips.hide()}
+      onMouseEnter={(event) => windows.tips.show(event.currentTarget as Element, t(title), keysFor(command))}
+      onMouseLeave={() => windows.tips.hide()}
       onMouseDown={(event) => event.preventDefault()}
       onClick={() => {
-        tips.hide();
+        windows.tips.hide();
         runCommand(command);
       }}
     >
@@ -36,7 +37,7 @@ function Tool({ command, title, on, disabled, children }: ToolProps) {
   );
 }
 
-export function FindFilesPopup({ files, code }: { files: FindFiles; code: CodePlugin }) {
+export function FindFilesPopup({ windows, files, code }: { windows: Windows; files: FindFiles; code: CodePlugin }) {
   const query = useRef<HTMLInputElement>(null);
   const replace = useRef<HTMLInputElement>(null);
   const mask = useRef<HTMLInputElement>(null);
@@ -63,7 +64,7 @@ export function FindFilesPopup({ files, code }: { files: FindFiles; code: CodePl
   const report = files.report.value;
 
   return (
-    <Popup id="find-files" keys="find-files" class="fif" size={{ w: 1100, h: 640 }} min={{ w: 560, h: 320 }} onClose={() => files.close()}>
+    <Popup windows={windows} id="find-files" keys="find-files" class="fif" size={{ w: 1100, h: 640 }} min={{ w: 560, h: 320 }} onClose={() => files.close()}>
       <div class="fif-head">
         <div class="fif-row">
           <span class="fif-icon">⌕</span>
@@ -76,19 +77,19 @@ export function FindFilesPopup({ files, code }: { files: FindFiles; code: CodePl
             onFocus={() => files.focusOn('query')}
             onInput={(event) => files.setQuery(event.currentTarget.value)}
           />
-          <Tool command="findFiles.toggleCase" title="find.case" on={files.caseSensitive.value}>
+          <Tool windows={windows} command="findFiles.toggleCase" title="find.case" on={files.caseSensitive.value}>
             Cc
           </Tool>
-          <Tool command="findFiles.toggleWords" title="find.words" on={files.words.value}>
+          <Tool windows={windows} command="findFiles.toggleWords" title="find.words" on={files.words.value}>
             W
           </Tool>
-          <Tool command="findFiles.toggleRegex" title="find.regex" on={files.regex.value}>
+          <Tool windows={windows} command="findFiles.toggleRegex" title="find.regex" on={files.regex.value}>
             .*
           </Tool>
           <span class={`fif-count ${files.busy.value ? 'is-busy' : ''}`}>
             {files.query.value === '' ? '' : `${total}${files.truncated.value ? '+' : ''} · ${files.files.value} ${t('findFiles.files')}`}
           </span>
-          <Tool command={replacing ? 'find.files' : 'find.filesReplace'} title={replacing ? 'find.hideReplace' : 'find.showReplace'}>
+          <Tool windows={windows} command={replacing ? 'find.files' : 'find.filesReplace'} title={replacing ? 'find.hideReplace' : 'find.showReplace'}>
             {replacing ? '▾' : '▸'}
           </Tool>
         </div>
@@ -104,10 +105,10 @@ export function FindFilesPopup({ files, code }: { files: FindFiles; code: CodePl
               onFocus={() => files.focusOn('replace')}
               onInput={(event) => files.setReplacement(event.currentTarget.value)}
             />
-            <Tool command="findFiles.replaceFile" title="findFiles.replaceFile" disabled={total === 0}>
+            <Tool windows={windows} command="findFiles.replaceFile" title="findFiles.replaceFile" disabled={total === 0}>
               {t('findFiles.replaceFile')}
             </Tool>
-            <Tool command="findFiles.replaceAll" title="findFiles.replaceAll" disabled={total === 0}>
+            <Tool windows={windows} command="findFiles.replaceAll" title="findFiles.replaceAll" disabled={total === 0}>
               {t('findFiles.replaceAll')}
             </Tool>
           </div>

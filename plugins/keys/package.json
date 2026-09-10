@@ -20,7 +20,8 @@
     "@ide/api": "workspace:*",
     "@ide/plugin-keymap": "workspace:*",
     "@ide/protocol": "workspace:*",
-    "@ide/ui": "workspace:*"
+    "@ide/ui": "workspace:*",
+    "@ide/windows": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

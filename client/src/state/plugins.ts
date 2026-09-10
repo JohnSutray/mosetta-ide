@@ -1,3 +1,4 @@
+import { windows } from '@ide/windows';
 import { commands } from '../keys/commands.js';
 import { rpc as socket, type RpcLike } from './session.js';
 import { complain, notify, say, settle } from './notifications.js';
@@ -160,6 +161,7 @@ export class Plugins {
           if (frame.name !== name || frame.event !== event) return;
           handler(frame.payload);
         }),
+      windows,
       getPlugin: <T,>(ctor: PluginClass<T>): T => {
         const found = this.instances.get(ctor);
         if (!found) throw new Error(`плагин не поднят: ${ctor.name}`);

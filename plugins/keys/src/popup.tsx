@@ -1,3 +1,4 @@
+import type { Windows } from '@ide/windows';
 import { t } from '@ide/api/client';
 import { keys } from '@ide/plugin-keymap';
 import { Fragment } from 'preact';
@@ -5,7 +6,7 @@ import type { KeyBinding, KeyContext, KeyScope } from '@ide/protocol';
 import { Popup } from '@ide/ui';
 import type { KeysWindow } from './state.js';
 
-export function KeysPopup({ window: win }: { window: KeysWindow }) {
+export function KeysPopup({ windows, window: win }: { windows: Windows; window: KeysWindow }) {
   if (!win.open.value) return null;
 
   const bindings = keys.bindings.value;
@@ -29,7 +30,7 @@ export function KeysPopup({ window: win }: { window: KeysWindow }) {
   }
 
   return (
-    <Popup
+    <Popup windows={windows}
       id="keys.show"
       keys="keys"
       class="keys-help"

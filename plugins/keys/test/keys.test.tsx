@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { windows } from '@ide/windows';
 import { FakeHost, nodes, of } from '@ide/api/testing';
 import KeymapPlugin, { keys } from '@ide/plugin-keymap';
 import KeysPlugin from '../src/client.js';
@@ -23,7 +24,7 @@ async function raise() {
 }
 
 function rendered(plugin: KeysPlugin) {
-  return nodes(KeysPopup({ window: plugin.window }));
+  return nodes(KeysPopup({ windows, window: plugin.window }));
 }
 
 function texts(plugin: KeysPlugin): string[] {

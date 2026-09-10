@@ -22,6 +22,6 @@ export default class KeysPlugin {
       active: this.window.open,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <KeysPopup window={this.window} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <KeysPopup windows={this.ide.windows} window={this.window} />);
   }
 }

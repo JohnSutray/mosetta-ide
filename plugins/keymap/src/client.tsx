@@ -1,7 +1,6 @@
 import { activate, keymap, registry, t } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import type { KeyBinding, KeyHost, KeyOs, KeyScope } from '@ide/protocol';
-import { updateHost } from '@ide/windows';
 import { effect } from '@preact/signals';
 import { keyContexts } from './context.js';
 import { Dispatcher, keyRules } from './dispatcher.js';
@@ -59,12 +58,13 @@ export default class KeymapPlugin {
         () => keyContexts.hereChain(),
         (key) => this.echo.noteUnbound(key),
         this.echo,
+        this.ide.windows,
       );
       const dispatcher = this.dispatcher;
       effect(() => dispatcher.setKeymap(keymap.value));
     }
 
-    updateHost({ catchesKeys: (context) => context !== undefined && keyRules.catchesKeys(context) });
+    this.ide.windows.updateHost({ catchesKeys: (context) => context !== undefined && keyRules.catchesKeys(context) });
   }
 }
 

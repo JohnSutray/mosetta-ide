@@ -1,3 +1,4 @@
+import type { Windows } from '@ide/windows';
 import type { Signal } from '@preact/signals';
 import type {
   DirEntry,
@@ -126,6 +127,7 @@ export interface PluginToolbarEntry {
 }
 
 export interface Ide {
+  readonly windows: Windows;
   readonly name: string;
   readonly rpc: { call(method: string, params?: unknown): Promise<unknown> };
   getPlugin<T>(ctor: PluginClass<T>): T;

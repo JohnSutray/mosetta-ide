@@ -1,3 +1,4 @@
+import type { Windows } from '@ide/windows';
 import { settingsOf, t } from '@ide/api/client';
 import type { MergeFile } from './types.js';
 import { MergeColumns } from './columns.js';
@@ -6,7 +7,7 @@ import { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import { FileIcon, Popup } from '@ide/ui';
 import type { Merge } from './state.js';
 
-export function MergeScreen({ merge, code }: { merge: Merge; code: CodePlugin }) {
+export function MergeScreen({ windows, merge, code }: { windows: Windows; merge: Merge; code: CodePlugin }) {
   if (!merge.open.value) return null;
   const session = merge.session.value;
   const file = merge.file.value;
@@ -17,7 +18,7 @@ export function MergeScreen({ merge, code }: { merge: Merge; code: CodePlugin })
   const left = merge.left.value;
 
   return (
-    <Popup
+    <Popup windows={windows}
       id="merge"
       keys="merge"
       full

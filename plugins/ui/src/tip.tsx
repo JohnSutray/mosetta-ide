@@ -1,7 +1,7 @@
-import { tips } from '@ide/windows';
+import type { Tips } from '@ide/windows';
 import { useLayoutEffect, useRef } from 'preact/hooks';
 
-export function Tip() {
+export function Tip({ tips }: { tips: Tips }) {
   const shown = tips.spot.value;
   const box = useRef<HTMLDivElement>(null);
 

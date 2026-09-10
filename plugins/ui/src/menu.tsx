@@ -1,4 +1,4 @@
-import { popups, activeMenu, host } from '@ide/windows';
+import type { Windows } from '@ide/windows';
 import { useEffect, useRef, useState } from 'preact/hooks';
 
 export interface MenuItem {
@@ -7,13 +7,13 @@ export interface MenuItem {
   run: () => void;
 }
 
-export function Menu({
+export function Menu({ windows,
   x,
   y,
   items,
   onClose,
   class: extra = '',
-}: {
+}: { windows: Windows;
   x: number;
   y: number;
   items: MenuItem[];
@@ -26,9 +26,9 @@ export function Menu({
   useEffect(() => {
     const came = document.activeElement as HTMLElement | null;
     box.current?.focus({ preventScroll: true });
-    popups.enter({ id: 'menu', close: onClose, layer: true });
+    windows.popups.enter({ id: 'menu', close: onClose, layer: true });
     return () => {
-      popups.leave('menu');
+      windows.popups.leave('menu');
       const here = document.activeElement;
       const mine = here === box.current || (here !== null && box.current?.contains(here));
       if (mine || here === document.body) came?.focus();
@@ -37,7 +37,7 @@ export function Menu({
 
   useEffect(() => {
     const total = items.length;
-    activeMenu.value = {
+    windows.activeMenu.value = {
       next: () => setAt((was) => (total ? (was + 1) % total : 0)),
       prev: () => setAt((was) => (total ? (was - 1 + total) % total : 0)),
       accept: () => {
@@ -48,7 +48,7 @@ export function Menu({
       },
     };
     return () => {
-      activeMenu.value = null;
+      windows.activeMenu.value = null;
     };
   }, [items, at, onClose]);
 
@@ -72,7 +72,7 @@ export function Menu({
             item.run();
           }}
         >
-          {host.t(item.label)}
+          {windows.host.t(item.label)}
         </button>
       ))}
     </div>

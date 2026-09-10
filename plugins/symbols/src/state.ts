@@ -3,7 +3,6 @@ import type { Ide } from '@ide/api/client';
 import { batch, signal, type Signal } from '@preact/signals';
 import type { SymbolSite } from '@ide/plugin-lsp';
 import type { SymbolSpot } from '@ide/plugin-editor';
-import { activePick } from '@ide/windows';
 
 export type SymbolKind = 'definition' | 'usages';
 
@@ -44,7 +43,7 @@ export class Symbols {
       this.list.value = null;
       this.preview.value = null;
     });
-    if (activePick.value === this.pick) activePick.value = null;
+    if (this.ide.windows.activePick.value === this.pick) this.ide.windows.activePick.value = null;
   }
 
   private readonly pick = {
@@ -138,7 +137,7 @@ export class Symbols {
 
   private show(list: Omit<SymbolList, 'at'>): void {
     this.list.value = { ...list, at: 0 };
-    activePick.value = this.pick;
+    this.ide.windows.activePick.value = this.pick;
     this.select(0);
   }
 

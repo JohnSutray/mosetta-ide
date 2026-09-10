@@ -77,7 +77,7 @@ export default class MergePlugin implements MergeRemote {
       badge: merge.pending,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <MergeScreen merge={merge} code={this.ide.getPlugin(CodePlugin)} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <MergeScreen windows={this.ide.windows} merge={merge} code={this.ide.getPlugin(CodePlugin)} />);
   }
 }
 

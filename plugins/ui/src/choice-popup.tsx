@@ -1,3 +1,4 @@
+import type { Windows } from '@ide/windows';
 import { useState } from 'preact/hooks';
 import { Popup } from './popup.js';
 
@@ -10,6 +11,7 @@ export interface ChoiceRow {
 }
 
 export interface ChoiceProps {
+  windows: Windows;
   id: string;
   title: string;
   note: string;
@@ -25,7 +27,7 @@ export interface ChoiceProps {
 export function ChoicePopup(props: ChoiceProps) {
   const [draft, setDraft] = useState('');
   return (
-    <Popup
+    <Popup windows={props.windows}
       id={props.id}
       keys="prompt"
       class="choice"

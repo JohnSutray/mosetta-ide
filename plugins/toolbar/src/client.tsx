@@ -9,7 +9,6 @@ import {
   type Ide,
 } from '@ide/api/client';
 import { keysFor } from '@ide/plugin-keymap';
-import { tips } from '@ide/windows';
 import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarWidget } from './schema.js';
 import { TOOLBAR_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
@@ -55,11 +54,11 @@ export default class Toolbar {
         key={entry.id}
         class={`tool ${active ? 'is-active' : ''}`}
         onMouseEnter={(event) =>
-          tips.show(event.currentTarget as Element, t(entry.title), keysFor(entry.command))
+          this.ide.windows.tips.show(event.currentTarget as Element, t(entry.title), keysFor(entry.command))
         }
-        onMouseLeave={() => tips.hide()}
+        onMouseLeave={() => this.ide.windows.tips.hide()}
         onClick={() => {
-          tips.hide();
+          this.ide.windows.tips.hide();
           runCommand(entry.command);
         }}
       >

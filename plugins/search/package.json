@@ -28,7 +28,8 @@
     "@ide/protocol": "workspace:*",
     "@ide/ui": "workspace:*",
     "typescript": "^5.7.2",
-    "@ide/plugin-code": "workspace:*"
+    "@ide/plugin-code": "workspace:*",
+    "@ide/windows": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

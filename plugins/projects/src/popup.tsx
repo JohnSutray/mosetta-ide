@@ -1,10 +1,11 @@
+import type { Windows } from '@ide/windows';
 import { t, workspaces } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import type { DirSuggestion } from './types.js';
 import { Chevron, DirIcon, Icon, Popup } from '@ide/ui';
 import type { Projects } from './state.js';
 
-export function ProjectsPopup({ projects }: { projects: Projects }) {
+export function ProjectsPopup({ windows, projects }: { windows: Windows; projects: Projects }) {
   const input = useRef<HTMLInputElement>(null);
   const shown = projects.visible.value;
 
@@ -17,7 +18,7 @@ export function ProjectsPopup({ projects }: { projects: Projects }) {
   if (!shown) return null;
 
   return (
-    <Popup
+    <Popup windows={windows}
       id="projects"
       keys="projects"
       class="projects-popup"

@@ -4,7 +4,7 @@ import { useRef } from 'preact/hooks';
 import type { GitCommit } from './types.js';
 import { ChangedTree } from './changed-tree.js';
 import { Popup, Resizer } from '@ide/ui';
-import { geometry } from '@ide/windows';
+import type { Windows } from '@ide/windows';
 
 const FILES_ID = 'push.files';
 const FILES_DEFAULT = 460;
@@ -17,11 +17,12 @@ const MESSAGE_MIN = 48;
 const TREE_MIN = 120;
 
 export interface PushProps {
+  windows: Windows;
   git: Git;
   push: PushWindow;
 }
 
-export function Push({ git, push }: PushProps) {
+export function Push({ windows, git, push }: PushProps) {
   const split = useRef<HTMLDivElement>(null);
   const files = useRef<HTMLDivElement>(null);
 
@@ -42,7 +43,7 @@ export function Push({ git, push }: PushProps) {
   const force = push.force.value;
 
   return (
-    <Popup
+    <Popup windows={windows}
       id="push"
       keys="push"
       over="branches"
@@ -98,12 +99,12 @@ export function Push({ git, push }: PushProps) {
               />
             </div>
 
-            <Resizer id={FILES_ID} side="right" limits={limits} defaultWidth={FILES_DEFAULT} />
+            <Resizer windows={windows} id={FILES_ID} side="right" limits={limits} defaultWidth={FILES_DEFAULT} />
 
             <div
               class="push-files"
               ref={files}
-              style={{ width: `${geometry.widthOf(FILES_ID, FILES_DEFAULT)}px` }}
+              style={{ width: `${windows.geometry.widthOf(FILES_ID, FILES_DEFAULT)}px` }}
             >
               <div class="push-lane-title">
                 {push.selected.value
@@ -115,7 +116,7 @@ export function Push({ git, push }: PushProps) {
                 <ChangedTree changes={push.changes.value} />
               </div>
 
-              <Resizer
+              <Resizer windows={windows}
                 id={MESSAGE_ID}
                 side="right"
                 axis="y"
@@ -124,7 +125,7 @@ export function Push({ git, push }: PushProps) {
               />
               <div
                 class="push-message"
-                style={{ height: `${geometry.widthOf(MESSAGE_ID, MESSAGE_DEFAULT)}px` }}
+                style={{ height: `${windows.geometry.widthOf(MESSAGE_ID, MESSAGE_DEFAULT)}px` }}
               >
                 <Message push={push} />
               </div>
