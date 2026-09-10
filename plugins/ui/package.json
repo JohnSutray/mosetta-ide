@@ -10,7 +10,19 @@
     ".": "./src/index.ts"
   },
   "ide": {
-    "client": "src/client.tsx"
+    "client": "src/client.tsx",
+    "shares": [
+      "Chevron",
+      "ChoicePopup",
+      "DirIcon",
+      "FileIcon",
+      "Icon",
+      "Menu",
+      "PickPopup",
+      "Popup",
+      "Resizer",
+      "RootIcon"
+    ]
   },
   "dependencies": {
     "@ide/api": "workspace:*",
