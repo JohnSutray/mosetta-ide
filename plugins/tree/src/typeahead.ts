@@ -1,43 +1,75 @@
+import { layout } from '@ide/plugin-search';
 import { signal } from '@preact/signals';
 import type { TreeSelection } from './state.js';
 
 export class TreeTypeahead {
   readonly term = signal('');
+  readonly found = signal(true);
 
   constructor(private readonly selection: TreeSelection) {}
 
-  match(name: string): [number, number] | null {
+  private variants(): string[] {
     const term = this.term.value.toLowerCase();
-    if (term === '') return null;
-    const at = name.toLowerCase().indexOf(term);
-    return at === -1 ? null : [at, at + term.length];
+    if (term === '') return [];
+    const other = layout.retype(term);
+    return other ? [term, other.toLowerCase()] : [term];
+  }
+
+  match(name: string): [number, number] | null {
+    const lower = name.toLowerCase();
+    for (const variant of this.variants()) {
+      const at = lower.indexOf(variant);
+      if (at !== -1) return [at, at + variant.length];
+    }
+    return null;
   }
 
   type(text: string): void {
     this.term.value = text;
-    if (text === '') return;
-    const term = text.toLowerCase();
+    if (text === '') {
+      this.found.value = true;
+      return;
+    }
+    const variants = this.variants();
     const order = this.selection.visibleOrder();
-    if (order.length === 0) return;
+    if (order.length === 0) {
+      this.found.value = false;
+      return;
+    }
     const current = order.indexOf(this.selection.focus.value ?? '');
-    if (current !== -1 && nameOf(order[current]!).includes(term)) return;
-    const found =
-      this.seek(order, current + 1, 1, (name) => name.startsWith(term)) ??
-      this.seek(order, current + 1, 1, (name) => name.includes(term));
+    const here = current === -1 ? null : nameOf(order[current]!);
+    if (here !== null && variants.some((variant) => here.includes(variant))) {
+      this.found.value = true;
+      return;
+    }
+    let found: string | null = null;
+    for (const variant of variants) {
+      found =
+        this.seek(order, current + 1, 1, (name) => name.startsWith(variant)) ??
+        this.seek(order, current + 1, 1, (name) => name.includes(variant));
+      if (found !== null) break;
+    }
+    this.found.value = found !== null;
     if (found !== null) this.selection.only(found);
   }
 
   move(delta: 1 | -1): void {
-    const term = this.term.value.toLowerCase();
-    if (term === '') return;
+    const variants = this.variants();
+    if (variants.length === 0) return;
     const order = this.selection.visibleOrder();
     const current = order.indexOf(this.selection.focus.value ?? '');
-    const found = this.seek(order, current + delta, delta, (name) => name.includes(term));
-    if (found !== null) this.selection.only(found);
+    for (const variant of variants) {
+      const found = this.seek(order, current + delta, delta, (name) => name.includes(variant));
+      if (found !== null) {
+        this.selection.only(found);
+        return;
+      }
+    }
   }
 
   clear(): void {
     this.term.value = '';
+    this.found.value = true;
   }
 
   private seek(order: string[], from: number, delta: 1 | -1, test: (name: string) => boolean): string | null {

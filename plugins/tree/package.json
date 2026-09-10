@@ -39,6 +39,7 @@
     "@ide/plugin-doc": "workspace:*",
     "@ide/plugin-keymap": "workspace:*",
     "@ide/plugin-lsp": "workspace:*",
+    "@ide/plugin-search": "workspace:*",
     "@ide/ui": "workspace:*"
   },
   "peerDependencies": {

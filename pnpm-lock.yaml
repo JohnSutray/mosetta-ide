@@ -736,6 +736,9 @@ importers:
       '@ide/plugin-lsp':
         specifier: workspace:*
         version: link:../lsp
+      '@ide/plugin-search':
+        specifier: workspace:*
+        version: link:../search
       '@ide/ui':
         specifier: workspace:*
         version: link:../ui

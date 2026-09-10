@@ -1,15 +1,52 @@
 export const STYLE = `
-.tree-typeahead {
+.tree-find { position: sticky; top: 0; height: 0; z-index: 3; }
+.tree-find-box {
   position: absolute;
+  top: 2px;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   width: 1px;
   height: 1px;
+  padding: 0;
+  overflow: hidden;
   opacity: 0;
+  pointer-events: none;
+  background: var(--bg);
+  border: 1px solid var(--treesel);
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+  font: 12px var(--ui-font);
+}
+.tree-find-box.is-on {
+  width: auto;
+  height: auto;
+  padding: 3px 8px;
+  overflow: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+.tree-find-box.is-missing { border-color: var(--error); }
+.tree-find-box.is-missing .tree-find-input { color: var(--error); }
+.tree-find-icon { color: var(--muted); }
+.tree-find-input {
+  width: 14ch;
+  min-width: 0;
   border: 0;
   padding: 0;
-  margin: 0;
-  pointer-events: none;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  outline: none;
+  cursor: text;
 }
-.tree-name b { color: var(--accent); font-weight: 700; }
+.tree-name b {
+  background: #6b5d2a;
+  border-radius: 2px;
+  color: #f2ecd8;
+  font-weight: inherit;
+}
 
 .tree {
   padding: 3px 0;

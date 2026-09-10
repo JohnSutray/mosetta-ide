@@ -27,7 +27,12 @@ export function Tree(props: TreeProps) {
   const field = useRef<HTMLInputElement>(null);
   const host = useRef<HTMLDivElement>(null);
   const wanted = props.selection.wantsKeyboard.value;
-  const grabKeyboard = () => field.current?.focus({ preventScroll: true });
+  const grabKeyboard = () => {
+    const el = field.current;
+    if (!el) return;
+    el.focus({ preventScroll: true });
+    el.setSelectionRange(el.value.length, el.value.length);
+  };
 
   useEffect(() => {
     grabKeyboard();
@@ -43,20 +48,30 @@ export function Tree(props: TreeProps) {
   const open = props.files.rootExpanded.value;
   const term = props.typeahead.term.value;
   return (
-    <div class="tree" data-keys="tree" ref={host} onClick={() => grabKeyboard()}>
-      <input
-        ref={field}
-        class={`tree-typeahead ${term ? 'is-on' : ''}`}
-        value={term}
-        spellcheck={false}
-        autocomplete="off"
-        aria-label={t('tree.find')}
-        onInput={(event) => props.typeahead.type(event.currentTarget.value)}
-        onBlur={(event) => {
-          const next = event.relatedTarget as Node | null;
-          if (!next || !host.current?.contains(next)) props.typeahead.clear();
-        }}
-      />
+    <div
+      class="tree"
+      data-keys="tree"
+      ref={host}
+      onClick={() => {
+        props.typeahead.clear();
+        grabKeyboard();
+      }}
+    >
+      <div class="tree-find">
+        <div class={`tree-find-box ${term ? 'is-on' : ''} ${props.typeahead.found.value ? '' : 'is-missing'}`}>
+          <span class="tree-find-icon">⌕</span>
+          <input
+            ref={field}
+            class="tree-find-input"
+            value={term}
+            spellcheck={false}
+            autocomplete="off"
+            aria-label={t('tree.find')}
+            onInput={(event) => props.typeahead.type(event.currentTarget.value)}
+            onBlur={() => props.typeahead.clear()}
+          />
+        </div>
+      </div>
       <div
         class="tree-row is-root"
         data-path=""

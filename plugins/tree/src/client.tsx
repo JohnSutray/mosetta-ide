@@ -118,7 +118,6 @@ export default class TreePlugin {
       title: 'panel.tree',
       side: 'left',
       open: this.shown,
-      badges: () => (this.typeahead.term.value ? <span class="tag tree-find">⌕ {this.typeahead.term.value}</span> : null),
       view: () => (
         <Tree
           typeahead={this.typeahead}

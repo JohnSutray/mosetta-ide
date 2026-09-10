@@ -48,6 +48,22 @@ describe('поиск по дереву буквами', () => {
     expect(find.match('main.tsx')).toEqual([0, 4]);
   });
 
+  it('набранное в русской раскладке находит английское имя (ADR-0199)', () => {
+    find.type('сдшуте');
+    expect(selection.focus.value).toBe('client');
+    expect(find.found.value).toBe(true);
+    expect(find.match('client')).toEqual([0, 6]);
+  });
+
+  it('говорит, нашлось ли: по этому краснеет рамка (ADR-0199)', () => {
+    find.type('co');
+    expect(find.found.value).toBe(true);
+    find.type('щщщ');
+    expect(find.found.value).toBe(false);
+    find.type('');
+    expect(find.found.value).toBe(true);
+  });
+
   it('стрелки при набранном ходят по совпадениям по кругу', () => {
     find.type('c');
     expect(selection.focus.value).toBe('client');

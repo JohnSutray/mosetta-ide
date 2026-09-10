@@ -8,6 +8,7 @@ import { STYLE } from './style.js';
 import { OPENER_SCHEMA, type IndexHit, type IndexKind, type Opener } from './types.js';
 
 export type { Found, IndexHit, IndexKind, Opener, SearchStats } from './types.js';
+export { layout, Layout } from './layout.js';
 
 @registry({ key: 'search.opener', schema: OPENER_SCHEMA })
 @configSection({ section: 'index', defaults: INDEX_DEFAULTS })
