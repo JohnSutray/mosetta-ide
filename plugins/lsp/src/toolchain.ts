@@ -2,6 +2,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
 import type { Logger } from '@ide/api/server';
+import type { LspSettings } from './settings.js';
 
 type InitOptions = Record<string, unknown> | undefined;
 
@@ -24,7 +25,14 @@ function resolveTsserver(root: string, dir: string, log: Logger): string | null 
 export class Toolchain {
   constructor(private readonly dir: string) {}
 
-  optionsFor(name: string, root: string, log: Logger): InitOptions {
+  preferencesFor(lsp: LspSettings, name: string, root: string): Record<string, unknown> {
+    return {
+      ...(lsp.servers[name]?.preferences ?? {}),
+      ...(lsp.projects?.[path.basename(root)]?.[name] ?? {}),
+    };
+  }
+
+  optionsFor(name: string, root: string, log: Logger, preferences: Record<string, unknown> = {}): InitOptions {
     if (name !== 'typescript') return undefined;
 
     const tsserver = resolveTsserver(root, this.dir, log);
@@ -33,6 +41,7 @@ export class Toolchain {
       preferences: {
         includeCompletionsForModuleExports: true,
         includeInlayParameterNameHints: 'none',
+        ...preferences,
       },
     };
   }

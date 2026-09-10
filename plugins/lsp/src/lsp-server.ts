@@ -121,7 +121,7 @@ export class LspServer {
         },
         workspace: { workspaceFolders: true, configuration: false },
       },
-      initializationOptions: this.toolchain.optionsFor(this.name, this.root, this.log),
+      initializationOptions: this.toolchain.optionsFor(this.name, this.root, this.log, this.settings.preferences),
     });
     this.notify('initialized', {});
     this.setState('ready');
