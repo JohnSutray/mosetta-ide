@@ -1,14 +1,13 @@
 import { hoverTooltip, type Tooltip } from '@codemirror/view';
 import type { EditorState } from '@codemirror/state';
 import type { HoverInfo, Severity } from '@ide/plugin-lsp';
-import { codePainter, darcula } from '@ide/code';
-
-const dc = darcula.palette;
+import type CodePlugin from '@ide/plugin-code';
 import { diagnostics } from './diagnostics.js';
 
 export function lspHover(
   pathOf: () => string | null,
   ask: (path: string, line: number, character: number) => Promise<HoverInfo | null>,
+  code: CodePlugin,
 ) {
   return hoverTooltip(async (view, pos): Promise<Tooltip | null> => {
     const path = pathOf();
@@ -31,17 +30,17 @@ export function lspHover(
           const box = document.createElement('div');
           box.className = 'cm-hover-problem';
           box.style.borderColor = tint(problem.severity);
-          box.append(...message(problem.message));
+          box.append(...message(problem.message, code.look.palette.class));
           dom.append(box);
         }
 
         if (info) {
-          const code = document.createElement('div');
-          code.className = 'cm-hover-code';
-          for (const chunk of codePainter.paint(stripFences(info.markdown), path)) {
-            code.append(painted(chunk.text, chunk.color));
+          const signature = document.createElement('div');
+          signature.className = 'cm-hover-code';
+          for (const chunk of code.painter.paint(stripFences(info.markdown), path)) {
+            signature.append(painted(chunk.text, chunk.color));
           }
-          dom.append(code);
+          dom.append(signature);
         }
         return { dom };
       },
@@ -50,20 +49,20 @@ export function lspHover(
 }
 
 function tint(severity: Severity): string {
-  if (severity === 'warning') return dc.warnFg;
-  if (severity === 'info') return dc.number;
-  if (severity === 'hint') return dc.comment;
-  return dc.errorFg;
+  if (severity === 'warning') return 'var(--warning)';
+  if (severity === 'info') return 'var(--info)';
+  if (severity === 'hint') return 'var(--hint)';
+  return 'var(--error)';
 }
 
-function message(text: string): Node[] {
+function message(text: string, accent: string): Node[] {
   const out: Node[] = [];
   const quoted = /'([^']+)'|`([^`]+)`/g;
   let last = 0;
   for (const found of text.matchAll(quoted)) {
     const at = found.index ?? 0;
     if (at > last) out.push(document.createTextNode(text.slice(last, at)));
-    out.push(painted(found[0], dc.class));
+    out.push(painted(found[0], accent));
     last = at + found[0].length;
   }
   if (last < text.length) out.push(document.createTextNode(text.slice(last)));

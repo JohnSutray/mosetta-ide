@@ -1,11 +1,12 @@
 import { settingsOf, t } from '@ide/api/client';
 import type { MergeFile } from './types.js';
 import { MergeColumns } from './columns.js';
-import { CodeView, EDITOR_DEFAULTS } from '@ide/code';
+import type CodePlugin from '@ide/plugin-code';
+import { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import { FileIcon, Popup } from '@ide/ui';
 import type { Merge } from './state.js';
 
-export function MergeScreen({ merge }: { merge: Merge }) {
+export function MergeScreen({ merge, code }: { merge: Merge; code: CodePlugin }) {
   if (!merge.open.value) return null;
   const session = merge.session.value;
   const file = merge.file.value;
@@ -49,9 +50,11 @@ export function MergeScreen({ merge }: { merge: Merge }) {
 
         <div class="merge-work">
           {whole ? (
-            <WholeFile file={file} merge={merge} />
+            <WholeFile file={file} merge={merge} code={code} />
           ) : (
             <MergeColumns
+              code={code}
+              diff3={merge.diff3}
               path={file.path}
               regions={merge.regions.value}
               choices={merge.choices.value}
@@ -125,7 +128,7 @@ function FileRow({
   );
 }
 
-function WholeFile({ file, merge }: { file: MergeFile; merge: Merge }) {
+function WholeFile({ file, merge, code }: { file: MergeFile; merge: Merge; code: CodePlugin }) {
   const survivor = file.left.text === null ? 'right' : 'left';
   const side = file[survivor];
   const gone = file[survivor === 'left' ? 'right' : 'left'];
@@ -152,7 +155,7 @@ function WholeFile({ file, merge }: { file: MergeFile; merge: Merge }) {
         <div class="merge-card">
           <div class="merge-card-title">{t(side.label)}</div>
           <div class="merge-card-body">
-            <CodeView path={file.path} text={side.text ?? ''} line={-1} settings={editor} />
+            <code.View path={file.path} text={side.text ?? ''} line={-1} settings={editor} />
           </div>
           <button
             type="button"

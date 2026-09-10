@@ -13,14 +13,14 @@ import { activeLine } from './active-line.js';
 import { bracketMatching, indentOnInput, foldGutter } from '@codemirror/language';
 import { highlightSelectionMatches } from '@codemirror/search';
 import type { DocState } from '@ide/protocol';
-import type { EditorSettings } from '@ide/code';
+import type CodePlugin from '@ide/plugin-code';
+import type { EditorSettings, Hunk } from '@ide/plugin-code';
 import type { Diagnostic, HoverInfo } from '@ide/plugin-lsp';
-import { type Hunk, type HunkBox } from '@ide/api/client';
+import { type HunkBox } from '@ide/api/client';
 import { chordHeld } from '@ide/plugin-keymap';
 import { takeFocusOnMount } from '@ide/plugin-doc';
-import { darcula, inputMechanics, languages } from '@ide/code';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
-import { gitMarks, setHeadText } from './git-marks.js';
+import { setHeadText, type GitMarks } from './git-marks.js';
 import { lspHover } from './hover.js';
 
 const externalUpdate = Annotation.define<boolean>();
@@ -41,6 +41,8 @@ interface Props {
   onHover: (path: string, line: number, character: number) => Promise<HoverInfo | null>;
   onMount: (view: EditorView | null) => void;
   extra: Extension[];
+  code: CodePlugin;
+  marks: GitMarks;
 }
 
 export function CodeEditor({
@@ -59,6 +61,8 @@ export function CodeEditor({
   onHover,
   onMount,
   extra,
+  code,
+  marks,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
@@ -81,7 +85,7 @@ export function CodeEditor({
       bracketMatching(),
       activeLine,
       highlightSelectionMatches(),
-      keymap.of([...inputMechanics.keymap]),
+      keymap.of([...code.input.keymap]),
       EditorView.updateListener.of((update) => {
         if (update.selectionSet || update.docChanged) {
           const at = update.state.selection.main.head;
@@ -102,20 +106,21 @@ export function CodeEditor({
           return true;
         },
       }),
-      darcula.extension,
-      gitMarks.gutter((hunk, box) => handlers.current.onHunk(hunk, box)),
+      code.look.extension,
+      marks.gutter((hunk, box) => handlers.current.onHunk(hunk, box)),
       diagnosticsExtension,
       lspHover(
         () => pathRef.current,
         (path, line, character) => handlers.current.onHover(path, line, character),
+        code,
       ),
       EditorView.theme({
         '&': { fontSize: `${settings.fontSize}px` },
-        '.cm-content': darcula.textStyle(settings),
+        '.cm-content': code.look.textStyle(settings),
         '.cm-cursor, .cm-dropCursor': { borderLeftWidth: `${settings.caretWidth}px` },
       }),
       EditorState.tabSize.of(settings.tabSize),
-      language.current.of(languages.of(file.path)),
+      language.current.of(code.languages.of(file.path)),
       EditorState.readOnly.of(file.truncated),
       extras.current.of(extra),
     ];
@@ -137,7 +142,7 @@ export function CodeEditor({
   }, [docKey, settings.fontSize, settings.fontFamily, settings.tabSize, settings.lineNumbers, settings.caretWidth]);
 
   useEffect(() => {
-    view.current?.dispatch({ effects: language.current.reconfigure(languages.of(file.path)) });
+    view.current?.dispatch({ effects: language.current.reconfigure(code.languages.of(file.path)) });
   }, [file.path]);
 
   useEffect(() => {

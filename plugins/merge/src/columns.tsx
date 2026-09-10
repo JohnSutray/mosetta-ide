@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { EditorState, StateEffect, StateField, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType, lineNumbers } from '@codemirror/view';
-import type { EditorSettings } from '@ide/code';
-import { darcula } from '@ide/code';
-import { languages } from '@ide/code';
-import type { Choice, Region } from './diff3.js';
+import type CodePlugin from '@ide/plugin-code';
+import type { EditorSettings } from '@ide/plugin-code';
+import type { Choice, Diff3, Region } from './diff3.js';
 import { layout, type Lane, type LaneLayout } from './layout.js';
 import { t } from '@ide/api/client';
 
@@ -14,6 +13,8 @@ interface Props {
   choices: Choice[];
   cursor: number;
   settings: EditorSettings;
+  code: CodePlugin;
+  diff3: Diff3;
   leftLabel: string;
   rightLabel: string;
   onDecide: (at: number, side: 'left' | 'right', choice: 'take' | 'skip' | null) => void;
@@ -22,7 +23,7 @@ interface Props {
 
 export function MergeColumns(props: Props) {
   const { path, regions, choices, cursor, settings } = props;
-  const grid = layout(regions, choices);
+  const grid = layout(regions, choices, props.diff3);
 
   const hosts = {
     left: useRef<HTMLDivElement>(null),
@@ -41,7 +42,7 @@ export function MergeColumns(props: Props) {
       made[lane] = new EditorView({
         state: EditorState.create({
           doc: '',
-          extensions: paneExtensions(path, settings),
+          extensions: paneExtensions(path, settings, props.code),
         }),
         parent: host,
       });
@@ -303,17 +304,17 @@ function decorate(state: EditorState, lane: LaneState) {
   );
 }
 
-function paneExtensions(path: string, settings: EditorSettings): Extension[] {
+function paneExtensions(path: string, settings: EditorSettings, code: CodePlugin): Extension[] {
   return [
     lineNumbers(),
-    languages.of(path),
-    darcula.extension,
+    code.languages.of(path),
+    code.look.extension,
     laneField,
     EditorView.editable.of(false),
     EditorState.readOnly.of(true),
     EditorView.theme({
       '&': { fontSize: `${settings.fontSize}px`, height: '100%' },
-      '.cm-content': darcula.textStyle(settings),
+      '.cm-content': code.look.textStyle(settings),
       '.cm-scroller': { overflow: 'auto' },
     }),
   ];

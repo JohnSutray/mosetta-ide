@@ -1,9 +1,12 @@
-import { inputMechanics } from '@ide/code';
+import { InputMechanics } from '@ide/plugin-code';
 import { reserved } from '../src/reserved.js';
 import { describe, expect, it } from 'vitest';
 import { keyRules } from '../src/dispatcher.js';
 import { keyHost } from '../src/host.js';
 import { WORLDS, inWorld, keymap } from './keymap-shared.js';
+
+const inputMechanics = new InputMechanics();
+keyRules.useMechanics(inputMechanics.keys(keyHost.isMac));
 
 function press(key: string, target: unknown, mods: Record<string, boolean> = {}) {
   return {

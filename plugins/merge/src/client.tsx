@@ -2,6 +2,7 @@ import { activate, remote, stub } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { computed } from '@preact/signals';
 import { MergeIcon } from './icons.js';
+import CodePlugin from '@ide/plugin-code';
 import { MergeScreen } from './screen.js';
 import { Merge, type MergeRemote } from './state.js';
 import type { MergeSession } from './types.js';
@@ -76,7 +77,7 @@ export default class MergePlugin implements MergeRemote {
       badge: merge.pending,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <MergeScreen merge={merge} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <MergeScreen merge={merge} code={this.ide.getPlugin(CodePlugin)} />);
   }
 }
 

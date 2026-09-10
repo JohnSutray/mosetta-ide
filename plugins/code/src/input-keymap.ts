@@ -43,5 +43,3 @@ export class InputMechanics {
     return out.join('+');
   }
 }
-
-export const inputMechanics = new InputMechanics();

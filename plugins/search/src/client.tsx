@@ -1,3 +1,4 @@
+import CodePlugin from '@ide/plugin-code';
 import { activate, configSection, registry, remote, stub } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { SearchIcon } from './icons.js';
@@ -51,6 +52,6 @@ export default class SearchPlugin implements SearchRemote {
       active: search.open,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <SearchEverywhere search={search} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <SearchEverywhere search={search} code={this.ide.getPlugin(CodePlugin)} />);
   }
 }

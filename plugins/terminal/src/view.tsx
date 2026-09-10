@@ -1,13 +1,12 @@
 import { settingsOf } from '@ide/api/client';
-import { EDITOR_DEFAULTS } from '@ide/code';
+import { EDITOR_DEFAULTS } from '@ide/plugin-code';
+import type { Palette } from '@ide/plugin-theme';
 import { TERMINAL_DEFAULTS } from './settings.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { t } from '@ide/api/client';
-import { darcula } from '@ide/code';
 
-const dc = darcula.palette;
 import type { Attached } from './types.js';
 
 function fontOf(): string {
@@ -24,7 +23,8 @@ export interface Screen {
   resize(name: string, cols: number, rows: number): void;
 }
 
-export function TerminalView({ screen }: { screen: Screen }) {
+export function TerminalView({ screen, palette }: { screen: Screen; palette: Palette }) {
+  const dc = palette;
   const host = useRef<HTMLDivElement>(null);
   const name = screen.name;
 

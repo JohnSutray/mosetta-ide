@@ -1,7 +1,9 @@
-import { inputMechanics } from '@ide/code';
+import { InputMechanics } from '@ide/plugin-code';
 import { describe, expect, it } from 'vitest';
 import type { KeyBinding as CmBinding } from '@codemirror/view';
 import { WORLDS, inWorld, keymap } from './keymap-shared.js';
+
+const inputMechanics = new InputMechanics();
 
 function macKey(binding: CmBinding): string {
   return binding.mac ?? binding.key ?? '';

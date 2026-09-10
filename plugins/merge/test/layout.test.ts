@@ -1,6 +1,9 @@
-import { diff3 } from '../src/diff3.js';
+import { LineDiff } from '@ide/plugin-code';
+import { Diff3 } from '../src/diff3.js';
 import { describe, expect, it } from 'vitest';
 import { layout } from '../src/layout.js';
+
+const diff3 = new Diff3(() => new LineDiff());
 
 const lines = (...items: string[]) => `${items.join('\n')}\n`;
 
@@ -16,7 +19,7 @@ describe('раскладка трёх колонок', () => {
     const right = lines('a', 'правое', 'c');
 
     const regions = diff3.regions(base, left, right);
-    const grid = layout(regions, diff3.defaultChoices(regions));
+    const grid = layout(regions, diff3.defaultChoices(regions), diff3);
 
     expect(rowsOf(grid.left)).toBe(grid.rows);
     expect(rowsOf(grid.center)).toBe(grid.rows);
@@ -29,7 +32,7 @@ describe('раскладка трёх колонок', () => {
     const right = lines('1', '2', '3', 'ЧЕТЫРЕ', '5');
 
     const regions = diff3.regions(base, left, right);
-    const grid = layout(regions, diff3.defaultChoices(regions));
+    const grid = layout(regions, diff3.defaultChoices(regions), diff3);
 
     const cellOf = (lane: 'left' | 'center' | 'right', region: number): number => {
       const band = grid[lane].bands.find((item) => item.region === region)!;
@@ -49,7 +52,7 @@ describe('раскладка трёх колонок', () => {
   it('пустая колонка не длиннее соседей на невидимую строку', () => {
     const base = lines('a', 'b');
     const regions = diff3.regions(base, '', base);
-    const grid = layout(regions, diff3.defaultChoices(regions));
+    const grid = layout(regions, diff3.defaultChoices(regions), diff3);
 
     expect(rowsOf(grid.left)).toBe(grid.rows);
     expect(rowsOf(grid.right)).toBe(grid.rows);
@@ -63,12 +66,12 @@ describe('раскладка трёх колонок', () => {
       { left: null, right: null },
       { left: 'take', right: 'skip' },
       { left: null, right: null },
-    ]);
+    ], diff3);
     const two = layout(regions, [
       { left: null, right: null },
       { left: 'take', right: 'take' },
       { left: null, right: null },
-    ]);
+    ], diff3);
 
     expect(two.rows).toBe(one.rows + 1);
     expect(rowsOf(two.left)).toBe(two.rows);

@@ -12,6 +12,7 @@ import {
 } from '@ide/api/client';
 import { ChoicePopup } from '@ide/ui';
 import { TerminalIcon } from './icon.js';
+import ThemePlugin from '@ide/plugin-theme';
 import { TerminalView } from './view.js';
 import { Chips } from './chips.js';
 import { TERMINAL_DEFAULTS } from './settings.js';
@@ -110,7 +111,7 @@ export default class TerminalPlugin {
       title: 'panel.terminal',
       side: 'right',
       open: this.shown,
-      view: () => <TerminalView screen={this.screen()} />,
+      view: () => <TerminalView screen={this.screen()} palette={this.ide.getPlugin(ThemePlugin).palette} />,
       close: () => {
         this.shown.value = false;
       },

@@ -1,4 +1,3 @@
-import { inputMechanics } from '@ide/code';
 import { runCommand } from '@ide/api/client';
 import { popups } from '@ide/windows';
 import type { KeysEcho } from './echo.js';
@@ -13,8 +12,6 @@ const CLIPBOARD = new Set<string>(['tree.copy', 'tree.cut', 'tree.paste']);
 const CAPTURING = new Set<KeyContext>(['keys']);
 
 const OWNING = new Set<KeyContext>(['terminal']);
-
-const MECHANICS = inputMechanics.keys(keyHost.isMac);
 
 const TAKEN = reserved.in(keyHost.scopes);
 
@@ -54,6 +51,12 @@ const BARE_MODIFIERS = new Set(['Shift', 'Control', 'Alt', 'Meta']);
 const DOUBLE_TAP_MS = 400;
 
 export class KeyRules {
+  private mechanics: ReadonlySet<string> = new Set();
+
+  useMechanics(keys: ReadonlySet<string>): void {
+    this.mechanics = keys;
+  }
+
   appliesHere(binding: KeyBinding, scopes: KeyScope[] = keyHost.scopes): boolean {
     if (!binding.where || binding.where.length === 0) return true;
     return binding.where.some((scope) => scopes.includes(scope));
@@ -69,7 +72,7 @@ export class KeyRules {
     if (soft.has(key)) return true;
     if (left.has(key)) return false;
     if (clip.has(key)) return false;
-    if (MECHANICS.has(key)) return false;
+    if (this.mechanics.has(key)) return false;
     return key.split('+').some((part) => OURS.includes(part));
   }
 

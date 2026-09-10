@@ -40,5 +40,3 @@ export class MethodNames {
     return builder.finish();
   }
 }
-
-export const methodNames = new MethodNames();

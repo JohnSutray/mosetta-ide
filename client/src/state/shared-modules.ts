@@ -8,7 +8,12 @@ import * as cmCommands from '@codemirror/commands';
 import * as cmLanguage from '@codemirror/language';
 import * as cmSearch from '@codemirror/search';
 import * as windows from '@ide/windows';
-import * as code from '@ide/code';
+import * as lezerHighlight from '@lezer/highlight';
+import * as langJavascript from '@codemirror/lang-javascript';
+import * as langJson from '@codemirror/lang-json';
+import * as langCss from '@codemirror/lang-css';
+import * as langHtml from '@codemirror/lang-html';
+import * as langMarkdown from '@codemirror/lang-markdown';
 
 export const sharedModules: Record<string, unknown> = {
   preact,
@@ -21,5 +26,10 @@ export const sharedModules: Record<string, unknown> = {
   '@codemirror/language': cmLanguage,
   '@codemirror/search': cmSearch,
   '@ide/windows': windows,
-  '@ide/code': code,
+  '@lezer/highlight': lezerHighlight,
+  '@codemirror/lang-javascript': langJavascript,
+  '@codemirror/lang-json': langJson,
+  '@codemirror/lang-css': langCss,
+  '@codemirror/lang-html': langHtml,
+  '@codemirror/lang-markdown': langMarkdown,
 };

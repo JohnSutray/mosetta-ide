@@ -1,4 +1,4 @@
-import { diff3, type Region, type Choice } from './diff3.js';
+import type { Diff3, Region, Choice } from './diff3.js';
 
 export type Lane = 'left' | 'center' | 'right';
 
@@ -33,7 +33,7 @@ export interface Layout {
   rows: number;
 }
 
-export function layout(regions: Region[], choices: Choice[]): Layout {
+export function layout(regions: Region[], choices: Choice[], diff3: Diff3): Layout {
   const lines: Record<Lane, string[]> = { left: [], center: [], right: [] };
   const pads: Record<Lane, Pad[]> = { left: [], center: [], right: [] };
   const bands: Record<Lane, Band[]> = { left: [], center: [], right: [] };

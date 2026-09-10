@@ -1,4 +1,7 @@
-import { diff3, type Region } from '../src/diff3.js';
+import { LineDiff } from '@ide/plugin-code';
+import { Diff3, type Region } from '../src/diff3.js';
+
+const diff3 = new Diff3(() => new LineDiff());
 import { describe, expect, it } from 'vitest';
 
 const lines = (...items: string[]) => `${items.join('\n')}\n`;

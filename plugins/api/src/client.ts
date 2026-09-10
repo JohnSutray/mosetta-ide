@@ -95,8 +95,6 @@ export interface NotesAccess {
 }
 export declare const notes: NotesAccess;
 
-export type { Hunk, HunkKind } from '@ide/code';
-
 export interface HunkBox {
   left: number;
   top: number;

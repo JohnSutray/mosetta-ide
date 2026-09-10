@@ -13,7 +13,12 @@ export const CORE_PROVIDED = [
   '@codemirror/language',
   '@codemirror/search',
   '@ide/windows',
-  '@ide/code',
+  '@lezer/highlight',
+  '@codemirror/lang-javascript',
+  '@codemirror/lang-json',
+  '@codemirror/lang-css',
+  '@codemirror/lang-html',
+  '@codemirror/lang-markdown',
   '@ide/api/client',
 ] as const;
 

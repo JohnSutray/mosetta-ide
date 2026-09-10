@@ -1,3 +1,4 @@
+import CodePlugin from '@ide/plugin-code';
 import { activate, configSection, remote, setSetting, settingsOf, stub, type Ide } from '@ide/api/client';
 import { search } from '@codemirror/search';
 import { ViewPlugin } from '@codemirror/view';
@@ -51,7 +52,7 @@ export default class FindPlugin implements FindFilesRemote {
   @activate() protected start(): void {
     this.ide.css(STYLE);
     this.ide.registry('editor.extension').add({ id: 'find', extension: this.extension() });
-    this.ide.registry<() => unknown>('chrome.top').add(() => <FindFilesPopup files={this.files} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <FindFilesPopup files={this.files} code={this.ide.getPlugin(CodePlugin)} />);
     this.ide.registry('toolbar.button').add({
       id: 'find.files',
       title: 'toolbar.findFiles',

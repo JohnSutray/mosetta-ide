@@ -12,6 +12,9 @@ export const STYLE = `
   --dir: #a9b7c6;
   --accent: #ffc66d;
   --error: #ff6b68;
+  --warning: #be9117;
+  --info: #6897bb;
+  --hint: #808080;
   --git-modified: #6897bb;
   --git-added: #629755;
   --git-conflict: #e0655f;

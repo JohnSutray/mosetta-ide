@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
 import { runCommand, settingsOf, t } from '@ide/api/client';
-import { CodeView, EDITOR_DEFAULTS } from '@ide/code';
+import type CodePlugin from '@ide/plugin-code';
+import { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import { keysFor } from '@ide/plugin-keymap';
 import { Popup } from '@ide/ui';
 import { tips } from '@ide/windows';
@@ -35,7 +36,7 @@ function Tool({ command, title, on, disabled, children }: ToolProps) {
   );
 }
 
-export function FindFilesPopup({ files }: { files: FindFiles }) {
+export function FindFilesPopup({ files, code }: { files: FindFiles; code: CodePlugin }) {
   const query = useRef<HTMLInputElement>(null);
   const replace = useRef<HTMLInputElement>(null);
   const mask = useRef<HTMLInputElement>(null);
@@ -162,7 +163,7 @@ export function FindFilesPopup({ files }: { files: FindFiles }) {
         </div>
         <div class="fif-preview">
           {preview ? (
-            <CodeView key={preview.path} path={preview.path} text={preview.text} line={preview.line} settings={editor} />
+            <code.View key={preview.path} path={preview.path} text={preview.text} line={preview.line} settings={editor} />
           ) : (
             <div class="fif-empty">{t('findFiles.preview')}</div>
           )}

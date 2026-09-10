@@ -1,11 +1,12 @@
 import { settingsOf, t } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import { CodeView, EDITOR_DEFAULTS } from '@ide/code';
+import type CodePlugin from '@ide/plugin-code';
+import { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import type { IndexHit } from './types.js';
 import { Popup } from '@ide/ui';
 import type { Search } from './state.js';
 
-export function SearchEverywhere({ search }: { search: Search }) {
+export function SearchEverywhere({ search, code }: { search: Search; code: CodePlugin }) {
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
 
@@ -72,7 +73,7 @@ export function SearchEverywhere({ search }: { search: Search }) {
 
           <div class="se-preview">
             {preview ? (
-              <CodeView
+              <code.View
                 key={preview.path}
                 path={preview.path}
                 text={preview.text}

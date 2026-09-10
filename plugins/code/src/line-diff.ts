@@ -215,5 +215,3 @@ export class LineDiff {
     return [...lines.slice(0, at), ...restored, ...lines.slice(at)].join('\n');
   }
 }
-
-export const lineDiff = new LineDiff();

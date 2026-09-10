@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
-import { type Hunk, type HunkBox } from '@ide/api/client';
+import { type HunkBox } from '@ide/api/client';
+import type { Hunk } from '@ide/plugin-code';
 import { editDoc, openDoc } from '@ide/plugin-doc';
 
 export class GitMarks {

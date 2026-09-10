@@ -1,7 +1,7 @@
 import { StateEffect, StateField, type Extension } from '@codemirror/state';
 import { EditorView, gutter, GutterMarker } from '@codemirror/view';
-import type { Hunk, HunkBox } from '@ide/api/client';
-import { lineDiff } from '@ide/code';
+import type { HunkBox } from '@ide/api/client';
+import type { Hunk, LineDiff } from '@ide/plugin-code';
 
 export const setHeadText = StateEffect.define<string | null>();
 
@@ -12,23 +12,25 @@ interface GitLines {
 
 const EMPTY: GitLines = { head: null, hunks: [] };
 
-export const gitField = StateField.define<GitLines>({
-  create() {
-    return EMPTY;
-  },
-  update(value, tr) {
-    let head = value.head;
-    let changed = false;
-    for (const effect of tr.effects) {
-      if (!effect.is(setHeadText)) continue;
-      head = effect.value;
-      changed = true;
-    }
-    if (!changed && !tr.docChanged) return value;
-    if (head === null) return value.hunks.length === 0 && value.head === null ? value : { head, hunks: [] };
-    return { head, hunks: lineDiff.hunks(head, tr.state.doc.toString()) };
-  },
-});
+function linesFieldOf(diff: LineDiff) {
+  return StateField.define<GitLines>({
+    create() {
+      return EMPTY;
+    },
+    update(value, tr) {
+      let head = value.head;
+      let changed = false;
+      for (const effect of tr.effects) {
+        if (!effect.is(setHeadText)) continue;
+        head = effect.value;
+        changed = true;
+      }
+      if (!changed && !tr.docChanged) return value;
+      if (head === null) return value.hunks.length === 0 && value.head === null ? value : { head, hunks: [] };
+      return { head, hunks: diff.hunks(head, tr.state.doc.toString()) };
+    },
+  });
+}
 
 class Mark extends GutterMarker {
   constructor(private readonly kind: Hunk['kind']) {
@@ -61,6 +63,12 @@ function boxOf(view: EditorView, hunk: Hunk, event: MouseEvent): HunkBox {
 }
 
 export class GitMarks {
+  private readonly field: StateField<GitLines>;
+
+  constructor(diff: LineDiff) {
+    this.field = linesFieldOf(diff);
+  }
+
   at(hunks: Hunk[], line: number): Hunk | null {
     for (const hunk of hunks) {
       if (line >= hunk.from && line <= hunk.to) return hunk;
@@ -70,22 +78,22 @@ export class GitMarks {
 
   gutter(onClick: (hunk: Hunk, at: HunkBox) => void): Extension {
     return [
-      gitField,
+      this.field,
       gutter({
         class: 'cm-gitgutter',
         lineMarker: (view, block) => {
-          const { hunks } = view.state.field(gitField);
+          const { hunks } = view.state.field(this.field);
           if (hunks.length === 0) return null;
           const line = view.state.doc.lineAt(block.from).number;
           const hunk = this.at(hunks, line);
           return hunk ? MARKS[hunk.kind] : null;
         },
         lineMarkerChange: (update) => {
-          return update.docChanged || update.startState.field(gitField) !== update.state.field(gitField);
+          return update.docChanged || update.startState.field(this.field) !== update.state.field(this.field);
         },
         domEventHandlers: {
           mousedown: (view, block, event) => {
-            const { hunks } = view.state.field(gitField);
+            const { hunks } = view.state.field(this.field);
             const line = view.state.doc.lineAt(block.from).number;
             const hunk = this.at(hunks, line);
             if (!hunk) return false;
@@ -125,5 +133,3 @@ export class GitMarks {
     view.dispatch({ changes: { from: at, to: at, insert: `${restored}\n` } });
   }
 }
-
-export const gitMarks = new GitMarks();

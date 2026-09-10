@@ -62,6 +62,20 @@ describe('совпадение и порядок', () => {
     expect(out.map((one) => one.item.label)).toEqual(['valueA', 'valueC', 'valueB']);
   });
 
+  it('одинаковые пункты от сервера получают разные ключи — выделение и строки не путаются', () => {
+    const { ranker: rank } = ranker();
+    const out = rank.rank(
+      [
+        { label: 'module', kind: 'keyword', source: 'lsp' },
+        { label: 'module', kind: 'variable', source: 'lsp' },
+        { label: 'module', kind: 'variable', source: 'lsp' },
+      ],
+      'mod',
+      NO_WEIGHTS,
+    );
+    expect(new Set(out.map((one) => one.key)).size).toBe(3);
+  });
+
   it('история поднимает то, что выбирали', () => {
     const { ranker: rank, history } = ranker();
     const items = [member('getAll'), member('getOne')];

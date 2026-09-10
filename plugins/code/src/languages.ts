@@ -1,15 +1,17 @@
 import type { Extension } from '@codemirror/state';
 import { javascript } from '@codemirror/lang-javascript';
 import { LanguageSupport } from '@codemirror/language';
-import { methodNames } from './method-names.js';
+import type { MethodNames } from './method-names.js';
 import { json } from '@codemirror/lang-json';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
 import { markdown } from '@codemirror/lang-markdown';
 
 export class Languages {
+  constructor(private readonly methodNames: MethodNames) {}
+
   private js(support: LanguageSupport): LanguageSupport {
-    return new LanguageSupport(support.language, [support.support, methodNames.extension]);
+    return new LanguageSupport(support.language, [support.support, this.methodNames.extension]);
   }
 
   of(path: string): Extension {
@@ -43,5 +45,3 @@ export class Languages {
     }
   }
 }
-
-export const languages = new Languages();

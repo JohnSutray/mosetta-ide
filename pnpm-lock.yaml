@@ -47,9 +47,6 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../plugins/api
-      '@ide/code':
-        specifier: workspace:*
-        version: link:../code
       '@ide/protocol':
         specifier: workspace:*
         version: link:../protocol
@@ -82,8 +79,34 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@22.20.1)
 
-  code:
+  plugins/api:
     dependencies:
+      '@ide/protocol':
+        specifier: workspace:*
+        version: link:../../protocol
+      '@preact/signals':
+        specifier: ^1.3.1
+        version: 1.3.4(preact@10.29.8)
+      ajv:
+        specifier: ^8.17.1
+        version: 8.20.0
+    devDependencies:
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+
+  plugins/code:
+    dependencies:
+      '@ide/api':
+        specifier: workspace:*
+        version: link:../api
+      '@ide/plugin-theme':
+        specifier: workspace:*
+        version: link:../theme
+      '@ide/protocol':
+        specifier: workspace:*
+        version: link:../../protocol
+    devDependencies:
       '@codemirror/commands':
         specifier: ^6.7.1
         version: 6.11.0
@@ -111,44 +134,30 @@ importers:
       '@codemirror/view':
         specifier: ^6.35.3
         version: 6.43.9
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../protocol
       '@lezer/highlight':
         specifier: ^1.2.1
         version: 1.2.3
-    devDependencies:
-      preact:
-        specifier: ^10.25.3
-        version: 10.29.8
-
-  plugins/api:
-    dependencies:
-      '@ide/code':
-        specifier: workspace:*
-        version: link:../../code
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../../protocol
       '@preact/signals':
         specifier: ^1.3.1
         version: 1.3.4(preact@10.29.8)
-      ajv:
-        specifier: ^8.17.1
-        version: 8.20.0
-    devDependencies:
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.20.1
       preact:
         specifier: ^10.25.3
         version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
 
   plugins/completion:
     dependencies:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
-      '@ide/code':
+      '@ide/plugin-code':
         specifier: workspace:*
-        version: link:../../code
+        version: link:../code
       '@ide/plugin-doc':
         specifier: workspace:*
         version: link:../doc
@@ -208,9 +217,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
-      '@ide/code':
+      '@ide/plugin-code':
         specifier: workspace:*
-        version: link:../../code
+        version: link:../code
       '@ide/plugin-doc':
         specifier: workspace:*
         version: link:../doc
@@ -239,6 +248,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.35.3
         version: 6.43.9
+      '@ide/plugin-theme':
+        specifier: workspace:*
+        version: link:../theme
       '@ide/protocol':
         specifier: workspace:*
         version: link:../../protocol
@@ -257,9 +269,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
-      '@ide/code':
+      '@ide/plugin-code':
         specifier: workspace:*
-        version: link:../../code
+        version: link:../code
       '@ide/plugin-doc':
         specifier: workspace:*
         version: link:../doc
@@ -306,9 +318,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
-      '@ide/code':
+      '@ide/plugin-code':
         specifier: workspace:*
-        version: link:../../code
+        version: link:../code
       '@ide/plugin-doc':
         specifier: workspace:*
         version: link:../doc
@@ -343,9 +355,6 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
-      '@ide/code':
-        specifier: workspace:*
-        version: link:../../code
       '@ide/protocol':
         specifier: workspace:*
         version: link:../../protocol
@@ -356,6 +365,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.35.3
         version: 6.43.9
+      '@ide/plugin-code':
+        specifier: workspace:*
+        version: link:../code
       '@preact/signals':
         specifier: ^1.3.1
         version: 1.3.4(preact@10.29.8)
@@ -449,9 +461,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
-      '@ide/code':
+      '@ide/plugin-code':
         specifier: workspace:*
-        version: link:../../code
+        version: link:../code
       '@ide/plugin-doc':
         specifier: workspace:*
         version: link:../doc
@@ -599,9 +611,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
-      '@ide/code':
+      '@ide/plugin-code':
         specifier: workspace:*
-        version: link:../../code
+        version: link:../code
       '@ide/plugin-doc':
         specifier: workspace:*
         version: link:../doc
@@ -646,9 +658,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
-      '@ide/code':
+      '@ide/plugin-code':
         specifier: workspace:*
-        version: link:../../code
+        version: link:../code
       '@ide/plugin-doc':
         specifier: workspace:*
         version: link:../doc
@@ -686,9 +698,12 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../api
-      '@ide/code':
+      '@ide/plugin-code':
         specifier: workspace:*
-        version: link:../../code
+        version: link:../code
+      '@ide/plugin-theme':
+        specifier: workspace:*
+        version: link:../theme
       '@ide/protocol':
         specifier: workspace:*
         version: link:../../protocol
@@ -853,6 +868,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../plugins/api
+      '@ide/plugin-code':
+        specifier: workspace:*
+        version: link:../plugins/code
       '@ide/plugin-completion':
         specifier: workspace:*
         version: link:../plugins/completion

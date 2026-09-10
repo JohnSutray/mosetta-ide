@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { darcula } from '@ide/code';
+import { CODE_FONT, DARCULA } from '@ide/plugin-theme';
+import { CodeLook } from '../src/look.js';
+
+const darcula = new CodeLook({ palette: DARCULA, codeFont: CODE_FONT, dark: true });
 
 describe('шрифт редактора', () => {
   it('выключены — гасим И лигатуры, И контекстные альтернативы', () => {

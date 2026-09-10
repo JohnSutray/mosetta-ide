@@ -20,6 +20,7 @@ export class Ranker {
 
   rank(items: readonly Item[], query: string, weights: ReadonlyMap<string, number>): Ranked[] {
     const out: Ranked[] = [];
+    const seen = new Map<string, number>();
     for (const item of items) {
       const target = item.filter ?? item.label;
       const hit = this.fuzzy.match(query, target);
@@ -30,12 +31,16 @@ export class Ranker {
         this.history.bonus(item.label) -
         (item.rank ?? 0) * RANK_STEP -
         (item.deprecated ? DEPRECATED : 0);
-      out.push({ item, key: this.keyOf(item), positions: target === item.label ? hit.positions : [], score });
+      const base = this.keyOf(item);
+      const repeat = seen.get(base) ?? 0;
+      seen.set(base, repeat + 1);
+      const key = repeat === 0 ? base : `${base}#${repeat}`;
+      out.push({ item, key, positions: target === item.label ? hit.positions : [], score });
     }
     return out.sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label));
   }
 
   keyOf(item: Item): string {
-    return `${item.source}|${item.label}|${item.detail ?? ''}`;
+    return `${item.source}|${item.kind}|${item.label}|${item.detail ?? ''}`;
   }
 }

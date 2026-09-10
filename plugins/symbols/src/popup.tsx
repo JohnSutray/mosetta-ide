@@ -1,6 +1,7 @@
 import { settingsOf, t } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import { CodeView, EDITOR_DEFAULTS, codePainter } from '@ide/code';
+import type CodePlugin from '@ide/plugin-code';
+import { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import { Popup, Resizer } from '@ide/ui';
 import { geometry } from '@ide/windows';
 import type { Symbols } from './state.js';
@@ -13,7 +14,7 @@ const LIST_DEFAULT = 150;
 const LIST_MIN = 60;
 const PREVIEW_MIN = 120;
 
-export function SymbolsPopup({ symbols }: { symbols: Symbols }) {
+export function SymbolsPopup({ symbols, code }: { symbols: Symbols; code: CodePlugin }) {
   const list = symbols.list.value;
   const editor = settingsOf('editor', EDITOR_DEFAULTS).value;
   const preview = symbols.preview.value;
@@ -83,7 +84,7 @@ export function SymbolsPopup({ symbols }: { symbols: Symbols }) {
             <span class="symbols-where">{site.path}</span>
             <span class="symbols-line">{site.line + 1}</span>
             <span class="symbols-text">
-              {codePainter.paint(site.preview, site.path).map((chunk, i) =>
+              {code.painter.paint(site.preview, site.path).map((chunk, i) =>
                 chunk.color ? (
                   <span key={i} style={{ color: chunk.color }}>
                     {chunk.text}
@@ -102,7 +103,7 @@ export function SymbolsPopup({ symbols }: { symbols: Symbols }) {
 
       <div class="symbols-preview">
         {preview ? (
-          <CodeView
+          <code.View
             key={preview.path}
             path={preview.path}
             text={preview.text}

@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-editor",
+  "name": "@ide/plugin-code",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,36 +11,40 @@
   },
   "ide": {
     "client": "src/client.tsx",
-    "strings": "src/en.json"
+    "shares": ["EDITOR_DEFAULTS"]
   },
   "dependencies": {
     "@ide/api": "workspace:*",
-    "@ide/plugin-doc": "workspace:*",
-    "@ide/plugin-keymap": "workspace:*",
-    "@ide/plugin-lsp": "workspace:*",
-    "@ide/plugin-merge": "workspace:*",
-    "@ide/plugin-code": "workspace:*"
+    "@ide/plugin-theme": "workspace:*",
+    "@ide/protocol": "workspace:*"
   },
   "peerDependencies": {
     "@codemirror/commands": "^6.7.1",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.9",
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/lang-markdown": "^6.3.1",
     "@codemirror/language": "^6.10.8",
-    "@codemirror/search": "^6.5.8",
     "@codemirror/state": "^6.5.0",
     "@codemirror/view": "^6.35.3",
-    "@ide/protocol": "workspace:*",
-    "@preact/signals": "^1.3.1",
+    "@lezer/highlight": "^1.2.1",
     "preact": "^10.25.3"
   },
   "devDependencies": {
     "@codemirror/commands": "^6.7.1",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.9",
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/lang-markdown": "^6.3.1",
     "@codemirror/language": "^6.10.8",
-    "@codemirror/search": "^6.5.8",
     "@codemirror/state": "^6.5.0",
     "@codemirror/view": "^6.35.3",
-    "@ide/protocol": "workspace:*",
+    "@lezer/highlight": "^1.2.1",
     "@preact/signals": "^1.3.1",
+    "@types/node": "^22.10.5",
     "preact": "^10.25.3",
-    "vitest": "^2.1.9",
-    "@ide/plugin-theme": "workspace:*"
+    "vitest": "^2.1.9"
   }
 }

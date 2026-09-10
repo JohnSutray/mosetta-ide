@@ -1,4 +1,4 @@
-import { lineDiff, type Step } from '@ide/code';
+import type { LineDiff, Step } from '@ide/plugin-code';
 
 export type RegionKind =
   | 'same'
@@ -29,13 +29,15 @@ interface Change {
 }
 
 export class Diff3 {
+  constructor(private readonly lines: () => LineDiff) {}
+
   regions(base: string, left: string, right: string): Region[] {
-    return this.regionsOfLines(lineDiff.split(base), lineDiff.split(left), lineDiff.split(right));
+    return this.regionsOfLines(this.lines().split(base), this.lines().split(left), this.lines().split(right));
   }
 
   regionsOfLines(base: string[], left: string[], right: string[]): Region[] {
-    const changesL = this.changesOf(lineDiff.steps(base, left));
-    const changesR = this.changesOf(lineDiff.steps(base, right));
+    const changesL = this.changesOf(this.lines().steps(base, left));
+    const changesR = this.changesOf(this.lines().steps(base, right));
 
     const regions: Region[] = [];
     let bi = 0;
@@ -209,5 +211,3 @@ export class Diff3 {
     return a.length === b.length && a.every((line, at) => line === b[at]);
   }
 }
-
-export const diff3 = new Diff3();

@@ -1,3 +1,4 @@
+import CodePlugin from '@ide/plugin-code';
 import { activate } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import Editor from '@ide/plugin-editor';
@@ -16,6 +17,6 @@ export default class SymbolsPlugin {
   @activate() protected start(): void {
     this.ide.css(STYLE);
     this.ide.getPlugin(Editor).onSymbolAsk((spot) => void this.symbols.ask(spot));
-    this.ide.registry<() => unknown>('chrome.top').add(() => <SymbolsPopup symbols={this.symbols} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <SymbolsPopup symbols={this.symbols} code={this.ide.getPlugin(CodePlugin)} />);
   }
 }

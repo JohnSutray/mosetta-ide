@@ -1,9 +1,6 @@
 import { StateEffect, StateField, type EditorState, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, type DecorationSet } from '@codemirror/view';
 import type { Diagnostic, Severity } from '@ide/plugin-lsp';
-import { darcula } from '@ide/code';
-
-const dc = darcula.palette;
 
 export const setDiagnostics = StateEffect.define<Diagnostic[]>();
 
@@ -45,11 +42,11 @@ function build(list: Diagnostic[], doc: { lines: number; line(n: number): { from
 }
 
 export const diagnosticsTheme = EditorView.theme({
-  '.cm-diag': { textDecoration: `underline wavy ${dc.errorFg}`, textUnderlineOffset: '3px' },
-  '.cm-diag-error': { textDecorationColor: dc.errorFg },
-  '.cm-diag-warning': { textDecorationColor: dc.warnFg },
-  '.cm-diag-info': { textDecorationColor: dc.number },
-  '.cm-diag-hint': { textDecorationColor: dc.comment },
+  '.cm-diag': { textDecoration: 'underline wavy var(--error)', textUnderlineOffset: '3px' },
+  '.cm-diag-error': { textDecorationColor: 'var(--error)' },
+  '.cm-diag-warning': { textDecorationColor: 'var(--warning)' },
+  '.cm-diag-info': { textDecorationColor: 'var(--info)' },
+  '.cm-diag-hint': { textDecorationColor: 'var(--hint)' },
 });
 
 export const diagnosticsExtension: Extension = [diagnosticsField, diagnosticsTheme];

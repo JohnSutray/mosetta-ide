@@ -2,20 +2,24 @@ import { useEffect, useRef } from 'preact/hooks';
 import { EditorState, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, lineNumbers, highlightSpecialChars } from '@codemirror/view';
 import type { EditorSettings } from './settings.js';
-import { darcula } from './darcula.js';
-import { languages } from './languages.js';
+import type { CodeLook } from './look.js';
+import type { Languages } from './languages.js';
+
+export interface CodeViewProps {
+  path: string;
+  text: string;
+  line: number;
+  settings: EditorSettings;
+}
 
 export function CodeView({
   path,
   text,
   line,
   settings,
-}: {
-  path: string;
-  text: string;
-  line: number;
-  settings: EditorSettings;
-}) {
+  look,
+  languages,
+}: CodeViewProps & { look: CodeLook; languages: Languages }) {
   const host = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,13 +28,13 @@ export function CodeView({
       lineNumbers(),
       highlightSpecialChars(),
       languages.of(path),
-      darcula.extension,
+      look.extension,
       hitLine,
       EditorView.editable.of(false),
       EditorState.readOnly.of(true),
       EditorView.theme({
         '&': { fontSize: `${settings.fontSize}px`, height: '100%' },
-        '.cm-content': darcula.textStyle(settings),
+        '.cm-content': look.textStyle(settings),
         '.cm-scroller': { overflow: 'auto' },
       }),
     ];

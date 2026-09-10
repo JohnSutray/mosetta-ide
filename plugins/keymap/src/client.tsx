@@ -1,4 +1,4 @@
-import { activate, keymap, t } from '@ide/api/client';
+import { activate, keymap, registry, t } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import type { KeyBinding, KeyHost, KeyOs, KeyScope } from '@ide/protocol';
 import { updateHost } from '@ide/windows';
@@ -18,6 +18,18 @@ export { reserved } from './reserved.js';
 export type { KeyEcho } from './echo.js';
 export type { ReservedKey as TakenKey } from './reserved.js';
 
+export interface InputMechanicsEntry {
+  id: string;
+  keys(isMac: boolean): ReadonlySet<string>;
+}
+
+const MECHANICS_SCHEMA = {
+  type: 'object',
+  required: ['id', 'keys'],
+  properties: { id: { type: 'string' }, keys: {} },
+} as const;
+
+@registry({ key: 'keys.mechanics', schema: MECHANICS_SCHEMA })
 export default class KeymapPlugin {
   readonly echo: KeysEcho;
   private dispatcher: Dispatcher | null = null;
@@ -34,6 +46,13 @@ export default class KeymapPlugin {
   @activate() protected start(): void {
     this.ide.command('key.reserved', () => {});
     this.ide.command('field.native', () => {});
+
+    const mechanics = this.ide.registry<InputMechanicsEntry>('keys.mechanics').all;
+    effect(() => {
+      const keys = new Set<string>();
+      for (const one of mechanics.value) for (const key of one.keys(keyHost.isMac)) keys.add(key);
+      keyRules.useMechanics(keys);
+    });
 
     if (typeof window !== 'undefined') {
       this.dispatcher = new Dispatcher(

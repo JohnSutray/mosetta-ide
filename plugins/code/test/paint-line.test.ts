@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { codePainter } from '@ide/code';
-import { darcula } from '@ide/code';
+import { CODE_FONT, DARCULA } from '@ide/plugin-theme';
+import { CodeLook } from '../src/look.js';
+import { CodePainter } from '../src/paint-line.js';
+import { Languages } from '../src/languages.js';
+import { MethodNames } from '../src/method-names.js';
+
+const darcula = new CodeLook({ palette: DARCULA, codeFont: CODE_FONT, dark: true });
+const codePainter = new CodePainter(new Languages(new MethodNames()), () => darcula);
 
 function colorOf(text: string, path: string, word: string): string | null {
   const chunk = codePainter.paint(text, path).find((item) => item.text === word);

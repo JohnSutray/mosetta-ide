@@ -48,7 +48,7 @@
     "@ide/windows": "workspace:*",
     "@ide/plugin-doc": "workspace:*",
     "@ide/ui": "workspace:*",
-    "@ide/code": "workspace:*"
+    "@ide/plugin-code": "workspace:*"
   },
   "peerDependencies": {
     "@codemirror/search": "^6.5.8",

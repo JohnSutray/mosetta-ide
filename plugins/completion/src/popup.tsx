@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from 'preact/hooks';
 import type { JSX } from 'preact';
 import { t } from '@ide/api/client';
-import { codePainter } from '@ide/code';
+import type CodePlugin from '@ide/plugin-code';
 import type { Ranked } from './ranker.js';
 import type { CompletionSession } from './session.js';
 import type { ItemKind } from './types.js';
@@ -31,12 +31,13 @@ const BADGES: Record<ItemKind, string> = {
 };
 
 interface Props {
+  code: CodePlugin;
   session: CompletionSession;
   path: () => string | null;
   onPick: (index: number) => void;
 }
 
-export function CompletionList({ session, path, onPick }: Props) {
+export function CompletionList({ session, path, onPick, code }: Props) {
   const items = session.items.value;
   const selected = session.selected.value;
   const details = session.details.value;
@@ -62,7 +63,7 @@ export function CompletionList({ session, path, onPick }: Props) {
         <div class="cmp-docs">
           {details.detail && (
             <div class="cmp-docs-code">
-              {codePainter.paint(details.detail, path() ?? 'a.ts').map((chunk, index) => (
+              {code.painter.paint(details.detail, path() ?? 'a.ts').map((chunk, index) => (
                 <span key={index} style={chunk.color ? { color: chunk.color } : undefined}>
                   {chunk.text}
                 </span>

@@ -1,7 +1,8 @@
 import { project, t } from '@ide/api/client';
 import { expectExternal, forgetDiverged, onMergeRequested } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
-import { diff3, type Region, type Choice, type SideChoice } from './diff3.js';
+import CodePlugin from '@ide/plugin-code';
+import { Diff3, type Region, type Choice, type SideChoice } from './diff3.js';
 import { batch, computed, effect, signal, type ReadonlySignal, type Signal } from '@preact/signals';
 import type { MergeFile, MergeSession } from './types.js';
 
@@ -13,6 +14,8 @@ export interface MergeRemote {
 }
 
 export class Merge {
+  readonly diff3 = new Diff3(() => this.ide.getPlugin(CodePlugin).diff);
+
   readonly session = signal<MergeSession | null>(null);
   readonly open = signal(false);
   readonly path = signal<string | null>(null);
@@ -42,7 +45,7 @@ export class Merge {
   readonly regions: ReadonlySignal<Region[]> = computed(() => {
     const file = this.file.value;
     if (!file || file.left.text === null || file.right.text === null) return [];
-    return diff3.regions(file.base ?? '', file.left.text, file.right.text);
+    return this.diff3.regions(file.base ?? '', file.left.text, file.right.text);
   });
 
   readonly choices: ReadonlySignal<Choice[]> = computed(() => {
@@ -51,18 +54,18 @@ export class Merge {
     if (!file) return [];
     const stored = this.decisions.value.get(file.path);
     if (stored && stored.length === regions.length) return stored;
-    return diff3.defaultChoices(regions);
+    return this.diff3.defaultChoices(regions);
   });
 
   readonly result: ReadonlySignal<string> = computed(() =>
-    diff3.buildText(this.regions.value, this.choices.value),
+    this.diff3.buildText(this.regions.value, this.choices.value),
   );
 
   readonly ready: ReadonlySignal<boolean> = computed(() => {
     const file = this.file.value;
     if (!file) return false;
     if (file.left.text === null || file.right.text === null) return false;
-    return diff3.allDecided(this.regions.value, this.choices.value);
+    return this.diff3.allDecided(this.regions.value, this.choices.value);
   });
 
   readonly conflicts: ReadonlySignal<number[]> = computed(() =>
@@ -82,7 +85,7 @@ export class Merge {
     const regions = this.regions.value;
     const choices = this.choices.value;
     return regions.filter((region, at) =>
-      diff3.undecided(region, choices[at] ?? { left: null, right: null }),
+      this.diff3.undecided(region, choices[at] ?? { left: null, right: null }),
     ).length;
   });
 
@@ -198,7 +201,7 @@ export class Merge {
       void this.resolve(side === 'left' ? file.left.text : file.right.text);
       return;
     }
-    this.remember(file.path, diff3.takeSide(this.regions.value, side));
+    this.remember(file.path, this.diff3.takeSide(this.regions.value, side));
   }
 
   async resolve(text?: string | null): Promise<void> {
@@ -259,7 +262,7 @@ export class Merge {
     const region = this.regions.value[at];
     const choice = this.choices.value[at];
     if (!region || !choice) return false;
-    return diff3.undecided(region, choice);
+    return this.diff3.undecided(region, choice);
   }
 
   private focusOn(path: string): boolean {

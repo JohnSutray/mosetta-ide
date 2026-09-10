@@ -26,10 +26,10 @@
   },
   "dependencies": {
     "@ide/api": "workspace:*",
-    "@ide/code": "workspace:*",
     "@ide/plugin-doc": "workspace:*",
     "@ide/plugin-lsp": "workspace:*",
-    "@ide/plugin-search": "workspace:*"
+    "@ide/plugin-search": "workspace:*",
+    "@ide/plugin-code": "workspace:*"
   },
   "peerDependencies": {
     "@codemirror/language": "^6.10.8",

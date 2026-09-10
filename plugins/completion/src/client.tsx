@@ -1,5 +1,6 @@
 import { activate, configSection, project, registry, remote, settingsOf, stub, t, type Ide } from '@ide/api/client';
 import { flushDocs, openDoc } from '@ide/plugin-doc';
+import CodePlugin from '@ide/plugin-code';
 import LspPlugin from '@ide/plugin-lsp';
 import { computed, effect, signal } from '@preact/signals';
 import { render } from 'preact';
@@ -76,6 +77,7 @@ export default class CompletionPlugin {
       (dom) => {
         render(
           <CompletionList
+            code={this.ide.getPlugin(CodePlugin)}
             session={session}
             path={() => openDoc.value?.path ?? null}
             onPick={(index) => {

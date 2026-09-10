@@ -24,6 +24,7 @@ export class Defaults {
         '@ide/plugin-problems',
         '@ide/plugin-toolbar',
         '@ide/plugin-layout',
+        '@ide/plugin-code',
         '@ide/plugin-editor',
         '@ide/plugin-find',
         '@ide/plugin-completion',

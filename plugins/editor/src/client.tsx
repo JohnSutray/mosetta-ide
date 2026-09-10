@@ -25,13 +25,14 @@ import {
   settings,
   settingsOf,
   t,
-  type Hunk,
   type HunkBox,
   type Ide,
 } from '@ide/api/client';
 import { closeFile, dirty, editDoc, externalEpoch, openDoc, openEpoch, pendingReveal, wantsFocus } from '@ide/plugin-doc';
 import LspPlugin from '@ide/plugin-lsp';
-import { EDITOR_DEFAULTS } from '@ide/code';
+import CodePlugin, { EDITOR_DEFAULTS } from '@ide/plugin-code';
+import type { Hunk } from '@ide/plugin-code';
+import { GitMarks } from './git-marks.js';
 import { EMPTY_SCHEMA, EXTENSION_SCHEMA, type EditorExtension, type EmptyView } from './schema.js';
 import { STYLE } from './style.js';
 import { EditorIcon } from './icon.js';
@@ -65,8 +66,20 @@ export default class Editor {
     return this.ide.getPlugin(LspPlugin);
   }
 
+  private get code(): CodePlugin {
+    return this.ide.getPlugin(CodePlugin);
+  }
+
+  private marks: GitMarks | null = null;
+
+  private gitMarks(): GitMarks {
+    this.marks ??= new GitMarks(this.code.diff);
+    return this.marks;
+  }
+
   @activate() protected start(): void {
     this.ide.css(STYLE);
+    this.ide.registry('keys.mechanics').add({ id: 'editor', keys: (isMac: boolean) => this.code.input.keys(isMac) });
     const registered = this.ide.registry<EditorExtension>('editor.extension').all;
     this.extras = computed(() => registered.value.map((one) => one.extension as Extension));
 
@@ -189,6 +202,8 @@ export default class Editor {
           }}
           onHover={(path, line, character) => this.lsp.hover(path, line, character)}
           onMount={(view) => (this.view = view)}
+          code={this.code}
+          marks={this.gitMarks()}
           extra={this.extras?.value ?? []}
         />
       </div>

@@ -1,7 +1,6 @@
 packages:
   - protocol
   - windows
-  - code
   - server
   - client
   - plugins/*

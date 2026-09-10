@@ -3,6 +3,8 @@ import type { DocState } from '@ide/protocol';
 import { FakeHost, nodes, of } from '@ide/api/testing';
 import LspPlugin from '@ide/plugin-lsp';
 import DocPlugin from '@ide/plugin-doc';
+import CodePlugin from '@ide/plugin-code';
+import ThemePlugin from '@ide/plugin-theme';
 import Editor from '../src/client.js';
 
 const NAME = '@ide/plugin-editor';
@@ -19,6 +21,8 @@ describe('редактор', () => {
     (globalThis as Record<string, unknown>)['document'] ??= {};
     host.add(DocPlugin, '@ide/plugin-doc');
     host.add(LspPlugin, '@ide/plugin-lsp');
+    host.add(ThemePlugin, '@ide/plugin-theme');
+    host.add(CodePlugin, '@ide/plugin-code');
     host.add(Editor, NAME);
     await host.start();
   });
