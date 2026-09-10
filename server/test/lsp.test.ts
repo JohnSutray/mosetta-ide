@@ -36,6 +36,8 @@ describe('языковой сервер (плагин)', () => {
       ),
       'src/bad.ts': 'export const answer: number = "сорок два";\n',
       'src/good.ts': 'export function twice(x: number): number {\n  return x * 2;\n}\n',
+      'src/use.ts': 'const text = "abc";\ntext.\n',
+      'src/auto.ts': 'twi\n',
     });
     server = await withServer(60_000, CONFIG);
     c = await connect(server);
@@ -88,6 +90,30 @@ describe('языковой сервер (плагин)', () => {
     } | null;
     expect(hover?.markdown ?? '').toMatch(/twice/);
     expect(hover?.markdown ?? '').toMatch(/number/);
+  }, 45_000);
+
+  it('дополнение после точки — члены типа от чекера; resolve дочитывает сигнатуру (ADR-0200)', async () => {
+    await c.call('doc.open', { path: 'src/use.ts' });
+    const answer = (await lsp('completion', { path: 'src/use.ts', line: 1, character: 5, trigger: '.' })) as {
+      items: Array<{ label: string; kind: string; raw: unknown }>;
+    };
+    const upper = answer.items.find((item) => item.label === 'toUpperCase');
+    expect(upper?.kind).toBe('method');
+    const details = (await lsp('resolve', { path: 'src/use.ts', item: upper?.raw })) as { detail?: string };
+    expect(details.detail ?? '').toMatch(/toUpperCase/);
+  }, 45_000);
+
+  it('авто-импорт: имя из соседнего модуля приезжает со строкой импорта (ADR-0200)', async () => {
+    await c.call('doc.open', { path: 'src/auto.ts' });
+    const answer = (await lsp('completion', { path: 'src/auto.ts', line: 0, character: 3 })) as {
+      items: Array<{ label: string; imports?: boolean; raw: unknown }>;
+    };
+    const twice = answer.items.find((item) => item.label === 'twice');
+    expect(twice?.imports).toBe(true);
+    const details = (await lsp('resolve', { path: 'src/auto.ts', item: twice?.raw })) as {
+      edits: Array<{ text: string }>;
+    };
+    expect(details.edits.map((edit) => edit.text).join('')).toMatch(/import \{ twice \} from ['"]\.\/good['"]/);
   }, 45_000);
 });
 

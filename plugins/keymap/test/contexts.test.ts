@@ -30,6 +30,9 @@ function declared(): Set<string> {
   for (const text of [...sources(SRC), ...pluginSources()]) {
     for (const [, name] of text.matchAll(/\bdata-keys="([\w-]+)"/g)) if (name) found.add(name);
     for (const [, name] of text.matchAll(/\bkeys="([\w-]+)"/g)) if (name) found.add(name);
+    for (const [, names] of text.matchAll(/'data-keys':\s*'([\w\s-]+)'/g)) {
+      for (const name of names?.split(/\s+/) ?? []) if (name) found.add(name);
+    }
   }
   return found;
 }
@@ -72,5 +75,13 @@ describe('контексты клавиш', () => {
     const loner = { closest: () => null } as unknown as Element;
     expect(keyContexts.of(loner)).toBe('global');
     expect(keyContexts.of(null)).toBe('global');
+  });
+
+  it('поверхность может назвать цепочку: своё первым, чего нет — у следующего (ADR-0200)', () => {
+    const surface = { getAttribute: () => 'completion editor' } as unknown as Element;
+    const focused = { closest: () => surface } as unknown as Element;
+    expect(keyContexts.chain(focused)).toEqual(['completion', 'editor']);
+    expect(keyContexts.of(focused)).toBe('completion');
+    expect(keyContexts.chain(null)).toEqual(['global']);
   });
 });

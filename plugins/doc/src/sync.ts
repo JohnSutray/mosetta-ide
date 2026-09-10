@@ -7,6 +7,7 @@ export class DocSync {
   private pending: string | null = null;
   private inFlight = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private flight: Promise<void> | null = null;
 
   constructor(
     private readonly wire: Pick<DocWire, 'edit'>,
@@ -50,6 +51,9 @@ export class DocSync {
       this.timer = null;
     }
     await this.push();
+    while (this.flight || (this.pending !== null && this.path)) {
+      await (this.flight ?? this.push());
+    }
   }
 
   private async push(): Promise<void> {
@@ -57,6 +61,8 @@ export class DocSync {
     const text = this.pending;
     this.pending = null;
     this.inFlight = true;
+    let landed: () => void = () => undefined;
+    this.flight = new Promise<void>((resolve) => (landed = resolve));
     try {
       const result = await this.wire.edit(this.path, text, this.version_);
       this.version_ = result.version;
@@ -70,6 +76,8 @@ export class DocSync {
       this.onError(err instanceof Error ? err.message : String(err));
     } finally {
       this.inFlight = false;
+      this.flight = null;
+      landed();
       if (this.pending !== null) await this.push();
     }
   }

@@ -1,4 +1,4 @@
-import { activate, configSection, project, remote, stub, workspaces } from '@ide/api/client';
+import { activate, configSection, project, remote, settingsOf, stub, workspaces } from '@ide/api/client';
 import { openDoc } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
@@ -6,9 +6,32 @@ import { LSP_DEFAULTS } from './settings.js';
 import { Lsp } from './state.js';
 
 export { LSP_DEFAULTS, type LspServerSettings, type LspSettings } from './settings.js';
-import type { Diagnostic, FileDiagnostics, HoverInfo, LspStatus, SymbolSite } from './types.js';
+import type {
+  CompletionAnswer,
+  CompletionDetails,
+  Diagnostic,
+  FileDiagnostics,
+  HoverInfo,
+  LspStatus,
+  SymbolSite,
+} from './types.js';
 
-export type { Diagnostic, FileDiagnostics, HoverInfo, LspState, LspStatus, Position, Range, Severity, SymbolSite } from './types.js';
+export type {
+  CompletionAnswer,
+  CompletionDetails,
+  CompletionEntry,
+  CompletionKind,
+  Diagnostic,
+  FileDiagnostics,
+  HoverInfo,
+  LspState,
+  LspStatus,
+  Position,
+  Range,
+  Severity,
+  SymbolSite,
+  TextEdit,
+} from './types.js';
 
 @configSection({ section: 'lsp', defaults: LSP_DEFAULTS })
 export default class LspPlugin {
@@ -67,6 +90,36 @@ export default class LspPlugin {
 
   references(path: string, line: number, character: number): Promise<SymbolSite[]> {
     return this.askReferences({ path, line, character });
+  }
+
+  serves(path: string): boolean {
+    const name = path.slice(path.lastIndexOf('/') + 1);
+    const dot = name.lastIndexOf('.');
+    if (dot <= 0) return false;
+    const extension = name.slice(dot + 1).toLowerCase();
+    const servers = settingsOf('lsp', LSP_DEFAULTS).value.servers;
+    return Object.values(servers).some((server) => server.enabled && server.extensions.includes(extension));
+  }
+
+  complete(path: string, line: number, character: number, trigger?: string): Promise<CompletionAnswer> {
+    return this.askCompletion({ path, line, character, ...(trigger ? { trigger } : {}) });
+  }
+
+  resolveCompletion(path: string, item: unknown): Promise<CompletionDetails> {
+    return this.askResolve({ path, item });
+  }
+
+  @remote('completion') protected askCompletion(_params: {
+    path: string;
+    line: number;
+    character: number;
+    trigger?: string;
+  }): Promise<CompletionAnswer> {
+    return stub();
+  }
+
+  @remote('resolve') protected askResolve(_params: { path: string; item: unknown }): Promise<CompletionDetails> {
+    return stub();
   }
 
   @remote('status') protected askStatus(): Promise<LspStatus[]> {

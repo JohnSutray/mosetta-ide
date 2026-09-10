@@ -6,7 +6,7 @@ import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
 import { keyHost } from './host.js';
 import { reserved } from './reserved.js';
 
-export type ContextResolver = () => KeyContext;
+export type ContextResolver = () => readonly KeyContext[];
 
 const CLIPBOARD = new Set<string>(['tree.copy', 'tree.cut', 'tree.paste']);
 
@@ -93,9 +93,19 @@ export class KeyRules {
     return isTextField(target) && !isContentEditable(target);
   }
 
-  pick(bindings: readonly KeyBinding[], context: KeyContext, key: string, editable: boolean): KeyBinding | undefined {
+  pick(
+    bindings: readonly KeyBinding[],
+    context: KeyContext | readonly KeyContext[],
+    key: string,
+    editable: boolean,
+  ): KeyBinding | undefined {
+    const chain: readonly KeyContext[] = typeof context === 'string' ? [context] : context;
     const at = (when: KeyContext) => bindings.find((b) => (b.when ?? 'global') === when && b.key === key);
-    return at(context) ?? (editable ? at('editable') : undefined) ?? (OWNING.has(context) ? undefined : at('global'));
+    for (const one of chain) {
+      const found = at(one);
+      if (found) return found;
+    }
+    return (editable ? at('editable') : undefined) ?? (OWNING.has(chain[0] ?? 'global') ? undefined : at('global'));
   }
 
   eventToKey(event: KeyboardEvent): string | null {
@@ -146,8 +156,9 @@ export class Dispatcher {
   }
 
   private fire(key: string, event: KeyboardEvent): boolean {
-    const context = this.resolveContext();
-    const binding = keyRules.pick(this.bindings, context, key, keyRules.inPlainField(event.target));
+    const chain = this.resolveContext();
+    const context = chain[0] ?? 'global';
+    const binding = keyRules.pick(this.bindings, chain, key, keyRules.inPlainField(event.target));
 
     this.echo.echo(key, context, binding?.command ?? null);
     if (binding?.command === NATIVE) return true;

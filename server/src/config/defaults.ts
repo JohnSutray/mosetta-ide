@@ -26,6 +26,7 @@ export class Defaults {
         '@ide/plugin-layout',
         '@ide/plugin-editor',
         '@ide/plugin-find',
+        '@ide/plugin-completion',
         '@ide/plugin-sheep',
       ],
     },

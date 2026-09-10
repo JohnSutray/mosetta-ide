@@ -4,7 +4,19 @@ import type { LspServerSettings } from './settings.js';
 import type { Logger, MemoryEvent, ProcessChild, ProcessHandle, ProjectMemory, RunAsk } from '@ide/api/server';
 import { FrameDecoder } from './codec.js';
 import type { Toolchain } from './toolchain.js';
-import type { Diagnostic, HoverInfo, LspState, LspStatus, Severity, SymbolSite } from './types.js';
+import type {
+  CompletionAnswer,
+  CompletionDetails,
+  CompletionEntry,
+  CompletionKind,
+  Diagnostic,
+  HoverInfo,
+  LspState,
+  LspStatus,
+  Range,
+  Severity,
+  SymbolSite,
+} from './types.js';
 
 export type LspEvent =
   | { type: 'status'; status: LspStatus }
@@ -95,6 +107,17 @@ export class LspServer {
           hover: { contentFormat: ['markdown', 'plaintext'] },
           definition: { linkSupport: true },
           references: {},
+          completion: {
+            contextSupport: true,
+            completionItem: {
+              snippetSupport: false,
+              labelDetailsSupport: true,
+              deprecatedSupport: true,
+              tagSupport: { valueSet: [1] },
+              documentationFormat: ['markdown', 'plaintext'],
+              resolveSupport: { properties: ['detail', 'documentation', 'additionalTextEdits'] },
+            },
+          },
         },
         workspace: { workspaceFolders: true, configuration: false },
       },
@@ -278,6 +301,29 @@ export class LspServer {
     return out;
   }
 
+  async completion(key: string, line: number, character: number, trigger?: string): Promise<CompletionAnswer> {
+    if (this.state !== 'ready') throw new Error(`${this.name} не готов (${this.state})`);
+    this.didOpen(key);
+    const result = (await this.request('textDocument/completion', {
+      textDocument: { uri: this.uri(key) },
+      position: { line, character },
+      context: trigger ? { triggerKind: 2, triggerCharacter: trigger } : { triggerKind: 1 },
+    })) as RawCompletion[] | { items?: RawCompletion[]; isIncomplete?: boolean } | null;
+    const list = Array.isArray(result) ? { items: result, isIncomplete: false } : (result ?? {});
+    return { items: (list.items ?? []).map(toEntry), incomplete: Boolean(list.isIncomplete) };
+  }
+
+  async resolveCompletion(raw: unknown): Promise<CompletionDetails> {
+    if (this.state !== 'ready') throw new Error(`${this.name} не готов (${this.state})`);
+    const item = (await this.request('completionItem/resolve', raw)) as RawCompletion | null;
+    const documentation = renderDocumentation(item?.documentation);
+    return {
+      ...(item?.detail ? { detail: item.detail } : {}),
+      ...(documentation ? { documentation } : {}),
+      edits: (item?.additionalTextEdits ?? []).map((edit) => ({ range: edit.range, text: edit.newText })),
+    };
+  }
+
   private onMemory(event: MemoryEvent): void {
     const key = event.path;
     if (event.type === 'doc.moved') {
@@ -445,6 +491,73 @@ interface PublishDiagnostics {
     code?: string | number;
     source?: string;
   }>;
+}
+
+interface RawCompletion {
+  label: string;
+  kind?: number;
+  detail?: string;
+  labelDetails?: { detail?: string; description?: string };
+  documentation?: unknown;
+  sortText?: string;
+  filterText?: string;
+  insertText?: string;
+  textEdit?: { range?: Range; insert?: Range; newText: string };
+  additionalTextEdits?: Array<{ range: Range; newText: string }>;
+  deprecated?: boolean;
+  tags?: number[];
+}
+
+const KINDS: Record<number, CompletionKind> = {
+  1: 'text',
+  2: 'method',
+  3: 'function',
+  4: 'constructor',
+  5: 'field',
+  6: 'variable',
+  7: 'class',
+  8: 'interface',
+  9: 'module',
+  10: 'property',
+  13: 'enum',
+  14: 'keyword',
+  15: 'snippet',
+  17: 'file',
+  19: 'folder',
+  20: 'member',
+  21: 'constant',
+  22: 'class',
+  25: 'type',
+};
+
+const IMPORT_MARK = '\uffff';
+
+function toEntry(item: RawCompletion): CompletionEntry {
+  const edit = item.textEdit;
+  const range = edit?.range ?? edit?.insert;
+  const marked = item.sortText?.startsWith(IMPORT_MARK) ?? false;
+  const module = item.labelDetails?.description;
+  const detail = module ?? item.labelDetails?.detail ?? item.detail;
+  return {
+    label: item.label,
+    kind: KINDS[item.kind ?? 0] ?? 'other',
+    insert: edit?.newText ?? item.insertText ?? item.label,
+    ...(range ? { range } : {}),
+    sortText: (item.sortText ?? item.label).replace(IMPORT_MARK, ''),
+    ...(item.filterText && item.filterText !== item.label ? { filterText: item.filterText } : {}),
+    ...(detail ? { detail } : {}),
+    ...(marked || module ? { imports: true } : {}),
+    ...(item.deprecated || item.tags?.includes(1) ? { deprecated: true } : {}),
+    raw: item,
+  };
+}
+
+function renderDocumentation(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && typeof (value as { value?: unknown }).value === 'string') {
+    return (value as { value: string }).value;
+  }
+  return '';
 }
 
 function languageIdFor(key: string): string {

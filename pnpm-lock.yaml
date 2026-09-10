@@ -141,6 +141,46 @@ importers:
         specifier: ^10.25.3
         version: 10.29.8
 
+  plugins/completion:
+    dependencies:
+      '@ide/api':
+        specifier: workspace:*
+        version: link:../api
+      '@ide/code':
+        specifier: workspace:*
+        version: link:../../code
+      '@ide/plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
+      '@ide/plugin-lsp':
+        specifier: workspace:*
+        version: link:../lsp
+      '@ide/plugin-search':
+        specifier: workspace:*
+        version: link:../search
+    devDependencies:
+      '@codemirror/language':
+        specifier: ^6.10.8
+        version: 6.12.4
+      '@codemirror/state':
+        specifier: ^6.5.0
+        version: 6.7.1
+      '@codemirror/view':
+        specifier: ^6.35.3
+        version: 6.43.9
+      '@preact/signals':
+        specifier: ^1.3.1
+        version: 1.3.4(preact@10.29.8)
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.20.1
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
+
   plugins/doc:
     dependencies:
       '@ide/api':
@@ -813,6 +853,9 @@ importers:
       '@ide/api':
         specifier: workspace:*
         version: link:../plugins/api
+      '@ide/plugin-completion':
+        specifier: workspace:*
+        version: link:../plugins/completion
       '@ide/plugin-doc':
         specifier: workspace:*
         version: link:../plugins/doc

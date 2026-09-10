@@ -1,0 +1,49 @@
+{
+  "name": "@ide/plugin-completion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "exports": {
+    ".": "./src/client.tsx"
+  },
+  "ide": {
+    "client": "src/client.tsx",
+    "strings": "src/en.json",
+    "commands": {
+      "completion.show": "Дополнение: показать список",
+      "completion.next": "Дополнение: вниз",
+      "completion.prev": "Дополнение: вверх",
+      "completion.pageDown": "Дополнение: страница вниз",
+      "completion.pageUp": "Дополнение: страница вверх",
+      "completion.accept": "Дополнение: вставить",
+      "completion.replace": "Дополнение: заменить слово целиком",
+      "completion.close": "Дополнение: закрыть"
+    }
+  },
+  "dependencies": {
+    "@ide/api": "workspace:*",
+    "@ide/code": "workspace:*",
+    "@ide/plugin-doc": "workspace:*",
+    "@ide/plugin-lsp": "workspace:*",
+    "@ide/plugin-search": "workspace:*"
+  },
+  "peerDependencies": {
+    "@codemirror/language": "^6.10.8",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.35.3",
+    "@preact/signals": "^1.3.1",
+    "preact": "^10.25.3"
+  },
+  "devDependencies": {
+    "@codemirror/language": "^6.10.8",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.35.3",
+    "@preact/signals": "^1.3.1",
+    "@types/node": "^22.10.5",
+    "preact": "^10.25.3",
+    "vitest": "^2.1.9"
+  }
+}

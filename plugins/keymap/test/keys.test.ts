@@ -62,6 +62,19 @@ describe('раскладка и поля ввода', () => {
     expect(keyRules.inPlainField(ROW as never)).toBe(false);
   });
 
+  it('цепочка контекстов: своё первым, чего нет — у следующего, потом глобальное (ADR-0200)', () => {
+    const bindings = [
+      { command: 'completion.accept', key: 'enter', when: 'completion' as const },
+      { command: 'edit.undo', key: 'meta+z', when: 'editor' as const },
+      { command: 'search.everywhere', key: 'meta+o' },
+    ];
+    const chain = ['completion', 'editor'] as const;
+    expect(keyRules.pick(bindings, chain, 'enter', false)?.command).toBe('completion.accept');
+    expect(keyRules.pick(bindings, chain, 'meta+z', false)?.command).toBe('edit.undo');
+    expect(keyRules.pick(bindings, chain, 'meta+o', false)?.command).toBe('search.everywhere');
+    expect(keyRules.pick(bindings, 'editor', 'enter', false)).toBeUndefined();
+  });
+
   it('в ПУСТОМ поле стирать нечего — Backspace достаётся раскладке (ADR-0193)', () => {
     expect(keyRules.typedIntoField(press('Backspace', EMPTY))).toBe(false);
     expect(keyRules.typedIntoField(press('Delete', EMPTY))).toBe(false);

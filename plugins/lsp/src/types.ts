@@ -45,3 +45,53 @@ export interface SymbolSite {
   preview: string;
   isImport: boolean;
 }
+
+export type CompletionKind =
+  | 'method'
+  | 'function'
+  | 'constructor'
+  | 'field'
+  | 'property'
+  | 'variable'
+  | 'constant'
+  | 'class'
+  | 'interface'
+  | 'enum'
+  | 'member'
+  | 'module'
+  | 'keyword'
+  | 'snippet'
+  | 'type'
+  | 'file'
+  | 'folder'
+  | 'text'
+  | 'other';
+
+export interface CompletionEntry {
+  label: string;
+  kind: CompletionKind;
+  insert: string;
+  range?: Range;
+  sortText: string;
+  filterText?: string;
+  detail?: string;
+  imports?: boolean;
+  deprecated?: boolean;
+  raw: unknown;
+}
+
+export interface CompletionAnswer {
+  items: CompletionEntry[];
+  incomplete: boolean;
+}
+
+export interface TextEdit {
+  range: Range;
+  text: string;
+}
+
+export interface CompletionDetails {
+  detail?: string;
+  documentation?: string;
+  edits: TextEdit[];
+}

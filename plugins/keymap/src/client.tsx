@@ -37,7 +37,7 @@ export default class KeymapPlugin {
 
     if (typeof window !== 'undefined') {
       this.dispatcher = new Dispatcher(
-        () => keyContexts.here(),
+        () => keyContexts.hereChain(),
         (key) => this.echo.noteUnbound(key),
         this.echo,
       );

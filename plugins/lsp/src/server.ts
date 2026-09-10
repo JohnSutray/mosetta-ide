@@ -1,7 +1,7 @@
 import { activate, command, type CallContext, type Ide } from '@ide/api/server';
 import { LspHost } from './host.js';
 import { LSP_DEFAULTS } from './settings.js';
-import type { FileDiagnostics, HoverInfo, LspStatus, SymbolSite } from './types.js';
+import type { CompletionAnswer, CompletionDetails, FileDiagnostics, HoverInfo, LspStatus, SymbolSite } from './types.js';
 
 export default class LspServerPlugin {
   constructor(private readonly ide: Ide) {}
@@ -43,6 +43,19 @@ export default class LspServerPlugin {
   @command() protected references(params: unknown, call: CallContext): Promise<SymbolSite[]> {
     const { path, line, character } = spot(params);
     return this.host(call).require(path).references(path, line, character);
+  }
+
+  @command() protected completion(params: unknown, call: CallContext): Promise<CompletionAnswer> {
+    const { path, line, character } = spot(params);
+    const trigger = (params as { trigger?: unknown }).trigger;
+    return this.host(call)
+      .require(path)
+      .completion(path, line, character, typeof trigger === 'string' ? trigger : undefined);
+  }
+
+  @command() protected resolve(params: unknown, call: CallContext): Promise<CompletionDetails> {
+    const path = pathOf(params);
+    return this.host(call).require(path).resolveCompletion((params as { item?: unknown }).item);
   }
 }
 
