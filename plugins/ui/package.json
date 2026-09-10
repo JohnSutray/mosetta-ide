@@ -7,7 +7,7 @@
     "test": "vitest run"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/client.tsx"
   },
   "ide": {
     "client": "src/client.tsx",

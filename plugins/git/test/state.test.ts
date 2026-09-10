@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { fuzzy } from '@ide/ui';
 import type { GitBranch, GitState } from '../src/types.js';
 import { FakeHost } from '@ide/api/testing';
 import { BranchesWindow, Git, type GitRemote } from '../src/state.js';
@@ -77,7 +78,7 @@ describe('git', () => {
   it('окно веток берёт список у git, а не держит свой', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
-    const window = new BranchesWindow(git, ide);
+    const window = new BranchesWindow(git, ide, () => fuzzy);
     git.branches.value = [branch('main', { current: true }), branch('feature/x')];
     expect(window.shown.value.map((one) => one.name)).toEqual(['main', 'feature/x']);
   });
@@ -85,7 +86,7 @@ describe('git', () => {
   it('стрелки ходят по отфильтрованному, а не по всему списку', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
-    const window = new BranchesWindow(git, ide);
+    const window = new BranchesWindow(git, ide, () => fuzzy);
     git.branches.value = [branch('main'), branch('feature/x'), branch('feature/y')];
     window.setFilter('fy');
     expect(window.shown.value.map((one) => one.name)).toEqual(['feature/y']);
@@ -97,7 +98,7 @@ describe('git', () => {
   it('фильтр сбрасывает выделение на первую строку', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
-    const window = new BranchesWindow(git, ide);
+    const window = new BranchesWindow(git, ide, () => fuzzy);
     git.branches.value = [branch('main'), branch('feature/x')];
     window.move(1);
     expect(window.selected.value).toBe(1);
@@ -108,7 +109,7 @@ describe('git', () => {
   it('заголовки разделов невыбираемы и стоят перед своими ветками', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
-    const window = new BranchesWindow(git, ide);
+    const window = new BranchesWindow(git, ide, () => fuzzy);
     git.branches.value = [branch('main'), branch('origin/main', { remote: true })];
     expect(window.rows.value.map((row) => row.kind)).toEqual([
       'head',
@@ -124,7 +125,7 @@ describe('git', () => {
   it('Escape закрывает по одному слою', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
-    const window = new BranchesWindow(git, ide);
+    const window = new BranchesWindow(git, ide, () => fuzzy);
     git.branches.value = [branch('main', { current: true })];
     git.state.value = state({});
     window.show();
@@ -146,7 +147,7 @@ describe('git', () => {
   it('без репозитория окно веток не открывается и говорит об этом', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
-    const window = new BranchesWindow(git, ide);
+    const window = new BranchesWindow(git, ide, () => fuzzy);
     window.show();
     expect(window.open.value).toBe(false);
     expect(ide.complaints).toHaveLength(1);

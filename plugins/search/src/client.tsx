@@ -7,6 +7,10 @@ import { Search, type SearchRemote } from './state.js';
 import { INDEX_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
 import { OPENER_SCHEMA, type IndexHit, type IndexKind, type Opener } from './types.js';
+import { layout } from './layout.js';
+import { matcher } from './matcher.js';
+import { textIndex } from './text.js';
+import DocPlugin from '@ide/plugin-doc';
 
 export type { Found, IndexHit, IndexKind, Opener, SearchStats } from './types.js';
 export { layout, Layout } from './layout.js';
@@ -16,10 +20,14 @@ export { textIndex, TextIndex, type Indexed } from './text.js';
 @registry({ key: 'search.opener', schema: OPENER_SCHEMA })
 @configSection({ section: 'index', defaults: INDEX_DEFAULTS })
 export default class SearchPlugin implements SearchRemote {
+  readonly layout = layout;
+  readonly matcher = matcher;
+  readonly textIndex = textIndex;
+
   readonly search: Search;
 
   constructor(private readonly ide: Ide) {
-    this.search = new Search(this, ide.registry<Opener>('search.opener'));
+    this.search = new Search(this, ide.registry<Opener>('search.opener'), () => ide.getPlugin(DocPlugin));
   }
 
   find(query: string, limit?: number, kinds?: IndexKind[]): Promise<IndexHit[]> {

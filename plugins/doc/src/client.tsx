@@ -1,8 +1,7 @@
 import { activate, docs, project, t, workspaces } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
-import type { DocState } from '@ide/protocol';
 import { effect } from '@preact/signals';
-import { Doc, type Reveal } from './doc.js';
+import { Doc } from './doc.js';
 import { EditorFocus } from './focus.js';
 
 export type { Reveal } from './doc.js';
@@ -18,7 +17,6 @@ export default class DocPlugin {
       t,
       remembered: (root) => ide.remember<string | null>(`file:${root}`, null, 'tab'),
     });
-    current = this;
   }
 
   @activate() protected start(): void {
@@ -60,81 +58,47 @@ export default class DocPlugin {
   closeFile(): Promise<void> {
     return this.doc.close(workspaces.current.value?.root ?? null);
   }
-}
 
-let current: DocPlugin | null = null;
-
-function live(): DocPlugin {
-  if (!current) throw new Error('@ide/plugin-doc не поднят');
-  return current;
-}
-
-export const openDoc: { readonly value: DocState | null } = {
-  get value() {
-    return live().doc.open.value;
-  },
-};
-export const dirty: { readonly value: boolean } = {
-  get value() {
-    return live().doc.dirty.value;
-  },
-};
-export const externalEpoch: { readonly value: number } = {
-  get value() {
-    return live().doc.externalEpoch.value;
-  },
-};
-export const openEpoch: { readonly value: number } = {
-  get value() {
-    return live().doc.openEpoch.value;
-  },
-};
-export const pendingReveal: { readonly value: Reveal | null } = {
-  get value() {
-    return live().doc.pendingReveal.value;
-  },
-};
-export const diverged: { readonly value: ReadonlyMap<string, 'changed' | 'removed'> } = {
-  get value() {
-    return live().doc.diverged.value;
-  },
-};
-export const wantsFocus: { readonly value: number } = {
-  get value() {
-    return live().focus.wanted.value;
-  },
-};
-
-export function goTo(path: string, line: number, character?: number): Promise<void> {
-  return live().goTo(path, line, character);
-}
-export function openFile(path: string, options?: { focus?: boolean }): Promise<void> {
-  return live().openFile(path, options);
-}
-export function flushDocs(): Promise<void> {
-  return live().doc.sync.flush();
-}
-export function peekFile(path: string): Promise<{ path: string; text: string }> {
-  return live().peekFile(path);
-}
-export function editDoc(text: string): void {
-  live().doc.edit(text);
-}
-export function closeFile(): Promise<void> {
-  return live().closeFile();
-}
-export function reloadFile(): Promise<void> {
-  return live().doc.reload();
-}
-export function takeFocusOnMount(): boolean {
-  return live().focus.takeOnMount();
-}
-export function onMergeRequested(handler: (path: string) => void): () => void {
-  return live().doc.onMergeRequested(handler);
-}
-export function expectExternal(path: string): void {
-  live().doc.expectExternal(path);
-}
-export function forgetDiverged(path: string): void {
-  live().doc.forgetDiverged(path);
+  get openDoc() {
+    return this.doc.open;
+  }
+  get dirty() {
+    return this.doc.dirty;
+  }
+  get externalEpoch() {
+    return this.doc.externalEpoch;
+  }
+  get openEpoch() {
+    return this.doc.openEpoch;
+  }
+  get pendingReveal() {
+    return this.doc.pendingReveal;
+  }
+  get diverged() {
+    return this.doc.diverged;
+  }
+  get wantsFocus() {
+    return this.focus.wanted;
+  }
+  flushDocs(): Promise<void> {
+    return this.doc.sync.flush();
+  }
+  editDoc(text: string): void {
+    this.doc.edit(text);
+  }
+  reloadFile(): Promise<void> {
+    return this.doc.reload();
+  }
+  takeFocusOnMount(): boolean {
+    return this.focus.takeOnMount();
+  }
+  onMergeRequested(handler: (path: string) => void): () => void {
+    return this.doc.onMergeRequested(handler);
+  }
+  expectExternal(path: string): void {
+    this.doc.expectExternal(path);
+  }
+  forgetDiverged(path: string): void {
+    this.doc.forgetDiverged(path);
+  }
 }

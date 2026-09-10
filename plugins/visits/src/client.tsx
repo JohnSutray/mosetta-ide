@@ -1,16 +1,20 @@
 import { activate, remote, stub, workspaces } from '@ide/api/client';
-import { openDoc, pendingReveal } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { effect } from '@preact/signals';
 import Editor from '@ide/plugin-editor';
 import { Visits, type VisitsRemote } from './state.js';
 import type { Visit } from './types.js';
+import DocPlugin from '@ide/plugin-doc';
 
 export default class VisitsPlugin implements VisitsRemote {
+  private get docs(): DocPlugin {
+    return this.ide.getPlugin(DocPlugin);
+  }
+
   readonly visits: Visits;
 
   constructor(private readonly ide: Ide) {
-    this.visits = new Visits(this);
+    this.visits = new Visits(this, () => ide.getPlugin(DocPlugin));
   }
 
   list(): Promise<Visit[]> {
@@ -38,10 +42,10 @@ export default class VisitsPlugin implements VisitsRemote {
 
     let last: string | null = null;
     effect(() => {
-      const file = openDoc.value;
+      const file = this.docs.openDoc.value;
       if (!file || file.path === last) return;
       last = file.path;
-      const at = pendingReveal.value;
+      const at = this.docs.pendingReveal.value;
       visits.visit(file.path, at?.path === file.path ? at.line : 0, at?.character ?? 0);
     });
 

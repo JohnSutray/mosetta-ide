@@ -1,10 +1,12 @@
 import { signal } from '@preact/signals';
 import { type HunkBox } from '@ide/api/client';
 import type { Hunk } from '@ide/plugin-code';
-import { editDoc, openDoc } from '@ide/plugin-doc';
+import type DocPlugin from '@ide/plugin-doc';
 
 export class GitMarks {
-  constructor(private readonly remote: { head(path: string): Promise<{ path: string; text: string | null }> }) {}
+  constructor(private readonly remote: { head(path: string): Promise<{ path: string; text: string | null }> },
+    private readonly docs: () => Pick<DocPlugin, 'openDoc' | 'editDoc'>,
+  ) {}
 
   readonly popup = signal<{ hunk: Hunk; box: HunkBox } | null>(null);
 
@@ -25,10 +27,10 @@ export class GitMarks {
 
   revertOpen(): void {
     const open = this.popup.value;
-    const file = openDoc.value;
+    const file = this.docs().openDoc.value;
     this.popup.value = null;
     if (!open || !file) return;
-    editDoc(reverted(file.text, open.hunk));
+    this.docs().editDoc(reverted(file.text, open.hunk));
   }
 
   async load(path: string | null): Promise<void> {

@@ -1,10 +1,10 @@
 import { project, t } from '@ide/api/client';
-import { expectExternal, forgetDiverged, onMergeRequested } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import CodePlugin from '@ide/plugin-code';
 import { Diff3, type Region, type Choice, type SideChoice } from './diff3.js';
 import { batch, computed, effect, signal, type ReadonlySignal, type Signal } from '@preact/signals';
 import type { MergeFile, MergeSession } from './types.js';
+import DocPlugin from '@ide/plugin-doc';
 
 export interface MergeRemote {
   state(): Promise<MergeSession | null>;
@@ -93,7 +93,7 @@ export class Merge {
     private readonly ide: Ide,
     private readonly access: MergeRemote,
   ) {
-    onMergeRequested((path) => this.openFor(path));
+    this.ide.getPlugin(DocPlugin).onMergeRequested((path) => this.openFor(path));
 
     effect(() => {
       if (project.value) void this.load();
@@ -208,10 +208,10 @@ export class Merge {
     const file = this.file.value;
     if (!file) return;
     const payload = text === undefined ? this.result.value : text;
-    expectExternal(file.path);
+    this.ide.getPlugin(DocPlugin).expectExternal(file.path);
     try {
       const rest = await this.access.resolve(file.path, payload);
-      forgetDiverged(file.path);
+      this.ide.getPlugin(DocPlugin).forgetDiverged(file.path);
       batch(() => {
         this.session.value = rest;
         this.decisions.value = without(this.decisions.value, file.path);

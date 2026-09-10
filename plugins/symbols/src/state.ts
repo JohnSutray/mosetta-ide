@@ -1,8 +1,8 @@
-import { goTo, openDoc, peekFile } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { batch, signal, type Signal } from '@preact/signals';
 import type { SymbolSite } from '@ide/plugin-lsp';
 import type { SymbolSpot } from '@ide/plugin-editor';
+import DocPlugin from '@ide/plugin-doc';
 
 export type SymbolKind = 'definition' | 'usages';
 
@@ -63,7 +63,7 @@ export class Symbols {
   }
 
   async ask(where: SymbolSpot): Promise<void> {
-    const file = openDoc.value;
+    const file = this.ide.getPlugin(DocPlugin).openDoc.value;
     if (!file) return;
 
     const spot = { path: file.path, line: where.line, character: where.character };
@@ -112,7 +112,7 @@ export class Symbols {
       this.preview.value = null;
       return;
     }
-    void peekFile(site.path)
+    void this.ide.getPlugin(DocPlugin).peekFile(site.path)
       .then((file) => {
         if (this.list.peek() === null) return;
         this.preview.value = { path: site.path, text: file.text, line: site.line };
@@ -143,7 +143,7 @@ export class Symbols {
 
   private jumpTo(site: SymbolSite): void {
     this.close();
-    void goTo(site.path, site.line, site.character);
+    void this.ide.getPlugin(DocPlugin).goTo(site.path, site.line, site.character);
   }
 
   private samePlace(site: SymbolSite, spot: { path: string; line: number }): boolean {

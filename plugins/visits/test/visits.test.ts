@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Visits } from '../src/state.js';
 import type { Visit } from '../src/types.js';
 
-const visits = new Visits({ list: async () => [], save: async () => ({ saved: 0 }) });
+const visits = new Visits({ list: async () => [], save: async () => ({ saved: 0 }) }, () => ({ goTo: async () => undefined }));
 
 const FAR = 12;
 const LIMIT = 30;

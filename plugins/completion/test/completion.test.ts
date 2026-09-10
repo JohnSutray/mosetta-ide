@@ -8,6 +8,7 @@ import { BufferWords } from '../src/sources/buffer.js';
 import { LspCompletions } from '../src/sources/lsp.js';
 import { Postfix } from '../src/sources/postfix.js';
 import type { Answer, Ask, Item, Source } from '../src/types.js';
+import { matcher, textIndex } from '@ide/plugin-search';
 
 function askAt(marked: string, extra: Partial<Ask> = {}): Ask {
   const pos = marked.indexOf('|');
@@ -30,7 +31,7 @@ function askAt(marked: string, extra: Partial<Ask> = {}): Ask {
 
 function ranker(store = signal<Record<string, number>>({})) {
   const history = new ChoiceHistory(store);
-  return { ranker: new Ranker(new Fuzzy(), history), history };
+  return { ranker: new Ranker(new Fuzzy(matcher, textIndex), history), history };
 }
 
 const word = (label: string): Item => ({ label, kind: 'word', source: 'buffer' });
@@ -39,7 +40,7 @@ const NO_WEIGHTS = new Map<string, number>();
 
 describe('совпадение и порядок', () => {
   it('горбы находят имя, середина слова — нет', () => {
-    const fuzzy = new Fuzzy();
+    const fuzzy = new Fuzzy(matcher, textIndex);
     expect(fuzzy.match('gEBI', 'getElementById')).not.toBe(null);
     expect(fuzzy.match('ebi', 'getElementById')).not.toBe(null);
     expect(fuzzy.match('ment', 'getElement')).toBe(null);

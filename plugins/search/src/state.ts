@@ -1,7 +1,7 @@
-import { goTo, peekFile } from '@ide/plugin-doc';
 import type { RegistryHandle } from '@ide/api/client';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
 import type { IndexHit, IndexKind, Opener } from './types.js';
+import type DocPlugin from '@ide/plugin-doc';
 
 export interface SearchRemote {
   find(query: string, limit?: number, kinds?: IndexKind[]): Promise<IndexHit[]>;
@@ -11,6 +11,7 @@ export class Search {
   constructor(
     private readonly remote: SearchRemote,
     private readonly openers: RegistryHandle<Opener>,
+    private readonly docs: () => Pick<DocPlugin, 'goTo' | 'peekFile'>,
   ) {}
 
   readonly open = signal(false);
@@ -95,7 +96,7 @@ export class Search {
       return;
     }
 
-    void goTo(hit.path, hit.line ?? 0);
+    void this.docs().goTo(hit.path, hit.line ?? 0);
   }
 
   private async run(value: string): Promise<void> {
@@ -141,7 +142,7 @@ export class Search {
     this.timer = setTimeout(() => {
       this.timer = null;
       const token = this.token;
-      void peekFile(hit.path)
+      void this.docs().peekFile(hit.path)
         .then((state) => {
           if (token !== this.token || !this.open.value) return;
           this.preview.value = { path: state.path, text: state.text, line: hit.line ?? 0 };

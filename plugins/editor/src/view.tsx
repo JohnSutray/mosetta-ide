@@ -17,8 +17,6 @@ import type CodePlugin from '@ide/plugin-code';
 import type { EditorSettings, Hunk } from '@ide/plugin-code';
 import type { Diagnostic, HoverInfo } from '@ide/plugin-lsp';
 import { type HunkBox } from '@ide/api/client';
-import { chordHeld } from '@ide/plugin-keymap';
-import { takeFocusOnMount } from '@ide/plugin-doc';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
 import { setHeadText, type GitMarks } from './git-marks.js';
 import { lspHover } from './hover.js';
@@ -43,6 +41,8 @@ interface Props {
   extra: Extension[];
   code: CodePlugin;
   marks: GitMarks;
+  takeFocus: () => boolean;
+  chordHeld: (command: string, event: MouseEvent) => boolean;
 }
 
 export function CodeEditor({
@@ -63,6 +63,8 @@ export function CodeEditor({
   extra,
   code,
   marks,
+  takeFocus,
+  chordHeld,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
@@ -132,7 +134,7 @@ export function CodeEditor({
     instance.dispatch({ effects: setHeadText.of(head) });
     view.current = instance;
     onMount(instance);
-    if (takeFocusOnMount()) instance.focus();
+    if (takeFocus()) instance.focus();
 
     return () => {
       onMount(null);

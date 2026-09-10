@@ -1,9 +1,9 @@
 import { setSetting, settingsOf } from '@ide/api/client';
 import { TREE_DEFAULTS } from './settings.js';
-import { openDoc } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { computed } from '@preact/signals';
 import type { TreeSelection } from './state.js';
+import DocPlugin from '@ide/plugin-doc';
 
 export class TreeFollow {
   readonly on = computed(() => settingsOf('tree', TREE_DEFAULTS).value.followEditor);
@@ -25,7 +25,7 @@ export class TreeFollow {
 
   async now(): Promise<void> {
     if (!this.on.peek()) return;
-    const path = openDoc.value?.path;
+    const path = this.ide.getPlugin(DocPlugin).openDoc.value?.path;
     if (path) await this.selection.reveal(path);
   }
 }

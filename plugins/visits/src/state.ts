@@ -1,6 +1,6 @@
-import { goTo } from '@ide/plugin-doc';
 import { signal } from '@preact/signals';
 import type { Visit } from './types.js';
+import type DocPlugin from '@ide/plugin-doc';
 
 export interface VisitsRemote {
   list(): Promise<Visit[]>;
@@ -19,7 +19,9 @@ export class Visits {
   private walking = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private readonly remote: VisitsRemote) {}
+  constructor(private readonly remote: VisitsRemote,
+    private readonly docs: () => Pick<DocPlugin, 'goTo'>,
+  ) {}
 
   canGoBack(): boolean {
     return this.at.value > 0;
@@ -114,7 +116,7 @@ export class Visits {
     this.walking = true;
     this.at.value = to;
     try {
-      await goTo(target.path, target.line, target.character);
+      await this.docs().goTo(target.path, target.line, target.character);
     } finally {
       setTimeout(() => {
         this.walking = false;

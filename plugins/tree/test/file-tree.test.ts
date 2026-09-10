@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, type FakeSurface } from '@ide/api/testing';
 import type { DirEntry } from '@ide/api/client';
 import TreePlugin from '../src/client.js';
-import DocPlugin, { openFile } from '@ide/plugin-doc';
+import DocPlugin from '@ide/plugin-doc';
 
 let surface: FakeSurface;
+let docs: DocPlugin;
 let plugin: TreePlugin;
 
 function entry(path: string, kind: 'file' | 'dir' = 'file'): DirEntry {
@@ -22,7 +23,7 @@ beforeEach(async () => {
   (globalThis as Record<string, unknown>)['document'] ??= { addEventListener: () => {} };
   const host = new FakeHost();
   (globalThis as Record<string, unknown>)['document'] ??= {};
-  host.add(DocPlugin, '@ide/plugin-doc');
+  docs = host.add(DocPlugin, '@ide/plugin-doc');
   surface = host.surface;
   surface.dirs.set('', [entry('src', 'dir'), entry('README.md')]);
   surface.dirs.set('src', [entry('src/a.ts')]);
@@ -53,7 +54,7 @@ describe('память дерева у плагина', () => {
     surface.project.value = PROJECT;
     surface.docs.texts.set('src/a.ts', 'раз');
     await settle();
-    await openFile('src/a.ts');
+    await docs.openFile('src/a.ts');
     await settle();
     expect(plugin.files.expanded.value.has('src')).toBe(true);
     expect([...plugin.selection.picked.value]).toEqual(['src/a.ts']);

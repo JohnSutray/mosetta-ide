@@ -1,4 +1,4 @@
-import { layout } from '@ide/plugin-search';
+import type { Layout } from '@ide/plugin-search';
 import { signal } from '@preact/signals';
 import type { TreeSelection } from './state.js';
 
@@ -6,12 +6,15 @@ export class TreeTypeahead {
   readonly term = signal('');
   readonly found = signal(true);
 
-  constructor(private readonly selection: TreeSelection) {}
+  constructor(
+    private readonly selection: TreeSelection,
+    private readonly layout: () => Pick<Layout, 'retype'>,
+  ) {}
 
   private variants(): string[] {
     const term = this.term.value.toLowerCase();
     if (term === '') return [];
-    const other = layout.retype(term);
+    const other = this.layout().retype(term);
     return other ? [term, other.toLowerCase()] : [term];
   }
 

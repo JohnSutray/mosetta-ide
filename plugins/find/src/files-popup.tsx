@@ -3,13 +3,13 @@ import type { ComponentChildren } from 'preact';
 import { runCommand, settingsOf, t } from '@ide/api/client';
 import type CodePlugin from '@ide/plugin-code';
 import { EDITOR_DEFAULTS } from '@ide/plugin-code';
-import { keysFor } from '@ide/plugin-keymap';
 import { Popup } from '@ide/ui';
 import type { Windows } from '@ide/windows';
 import type { FileHit } from './grep.js';
 import type { FindFiles } from './files.js';
 
 interface ToolProps {
+  keysFor: (command: string) => string[];
   windows: Windows;
   command: string;
   title: string;
@@ -18,7 +18,7 @@ interface ToolProps {
   children: ComponentChildren;
 }
 
-function Tool({ windows, command, title, on, disabled, children }: ToolProps) {
+function Tool({ keysFor, windows, command, title, on, disabled, children }: ToolProps) {
   return (
     <button
       type="button"
@@ -37,7 +37,7 @@ function Tool({ windows, command, title, on, disabled, children }: ToolProps) {
   );
 }
 
-export function FindFilesPopup({ windows, files, code }: { windows: Windows; files: FindFiles; code: CodePlugin }) {
+export function FindFilesPopup({ keysFor, windows, files, code }: { keysFor: (command: string) => string[]; windows: Windows; files: FindFiles; code: CodePlugin }) {
   const query = useRef<HTMLInputElement>(null);
   const replace = useRef<HTMLInputElement>(null);
   const mask = useRef<HTMLInputElement>(null);
@@ -77,19 +77,19 @@ export function FindFilesPopup({ windows, files, code }: { windows: Windows; fil
             onFocus={() => files.focusOn('query')}
             onInput={(event) => files.setQuery(event.currentTarget.value)}
           />
-          <Tool windows={windows} command="findFiles.toggleCase" title="find.case" on={files.caseSensitive.value}>
+          <Tool keysFor={keysFor} windows={windows} command="findFiles.toggleCase" title="find.case" on={files.caseSensitive.value}>
             Cc
           </Tool>
-          <Tool windows={windows} command="findFiles.toggleWords" title="find.words" on={files.words.value}>
+          <Tool keysFor={keysFor} windows={windows} command="findFiles.toggleWords" title="find.words" on={files.words.value}>
             W
           </Tool>
-          <Tool windows={windows} command="findFiles.toggleRegex" title="find.regex" on={files.regex.value}>
+          <Tool keysFor={keysFor} windows={windows} command="findFiles.toggleRegex" title="find.regex" on={files.regex.value}>
             .*
           </Tool>
           <span class={`fif-count ${files.busy.value ? 'is-busy' : ''}`}>
             {files.query.value === '' ? '' : `${total}${files.truncated.value ? '+' : ''} · ${files.files.value} ${t('findFiles.files')}`}
           </span>
-          <Tool windows={windows} command={replacing ? 'find.files' : 'find.filesReplace'} title={replacing ? 'find.hideReplace' : 'find.showReplace'}>
+          <Tool keysFor={keysFor} windows={windows} command={replacing ? 'find.files' : 'find.filesReplace'} title={replacing ? 'find.hideReplace' : 'find.showReplace'}>
             {replacing ? '▾' : '▸'}
           </Tool>
         </div>
@@ -105,10 +105,10 @@ export function FindFilesPopup({ windows, files, code }: { windows: Windows; fil
               onFocus={() => files.focusOn('replace')}
               onInput={(event) => files.setReplacement(event.currentTarget.value)}
             />
-            <Tool windows={windows} command="findFiles.replaceFile" title="findFiles.replaceFile" disabled={total === 0}>
+            <Tool keysFor={keysFor} windows={windows} command="findFiles.replaceFile" title="findFiles.replaceFile" disabled={total === 0}>
               {t('findFiles.replaceFile')}
             </Tool>
-            <Tool windows={windows} command="findFiles.replaceAll" title="findFiles.replaceAll" disabled={total === 0}>
+            <Tool keysFor={keysFor} windows={windows} command="findFiles.replaceAll" title="findFiles.replaceAll" disabled={total === 0}>
               {t('findFiles.replaceAll')}
             </Tool>
           </div>

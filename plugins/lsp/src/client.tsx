@@ -1,5 +1,4 @@
 import { activate, configSection, project, remote, settingsOf, stub, workspaces } from '@ide/api/client';
-import { openDoc } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
 import { LSP_DEFAULTS } from './settings.js';
@@ -15,6 +14,7 @@ import type {
   LspStatus,
   SymbolSite,
 } from './types.js';
+import DocPlugin from '@ide/plugin-doc';
 
 export type {
   CompletionAnswer,
@@ -35,12 +35,16 @@ export type {
 
 @configSection({ section: 'lsp', defaults: LSP_DEFAULTS })
 export default class LspPlugin {
+  private get docs(): DocPlugin {
+    return this.ide.getPlugin(DocPlugin);
+  }
+
   readonly lsp = new Lsp();
 
   readonly problems: ReadonlySignal<FileDiagnostics[]> = this.lsp.problems;
   readonly statuses = this.lsp.statuses;
   readonly fileDiagnostics: ReadonlySignal<Diagnostic[]> = computed(() =>
-    this.lsp.of(openDoc.value?.path ?? null),
+    this.lsp.of(this.docs.openDoc.value?.path ?? null),
   );
 
   constructor(private readonly ide: Ide) {}
@@ -72,7 +76,7 @@ export default class LspPlugin {
     });
 
     effect(() => {
-      const path = openDoc.value?.path;
+      const path = this.docs.openDoc.value?.path;
       if (!path || !project.value) return;
       void this.askDiagnostics({ path })
         .then((known) => this.lsp.set(known.path, known.diagnostics))

@@ -1,9 +1,9 @@
 import { fs, t } from '@ide/api/client';
-import { flushDocs, openFile } from '@ide/plugin-doc';
 import type { Ide } from '@ide/api/client';
 import type { FileTree } from './file-tree.js';
 import { batch, signal } from '@preact/signals';
 import type { EntryKind } from '@ide/api/client';
+import DocPlugin from '@ide/plugin-doc';
 
 export interface Ask {
   id: number;
@@ -225,7 +225,7 @@ export class TreeOps {
         await fs.create(path, kind);
         await this.files.load(parent);
         await this.files.ensureExpanded(parent);
-        if (kind === 'file') await openFile(path);
+        if (kind === 'file') await this.ide.getPlugin(DocPlugin).openFile(path);
       },
     });
   }
@@ -242,7 +242,7 @@ export class TreeOps {
       run: async (next) => {
         if (next === name) return;
         const to = parent === '' ? next : `${parent}/${next}`;
-        await flushDocs();
+        await this.ide.getPlugin(DocPlugin).flushDocs();
         await fs.move(path, to);
         await this.files.load(parent);
         this.ide.say(t('tree.renamed', { name: next }));
@@ -300,7 +300,7 @@ export class TreeOps {
   }
 
   async dropInto(paths: string[], folder: string, copy: boolean): Promise<void> {
-    if (!copy) await flushDocs();
+    if (!copy) await this.ide.getPlugin(DocPlugin).flushDocs();
     for (const from of paths) {
       const name = from.slice(from.lastIndexOf('/') + 1);
       const to = join(folder, name);
@@ -380,7 +380,7 @@ export class TreeOps {
         await fs.create(path, 'file');
         await fs.write(path, text);
         await this.files.load(parent);
-        await openFile(path);
+        await this.ide.getPlugin(DocPlugin).openFile(path);
       },
     });
   }

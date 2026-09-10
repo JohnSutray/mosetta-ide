@@ -1,5 +1,4 @@
 import { activate, configSection, project, registry, remote, settingsOf, stub, t, type Ide } from '@ide/api/client';
-import { flushDocs, openDoc } from '@ide/plugin-doc';
 import CodePlugin from '@ide/plugin-code';
 import LspPlugin from '@ide/plugin-lsp';
 import { computed, effect, signal } from '@preact/signals';
@@ -16,12 +15,18 @@ import { LspCompletions } from './sources/lsp.js';
 import { Postfix } from './sources/postfix.js';
 import { STYLE } from './style.js';
 import { SOURCE_SCHEMA, type Source } from './types.js';
+import DocPlugin from '@ide/plugin-doc';
+import SearchPlugin from '@ide/plugin-search';
 
 export type { Answer, Ask, Details, Item, ItemKind, Source } from './types.js';
 
 @registry({ key: 'completion.source', schema: SOURCE_SCHEMA })
 @configSection({ section: 'completion', defaults: COMPLETION_DEFAULTS })
 export default class CompletionPlugin {
+  private get docs(): DocPlugin {
+    return this.ide.getPlugin(DocPlugin);
+  }
+
   constructor(private readonly ide: Ide) {}
 
   private get lsp(): LspPlugin {
@@ -46,7 +51,7 @@ export default class CompletionPlugin {
     });
     const sources = this.ide.registry<Source>('completion.source');
     const session = new CompletionSession(
-      new Ranker(new Fuzzy(), history),
+      new Ranker(new Fuzzy(this.ide.getPlugin(SearchPlugin).matcher, this.ide.getPlugin(SearchPlugin).textIndex), history),
       () => sources.all.value.filter((source) => this.enabled(source.id, settings.value)),
       () => Date.now(),
       (what, detail) =>
@@ -60,7 +65,7 @@ export default class CompletionPlugin {
           complete: (path, line, character, trigger) => this.lsp.complete(path, line, character, trigger),
           resolveCompletion: (path, item) => this.lsp.resolveCompletion(path, item),
         },
-        flushDocs,
+        () => this.docs.flushDocs(),
       ),
       new Postfix(),
       new BufferWords((path) => this.lsp.serves(path)),
@@ -72,14 +77,14 @@ export default class CompletionPlugin {
     const bridge: CompletionBridge = new CompletionBridge(
       session,
       history,
-      () => openDoc.value?.path ?? null,
+      () => this.docs.openDoc.value?.path ?? null,
       () => settings.value.auto,
       (dom) => {
         render(
           <CompletionList
             code={this.ide.getPlugin(CodePlugin)}
             session={session}
-            path={() => openDoc.value?.path ?? null}
+            path={() => this.docs.openDoc.value?.path ?? null}
             onPick={(index) => {
               session.select(index);
               bridge.accept('insert');

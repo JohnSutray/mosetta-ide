@@ -1,10 +1,14 @@
 import { activate, t, type Ide } from '@ide/api/client';
-import { goTo, openDoc } from '@ide/plugin-doc';
 import LspPlugin, { type Diagnostic } from '@ide/plugin-lsp';
 import { STYLE } from './style.js';
 import { ProblemsIcon } from './icon.js';
+import DocPlugin from '@ide/plugin-doc';
 
 export default class Problems {
+  private get docs(): DocPlugin {
+    return this.ide.getPlugin(DocPlugin);
+  }
+
   private readonly maxRows = 500;
 
   constructor(private readonly ide: Ide) {}
@@ -59,7 +63,7 @@ export default class Problems {
         {shown.map((file) => (
           <div class="problems-file" key={file.path}>
             <div
-              class={`problems-where ${openDoc.value?.path === file.path ? 'is-current' : ''}`}
+              class={`problems-where ${this.docs.openDoc.value?.path === file.path ? 'is-current' : ''}`}
               title={file.path}
               onClick={() => void this.jump(file.path, file.diagnostics[0])}
             >
@@ -90,6 +94,6 @@ export default class Problems {
 
   private async jump(path: string, item: Diagnostic | undefined): Promise<void> {
     if (!item) return;
-    await goTo(path, item.range.start.line, item.range.start.character);
+    await this.docs.goTo(path, item.range.start.line, item.range.start.character);
   }
 }

@@ -28,7 +28,6 @@ import {
   type HunkBox,
   type Ide,
 } from '@ide/api/client';
-import { closeFile, dirty, editDoc, externalEpoch, openDoc, openEpoch, pendingReveal, wantsFocus } from '@ide/plugin-doc';
 import LspPlugin from '@ide/plugin-lsp';
 import CodePlugin, { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import type { Hunk } from '@ide/plugin-code';
@@ -38,6 +37,8 @@ import { STYLE } from './style.js';
 import { EditorIcon } from './icon.js';
 import { CodeEditor } from './view.js';
 import { DivergedBadge } from './diverged.js';
+import DocPlugin from '@ide/plugin-doc';
+import KeymapPlugin from '@ide/plugin-keymap';
 
 export interface SymbolSpot {
   line: number;
@@ -50,6 +51,10 @@ export interface SymbolSpot {
 @registry({ key: 'editor.extension', schema: EXTENSION_SCHEMA })
 @configSection({ section: 'editor', defaults: EDITOR_DEFAULTS })
 export default class Editor {
+  private get docs(): DocPlugin {
+    return this.ide.getPlugin(DocPlugin);
+  }
+
   private readonly head = signal<{ path: string; text: string | null } | null>(null);
   private hunkHandler: ((hunk: Hunk, box: HunkBox) => void) | null = null;
   private symbolHandler: ((spot: SymbolSpot) => void) | null = null;
@@ -95,10 +100,10 @@ export default class Editor {
       side: 'main',
       open,
       view: () => this.body(),
-      heading: () => openDoc.value?.path ?? null,
+      heading: () => this.docs.openDoc.value?.path ?? null,
       badges: () => this.badges(),
       close: () => {
-        if (openDoc.value) void closeFile();
+        if (this.docs.openDoc.value) void this.docs.closeFile();
         else open.value = false;
       },
     });
@@ -112,7 +117,7 @@ export default class Editor {
     });
 
     effect(() => {
-      const path = openDoc.value?.path ?? null;
+      const path = this.docs.openDoc.value?.path ?? null;
       if (path && path !== this.shown) open.value = true;
       this.shown = path;
     });
@@ -167,18 +172,18 @@ export default class Editor {
   }
 
   private badges() {
-    const file = openDoc.value;
+    const file = this.docs.openDoc.value;
     if (!file) return null;
     return (
       <>
         {file.truncated && <span class="tag">read-only</span>}
-        {dirty.value && <span class="tag is-dirty">modified</span>}
+        {this.docs.dirty.value && <span class="tag is-dirty">modified</span>}
       </>
     );
   }
 
   private body() {
-    const file = openDoc.value;
+    const file = this.docs.openDoc.value;
     if (!file) return this.empty();
     if (!settings.value) return null;
     const config = settingsOf('editor', EDITOR_DEFAULTS).value;
@@ -189,13 +194,13 @@ export default class Editor {
           file={file}
           head={this.headFor(file.path)}
           onHunk={(hunk, box) => this.hunkHandler?.(hunk, box)}
-          docKey={openEpoch.value}
-          externalEpoch={externalEpoch.value}
-          reveal={pendingReveal.value}
-          wantsFocus={wantsFocus.value}
+          docKey={this.docs.openEpoch.value}
+          externalEpoch={this.docs.externalEpoch.value}
+          reveal={this.docs.pendingReveal.value}
+          wantsFocus={this.docs.wantsFocus.value}
           settings={config}
           diagnostics={this.lsp.fileDiagnostics.value}
-          onEdit={editDoc}
+          onEdit={(text) => this.docs.editDoc(text)}
           onCaret={(line, character) => this.caretHandler?.(file.path, line, character)}
           onModClick={(pos) => {
             if (this.view) this.ask(this.view, pos);
@@ -203,6 +208,8 @@ export default class Editor {
           onHover={(path, line, character) => this.lsp.hover(path, line, character)}
           onMount={(view) => (this.view = view)}
           code={this.code}
+          takeFocus={() => this.docs.takeFocusOnMount()}
+          chordHeld={(command, event) => this.ide.getPlugin(KeymapPlugin).chordHeld(command, event)}
           marks={this.gitMarks()}
           extra={this.extras?.value ?? []}
         />

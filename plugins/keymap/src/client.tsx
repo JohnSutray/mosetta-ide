@@ -7,9 +7,9 @@ import { Dispatcher, keyRules } from './dispatcher.js';
 import { KeysEcho, type KeyEcho } from './echo.js';
 import { keyHost } from './host.js';
 import { reserved, type ReservedKey } from './reserved.js';
+import { chordHeld } from './chords.js';
+import { keysFor } from './keys-for.js';
 
-export { chordHeld } from './chords.js';
-export { keysFor } from './keys-for.js';
 export { keyContexts } from './context.js';
 export { keyRules } from './dispatcher.js';
 export { keyHost, KeyHostInfo } from './host.js';
@@ -39,7 +39,46 @@ export default class KeymapPlugin {
       t,
       keymap: () => keymap.value,
     });
-    current = this;
+  }
+
+  readonly keys: {
+    readonly host: KeyHost;
+    readonly os: KeyOs;
+    readonly bindings: { readonly value: KeyBinding[] };
+    humanize(key: string): string;
+    taken(scopes: KeyScope[]): ReservedKey[];
+    readonly echo: { readonly value: KeyEcho | null };
+  } = ((plugin: KeymapPlugin) => ({
+    get host() {
+      return keyHost.host;
+    },
+    get os() {
+      return keyHost.os;
+    },
+    bindings: {
+      get value() {
+        return keymap.value.bindings;
+      },
+    },
+    humanize: (key: string) => keyHost.humanize(key),
+    taken: (scopes: KeyScope[]) => reserved.in(scopes),
+    echo: {
+      get value(): KeyEcho | null {
+        return plugin.echo.lastKey.value;
+      },
+    },
+  }))(this);
+
+  keysFor(command: string): string[] {
+    return keysFor(command);
+  }
+
+  chordHeld(command: string, event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean }): boolean {
+    return chordHeld(command, event);
+  }
+
+  primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
+    return keyHost.primaryHeld(event);
   }
 
   @activate() protected start(): void {
@@ -67,42 +106,3 @@ export default class KeymapPlugin {
     this.ide.windows.updateHost({ catchesKeys: (context) => context !== undefined && keyRules.catchesKeys(context) });
   }
 }
-
-let current: KeymapPlugin | null = null;
-
-function live(): KeymapPlugin {
-  if (!current) throw new Error('@ide/plugin-keymap не поднят');
-  return current;
-}
-
-export function primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
-  return keyHost.primaryHeld(event);
-}
-
-export const keys: {
-  readonly host: KeyHost;
-  readonly os: KeyOs;
-  readonly bindings: { readonly value: KeyBinding[] };
-  humanize(key: string): string;
-  taken(scopes: KeyScope[]): ReservedKey[];
-  readonly echo: { readonly value: KeyEcho | null };
-} = {
-  get host() {
-    return keyHost.host;
-  },
-  get os() {
-    return keyHost.os;
-  },
-  bindings: {
-    get value() {
-      return keymap.value.bindings;
-    },
-  },
-  humanize: (key) => keyHost.humanize(key),
-  taken: (scopes) => reserved.in(scopes),
-  echo: {
-    get value() {
-      return live().echo.lastKey.value;
-    },
-  },
-};

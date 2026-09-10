@@ -1,6 +1,4 @@
 import { project, t } from '@ide/api/client';
-import { primaryHeld } from '@ide/plugin-keymap';
-import { openDoc, openFile } from '@ide/plugin-doc';
 import { useEffect, useRef } from 'preact/hooks';
 import type { DirEntry } from '@ide/api/client';
 import { Chevron, DirIcon, FileIcon, RootIcon } from '@ide/ui';
@@ -9,6 +7,7 @@ import type { TreeMenuState } from './menu.js';
 import type { TreeOps, TreeSelection } from './state.js';
 import type { TreeTints } from './tints.js';
 import type { TreeTypeahead } from './typeahead.js';
+import type DocPlugin from '@ide/plugin-doc';
 
 export interface TreeProps {
   files: FileTree;
@@ -18,6 +17,8 @@ export interface TreeProps {
   tints: TreeTints;
   broken: { readonly value: ReadonlySet<string> };
   typeahead: TreeTypeahead;
+  docs: DocPlugin;
+  primaryHeld: (event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }) => boolean;
 }
 
 export function Tree(props: TreeProps) {
@@ -123,7 +124,7 @@ function Row({ entry, depth, ...props }: { entry: DirEntry; depth: number } & Tr
   const { files, selection, ops, menu, tints } = props;
   const isDir = entry.kind === 'dir';
   const isOpen = files.expanded.value.has(entry.path);
-  const isCurrent = openDoc.value?.path === entry.path;
+  const isCurrent = props.docs.openDoc.value?.path === entry.path;
   const kids = isOpen ? files.children.value.get(entry.path) : undefined;
   const broken = props.broken.value.has(entry.path);
   const tint = entry.noScan ? undefined : tints.of(entry.path);
@@ -160,7 +161,7 @@ function Row({ entry, depth, ...props }: { entry: DirEntry; depth: number } & Tr
           void ops.dropInto(JSON.parse(raw) as string[], folderFor(entry), event.altKey);
         }}
         onClick={(event) => {
-          const additive = primaryHeld(event);
+          const additive = props.primaryHeld(event);
           if (event.shiftKey) {
             selection.range(entry.path, selection.visibleOrder());
             return;
@@ -174,10 +175,10 @@ function Row({ entry, depth, ...props }: { entry: DirEntry; depth: number } & Tr
             void files.toggle(entry.path);
             return;
           }
-          void openFile(entry.path, { focus: false });
+          void props.docs.openFile(entry.path, { focus: false });
         }}
         onDblClick={() => {
-          if (!isDir) void openFile(entry.path, { focus: true });
+          if (!isDir) void props.docs.openFile(entry.path, { focus: true });
         }}
         onContextMenu={(event) => {
           event.preventDefault();

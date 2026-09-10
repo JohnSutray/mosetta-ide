@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { windows } from '@ide/windows';
 import { FakeHost, nodes, of } from '@ide/api/testing';
-import KeymapPlugin, { keys } from '@ide/plugin-keymap';
+import KeymapPlugin from '@ide/plugin-keymap';
 import KeysPlugin from '../src/client.js';
 import { KeysPopup } from '../src/popup.js';
 
+let keys: KeymapPlugin['keys'];
+
 async function raise() {
   const host = new FakeHost();
-  host.add(KeymapPlugin, '@ide/plugin-keymap');
+  keys = host.add(KeymapPlugin, '@ide/plugin-keymap').keys;
   const plugin = host.add(KeysPlugin, '@ide/plugin-keys');
   await host.start();
   const mine = `${keys.host}:${keys.os}` as const;
@@ -24,7 +26,7 @@ async function raise() {
 }
 
 function rendered(plugin: KeysPlugin) {
-  return nodes(KeysPopup({ windows, window: plugin.window }));
+  return nodes(KeysPopup({ keys, windows, window: plugin.window }));
 }
 
 function texts(plugin: KeysPlugin): string[] {

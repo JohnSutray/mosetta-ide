@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, of, nodes } from '@ide/api/testing';
 import { tips } from '@ide/windows';
 import Toolbar from '../src/client.js';
-import KeymapPlugin, { keys } from '@ide/plugin-keymap';
+import KeymapPlugin from '@ide/plugin-keymap';
 
 const NAME = '@ide/plugin-toolbar';
 
@@ -106,7 +106,7 @@ describe('тулбар', () => {
       y: 6,
       above: -6,
       title: 'toolbar.tree',
-      keys: [keys.humanize('meta+1')],
+      keys: [host.plugin(KeymapPlugin).keys.humanize('meta+1')],
     });
     (button.props['onMouseLeave'] as () => void)();
     expect(tips.spot.value).toBeNull();

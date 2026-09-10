@@ -10,7 +10,7 @@ import {
   t,
   type Ide,
 } from '@ide/api/client';
-import { ChoicePopup, PickPopup, matches as pickMatches } from '@ide/ui';
+import UiPlugin, { ChoicePopup, PickPopup } from '@ide/ui';
 import type { PackageManagerInfo } from './managers.js';
 import type { Opener } from '@ide/plugin-search';
 import { NpmIcon } from './icon.js';
@@ -195,7 +195,7 @@ export default class NpmScripts {
           return (
             <>
               <span class="pick-name">
-                {pickMatches.highlight(scriptId.scriptOf(script.id), pickMatches.shiftMatches(matches, from, script.id.length - from))}
+                {this.ide.getPlugin(UiPlugin).matches.highlight(scriptId.scriptOf(script.id), this.ide.getPlugin(UiPlugin).matches.shiftMatches(matches, from, script.id.length - from))}
               </span>
               <span class="pick-detail">{script.command}</span>
             </>

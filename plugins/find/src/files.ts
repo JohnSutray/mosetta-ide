@@ -1,6 +1,6 @@
-import { goTo, peekFile } from '@ide/plugin-doc';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
 import type { FileHit, GrepResult } from './grep.js';
+import type DocPlugin from '@ide/plugin-doc';
 
 export type FilesMode = 'find' | 'replace';
 export type FilesField = 'query' | 'replace' | 'mask';
@@ -51,6 +51,7 @@ export class FindFiles {
     private readonly saveMasks: (list: string[]) => Promise<void>,
     private readonly saveMasksOff: (list: string[]) => Promise<void>,
     private readonly complain: (message: string) => void,
+    private readonly docs: () => Pick<DocPlugin, 'goTo' | 'peekFile'>,
   ) {}
 
   readonly activeMasks: ReadonlySignal<string[]> = computed(() => {
@@ -169,7 +170,7 @@ export class FindFiles {
     const hit = this.current.value;
     if (!hit) return;
     this.close();
-    void goTo(hit.path, hit.line, hit.from);
+    void this.docs().goTo(hit.path, hit.line, hit.from);
   }
 
   nextField(): void {
@@ -272,7 +273,7 @@ export class FindFiles {
     this.previewTimer = setTimeout(() => {
       this.previewTimer = null;
       const token = this.token;
-      void peekFile(hit.path)
+      void this.docs().peekFile(hit.path)
         .then((state) => {
           if (token !== this.token || !this.open.value) return;
           this.preview.value = { path: state.path, text: state.text, line: hit.line };

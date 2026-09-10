@@ -3,6 +3,7 @@ import type { DirEntry } from '@ide/api/client';
 import { FileTree } from '../src/file-tree.js';
 import { TreeSelection } from '../src/state.js';
 import { TreeTypeahead } from '../src/typeahead.js';
+import { layout } from '@ide/plugin-search';
 
 function entry(path: string, kind: 'file' | 'dir' = 'file'): DirEntry {
   return { path, name: path.split('/').pop() ?? path, kind } as DirEntry;
@@ -20,7 +21,7 @@ beforeEach(() => {
   files.children.value = children as never;
   files.expanded.value = new Set(['client']);
   selection = new TreeSelection(files);
-  find = new TreeTypeahead(selection);
+  find = new TreeTypeahead(selection, () => layout);
 });
 
 describe('поиск по дереву буквами', () => {

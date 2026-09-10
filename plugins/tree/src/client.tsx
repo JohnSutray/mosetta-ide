@@ -1,5 +1,4 @@
 import { activate, configSection, project, registry, remote, stub, tree, workspaces } from '@ide/api/client';
-import { openDoc, openFile } from '@ide/plugin-doc';
 import LspPlugin from '@ide/plugin-lsp';
 import type { Ide } from '@ide/api/client';
 import { computed, effect, untracked } from '@preact/signals';
@@ -15,10 +14,17 @@ import { TINT_SCHEMA, TreeTints, type TintSource } from './tints.js';
 import { Prompt } from './prompt.js';
 import { Tree } from './tree.js';
 import { TreeMenu } from './tree-menu.js';
+import DocPlugin from '@ide/plugin-doc';
+import KeymapPlugin from '@ide/plugin-keymap';
+import SearchPlugin from '@ide/plugin-search';
 
 @registry({ key: 'tree.tint', schema: TINT_SCHEMA })
 @configSection({ section: 'tree', defaults: TREE_DEFAULTS })
 export default class TreePlugin {
+  private get docs(): DocPlugin {
+    return this.ide.getPlugin(DocPlugin);
+  }
+
   readonly files: FileTree;
   readonly prompt = new PromptState();
   readonly selection: TreeSelection;
@@ -48,7 +54,7 @@ export default class TreePlugin {
     this.selection = new TreeSelection(this.files);
     this.ops = new TreeOps(this.selection, this.prompt, this.files, ide, (path) => this.askReveal({ path }));
     this.follow = new TreeFollow(this.selection, ide);
-    this.typeahead = new TreeTypeahead(this.selection);
+    this.typeahead = new TreeTypeahead(this.selection, () => ide.getPlugin(SearchPlugin).layout);
     this.tints = new TreeTints(ide.registry<TintSource>('tree.tint'));
     this.shown = ide.remember('panel.tree', true);
   }
@@ -85,7 +91,7 @@ export default class TreePlugin {
     this.ide.command('tree.open', () =>
       this.onPicked((path, isDir) => {
         if (isDir) void this.files.toggle(path);
-        else void openFile(path, { focus: true });
+        else void this.docs.openFile(path, { focus: true });
       }),
     );
     this.ide.command('tree.rename', () => this.onPicked((path) => ops.rename(path)));
@@ -119,7 +125,7 @@ export default class TreePlugin {
       side: 'left',
       open: this.shown,
       view: () => (
-        <Tree
+        <Tree docs={this.docs} primaryHeld={(event) => this.ide.getPlugin(KeymapPlugin).primaryHeld(event)}
           typeahead={this.typeahead}
           files={this.files}
           selection={this.selection}
@@ -144,7 +150,7 @@ export default class TreePlugin {
     ));
 
     effect(() => {
-      const path = openDoc.value?.path;
+      const path = this.docs.openDoc.value?.path;
       if (path) untracked(() => void this.follow.now());
     });
 

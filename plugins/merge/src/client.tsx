@@ -15,7 +15,6 @@ export default class MergePlugin implements MergeRemote {
 
   constructor(private readonly ide: Ide) {
     this.merge = new Merge(ide, this);
-    current = this;
   }
 
   async fromDisk(path: string): Promise<MergeSession | null> {
@@ -80,10 +79,3 @@ export default class MergePlugin implements MergeRemote {
     this.ide.registry<() => unknown>('chrome.top').add(() => <MergeScreen windows={this.ide.windows} merge={merge} code={this.ide.getPlugin(CodePlugin)} />);
   }
 }
-
-export function mergeFromDisk(path: string): Promise<MergeSession | null> {
-  if (!current) throw new Error('@ide/plugin-merge не поднят');
-  return current.fromDisk(path);
-}
-
-let current: MergePlugin | null = null;

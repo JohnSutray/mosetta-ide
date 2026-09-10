@@ -1,12 +1,12 @@
 import type { Windows } from '@ide/windows';
 import { t } from '@ide/api/client';
-import { keys } from '@ide/plugin-keymap';
 import { Fragment } from 'preact';
 import type { KeyBinding, KeyContext, KeyScope } from '@ide/protocol';
 import { Popup } from '@ide/ui';
 import type { KeysWindow } from './state.js';
+import type KeymapPlugin from '@ide/plugin-keymap';
 
-export function KeysPopup({ windows, window: win }: { windows: Windows; window: KeysWindow }) {
+export function KeysPopup({ keys, windows, window: win }: { keys: KeymapPlugin['keys']; windows: Windows; window: KeysWindow }) {
   if (!win.open.value) return null;
 
   const bindings = keys.bindings.value;

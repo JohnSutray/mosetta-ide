@@ -9,8 +9,6 @@ import {
   t,
   type Ide,
 } from '@ide/api/client';
-import { keysFor } from '@ide/plugin-keymap';
-import { openDoc } from '@ide/plugin-doc';
 import Editor from '@ide/plugin-editor';
 import { BranchesWindow, Git, PushWindow, type GitRemote, type TreeTint } from './state.js';
 import { GitMarks } from './marks.js';
@@ -28,9 +26,16 @@ import type {
   GitState,
   PushPreview,
 } from './types.js';
+import DocPlugin from '@ide/plugin-doc';
+import KeymapPlugin from '@ide/plugin-keymap';
+import UiPlugin from '@ide/ui';
 
 @configSection({ section: 'git', defaults: GIT_DEFAULTS })
 export default class GitPlugin implements GitRemote {
+  private get docs(): DocPlugin {
+    return this.ide.getPlugin(DocPlugin);
+  }
+
   private readonly git: Git;
   private readonly branchesWindow: BranchesWindow;
   private readonly pushWindow: PushWindow;
@@ -38,9 +43,9 @@ export default class GitPlugin implements GitRemote {
 
   constructor(private readonly ide: Ide) {
     this.git = new Git(this, ide);
-    this.branchesWindow = new BranchesWindow(this.git, ide);
+    this.branchesWindow = new BranchesWindow(this.git, ide, () => ide.getPlugin(UiPlugin).fuzzy);
     this.pushWindow = new PushWindow(this.git, this, ide);
-    this.marks = new GitMarks(this);
+    this.marks = new GitMarks(this, () => ide.getPlugin(DocPlugin));
   }
 
   @activate() protected start(): void {
@@ -80,7 +85,7 @@ export default class GitPlugin implements GitRemote {
       <Branches windows={this.ide.windows} git={this.git} window={this.branchesWindow} push={this.pushWindow} />
     ));
     this.ide.surface(() => <Push windows={this.ide.windows} git={this.git} push={this.pushWindow} />);
-    this.ide.surface(() => <HunkPopup windows={this.ide.windows} marks={this.marks} />);
+    this.ide.surface(() => <HunkPopup docs={this.docs} windows={this.ide.windows} marks={this.marks} />);
 
     const editor = this.ide.getPlugin(Editor);
     editor.onHunk((hunk, box) => this.marks.show(hunk, box));
@@ -90,7 +95,7 @@ export default class GitPlugin implements GitRemote {
     });
 
     effect(() => {
-      const path = openDoc.value?.path ?? null;
+      const path = this.docs.openDoc.value?.path ?? null;
       void this.git.state.value;
       void this.marks.load(project.value ? path : null);
     });
@@ -143,7 +148,7 @@ export default class GitPlugin implements GitRemote {
       <button
         class="branch-label"
         onMouseEnter={(event) =>
-          this.ide.windows.tips.show(event.currentTarget as Element, t('toolbar.branches'), keysFor('git.branches'))
+          this.ide.windows.tips.show(event.currentTarget as Element, t('toolbar.branches'), this.ide.getPlugin(KeymapPlugin).keysFor('git.branches'))
         }
         onMouseLeave={() => this.ide.windows.tips.hide()}
         onClick={() => {

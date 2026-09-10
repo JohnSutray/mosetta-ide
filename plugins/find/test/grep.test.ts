@@ -86,6 +86,7 @@ describe('чипы масок', () => {
         off.value = list;
       },
       () => undefined,
+      () => ({ goTo: async () => undefined, peekFile: async (path: string) => ({ path, text: '' }) }),
     );
     files.maskDraft.value = ' *.tsx ';
     files.addMask();
@@ -118,6 +119,7 @@ describe('чипы масок', () => {
       async () => undefined,
       async () => undefined,
       () => undefined,
+      () => ({ goTo: async () => undefined, peekFile: async (path: string) => ({ path, text: '' }) }),
     );
     files.show('find');
     expect(files.focus.value.field).toBe('query');

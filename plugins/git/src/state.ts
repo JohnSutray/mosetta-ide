@@ -1,6 +1,6 @@
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
 import { t, type Ide } from '@ide/api/client';
-import { fuzzy, type FuzzyHit } from '@ide/ui';
+import type { Fuzzy, FuzzyHit } from '@ide/ui';
 import type {
   GitAction,
   GitBranch,
@@ -135,7 +135,7 @@ export class BranchesWindow {
     const query = this.filter.value.trim();
     if (query === '') return this.git.branches.value;
     return this.git.branches.value
-      .map((branch) => ({ branch, hit: fuzzy.find(branch.name, query) }))
+      .map((branch) => ({ branch, hit: this.fuzzy().find(branch.name, query) }))
       .filter((row): row is { branch: GitBranch; hit: FuzzyHit } => row.hit !== null)
       .sort((a, b) => b.hit.score - a.hit.score)
       .map((row) => row.branch);
@@ -180,6 +180,7 @@ export class BranchesWindow {
   constructor(
     private readonly git: Git,
     private readonly ide: Pick<Ide, 'on' | 'complain'>,
+    private readonly fuzzy: () => Pick<Fuzzy, 'find'>,
   ) {
     this.ide.on('state', () => {
       if (this.open.value) void this.git.refresh();
