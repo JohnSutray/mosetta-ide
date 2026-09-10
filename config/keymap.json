@@ -224,7 +224,7 @@
     { "command": "tree.copyPath", "key": "meta+alt+shift+c", "when": "tree", "where": ["browser:mac", "electron:mac"] },
     { "command": "tree.copyPath", "key": "control+alt+shift+c", "when": "tree", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
 
-    { "command": "completion.show", "key": "alt+space", "when": "editor", "where": ["browser:mac", "electron:mac"] },
+    { "command": "completion.show", "key": "meta+space", "when": "editor", "where": ["browser:mac", "electron:mac"] },
     { "command": "completion.show", "key": "control+space", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "completion.next", "key": "arrowdown", "when": "completion" },
     { "command": "completion.prev", "key": "arrowup", "when": "completion" },

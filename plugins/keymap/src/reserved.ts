@@ -35,7 +35,6 @@ const TABLE: ReservedKey[] = [
   { key: 'meta+q', scopes: MAC, who: 'macOS', what: 'quit the app' },
   { key: 'meta+h', scopes: MAC, who: 'macOS', what: 'hide the app' },
   { key: 'meta+m', scopes: MAC, who: 'macOS', what: 'minimise the window' },
-  { key: 'meta+space', scopes: MAC, who: 'macOS', what: 'Spotlight' },
   {
     key: 'meta+backquote',
     scopes: CHROME_MAC,
@@ -62,6 +61,12 @@ const TABLE: ReservedKey[] = [
     scopes: MAC,
     who: 'macOS',
     what: 'switch input source (if more than one)',
+  },
+  {
+    key: 'alt+space',
+    scopes: MAC,
+    who: 'macOS',
+    what: 'previous input source (Karabiner turns Option+Shift into it; checked 10.09)',
   },
   { key: 'control+f2', scopes: MAC, who: 'macOS', what: 'focus the menu bar' },
 
