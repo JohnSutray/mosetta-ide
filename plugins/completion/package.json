@@ -11,6 +11,7 @@
   },
   "ide": {
     "client": "src/client.tsx",
+    "server": "src/server.ts",
     "strings": "src/en.json",
     "commands": {
       "completion.show": "Дополнение: показать список",

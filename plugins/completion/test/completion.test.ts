@@ -70,6 +70,20 @@ describe('совпадение и порядок', () => {
     history.chose('getOne');
     expect(rank.rank(items, 'get', NO_WEIGHTS)[0]!.item.label).toBe('getOne');
   });
+
+  it('выбор уходит на сервер, а его число — точное: дважды не засчитывается (правка 10.09)', () => {
+    const store = signal<Record<string, number>>({});
+    const sent: string[] = [];
+    const history = new ChoiceHistory(store, (label) => sent.push(label));
+    history.chose('log');
+    expect(sent).toEqual(['log']);
+    expect(store.value).toEqual({ log: 1 });
+    history.heard('log', 3);
+    expect(store.value).toEqual({ log: 3 });
+    history.replace({ bind: 2 });
+    expect(history.bonus('log')).toBe(0);
+    expect(history.bonus('bind')).toBeGreaterThan(0);
+  });
 });
 
 describe('сеанс', () => {

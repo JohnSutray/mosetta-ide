@@ -1,7 +1,7 @@
-import { activate, configSection, registry, settingsOf, t, type Ide } from '@ide/api/client';
+import { activate, configSection, project, registry, remote, settingsOf, stub, t, type Ide } from '@ide/api/client';
 import { flushDocs, openDoc } from '@ide/plugin-doc';
 import LspPlugin from '@ide/plugin-lsp';
-import { computed } from '@preact/signals';
+import { computed, effect, signal } from '@preact/signals';
 import { render } from 'preact';
 import { CompletionBridge } from './bridge.js';
 import { Fuzzy } from './fuzzy.js';
@@ -30,7 +30,19 @@ export default class CompletionPlugin {
   @activate() protected start(): void {
     this.ide.css(STYLE);
     const settings = computed(() => settingsOf('completion', COMPLETION_DEFAULTS).value);
-    const history = new ChoiceHistory(this.ide.remember<Record<string, number>>('choices', {}));
+    const history = new ChoiceHistory(signal<Record<string, number>>({}), (label) => {
+      void this.askChose({ label }).catch(() => undefined);
+    });
+    this.ide.on('chose', (payload) => {
+      const heard = payload as { label: string; times: number };
+      history.heard(heard.label, heard.times);
+    });
+    effect(() => {
+      if (!project.value) return;
+      void this.askChoices()
+        .then((all) => history.replace(all))
+        .catch(() => undefined);
+    });
     const sources = this.ide.registry<Source>('completion.source');
     const session = new CompletionSession(
       new Ranker(new Fuzzy(), history),
@@ -86,6 +98,14 @@ export default class CompletionPlugin {
     this.ide.command('completion.accept', () => bridge.accept('insert'));
     this.ide.command('completion.replace', () => bridge.accept('replace'));
     this.ide.command('completion.close', () => session.close());
+  }
+
+  @remote('choices') protected askChoices(): Promise<Record<string, number>> {
+    return stub();
+  }
+
+  @remote('chose') protected askChose(_params: { label: string }): Promise<{ label: string; times: number }> {
+    return stub();
   }
 
   private enabled(id: string, settings: CompletionSettings): boolean {

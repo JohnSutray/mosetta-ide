@@ -1,11 +1,13 @@
 import type { Signal } from '@preact/signals';
 
-const LIMIT = 500;
 const STEP = 12;
 const MOST = 40;
 
 export class ChoiceHistory {
-  constructor(private readonly store: Signal<Record<string, number>>) {}
+  constructor(
+    private readonly store: Signal<Record<string, number>>,
+    private readonly send: (label: string) => void = () => undefined,
+  ) {}
 
   bonus(label: string): number {
     const times = this.store.value[label] ?? 0;
@@ -13,12 +15,16 @@ export class ChoiceHistory {
   }
 
   chose(label: string): void {
-    const next = { ...this.store.value, [label]: (this.store.value[label] ?? 0) + 1 };
-    const names = Object.keys(next).filter((name) => name !== label);
-    if (names.length >= LIMIT) {
-      names.sort((a, b) => next[a]! - next[b]!);
-      for (const name of names.slice(0, names.length - LIMIT + 1)) delete next[name];
-    }
-    this.store.value = next;
+    this.store.value = { ...this.store.value, [label]: (this.store.value[label] ?? 0) + 1 };
+    this.send(label);
+  }
+
+  heard(label: string, times: number): void {
+    if (this.store.value[label] === times) return;
+    this.store.value = { ...this.store.value, [label]: times };
+  }
+
+  replace(all: Record<string, number>): void {
+    this.store.value = all;
   }
 }
