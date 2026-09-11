@@ -185,6 +185,10 @@ export class RpcClient {
 }
 
 function defaultUrl(): string {
+  if (import.meta.env.VITE_IDE_PORT === 'url') {
+    const given = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('port');
+    return `ws://127.0.0.1:${given ?? DEFAULT_PORT}${WS_PATH}`;
+  }
   const fixed = Number(import.meta.env.VITE_IDE_PORT) || 0;
   const devPort = fixed || DEFAULT_PORT;
   if (typeof location === 'undefined') return `ws://127.0.0.1:${devPort}${WS_PATH}`;

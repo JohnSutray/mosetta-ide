@@ -285,6 +285,20 @@ function translate(err: unknown, key: string, expected: 'file' | 'dir'): RpcErro
 }
 
 export class Disk {
+  async moveOnce(from: string, to: string): Promise<boolean> {
+    try {
+      await fs.access(to);
+      return false;
+    } catch {}
+    try {
+      await fs.mkdir(path.dirname(to), { recursive: true });
+      await fs.rename(from, to);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async probeRoot(input: string): Promise<string> {
     const expanded = paths.expandRoot(input);
     let real: string;

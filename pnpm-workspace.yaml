@@ -2,8 +2,10 @@ packages:
   - protocol
   - server
   - client
+  - desktop
   - plugins/*
 
 allowBuilds:
   esbuild: true
   node-pty: true
+  electron: true

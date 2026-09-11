@@ -11,6 +11,7 @@ import { Env } from './env/env.js';
 import { journal } from './log.js';
 import { Session } from './rpc/session.js';
 import { WorkspaceRegistry } from './workspace/registry.js';
+import { disk } from './fs/os-fs.js';
 
 const log = journal.logger('server');
 
@@ -22,6 +23,7 @@ export interface ServerOptions {
   stateDir?: string;
   watchConfig?: boolean;
   shellEnv?: boolean;
+  trustedOrigins?: string[];
 }
 
 export interface RunningServer {
@@ -31,8 +33,9 @@ export interface RunningServer {
   close(): Promise<void>;
 }
 
-function isLocalOrigin(origin: string | undefined): boolean {
+function isLocalOrigin(origin: string | undefined, trusted: readonly string[] = []): boolean {
   if (!origin) return true;
+  if (trusted.includes(origin)) return true;
   try {
     const { hostname } = new URL(origin);
     return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
@@ -42,11 +45,19 @@ function isLocalOrigin(origin: string | undefined): boolean {
 }
 
 export class Boot {
+  private async defaultStateDir(): Promise<string> {
+    const next = path.join(os.homedir(), '.mosetta', 'ide', 'state');
+    if (await disk.moveOnce(path.join(os.homedir(), '.web-ide'), next)) {
+      log.info(`состояние перенесено: ~/.web-ide → ${next}`);
+    }
+    return next;
+  }
+
   async start(options: ServerOptions = {}): Promise<RunningServer> {
     const host = options.host ?? '127.0.0.1';
     const port = options.port ?? DEFAULT_PORT;
     const startedAt = Date.now();
-    const stateDir = options.stateDir ?? path.join(os.homedir(), '.web-ide');
+    const stateDir = options.stateDir ?? (await this.defaultStateDir());
     const config = await ConfigStore.load(options.configDir);
     const env = new Env();
     if (options.watchConfig ?? true) config.watch();
@@ -84,7 +95,7 @@ export class Boot {
         socket.destroy();
         return;
       }
-      if (!isLocalOrigin(req.headers.origin)) {
+      if (!isLocalOrigin(req.headers.origin, options.trustedOrigins)) {
         log.warn(`отказ по Origin: ${req.headers.origin}`);
         socket.destroy();
         return;
