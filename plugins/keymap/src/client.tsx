@@ -1,4 +1,4 @@
-import { activate, registry } from '@mosetta/ide-api/client';
+import { activate, plugin, registry } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import type { KeyBinding, KeyContext, KeyHost, KeyOs, KeyScope } from '@mosetta/ide-protocol';
 import { effect } from '@preact/signals';
@@ -29,6 +29,7 @@ const MECHANICS_SCHEMA = {
 } as const;
 
 @registry({ key: 'keys.mechanics', schema: MECHANICS_SCHEMA })
+@plugin({ title: 'plugin.keymap' })
 export default class KeymapPlugin {
   readonly echo: KeysEcho;
   private dispatcher: Dispatcher | null = null;

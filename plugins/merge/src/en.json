@@ -32,5 +32,6 @@
   "merge.wholeFile": "the file itself is in question — pick one",
   "merge.deleted": "the file is gone here",
   "merge.acceptDelete": "accept the deletion",
-  "merge.keepFile": "keep this version"
+  "merge.keepFile": "keep this version",
+  "plugin.merge": "Merge"
 }

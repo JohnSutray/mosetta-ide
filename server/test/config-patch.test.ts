@@ -103,3 +103,48 @@ describe('точечная правка настроек', () => {
     expect(JSON.parse(text)).toEqual({ tree: { followEditor: false } });
   });
 });
+
+describe('сброс настройки к заводской (ADR-0213)', () => {
+  const before = `{
+  // Шрифт подобран руками
+  "editor": { "fontSize": 15, "tabSize": 4 },
+  "terminal": {
+    // Оболочка своя
+    "shell": "/bin/bash"
+  }
+}
+`;
+
+  it('убирает ключ и не трогает комментарии и соседей', () => {
+    const { text, rewritten } = patch.unset(before, 'editor', 'fontSize');
+    expect(rewritten, 'пересборка не понадобилась').toBe(false);
+    expect(text).toContain('// Шрифт подобран руками');
+    expect(text).toContain('// Оболочка своя');
+    expect(read(text).editor).toEqual({ tabSize: 4 });
+    expect(read(text).terminal!.shell).toBe('/bin/bash');
+  });
+
+  it('последний ключ раздела — раздел остаётся пустым, файл цел', () => {
+    const { text, rewritten } = patch.unset(before, 'terminal', 'shell');
+    expect(rewritten).toBe(false);
+    expect(read(text).terminal).toEqual({});
+    expect(read(text).editor).toEqual({ fontSize: 15, tabSize: 4 });
+  });
+
+  it('ключа нет — файл не меняется ни на символ', () => {
+    expect(patch.unset(before, 'git', 'autoFetchMinutes').text).toBe(before);
+  });
+
+  it('ключ на своей строке уходит вместе со строкой — файл ровный', () => {
+    const tidy = `{\n  "editor": {\n    "fontSize": 15,\n    "tabSize": 4\n  }\n}\n`;
+    expect(patch.unset(tidy, 'editor', 'fontSize').text).toBe(`{\n  "editor": {\n    "tabSize": 4\n  }\n}\n`);
+    expect(patch.unset(tidy, 'editor', 'tabSize').text).toBe(`{\n  "editor": {\n    "fontSize": 15\n  }\n}\n`);
+  });
+
+  it('вписать и сбросить — файл тот же байт в байт', () => {
+    const tidy = `{\n  // своё\n  "editor": {\n    "fontSize": 15\n  }\n}\n`;
+    const written = patch.setting(tidy, 'editor', 'lineNumbers', false).text;
+    expect(written).not.toBe(tidy);
+    expect(patch.unset(written, 'editor', 'lineNumbers').text).toBe(tidy);
+  });
+});

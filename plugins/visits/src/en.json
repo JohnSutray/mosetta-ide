@@ -1,4 +1,5 @@
 {
   "command.nav.back": "Back",
-  "command.nav.forward": "Forward"
+  "command.nav.forward": "Forward",
+  "plugin.visits": "Caret history"
 }

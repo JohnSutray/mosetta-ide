@@ -1,4 +1,4 @@
-import { activate, configSection, registry, remote, stub } from '@mosetta/ide-api/client';
+import { activate, configSection, plugin, registry, remote, stub } from '@mosetta/ide-api/client';
 import LspPlugin from '@mosetta/ide-plugin-lsp';
 import type { Ide } from '@mosetta/ide-api/client';
 import { computed, effect, untracked } from '@preact/signals';
@@ -21,6 +21,7 @@ import UiPlugin from '@mosetta/ide-plugin-ui';
 
 @registry({ key: 'tree.tint', schema: TINT_SCHEMA })
 @configSection({ section: 'tree', defaults: TREE_DEFAULTS })
+@plugin({ title: 'plugin.tree' })
 export default class TreePlugin {
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);

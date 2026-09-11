@@ -1,5 +1,5 @@
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
-import { activate, configSection, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { activate, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import Editor from '@mosetta/ide-plugin-editor';
 import { BranchesWindow, Git, PushWindow, type GitRemote, type TreeTint } from './state.js';
 import { GitMarks } from './marks.js';
@@ -22,6 +22,7 @@ import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
 @configSection({ section: 'git', defaults: GIT_DEFAULTS })
+@plugin({ title: 'plugin.git' })
 export default class GitPlugin implements GitRemote {
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);

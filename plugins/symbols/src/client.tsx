@@ -1,5 +1,5 @@
 import CodePlugin from '@mosetta/ide-plugin-code';
-import { activate } from '@mosetta/ide-api/client';
+import { activate, plugin } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import Editor from '@mosetta/ide-plugin-editor';
 import LspPlugin from '@mosetta/ide-plugin-lsp';
@@ -8,6 +8,7 @@ import { Symbols } from './state.js';
 import { STYLE } from './style.js';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+@plugin({ title: 'plugin.symbols' })
 export default class SymbolsPlugin {
   readonly symbols: Symbols;
 

@@ -1,4 +1,4 @@
-import { activate } from '@mosetta/ide-api/client';
+import { activate, plugin } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { KeysIcon } from './icons.js';
 import { KeysPopup } from './popup.js';
@@ -7,6 +7,7 @@ import { STYLE } from './style.js';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+@plugin({ title: 'plugin.keys' })
 export default class KeysPlugin {
   readonly window = new KeysWindow();
 

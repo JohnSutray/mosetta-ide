@@ -1,5 +1,5 @@
 import CodePlugin from '@mosetta/ide-plugin-code';
-import { activate, configSection, registry, remote, stub } from '@mosetta/ide-api/client';
+import { activate, configSection, plugin, registry, remote, stub } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { SearchIcon } from './icons.js';
 import { SearchEverywhere } from './popup.js';
@@ -20,6 +20,7 @@ export { textIndex, TextIndex, type Indexed } from './text.js';
 
 @registry({ key: 'search.opener', schema: OPENER_SCHEMA })
 @configSection({ section: 'index', defaults: INDEX_DEFAULTS })
+@plugin({ title: 'plugin.search' })
 export default class SearchPlugin implements SearchRemote {
   readonly layout = layout;
   readonly matcher = matcher;

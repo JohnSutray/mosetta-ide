@@ -28,6 +28,10 @@ export interface Api {
     params: { section: string; key: string; value: SettingValue };
     result: { section: string; key: string; value: SettingValue };
   };
+  'config.reset': {
+    params: { section: string; key: string };
+    result: { section: string; key: string };
+  };
 
   'fs.list': { params: { path: string }; result: DirEntry[] };
   'fs.read': { params: { path: string }; result: FileText };

@@ -14,5 +14,7 @@
   "scripts.manager.apply": "use",
   "scripts.manager.empty": "Nothing found — type a path below",
   "scripts.manager.hint": "Package manager",
-  "command.scripts.packageManager": "Package manager"
+  "command.scripts.packageManager": "Package manager",
+  "plugin.npm-scripts": "npm scripts",
+  "settings.tools.packageManager": "Package manager (empty — as the project says)"
 }

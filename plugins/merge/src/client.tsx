@@ -1,4 +1,4 @@
-import { activate, remote, stub } from '@mosetta/ide-api/client';
+import { activate, plugin, remote, stub } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { computed } from '@preact/signals';
 import { MergeIcon } from './icons.js';
@@ -11,6 +11,7 @@ export type { MergeFile, MergeSession, MergeSide, MergeSource } from './types.js
 import { STYLE } from './style.js';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+@plugin({ title: 'plugin.merge' })
 export default class MergePlugin implements MergeRemote {
   readonly merge: Merge;
 

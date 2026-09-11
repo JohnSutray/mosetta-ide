@@ -1,5 +1,5 @@
 import CodePlugin from '@mosetta/ide-plugin-code';
-import { activate, configSection, IdeProvider, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { activate, configSection, IdeProvider, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import { search } from '@codemirror/search';
 import { ViewPlugin } from '@codemirror/view';
 import { computed } from '@preact/signals';
@@ -19,6 +19,7 @@ import UiPlugin from '@mosetta/ide-plugin-ui';
 export type { FileHit, GrepResult } from './grep.js';
 
 @configSection({ section: 'find', defaults: FIND_DEFAULTS })
+@plugin({ title: 'plugin.find' })
 export default class FindPlugin implements FindFilesRemote {
   readonly find = new FindState();
   readonly files: FindFiles;

@@ -1,5 +1,5 @@
 import { effect, signal } from '@preact/signals';
-import { activate, configSection, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { activate, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import UiPlugin, { ChoicePopup, PickPopup } from '@mosetta/ide-plugin-ui';
 import type { PackageManagerInfo } from './managers.js';
 import type { Opener } from '@mosetta/ide-plugin-search';
@@ -18,6 +18,7 @@ export interface ScriptInfo {
 }
 
 @configSection({ section: 'tools', defaults: TOOLS_DEFAULTS })
+@plugin({ title: 'plugin.npm-scripts' })
 export default class NpmScripts {
   private readonly open = signal(false);
   private readonly known = signal<ScriptInfo[]>([]);

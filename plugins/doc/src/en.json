@@ -3,5 +3,6 @@
   "command.file.reload": "Reload file from disk",
   "file.reloaded": "{path} reloaded from disk",
   "file.external": "{path} changed on disk — reloaded",
-  "file.gone": "{path} is gone from disk. Saving will recreate it."
+  "file.gone": "{path} is gone from disk. Saving will recreate it.",
+  "plugin.doc": "Documents"
 }

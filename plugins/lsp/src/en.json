@@ -1,0 +1,8 @@
+{
+  "plugin.lsp": "Language servers",
+  "settings.lsp.startOnOpen": "Start with the project",
+  "settings.lsp.checkProject": "Check the whole project",
+  "settings.lsp.checkProjectLimit": "Most files in a project check",
+  "settings.lsp.servers": "Language servers",
+  "settings.lsp.projects": "Per-project server settings"
+}

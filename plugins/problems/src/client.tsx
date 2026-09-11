@@ -1,9 +1,10 @@
-import { activate, type Ide } from '@mosetta/ide-api/client';
+import { activate, plugin, type Ide } from '@mosetta/ide-api/client';
 import LspPlugin, { type Diagnostic } from '@mosetta/ide-plugin-lsp';
 import { STYLE } from './style.js';
 import { ProblemsIcon } from './icon.js';
 import DocPlugin from '@mosetta/ide-plugin-doc';
 
+@plugin({ title: 'plugin.problems' })
 export default class Problems {
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);

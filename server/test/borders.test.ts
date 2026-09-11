@@ -9,7 +9,7 @@ const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const CORE = new Set(['@mosetta/ide-protocol', '@mosetta/ide-api', '@mosetta/ide-client', '@mosetta/ide-server']);
 
 const LANGUAGE: Record<string, readonly string[]> = {
-  '@mosetta/ide-api': ['activate', 'command', 'configSection', 'IdeProvider', 'registry', 'remote', 'stub', 'useIde', 'useT'],
+  '@mosetta/ide-api': ['activate', 'command', 'configSection', 'IdeProvider', 'plugin', 'registry', 'remote', 'stub', 'useIde', 'useT'],
   '@mosetta/ide-protocol': ['RpcErrorCode'],
 };
 

@@ -1,4 +1,4 @@
-import { activate } from '@mosetta/ide-api/client';
+import { activate, plugin } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { effect } from '@preact/signals';
 import { Doc } from './doc.js';
@@ -6,6 +6,7 @@ import { EditorFocus } from './focus.js';
 
 export type { Reveal } from './doc.js';
 
+@plugin({ title: 'plugin.doc' })
 export default class DocPlugin {
   readonly doc: Doc;
   readonly focus = new EditorFocus();

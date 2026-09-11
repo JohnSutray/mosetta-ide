@@ -22,7 +22,8 @@
       "Popup",
       "Resizer",
       "RootIcon"
-    ]
+    ],
+    "strings": "src/en.json"
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",

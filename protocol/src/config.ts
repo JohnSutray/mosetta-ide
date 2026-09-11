@@ -36,6 +36,7 @@ export type KeyContext =
   | 'terminal'
   | 'keys'
   | 'merge'
+  | 'settings'
   | 'find'
   | 'find-multiline'
   | 'find-replace'
@@ -66,4 +67,6 @@ export interface ConfigBundle {
   settings: Settings;
   keymap: Keymap;
   sources: string[];
+  user: Record<string, Record<string, unknown>>;
+  defaults: Settings;
 }

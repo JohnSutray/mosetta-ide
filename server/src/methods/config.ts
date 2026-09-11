@@ -40,6 +40,14 @@ export class ConfigMethods {
     await ctx.config.set(params.section, params.key, value);
     return { section: params.section, key: params.key, value };
   };
+
+  readonly reset: Handler<'config.reset'> = async (params, ctx) => {
+    if (!params || typeof params.section !== 'string' || typeof params.key !== 'string') {
+      throw RpcError.invalidParams('нужны section и key');
+    }
+    await ctx.config.unset(params.section, params.key);
+    return { section: params.section, key: params.key };
+  };
 }
 
 export const configMethods = new ConfigMethods();

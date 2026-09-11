@@ -56,5 +56,7 @@
   "git.merged": "merged {branch} into current",
   "git.created": "created {branch}",
   "git.renamed": "renamed to {branch}",
-  "git.deleted": "deleted {branch}"
+  "git.deleted": "deleted {branch}",
+  "plugin.git": "Git",
+  "settings.git.autoFetchMinutes": "Fetch in the background every N minutes (0 — never)"
 }

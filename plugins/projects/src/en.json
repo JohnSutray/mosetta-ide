@@ -11,5 +11,6 @@
   "command.projects.close": "Projects: back to the tree",
   "projects.placeholder": "Path to a project",
   "projects.open": "open",
-  "projects.empty": "empty"
+  "projects.empty": "empty",
+  "plugin.projects": "Projects"
 }

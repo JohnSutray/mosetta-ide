@@ -14,6 +14,7 @@ export const handlers: HandlerTable = {
 
   'config.get': (p, c) => configMethods.get(p, c),
   'config.set': (p, c) => configMethods.set(p, c),
+  'config.reset': (p, c) => configMethods.reset(p, c),
 
   'workspace.open': (p, c) => workspaceMethods.open(p, c),
   'workspace.attach': (p, c) => workspaceMethods.attach(p, c),

@@ -1,4 +1,4 @@
-import { activate, configSection, IdeProvider, registry, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { activate, configSection, IdeProvider, plugin, registry, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import CodePlugin from '@mosetta/ide-plugin-code';
 import LspPlugin from '@mosetta/ide-plugin-lsp';
 import { computed, effect, signal } from '@preact/signals';
@@ -22,6 +22,7 @@ export type { Answer, Ask, Details, Item, ItemKind, Source } from './types.js';
 
 @registry({ key: 'completion.source', schema: SOURCE_SCHEMA })
 @configSection({ section: 'completion', defaults: COMPLETION_DEFAULTS })
+@plugin({ title: 'plugin.completion' })
 export default class CompletionPlugin {
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);

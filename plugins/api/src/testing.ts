@@ -9,7 +9,7 @@ import type {
   WorkspaceInfo,
   SettingValue,
 } from '@mosetta/ide-protocol';
-import { attach, hooksOf, registriesOf, sectionsOf } from './client.js';
+import { attach, hooksOf, passportOf, registriesOf, sectionsOf } from './client.js';
 import { sectionOf } from './section.js';
 import type {
   IdeServices,
@@ -26,7 +26,7 @@ import type {
   RegistryHandle,
 } from './client.js';
 
-export { activate, configSection, IdeProvider, registry, remote, stub, useIde, useT } from './client.js';
+export { activate, configSection, IdeProvider, plugin, registry, remote, stub, useIde, useT } from './client.js';
 
 export interface Tip {
   text: string;
@@ -150,6 +150,12 @@ export class FakeSurface implements IdeServices {
         return sectionOf(all.value, section, defaults);
       },
     };
+  };
+
+  readonly settingsFile: Signal<Record<string, Record<string, unknown>>> = signal({});
+  readonly settingResets: Array<{ section: string; key: string }> = [];
+  readonly resetSetting = async (section: string, key: string): Promise<void> => {
+    this.settingResets.push({ section, key });
   };
 
   readonly titles: string[] = [];
@@ -340,6 +346,8 @@ export class FakeIde implements Ide {
   get fs() { return this.host.surface.fs; }
   get docs() { return this.host.surface.docs; }
   get mount() { return this.host.surface.mount; }
+  get settingsFile() { return this.host.surface.settingsFile; }
+  get resetSetting() { return this.host.surface.resetSetting; }
 
   getPlugin<T>(ctor: PluginClass<T>): T {
     return this.host.plugin(ctor);
@@ -432,7 +440,8 @@ export class FakeHost {
     for (const spec of registriesOf(ctor)) {
       this.registry.declare(spec.key, name, spec.schema);
     }
-    for (const spec of sectionsOf(ctor)) this.registry.add('settings', spec, name);
+    const title = passportOf(ctor)?.title ?? name;
+    for (const spec of sectionsOf(ctor)) this.registry.add('settings', { ...spec, owner: name, title }, name);
     this.ides.set(name, ide);
     this.instances.set(ctor, instance);
     this.built.push({ name, instance });

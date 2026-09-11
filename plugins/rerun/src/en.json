@@ -1,4 +1,5 @@
 {
   "command.scripts.rerun": "Rerun last script",
-  "rerun.nothing": "nothing to rerun — run a script first"
+  "rerun.nothing": "nothing to rerun — run a script first",
+  "plugin.rerun": "Rerun"
 }

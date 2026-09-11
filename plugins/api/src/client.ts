@@ -98,6 +98,8 @@ export interface IdeServices {
   readonly keymap: { readonly value: Keymap };
   readonly connected: { readonly value: boolean };
   readonly notes: NotesAccess;
+  readonly settingsFile: { readonly value: Record<string, Record<string, unknown>> };
+  readonly resetSetting: (section: string, key: string) => Promise<void>;
   readonly mount: Mount;
 }
 
@@ -190,9 +192,14 @@ export function registriesOf(ctor: object): RegistrySpec[] {
   return declared.get(ctor) ?? [];
 }
 
+export interface SettingField {
+  options?: readonly string[];
+}
+
 export interface SettingsSection {
   section: string;
   defaults: object;
+  fields?: Record<string, SettingField>;
 }
 
 export function configSection(spec: SettingsSection) {
@@ -206,15 +213,43 @@ export function configSection(spec: SettingsSection) {
 
 const sections = new WeakMap<object, SettingsSection[]>();
 
+export interface SettingsEntry extends SettingsSection {
+  owner: string;
+  title: string;
+}
+
+export interface PluginSpec {
+  title: string;
+}
+
+export function plugin(spec: PluginSpec) {
+  return function (target: object, ctx: ClassDecoratorContext): void {
+    void ctx;
+    passports.set(target, spec);
+  };
+}
+
+const passports = new WeakMap<object, PluginSpec>();
+
+export function passportOf(ctor: object): PluginSpec | null {
+  return passports.get(ctor) ?? null;
+}
+
 export function sectionsOf(ctor: object): SettingsSection[] {
   return sections.get(ctor) ?? [];
 }
 
 export const SETTINGS_SCHEMA = {
   type: 'object',
-  required: ['section', 'defaults'],
+  required: ['section', 'defaults', 'owner', 'title'],
   additionalProperties: false,
-  properties: { section: { type: 'string' }, defaults: { type: 'object' } },
+  properties: {
+    section: { type: 'string' },
+    defaults: { type: 'object' },
+    fields: { type: 'object' },
+    owner: { type: 'string' },
+    title: { type: 'string' },
+  },
 } as const;
 
 export function activate() {

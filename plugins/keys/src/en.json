@@ -34,5 +34,7 @@
   "keys.context.find-files": "Find in files",
   "keys.context.find-files-mask": "File masks",
   "keys.context.editable": "Any text field",
-  "keys.context.find-multiline": "Find in file (multi-line)"
+  "keys.context.find-multiline": "Find in file (multi-line)",
+  "plugin.keys": "Keys window",
+  "keys.context.settings": "Settings"
 }

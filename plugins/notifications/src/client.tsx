@@ -1,8 +1,9 @@
-import { activate } from '@mosetta/ide-api/client';
+import { activate, plugin } from '@mosetta/ide-api/client';
 import type { Ide, Note } from '@mosetta/ide-api/client';
 import { effect } from '@preact/signals';
 import { STYLE } from './style.js';
 
+@plugin({ title: 'plugin.notifications' })
 export default class NotificationsPlugin {
   readonly lifetimeMs = 60_000;
   private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();

@@ -11,7 +11,10 @@
   },
   "ide": {
     "client": "src/client.tsx",
-    "shares": ["EDITOR_DEFAULTS"]
+    "shares": [
+      "EDITOR_DEFAULTS"
+    ],
+    "strings": "src/en.json"
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",

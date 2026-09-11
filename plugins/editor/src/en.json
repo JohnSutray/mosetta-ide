@@ -8,5 +8,12 @@
   "diverged.sort": "sort it out",
   "diverged.merge.hint": "merge the disk into your text — your edits are kept",
   "diverged.discard": "drop my edits",
-  "diverged.discard.hint": "re-read the file from disk, losing what you typed"
+  "diverged.discard.hint": "re-read the file from disk, losing what you typed",
+  "plugin.editor": "Editor",
+  "settings.editor.fontFamily": "Font family",
+  "settings.editor.fontSize": "Font size",
+  "settings.editor.tabSize": "Tab size",
+  "settings.editor.lineNumbers": "Line numbers",
+  "settings.editor.caretWidth": "Caret width, px",
+  "settings.editor.ligatures": "Font ligatures"
 }

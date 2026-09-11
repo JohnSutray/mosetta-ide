@@ -1,6 +1,6 @@
 /// <reference path="./raw.d.ts" />
 import { batch, signal } from '@preact/signals';
-import { activate, configSection, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { activate, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import UiPlugin, { ChoicePopup } from '@mosetta/ide-plugin-ui';
 import { TerminalIcon } from './icon.js';
 import ThemePlugin from '@mosetta/ide-plugin-theme';
@@ -12,6 +12,7 @@ import { STYLE } from './style.js';
 import type { Attached, OpenAsk, ShellInfo, TerminalInfo } from './types.js';
 
 @configSection({ section: 'terminal', defaults: TERMINAL_DEFAULTS })
+@plugin({ title: 'plugin.terminal' })
 export default class TerminalPlugin {
   private readonly list = signal<TerminalInfo[]>([]);
   private readonly active = signal<string | null>(null);

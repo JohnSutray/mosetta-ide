@@ -33,7 +33,13 @@ export class ConfigStore {
   }
 
   static async load(dir = defaultConfigDir()): Promise<ConfigStore> {
-    const store = new ConfigStore(dir, { settings: defaults.settings, keymap: defaults.emptyKeymap, sources: [] });
+    const store = new ConfigStore(dir, {
+      settings: defaults.settings,
+      keymap: defaults.emptyKeymap,
+      sources: [],
+      user: {},
+      defaults: defaults.settings,
+    });
     store.bundle = await store.read();
     return store;
   }
@@ -83,6 +89,27 @@ export class ConfigStore {
     return { rewritten: patched.rewritten };
   }
 
+  unset(section: string, key: string): Promise<void> {
+    const next = this.writing.then(() => this.remove(section, key));
+    this.writing = next.catch(() => undefined);
+    return next;
+  }
+
+  private async remove(section: string, key: string): Promise<void> {
+    const file = path.join(this.dir, 'settings.json');
+    let raw: string;
+    try {
+      raw = await fsp.readFile(file, 'utf8');
+    } catch {
+      return;
+    }
+    const patched = patch.unset(raw, section, key);
+    if (patched.text === raw) return;
+    await fsp.writeFile(file, patched.text, 'utf8');
+    if (patched.rewritten) log.warn('settings.json пересобран — комментарии в нём не сохранились');
+    await this.reload();
+  }
+
   dispose(): void {
     for (const watcher of this.watchers.splice(0)) watcher.close();
     if (this.reloadTimer) clearTimeout(this.reloadTimer);
@@ -105,12 +132,16 @@ export class ConfigStore {
 
   private async read(): Promise<ConfigBundle> {
     const sources: string[] = [];
-    const settings = mergeSettings(
-      defaults.settings,
-      await this.readFile<Partial<Settings>>('settings.json', sources),
-    );
+    const user = await this.readFile<Partial<Settings>>('settings.json', sources);
+    const settings = mergeSettings(defaults.settings, user);
     const rawKeymap = await this.readFile<Keymap>('keymap.json', sources);
-    return { settings, keymap: keymapRules.validate(rawKeymap), sources };
+    return {
+      settings,
+      keymap: keymapRules.validate(rawKeymap),
+      sources,
+      user: (user ?? {}) as Record<string, Record<string, unknown>>,
+      defaults: defaults.settings,
+    };
   }
 
   private async readFile<T>(name: string, sources: string[]): Promise<T | null> {

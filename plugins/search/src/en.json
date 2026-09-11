@@ -9,5 +9,8 @@
   "search.empty": "Nothing found",
   "search.preview": "Preview",
   "search.kind.ts": "Symbols",
-  "search.kind.file": "Files"
+  "search.kind.file": "Files",
+  "plugin.search": "Search everywhere",
+  "settings.index.enabled": "Build the search index",
+  "settings.index.maxResults": "Most results shown"
 }

@@ -1,5 +1,6 @@
 import { render } from 'preact';
-import { SETTINGS_SCHEMA, type IdeServices, type SettingsSection } from '@mosetta/ide-api/client';
+import { effect } from '@preact/signals';
+import { SETTINGS_SCHEMA, type IdeServices, type SettingsEntry } from '@mosetta/ide-api/client';
 import { sectionOf } from '@mosetta/ide-api/section';
 import { RpcClient } from './rpc/client.js';
 import { Notifications } from './state/notifications.js';
@@ -30,6 +31,7 @@ export class Core {
     i18n: this.i18n,
   });
   readonly mount: RootMount;
+  private coreDeclared = false;
   readonly services: IdeServices;
 
   constructor(
@@ -47,6 +49,12 @@ export class Core {
     this.store.declare('chrome.top', 'core');
     this.store.declare('chrome.main', 'core');
     this.store.declare('settings', 'core', SETTINGS_SCHEMA);
+    effect(() => {
+      const core = this.config.defaults.value;
+      if (!core || this.coreDeclared) return;
+      this.coreDeclared = true;
+      this.store.add<SettingsEntry>('settings', { section: 'fs', defaults: core.fs, owner: 'core', title: 'settings.core' }, 'core');
+    });
   }
 
   start(): void {
@@ -118,12 +126,20 @@ export class Core {
         onRemoved: (handler) => this.rpc.on('doc.removed', handler),
       },
       mount: this.mount,
+      settingsFile: this.config.user,
+      resetSetting: async (section, key) => {
+        await this.rpc.call('config.reset', { section, key });
+      },
       setSetting: async (section, key, value) => {
-        const own = this.store.all<SettingsSection>('settings').value.find((one) => one.section === section);
+        const own = this.store.all<SettingsEntry>('settings').value.find((one) => one.section === section);
         if (!own) throw new Error(`раздел настроек никто не объявил: ${section}`);
         const known = (own.defaults as Record<string, unknown>)[key];
         if (known === undefined) throw new Error(`такой настройки нет: ${section}.${key}`);
         if (typeof known !== typeof value) throw new Error(`${section}.${key} ждёт ${typeof known}`);
+        const options = own.fields?.[key]?.options;
+        if (options && typeof value === 'string' && !options.includes(value)) {
+          throw new Error(`${section}.${key}: «${value}» — не из вариантов ${options.join(', ')}`);
+        }
         await this.rpc.call('config.set', { section, key, value });
       },
     };

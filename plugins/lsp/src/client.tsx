@@ -1,4 +1,4 @@
-import { activate, configSection, remote, stub } from '@mosetta/ide-api/client';
+import { activate, configSection, plugin, remote, stub } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
 import { LSP_DEFAULTS } from './settings.js';
@@ -34,6 +34,7 @@ export type {
 } from './types.js';
 
 @configSection({ section: 'lsp', defaults: LSP_DEFAULTS })
+@plugin({ title: 'plugin.lsp' })
 export default class LspPlugin {
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);

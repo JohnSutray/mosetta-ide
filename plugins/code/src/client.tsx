@@ -7,6 +7,7 @@ import { LineDiff } from './line-diff.js';
 import { CodeLook } from './look.js';
 import { MethodNames } from './method-names.js';
 import { CodePainter } from './paint-line.js';
+import { plugin } from '@mosetta/ide-api/client';
 
 export { EDITOR_DEFAULTS, type EditorSettings } from './settings.js';
 export type { Chunk, CodeChunk } from './paint-line.js';
@@ -15,6 +16,7 @@ export type { CodeViewProps } from './code-view.js';
 export type { ThemeSource } from './look.js';
 export { CodeLook, CodePainter, InputMechanics, Languages, LineDiff, MethodNames };
 
+@plugin({ title: 'plugin.code' })
 export default class CodePlugin {
   readonly languages = new Languages(new MethodNames());
   readonly diff = new LineDiff();

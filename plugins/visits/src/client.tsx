@@ -1,4 +1,4 @@
-import { activate, remote, stub } from '@mosetta/ide-api/client';
+import { activate, plugin, remote, stub } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { effect } from '@preact/signals';
 import Editor from '@mosetta/ide-plugin-editor';
@@ -6,6 +6,7 @@ import { Visits, type VisitsRemote } from './state.js';
 import type { Visit } from './types.js';
 import DocPlugin from '@mosetta/ide-plugin-doc';
 
+@plugin({ title: 'plugin.visits' })
 export default class VisitsPlugin implements VisitsRemote {
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);

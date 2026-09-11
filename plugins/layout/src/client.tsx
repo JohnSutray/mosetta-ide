@@ -1,10 +1,11 @@
 import { Fragment } from 'preact';
-import { activate, registry, type Ide } from '@mosetta/ide-api/client';
+import { activate, plugin, registry, type Ide } from '@mosetta/ide-api/client';
 import UiPlugin, { Resizer } from '@mosetta/ide-plugin-ui';
 import { PANEL_SCHEMA, type PanelWish } from './schema.js';
 import { STYLE } from './style.js';
 
 @registry({ key: 'panel', schema: PANEL_SCHEMA })
+@plugin({ title: 'plugin.layout' })
 export default class Layout {
   private readonly keepFree = 320;
   private readonly fallbackWidth = 260;

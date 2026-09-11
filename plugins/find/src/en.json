@@ -47,5 +47,9 @@
   "findFiles.replaced": "replaced:",
   "findFiles.replaceAll": "replace all",
   "findFiles.replaceFile": "replace in this file",
-  "toolbar.findFiles": "Find in files"
+  "toolbar.findFiles": "Find in files",
+  "plugin.find": "Find",
+  "settings.find.masks": "File masks",
+  "settings.find.masksOff": "Switched-off file masks",
+  "settings.find.maxHits": "Most matches shown"
 }

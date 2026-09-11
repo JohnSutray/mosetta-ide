@@ -1,3 +1,5 @@
 {
-  "toolbar.connection": "Connection to the editor server"
+  "toolbar.connection": "Connection to the editor server",
+  "plugin.toolbar": "Toolbar",
+  "settings.toolbar.order": "Button order, by command"
 }

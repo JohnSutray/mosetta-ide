@@ -165,6 +165,8 @@
     { "command": "keys.show", "key": "meta+9", "where": ["browser:mac", "electron:mac"] },
     { "command": "keys.show", "key": "control+alt+9", "where": ["browser:win", "browser:linux"] },
     { "command": "keys.show", "key": "control+9", "where": ["electron:win", "electron:linux"] },
+    { "command": "settings.show", "key": "meta+comma", "where": ["browser:mac", "electron:mac"] },
+    { "command": "settings.show", "key": "control+comma", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
 
     { "command": "git.branches", "key": "meta+backquote", "where": ["electron:mac"] },
     { "command": "git.branches", "key": "control+backquote", "where": ["browser:mac", "electron:mac"] },

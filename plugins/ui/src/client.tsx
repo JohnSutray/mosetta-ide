@@ -1,4 +1,4 @@
-import { activate, registry } from '@mosetta/ide-api/client';
+import { activate, plugin, registry } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { Tip } from './tip.js';
 import { STYLE } from './style.js';
@@ -15,6 +15,7 @@ const CAPTURE_SCHEMA = {
 export * from './index.js';
 
 @registry({ key: 'ui.captures', schema: CAPTURE_SCHEMA })
+@plugin({ title: 'plugin.ui' })
 export default class UiPlugin {
   readonly fuzzy = fuzzy;
   readonly matches = matches;

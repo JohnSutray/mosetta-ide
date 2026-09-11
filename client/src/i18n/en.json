@@ -43,5 +43,13 @@
   "file.conflict": "{path} changed on disk and here — pick one",
   "file.removed": "{path} is gone from disk",
   "file.saved": "{path} saved",
-  "rpc.closed": "Connection closed"
+  "rpc.closed": "Connection closed",
+  "settings.core": "Core",
+  "settings.fs.hidden": "Hidden files",
+  "settings.fs.noScan": "Folders search and language servers skip",
+  "settings.fs.maxFileMb": "Largest file kept in memory, MB",
+  "settings.fs.preloadBudgetMb": "Memory for preloading files, MB",
+  "settings.fs.textExtensions": "Text file extensions",
+  "settings.fs.watch": "Watch the disk for changes",
+  "settings.fs.watchDebounceMs": "Pause before reading a change, ms"
 }

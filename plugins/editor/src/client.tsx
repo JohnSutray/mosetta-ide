@@ -18,7 +18,7 @@ import {
   undo,
 } from '@codemirror/commands';
 import { computed, effect, signal, type ReadonlySignal, type Signal } from '@preact/signals';
-import { activate, configSection, registry, type HunkBox, type Ide } from '@mosetta/ide-api/client';
+import { activate, configSection, plugin, registry, type HunkBox, type Ide } from '@mosetta/ide-api/client';
 import LspPlugin from '@mosetta/ide-plugin-lsp';
 import CodePlugin, { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
 import type { Hunk } from '@mosetta/ide-plugin-code';
@@ -41,6 +41,7 @@ export interface SymbolSpot {
 @registry({ key: 'editor.empty', schema: EMPTY_SCHEMA })
 @registry({ key: 'editor.extension', schema: EXTENSION_SCHEMA })
 @configSection({ section: 'editor', defaults: EDITOR_DEFAULTS })
+@plugin({ title: 'plugin.editor' })
 export default class Editor {
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);

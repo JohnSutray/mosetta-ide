@@ -10,6 +10,8 @@ import {
   registriesOf,
   sectionsOf,
   configSection,
+  passportOf,
+  plugin as pluginHook,
   registry as registryHook,
   remote,
   stub,
@@ -64,6 +66,7 @@ export class Plugins {
           activate: activateHook,
           registry: registryHook,
           configSection,
+          plugin: pluginHook,
         },
       },
     };
@@ -102,7 +105,11 @@ export class Plugins {
 
     for (const one of built) {
       for (const spec of registriesOf(one.ctor)) registry.declare(spec.key, one.name, spec.schema);
-      for (const spec of sectionsOf(one.ctor)) registry.add('settings', spec, one.name);
+      const title = passportOf(one.ctor)?.title;
+      if (!title) this.deps.notes.complain(`${one.name}: у плагина нет названия — @plugin({ title }) (ADR-0213)`);
+      for (const spec of sectionsOf(one.ctor)) {
+        registry.add('settings', { ...spec, owner: one.name, title: title ?? one.name }, one.name);
+      }
     }
     for (const one of built) {
       try {

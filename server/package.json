@@ -43,7 +43,8 @@
     "typescript": "^5.7.2",
     "ws": "^8.18.0",
     "tsx": "^4.19.2",
-    "@mosetta/ide-client": "workspace:*"
+    "@mosetta/ide-client": "workspace:*",
+    "@mosetta/ide-plugin-settings": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

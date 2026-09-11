@@ -11,7 +11,8 @@
   },
   "ide": {
     "client": "src/client.tsx",
-    "server": "src/server.ts"
+    "server": "src/server.ts",
+    "strings": "src/en.json"
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",

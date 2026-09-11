@@ -9,5 +9,9 @@
   "command.completion.close": "Completion: close",
   "completion.loading": "asking the language server…",
   "completion.empty": "Nothing to complete here",
-  "completion.failed": "Completion source failed —"
+  "completion.failed": "Completion source failed —",
+  "plugin.completion": "Completion",
+  "settings.completion.auto": "Show suggestions while typing",
+  "settings.completion.words": "Suggest words from open files",
+  "settings.completion.postfix": "Postfix completions"
 }

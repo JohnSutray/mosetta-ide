@@ -28,6 +28,7 @@ export class Defaults {
         '@mosetta/ide-plugin-editor',
         '@mosetta/ide-plugin-find',
         '@mosetta/ide-plugin-completion',
+        '@mosetta/ide-plugin-settings',
         '@mosetta/ide-plugin-sheep',
       ],
     },

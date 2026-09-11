@@ -54,5 +54,7 @@
   "tree.clipboardEmpty": "Clipboard is empty",
   "prompt.cancel": "cancel",
   "tree.find": "type to find in the tree",
-  "command.tree.findClear": "Tree: clear typed search"
+  "command.tree.findClear": "Tree: clear typed search",
+  "plugin.tree": "Project tree",
+  "settings.tree.followEditor": "Follow the open file"
 }
