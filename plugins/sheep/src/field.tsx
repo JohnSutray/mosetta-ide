@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { sheepfold, type Sheep } from './world.js';
 import { pixelFont } from './pixel-font.js';
 import { pixelGrid } from './pixel-grid.js';
-import { useT } from '@ide/api/client';
+import { useT } from '@mosetta/ide-api/client';
 
 const DIGIT_FONT = "'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif";
 

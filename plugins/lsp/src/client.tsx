@@ -1,5 +1,5 @@
-import { activate, configSection, remote, stub } from '@ide/api/client';
-import type { Ide } from '@ide/api/client';
+import { activate, configSection, remote, stub } from '@mosetta/ide-api/client';
+import type { Ide } from '@mosetta/ide-api/client';
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
 import { LSP_DEFAULTS } from './settings.js';
 import { Lsp } from './state.js';
@@ -14,7 +14,7 @@ import type {
   LspStatus,
   SymbolSite,
 } from './types.js';
-import DocPlugin from '@ide/plugin-doc';
+import DocPlugin from '@mosetta/ide-plugin-doc';
 
 export type {
   CompletionAnswer,

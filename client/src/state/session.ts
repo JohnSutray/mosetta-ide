@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import type { LogLine, WorkspaceInfo } from '@ide/protocol';
+import type { LogLine, WorkspaceInfo } from '@mosetta/ide-protocol';
 import { RpcClient, RpcFailure } from '../rpc/client.js';
 import type { Notifications } from './notifications.js';
 import type { Config } from './config.js';

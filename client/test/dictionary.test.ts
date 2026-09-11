@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COMMAND_IDS } from '@ide/protocol';
+import { COMMAND_IDS } from '@mosetta/ide-protocol';
 import en from '../src/i18n/en.json';
 
 describe('словарь ядра', () => {

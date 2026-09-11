@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-terminal",
+  "name": "@mosetta/ide-plugin-terminal",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -20,14 +20,14 @@
     }
   },
   "dependencies": {
-    "@ide/api": "workspace:*",
-    "@ide/protocol": "workspace:*",
-    "@ide/ui": "workspace:*",
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-protocol": "workspace:*",
+    "@mosetta/ide-plugin-ui": "workspace:*",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "node-pty": "^1.1.0",
-    "@ide/plugin-code": "workspace:*",
-    "@ide/plugin-theme": "workspace:*"
+    "@mosetta/ide-plugin-code": "workspace:*",
+    "@mosetta/ide-plugin-theme": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

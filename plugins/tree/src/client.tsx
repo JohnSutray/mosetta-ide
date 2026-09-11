@@ -1,6 +1,6 @@
-import { activate, configSection, registry, remote, stub } from '@ide/api/client';
-import LspPlugin from '@ide/plugin-lsp';
-import type { Ide } from '@ide/api/client';
+import { activate, configSection, registry, remote, stub } from '@mosetta/ide-api/client';
+import LspPlugin from '@mosetta/ide-plugin-lsp';
+import type { Ide } from '@mosetta/ide-api/client';
 import { computed, effect, untracked } from '@preact/signals';
 import { FollowIcon, TreeIcon } from './icons.js';
 import { FileTree } from './file-tree.js';
@@ -14,10 +14,10 @@ import { TINT_SCHEMA, TreeTints, type TintSource } from './tints.js';
 import { Prompt } from './prompt.js';
 import { Tree } from './tree.js';
 import { TreeMenu } from './tree-menu.js';
-import DocPlugin from '@ide/plugin-doc';
-import KeymapPlugin from '@ide/plugin-keymap';
-import SearchPlugin from '@ide/plugin-search';
-import UiPlugin from '@ide/ui';
+import DocPlugin from '@mosetta/ide-plugin-doc';
+import KeymapPlugin from '@mosetta/ide-plugin-keymap';
+import SearchPlugin from '@mosetta/ide-plugin-search';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 @registry({ key: 'tree.tint', schema: TINT_SCHEMA })
 @configSection({ section: 'tree', defaults: TREE_DEFAULTS })

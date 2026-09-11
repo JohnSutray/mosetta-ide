@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { PluginInfo, PluginManifest } from '@ide/protocol';
+import type { PluginInfo, PluginManifest } from '@mosetta/ide-protocol';
 import { PluginBuild } from './build.js';
 import type { SharedModules } from './shared.js';
 import {
@@ -14,15 +14,16 @@ import {
   type Ide,
   type PluginClass,
   type Project,
-} from '@ide/api/server';
-export { type CallContext } from '@ide/api/server';
-import type { Settings } from '@ide/protocol';
-import { sectionOf } from '@ide/api/section';
+} from '@mosetta/ide-api/server';
+export { type CallContext } from '@mosetta/ide-api/server';
+import type { Settings } from '@mosetta/ide-protocol';
+import { sectionOf } from '@mosetta/ide-api/section';
 import { PluginProject } from './project.js';
 import type { Workspace } from '../workspace/workspace.js';
 import type { Logger } from '../log.js';
 import { Env } from '../env/env.js';
 import type { Processes } from '../env/processes.js';
+import { legacyNames } from '@mosetta/ide-protocol';
 
 interface Loaded {
   info: PluginInfo;
@@ -84,7 +85,7 @@ export class PluginHost {
     const had = (global_.__ideApi as { modules?: Record<string, unknown> } | undefined)?.modules ?? {};
     global_.__ideApi = {
       ...((global_.__ideApi as object) ?? {}),
-      modules: { ...had, '@ide/api/server': { command, activate } },
+      modules: { ...had, '@mosetta/ide-api/server': { command, activate } },
     };
   }
 
@@ -184,6 +185,24 @@ export class PluginHost {
     return [...out];
   }
 
+  private async stateOf(name: string): Promise<string> {
+    const root = path.join(this.stateDir, 'plugins');
+    const safe = (one: string) => one.replace(/[^\w.-]/g, '_');
+    const dir = path.join(root, safe(name));
+    const old = legacyNames.legacyOf(name);
+    if (!old) return dir;
+    const was = path.join(root, safe(old));
+    try {
+      await fs.access(dir);
+    } catch {
+      try {
+        await fs.rename(was, dir);
+        this.log.info(`${name}: состояние перенесено со старого имени ${old}`);
+      } catch {}
+    }
+    return dir;
+  }
+
   private async one(name: string, needs: string[]): Promise<void> {
     const pkgPath = await this.shared.manifestOf(name);
     const dir = path.dirname(pkgPath);
@@ -253,7 +272,7 @@ export class PluginHost {
           this.machine.processes.stream({ ...ask, reason: `${name}: ${ask.reason}` }, onChunk),
         log: this.log,
         dir,
-        state: path.join(this.stateDir, 'plugins', name.replace(/[^\w.-]/g, '_')),
+        state: await this.stateOf(name),
       };
       const instance = new Ctor(ide) as object;
       this.instances.set(Ctor, instance);

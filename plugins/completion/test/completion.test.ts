@@ -8,7 +8,7 @@ import { BufferWords } from '../src/sources/buffer.js';
 import { LspCompletions } from '../src/sources/lsp.js';
 import { Postfix } from '../src/sources/postfix.js';
 import type { Answer, Ask, Item, Source } from '../src/types.js';
-import { matcher, textIndex } from '@ide/plugin-search';
+import { matcher, textIndex } from '@mosetta/ide-plugin-search';
 
 function askAt(marked: string, extra: Partial<Ask> = {}): Ask {
   const pos = marked.indexOf('|');

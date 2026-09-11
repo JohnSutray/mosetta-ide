@@ -44,15 +44,15 @@ importers:
       '@codemirror/view':
         specifier: ^6.35.3
         version: 6.43.9
-      '@ide/api':
-        specifier: workspace:*
-        version: link:../plugins/api
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../protocol
       '@lezer/highlight':
         specifier: ^1.2.1
         version: 1.2.3
+      '@mosetta/ide-api':
+        specifier: workspace:*
+        version: link:../plugins/api
+      '@mosetta/ide-protocol':
+        specifier: workspace:*
+        version: link:../protocol
       '@preact/signals':
         specifier: ^1.3.1
         version: 1.3.4(preact@10.29.8)
@@ -78,7 +78,7 @@ importers:
 
   plugins/api:
     dependencies:
-      '@ide/protocol':
+      '@mosetta/ide-protocol':
         specifier: workspace:*
         version: link:../../protocol
       '@preact/signals':
@@ -94,13 +94,13 @@ importers:
 
   plugins/code:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-theme':
+      '@mosetta/ide-plugin-theme':
         specifier: workspace:*
         version: link:../theme
-      '@ide/protocol':
+      '@mosetta/ide-protocol':
         specifier: workspace:*
         version: link:../../protocol
     devDependencies:
@@ -149,19 +149,19 @@ importers:
 
   plugins/completion:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-code':
+      '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../code
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
-      '@ide/plugin-lsp':
+      '@mosetta/ide-plugin-lsp':
         specifier: workspace:*
         version: link:../lsp
-      '@ide/plugin-search':
+      '@mosetta/ide-plugin-search':
         specifier: workspace:*
         version: link:../search
     devDependencies:
@@ -189,10 +189,10 @@ importers:
 
   plugins/doc:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/protocol':
+      '@mosetta/ide-protocol':
         specifier: workspace:*
         version: link:../../protocol
     devDependencies:
@@ -211,22 +211,22 @@ importers:
 
   plugins/editor:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-code':
+      '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../code
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
-      '@ide/plugin-keymap':
+      '@mosetta/ide-plugin-keymap':
         specifier: workspace:*
         version: link:../keymap
-      '@ide/plugin-lsp':
+      '@mosetta/ide-plugin-lsp':
         specifier: workspace:*
         version: link:../lsp
-      '@ide/plugin-merge':
+      '@mosetta/ide-plugin-merge':
         specifier: workspace:*
         version: link:../merge
     devDependencies:
@@ -245,10 +245,10 @@ importers:
       '@codemirror/view':
         specifier: ^6.35.3
         version: 6.43.9
-      '@ide/plugin-theme':
+      '@mosetta/ide-plugin-theme':
         specifier: workspace:*
         version: link:../theme
-      '@ide/protocol':
+      '@mosetta/ide-protocol':
         specifier: workspace:*
         version: link:../../protocol
       '@preact/signals':
@@ -263,22 +263,22 @@ importers:
 
   plugins/find:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-code':
+      '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../code
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
-      '@ide/plugin-editor':
+      '@mosetta/ide-plugin-editor':
         specifier: workspace:*
         version: link:../editor
-      '@ide/plugin-keymap':
+      '@mosetta/ide-plugin-keymap':
         specifier: workspace:*
         version: link:../keymap
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
     devDependencies:
@@ -291,7 +291,7 @@ importers:
       '@codemirror/view':
         specifier: ^6.35.3
         version: 6.43.9
-      '@ide/plugin-lsp':
+      '@mosetta/ide-plugin-lsp':
         specifier: workspace:*
         version: link:../lsp
       '@preact/signals':
@@ -309,22 +309,22 @@ importers:
 
   plugins/git:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-code':
+      '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../code
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
-      '@ide/plugin-editor':
+      '@mosetta/ide-plugin-editor':
         specifier: workspace:*
         version: link:../editor
-      '@ide/plugin-keymap':
+      '@mosetta/ide-plugin-keymap':
         specifier: workspace:*
         version: link:../keymap
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
     devDependencies:
@@ -343,17 +343,17 @@ importers:
 
   plugins/keymap:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/protocol':
+      '@mosetta/ide-protocol':
         specifier: workspace:*
         version: link:../../protocol
     devDependencies:
       '@codemirror/view':
         specifier: ^6.35.3
         version: 6.43.9
-      '@ide/plugin-code':
+      '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../code
       '@preact/signals':
@@ -371,18 +371,18 @@ importers:
 
   plugins/keys:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-keymap':
+      '@mosetta/ide-plugin-keymap':
         specifier: workspace:*
         version: link:../keymap
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../../protocol
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
+      '@mosetta/ide-protocol':
+        specifier: workspace:*
+        version: link:../../protocol
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1
@@ -399,10 +399,10 @@ importers:
 
   plugins/layout:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
     devDependencies:
@@ -415,13 +415,13 @@ importers:
 
   plugins/lsp:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
-      '@ide/protocol':
+      '@mosetta/ide-protocol':
         specifier: workspace:*
         version: link:../../protocol
       typescript:
@@ -443,21 +443,21 @@ importers:
 
   plugins/merge:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-code':
+      '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../code
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../../protocol
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
+      '@mosetta/ide-protocol':
+        specifier: workspace:*
+        version: link:../../protocol
     devDependencies:
       '@codemirror/state':
         specifier: ^6.5.0
@@ -480,7 +480,7 @@ importers:
 
   plugins/notifications:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
     devDependencies:
@@ -499,21 +499,21 @@ importers:
 
   plugins/npm-scripts:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-search':
+      '@mosetta/ide-plugin-search':
         specifier: workspace:*
         version: link:../search
-      '@ide/plugin-terminal':
+      '@mosetta/ide-plugin-terminal':
         specifier: workspace:*
         version: link:../terminal
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../../protocol
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
+      '@mosetta/ide-protocol':
+        specifier: workspace:*
+        version: link:../../protocol
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1
@@ -527,16 +527,16 @@ importers:
 
   plugins/problems:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
-      '@ide/plugin-lsp':
+      '@mosetta/ide-plugin-lsp':
         specifier: workspace:*
         version: link:../lsp
-      '@ide/protocol':
+      '@mosetta/ide-protocol':
         specifier: workspace:*
         version: link:../../protocol
     devDependencies:
@@ -549,15 +549,15 @@ importers:
 
   plugins/projects:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../../protocol
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
+      '@mosetta/ide-protocol':
+        specifier: workspace:*
+        version: link:../../protocol
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1
@@ -574,14 +574,14 @@ importers:
 
   plugins/rerun:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-npm-scripts':
+      '@mosetta/ide-plugin-npm-scripts':
         specifier: workspace:*
         version: link:../npm-scripts
     devDependencies:
-      '@ide/plugin-terminal':
+      '@mosetta/ide-plugin-terminal':
         specifier: workspace:*
         version: link:../terminal
       preact:
@@ -593,21 +593,21 @@ importers:
 
   plugins/search:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-code':
+      '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../code
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../../protocol
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
+      '@mosetta/ide-protocol':
+        specifier: workspace:*
+        version: link:../../protocol
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
@@ -627,7 +627,7 @@ importers:
 
   plugins/sheep:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
     devDependencies:
@@ -640,27 +640,27 @@ importers:
 
   plugins/symbols:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-code':
+      '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../code
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
-      '@ide/plugin-editor':
+      '@mosetta/ide-plugin-editor':
         specifier: workspace:*
         version: link:../editor
-      '@ide/plugin-lsp':
+      '@mosetta/ide-plugin-lsp':
         specifier: workspace:*
         version: link:../lsp
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../../protocol
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
+      '@mosetta/ide-protocol':
+        specifier: workspace:*
+        version: link:../../protocol
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1
@@ -677,21 +677,21 @@ importers:
 
   plugins/terminal:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-code':
+      '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../code
-      '@ide/plugin-theme':
+      '@mosetta/ide-plugin-theme':
         specifier: workspace:*
         version: link:../theme
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../../protocol
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
+      '@mosetta/ide-protocol':
+        specifier: workspace:*
+        version: link:../../protocol
       '@xterm/addon-fit':
         specifier: ^0.10.0
         version: 0.10.0(@xterm/xterm@5.5.0)
@@ -717,7 +717,7 @@ importers:
 
   plugins/theme:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
     devDependencies:
@@ -736,18 +736,18 @@ importers:
 
   plugins/toolbar:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-keymap':
+      '@mosetta/ide-plugin-keymap':
         specifier: workspace:*
         version: link:../keymap
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../../protocol
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
+      '@mosetta/ide-protocol':
+        specifier: workspace:*
+        version: link:../../protocol
     devDependencies:
       preact:
         specifier: ^10.25.3
@@ -758,22 +758,22 @@ importers:
 
   plugins/tree:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
-      '@ide/plugin-keymap':
+      '@mosetta/ide-plugin-keymap':
         specifier: workspace:*
         version: link:../keymap
-      '@ide/plugin-lsp':
+      '@mosetta/ide-plugin-lsp':
         specifier: workspace:*
         version: link:../lsp
-      '@ide/plugin-search':
+      '@mosetta/ide-plugin-search':
         specifier: workspace:*
         version: link:../search
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui
     devDependencies:
@@ -792,10 +792,10 @@ importers:
 
   plugins/ui:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/protocol':
+      '@mosetta/ide-protocol':
         specifier: workspace:*
         version: link:../../protocol
     devDependencies:
@@ -814,13 +814,13 @@ importers:
 
   plugins/visits:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
-      '@ide/plugin-editor':
+      '@mosetta/ide-plugin-editor':
         specifier: workspace:*
         version: link:../editor
     devDependencies:
@@ -841,87 +841,87 @@ importers:
 
   server:
     dependencies:
-      '@ide/api':
+      '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../plugins/api
-      '@ide/plugin-code':
+      '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../plugins/code
-      '@ide/plugin-completion':
+      '@mosetta/ide-plugin-completion':
         specifier: workspace:*
         version: link:../plugins/completion
-      '@ide/plugin-doc':
+      '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../plugins/doc
-      '@ide/plugin-editor':
+      '@mosetta/ide-plugin-editor':
         specifier: workspace:*
         version: link:../plugins/editor
-      '@ide/plugin-find':
+      '@mosetta/ide-plugin-find':
         specifier: workspace:*
         version: link:../plugins/find
-      '@ide/plugin-git':
+      '@mosetta/ide-plugin-git':
         specifier: workspace:*
         version: link:../plugins/git
-      '@ide/plugin-keymap':
+      '@mosetta/ide-plugin-keymap':
         specifier: workspace:*
         version: link:../plugins/keymap
-      '@ide/plugin-keys':
+      '@mosetta/ide-plugin-keys':
         specifier: workspace:*
         version: link:../plugins/keys
-      '@ide/plugin-layout':
+      '@mosetta/ide-plugin-layout':
         specifier: workspace:*
         version: link:../plugins/layout
-      '@ide/plugin-lsp':
+      '@mosetta/ide-plugin-lsp':
         specifier: workspace:*
         version: link:../plugins/lsp
-      '@ide/plugin-merge':
+      '@mosetta/ide-plugin-merge':
         specifier: workspace:*
         version: link:../plugins/merge
-      '@ide/plugin-notifications':
+      '@mosetta/ide-plugin-notifications':
         specifier: workspace:*
         version: link:../plugins/notifications
-      '@ide/plugin-npm-scripts':
+      '@mosetta/ide-plugin-npm-scripts':
         specifier: workspace:*
         version: link:../plugins/npm-scripts
-      '@ide/plugin-problems':
+      '@mosetta/ide-plugin-problems':
         specifier: workspace:*
         version: link:../plugins/problems
-      '@ide/plugin-projects':
+      '@mosetta/ide-plugin-projects':
         specifier: workspace:*
         version: link:../plugins/projects
-      '@ide/plugin-rerun':
+      '@mosetta/ide-plugin-rerun':
         specifier: workspace:*
         version: link:../plugins/rerun
-      '@ide/plugin-search':
+      '@mosetta/ide-plugin-search':
         specifier: workspace:*
         version: link:../plugins/search
-      '@ide/plugin-sheep':
+      '@mosetta/ide-plugin-sheep':
         specifier: workspace:*
         version: link:../plugins/sheep
-      '@ide/plugin-symbols':
+      '@mosetta/ide-plugin-symbols':
         specifier: workspace:*
         version: link:../plugins/symbols
-      '@ide/plugin-terminal':
+      '@mosetta/ide-plugin-terminal':
         specifier: workspace:*
         version: link:../plugins/terminal
-      '@ide/plugin-theme':
+      '@mosetta/ide-plugin-theme':
         specifier: workspace:*
         version: link:../plugins/theme
-      '@ide/plugin-toolbar':
+      '@mosetta/ide-plugin-toolbar':
         specifier: workspace:*
         version: link:../plugins/toolbar
-      '@ide/plugin-tree':
+      '@mosetta/ide-plugin-tree':
         specifier: workspace:*
         version: link:../plugins/tree
-      '@ide/plugin-visits':
-        specifier: workspace:*
-        version: link:../plugins/visits
-      '@ide/protocol':
-        specifier: workspace:*
-        version: link:../protocol
-      '@ide/ui':
+      '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../plugins/ui
+      '@mosetta/ide-plugin-visits':
+        specifier: workspace:*
+        version: link:../plugins/visits
+      '@mosetta/ide-protocol':
+        specifier: workspace:*
+        version: link:../protocol
       esbuild:
         specifier: 0.25.12
         version: 0.25.12

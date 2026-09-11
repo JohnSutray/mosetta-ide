@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FakeHost, nodes, of } from '@ide/api/testing';
+import { FakeHost, nodes, of } from '@mosetta/ide-api/testing';
 import NotificationsPlugin from '../src/client.js';
 
-const NAME = '@ide/plugin-notifications';
+const NAME = '@mosetta/ide-plugin-notifications';
 
 let host: FakeHost;
 let plugin: NotificationsPlugin;

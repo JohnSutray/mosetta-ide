@@ -1,4 +1,4 @@
-import type { Logger, ProjectMemory } from '@ide/api/server';
+import type { Logger, ProjectMemory } from '@mosetta/ide-api/server';
 import type { MergeSessions } from './sessions.js';
 import type { MergeFile, MergeSession } from './types.js';
 

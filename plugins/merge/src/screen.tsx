@@ -1,10 +1,10 @@
-import type { Windows } from '@ide/ui';
-import { useIde, useT } from '@ide/api/client';
+import type { Windows } from '@mosetta/ide-plugin-ui';
+import { useIde, useT } from '@mosetta/ide-api/client';
 import type { MergeFile } from './types.js';
 import { MergeColumns } from './columns.js';
-import type CodePlugin from '@ide/plugin-code';
-import { EDITOR_DEFAULTS } from '@ide/plugin-code';
-import { FileIcon, Popup } from '@ide/ui';
+import type CodePlugin from '@mosetta/ide-plugin-code';
+import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
+import { FileIcon, Popup } from '@mosetta/ide-plugin-ui';
 import type { Merge } from './state.js';
 
 export function MergeScreen({ windows, merge, code }: { windows: Windows; merge: Merge; code: CodePlugin }) {

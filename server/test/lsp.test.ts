@@ -4,7 +4,7 @@ import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
 const CONFIG = fileURLToPath(new URL('./fixtures/lsp-config', import.meta.url));
-const LSP = '@ide/plugin-lsp';
+const LSP = '@mosetta/ide-plugin-lsp';
 
 interface Diagnostic {
   severity: string;

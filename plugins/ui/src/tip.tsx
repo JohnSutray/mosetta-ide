@@ -1,6 +1,6 @@
 import type { Tips } from './windows/tips.js';
 import { useLayoutEffect, useRef } from 'preact/hooks';
-import { useIde } from '@ide/api/client';
+import { useIde } from '@mosetta/ide-api/client';
 
 export function Tip({ tips }: { tips: Tips }) {
   const shown = tips.spot.value;

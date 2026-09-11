@@ -7,7 +7,7 @@ import {
   type EventPayload,
   type RpcId,
   type ServerFrame,
-} from '@ide/protocol';
+} from '@mosetta/ide-protocol';
 import { RpcError } from '../errors.js';
 import { journal } from '../log.js';
 import { handlers } from '../methods/index.js';

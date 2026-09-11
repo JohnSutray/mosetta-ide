@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import type { Bounds } from '@ide/api/client';
+import type { Bounds } from '@mosetta/ide-api/client';
 
 export class TreeMenuState {
   readonly open = signal<{ path: string; isDir: boolean; x: number; y: number } | null>(null);

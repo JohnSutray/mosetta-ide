@@ -1,9 +1,9 @@
 /// <reference path="./raw.d.ts" />
 import { batch, signal } from '@preact/signals';
-import { activate, configSection, remote, stub, type Ide } from '@ide/api/client';
-import UiPlugin, { ChoicePopup } from '@ide/ui';
+import { activate, configSection, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import UiPlugin, { ChoicePopup } from '@mosetta/ide-plugin-ui';
 import { TerminalIcon } from './icon.js';
-import ThemePlugin from '@ide/plugin-theme';
+import ThemePlugin from '@mosetta/ide-plugin-theme';
 import { TerminalView } from './view.js';
 import { Chips } from './chips.js';
 import { TERMINAL_DEFAULTS } from './settings.js';

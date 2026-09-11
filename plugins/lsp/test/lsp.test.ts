@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FakeHost } from '@ide/api/testing';
-import DocPlugin from '@ide/plugin-doc';
+import { FakeHost } from '@mosetta/ide-api/testing';
+import DocPlugin from '@mosetta/ide-plugin-doc';
 import LspPlugin, { type Diagnostic } from '../src/client.js';
 
-const NAME = '@ide/plugin-lsp';
+const NAME = '@mosetta/ide-plugin-lsp';
 const PROJECT = { id: 'p1', root: '/один', name: 'один' } as never;
 const OTHER = { id: 'p2', root: '/два', name: 'два' } as never;
 
@@ -22,7 +22,7 @@ let known: Array<{ path: string; diagnostics: Diagnostic[] }>;
 beforeEach(async () => {
   host = new FakeHost();
   (globalThis as Record<string, unknown>)['document'] ??= {};
-  host.add(DocPlugin, '@ide/plugin-doc');
+  host.add(DocPlugin, '@mosetta/ide-plugin-doc');
   plugin = host.add(LspPlugin, NAME);
   known = [{ path: 'b.ts', diagnostics: [problem(1, 'сломано')] }];
   const ide = host.ide(NAME);

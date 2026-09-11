@@ -1,5 +1,5 @@
-import type { Ide } from '@ide/api/client';
-import ThemePlugin from '@ide/plugin-theme';
+import type { Ide } from '@mosetta/ide-api/client';
+import ThemePlugin from '@mosetta/ide-plugin-theme';
 import { CodeView, type CodeViewProps } from './code-view.js';
 import { InputMechanics } from './input-keymap.js';
 import { Languages } from './languages.js';

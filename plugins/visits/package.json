@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-visits",
+  "name": "@mosetta/ide-plugin-visits",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,9 +19,9 @@
     }
   },
   "dependencies": {
-    "@ide/api": "workspace:*",
-    "@ide/plugin-doc": "workspace:*",
-    "@ide/plugin-editor": "workspace:*"
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-plugin-doc": "workspace:*",
+    "@mosetta/ide-plugin-editor": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

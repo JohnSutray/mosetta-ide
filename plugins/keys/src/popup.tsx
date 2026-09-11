@@ -1,10 +1,10 @@
-import type { Windows } from '@ide/ui';
-import { useT, type IdeServices } from '@ide/api/client';
+import type { Windows } from '@mosetta/ide-plugin-ui';
+import { useT, type IdeServices } from '@mosetta/ide-api/client';
 import { Fragment } from 'preact';
-import type { KeyBinding, KeyContext, KeyScope } from '@ide/protocol';
-import { Popup } from '@ide/ui';
+import type { KeyBinding, KeyContext, KeyScope } from '@mosetta/ide-protocol';
+import { Popup } from '@mosetta/ide-plugin-ui';
 import type { KeysWindow } from './state.js';
-import type KeymapPlugin from '@ide/plugin-keymap';
+import type KeymapPlugin from '@mosetta/ide-plugin-keymap';
 
 interface KeysProps {
   keys: KeymapPlugin['keys'];

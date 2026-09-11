@@ -1,4 +1,4 @@
-import type { KeyHost, KeyOs, KeyScope } from '@ide/protocol';
+import type { KeyHost, KeyOs, KeyScope } from '@mosetta/ide-protocol';
 
 export interface ReservedKey {
   key: string;

@@ -1,3 +1,3 @@
-import { pluginTests } from '@ide/api/vitest';
+import { pluginTests } from '@mosetta/ide-api/vitest';
 
 export default pluginTests();

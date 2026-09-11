@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
-import type { Logger } from '@ide/api/server';
+import type { Logger } from '@mosetta/ide-api/server';
 import type { LspSettings } from './settings.js';
 
 type InitOptions = Record<string, unknown> | undefined;

@@ -1,4 +1,4 @@
-import type { CompletionAnswer, CompletionDetails, CompletionEntry, Position } from '@ide/plugin-lsp';
+import type { CompletionAnswer, CompletionDetails, CompletionEntry, Position } from '@mosetta/ide-plugin-lsp';
 import type { Answer, Ask, Item, Source } from '../types.js';
 
 export interface LspWire {

@@ -1,9 +1,9 @@
-import { useT } from '@ide/api/client';
+import { useT } from '@mosetta/ide-api/client';
 import type { BranchesWindow, Git, PushWindow } from './state.js';
 import { useEffect, useRef } from 'preact/hooks';
 import type { GitBranch } from './types.js';
-import { Chevron, Icon, Menu, Popup, type MenuItem } from '@ide/ui';
-import type { Windows } from '@ide/ui';
+import { Chevron, Icon, Menu, Popup, type MenuItem } from '@mosetta/ide-plugin-ui';
+import type { Windows } from '@mosetta/ide-plugin-ui';
 
 export interface BranchesProps {
   windows: Windows;

@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
-import { type HunkBox } from '@ide/api/client';
-import type { Hunk } from '@ide/plugin-code';
-import type DocPlugin from '@ide/plugin-doc';
+import { type HunkBox } from '@mosetta/ide-api/client';
+import type { Hunk } from '@mosetta/ide-plugin-code';
+import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export class GitMarks {
   constructor(private readonly remote: { head(path: string): Promise<{ path: string; text: string | null }> },

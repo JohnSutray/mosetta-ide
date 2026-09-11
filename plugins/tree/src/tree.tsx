@@ -1,13 +1,13 @@
-import { useIde, useT } from '@ide/api/client';
+import { useIde, useT } from '@mosetta/ide-api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import type { DirEntry } from '@ide/api/client';
-import { Chevron, DirIcon, FileIcon, RootIcon } from '@ide/ui';
+import type { DirEntry } from '@mosetta/ide-api/client';
+import { Chevron, DirIcon, FileIcon, RootIcon } from '@mosetta/ide-plugin-ui';
 import type { FileTree } from './file-tree.js';
 import type { TreeMenuState } from './menu.js';
 import type { TreeOps, TreeSelection } from './state.js';
 import type { TreeTints } from './tints.js';
 import type { TreeTypeahead } from './typeahead.js';
-import type DocPlugin from '@ide/plugin-doc';
+import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export interface TreeProps {
   files: FileTree;

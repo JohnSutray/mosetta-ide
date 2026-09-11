@@ -1,7 +1,7 @@
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import path from 'node:path';
 import type { LspServerSettings } from './settings.js';
-import type { Logger, MemoryEvent, ProcessChild, ProcessHandle, ProjectMemory, RunAsk } from '@ide/api/server';
+import type { Logger, MemoryEvent, ProcessChild, ProcessHandle, ProjectMemory, RunAsk } from '@mosetta/ide-api/server';
 import { FrameDecoder } from './codec.js';
 import type { Toolchain } from './toolchain.js';
 import type {

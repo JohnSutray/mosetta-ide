@@ -1,8 +1,8 @@
-import type { Windows } from '@ide/ui';
-import { useIde, useT } from '@ide/api/client';
+import type { Windows } from '@mosetta/ide-plugin-ui';
+import { useIde, useT } from '@mosetta/ide-api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import type { DirSuggestion } from './types.js';
-import { Chevron, DirIcon, Icon, Popup } from '@ide/ui';
+import { Chevron, DirIcon, Icon, Popup } from '@mosetta/ide-plugin-ui';
 import type { Projects } from './state.js';
 
 export function ProjectsPopup({ windows, projects }: { windows: Windows; projects: Projects }) {

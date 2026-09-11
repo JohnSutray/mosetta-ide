@@ -1,4 +1,4 @@
-import { command, type CallContext, type Ide } from '@ide/api/server';
+import { command, type CallContext, type Ide } from '@mosetta/ide-api/server';
 import { Browse } from './browse.js';
 import { Recent } from './recent.js';
 import type { DirSuggestion, RecentProject } from './types.js';

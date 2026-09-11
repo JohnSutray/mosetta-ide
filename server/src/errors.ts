@@ -1,4 +1,4 @@
-import { RpcErrorCode, type RpcErrorBody } from '@ide/protocol';
+import { RpcErrorCode, type RpcErrorBody } from '@mosetta/ide-protocol';
 
 export class RpcError extends Error {
   constructor(

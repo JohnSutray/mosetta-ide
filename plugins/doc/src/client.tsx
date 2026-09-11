@@ -1,5 +1,5 @@
-import { activate } from '@ide/api/client';
-import type { Ide } from '@ide/api/client';
+import { activate } from '@mosetta/ide-api/client';
+import type { Ide } from '@mosetta/ide-api/client';
 import { effect } from '@preact/signals';
 import { Doc } from './doc.js';
 import { EditorFocus } from './focus.js';

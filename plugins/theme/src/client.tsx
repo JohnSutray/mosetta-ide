@@ -1,5 +1,5 @@
-import { activate } from '@ide/api/client';
-import type { Ide } from '@ide/api/client';
+import { activate } from '@mosetta/ide-api/client';
+import type { Ide } from '@mosetta/ide-api/client';
 import { CODE_FONT, DARCULA, type Palette } from './palette.js';
 import { STYLE } from './style.js';
 

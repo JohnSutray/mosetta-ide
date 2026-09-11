@@ -1,13 +1,13 @@
 import { effect, signal } from '@preact/signals';
-import { activate, configSection, remote, stub, type Ide } from '@ide/api/client';
-import UiPlugin, { ChoicePopup, PickPopup } from '@ide/ui';
+import { activate, configSection, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import UiPlugin, { ChoicePopup, PickPopup } from '@mosetta/ide-plugin-ui';
 import type { PackageManagerInfo } from './managers.js';
-import type { Opener } from '@ide/plugin-search';
+import type { Opener } from '@mosetta/ide-plugin-search';
 import { NpmIcon } from './icon.js';
 import { TOOLS_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
 import { scriptId } from './script-id.js';
-import TerminalPlugin from '@ide/plugin-terminal';
+import TerminalPlugin from '@mosetta/ide-plugin-terminal';
 import type { RunPlan } from './server.js';
 
 export interface ScriptInfo {

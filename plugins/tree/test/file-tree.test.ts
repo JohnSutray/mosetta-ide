@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FakeHost, type FakeSurface } from '@ide/api/testing';
-import type { DirEntry } from '@ide/api/client';
+import { FakeHost, type FakeSurface } from '@mosetta/ide-api/testing';
+import type { DirEntry } from '@mosetta/ide-api/client';
 import TreePlugin from '../src/client.js';
-import DocPlugin from '@ide/plugin-doc';
-import UiPlugin from '@ide/ui';
+import DocPlugin from '@mosetta/ide-plugin-doc';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 let surface: FakeSurface;
 let docs: DocPlugin;
@@ -23,13 +23,13 @@ async function settle(): Promise<void> {
 beforeEach(async () => {
   (globalThis as Record<string, unknown>)['document'] ??= { addEventListener: () => {} };
   const host = new FakeHost();
-  host.add(UiPlugin, '@ide/ui');
+  host.add(UiPlugin, '@mosetta/ide-plugin-ui');
   (globalThis as Record<string, unknown>)['document'] ??= {};
-  docs = host.add(DocPlugin, '@ide/plugin-doc');
+  docs = host.add(DocPlugin, '@mosetta/ide-plugin-doc');
   surface = host.surface;
   surface.dirs.set('', [entry('src', 'dir'), entry('README.md')]);
   surface.dirs.set('src', [entry('src/a.ts')]);
-  plugin = host.add(TreePlugin, '@ide/plugin-tree');
+  plugin = host.add(TreePlugin, '@mosetta/ide-plugin-tree');
   await host.start();
 });
 

@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-notifications",
+  "name": "@mosetta/ide-plugin-notifications",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "strings": "src/en.json"
   },
   "dependencies": {
-    "@ide/api": "workspace:*"
+    "@mosetta/ide-api": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

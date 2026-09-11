@@ -1,4 +1,4 @@
-import { useIde, useT } from '@ide/api/client';
+import { useIde, useT } from '@mosetta/ide-api/client';
 import type { Windows } from './windows/windows.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 

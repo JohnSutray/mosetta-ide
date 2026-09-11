@@ -1,4 +1,4 @@
-import { activate, command, type CallContext, type Ide, type Project } from '@ide/api/server';
+import { activate, command, type CallContext, type Ide, type Project } from '@mosetta/ide-api/server';
 import { FindProviders } from './finds.js';
 import { SearchIndex } from './index.js';
 import { INDEX_DEFAULTS } from './settings.js';

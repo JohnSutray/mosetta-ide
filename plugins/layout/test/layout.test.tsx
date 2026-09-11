@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FakeHost, nodes, of } from '@ide/api/testing';
-import UiPlugin, { Resizer } from '@ide/ui';
+import { FakeHost, nodes, of } from '@mosetta/ide-api/testing';
+import UiPlugin, { Resizer } from '@mosetta/ide-plugin-ui';
 import Layout from '../src/client.js';
 import type { PanelWish } from '../src/schema.js';
 
-const NAME = '@ide/plugin-layout';
+const NAME = '@mosetta/ide-plugin-layout';
 
 (globalThis as { window?: object }).window = { innerWidth: 1200, innerHeight: 800, addEventListener: () => {} };
 
@@ -36,7 +36,7 @@ describe('раскладка', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
-    host.add(UiPlugin, '@ide/ui');
+    host.add(UiPlugin, '@mosetta/ide-plugin-ui');
     host.add(Layout, NAME);
     await host.start();
     main = host.registry.all<() => unknown>('chrome.main')[0]!;
@@ -64,7 +64,7 @@ describe('раскладка', () => {
     host.registry.add('panel', wish('tree', 'left'), 'core');
     host.registry.add('panel', wish('git', 'left'), 'core');
     host.registry.add('panel', wish('terminal', 'right'), 'core');
-    host.registry.add('panel', wish('problems', 'right'), '@ide/plugin-problems');
+    host.registry.add('panel', wish('problems', 'right'), '@mosetta/ide-plugin-problems');
     expect(shape(main())).toEqual([
       'tree', '|tree', 'git', '|git',
       '|terminal', 'terminal', '|problems', 'problems',
@@ -73,7 +73,7 @@ describe('раскладка', () => {
 
   it('порядок внутри стороны — порядок пожеланий', () => {
     host.registry.add('panel', wish('terminal', 'right'), 'core');
-    host.registry.add('panel', wish('problems', 'right'), '@ide/plugin-problems');
+    host.registry.add('panel', wish('problems', 'right'), '@mosetta/ide-plugin-problems');
     expect(shape(main()).filter((one) => !one.startsWith('|'))).toEqual([
       'terminal',
       'problems',
@@ -160,9 +160,9 @@ describe('раскладка', () => {
   });
 
   it('пожелание не той формы отвергается вместе с именем автора', () => {
-    host.registry.add('panel', { id: 'x', title: 'panel.x', side: 'left' }, '@ide/plugin-чей-то');
+    host.registry.add('panel', { id: 'x', title: 'panel.x', side: 'left' }, '@mosetta/ide-plugin-чей-то');
     expect(host.complaints).toHaveLength(1);
-    expect(host.complaints[0]).toContain('@ide/plugin-чей-то');
+    expect(host.complaints[0]).toContain('@mosetta/ide-plugin-чей-то');
     expect(host.complaints[0]).toContain('«open»');
   });
 

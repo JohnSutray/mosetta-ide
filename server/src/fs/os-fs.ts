@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Stats } from 'node:fs';
-import type { DirEntry, EntryKind, FsSettings } from '@ide/protocol';
-import { RpcErrorCode } from '@ide/protocol';
+import type { DirEntry, EntryKind, FsSettings } from '@mosetta/ide-protocol';
+import { RpcErrorCode } from '@mosetta/ide-protocol';
 import { RpcError } from '../errors.js';
 import { paths } from '../workspace/paths.js';
 

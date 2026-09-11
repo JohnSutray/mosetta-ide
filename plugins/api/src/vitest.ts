@@ -2,7 +2,7 @@ export function pluginTests(): Record<string, unknown> {
   return {
     resolve: {
       alias: {
-        '@ide/api/client': '@ide/api/testing',
+        '@mosetta/ide-api/client': '@mosetta/ide-api/testing',
       },
     },
     esbuild: {
@@ -11,7 +11,7 @@ export function pluginTests(): Record<string, unknown> {
     },
     test: {
       environment: 'node',
-      setupFiles: ['@ide/api/browser-globals'],
+      setupFiles: ['@mosetta/ide-api/browser-globals'],
       include: ['test/**/*.test.ts', 'test/**/*.test.tsx'],
     },
   };

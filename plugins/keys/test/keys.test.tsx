@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { Windows } from '@ide/ui';
-import { FakeHost, nodes, of } from '@ide/api/testing';
-import KeymapPlugin from '@ide/plugin-keymap';
+import type { Windows } from '@mosetta/ide-plugin-ui';
+import { FakeHost, nodes, of } from '@mosetta/ide-api/testing';
+import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import KeysPlugin from '../src/client.js';
 import { KeysSheet } from '../src/popup.js';
-import UiPlugin from '@ide/ui';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 let keys: KeymapPlugin['keys'];
 let windows: Windows;
@@ -12,9 +12,9 @@ let t: (key: string, params?: Record<string, string | number>) => string;
 
 async function raise() {
   const host = new FakeHost();
-  host.add(UiPlugin, '@ide/ui');
-  keys = host.add(KeymapPlugin, '@ide/plugin-keymap').keys;
-  const plugin = host.add(KeysPlugin, '@ide/plugin-keys');
+  host.add(UiPlugin, '@mosetta/ide-plugin-ui');
+  keys = host.add(KeymapPlugin, '@mosetta/ide-plugin-keymap').keys;
+  const plugin = host.add(KeysPlugin, '@mosetta/ide-plugin-keys');
   t = host.surface.t;
   windows = host.plugin(UiPlugin).windows;
   await host.start();

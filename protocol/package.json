@@ -1,5 +1,5 @@
 {
-  "name": "@ide/protocol",
+  "name": "@mosetta/ide-protocol",
   "version": "0.0.0",
   "private": true,
   "type": "module",

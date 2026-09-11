@@ -12,7 +12,7 @@ import {
   type Result,
   type RpcErrorBody,
   type ServerFrame,
-} from '@ide/protocol';
+} from '@mosetta/ide-protocol';
 
 export class RpcFailure extends Error {
   constructor(readonly body: RpcErrorBody) {

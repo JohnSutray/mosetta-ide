@@ -1,4 +1,4 @@
-import { activate, command, type CallContext, type Ide, type Project, type ProjectResource } from '@ide/api/server';
+import { activate, command, type CallContext, type Ide, type Project, type ProjectResource } from '@mosetta/ide-api/server';
 import { FsConflicts } from './conflicts.js';
 import { MergeSessions } from './sessions.js';
 import type { MergeSession, MergeSupply } from './types.js';

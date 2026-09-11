@@ -1,4 +1,4 @@
-import type { Settings } from '@ide/protocol';
+import type { Settings } from '@mosetta/ide-protocol';
 
 export const DEFAULT_SETTINGS_FALLBACK: Settings = {
   plugins: { enabled: [] },

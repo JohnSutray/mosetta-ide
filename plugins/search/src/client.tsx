@@ -1,6 +1,6 @@
-import CodePlugin from '@ide/plugin-code';
-import { activate, configSection, registry, remote, stub } from '@ide/api/client';
-import type { Ide } from '@ide/api/client';
+import CodePlugin from '@mosetta/ide-plugin-code';
+import { activate, configSection, registry, remote, stub } from '@mosetta/ide-api/client';
+import type { Ide } from '@mosetta/ide-api/client';
 import { SearchIcon } from './icons.js';
 import { SearchEverywhere } from './popup.js';
 import { Search, type SearchRemote } from './state.js';
@@ -10,8 +10,8 @@ import { OPENER_SCHEMA, type IndexHit, type IndexKind, type Opener } from './typ
 import { layout } from './layout.js';
 import { matcher } from './matcher.js';
 import { textIndex } from './text.js';
-import DocPlugin from '@ide/plugin-doc';
-import UiPlugin from '@ide/ui';
+import DocPlugin from '@mosetta/ide-plugin-doc';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 export type { Found, IndexHit, IndexKind, Opener, SearchStats } from './types.js';
 export { layout, Layout } from './layout.js';

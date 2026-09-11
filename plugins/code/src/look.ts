@@ -2,7 +2,7 @@ import { EditorView } from '@codemirror/view';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import type { Extension } from '@codemirror/state';
 import { tagHighlighter, tags as t, type Highlighter } from '@lezer/highlight';
-import type { Palette } from '@ide/plugin-theme';
+import type { Palette } from '@mosetta/ide-plugin-theme';
 
 export interface ThemeSource {
   readonly palette: Palette;

@@ -1,5 +1,5 @@
-import { RpcErrorCode, type DocState } from '@ide/protocol';
-import type { DocWire } from '@ide/api/client';
+import { RpcErrorCode, type DocState } from '@mosetta/ide-protocol';
+import type { DocWire } from '@mosetta/ide-api/client';
 
 export class DocSync {
   private path: string | null = null;

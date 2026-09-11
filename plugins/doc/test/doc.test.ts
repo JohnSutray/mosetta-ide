@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FakeHost } from '@ide/api/testing';
-import { RpcErrorCode } from '@ide/protocol';
+import { FakeHost } from '@mosetta/ide-api/testing';
+import { RpcErrorCode } from '@mosetta/ide-protocol';
 import DocPlugin from '../src/client.js';
 
-const NAME = '@ide/plugin-doc';
+const NAME = '@mosetta/ide-plugin-doc';
 const PROJECT = { id: 'p1', root: '/один', name: 'один' } as never;
 const OTHER = { id: 'p2', root: '/два', name: 'два' } as never;
 

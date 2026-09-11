@@ -1,4 +1,4 @@
-import type { Layout } from '@ide/plugin-search';
+import type { Layout } from '@mosetta/ide-plugin-search';
 import { signal } from '@preact/signals';
 import type { TreeSelection } from './state.js';
 

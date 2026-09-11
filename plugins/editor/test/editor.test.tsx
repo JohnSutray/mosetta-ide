@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { DocState } from '@ide/protocol';
-import { FakeHost, nodes, of } from '@ide/api/testing';
-import LspPlugin from '@ide/plugin-lsp';
-import DocPlugin from '@ide/plugin-doc';
-import CodePlugin from '@ide/plugin-code';
-import ThemePlugin from '@ide/plugin-theme';
+import type { DocState } from '@mosetta/ide-protocol';
+import { FakeHost, nodes, of } from '@mosetta/ide-api/testing';
+import LspPlugin from '@mosetta/ide-plugin-lsp';
+import DocPlugin from '@mosetta/ide-plugin-doc';
+import CodePlugin from '@mosetta/ide-plugin-code';
+import ThemePlugin from '@mosetta/ide-plugin-theme';
 import Editor from '../src/client.js';
 
-const NAME = '@ide/plugin-editor';
+const NAME = '@mosetta/ide-plugin-editor';
 
 function doc(path: string, extra: Partial<DocState> = {}): DocState {
   return { path, text: 'привет', version: 1, truncated: false, ...extra } as DocState;
@@ -19,10 +19,10 @@ describe('редактор', () => {
   beforeEach(async () => {
     host = new FakeHost();
     (globalThis as Record<string, unknown>)['document'] ??= {};
-    host.add(DocPlugin, '@ide/plugin-doc');
-    host.add(LspPlugin, '@ide/plugin-lsp');
-    host.add(ThemePlugin, '@ide/plugin-theme');
-    host.add(CodePlugin, '@ide/plugin-code');
+    host.add(DocPlugin, '@mosetta/ide-plugin-doc');
+    host.add(LspPlugin, '@mosetta/ide-plugin-lsp');
+    host.add(ThemePlugin, '@mosetta/ide-plugin-theme');
+    host.add(CodePlugin, '@mosetta/ide-plugin-code');
     host.add(Editor, NAME);
     await host.start();
   });
@@ -135,7 +135,7 @@ describe('редактор', () => {
     host.registry.add(
       'editor.empty',
       { id: 'sheep', view: () => <i data-id="sheep" /> },
-      '@ide/plugin-sheep',
+      '@mosetta/ide-plugin-sheep',
     );
     expect(nodes(body()).some((one) => one.props['data-id'] === 'sheep')).toBe(true);
   });

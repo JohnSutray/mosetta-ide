@@ -6,11 +6,11 @@ import { BORDER_DEBT } from './borders.debt.js';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
-const CORE = new Set(['@ide/protocol', '@ide/api', '@ide/client', '@ide/server']);
+const CORE = new Set(['@mosetta/ide-protocol', '@mosetta/ide-api', '@mosetta/ide-client', '@mosetta/ide-server']);
 
 const LANGUAGE: Record<string, readonly string[]> = {
-  '@ide/api': ['activate', 'command', 'configSection', 'IdeProvider', 'registry', 'remote', 'stub', 'useIde', 'useT'],
-  '@ide/protocol': ['RpcErrorCode'],
+  '@mosetta/ide-api': ['activate', 'command', 'configSection', 'IdeProvider', 'registry', 'remote', 'stub', 'useIde', 'useT'],
+  '@mosetta/ide-protocol': ['RpcErrorCode'],
 };
 
 interface Pkg {
@@ -78,10 +78,10 @@ function scan(): string[] {
     for (const file of sources(pkg.dir)) {
       const text = fs.readFileSync(file, 'utf8');
       const uses: Array<[string, string]> = [];
-      for (const [, spec, from] of text.matchAll(/^(?:import|export)\s+([^;]*?)\s+from\s+'(@ide\/[^']+)'/gm)) {
+      for (const [, spec, from] of text.matchAll(/^(?:import|export)\s+([^;]*?)\s+from\s+'(@mosetta\/ide-[^']+)'/gm)) {
         for (const name of taken(spec!)) uses.push([from!, name]);
       }
-      for (const [, from] of text.matchAll(/^import\s+'(@ide\/[^']+)'/gm)) uses.push([from!, '(import)']);
+      for (const [, from] of text.matchAll(/^import\s+'(@mosetta\/ide-[^']+)'/gm)) uses.push([from!, '(import)']);
       for (const [from, name] of uses) {
         const source = byName.get(from.split('/').slice(0, 2).join('/'));
         if (!source || source.name === pkg.name) continue;

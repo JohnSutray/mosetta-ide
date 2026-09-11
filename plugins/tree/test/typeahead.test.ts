@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { DirEntry } from '@ide/api/client';
+import type { DirEntry } from '@mosetta/ide-api/client';
 import { FileTree } from '../src/file-tree.js';
 import { TreeSelection } from '../src/state.js';
 import { TreeTypeahead } from '../src/typeahead.js';
-import { layout } from '@ide/plugin-search';
+import { layout } from '@mosetta/ide-plugin-search';
 
 function entry(path: string, kind: 'file' | 'dir' = 'file'): DirEntry {
   return { path, name: path.split('/').pop() ?? path, kind } as DirEntry;

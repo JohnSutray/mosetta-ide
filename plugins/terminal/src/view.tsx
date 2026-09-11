@@ -1,6 +1,6 @@
-import { useIde, useT, type IdeServices } from '@ide/api/client';
-import { EDITOR_DEFAULTS } from '@ide/plugin-code';
-import type { Palette } from '@ide/plugin-theme';
+import { useIde, useT, type IdeServices } from '@mosetta/ide-api/client';
+import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
+import type { Palette } from '@mosetta/ide-plugin-theme';
 import { TERMINAL_DEFAULTS } from './settings.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { Terminal } from '@xterm/xterm';

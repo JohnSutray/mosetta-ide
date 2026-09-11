@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-rerun",
+  "name": "@mosetta/ide-plugin-rerun",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,16 +13,16 @@
       "scripts.rerun": "Перезапустить последний скрипт"
     },
     "needs": [
-      "@ide/plugin-npm-scripts"
+      "@mosetta/ide-plugin-npm-scripts"
     ]
   },
   "dependencies": {
-    "@ide/api": "workspace:*",
-    "@ide/plugin-npm-scripts": "workspace:*"
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-plugin-npm-scripts": "workspace:*"
   },
   "devDependencies": {
     "preact": "^10.25.3",
     "vitest": "^2.1.9",
-    "@ide/plugin-terminal": "workspace:*"
+    "@mosetta/ide-plugin-terminal": "workspace:*"
   }
 }

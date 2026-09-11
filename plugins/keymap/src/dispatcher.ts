@@ -1,8 +1,8 @@
 import type { KeysEcho } from './echo.js';
-import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
+import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@mosetta/ide-protocol';
 import { keyHost } from './host.js';
 import { reserved } from './reserved.js';
-import type { Mount } from '@ide/api/client';
+import type { Mount } from '@mosetta/ide-api/client';
 
 export type ContextResolver = () => readonly KeyContext[];
 

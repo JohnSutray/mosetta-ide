@@ -1,9 +1,9 @@
-import { useIde, useT } from '@ide/api/client';
+import { useIde, useT } from '@mosetta/ide-api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import type CodePlugin from '@ide/plugin-code';
-import { EDITOR_DEFAULTS } from '@ide/plugin-code';
-import { Popup, Resizer } from '@ide/ui';
-import type { Windows } from '@ide/ui';
+import type CodePlugin from '@mosetta/ide-plugin-code';
+import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
+import { Popup, Resizer } from '@mosetta/ide-plugin-ui';
+import type { Windows } from '@mosetta/ide-plugin-ui';
 import type { Symbols } from './state.js';
 
 const SIZE = { w: 620, h: 420 };

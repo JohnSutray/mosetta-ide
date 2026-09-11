@@ -1,5 +1,5 @@
-import { activate, type Ide } from '@ide/api/client';
-import NpmScripts from '@ide/plugin-npm-scripts';
+import { activate, type Ide } from '@mosetta/ide-api/client';
+import NpmScripts from '@mosetta/ide-plugin-npm-scripts';
 
 export default class Rerun {
   private last: string | null = null;

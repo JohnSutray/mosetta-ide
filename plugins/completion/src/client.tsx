@@ -1,6 +1,6 @@
-import { activate, configSection, IdeProvider, registry, remote, stub, type Ide } from '@ide/api/client';
-import CodePlugin from '@ide/plugin-code';
-import LspPlugin from '@ide/plugin-lsp';
+import { activate, configSection, IdeProvider, registry, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import CodePlugin from '@mosetta/ide-plugin-code';
+import LspPlugin from '@mosetta/ide-plugin-lsp';
 import { computed, effect, signal } from '@preact/signals';
 import { render } from 'preact';
 import { CompletionBridge } from './bridge.js';
@@ -15,8 +15,8 @@ import { LspCompletions } from './sources/lsp.js';
 import { Postfix } from './sources/postfix.js';
 import { STYLE } from './style.js';
 import { SOURCE_SCHEMA, type Source } from './types.js';
-import DocPlugin from '@ide/plugin-doc';
-import SearchPlugin from '@ide/plugin-search';
+import DocPlugin from '@mosetta/ide-plugin-doc';
+import SearchPlugin from '@mosetta/ide-plugin-search';
 
 export type { Answer, Ask, Details, Item, ItemKind, Source } from './types.js';
 

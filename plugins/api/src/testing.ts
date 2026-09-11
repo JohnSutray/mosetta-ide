@@ -8,7 +8,7 @@ import type {
   Settings,
   WorkspaceInfo,
   SettingValue,
-} from '@ide/protocol';
+} from '@mosetta/ide-protocol';
 import { attach, hooksOf, registriesOf, sectionsOf } from './client.js';
 import { sectionOf } from './section.js';
 import type {

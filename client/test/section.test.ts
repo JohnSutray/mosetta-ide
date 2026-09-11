@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sectionOf } from '@ide/api/section';
+import { sectionOf } from '@mosetta/ide-api/section';
 
 describe('раздел настроек', () => {
   const defaults = { fontSize: 13, ligatures: false, args: [] as string[] };

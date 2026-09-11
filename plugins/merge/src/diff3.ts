@@ -1,4 +1,4 @@
-import type { LineDiff, Step } from '@ide/plugin-code';
+import type { LineDiff, Step } from '@mosetta/ide-plugin-code';
 
 export type RegionKind =
   | 'same'

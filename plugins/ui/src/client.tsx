@@ -1,5 +1,5 @@
-import { activate, registry } from '@ide/api/client';
-import type { Ide } from '@ide/api/client';
+import { activate, registry } from '@mosetta/ide-api/client';
+import type { Ide } from '@mosetta/ide-api/client';
 import { Tip } from './tip.js';
 import { STYLE } from './style.js';
 import { fuzzy } from './fuzzy.js';

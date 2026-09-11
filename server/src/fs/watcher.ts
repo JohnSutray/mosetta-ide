@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { FsSettings } from '@ide/protocol';
+import type { FsSettings } from '@mosetta/ide-protocol';
 import type { Logger } from '../log.js';
 import { disk } from './os-fs.js';
 import { paths } from '../workspace/paths.js';

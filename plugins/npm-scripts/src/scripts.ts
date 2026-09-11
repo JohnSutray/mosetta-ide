@@ -1,4 +1,4 @@
-import type { FindProvider, Found } from '@ide/plugin-search/server';
+import type { FindProvider, Found } from '@mosetta/ide-plugin-search/server';
 
 export class ScriptsInPackageJson implements FindProvider {
   readonly kind = 'npm';

@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-code",
+  "name": "@mosetta/ide-plugin-code",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,9 +14,9 @@
     "shares": ["EDITOR_DEFAULTS"]
   },
   "dependencies": {
-    "@ide/api": "workspace:*",
-    "@ide/plugin-theme": "workspace:*",
-    "@ide/protocol": "workspace:*"
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-plugin-theme": "workspace:*",
+    "@mosetta/ide-protocol": "workspace:*"
   },
   "peerDependencies": {
     "@codemirror/commands": "^6.7.1",

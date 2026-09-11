@@ -1,4 +1,4 @@
-import { InputMechanics } from '@ide/plugin-code';
+import { InputMechanics } from '@mosetta/ide-plugin-code';
 import { reserved } from '../src/reserved.js';
 import { describe, expect, it } from 'vitest';
 import { keyRules } from '../src/dispatcher.js';

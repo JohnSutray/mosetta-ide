@@ -1,7 +1,7 @@
-import type { RegistryHandle } from '@ide/api/client';
+import type { RegistryHandle } from '@mosetta/ide-api/client';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
 import type { IndexHit, IndexKind, Opener } from './types.js';
-import type DocPlugin from '@ide/plugin-doc';
+import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export interface SearchRemote {
   find(query: string, limit?: number, kinds?: IndexKind[]): Promise<IndexHit[]>;

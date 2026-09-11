@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import type { ConfigBundle, Keymap, Settings } from '@ide/protocol';
+import type { ConfigBundle, Keymap, Settings } from '@mosetta/ide-protocol';
 
 export class Config {
   readonly settings = signal<Settings | null>(null);

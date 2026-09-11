@@ -1,4 +1,4 @@
-import { useT } from '@ide/api/client';
+import { useT } from '@mosetta/ide-api/client';
 import type { Size } from './windows/geometry.js';
 import type { Windows } from './windows/windows.js';
 import { Fragment } from 'preact';

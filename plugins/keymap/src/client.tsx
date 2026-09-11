@@ -1,6 +1,6 @@
-import { activate, registry } from '@ide/api/client';
-import type { Ide } from '@ide/api/client';
-import type { KeyBinding, KeyContext, KeyHost, KeyOs, KeyScope } from '@ide/protocol';
+import { activate, registry } from '@mosetta/ide-api/client';
+import type { Ide } from '@mosetta/ide-api/client';
+import type { KeyBinding, KeyContext, KeyHost, KeyOs, KeyScope } from '@mosetta/ide-protocol';
 import { effect } from '@preact/signals';
 import { keyContexts } from './context.js';
 import { Dispatcher, keyRules } from './dispatcher.js';

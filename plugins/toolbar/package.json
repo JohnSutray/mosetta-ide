@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-toolbar",
+  "name": "@mosetta/ide-plugin-toolbar",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,17 +14,17 @@
     "strings": "src/en.json"
   },
   "dependencies": {
-    "@ide/api": "workspace:*",
-    "@ide/plugin-keymap": "workspace:*",
-    "@ide/ui": "workspace:*"
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-plugin-keymap": "workspace:*",
+    "@mosetta/ide-plugin-ui": "workspace:*"
   },
   "peerDependencies": {
-    "@ide/protocol": "workspace:*",
+    "@mosetta/ide-protocol": "workspace:*",
     "preact": "^10.25.3"
   },
   "devDependencies": {
     "preact": "^10.25.3",
     "vitest": "^2.1.9",
-    "@ide/ui": "workspace:*"
+    "@mosetta/ide-plugin-ui": "workspace:*"
   }
 }

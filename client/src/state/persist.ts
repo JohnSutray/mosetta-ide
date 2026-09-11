@@ -39,6 +39,26 @@ export class Memory {
     }
   }
 
+  migrate(rename: (key: string) => string | null): void {
+    for (const store of [this.tab(), this.machine()]) {
+      if (!store) continue;
+      try {
+        const keys: string[] = [];
+        for (let i = 0; i < store.length; i += 1) {
+          const full = store.key(i);
+          if (full?.startsWith(this.prefix)) keys.push(full);
+        }
+        for (const full of keys) {
+          const next = rename(full.slice(this.prefix.length));
+          if (next === null) continue;
+          const value = store.getItem(full);
+          if (value !== null && store.getItem(this.prefix + next) === null) store.setItem(this.prefix + next, value);
+          store.removeItem(full);
+        }
+      } catch {}
+    }
+  }
+
   signal<T>(key: string, initial: T, scope: Scope = 'both'): Signal<T> {
     const sig = signal<T>(this.recall(key, initial));
     sig.subscribe((value) => this.keep(key, value, scope));

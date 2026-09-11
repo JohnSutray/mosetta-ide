@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { EditorSelection, EditorState } from '@codemirror/state';
-import { FakeHost } from '@ide/api/testing';
-import DocPlugin from '@ide/plugin-doc';
-import LspPlugin from '@ide/plugin-lsp';
-import Editor from '@ide/plugin-editor';
+import { FakeHost } from '@mosetta/ide-api/testing';
+import DocPlugin from '@mosetta/ide-plugin-doc';
+import LspPlugin from '@mosetta/ide-plugin-lsp';
+import Editor from '@mosetta/ide-plugin-editor';
 import FindPlugin from '../src/client.js';
 import { FindState } from '../src/find.js';
-import UiPlugin from '@ide/ui';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
-const NAME = '@ide/plugin-find';
+const NAME = '@mosetta/ide-plugin-find';
 
 function at(doc: string, from: number, to: number): EditorState {
   return EditorState.create({ doc, selection: EditorSelection.single(from, to) });
@@ -52,10 +52,10 @@ describe('плагин поиска', () => {
   async function up() {
     (globalThis as Record<string, unknown>)['document'] ??= {};
     const host = new FakeHost();
-    host.add(UiPlugin, '@ide/ui');
-    host.add(DocPlugin, '@ide/plugin-doc');
-    host.add(LspPlugin, '@ide/plugin-lsp');
-    host.add(Editor, '@ide/plugin-editor');
+    host.add(UiPlugin, '@mosetta/ide-plugin-ui');
+    host.add(DocPlugin, '@mosetta/ide-plugin-doc');
+    host.add(LspPlugin, '@mosetta/ide-plugin-lsp');
+    host.add(Editor, '@mosetta/ide-plugin-editor');
     const plugin = host.add(FindPlugin, NAME);
     await host.start();
     return { host, plugin };

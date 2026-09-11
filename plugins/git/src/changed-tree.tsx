@@ -1,6 +1,6 @@
-import { useT } from '@ide/api/client';
+import { useT } from '@mosetta/ide-api/client';
 import type { GitChange } from './types.js';
-import { DirIcon, FileIcon } from '@ide/ui';
+import { DirIcon, FileIcon } from '@mosetta/ide-plugin-ui';
 
 interface Node {
   name: string;

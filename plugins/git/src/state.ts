@@ -1,6 +1,6 @@
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
-import type { Ide, Mount } from '@ide/api/client';
-import type { Fuzzy, FuzzyHit } from '@ide/ui';
+import type { Ide, Mount } from '@mosetta/ide-api/client';
+import type { Fuzzy, FuzzyHit } from '@mosetta/ide-plugin-ui';
 import type {
   GitAction,
   GitBranch,

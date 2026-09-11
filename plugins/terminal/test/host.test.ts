@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import os from 'node:os';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { ProcessHandle, Project, ProjectMemory, ProjectResource } from '@ide/api/server';
+import type { ProcessHandle, Project, ProjectMemory, ProjectResource } from '@mosetta/ide-api/server';
 import { TerminalHost } from '../src/host.js';
 
 class FakeProject implements Project {

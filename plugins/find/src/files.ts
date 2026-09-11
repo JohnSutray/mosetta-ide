@@ -1,6 +1,6 @@
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
 import type { FileHit, GrepResult } from './grep.js';
-import type DocPlugin from '@ide/plugin-doc';
+import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export type FilesMode = 'find' | 'replace';
 export type FilesField = 'query' | 'replace' | 'mask';

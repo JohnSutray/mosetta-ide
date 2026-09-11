@@ -18,18 +18,18 @@ import {
   undo,
 } from '@codemirror/commands';
 import { computed, effect, signal, type ReadonlySignal, type Signal } from '@preact/signals';
-import { activate, configSection, registry, type HunkBox, type Ide } from '@ide/api/client';
-import LspPlugin from '@ide/plugin-lsp';
-import CodePlugin, { EDITOR_DEFAULTS } from '@ide/plugin-code';
-import type { Hunk } from '@ide/plugin-code';
+import { activate, configSection, registry, type HunkBox, type Ide } from '@mosetta/ide-api/client';
+import LspPlugin from '@mosetta/ide-plugin-lsp';
+import CodePlugin, { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
+import type { Hunk } from '@mosetta/ide-plugin-code';
 import { GitMarks } from './git-marks.js';
 import { EMPTY_SCHEMA, EXTENSION_SCHEMA, type EditorExtension, type EmptyView } from './schema.js';
 import { STYLE } from './style.js';
 import { EditorIcon } from './icon.js';
 import { CodeEditor } from './view.js';
 import { DivergedBadge } from './diverged.js';
-import DocPlugin from '@ide/plugin-doc';
-import KeymapPlugin from '@ide/plugin-keymap';
+import DocPlugin from '@mosetta/ide-plugin-doc';
+import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 
 export interface SymbolSpot {
   line: number;

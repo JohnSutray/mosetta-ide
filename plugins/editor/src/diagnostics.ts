@@ -1,6 +1,6 @@
 import { StateEffect, StateField, type EditorState, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, type DecorationSet } from '@codemirror/view';
-import type { Diagnostic, Severity } from '@ide/plugin-lsp';
+import type { Diagnostic, Severity } from '@mosetta/ide-plugin-lsp';
 
 export const setDiagnostics = StateEffect.define<Diagnostic[]>();
 

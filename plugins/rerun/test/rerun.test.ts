@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FakeHost } from '@ide/api/testing';
-import NpmScripts, { type ScriptInfo } from '@ide/plugin-npm-scripts';
-import TerminalPlugin from '@ide/plugin-terminal';
+import { FakeHost } from '@mosetta/ide-api/testing';
+import NpmScripts, { type ScriptInfo } from '@mosetta/ide-plugin-npm-scripts';
+import TerminalPlugin from '@mosetta/ide-plugin-terminal';
 import Rerun from '../src/client.js';
 
-const NPM = '@ide/plugin-npm-scripts';
-const RERUN = '@ide/plugin-rerun';
+const NPM = '@mosetta/ide-plugin-npm-scripts';
+const RERUN = '@mosetta/ide-plugin-rerun';
 
 const SCRIPTS: ScriptInfo[] = [
   { id: 'core::dev', script: 'dev', command: 'vite', path: 'packages/core' },
@@ -22,8 +22,8 @@ describe('перезапуск последнего скрипта', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
-    host.add(TerminalPlugin, '@ide/plugin-terminal');
-    host.ide('@ide/plugin-terminal').answers.set('list', () => []);
+    host.add(TerminalPlugin, '@mosetta/ide-plugin-terminal');
+    host.ide('@mosetta/ide-plugin-terminal').answers.set('list', () => []);
     npm = host.add(NpmScripts, NPM);
     host.add(Rerun, RERUN);
     host.ide(NPM).answers.set('list', () => SCRIPTS);
@@ -32,7 +32,7 @@ describe('перезапуск последнего скрипта', () => {
       command: 'pnpm run dev',
       cwd: '.',
     }));
-    host.ide('@ide/plugin-terminal').answers.set('open', () => ({
+    host.ide('@mosetta/ide-plugin-terminal').answers.set('open', () => ({
       name: 'скрипт',
       title: 'скрипт',
       kind: 'script',

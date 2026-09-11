@@ -17,7 +17,7 @@ import {
   type ProjectResource,
   type RunAsk,
   type RunResult,
-} from '@ide/api/server';
+} from '@mosetta/ide-api/server';
 import GitServer from '../src/server.js';
 import { GitStatus } from '../src/status.js';
 import type { GitBranch, GitChange, GitState, PushPreview } from '../src/types.js';
@@ -99,7 +99,7 @@ const silent = { debug() {}, info() {}, warn() {}, error() {} };
 
 function fakeIde(projects: Array<(project: Project) => void>): Ide {
   return {
-    name: '@ide/plugin-git',
+    name: '@mosetta/ide-plugin-git',
     method: () => undefined,
     getPlugin: () => {
       throw new Error('соседей в этом тесте нет');

@@ -1,5 +1,5 @@
 import type { IndexSettings } from './settings.js';
-import type { Logger, ProjectMemory } from '@ide/api/server';
+import type { Logger, ProjectMemory } from '@mosetta/ide-api/server';
 import { matcher } from './matcher.js';
 import { layout } from './layout.js';
 import { Vocabulary, textIndex, type Indexed } from './text.js';

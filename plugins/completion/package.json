@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-completion",
+  "name": "@mosetta/ide-plugin-completion",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -25,11 +25,11 @@
     }
   },
   "dependencies": {
-    "@ide/api": "workspace:*",
-    "@ide/plugin-doc": "workspace:*",
-    "@ide/plugin-lsp": "workspace:*",
-    "@ide/plugin-search": "workspace:*",
-    "@ide/plugin-code": "workspace:*"
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-plugin-doc": "workspace:*",
+    "@mosetta/ide-plugin-lsp": "workspace:*",
+    "@mosetta/ide-plugin-search": "workspace:*",
+    "@mosetta/ide-plugin-code": "workspace:*"
   },
   "peerDependencies": {
     "@codemirror/language": "^6.10.8",

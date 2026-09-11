@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { DirEntry } from '@ide/api/client';
+import type { DirEntry } from '@mosetta/ide-api/client';
 import { FileTree } from '../src/file-tree.js';
 import { TreeSelection } from '../src/state.js';
 

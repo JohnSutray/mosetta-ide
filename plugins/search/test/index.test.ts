@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { MemoryDoc, MemoryEvent, ProjectMemory } from '@ide/api/server';
+import type { MemoryDoc, MemoryEvent, ProjectMemory } from '@mosetta/ide-api/server';
 import { FindProviders } from '../src/finds.js';
 import { SearchIndex } from '../src/index.js';
 import type { Found } from '../src/types.js';

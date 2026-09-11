@@ -11,6 +11,10 @@ function fakeStore() {
   const map = new Map<string, string>();
   return {
     map,
+    get length() {
+      return map.size;
+    },
+    key: (at: number) => [...map.keys()][at] ?? null,
     getItem: (key: string) => map.get(key) ?? null,
     setItem: (key: string, value: string) => void map.set(key, value),
     removeItem: (key: string) => void map.delete(key),
@@ -80,5 +84,18 @@ describe('память вкладки и память машины', () => {
     Reflect.deleteProperty(globalThis as object, 'localStorage');
     expect(() => keep('panel-widths', { tree: 1 })).not.toThrow();
     expect(recall('panel-widths', 'дефолт')).toBe('дефолт');
+  });
+});
+
+describe('перенос памяти со старых имён (ADR-0210)', () => {
+  it('ключ старого пакета переезжает, свежий не затирается', () => {
+    const mem = new Memory();
+    mem.keep('@ide/plugin-tree/panel.open', true);
+    mem.keep('@ide/ui/panel-widths', { tree: 340 });
+    mem.keep('@mosetta/ide-plugin-ui/panel-widths', { tree: 500 });
+    mem.migrate((key) => (key.startsWith('@ide/plugin-tree/') ? key.replace('@ide/', '@mosetta/ide-') : key.startsWith('@ide/ui/') ? key.replace('@ide/ui/', '@mosetta/ide-plugin-ui/') : null));
+    expect(mem.recall('@mosetta/ide-plugin-tree/panel.open', false)).toBe(true);
+    expect(mem.recall('@ide/plugin-tree/panel.open', 'нет')).toBe('нет');
+    expect(mem.recall('@mosetta/ide-plugin-ui/panel-widths', {})).toEqual({ tree: 500 });
   });
 });

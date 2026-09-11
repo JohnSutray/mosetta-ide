@@ -1,8 +1,8 @@
 import { TREE_DEFAULTS } from './settings.js';
-import type { Ide } from '@ide/api/client';
+import type { Ide } from '@mosetta/ide-api/client';
 import { computed } from '@preact/signals';
 import type { TreeSelection } from './state.js';
-import DocPlugin from '@ide/plugin-doc';
+import DocPlugin from '@mosetta/ide-plugin-doc';
 
 export class TreeFollow {
   readonly on = computed(() => this.ide.settingsOf('tree', TREE_DEFAULTS).value.followEditor);

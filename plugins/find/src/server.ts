@@ -1,4 +1,4 @@
-import { command, type CallContext, type Ide, type ProjectMemory } from '@ide/api/server';
+import { command, type CallContext, type Ide, type ProjectMemory } from '@mosetta/ide-api/server';
 import { Grep, type FileHit, type GrepOptions, type GrepResult } from './grep.js';
 import { FIND_DEFAULTS } from './settings.js';
 

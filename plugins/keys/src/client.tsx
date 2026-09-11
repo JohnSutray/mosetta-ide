@@ -1,11 +1,11 @@
-import { activate } from '@ide/api/client';
-import type { Ide } from '@ide/api/client';
+import { activate } from '@mosetta/ide-api/client';
+import type { Ide } from '@mosetta/ide-api/client';
 import { KeysIcon } from './icons.js';
 import { KeysPopup } from './popup.js';
 import { KeysWindow } from './state.js';
 import { STYLE } from './style.js';
-import KeymapPlugin from '@ide/plugin-keymap';
-import UiPlugin from '@ide/ui';
+import KeymapPlugin from '@mosetta/ide-plugin-keymap';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 export default class KeysPlugin {
   readonly window = new KeysWindow();

@@ -1,4 +1,4 @@
-import type { ApiMethod, EventName, EventPayload, Params, Result } from '@ide/protocol';
+import type { ApiMethod, EventName, EventPayload, Params, Result } from '@mosetta/ide-protocol';
 import type { PluginHost } from '../plugins/host.js';
 import type { ConfigStore } from '../config/store.js';
 import type { WorkspaceRegistry } from '../workspace/registry.js';

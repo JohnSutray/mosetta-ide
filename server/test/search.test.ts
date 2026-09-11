@@ -17,10 +17,10 @@ interface Stats {
   pending: number;
 }
 function search(c: TestClient, params: { query: string; limit?: number; kinds?: string[] }): Promise<Hit[]> {
-  return c.call('plugins.call', { name: '@ide/plugin-search', method: 'search', params }) as Promise<Hit[]>;
+  return c.call('plugins.call', { name: '@mosetta/ide-plugin-search', method: 'search', params }) as Promise<Hit[]>;
 }
 function indexStats(c: TestClient): Promise<Stats> {
-  return c.call('plugins.call', { name: '@ide/plugin-search', method: 'stats', params: null }) as Promise<Stats>;
+  return c.call('plugins.call', { name: '@mosetta/ide-plugin-search', method: 'stats', params: null }) as Promise<Stats>;
 }
 
 describe('поиск всего', () => {

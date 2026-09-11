@@ -1,7 +1,7 @@
 import { hoverTooltip, type Tooltip } from '@codemirror/view';
 import type { EditorState } from '@codemirror/state';
-import type { HoverInfo, Severity } from '@ide/plugin-lsp';
-import type CodePlugin from '@ide/plugin-code';
+import type { HoverInfo, Severity } from '@mosetta/ide-plugin-lsp';
+import type CodePlugin from '@mosetta/ide-plugin-code';
 import { diagnostics } from './diagnostics.js';
 
 export function lspHover(

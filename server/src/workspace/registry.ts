@@ -1,4 +1,4 @@
-import type { WorkspaceInfo } from '@ide/protocol';
+import type { WorkspaceInfo } from '@mosetta/ide-protocol';
 import type { ConfigStore } from '../config/store.js';
 import { disk } from '../fs/os-fs.js';
 import { RpcError } from '../errors.js';

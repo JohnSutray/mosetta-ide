@@ -1,4 +1,4 @@
-import type { Ide, RunResult } from '@ide/api/server';
+import type { Ide, RunResult } from '@mosetta/ide-api/server';
 
 export interface GitResult {
   ok: boolean;

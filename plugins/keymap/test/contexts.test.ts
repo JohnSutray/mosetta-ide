@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import type { Keymap } from '@ide/protocol';
+import type { Keymap } from '@mosetta/ide-protocol';
 
 const SRC = fileURLToPath(new URL('../../../client/src', import.meta.url));
 const PLUGINS = fileURLToPath(new URL('../..', import.meta.url));

@@ -1,4 +1,4 @@
-import type { KeyHost, KeyOs, KeyScope } from '@ide/protocol';
+import type { KeyHost, KeyOs, KeyScope } from '@mosetta/ide-protocol';
 
 const NAMES: Record<string, string> = {
   backquote: '`',

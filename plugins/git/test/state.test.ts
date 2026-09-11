@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { fuzzy } from '@ide/ui';
+import { fuzzy } from '@mosetta/ide-plugin-ui';
 import type { GitBranch, GitState } from '../src/types.js';
-import { FakeHost } from '@ide/api/testing';
+import { FakeHost } from '@mosetta/ide-api/testing';
 import { BranchesWindow, Git, type GitRemote } from '../src/state.js';
 
 new FakeHost();

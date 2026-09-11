@@ -1,5 +1,5 @@
-import CodePlugin from '@ide/plugin-code';
-import { activate, configSection, IdeProvider, remote, stub, type Ide } from '@ide/api/client';
+import CodePlugin from '@mosetta/ide-plugin-code';
+import { activate, configSection, IdeProvider, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import { search } from '@codemirror/search';
 import { ViewPlugin } from '@codemirror/view';
 import { computed } from '@preact/signals';
@@ -12,9 +12,9 @@ import type { GrepResult } from './grep.js';
 import { FIND_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
 import { FindFilesIcon } from './icons.js';
-import DocPlugin from '@ide/plugin-doc';
-import KeymapPlugin from '@ide/plugin-keymap';
-import UiPlugin from '@ide/ui';
+import DocPlugin from '@mosetta/ide-plugin-doc';
+import KeymapPlugin from '@mosetta/ide-plugin-keymap';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 export type { FileHit, GrepResult } from './grep.js';
 

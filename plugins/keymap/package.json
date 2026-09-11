@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-keymap",
+  "name": "@mosetta/ide-plugin-keymap",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -18,8 +18,8 @@
     }
   },
   "dependencies": {
-    "@ide/api": "workspace:*",
-    "@ide/protocol": "workspace:*"
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-protocol": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",
@@ -31,6 +31,6 @@
     "preact": "^10.25.3",
     "vitest": "^2.1.9",
     "@types/node": "^22.10.5",
-    "@ide/plugin-code": "workspace:*"
+    "@mosetta/ide-plugin-code": "workspace:*"
   }
 }

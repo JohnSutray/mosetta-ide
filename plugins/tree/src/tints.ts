@@ -1,4 +1,4 @@
-import type { RegistryHandle } from '@ide/api/client';
+import type { RegistryHandle } from '@mosetta/ide-api/client';
 
 export type TreeTint = 'modified' | 'added' | 'conflict';
 

@@ -1,5 +1,5 @@
 import path from 'node:path';
-import type { Ide, Project, ProjectResource } from '@ide/api/server';
+import type { Ide, Project, ProjectResource } from '@mosetta/ide-api/server';
 import { LspServer } from './lsp-server.js';
 import { LSP_DEFAULTS } from './settings.js';
 import { Toolchain } from './toolchain.js';

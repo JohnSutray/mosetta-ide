@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-problems",
+  "name": "@mosetta/ide-plugin-problems",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,12 +14,12 @@
     }
   },
   "dependencies": {
-    "@ide/api": "workspace:*",
-    "@ide/plugin-doc": "workspace:*",
-    "@ide/plugin-lsp": "workspace:*"
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-plugin-doc": "workspace:*",
+    "@mosetta/ide-plugin-lsp": "workspace:*"
   },
   "peerDependencies": {
-    "@ide/protocol": "workspace:*",
+    "@mosetta/ide-protocol": "workspace:*",
     "preact": "^10.25.3"
   },
   "devDependencies": {

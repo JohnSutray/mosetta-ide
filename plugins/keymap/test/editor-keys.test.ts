@@ -1,4 +1,4 @@
-import { InputMechanics } from '@ide/plugin-code';
+import { InputMechanics } from '@mosetta/ide-plugin-code';
 import { describe, expect, it } from 'vitest';
 import type { KeyBinding as CmBinding } from '@codemirror/view';
 import { WORLDS, inWorld, keymap } from './keymap-shared.js';

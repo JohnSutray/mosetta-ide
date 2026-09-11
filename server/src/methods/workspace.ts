@@ -1,4 +1,4 @@
-import type { WorkspaceInfo } from '@ide/protocol';
+import type { WorkspaceInfo } from '@mosetta/ide-protocol';
 import type { Handler } from '../rpc/context.js';
 import { RpcError } from '../errors.js';
 

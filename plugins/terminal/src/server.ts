@@ -1,4 +1,4 @@
-import { command, type CallContext, type Ide } from '@ide/api/server';
+import { command, type CallContext, type Ide } from '@mosetta/ide-api/server';
 import { TerminalHost } from './host.js';
 import { TERMINAL_DEFAULTS } from './settings.js';
 import { Shells } from './shells.js';

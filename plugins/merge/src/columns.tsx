@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { EditorState, StateEffect, StateField, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType, lineNumbers } from '@codemirror/view';
-import type CodePlugin from '@ide/plugin-code';
-import type { EditorSettings } from '@ide/plugin-code';
+import type CodePlugin from '@mosetta/ide-plugin-code';
+import type { EditorSettings } from '@mosetta/ide-plugin-code';
 import type { Choice, Diff3, Region } from './diff3.js';
 import { layout, type Lane, type LaneLayout } from './layout.js';
-import { useT } from '@ide/api/client';
+import { useT } from '@mosetta/ide-api/client';
 
 interface Props {
   path: string;

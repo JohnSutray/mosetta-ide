@@ -1,4 +1,4 @@
-import type { LogLevel, LogLine } from '@ide/protocol';
+import type { LogLevel, LogLine } from '@mosetta/ide-protocol';
 
 type Sink = (line: LogLine) => void;
 

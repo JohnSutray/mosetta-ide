@@ -1,9 +1,9 @@
-import type { Ide } from '@ide/api/client';
+import type { Ide } from '@mosetta/ide-api/client';
 import { batch, signal, type Signal } from '@preact/signals';
-import type { SymbolSite } from '@ide/plugin-lsp';
-import type { SymbolSpot } from '@ide/plugin-editor';
-import DocPlugin from '@ide/plugin-doc';
-import UiPlugin from '@ide/ui';
+import type { SymbolSite } from '@mosetta/ide-plugin-lsp';
+import type { SymbolSpot } from '@mosetta/ide-plugin-editor';
+import DocPlugin from '@mosetta/ide-plugin-doc';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 export type SymbolKind = 'definition' | 'usages';
 

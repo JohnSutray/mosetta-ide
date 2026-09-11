@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
-const MERGE = '@ide/plugin-merge';
+const MERGE = '@mosetta/ide-plugin-merge';
 interface Session {
   source: string;
   title: string;

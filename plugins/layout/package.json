@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-layout",
+  "name": "@mosetta/ide-plugin-layout",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,8 +14,8 @@
     "strings": "src/en.json"
   },
   "dependencies": {
-    "@ide/api": "workspace:*",
-    "@ide/ui": "workspace:*"
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-plugin-ui": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3"

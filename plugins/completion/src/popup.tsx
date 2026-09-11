@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from 'preact/hooks';
 import type { JSX } from 'preact';
-import { useT } from '@ide/api/client';
-import type CodePlugin from '@ide/plugin-code';
+import { useT } from '@mosetta/ide-api/client';
+import type CodePlugin from '@mosetta/ide-plugin-code';
 import type { Ranked } from './ranker.js';
 import type { CompletionSession } from './session.js';
 import type { ItemKind } from './types.js';

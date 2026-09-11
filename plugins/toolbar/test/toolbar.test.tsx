@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FakeHost, of, nodes } from '@ide/api/testing';
+import { FakeHost, of, nodes } from '@mosetta/ide-api/testing';
 import Toolbar from '../src/client.js';
-import KeymapPlugin from '@ide/plugin-keymap';
-import UiPlugin from '@ide/ui';
+import KeymapPlugin from '@mosetta/ide-plugin-keymap';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
-const NAME = '@ide/plugin-toolbar';
+const NAME = '@mosetta/ide-plugin-toolbar';
 
 function wish(id: string, extra: Record<string, unknown> = {}) {
   return {
@@ -28,8 +28,8 @@ describe('тулбар', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
-    host.add(UiPlugin, '@ide/ui');
-    host.add(KeymapPlugin, '@ide/plugin-keymap');
+    host.add(UiPlugin, '@mosetta/ide-plugin-ui');
+    host.add(KeymapPlugin, '@mosetta/ide-plugin-keymap');
     host.add(Toolbar, NAME);
     await host.start();
     top = host.registry.all<() => unknown>('chrome.top')[host.registry.authors('chrome.top').indexOf(NAME)]!;
@@ -140,9 +140,9 @@ describe('тулбар', () => {
   });
 
   it('запись не той формы отвергается вместе с именем автора', () => {
-    host.registry.add('toolbar.button', { id: 'tree', title: 'toolbar.tree' }, '@ide/plugin-чей-то');
+    host.registry.add('toolbar.button', { id: 'tree', title: 'toolbar.tree' }, '@mosetta/ide-plugin-чей-то');
     expect(host.complaints).toHaveLength(1);
-    expect(host.complaints[0]).toContain('@ide/plugin-чей-то');
+    expect(host.complaints[0]).toContain('@mosetta/ide-plugin-чей-то');
     expect(host.complaints[0]).toContain('toolbar.button');
     expect(host.complaints[0]).toContain('command');
   });

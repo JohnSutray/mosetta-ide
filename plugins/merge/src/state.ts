@@ -1,9 +1,9 @@
-import type { Ide } from '@ide/api/client';
-import CodePlugin from '@ide/plugin-code';
+import type { Ide } from '@mosetta/ide-api/client';
+import CodePlugin from '@mosetta/ide-plugin-code';
 import { Diff3, type Region, type Choice, type SideChoice } from './diff3.js';
 import { batch, computed, effect, signal, type ReadonlySignal, type Signal } from '@preact/signals';
 import type { MergeFile, MergeSession } from './types.js';
-import DocPlugin from '@ide/plugin-doc';
+import DocPlugin from '@mosetta/ide-plugin-doc';
 
 export interface MergeRemote {
   state(): Promise<MergeSession | null>;

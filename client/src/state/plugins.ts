@@ -2,7 +2,7 @@ import type { Commands } from '../keys/commands.js';
 import type { RpcLike } from './session.js';
 import type { Notifications } from './notifications.js';
 import { signal, type Signal } from '@preact/signals';
-import type { PluginInfo } from '@ide/protocol';
+import type { PluginInfo } from '@mosetta/ide-protocol';
 import {
   activate as activateHook,
   attach,
@@ -20,7 +20,7 @@ import {
   type Ide,
   type PluginClass,
   type RegistryHandle,
-} from '@ide/api/client';
+} from '@mosetta/ide-api/client';
 import type { Memory } from './persist.js';
 import { sharedModules } from './shared-modules.js';
 import type { Registry } from './registry.js';
@@ -55,7 +55,7 @@ export class Plugins {
     (globalThis as Record<string, unknown>).__ideApi = {
       modules: {
         ...sharedModules,
-        '@ide/api/client': {
+        '@mosetta/ide-api/client': {
           IdeProvider,
           useIde,
           useT,

@@ -1,4 +1,4 @@
-import type { DirEntry, TreeWire } from '@ide/api/client';
+import type { DirEntry, TreeWire } from '@mosetta/ide-api/client';
 import { signal } from '@preact/signals';
 
 export class FileTree {

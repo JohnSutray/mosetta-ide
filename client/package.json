@@ -1,5 +1,5 @@
 {
-  "name": "@ide/client",
+  "name": "@mosetta/ide-client",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -21,8 +21,8 @@
     "@codemirror/search": "^6.5.8",
     "@codemirror/state": "^6.5.0",
     "@codemirror/view": "^6.35.3",
-    "@ide/api": "workspace:*",
-    "@ide/protocol": "workspace:*",
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-protocol": "workspace:*",
     "@lezer/highlight": "^1.2.1",
     "@preact/signals": "^1.3.1",
     "ajv": "^8.17.1",

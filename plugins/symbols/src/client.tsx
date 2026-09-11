@@ -1,12 +1,12 @@
-import CodePlugin from '@ide/plugin-code';
-import { activate } from '@ide/api/client';
-import type { Ide } from '@ide/api/client';
-import Editor from '@ide/plugin-editor';
-import LspPlugin from '@ide/plugin-lsp';
+import CodePlugin from '@mosetta/ide-plugin-code';
+import { activate } from '@mosetta/ide-api/client';
+import type { Ide } from '@mosetta/ide-api/client';
+import Editor from '@mosetta/ide-plugin-editor';
+import LspPlugin from '@mosetta/ide-plugin-lsp';
 import { SymbolsPopup } from './popup.js';
 import { Symbols } from './state.js';
 import { STYLE } from './style.js';
-import UiPlugin from '@ide/ui';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 export default class SymbolsPlugin {
   readonly symbols: Symbols;

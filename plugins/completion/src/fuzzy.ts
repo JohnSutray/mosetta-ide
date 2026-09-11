@@ -1,4 +1,4 @@
-import type { Indexed, Matcher, TextIndex } from '@ide/plugin-search';
+import type { Indexed, Matcher, TextIndex } from '@mosetta/ide-plugin-search';
 
 export interface Hit {
   score: number;

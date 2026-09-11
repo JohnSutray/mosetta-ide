@@ -1,7 +1,7 @@
-import { useT } from '@ide/api/client';
-import type { Ide } from '@ide/api/client';
-import DocPlugin from '@ide/plugin-doc';
-import MergePlugin from '@ide/plugin-merge';
+import { useT } from '@mosetta/ide-api/client';
+import type { Ide } from '@mosetta/ide-api/client';
+import DocPlugin from '@mosetta/ide-plugin-doc';
+import MergePlugin from '@mosetta/ide-plugin-merge';
 
 export function DivergedBadge({ path, ide }: { path: string; ide: Ide }) {
   const t = useT();

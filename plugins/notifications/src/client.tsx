@@ -1,5 +1,5 @@
-import { activate } from '@ide/api/client';
-import type { Ide, Note } from '@ide/api/client';
+import { activate } from '@mosetta/ide-api/client';
+import type { Ide, Note } from '@mosetta/ide-api/client';
 import { effect } from '@preact/signals';
 import { STYLE } from './style.js';
 

@@ -24,16 +24,16 @@ describe('реестр', () => {
 
   it('писателю не положено ждать читателя', () => {
     const { registry, complaints } = store();
-    registry.add('toolbar.button', { id: 'tree' }, '@ide/plugin-ранний');
+    registry.add('toolbar.button', { id: 'tree' }, '@mosetta/ide-plugin-ранний');
     expect(complaints).toEqual([]);
     registry.declare('toolbar.button', 'core', BUTTON);
     expect(complaints).toHaveLength(1);
-    expect(complaints[0]).toContain('@ide/plugin-ранний');
+    expect(complaints[0]).toContain('@mosetta/ide-plugin-ранний');
   });
 
   it('в ключ без схемы можно писать что угодно', () => {
     const { registry, complaints } = store();
-    registry.add('чего-нибудь', { какое: 'угодно' }, '@ide/plugin-чей-то');
+    registry.add('чего-нибудь', { какое: 'угодно' }, '@mosetta/ide-plugin-чей-то');
     expect(registry.all('чего-нибудь').value).toHaveLength(1);
     expect(complaints).toEqual([]);
   });
@@ -41,9 +41,9 @@ describe('реестр', () => {
   it('отказ называет автора, ключ И ПОЛЕ', () => {
     const { registry, complaints } = store();
     registry.declare('toolbar.button', 'core', BUTTON);
-    registry.add('toolbar.button', { id: 'tree', comand: 'panel.tree' }, '@ide/plugin-tree');
+    registry.add('toolbar.button', { id: 'tree', comand: 'panel.tree' }, '@mosetta/ide-plugin-tree');
     expect(complaints).toHaveLength(1);
-    expect(complaints[0]).toContain('@ide/plugin-tree');
+    expect(complaints[0]).toContain('@mosetta/ide-plugin-tree');
     expect(complaints[0]).toContain('toolbar.button');
     expect(complaints[0]).toContain('«command»');
     expect(complaints[0]).toContain('«comand»');
@@ -52,17 +52,17 @@ describe('реестр', () => {
   it('запись не той формы всё равно ложится', () => {
     const { registry } = store();
     registry.declare('toolbar.button', 'core', BUTTON);
-    registry.add('toolbar.button', { id: 'tree' }, '@ide/plugin-tree');
+    registry.add('toolbar.button', { id: 'tree' }, '@mosetta/ide-plugin-tree');
     expect(registry.all('toolbar.button').value).toHaveLength(1);
   });
 
   it('две схемы на один ключ — жалоба с именем первого', () => {
     const { registry, complaints } = store();
     registry.declare('toolbar.button', 'core', BUTTON);
-    registry.declare('toolbar.button', '@ide/plugin-второй', { type: 'string' });
+    registry.declare('toolbar.button', '@mosetta/ide-plugin-второй', { type: 'string' });
     expect(complaints).toHaveLength(1);
     expect(complaints[0]).toContain('core');
-    registry.add('toolbar.button', 'строка', '@ide/plugin-второй');
+    registry.add('toolbar.button', 'строка', '@mosetta/ide-plugin-второй');
     expect(complaints).toHaveLength(2);
   });
 
@@ -93,7 +93,7 @@ describe('реестр', () => {
     const { registry } = store();
     registry.declare('toolbar.button', 'core', BUTTON);
     registry.add('toolbar.button', { id: 'tree', command: 'panel.tree' }, 'core');
-    registry.add('chrome.top', 'вид', '@ide/plugin-toolbar');
+    registry.add('chrome.top', 'вид', '@mosetta/ide-plugin-toolbar');
     expect(registry.describe()).toEqual([
       { key: 'chrome.top', count: 1 },
       { key: 'toolbar.button', schema: BUTTON, declaredBy: 'core', count: 1 },

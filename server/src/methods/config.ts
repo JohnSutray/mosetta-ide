@@ -1,4 +1,4 @@
-import type { SettingValue } from '@ide/protocol';
+import type { SettingValue } from '@mosetta/ide-protocol';
 import { RpcError } from '../errors.js';
 import { defaults } from '../config/defaults.js';
 import type { Handler } from '../rpc/context.js';

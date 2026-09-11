@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isCommandId, type Keymap } from '@ide/protocol';
+import { isCommandId, type Keymap } from '@mosetta/ide-protocol';
 import { jsonc } from '../src/config/jsonc.js';
 import { ConfigStore, keymapRules } from '../src/config/store.js';
 import { waitFor } from './helpers.js';

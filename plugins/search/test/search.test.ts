@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { FakeHost } from '@ide/api/testing';
-import DocPlugin from '@ide/plugin-doc';
+import { FakeHost } from '@mosetta/ide-api/testing';
+import DocPlugin from '@mosetta/ide-plugin-doc';
 import SearchPlugin, { type IndexHit } from '../src/client.js';
-import UiPlugin from '@ide/ui';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 function hit(kind: string, label: string, path = `${label}.ts`, line?: number): IndexHit {
   return { kind, label, path, line, matches: [], score: 1 };
 }
 
-const NAME = '@ide/plugin-search';
+const NAME = '@mosetta/ide-plugin-search';
 
 async function raise() {
   const host = new FakeHost();
-  host.add(UiPlugin, '@ide/ui');
+  host.add(UiPlugin, '@mosetta/ide-plugin-ui');
   (globalThis as Record<string, unknown>)['document'] ??= {};
-  host.add(DocPlugin, '@ide/plugin-doc');
+  host.add(DocPlugin, '@mosetta/ide-plugin-doc');
   const plugin = host.add(SearchPlugin, NAME);
   const hits: IndexHit[] = [];
   host.ide(NAME).answers.set('search', () => hits);
@@ -37,7 +37,7 @@ describe('найти всё', () => {
   it('Enter по скрипту отдаёт находку хозяину сорта, а не открывает файл', async () => {
     const { host, search, hits } = await raise();
     const ran: string[] = [];
-    host.registry.add('search.opener', { kind: 'npm', open: (found: { path: string }) => ran.push(found.path) }, '@ide/plugin-npm-scripts');
+    host.registry.add('search.opener', { kind: 'npm', open: (found: { path: string }) => ran.push(found.path) }, '@mosetta/ide-plugin-npm-scripts');
     hits.push(hit('npm', 'dev', 'package.json'));
     search.show();
     search.setQuery('dev');

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { SharedModules } from './plugins/shared.js';
 import { PluginHost } from './plugins/host.js';
 import { WebSocketServer } from 'ws';
-import { DEFAULT_PORT, WS_PATH } from '@ide/protocol';
+import { DEFAULT_PORT, WS_PATH } from '@mosetta/ide-protocol';
 import { ConfigStore } from './config/store.js';
 import { Env } from './env/env.js';
 import { journal } from './log.js';

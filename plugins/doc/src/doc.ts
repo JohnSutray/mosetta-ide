@@ -1,7 +1,7 @@
 import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
-import type { DocState } from '@ide/protocol';
-import { RpcErrorCode } from '@ide/protocol';
-import type { DocWire } from '@ide/api/client';
+import type { DocState } from '@mosetta/ide-protocol';
+import { RpcErrorCode } from '@mosetta/ide-protocol';
+import type { DocWire } from '@mosetta/ide-api/client';
 import { DocSync } from './sync.js';
 
 export interface Reveal {

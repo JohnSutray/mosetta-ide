@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { IdeProvider } from '@ide/api/client';
+import { IdeProvider } from '@mosetta/ide-api/client';
 import type { Registry } from '../state/registry.js';
 import type { Plugins } from '../state/plugins.js';
 import type { I18n } from '../i18n/index.js';

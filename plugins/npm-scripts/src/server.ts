@@ -1,6 +1,6 @@
 import fs from 'node:fs';
-import { activate, command, type CallContext, type Ide, type Project } from '@ide/api/server';
-import SearchServer, { type IndexHit } from '@ide/plugin-search/server';
+import { activate, command, type CallContext, type Ide, type Project } from '@mosetta/ide-api/server';
+import SearchServer, { type IndexHit } from '@mosetta/ide-plugin-search/server';
 import { PackageManagers, type PackageManagerInfo } from './managers.js';
 import { ScriptsInPackageJson } from './scripts.js';
 import { TOOLS_DEFAULTS } from './settings.js';

@@ -1,4 +1,4 @@
-import { activate, command, type CallContext, type Ide, type Project } from '@ide/api/server';
+import { activate, command, type CallContext, type Ide, type Project } from '@mosetta/ide-api/server';
 import { GitCli } from './cli.js';
 import { GIT_DEFAULTS } from './settings.js';
 import { GitIndex } from './index-git.js';

@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { FakeHost } from '@ide/api/testing';
+import { FakeHost } from '@mosetta/ide-api/testing';
 import NpmScripts from '../src/client.js';
-import TerminalPlugin from '@ide/plugin-terminal';
-import UiPlugin from '@ide/ui';
+import TerminalPlugin from '@mosetta/ide-plugin-terminal';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
-const NAME = '@ide/plugin-npm-scripts';
+const NAME = '@mosetta/ide-plugin-npm-scripts';
 
 async function raise() {
   const host = new FakeHost();
-  host.add(UiPlugin, '@ide/ui');
-  host.add(TerminalPlugin, '@ide/plugin-terminal');
-  host.ide('@ide/plugin-terminal').answers.set('list', () => []);
-  host.ide('@ide/plugin-terminal').answers.set('shells', () => []);
+  host.add(UiPlugin, '@mosetta/ide-plugin-ui');
+  host.add(TerminalPlugin, '@mosetta/ide-plugin-terminal');
+  host.ide('@mosetta/ide-plugin-terminal').answers.set('list', () => []);
+  host.ide('@mosetta/ide-plugin-terminal').answers.set('shells', () => []);
   const plugin = host.add(NpmScripts, NAME);
   host.ide(NAME).answers.set('list', () => []);
   host.ide(NAME).answers.set('managers', () => [

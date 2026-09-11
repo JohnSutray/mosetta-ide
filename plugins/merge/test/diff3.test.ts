@@ -1,4 +1,4 @@
-import { LineDiff } from '@ide/plugin-code';
+import { LineDiff } from '@mosetta/ide-plugin-code';
 import { Diff3, type Region } from '../src/diff3.js';
 
 const diff3 = new Diff3(() => new LineDiff());

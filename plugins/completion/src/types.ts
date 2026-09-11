@@ -1,4 +1,4 @@
-import type { CompletionKind, Range } from '@ide/plugin-lsp';
+import type { CompletionKind, Range } from '@mosetta/ide-plugin-lsp';
 
 export type ItemKind = CompletionKind | 'word' | 'postfix';
 

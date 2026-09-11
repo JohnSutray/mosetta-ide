@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CODE_FONT, DARCULA } from '@ide/plugin-theme';
+import { CODE_FONT, DARCULA } from '@mosetta/ide-plugin-theme';
 import { CodeLook } from '../src/look.js';
 import { CodePainter } from '../src/paint-line.js';
 import { Languages } from '../src/languages.js';

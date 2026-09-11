@@ -1,5 +1,5 @@
 {
-  "name": "@ide/plugin-lsp",
+  "name": "@mosetta/ide-plugin-lsp",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,9 +14,9 @@
     "server": "src/server.ts"
   },
   "dependencies": {
-    "@ide/api": "workspace:*",
-    "@ide/plugin-doc": "workspace:*",
-    "@ide/protocol": "workspace:*",
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-plugin-doc": "workspace:*",
+    "@mosetta/ide-protocol": "workspace:*",
     "typescript": "^5.7.2"
   },
   "peerDependencies": {

@@ -1,4 +1,4 @@
-import { useT } from '@ide/api/client';
+import { useT } from '@mosetta/ide-api/client';
 import type { TerminalInfo } from './types.js';
 
 export function Chips({

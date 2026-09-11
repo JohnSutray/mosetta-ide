@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import type { KeyBinding, KeyScope, Keymap } from '@ide/protocol';
+import type { KeyBinding, KeyScope, Keymap } from '@mosetta/ide-protocol';
 
 export function keymap(): Keymap {
   return jsonc<Keymap>('keymap.json');

@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import type { EventName, EventPayload, WorkspaceInfo } from '@ide/protocol';
+import type { EventName, EventPayload, WorkspaceInfo } from '@mosetta/ide-protocol';
 import { journal, type Logger } from '../log.js';
 import type { ConfigStore } from '../config/store.js';
 import { paths } from './paths.js';

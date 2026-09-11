@@ -1,9 +1,9 @@
-import { activate, configSection, registry, type Ide } from '@ide/api/client';
+import { activate, configSection, registry, type Ide } from '@mosetta/ide-api/client';
 import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarWidget } from './schema.js';
 import { TOOLBAR_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
-import KeymapPlugin from '@ide/plugin-keymap';
-import UiPlugin from '@ide/ui';
+import KeymapPlugin from '@mosetta/ide-plugin-keymap';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 @registry({ key: 'toolbar.button', schema: BUTTON_SCHEMA })
 @registry({ key: 'toolbar.widget', schema: WIDGET_SCHEMA })

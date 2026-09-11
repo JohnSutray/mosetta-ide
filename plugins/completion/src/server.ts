@@ -1,4 +1,4 @@
-import { command, type CallContext, type Ide } from '@ide/api/server';
+import { command, type CallContext, type Ide } from '@mosetta/ide-api/server';
 import { ChoiceStore } from './choice-store.js';
 
 export default class CompletionServer {

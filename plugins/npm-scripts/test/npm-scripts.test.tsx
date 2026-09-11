@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FakeHost } from '@ide/api/testing';
+import { FakeHost } from '@mosetta/ide-api/testing';
 import NpmScripts, { type ScriptInfo } from '../src/client.js';
-import TerminalPlugin from '@ide/plugin-terminal';
-import type { Opener } from '@ide/plugin-search';
-import UiPlugin from '@ide/ui';
+import TerminalPlugin from '@mosetta/ide-plugin-terminal';
+import type { Opener } from '@mosetta/ide-plugin-search';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
-const NAME = '@ide/plugin-npm-scripts';
+const NAME = '@mosetta/ide-plugin-npm-scripts';
 
 const SCRIPTS: ScriptInfo[] = [
   { id: 'core::dev', script: 'dev', command: 'vite', path: 'packages/core' },
@@ -24,10 +24,10 @@ describe('скрипты', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
-    host.add(UiPlugin, '@ide/ui');
-    terminal = host.add(TerminalPlugin, '@ide/plugin-terminal');
-    host.ide('@ide/plugin-terminal').answers.set('list', () => []);
-    host.ide('@ide/plugin-terminal').answers.set('shells', () => []);
+    host.add(UiPlugin, '@mosetta/ide-plugin-ui');
+    terminal = host.add(TerminalPlugin, '@mosetta/ide-plugin-terminal');
+    host.ide('@mosetta/ide-plugin-terminal').answers.set('list', () => []);
+    host.ide('@mosetta/ide-plugin-terminal').answers.set('shells', () => []);
     npm = host.add(NpmScripts, NAME);
     host.ide(NAME).answers.set('list', () => SCRIPTS);
     host.ide(NAME).answers.set('run', () => ({
@@ -35,7 +35,7 @@ describe('скрипты', () => {
       command: 'pnpm run dev',
       cwd: 'packages/core',
     }));
-    host.ide('@ide/plugin-terminal').answers.set('open', (p) => ({
+    host.ide('@mosetta/ide-plugin-terminal').answers.set('open', (p) => ({
       name: (p as { name: string }).name,
       title: (p as { name: string }).name,
       kind: 'script',
@@ -124,7 +124,7 @@ describe('скрипты', () => {
 
   it('состояние — поля экземпляра, а не модульные сигналы', () => {
     const second = new FakeHost();
-    second.add(UiPlugin, '@ide/ui');
+    second.add(UiPlugin, '@mosetta/ide-plugin-ui');
     second.add(NpmScripts, NAME);
     host.run('scripts.open');
     expect(popup()).not.toBeNull();

@@ -1,4 +1,4 @@
-import type { MemoryDoc, MemoryEvent, ProcessHandle, Project, ProjectMemory, ProjectResource, RunAsk } from '@ide/api/server';
+import type { MemoryDoc, MemoryEvent, ProcessHandle, Project, ProjectMemory, ProjectResource, RunAsk } from '@mosetta/ide-api/server';
 import type { Processes } from '../env/processes.js';
 import type { Workspace } from '../workspace/workspace.js';
 

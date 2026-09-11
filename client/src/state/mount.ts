@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import type { Bounds, Mount } from '@ide/api/client';
+import type { Bounds, Mount } from '@mosetta/ide-api/client';
 
 export interface MountOptions {
   page: boolean;

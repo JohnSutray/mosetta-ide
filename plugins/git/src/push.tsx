@@ -1,10 +1,10 @@
-import { useIde, useT } from '@ide/api/client';
+import { useIde, useT } from '@mosetta/ide-api/client';
 import type { Git, PushWindow } from './state.js';
 import { useRef } from 'preact/hooks';
 import type { GitCommit } from './types.js';
 import { ChangedTree } from './changed-tree.js';
-import { Popup, Resizer } from '@ide/ui';
-import type { Windows } from '@ide/ui';
+import { Popup, Resizer } from '@mosetta/ide-plugin-ui';
+import type { Windows } from '@mosetta/ide-plugin-ui';
 
 const FILES_ID = 'push.files';
 const FILES_DEFAULT = 460;

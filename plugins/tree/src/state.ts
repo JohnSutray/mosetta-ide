@@ -1,8 +1,8 @@
-import type { Ide } from '@ide/api/client';
+import type { Ide } from '@mosetta/ide-api/client';
 import type { FileTree } from './file-tree.js';
 import { batch, signal } from '@preact/signals';
-import type { EntryKind } from '@ide/api/client';
-import DocPlugin from '@ide/plugin-doc';
+import type { EntryKind } from '@mosetta/ide-api/client';
+import DocPlugin from '@mosetta/ide-plugin-doc';
 
 export interface Ask {
   id: number;

@@ -1,10 +1,10 @@
-import type { Windows } from '@ide/ui';
-import { useIde, useT } from '@ide/api/client';
+import type { Windows } from '@mosetta/ide-plugin-ui';
+import { useIde, useT } from '@mosetta/ide-api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import type CodePlugin from '@ide/plugin-code';
-import { EDITOR_DEFAULTS } from '@ide/plugin-code';
+import type CodePlugin from '@mosetta/ide-plugin-code';
+import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
 import type { IndexHit } from './types.js';
-import { Popup } from '@ide/ui';
+import { Popup } from '@mosetta/ide-plugin-ui';
 import type { Search } from './state.js';
 
 export function SearchEverywhere({ windows, search, code }: { windows: Windows; search: Search; code: CodePlugin }) {

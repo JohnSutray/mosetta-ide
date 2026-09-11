@@ -1,5 +1,5 @@
-import type { DirEntry, DocState, FsSettings, IndexStats } from '@ide/protocol';
-import { RpcErrorCode } from '@ide/protocol';
+import type { DirEntry, DocState, FsSettings, IndexStats } from '@mosetta/ide-protocol';
+import { RpcErrorCode } from '@mosetta/ide-protocol';
 import { RpcError } from '../errors.js';
 import type { Logger } from '../log.js';
 import { paths } from '../workspace/paths.js';

@@ -1,11 +1,11 @@
-import { activate, remote, stub } from '@ide/api/client';
-import type { Ide } from '@ide/api/client';
+import { activate, remote, stub } from '@mosetta/ide-api/client';
+import type { Ide } from '@mosetta/ide-api/client';
 import { ProjectsIcon } from './icons.js';
 import { ProjectsPopup } from './popup.js';
 import { Projects, type ProjectsRemote } from './state.js';
 import { STYLE } from './style.js';
 import type { DirSuggestion, RecentProject } from './types.js';
-import UiPlugin from '@ide/ui';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 export default class ProjectsPlugin implements ProjectsRemote {
   readonly projects: Projects;

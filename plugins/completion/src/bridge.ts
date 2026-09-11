@@ -2,7 +2,7 @@ import { EditorView, ViewPlugin, showTooltip, type Tooltip, type ViewUpdate } fr
 import { StateEffect, StateField, type ChangeSpec, type EditorState, type Extension } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { effect } from '@preact/signals';
-import type { Position } from '@ide/plugin-lsp';
+import type { Position } from '@mosetta/ide-plugin-lsp';
 import type { ChoiceHistory } from './history.js';
 import type { CompletionSession } from './session.js';
 import type { Ask, Details } from './types.js';

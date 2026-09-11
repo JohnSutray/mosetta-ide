@@ -1,4 +1,4 @@
-import type { WorkspacesAccess } from '@ide/api/client';
+import type { WorkspacesAccess } from '@mosetta/ide-api/client';
 import { batch, effect, signal } from '@preact/signals';
 import type { DirSuggestion, RecentProject } from './types.js';
 

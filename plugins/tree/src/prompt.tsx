@@ -1,7 +1,7 @@
-import type { Windows } from '@ide/ui';
-import { useT } from '@ide/api/client';
+import type { Windows } from '@mosetta/ide-plugin-ui';
+import { useT } from '@mosetta/ide-api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import { Popup } from '@ide/ui';
+import { Popup } from '@mosetta/ide-plugin-ui';
 import type { Ask, Prompt as PromptState, TreeSelection } from './state.js';
 
 const LINE = 18;

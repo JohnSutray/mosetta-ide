@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { FakeHost } from '@ide/api/testing';
-import Editor from '@ide/plugin-editor';
-import DocPlugin from '@ide/plugin-doc';
-import LspPlugin, { type SymbolSite } from '@ide/plugin-lsp';
+import { FakeHost } from '@mosetta/ide-api/testing';
+import Editor from '@mosetta/ide-plugin-editor';
+import DocPlugin from '@mosetta/ide-plugin-doc';
+import LspPlugin, { type SymbolSite } from '@mosetta/ide-plugin-lsp';
 import SymbolsPlugin from '../src/client.js';
-import UiPlugin from '@ide/ui';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
 function site(path: string, line: number, preview = 'foo()', isImport = false): SymbolSite {
   return { path, line, character: 0, preview, isImport };
@@ -16,18 +16,18 @@ async function raise() {
   fake.definitions = [];
   fake.referencesFound = [];
   const host = new FakeHost();
-  host.add(UiPlugin, '@ide/ui');
+  host.add(UiPlugin, '@mosetta/ide-plugin-ui');
   (globalThis as Record<string, unknown>)['document'] ??= {};
-  host.add(DocPlugin, '@ide/plugin-doc');
-  host.add(LspPlugin, '@ide/plugin-lsp');
-  const lsp = host.ide('@ide/plugin-lsp');
+  host.add(DocPlugin, '@mosetta/ide-plugin-doc');
+  host.add(LspPlugin, '@mosetta/ide-plugin-lsp');
+  const lsp = host.ide('@mosetta/ide-plugin-lsp');
   lsp.answers.set('definition', () => fake.definitions);
   lsp.answers.set('references', () => fake.referencesFound);
   lsp.answers.set('status', () => []);
   lsp.answers.set('problems', () => []);
   lsp.answers.set('diagnostics', (params) => ({ path: (params as { path: string }).path, diagnostics: [] }));
-  host.add(Editor, '@ide/plugin-editor');
-  const plugin = host.add(SymbolsPlugin, '@ide/plugin-symbols');
+  host.add(Editor, '@mosetta/ide-plugin-editor');
+  const plugin = host.add(SymbolsPlugin, '@mosetta/ide-plugin-symbols');
   host.surface.docs.texts.set('b.ts', '');
   host.surface.docs.texts.set('d.ts', '');
   await host.start();

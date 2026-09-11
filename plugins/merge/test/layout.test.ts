@@ -1,4 +1,4 @@
-import { LineDiff } from '@ide/plugin-code';
+import { LineDiff } from '@mosetta/ide-plugin-code';
 import { Diff3 } from '../src/diff3.js';
 import { describe, expect, it } from 'vitest';
 import { layout } from '../src/layout.js';

@@ -1,4 +1,4 @@
-import type { Logger } from '@ide/api/server';
+import type { Logger } from '@mosetta/ide-api/server';
 import type {
   GitAction,
   GitBranch,

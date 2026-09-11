@@ -24,7 +24,7 @@ function clientTable(): string[] {
   return [...body.matchAll(/^\s*(?:'([^']+)'|(\w+))(?:: \w+)?,$/gm)].map((m) => m[1] ?? m[2]!);
 }
 
-describe('контракт @ide/api', () => {
+describe('контракт @mosetta/ide-api', () => {
   it('имён без кода в контракте нет: службы — поля ide (ADR-0206)', () => {
     expect(names.injected(source('client.ts'))).toEqual([]);
     expect(surfaceMembers(source('client.ts'))).toContain('t');
@@ -51,7 +51,7 @@ describe('контракт @ide/api', () => {
   });
 
   it('клиент кладёт на стол ровно то, для чего сервер делает заглушки', () => {
-    const server = CORE_PROVIDED.filter((one) => one !== '@ide/api/client');
+    const server = CORE_PROVIDED.filter((one) => one !== '@mosetta/ide-api/client');
     expect([...clientTable()].sort()).toEqual([...server].sort());
   });
 
@@ -65,13 +65,13 @@ describe('контракт @ide/api', () => {
 
   it('заглушка читает со стола и падает именем, если стол пуст', async () => {
     const shared = new SharedModules(path.resolve(here, '..'), path.resolve(here, '../../client'));
-    shared.register('@ide/plugin-x', 'client', ['default', 'thing']);
-    const text = await shared.shim('@ide/plugin-x', 'client');
-    expect(text).toContain(`globalThis.__ideApi.modules["@ide/plugin-x"]`);
+    shared.register('@mosetta/ide-plugin-x', 'client', ['default', 'thing']);
+    const text = await shared.shim('@mosetta/ide-plugin-x', 'client');
+    expect(text).toContain(`globalThis.__ideApi.modules["@mosetta/ide-plugin-x"]`);
     expect(text).toContain('export default m.default;');
     expect(text).toContain('export const thing = m["thing"];');
     expect(text).toContain('не поднят');
-    const api = await shared.exportsOf('@ide/api/client', 'client');
+    const api = await shared.exportsOf('@mosetta/ide-api/client', 'client');
     expect(api).toContain('useT');
     expect(api).not.toContain('t');
     expect(api).toContain('registry');

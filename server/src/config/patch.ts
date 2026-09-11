@@ -1,4 +1,4 @@
-import type { SettingValue } from '@ide/protocol';
+import type { SettingValue } from '@mosetta/ide-protocol';
 import { jsonc } from './jsonc.js';
 
 export interface PatchResult {

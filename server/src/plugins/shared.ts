@@ -18,7 +18,7 @@ export const CORE_PROVIDED = [
   '@codemirror/lang-css',
   '@codemirror/lang-html',
   '@codemirror/lang-markdown',
-  '@ide/api/client',
+  '@mosetta/ide-api/client',
 ] as const;
 
 export type Side = 'client' | 'server';
@@ -62,7 +62,7 @@ export class SharedModules {
 
   knows(spec: string, side: Side): boolean {
     if (side === 'client' && (CORE_PROVIDED as readonly string[]).includes(spec)) return true;
-    if (side === 'server' && spec === '@ide/api/server') return true;
+    if (side === 'server' && spec === '@mosetta/ide-api/server') return true;
     return this.exports.has(`${side}:${spec}`);
   }
 
@@ -74,9 +74,9 @@ export class SharedModules {
     const known = this.exports.get(`${side}:${spec}`);
     if (known) return known;
     let names: string[];
-    if (spec === '@ide/api/client' || spec === '@ide/api/server') {
+    if (spec === '@mosetta/ide-api/client' || spec === '@mosetta/ide-api/server') {
       const file = spec.endsWith('client') ? 'client.ts' : 'server.ts';
-      const text = await fs.readFile(path.join(await this.packageDir('@ide/api'), 'src', file), 'utf8');
+      const text = await fs.readFile(path.join(await this.packageDir('@mosetta/ide-api'), 'src', file), 'utf8');
       names = this.contract.offered(text);
     } else {
       names = await this.probe(spec);

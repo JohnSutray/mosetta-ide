@@ -1,4 +1,4 @@
-import { activate, command, type CallContext, type Ide } from '@ide/api/server';
+import { activate, command, type CallContext, type Ide } from '@mosetta/ide-api/server';
 import { LspHost } from './host.js';
 import { LSP_DEFAULTS } from './settings.js';
 import type { CompletionAnswer, CompletionDetails, FileDiagnostics, HoverInfo, LspStatus, SymbolSite } from './types.js';

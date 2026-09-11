@@ -10,7 +10,7 @@ import type {
   Settings,
   WorkspaceInfo,
   SettingValue,
-} from '@ide/protocol';
+} from '@mosetta/ide-protocol';
 
 export interface Size {
   w: number;
@@ -25,7 +25,7 @@ export interface ResizerProps {
   defaultWidth: number;
 }
 
-export type { DirEntry, EntryKind } from '@ide/protocol';
+export type { DirEntry, EntryKind } from '@mosetta/ide-protocol';
 
 export interface TreeWire {
   list(path: string): Promise<DirEntry[]>;

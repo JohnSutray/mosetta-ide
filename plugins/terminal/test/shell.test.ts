@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { FakeHost } from '@ide/api/testing';
+import { FakeHost } from '@mosetta/ide-api/testing';
 import TerminalPlugin from '../src/client.js';
-import UiPlugin from '@ide/ui';
+import UiPlugin from '@mosetta/ide-plugin-ui';
 
-const NAME = '@ide/plugin-terminal';
+const NAME = '@mosetta/ide-plugin-terminal';
 
 async function raise() {
   const host = new FakeHost();
-  host.add(UiPlugin, '@ide/ui');
+  host.add(UiPlugin, '@mosetta/ide-plugin-ui');
   const plugin = host.add(TerminalPlugin, NAME);
   host.ide(NAME).answers.set('list', () => []);
   host.ide(NAME).answers.set('shells', () => [
@@ -43,7 +43,7 @@ describe('оболочка терминала', () => {
 
   it('сервер не ответил — говорим вслух, а не показываем пустоту', async () => {
     const host = new FakeHost();
-    host.add(UiPlugin, '@ide/ui');
+    host.add(UiPlugin, '@mosetta/ide-plugin-ui');
     const plugin = host.add(TerminalPlugin, NAME);
     host.ide(NAME).answers.set('list', () => []);
     host.ide(NAME).answers.set('shells', () => {

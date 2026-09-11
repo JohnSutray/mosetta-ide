@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FakeHost, nodes, of } from '@ide/api/testing';
-import LspPlugin, { type Diagnostic, type FileDiagnostics } from '@ide/plugin-lsp';
-import DocPlugin from '@ide/plugin-doc';
+import { FakeHost, nodes, of } from '@mosetta/ide-api/testing';
+import LspPlugin, { type Diagnostic, type FileDiagnostics } from '@mosetta/ide-plugin-lsp';
+import DocPlugin from '@mosetta/ide-plugin-doc';
 import Problems from '../src/client.js';
 
-const NAME = '@ide/plugin-problems';
+const NAME = '@mosetta/ide-plugin-problems';
 
 function problem(line: number, message: string, extra: Partial<Diagnostic> = {}): Diagnostic {
   return {
@@ -26,8 +26,8 @@ describe('панель ошибок', () => {
   beforeEach(async () => {
     host = new FakeHost();
     (globalThis as Record<string, unknown>)['document'] ??= {};
-    host.add(DocPlugin, '@ide/plugin-doc');
-    host.add(LspPlugin, '@ide/plugin-lsp');
+    host.add(DocPlugin, '@mosetta/ide-plugin-doc');
+    host.add(LspPlugin, '@mosetta/ide-plugin-lsp');
     host.add(Problems, NAME);
     host.surface.docs.texts.set('a.ts', '');
     await host.start();

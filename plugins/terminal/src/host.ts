@@ -1,5 +1,5 @@
 import { spawn, type IPty } from 'node-pty';
-import type { Logger, Project } from '@ide/api/server';
+import type { Logger, Project } from '@mosetta/ide-api/server';
 import type { ShellChoice, TerminalInfo, TerminalKind } from './types.js';
 
 function noForeground(): { who: string; why: string } | null {

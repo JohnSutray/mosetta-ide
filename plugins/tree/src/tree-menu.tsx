@@ -1,5 +1,5 @@
-import type { Windows } from '@ide/ui';
-import { Menu, type MenuItem } from '@ide/ui';
+import type { Windows } from '@mosetta/ide-plugin-ui';
+import { Menu, type MenuItem } from '@mosetta/ide-plugin-ui';
 import type { TreeMenuState } from './menu.js';
 import type { TreeOps, TreeSelection } from './state.js';
 

@@ -1,6 +1,6 @@
 import { render } from 'preact';
-import { SETTINGS_SCHEMA, type IdeServices, type SettingsSection } from '@ide/api/client';
-import { sectionOf } from '@ide/api/section';
+import { SETTINGS_SCHEMA, type IdeServices, type SettingsSection } from '@mosetta/ide-api/client';
+import { sectionOf } from '@mosetta/ide-api/section';
 import { RpcClient } from './rpc/client.js';
 import { Notifications } from './state/notifications.js';
 import { Config } from './state/config.js';
@@ -11,6 +11,7 @@ import { Session } from './state/session.js';
 import { Registry } from './state/registry.js';
 import { Plugins } from './state/plugins.js';
 import { RootMount, type MountOptions } from './state/mount.js';
+import { legacyNames } from '@mosetta/ide-protocol';
 import { App } from './ui/app.js';
 
 export class Core {
@@ -35,6 +36,12 @@ export class Core {
     private readonly root: HTMLElement,
     options: MountOptions,
   ) {
+    this.memory.migrate((key) => {
+      const at = key.indexOf('/', key.indexOf('/') + 1);
+      if (at < 0) return null;
+      const name = legacyNames.currentOf(key.slice(0, at));
+      return name === null ? null : name + key.slice(at);
+    });
     this.mount = new RootMount(root, options);
     this.services = this.serve();
     this.store.declare('chrome.top', 'core');

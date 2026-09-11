@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
-import { WS_PATH, type ApiMethod, type Params, type Result } from '@ide/protocol';
+import { WS_PATH, type ApiMethod, type Params, type Result } from '@mosetta/ide-protocol';
 import { boot, type RunningServer } from '../src/server.js';
 
 export interface TestClient {

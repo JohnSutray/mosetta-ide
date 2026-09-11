@@ -1,4 +1,4 @@
-import { activate, type Ide } from '@ide/api/client';
+import { activate, type Ide } from '@mosetta/ide-api/client';
 import { SheepField } from './field.js';
 import { STYLE } from './style.js';
 

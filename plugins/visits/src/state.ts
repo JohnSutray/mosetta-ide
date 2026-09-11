@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import type { Visit } from './types.js';
-import type DocPlugin from '@ide/plugin-doc';
-import { type Mount } from '@ide/api/client';
+import type DocPlugin from '@mosetta/ide-plugin-doc';
+import { type Mount } from '@mosetta/ide-api/client';
 
 export interface VisitsRemote {
   list(): Promise<Visit[]>;

@@ -1,8 +1,8 @@
-import { useIde, useT } from '@ide/api/client';
+import { useIde, useT } from '@mosetta/ide-api/client';
 import type { GitMarks } from './marks.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import type { Windows } from '@ide/ui';
-import type DocPlugin from '@ide/plugin-doc';
+import type { Windows } from '@mosetta/ide-plugin-ui';
+import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export function HunkPopup({ docs, windows, marks }: { docs: DocPlugin; windows: Windows; marks: GitMarks }) {
   const t = useT();

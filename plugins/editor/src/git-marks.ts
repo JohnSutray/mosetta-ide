@@ -1,7 +1,7 @@
 import { StateEffect, StateField, type Extension } from '@codemirror/state';
 import { EditorView, gutter, GutterMarker } from '@codemirror/view';
-import type { HunkBox } from '@ide/api/client';
-import type { Hunk, LineDiff } from '@ide/plugin-code';
+import type { HunkBox } from '@mosetta/ide-api/client';
+import type { Hunk, LineDiff } from '@mosetta/ide-plugin-code';
 
 export const setHeadText = StateEffect.define<string | null>();
 
