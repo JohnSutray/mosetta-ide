@@ -1,4 +1,4 @@
-import { settingsOf, t } from '@ide/api/client';
+import { useIde, useT } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import type CodePlugin from '@ide/plugin-code';
 import { EDITOR_DEFAULTS } from '@ide/plugin-code';
@@ -15,8 +15,10 @@ const LIST_MIN = 60;
 const PREVIEW_MIN = 120;
 
 export function SymbolsPopup({ windows, symbols, code }: { windows: Windows; symbols: Symbols; code: CodePlugin }) {
+  const ide = useIde();
+  const t = useT();
   const list = symbols.list.value;
-  const editor = settingsOf('editor', EDITOR_DEFAULTS).value;
+  const editor = ide.settingsOf('editor', EDITOR_DEFAULTS).value;
   const preview = symbols.preview.value;
   const body = useRef<HTMLDivElement>(null);
 

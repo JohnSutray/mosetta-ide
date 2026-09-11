@@ -1,4 +1,4 @@
-import { activate, docs, project, t, workspaces } from '@ide/api/client';
+import { activate } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { effect } from '@preact/signals';
 import { Doc } from './doc.js';
@@ -11,10 +11,10 @@ export default class DocPlugin {
   readonly focus = new EditorFocus();
 
   constructor(private readonly ide: Ide) {
-    this.doc = new Doc(docs, {
+    this.doc = new Doc(this.ide.docs, {
       say: (message) => ide.say(message),
       complain: (message) => ide.complain(message),
-      t,
+      t: ide.t,
       remembered: (root) => ide.remember<string | null>(`file:${root}`, null, 'tab'),
     });
   }
@@ -24,15 +24,15 @@ export default class DocPlugin {
     this.ide.command('file.reload', () => void this.doc.reload());
 
     effect(() => {
-      workspaces.current.value;
+      this.ide.workspaces.current.value;
       this.doc.reset();
     });
     effect(() => {
-      const ws = project.value;
+      const ws = this.ide.project.value;
       if (ws) void this.doc.attached(ws.root);
     });
     effect(() => {
-      const ws = workspaces.current.value;
+      const ws = this.ide.workspaces.current.value;
       const file = this.doc.open.value;
       if (!ws) return;
       document.title = file ? `${file.path} — ${ws.name}` : ws.name;
@@ -41,7 +41,7 @@ export default class DocPlugin {
 
   async openFile(path: string, options?: { focus?: boolean }): Promise<void> {
     if (options?.focus === false) this.focus.openWithoutFocus();
-    await this.doc.openAt(path, workspaces.current.value?.root ?? null);
+    await this.doc.openAt(path, this.ide.workspaces.current.value?.root ?? null);
     if (options?.focus) this.focus.focus();
   }
 
@@ -51,12 +51,12 @@ export default class DocPlugin {
   }
 
   async peekFile(path: string): Promise<{ path: string; text: string }> {
-    const state = await docs.state(path);
+    const state = await this.ide.docs.state(path);
     return { path: state.path, text: state.text };
   }
 
   closeFile(): Promise<void> {
-    return this.doc.close(workspaces.current.value?.root ?? null);
+    return this.doc.close(this.ide.workspaces.current.value?.root ?? null);
   }
 
   get openDoc() {

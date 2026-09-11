@@ -1,12 +1,22 @@
 import type { Windows } from '@ide/windows';
-import { t } from '@ide/api/client';
+import { useT, type IdeServices } from '@ide/api/client';
 import { Fragment } from 'preact';
 import type { KeyBinding, KeyContext, KeyScope } from '@ide/protocol';
 import { Popup } from '@ide/ui';
 import type { KeysWindow } from './state.js';
 import type KeymapPlugin from '@ide/plugin-keymap';
 
-export function KeysPopup({ keys, windows, window: win }: { keys: KeymapPlugin['keys']; windows: Windows; window: KeysWindow }) {
+interface KeysProps {
+  keys: KeymapPlugin['keys'];
+  windows: Windows;
+  window: KeysWindow;
+}
+
+export function KeysPopup(props: KeysProps) {
+  return <KeysSheet {...props} t={useT()} />;
+}
+
+export function KeysSheet({ keys, windows, window: win, t }: KeysProps & { t: IdeServices['t'] }) {
   if (!win.open.value) return null;
 
   const bindings = keys.bindings.value;
@@ -68,9 +78,9 @@ export function KeysPopup({ keys, windows, window: win }: { keys: KeymapPlugin['
             <kbd class="keys-kbd">{keys.humanize(echo.key)}</kbd>
             <span class="keys-echo-arrow">→</span>
             <span class={`keys-echo-command ${echo.command ? '' : 'is-free'}`}>
-              {echo.command ? commandName(echo.command) : t('keys.echo.free')}
+              {echo.command ? commandName(t, echo.command) : t('keys.echo.free')}
             </span>
-            <span class="keys-echo-context">{contextName(echo.context)}</span>
+            <span class="keys-echo-context">{contextName(t, echo.context)}</span>
           </>
         ) : (
           <span class="keys-echo-command is-free">{t('keys.echo.none')}</span>
@@ -112,11 +122,11 @@ export function KeysPopup({ keys, windows, window: win }: { keys: KeymapPlugin['
         <div class="keys-grid">
           {[...groups.entries()].map(([context, list]) => (
             <Fragment key={context}>
-              <div class="keys-group-title">{contextName(context)}</div>
+              <div class="keys-group-title">{contextName(t, context)}</div>
               {list.map((binding) => (
                 <div class="keys-row" key={`${binding.command}:${binding.key}`}>
                   <kbd class="keys-kbd">{keys.humanize(binding.key)}</kbd>
-                  <span class="keys-command">{commandName(binding.command)}</span>
+                  <span class="keys-command">{commandName(t, binding.command)}</span>
                 </div>
               ))}
             </Fragment>
@@ -127,10 +137,10 @@ export function KeysPopup({ keys, windows, window: win }: { keys: KeymapPlugin['
   );
 }
 
-function commandName(id: string): string {
+function commandName(t: IdeServices['t'], id: string): string {
   return t(`command.${id}`);
 }
 
-function contextName(context: KeyContext): string {
+function contextName(t: IdeServices['t'], context: KeyContext): string {
   return t(`keys.context.${context}`);
 }

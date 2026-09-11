@@ -1,13 +1,4 @@
-import {
-  activate,
-  configSection,
-  connected,
-  registry,
-  runCommand,
-  settingsOf,
-  t,
-  type Ide,
-} from '@ide/api/client';
+import { activate, configSection, registry, type Ide } from '@ide/api/client';
 import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarWidget } from './schema.js';
 import { TOOLBAR_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
@@ -26,7 +17,7 @@ export default class Toolbar {
       id: 'connection',
       side: 'right',
       view: () => (
-        <span class={`dot ${connected.value ? 'is-on' : 'is-off'}`} title={t('toolbar.connection')} />
+        <span class={`dot ${this.ide.connected.value ? 'is-on' : 'is-off'}`} title={this.ide.t('toolbar.connection')} />
       ),
     });
   }
@@ -54,12 +45,12 @@ export default class Toolbar {
         key={entry.id}
         class={`tool ${active ? 'is-active' : ''}`}
         onMouseEnter={(event) =>
-          this.ide.windows.tips.show(event.currentTarget as Element, t(entry.title), this.ide.getPlugin(KeymapPlugin).keysFor(entry.command))
+          this.ide.windows.tips.show(event.currentTarget as Element, this.ide.t(entry.title), this.ide.getPlugin(KeymapPlugin).keysFor(entry.command))
         }
         onMouseLeave={() => this.ide.windows.tips.hide()}
         onClick={() => {
           this.ide.windows.tips.hide();
-          runCommand(entry.command);
+          this.ide.runCommand(entry.command);
         }}
       >
         {entry.icon(active)}
@@ -69,7 +60,7 @@ export default class Toolbar {
   }
 
   private buttons(): ToolbarButton[] {
-    const order = settingsOf('toolbar', TOOLBAR_DEFAULTS).value.order;
+    const order = this.ide.settingsOf('toolbar', TOOLBAR_DEFAULTS).value.order;
     const all = this.ide
       .registry<ToolbarButton>('toolbar.button')
       .all.value.filter((one) => one.visible?.value ?? true);

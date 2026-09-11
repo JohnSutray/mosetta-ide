@@ -1,4 +1,4 @@
-import { activate, t, type Ide } from '@ide/api/client';
+import { activate, type Ide } from '@ide/api/client';
 import NpmScripts from '@ide/plugin-npm-scripts';
 
 export default class Rerun {
@@ -12,7 +12,7 @@ export default class Rerun {
     this.ide.command('scripts.rerun', () => {
       const id = this.last ?? npm.scripts()[0]?.id ?? null;
       if (!id) {
-        this.ide.say(t('rerun.nothing'));
+        this.ide.say(this.ide.t('rerun.nothing'));
         return;
       }
       this.last = id;

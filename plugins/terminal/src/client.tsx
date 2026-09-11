@@ -1,15 +1,6 @@
 /// <reference path="./raw.d.ts" />
 import { batch, signal } from '@preact/signals';
-import {
-  activate,
-  configSection,
-  remote,
-  runCommand,
-  setSetting,
-  stub,
-  t,
-  type Ide,
-} from '@ide/api/client';
+import { activate, configSection, remote, stub, type Ide } from '@ide/api/client';
 import { ChoicePopup } from '@ide/ui';
 import { TerminalIcon } from './icon.js';
 import ThemePlugin from '@ide/plugin-theme';
@@ -61,8 +52,8 @@ export default class TerminalPlugin {
         return (
           <button
             class="terminal-shell-label"
-            title={t('terminal.shell.hint')}
-            onClick={() => runCommand('terminal.shell')}
+            title={this.ide.t('terminal.shell.hint')}
+            onClick={() => this.ide.runCommand('terminal.shell')}
           >
             {current}
           </button>
@@ -73,19 +64,19 @@ export default class TerminalPlugin {
       this.shellPicker.value ? (
         <ChoicePopup windows={this.ide.windows}
           id="terminal.shell"
-          title={t('terminal.shell.title')}
-          note={t('terminal.shell.note')}
+          title={this.ide.t('terminal.shell.title')}
+          note={this.ide.t('terminal.shell.note')}
           rows={this.shells.value.map((one) => ({
             path: one.path,
             name: one.name,
             ref: one.ref,
             current: one.current,
-            mark: one.current ? t('terminal.shell.inUse') : undefined,
+            mark: one.current ? this.ide.t('terminal.shell.inUse') : undefined,
           }))}
-          empty={t('terminal.shell.empty')}
-          customPlaceholder={t('terminal.shell.custom')}
-          apply={t('terminal.shell.apply')}
-          reset={t('terminal.shell.default')}
+          empty={this.ide.t('terminal.shell.empty')}
+          customPlaceholder={this.ide.t('terminal.shell.custom')}
+          apply={this.ide.t('terminal.shell.apply')}
+          reset={this.ide.t('terminal.shell.default')}
           onChoose={(ref) => void this.chooseShell(ref)}
           onClose={() => (this.shellPicker.value = false)}
         />
@@ -154,7 +145,7 @@ export default class TerminalPlugin {
 
   async chooseShell(ref: string): Promise<void> {
     try {
-      await setSetting('terminal', 'shell', ref);
+      await this.ide.setSetting('terminal', 'shell', ref);
       this.shellPicker.value = false;
       await this.refreshShells();
       this.ide.say(ref === '' ? 'shell: default' : `shell: ${ref}`);
@@ -253,7 +244,7 @@ export default class TerminalPlugin {
     this.ide.on('exit', (payload) => {
       const { name } = payload as { name: string };
       void this.refresh();
-      const note = `\r\n\x1b[38;5;245m${t('terminal.finished')}\x1b[0m\r\n`;
+      const note = `\r\n\x1b[38;5;245m${this.ide.t('terminal.finished')}\x1b[0m\r\n`;
       for (const sink of this.sinks.get(name) ?? []) sink(note);
     });
   }

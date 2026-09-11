@@ -1,5 +1,5 @@
 import { Fragment } from 'preact';
-import { activate, registry, t, type Ide } from '@ide/api/client';
+import { activate, registry, type Ide } from '@ide/api/client';
 import { Resizer } from '@ide/ui';
 import { PANEL_SCHEMA, type PanelWish } from './schema.js';
 import { STYLE } from './style.js';
@@ -54,11 +54,11 @@ export default class Layout {
         style={main ? undefined : { width: `${this.width(panel)}px`, flex: 'none' }}
       >
         <header class="panel-head">
-          <span class="panel-title">{panel.heading?.() ?? t(panel.title)}</span>
+          <span class="panel-title">{panel.heading?.() ?? this.ide.t(panel.title)}</span>
           <span class="panel-actions">
             {panel.badges?.() as never}
             {panel.close && (
-              <span class="panel-close" title={t('panel.close')} onClick={panel.close}>
+              <span class="panel-close" title={this.ide.t('panel.close')} onClick={panel.close}>
                 ×
               </span>
             )}

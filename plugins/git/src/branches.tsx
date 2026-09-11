@@ -1,4 +1,4 @@
-import { t } from '@ide/api/client';
+import { useT } from '@ide/api/client';
 import type { BranchesWindow, Git, PushWindow } from './state.js';
 import { useEffect, useRef } from 'preact/hooks';
 import type { GitBranch } from './types.js';
@@ -13,6 +13,7 @@ export interface BranchesProps {
 }
 
 export function Branches({ windows, git, window, push }: BranchesProps) {
+  const t = useT();
   const list = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
   const nameField = useRef<HTMLInputElement>(null);

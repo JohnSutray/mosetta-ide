@@ -18,6 +18,7 @@ function fakeIde() {
       return () => undefined;
     },
     working: () => () => undefined,
+    t: (key: string) => key,
     complain: (message: string) => complaints.push(message),
   };
 }

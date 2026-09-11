@@ -1,11 +1,12 @@
 import type { Windows } from '@ide/windows';
-import { t, workspaces } from '@ide/api/client';
+import { useIde, useT } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import type { DirSuggestion } from './types.js';
 import { Chevron, DirIcon, Icon, Popup } from '@ide/ui';
 import type { Projects } from './state.js';
 
 export function ProjectsPopup({ windows, projects }: { windows: Windows; projects: Projects }) {
+  const t = useT();
   const input = useRef<HTMLInputElement>(null);
   const shown = projects.visible.value;
 
@@ -69,9 +70,10 @@ export function ProjectsPopup({ windows, projects }: { windows: Windows; project
 }
 
 function Recent({ projects }: { projects: Projects }) {
+  const ide = useIde();
   const list = projects.recent.value;
-  const live = workspaces.live.value;
-  const active = workspaces.current.value;
+  const live = ide.workspaces.live.value;
+  const active = ide.workspaces.current.value;
   if (list.length === 0) return null;
 
   return (
@@ -104,6 +106,7 @@ function shortenHome(root: string): string {
 }
 
 function Suggestions({ projects }: { projects: Projects }) {
+  const t = useT();
   const list = projects.suggestions.value;
   if (list.length === 0) return <div class="suggest is-empty">{t('projects.empty')}</div>;
   return (
@@ -126,6 +129,7 @@ function Suggestions({ projects }: { projects: Projects }) {
 }
 
 function PickerNode({ item, depth, projects }: { item: DirSuggestion; depth: number; projects: Projects }) {
+  const t = useT();
   const isOpen = projects.expanded.value.has(item.path);
   const kids = projects.children.value.get(item.path);
   const shown = projects.showingAll.value.has(item.path) ? kids : kids?.slice(0, projects.page);

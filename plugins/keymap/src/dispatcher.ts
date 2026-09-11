@@ -1,4 +1,3 @@
-import { runCommand } from '@ide/api/client';
 import type { Windows } from '@ide/windows';
 import type { KeysEcho } from './echo.js';
 import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
@@ -142,6 +141,7 @@ export class Dispatcher {
     private readonly onUnbound: (key: string) => void,
     private readonly echo: KeysEcho,
     private readonly windows: Pick<Windows, 'popups'>,
+    private readonly run: (id: string) => boolean,
   ) {
     window.addEventListener('keydown', this.onKeyDown, { capture: true });
     window.addEventListener('keyup', this.onKeyUp, { capture: true });
@@ -183,7 +183,7 @@ export class Dispatcher {
       return false;
     }
 
-    if (runCommand(binding.command)) {
+    if (this.run(binding.command)) {
       event.preventDefault();
       event.stopPropagation();
     }

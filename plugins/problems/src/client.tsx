@@ -1,4 +1,4 @@
-import { activate, t, type Ide } from '@ide/api/client';
+import { activate, type Ide } from '@ide/api/client';
 import LspPlugin, { type Diagnostic } from '@ide/plugin-lsp';
 import { STYLE } from './style.js';
 import { ProblemsIcon } from './icon.js';
@@ -45,7 +45,7 @@ export default class Problems {
   private view() {
     const files = this.ide.getPlugin(LspPlugin).problems.value;
     if (files.length === 0) {
-      return <div class="placeholder">{t('problems.empty')}</div>;
+      return <div class="placeholder">{this.ide.t('problems.empty')}</div>;
     }
 
     let left = this.maxRows;
@@ -87,7 +87,7 @@ export default class Problems {
             </ul>
           </div>
         ))}
-        {cut > 0 && <div class="problems-more">{t('problems.more', { count: cut })}</div>}
+        {cut > 0 && <div class="problems-more">{this.ide.t('problems.more', { count: cut })}</div>}
       </div>
     );
   }

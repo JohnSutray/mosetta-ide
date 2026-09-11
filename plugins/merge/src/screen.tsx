@@ -1,5 +1,5 @@
 import type { Windows } from '@ide/windows';
-import { settingsOf, t } from '@ide/api/client';
+import { useIde, useT } from '@ide/api/client';
 import type { MergeFile } from './types.js';
 import { MergeColumns } from './columns.js';
 import type CodePlugin from '@ide/plugin-code';
@@ -8,10 +8,12 @@ import { FileIcon, Popup } from '@ide/ui';
 import type { Merge } from './state.js';
 
 export function MergeScreen({ windows, merge, code }: { windows: Windows; merge: Merge; code: CodePlugin }) {
+  const ide = useIde();
+  const t = useT();
   if (!merge.open.value) return null;
   const session = merge.session.value;
   const file = merge.file.value;
-  const editor = settingsOf('editor', EDITOR_DEFAULTS).value;
+  const editor = ide.settingsOf('editor', EDITOR_DEFAULTS).value;
   if (!session || !file) return null;
 
   const whole = file.left.text === null || file.right.text === null;
@@ -130,10 +132,12 @@ function FileRow({
 }
 
 function WholeFile({ file, merge, code }: { file: MergeFile; merge: Merge; code: CodePlugin }) {
+  const ide = useIde();
+  const t = useT();
   const survivor = file.left.text === null ? 'right' : 'left';
   const side = file[survivor];
   const gone = file[survivor === 'left' ? 'right' : 'left'];
-  const editor = settingsOf('editor', EDITOR_DEFAULTS).value;
+  const editor = ide.settingsOf('editor', EDITOR_DEFAULTS).value;
 
   return (
     <div class="merge-whole">

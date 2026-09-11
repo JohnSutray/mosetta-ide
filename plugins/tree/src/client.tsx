@@ -1,4 +1,4 @@
-import { activate, configSection, project, registry, remote, stub, tree, workspaces } from '@ide/api/client';
+import { activate, configSection, registry, remote, stub } from '@ide/api/client';
 import LspPlugin from '@ide/plugin-lsp';
 import type { Ide } from '@ide/api/client';
 import { computed, effect, untracked } from '@preact/signals';
@@ -50,7 +50,7 @@ export default class TreePlugin {
   });
 
   constructor(private readonly ide: Ide) {
-    this.files = new FileTree(tree, (message) => ide.complain(message));
+    this.files = new FileTree(this.ide.tree, (message) => ide.complain(message));
     this.selection = new TreeSelection(this.files);
     this.ops = new TreeOps(this.selection, this.prompt, this.files, ide, (path) => this.askReveal({ path }));
     this.follow = new TreeFollow(this.selection, ide);
@@ -63,13 +63,13 @@ export default class TreePlugin {
     this.ide.css(STYLE);
 
     effect(() => {
-      workspaces.current.value;
+      this.ide.workspaces.current.value;
       this.files.reset();
     });
     effect(() => {
-      if (project.value) void this.files.load('').catch((err) => this.ide.complain(describe(err)));
+      if (this.ide.project.value) void this.files.load('').catch((err) => this.ide.complain(describe(err)));
     });
-    tree.onChanged((event) => this.files.refresh(event.path));
+    this.ide.tree.onChanged((event) => this.files.refresh(event.path));
 
     this.ide.command('panel.tree', () => {
       if (this.shown.value && this.selection.hasKeyboard()) {

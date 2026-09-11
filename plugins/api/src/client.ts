@@ -1,4 +1,6 @@
 import type { Windows } from '@ide/windows';
+import { createContext, createElement, type ComponentChildren } from 'preact';
+import { useContext } from 'preact/hooks';
 import type { Signal } from '@preact/signals';
 import type {
   DirEntry,
@@ -16,10 +18,6 @@ export interface Size {
   h: number;
 }
 
-export declare function t(key: string, params?: Record<string, string | number>): string;
-
-export declare function runCommand(id: string): boolean;
-
 export interface ResizerProps {
   id: string;
   side: 'left' | 'right';
@@ -28,18 +26,12 @@ export interface ResizerProps {
   defaultWidth: number;
 }
 
-export declare const settings: { readonly value: Settings | null };
-export declare function settingsOf<T extends object>(section: string, defaults: T): { readonly value: T };
-
-export declare const project: { readonly value: WorkspaceInfo | null };
-
 export type { DirEntry, EntryKind } from '@ide/protocol';
 
 export interface TreeWire {
   list(path: string): Promise<DirEntry[]>;
   onChanged(handler: (event: { path: string }) => void): () => void;
 }
-export declare const tree: TreeWire;
 
 export interface FsAccess {
   create(path: string, kind: EntryKind): Promise<DirEntry>;
@@ -50,7 +42,6 @@ export interface FsAccess {
   writeBytes(path: string, base64: string): Promise<DirEntry>;
   absolute(path: string): Promise<string>;
 }
-export declare const fs: FsAccess;
 
 export interface DocWire {
   open(path: string): Promise<DocState>;
@@ -65,8 +56,6 @@ export interface DocWire {
   onMoved(handler: (event: { from: string; path: string }) => void): () => void;
   onRemoved(handler: (event: { path: string }) => void): () => void;
 }
-export declare const docs: DocWire;
-export declare function setSetting(section: string, key: string, value: SettingValue): Promise<void>;
 
 export interface WorkspacesAccess {
   readonly current: { readonly value: WorkspaceInfo | null };
@@ -74,11 +63,6 @@ export interface WorkspacesAccess {
   open(root: string): Promise<void>;
   switchTo(id: string): Promise<void>;
 }
-export declare const workspaces: WorkspacesAccess;
-
-export declare const keymap: { readonly value: Keymap };
-
-export declare const connected: { readonly value: boolean };
 
 export type NoteKind = 'info' | 'error' | 'work';
 export interface Note {
@@ -94,7 +78,6 @@ export interface NotesAccess {
   dismiss(id: number): void;
   dismissAll(): void;
 }
-export declare const notes: NotesAccess;
 
 export interface HunkBox {
   left: number;
@@ -102,20 +85,37 @@ export interface HunkBox {
   bottom: number;
 }
 
-export interface ClientSurface {
-  t: typeof t;
-  runCommand: typeof runCommand;
-  keymap: typeof keymap;
-  connected: typeof connected;
-  notes: typeof notes;
-  settings: typeof settings;
-  settingsOf: typeof settingsOf;
-  project: typeof project;
-  tree: typeof tree;
-  fs: typeof fs;
-  docs: typeof docs;
-  setSetting: typeof setSetting;
-  workspaces: typeof workspaces;
+export interface IdeServices {
+  readonly windows: Windows;
+  readonly t: (key: string, params?: Record<string, string | number>) => string;
+  readonly runCommand: (id: string) => boolean;
+  readonly settings: { readonly value: Settings | null };
+  readonly settingsOf: <T extends object>(section: string, defaults: T) => { readonly value: T };
+  readonly project: { readonly value: WorkspaceInfo | null };
+  readonly tree: TreeWire;
+  readonly fs: FsAccess;
+  readonly docs: DocWire;
+  readonly setSetting: (section: string, key: string, value: SettingValue) => Promise<void>;
+  readonly workspaces: WorkspacesAccess;
+  readonly keymap: { readonly value: Keymap };
+  readonly connected: { readonly value: boolean };
+  readonly notes: NotesAccess;
+}
+
+const IdeContext = createContext<IdeServices | null>(null);
+
+export function IdeProvider(props: { value: IdeServices; children?: ComponentChildren }) {
+  return createElement(IdeContext.Provider, { value: props.value }, props.children);
+}
+
+export function useIde(): IdeServices {
+  const ide = useContext(IdeContext);
+  if (!ide) throw new Error('службы IDE не найдены: корень разметки не обёрнут в IdeProvider');
+  return ide;
+}
+
+export function useT(): IdeServices['t'] {
+  return useIde().t;
 }
 
 export interface PluginToolbarEntry {
@@ -126,8 +126,7 @@ export interface PluginToolbarEntry {
   active?: { readonly value: boolean };
 }
 
-export interface Ide {
-  readonly windows: Windows;
+export interface Ide extends IdeServices {
   readonly name: string;
   readonly rpc: { call(method: string, params?: unknown): Promise<unknown> };
   getPlugin<T>(ctor: PluginClass<T>): T;

@@ -1,4 +1,4 @@
-import { t } from '@ide/api/client';
+import { useT } from '@ide/api/client';
 import type { GitChange } from './types.js';
 import { DirIcon, FileIcon } from '@ide/ui';
 
@@ -10,6 +10,7 @@ interface Node {
 }
 
 export function ChangedTree({ changes }: { changes: GitChange[] }) {
+  const t = useT();
   if (changes.length === 0) {
     return <div class="push-empty">{t('push.noFiles')}</div>;
   }

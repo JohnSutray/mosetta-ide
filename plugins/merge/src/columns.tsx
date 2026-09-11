@@ -5,7 +5,7 @@ import type CodePlugin from '@ide/plugin-code';
 import type { EditorSettings } from '@ide/plugin-code';
 import type { Choice, Diff3, Region } from './diff3.js';
 import { layout, type Lane, type LaneLayout } from './layout.js';
-import { t } from '@ide/api/client';
+import { useT } from '@ide/api/client';
 
 interface Props {
   path: string;
@@ -22,6 +22,7 @@ interface Props {
 }
 
 export function MergeColumns(props: Props) {
+  const t = useT();
   const { path, regions, choices, cursor, settings } = props;
   const grid = layout(regions, choices, props.diff3);
 
@@ -168,6 +169,7 @@ function Rail({
   onDecide: Props['onDecide'];
   onPick: Props['onPick'];
 }) {
+  const t = useT();
   return (
     <div class={`merge-rail is-${side}`}>
       <div class="merge-column-title" />

@@ -1,14 +1,5 @@
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
-import {
-  activate,
-  configSection,
-  project,
-  remote,
-  runCommand,
-  stub,
-  t,
-  type Ide,
-} from '@ide/api/client';
+import { activate, configSection, remote, stub, type Ide } from '@ide/api/client';
 import Editor from '@ide/plugin-editor';
 import { BranchesWindow, Git, PushWindow, type GitRemote, type TreeTint } from './state.js';
 import { GitMarks } from './marks.js';
@@ -97,11 +88,11 @@ export default class GitPlugin implements GitRemote {
     effect(() => {
       const path = this.docs.openDoc.value?.path ?? null;
       void this.git.state.value;
-      void this.marks.load(project.value ? path : null);
+      void this.marks.load(this.ide.project.value ? path : null);
     });
 
     effect(() => {
-      const current = project.value;
+      const current = this.ide.project.value;
       this.git.reset();
       this.branchesWindow.reset();
       if (current) void this.git.refresh();
@@ -142,21 +133,21 @@ export default class GitPlugin implements GitRemote {
   }
 
   private branchLabel() {
-    if (!project.value) return null;
+    if (!this.ide.project.value) return null;
     const state = this.git.state.value;
     return (
       <button
         class="branch-label"
         onMouseEnter={(event) =>
-          this.ide.windows.tips.show(event.currentTarget as Element, t('toolbar.branches'), this.ide.getPlugin(KeymapPlugin).keysFor('git.branches'))
+          this.ide.windows.tips.show(event.currentTarget as Element, this.ide.t('toolbar.branches'), this.ide.getPlugin(KeymapPlugin).keysFor('git.branches'))
         }
         onMouseLeave={() => this.ide.windows.tips.hide()}
         onClick={() => {
           this.ide.windows.tips.hide();
-          runCommand('git.branches');
+          this.ide.runCommand('git.branches');
         }}
       >
-        {state.repo ? (state.branch ?? t('toolbar.noBranch')) : t('toolbar.noRepo')}
+        {state.repo ? (state.branch ?? this.ide.t('toolbar.noBranch')) : this.ide.t('toolbar.noRepo')}
         {state.ahead > 0 && <span class="branch-ahead">↑{state.ahead}</span>}
         {state.behind > 0 && <span class="branch-behind">↓{state.behind}</span>}
       </button>

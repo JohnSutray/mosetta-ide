@@ -13,7 +13,7 @@ import type {
 import { attach, hooksOf, registriesOf, sectionsOf } from './client.js';
 import { sectionOf } from './section.js';
 import type {
-  ClientSurface,
+  IdeServices,
   Note,
   NoteKind,
   NotesAccess,
@@ -26,98 +26,7 @@ import type {
   RegistryHandle,
 } from './client.js';
 
-let installed: FakeSurface | null = null;
-
-function surface(): FakeSurface {
-  if (!installed) {
-    throw new Error('поверхность не поднята: заведите FakeHost до импорта плагина');
-  }
-  return installed;
-}
-
-export function t(key: string, params?: Record<string, string | number>): string {
-  return surface().t(key, params);
-}
-export function runCommand(id: string): boolean {
-  return surface().runCommand(id);
-}
-
-export const settings: { readonly value: Settings | null } = {
-  get value() {
-    return surface().settings.value;
-  },
-};
-export function settingsOf<T extends object>(section: string, defaults: T): { readonly value: T } {
-  return {
-    get value() {
-      return sectionOf(surface().settings.value, section, defaults);
-    },
-  };
-}
-export const project: { readonly value: WorkspaceInfo | null } = {
-  get value() {
-    return surface().project.value;
-  },
-};
-export const tree: TreeWire = {
-  list: (path) => surface().tree.list(path),
-  onChanged: (handler) => surface().tree.onChanged(handler),
-};
-export const fs: FsAccess = {
-  create: (path, kind) => surface().fs.create(path, kind),
-  move: (from, to) => surface().fs.move(from, to),
-  copy: (from, to) => surface().fs.copy(from, to),
-  remove: (path) => surface().fs.remove(path),
-  write: (path, text) => surface().fs.write(path, text),
-  writeBytes: (path, base64) => surface().fs.writeBytes(path, base64),
-  absolute: (path) => surface().fs.absolute(path),
-};
-export const docs: DocWire = {
-  open: (path) => surface().docs.open(path),
-  close: (path) => surface().docs.close(path),
-  edit: (path, text, baseVersion) => surface().docs.edit(path, text, baseVersion),
-  save: (path) => surface().docs.save(path),
-  reload: (path) => surface().docs.reload(path),
-  state: (path) => surface().docs.state(path),
-  onChanged: (handler) => surface().docs.onChanged(handler),
-  onExternal: (handler) => surface().docs.onExternal(handler),
-  onDiverged: (handler) => surface().docs.onDiverged(handler),
-  onMoved: (handler) => surface().docs.onMoved(handler),
-  onRemoved: (handler) => surface().docs.onRemoved(handler),
-};
-export function setSetting(section: string, key: string, value: SettingValue): Promise<void> {
-  return surface().setSetting(section, key, value);
-}
-export const workspaces: WorkspacesAccess = {
-  get current() {
-    return surface().workspaces.current;
-  },
-  get live() {
-    return surface().workspaces.live;
-  },
-  open: (root) => surface().workspaces.open(root),
-  switchTo: (id) => surface().workspaces.switchTo(id),
-};
-export const connected: { readonly value: boolean } = {
-  get value() {
-    return surface().connected.value;
-  },
-};
-export const notes: NotesAccess = {
-  get all() {
-    return surface().notes.all;
-  },
-  notify: (text, kind) => surface().notes.notify(text, kind),
-  settle: (id, text, kind) => surface().notes.settle(id, text, kind),
-  dismiss: (id) => surface().notes.dismiss(id),
-  dismissAll: () => surface().notes.dismissAll(),
-};
-export const keymap: { readonly value: Keymap } = {
-  get value() {
-    return surface().keymap.value;
-  },
-};
-export { activate, configSection, registry, remote, stub } from './client.js';
+export { activate, configSection, IdeProvider, registry, remote, stub, useIde, useT } from './client.js';
 
 export interface Tip {
   text: string;
@@ -232,16 +141,17 @@ export class FakeNotes implements NotesAccess {
   }
 }
 
-export class FakeSurface implements ClientSurface {
+export class FakeSurface implements IdeServices {
+  readonly windows: Windows = windows;
   readonly settings: Signal<Settings | null> = signal(null);
-  settingsOf<T extends object>(section: string, defaults: T): { readonly value: T } {
+  readonly settingsOf = <T extends object>(section: string, defaults: T): { readonly value: T } => {
     const all = this.settings;
     return {
       get value() {
         return sectionOf(all.value, section, defaults);
       },
     };
-  }
+  };
 
   tip: Tip | null = null;
   readonly keymap: Signal<Keymap> = signal({ version: 1, bindings: [] });
@@ -309,21 +219,19 @@ export class FakeSurface implements ClientSurface {
   readonly heads = new Map<string, string>();
   constructor(private readonly host: FakeHost) {}
 
-  t(key: string, params?: Record<string, string | number>): string {
+  readonly t = (key: string, params?: Record<string, string | number>): string => {
     if (!params) return key;
     const tail = Object.entries(params)
       .map(([name, value]) => `${name}=${value}`)
       .join(',');
     return `${key}(${tail})`;
-  }
+  };
 
-  runCommand(id: string): boolean {
-    return this.host.run(id);
-  }
+  readonly runCommand = (id: string): boolean => this.host.run(id);
 
-  async setSetting(section: string, key: string, value: SettingValue): Promise<void> {
+  readonly setSetting = async (section: string, key: string, value: SettingValue): Promise<void> => {
     this.settingWrites.push({ section, key, value });
-  }
+  };
 }
 
 export class FakeRegistry {
@@ -408,6 +316,20 @@ export class FakeIde implements Ide {
     private readonly host: FakeHost,
   ) {}
 
+  get t() { return this.host.surface.t; }
+  get runCommand() { return this.host.surface.runCommand; }
+  get settings() { return this.host.surface.settings; }
+  get settingsOf() { return this.host.surface.settingsOf; }
+  get setSetting() { return this.host.surface.setSetting; }
+  get project() { return this.host.surface.project; }
+  get workspaces() { return this.host.surface.workspaces; }
+  get keymap() { return this.host.surface.keymap; }
+  get connected() { return this.host.surface.connected; }
+  get notes() { return this.host.surface.notes; }
+  get tree() { return this.host.surface.tree; }
+  get fs() { return this.host.surface.fs; }
+  get docs() { return this.host.surface.docs; }
+
   getPlugin<T>(ctor: PluginClass<T>): T {
     return this.host.plugin(ctor);
   }
@@ -490,7 +412,6 @@ export class FakeHost {
   constructor() {
     this.registry = new FakeRegistry((message) => this.complaints.push(message));
     this.surface = new FakeSurface(this);
-    installed = this.surface;
   }
 
   add<T>(ctor: PluginClass<T>, name: string): T {

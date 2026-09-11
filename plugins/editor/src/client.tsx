@@ -18,16 +18,7 @@ import {
   undo,
 } from '@codemirror/commands';
 import { computed, effect, signal, type ReadonlySignal, type Signal } from '@preact/signals';
-import {
-  activate,
-  configSection,
-  registry,
-  settings,
-  settingsOf,
-  t,
-  type HunkBox,
-  type Ide,
-} from '@ide/api/client';
+import { activate, configSection, registry, type HunkBox, type Ide } from '@ide/api/client';
 import LspPlugin from '@ide/plugin-lsp';
 import CodePlugin, { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import type { Hunk } from '@ide/plugin-code';
@@ -185,8 +176,8 @@ export default class Editor {
   private body() {
     const file = this.docs.openDoc.value;
     if (!file) return this.empty();
-    if (!settings.value) return null;
-    const config = settingsOf('editor', EDITOR_DEFAULTS).value;
+    if (!this.ide.settings.value) return null;
+    const config = this.ide.settingsOf('editor', EDITOR_DEFAULTS).value;
     return (
       <div class="editor-host">
         <DivergedBadge path={file.path} ide={this.ide} />
@@ -219,7 +210,7 @@ export default class Editor {
 
   private empty() {
     const views = this.ide.registry<EmptyView>('editor.empty').all.value;
-    if (views.length === 0) return <div class="editor-nothing">{t('editor.nothing')}</div>;
+    if (views.length === 0) return <div class="editor-nothing">{this.ide.t('editor.nothing')}</div>;
     return <>{views.map((one) => one.view() as never)}</>;
   }
 

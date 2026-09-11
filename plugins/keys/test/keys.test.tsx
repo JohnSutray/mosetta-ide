@@ -3,14 +3,16 @@ import { windows } from '@ide/windows';
 import { FakeHost, nodes, of } from '@ide/api/testing';
 import KeymapPlugin from '@ide/plugin-keymap';
 import KeysPlugin from '../src/client.js';
-import { KeysPopup } from '../src/popup.js';
+import { KeysSheet } from '../src/popup.js';
 
 let keys: KeymapPlugin['keys'];
+let t: (key: string, params?: Record<string, string | number>) => string;
 
 async function raise() {
   const host = new FakeHost();
   keys = host.add(KeymapPlugin, '@ide/plugin-keymap').keys;
   const plugin = host.add(KeysPlugin, '@ide/plugin-keys');
+  t = host.surface.t;
   await host.start();
   const mine = `${keys.host}:${keys.os}` as const;
   const alien = keys.os === 'win' ? 'browser:mac' : 'browser:win';
@@ -26,7 +28,7 @@ async function raise() {
 }
 
 function rendered(plugin: KeysPlugin) {
-  return nodes(KeysPopup({ keys, windows, window: plugin.window }));
+  return nodes(KeysSheet({ keys, windows, window: plugin.window, t }));
 }
 
 function texts(plugin: KeysPlugin): string[] {

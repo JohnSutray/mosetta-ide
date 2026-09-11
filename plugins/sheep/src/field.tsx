@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { sheepfold, type Sheep } from './world.js';
 import { pixelFont } from './pixel-font.js';
 import { pixelGrid } from './pixel-grid.js';
-import { t } from '@ide/api/client';
+import { useT } from '@ide/api/client';
 
 const DIGIT_FONT = "'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif";
 
@@ -188,7 +188,7 @@ function drawScore(
   pixelFont.write(ctx, line, w - pixelFont.measure(line, px) - 12, h - 8 - pixelFont.GLYPH_H * px, px, '#5f6871');
 }
 
-function drawWords(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+function drawWords(ctx: CanvasRenderingContext2D, w: number, h: number, t: (key: string) => string): void {
   const title = t('editor.empty.title');
   const hint = t('editor.empty.hint');
   const titlePx = Math.max(1, Math.min(4, Math.floor((w * 0.82) / (pixelFont.measure(title, 1) || 1))));
@@ -206,6 +206,7 @@ function drawWords(ctx: CanvasRenderingContext2D, w: number, h: number): void {
 }
 
 export function SheepField() {
+  const t = useT();
   const canvas = useRef<HTMLCanvasElement>(null);
   const [merged, setMerged] = useState(() => Number(localStorage.getItem(MERGED_KEY) ?? '0'));
   const [shorn, setShorn] = useState(() => Number(localStorage.getItem(SHORN_KEY) ?? '0'));
@@ -240,7 +241,7 @@ export function SheepField() {
     const draw = () => {
       const { w, h } = size();
       ctx.clearRect(0, 0, w, h);
-      drawWords(ctx, w, h);
+      drawWords(ctx, w, h, t);
 
       const barn = sheepfold.barnAt(w, h);
       const salon = sheepfold.salonAt(w, h);

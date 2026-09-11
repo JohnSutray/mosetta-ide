@@ -1,5 +1,5 @@
 import type { Windows } from '@ide/windows';
-import { t } from '@ide/api/client';
+import { useT } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import { Popup } from '@ide/ui';
 import type { Ask, Prompt as PromptState, TreeSelection } from './state.js';
@@ -19,6 +19,7 @@ function heightFor(ask: Ask): number {
 }
 
 export function Prompt({ windows, prompt, selection }: { windows: Windows; prompt: PromptState; selection: TreeSelection }) {
+  const t = useT();
   const field = useRef<HTMLInputElement>(null);
   const ask = prompt.ask.value;
 

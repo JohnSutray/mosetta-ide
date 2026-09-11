@@ -1,18 +1,19 @@
-import { keymap } from '@ide/api/client';
+import type { KeyBinding } from '@ide/protocol';
 import { keyRules } from './dispatcher.js';
 
-function modifiersOf(command: string): Set<string>[] {
-  return keymap.value.bindings
+function modifiersOf(bindings: readonly KeyBinding[], command: string): Set<string>[] {
+  return bindings
     .filter((binding) => binding.command === command && keyRules.appliesHere(binding))
     .map((binding) => new Set(binding.key.split('+').slice(0, -1)))
     .filter((mods) => mods.size > 0);
 }
 
 export function chordHeld(
+  bindings: readonly KeyBinding[],
   command: string,
   event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean },
 ): boolean {
-  return modifiersOf(command).some(
+  return modifiersOf(bindings, command).some(
     (mods) =>
       mods.has('meta') === event.metaKey &&
       mods.has('control') === event.ctrlKey &&

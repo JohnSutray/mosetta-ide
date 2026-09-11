@@ -1,5 +1,5 @@
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
-import { t, type Ide } from '@ide/api/client';
+import type { Ide } from '@ide/api/client';
 import type { Fuzzy, FuzzyHit } from '@ide/ui';
 import type {
   GitAction,
@@ -34,7 +34,7 @@ const FILE_TINT: Partial<Record<GitFileState, TreeTint>> = {
 export class Git {
   constructor(
     private readonly remote: GitRemote,
-    private readonly ide: Pick<Ide, 'on' | 'working' | 'complain'>,
+    private readonly ide: Pick<Ide, 'on' | 'working' | 'complain' | 't'>,
   ) {
     this.ide.on('output', (payload) => {
       const { chunk } = payload as { chunk: string };
@@ -93,7 +93,7 @@ export class Git {
   async run(action: GitAction, branchName?: string, name?: string): Promise<boolean> {
     if (this.running.value) return false;
     const branch = branchName ?? null;
-    const done = this.ide.working(t(`branches.${action === 'force-push' ? 'push' : action}`) + '…');
+    const done = this.ide.working(this.ide.t(`branches.${action === 'force-push' ? 'push' : action}`) + '…');
     batch(() => {
       this.running.value = action;
       this.output.value = '';
@@ -104,7 +104,7 @@ export class Git {
         done(error.split('\n')[0] ?? error, true);
         return false;
       }
-      done(doneText(action, branch, name));
+      done(this.doneText(action, branch, name));
       await this.refresh();
       return true;
     } catch (err) {
@@ -112,6 +112,32 @@ export class Git {
       return false;
     } finally {
       this.running.value = null;
+    }
+  }
+
+  private doneText(action: GitAction, branch: string | null, name?: string): string {
+    const of = name ?? branch ?? '';
+    switch (action) {
+      case 'fetch':
+        return this.ide.t('git.fetched');
+      case 'pull':
+        return this.ide.t('git.pulled', { branch: branch ?? '' });
+      case 'push':
+      case 'force-push':
+        return this.ide.t('git.pushed', { branch: of });
+      case 'checkout':
+        return this.ide.t('git.checkedOut', { branch: of });
+      case 'merge':
+        return this.ide.t('git.merged', { branch: of });
+      case 'create':
+        return this.ide.t('git.created', { branch: of });
+      case 'rename':
+        return this.ide.t('git.renamed', { branch: of });
+      case 'delete':
+      case 'force-delete':
+        return this.ide.t('git.deleted', { branch: of });
+      default:
+        return this.ide.t('git.done', { action });
     }
   }
 }
@@ -179,7 +205,7 @@ export class BranchesWindow {
 
   constructor(
     private readonly git: Git,
-    private readonly ide: Pick<Ide, 'on' | 'complain'>,
+    private readonly ide: Pick<Ide, 'on' | 'complain' | 't'>,
     private readonly fuzzy: () => Pick<Fuzzy, 'find'>,
   ) {
     this.ide.on('state', () => {
@@ -189,7 +215,7 @@ export class BranchesWindow {
 
   show(): void {
     if (!this.git.repo) {
-      this.ide.complain(t('branches.notRepo'));
+      this.ide.complain(this.ide.t('branches.notRepo'));
       return;
     }
     batch(() => {
@@ -284,7 +310,7 @@ export class PushWindow {
   constructor(
     private readonly git: Git,
     private readonly remote: GitRemote,
-    private readonly ide: Pick<Ide, 'complain'>,
+    private readonly ide: Pick<Ide, 'complain' | 't'>,
   ) {}
 
   readonly open = signal(false);
@@ -309,7 +335,7 @@ export class PushWindow {
 
   async show(): Promise<void> {
     if (!this.git.repo) {
-      this.ide.complain(t('branches.notRepo'));
+      this.ide.complain(this.ide.t('branches.notRepo'));
       return;
     }
     batch(() => {
@@ -361,31 +387,5 @@ export class PushWindow {
     } catch {
       if (token === this.token) this.changes.value = [];
     }
-  }
-}
-
-function doneText(action: GitAction, branch: string | null, name?: string): string {
-  const of = name ?? branch ?? '';
-  switch (action) {
-    case 'fetch':
-      return t('git.fetched');
-    case 'pull':
-      return t('git.pulled', { branch: branch ?? '' });
-    case 'push':
-    case 'force-push':
-      return t('git.pushed', { branch: of });
-    case 'checkout':
-      return t('git.checkedOut', { branch: of });
-    case 'merge':
-      return t('git.merged', { branch: of });
-    case 'create':
-      return t('git.created', { branch: of });
-    case 'rename':
-      return t('git.renamed', { branch: of });
-    case 'delete':
-    case 'force-delete':
-      return t('git.deleted', { branch: of });
-    default:
-      return t('git.done', { action });
   }
 }

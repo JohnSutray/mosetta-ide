@@ -1,4 +1,4 @@
-import { activate, notes, t } from '@ide/api/client';
+import { activate } from '@ide/api/client';
 import type { Ide, Note } from '@ide/api/client';
 import { effect } from '@preact/signals';
 import { STYLE } from './style.js';
@@ -15,7 +15,7 @@ export default class NotificationsPlugin {
 
     effect(() => {
       const alive = new Set<number>();
-      for (const note of notes.all.value) {
+      for (const note of this.ide.notes.all.value) {
         alive.add(note.id);
         if (note.kind === 'work') this.disarm(note.id);
         else if (!this.timers.has(note.id)) this.arm(note.id);
@@ -29,7 +29,7 @@ export default class NotificationsPlugin {
       id,
       setTimeout(() => {
         this.timers.delete(id);
-        notes.dismiss(id);
+        this.ide.notes.dismiss(id);
       }, this.lifetimeMs),
     );
   }
@@ -41,20 +41,20 @@ export default class NotificationsPlugin {
   }
 
   private view() {
-    const list = notes.all.value;
+    const list = this.ide.notes.all.value;
     if (list.length === 0) return null;
     return (
       <div class="notes">
         {list.length > 1 && (
-          <div class="notes-all" onClick={() => notes.dismissAll()}>
-            {t('note.closeAll')}
+          <div class="notes-all" onClick={() => this.ide.notes.dismissAll()}>
+            {this.ide.t('note.closeAll')}
           </div>
         )}
         {list.map((note: Note) => (
           <div key={note.id} class={`note is-${note.kind}`}>
             {note.kind === 'work' && <span class="spinner" />}
             <span class="note-text">{note.text}</span>
-            <span class="note-close" title={t('note.close')} onClick={() => notes.dismiss(note.id)}>
+            <span class="note-close" title={this.ide.t('note.close')} onClick={() => this.ide.notes.dismiss(note.id)}>
               ×
             </span>
           </div>

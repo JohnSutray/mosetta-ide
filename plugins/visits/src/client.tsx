@@ -1,4 +1,4 @@
-import { activate, remote, stub, workspaces } from '@ide/api/client';
+import { activate, remote, stub } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { effect } from '@preact/signals';
 import Editor from '@ide/plugin-editor';
@@ -50,7 +50,7 @@ export default class VisitsPlugin implements VisitsRemote {
     });
 
     effect(() => {
-      if (workspaces.current.value) void visits.load();
+      if (this.ide.workspaces.current.value) void visits.load();
       else visits.forget();
     });
 

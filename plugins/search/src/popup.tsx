@@ -1,5 +1,5 @@
 import type { Windows } from '@ide/windows';
-import { settingsOf, t } from '@ide/api/client';
+import { useIde, useT } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import type CodePlugin from '@ide/plugin-code';
 import { EDITOR_DEFAULTS } from '@ide/plugin-code';
@@ -8,6 +8,8 @@ import { Popup } from '@ide/ui';
 import type { Search } from './state.js';
 
 export function SearchEverywhere({ windows, search, code }: { windows: Windows; search: Search; code: CodePlugin }) {
+  const ide = useIde();
+  const t = useT();
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
 
@@ -23,7 +25,7 @@ export function SearchEverywhere({ windows, search, code }: { windows: Windows; 
       ?.scrollIntoView({ block: 'nearest' });
   }, [search.selected.value, search.hits.value]);
 
-  const editor = settingsOf('editor', EDITOR_DEFAULTS).value;
+  const editor = ide.settingsOf('editor', EDITOR_DEFAULTS).value;
   if (!search.open.value) return null;
 
   const preview = search.preview.value;

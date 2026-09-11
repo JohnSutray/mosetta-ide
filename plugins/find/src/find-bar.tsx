@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
-import { runCommand, t } from '@ide/api/client';
+import { useIde, useT } from '@ide/api/client';
 import type { Windows } from '@ide/windows';
 import type { FindState } from './find.js';
 
@@ -14,6 +14,8 @@ interface ToolProps {
 }
 
 function Tool({ keysFor, windows, command, title, on, children }: ToolProps) {
+  const ide = useIde();
+  const t = useT();
   return (
     <button
       type="button"
@@ -23,7 +25,7 @@ function Tool({ keysFor, windows, command, title, on, children }: ToolProps) {
       onMouseDown={(event) => event.preventDefault()}
       onClick={() => {
         windows.tips.hide();
-        runCommand(command);
+        ide.runCommand(command);
       }}
     >
       {children}
@@ -32,6 +34,7 @@ function Tool({ keysFor, windows, command, title, on, children }: ToolProps) {
 }
 
 export function FindBar({ keysFor, windows, find }: { keysFor: (command: string) => string[]; windows: Windows; find: FindState }) {
+  const t = useT();
   const field = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const epoch = find.focusEpoch.value;
   const multiline = find.multiline.value;

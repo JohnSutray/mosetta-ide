@@ -1,4 +1,4 @@
-import { activate, configSection, project, remote, settingsOf, stub, workspaces } from '@ide/api/client';
+import { activate, configSection, remote, stub } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
 import { LSP_DEFAULTS } from './settings.js';
@@ -57,12 +57,12 @@ export default class LspPlugin {
     this.ide.on('status', (payload) => this.lsp.setStatus(payload as LspStatus));
 
     effect(() => {
-      workspaces.current.value;
+      this.ide.workspaces.current.value;
       this.lsp.reset();
     });
 
     effect(() => {
-      if (!project.value) return;
+      if (!this.ide.project.value) return;
       void this.askStatus()
         .then((list) => {
           for (const status of list) this.lsp.setStatus(status);
@@ -77,7 +77,7 @@ export default class LspPlugin {
 
     effect(() => {
       const path = this.docs.openDoc.value?.path;
-      if (!path || !project.value) return;
+      if (!path || !this.ide.project.value) return;
       void this.askDiagnostics({ path })
         .then((known) => this.lsp.set(known.path, known.diagnostics))
         .catch(() => undefined);
@@ -101,7 +101,7 @@ export default class LspPlugin {
     const dot = name.lastIndexOf('.');
     if (dot <= 0) return false;
     const extension = name.slice(dot + 1).toLowerCase();
-    const servers = settingsOf('lsp', LSP_DEFAULTS).value.servers;
+    const servers = this.ide.settingsOf('lsp', LSP_DEFAULTS).value.servers;
     return Object.values(servers).some((server) => server.enabled && server.extensions.includes(extension));
   }
 

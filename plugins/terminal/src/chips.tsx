@@ -1,4 +1,4 @@
-import { t } from '@ide/api/client';
+import { useT } from '@ide/api/client';
 import type { TerminalInfo } from './types.js';
 
 export function Chips({
@@ -38,6 +38,7 @@ function Chip({
   onPick: (name: string) => void;
   onClose: (name: string) => void;
 }) {
+  const t = useT();
   const classes = [
     'term-chip',
     current ? 'is-current' : '',

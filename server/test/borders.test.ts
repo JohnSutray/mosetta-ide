@@ -9,7 +9,7 @@ const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const CORE = new Set(['@ide/protocol', '@ide/api', '@ide/client', '@ide/server', '@ide/windows']);
 
 const LANGUAGE: Record<string, readonly string[]> = {
-  '@ide/api': ['activate', 'command', 'configSection', 'registry', 'remote', 'stub'],
+  '@ide/api': ['activate', 'command', 'configSection', 'IdeProvider', 'registry', 'remote', 'stub', 'useIde', 'useT'],
   '@ide/protocol': ['RpcErrorCode'],
 };
 

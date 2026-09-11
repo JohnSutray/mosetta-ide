@@ -1,5 +1,5 @@
 import CodePlugin from '@ide/plugin-code';
-import { activate, configSection, remote, setSetting, settingsOf, stub, type Ide } from '@ide/api/client';
+import { activate, configSection, IdeProvider, remote, stub, type Ide } from '@ide/api/client';
 import { search } from '@codemirror/search';
 import { ViewPlugin } from '@codemirror/view';
 import { computed } from '@preact/signals';
@@ -25,10 +25,10 @@ export default class FindPlugin implements FindFilesRemote {
   constructor(private readonly ide: Ide) {
     this.files = new FindFiles(
       this,
-      computed(() => settingsOf('find', FIND_DEFAULTS).value.masks),
-      computed(() => settingsOf('find', FIND_DEFAULTS).value.masksOff),
-      (list) => setSetting('find', 'masks', list),
-      (list) => setSetting('find', 'masksOff', list),
+      computed(() => this.ide.settingsOf('find', FIND_DEFAULTS).value.masks),
+      computed(() => this.ide.settingsOf('find', FIND_DEFAULTS).value.masksOff),
+      (list) => this.ide.setSetting('find', 'masks', list),
+      (list) => this.ide.setSetting('find', 'masksOff', list),
       (message) => ide.complain(message),() => ide.getPlugin(DocPlugin)
     );
   }
@@ -99,7 +99,12 @@ export default class FindPlugin implements FindFilesRemote {
         createPanel: () => {
           const dom = document.createElement('div');
           dom.className = 'find-host';
-          render(<FindBar keysFor={(command: string) => this.ide.getPlugin(KeymapPlugin).keysFor(command)} windows={this.ide.windows} find={find} />, dom);
+          render(
+            <IdeProvider value={this.ide}>
+              <FindBar keysFor={(command: string) => this.ide.getPlugin(KeymapPlugin).keysFor(command)} windows={this.ide.windows} find={find} />
+            </IdeProvider>,
+            dom,
+          );
           return { dom, top: true, destroy: () => render(null, dom) };
         },
       }),

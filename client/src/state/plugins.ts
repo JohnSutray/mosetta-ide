@@ -1,4 +1,3 @@
-import { windows } from '@ide/windows';
 import { commands } from '../keys/commands.js';
 import { rpc as socket, type RpcLike } from './session.js';
 import { complain, notify, say, settle } from './notifications.js';
@@ -14,7 +13,10 @@ import {
   registry as registryHook,
   remote,
   stub,
-  type ClientSurface,
+  IdeProvider,
+  useIde,
+  useT,
+  type IdeServices,
   type Ide,
   type PluginClass,
   type RegistryHandle,
@@ -39,12 +41,14 @@ export class Plugins {
   private readonly instances = new Map<unknown, unknown>();
   private readonly slots = new Map<string, number>();
 
-  private expose(surface: ClientSurface): void {
+  private expose(): void {
     (globalThis as Record<string, unknown>).__ideApi = {
       modules: {
         ...sharedModules,
         '@ide/api/client': {
-          ...surface,
+          IdeProvider,
+          useIde,
+          useT,
           remote,
           stub,
           activate: activateHook,
@@ -59,8 +63,9 @@ export class Plugins {
     (globalThis as unknown as { __ideApi: { modules: Record<string, unknown> } }).__ideApi.modules[name] = mod;
   }
 
-  async load(surface: ClientSurface, registry: Registry): Promise<void> {
-    this.expose(surface);
+  async load(surface: IdeServices, registry: Registry): Promise<void> {
+    this.expose();
+    this.shared = surface;
     this.store = registry;
     const built: Built[] = [];
     let list: PluginInfo[];
@@ -98,6 +103,8 @@ export class Plugins {
     }
   }
 
+  private shared: IdeServices | null = null;
+
   private store: Registry | null = null;
 
   private registryOf(): Registry {
@@ -128,6 +135,11 @@ export class Plugins {
   }
 
   services(name: string): Ide {
+    if (!this.shared) throw new Error('службы не поданы: плагины загружены мимо plugins.load');
+    return { ...this.shared, ...this.bound(name) };
+  }
+
+  bound(name: string): Omit<Ide, keyof IdeServices> {
     return {
       name,
       rpc: {
@@ -161,7 +173,6 @@ export class Plugins {
           if (frame.name !== name || frame.event !== event) return;
           handler(frame.payload);
         }),
-      windows,
       getPlugin: <T,>(ctor: PluginClass<T>): T => {
         const found = this.instances.get(ctor);
         if (!found) throw new Error(`плагин не поднят: ${ctor.name}`);

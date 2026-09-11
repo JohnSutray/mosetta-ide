@@ -1,9 +1,9 @@
-import { keymap } from '@ide/api/client';
+import type { KeyBinding } from '@ide/protocol';
 import { keyHost } from './host.js';
 import { keyRules } from './dispatcher.js';
 
-export function keysFor(command: string): string[] {
-  return keymap.value.bindings
+export function keysFor(bindings: readonly KeyBinding[], command: string): string[] {
+  return bindings
     .filter(
       (binding) =>
         binding.command === command &&

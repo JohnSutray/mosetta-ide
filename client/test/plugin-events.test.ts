@@ -32,7 +32,7 @@ describe('события плагинов', () => {
   it('плагин слышит своё', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
-    new Plugins(socket).services('@ide/plugin-terminal').on('data', (p) => heard.push(p));
+    new Plugins(socket).bound('@ide/plugin-terminal').on('data', (p) => heard.push(p));
 
     socket.send('@ide/plugin-terminal', 'data', { name: 'root::dev', data: 'привет' });
     expect(heard).toEqual([{ name: 'root::dev', data: 'привет' }]);
@@ -41,7 +41,7 @@ describe('события плагинов', () => {
   it('чужого плагина не слышит', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
-    new Plugins(socket).services('@ide/plugin-terminal').on('data', (p) => heard.push(p));
+    new Plugins(socket).bound('@ide/plugin-terminal').on('data', (p) => heard.push(p));
 
     socket.send('@ide/plugin-git', 'data', 'чужое');
     expect(heard).toEqual([]);
@@ -50,7 +50,7 @@ describe('события плагинов', () => {
   it('чужое событие своего плагина не слышит', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
-    new Plugins(socket).services('@ide/plugin-terminal').on('data', (p) => heard.push(p));
+    new Plugins(socket).bound('@ide/plugin-terminal').on('data', (p) => heard.push(p));
 
     socket.send('@ide/plugin-terminal', 'exit', { exitCode: 0 });
     expect(heard).toEqual([]);
@@ -58,7 +58,7 @@ describe('события плагинов', () => {
 
   it('два слушателя одного события слышат оба', () => {
     const socket = new FakeSocket();
-    const ide = new Plugins(socket).services('@ide/plugin-terminal');
+    const ide = new Plugins(socket).bound('@ide/plugin-terminal');
     const heard: string[] = [];
     ide.on('data', () => heard.push('первый'));
     ide.on('data', () => heard.push('второй'));
@@ -71,7 +71,7 @@ describe('события плагинов', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
     const off = new Plugins(socket)
-      .services('@ide/plugin-terminal')
+      .bound('@ide/plugin-terminal')
       .on('data', (p) => heard.push(p));
 
     expect(socket.subscriptions).toBe(1);
@@ -86,8 +86,8 @@ describe('события плагинов', () => {
     const first = new FakeSocket();
     const second = new FakeSocket();
     const heard: string[] = [];
-    new Plugins(first).services('@ide/plugin-terminal').on('data', () => heard.push('первая'));
-    new Plugins(second).services('@ide/plugin-terminal').on('data', () => heard.push('вторая'));
+    new Plugins(first).bound('@ide/plugin-terminal').on('data', () => heard.push('первая'));
+    new Plugins(second).bound('@ide/plugin-terminal').on('data', () => heard.push('вторая'));
 
     first.send('@ide/plugin-terminal', 'data', null);
     expect(heard).toEqual(['первая']);

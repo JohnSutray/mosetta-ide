@@ -1,4 +1,4 @@
-import { project, t } from '@ide/api/client';
+import { useIde, useT } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import type { DirEntry } from '@ide/api/client';
 import { Chevron, DirIcon, FileIcon, RootIcon } from '@ide/ui';
@@ -22,7 +22,9 @@ export interface TreeProps {
 }
 
 export function Tree(props: TreeProps) {
-  const ws = project.value;
+  const ide = useIde();
+  const t = useT();
+  const ws = ide.project.value;
   const children = props.files.children.value.get('');
   const focused = props.selection.focus.value;
   const field = useRef<HTMLInputElement>(null);
@@ -121,6 +123,7 @@ function Level({ entries, depth, ...props }: { entries: DirEntry[]; depth: numbe
 }
 
 function Row({ entry, depth, ...props }: { entry: DirEntry; depth: number } & TreeProps) {
+  const t = useT();
   const { files, selection, ops, menu, tints } = props;
   const isDir = entry.kind === 'dir';
   const isOpen = files.expanded.value.has(entry.path);

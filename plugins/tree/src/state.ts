@@ -1,4 +1,3 @@
-import { fs, t } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import type { FileTree } from './file-tree.js';
 import { batch, signal } from '@preact/signals';
@@ -215,14 +214,14 @@ export class TreeOps {
   create(at: string, isDir: boolean, kind: EntryKind): void {
     const parent = parentOf(at, isDir);
     this.prompt.show({
-      title: kind === 'dir' ? t('tree.newFolder') : t('tree.newFile'),
-      text: parent === '' ? t('tree.inRoot') : parent,
+      title: kind === 'dir' ? this.ide.t('tree.newFolder') : this.ide.t('tree.newFile'),
+      text: parent === '' ? this.ide.t('tree.inRoot') : parent,
       field: true,
       value: '',
-      confirm: t('tree.create'),
+      confirm: this.ide.t('tree.create'),
       run: async (name) => {
         const path = parent === '' ? name : `${parent}/${name}`;
-        await fs.create(path, kind);
+        await this.ide.fs.create(path, kind);
         await this.files.load(parent);
         await this.files.ensureExpanded(parent);
         if (kind === 'file') await this.ide.getPlugin(DocPlugin).openFile(path);
@@ -234,18 +233,18 @@ export class TreeOps {
     const name = path.slice(path.lastIndexOf('/') + 1);
     const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
     this.prompt.show({
-      title: t('tree.rename'),
+      title: this.ide.t('tree.rename'),
       text: path,
       field: true,
       value: name,
-      confirm: t('tree.rename.do'),
+      confirm: this.ide.t('tree.rename.do'),
       run: async (next) => {
         if (next === name) return;
         const to = parent === '' ? next : `${parent}/${next}`;
         await this.ide.getPlugin(DocPlugin).flushDocs();
-        await fs.move(path, to);
+        await this.ide.fs.move(path, to);
         await this.files.load(parent);
-        this.ide.say(t('tree.renamed', { name: next }));
+        this.ide.say(this.ide.t('tree.renamed', { name: next }));
       },
     });
   }
@@ -255,21 +254,21 @@ export class TreeOps {
     const many = paths.length > 1;
     this.prompt.show({
       title: many
-        ? t('tree.deleteMany', { count: paths.length })
+        ? this.ide.t('tree.deleteMany', { count: paths.length })
         : isDir
-          ? t('tree.deleteFolder')
-          : t('tree.deleteFile'),
-      text: `${paths.join('\n')}\n\n${t('tree.deleteWarn')}`,
+          ? this.ide.t('tree.deleteFolder')
+          : this.ide.t('tree.deleteFile'),
+      text: `${paths.join('\n')}\n\n${this.ide.t('tree.deleteWarn')}`,
       field: false,
-      confirm: t('tree.delete.do'),
+      confirm: this.ide.t('tree.delete.do'),
       danger: true,
       run: async () => {
         for (const item of paths) {
-          await fs.remove(item);
+          await this.ide.fs.remove(item);
           await this.files.load(item.slice(0, Math.max(0, item.lastIndexOf('/'))));
         }
         this.selection.clear();
-        this.ide.say(many ? t('tree.deletedMany', { count: paths.length }) : t('tree.deleted', { path }));
+        this.ide.say(many ? this.ide.t('tree.deletedMany', { count: paths.length }) : this.ide.t('tree.deleted', { path }));
       },
     });
   }
@@ -277,15 +276,15 @@ export class TreeOps {
   copy(path: string, cut: boolean): void {
     const paths = this.selection.targets(path);
     this.clipboard.value = { paths, cut };
-    const what = paths.length > 1 ? t('tree.items', { count: paths.length }) : paths[0]!;
-    this.ide.say(cut ? t('tree.cut.done', { path: what }) : t('tree.copied', { path: what }));
+    const what = paths.length > 1 ? this.ide.t('tree.items', { count: paths.length }) : paths[0]!;
+    this.ide.say(cut ? this.ide.t('tree.cut.done', { path: what }) : this.ide.t('tree.copied', { path: what }));
   }
 
   async copyAbsolutePath(path: string): Promise<void> {
     try {
-      const absolute = await fs.absolute(path);
+      const absolute = await this.ide.fs.absolute(path);
       await navigator.clipboard.writeText(absolute);
-      this.ide.say(t('tree.pathCopied', { path: absolute }));
+      this.ide.say(this.ide.t('tree.pathCopied', { path: absolute }));
     } catch (err) {
       this.ide.complain(describe(err));
     }
@@ -306,12 +305,12 @@ export class TreeOps {
       const to = join(folder, name);
       if (to === from) continue;
       if (folder === from || folder.startsWith(`${from}/`)) {
-        this.ide.complain(t('tree.intoItself'));
+        this.ide.complain(this.ide.t('tree.intoItself'));
         return;
       }
       try {
-        if (copy) await fs.copy(from, to);
-        else await fs.move(from, to);
+        if (copy) await this.ide.fs.copy(from, to);
+        else await this.ide.fs.move(from, to);
       } catch (err) {
         this.ide.complain(describe(err));
         return;
@@ -322,7 +321,7 @@ export class TreeOps {
     await this.files.ensureExpanded(folder);
     this.selection.clear();
     this.ide.say(
-      copy ? t('tree.copiedInto', { folder: folder || '/' }) : t('tree.movedInto', { folder: folder || '/' }),
+      copy ? this.ide.t('tree.copiedInto', { folder: folder || '/' }) : this.ide.t('tree.movedInto', { folder: folder || '/' }),
     );
   }
 
@@ -339,7 +338,7 @@ export class TreeOps {
 
   async pasteFromSystem(parent: string): Promise<void> {
     if (!navigator.clipboard?.read) {
-      this.ide.complain(t('tree.noClipboard'));
+      this.ide.complain(this.ide.t('tree.noClipboard'));
       return;
     }
     let items: ClipboardItem[];
@@ -356,29 +355,29 @@ export class TreeOps {
         const blob = await item.getType(image);
         const extension = image.slice('image/'.length).replace('svg+xml', 'svg');
         const name = await this.freeName(parent, 'image', extension);
-        await fs.writeBytes(join(parent, name), await toBase64(blob));
+        await this.ide.fs.writeBytes(join(parent, name), await toBase64(blob));
         await this.files.load(parent);
         await this.files.ensureExpanded(parent);
-        this.ide.say(t('tree.pasted', { name }));
+        this.ide.say(this.ide.t('tree.pasted', { name }));
         return;
       }
     }
 
     const text = await navigator.clipboard.readText().catch(() => '');
     if (text.trim() === '') {
-      this.ide.complain(t('tree.clipboardEmpty'));
+      this.ide.complain(this.ide.t('tree.clipboardEmpty'));
       return;
     }
     this.prompt.show({
-      title: t('tree.pasteText'),
+      title: this.ide.t('tree.pasteText'),
       text: text.slice(0, 200),
       field: true,
       value: '',
-      confirm: t('tree.create'),
+      confirm: this.ide.t('tree.create'),
       run: async (name) => {
         const path = join(parent, name);
-        await fs.create(path, 'file');
-        await fs.write(path, text);
+        await this.ide.fs.create(path, 'file');
+        await this.ide.fs.write(path, text);
         await this.files.load(parent);
         await this.ide.getPlugin(DocPlugin).openFile(path);
       },

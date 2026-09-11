@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'preact/hooks';
 import type { JSX } from 'preact';
-import { t } from '@ide/api/client';
+import { useT } from '@ide/api/client';
 import type CodePlugin from '@ide/plugin-code';
 import type { Ranked } from './ranker.js';
 import type { CompletionSession } from './session.js';
@@ -38,6 +38,7 @@ interface Props {
 }
 
 export function CompletionList({ session, path, onPick, code }: Props) {
+  const t = useT();
   const items = session.items.value;
   const selected = session.selected.value;
   const details = session.details.value;

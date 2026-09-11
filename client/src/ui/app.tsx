@@ -3,15 +3,15 @@ import { config } from '../state/config.js';
 import { complain, notifications } from '../state/notifications.js';
 import { rpc, session } from '../state/session.js';
 import type { JSX } from 'preact';
-import { SETTINGS_SCHEMA, type SettingsSection } from '@ide/api/client';
+import { IdeProvider, SETTINGS_SCHEMA, type IdeServices, type SettingsSection } from '@ide/api/client';
 import { sectionOf } from '@ide/api/section';
-import { useEffect } from 'preact/hooks';
+import { useEffect, useMemo } from 'preact/hooks';
 import { registerCommands } from '../commands.js';
 import { Registry } from '../state/registry.js';
 import { i18n } from '../i18n/index.js';
 import { PluginSurfaces } from './plugin-surfaces.js';
 import { plugins } from '../state/plugins.js';
-import type { ClientSurface } from '@ide/api/client';
+import { windows } from '@ide/windows';
 
 const store = new Registry((message) => complain(message));
 
@@ -40,75 +40,81 @@ function NoShell() {
   );
 }
 
+function services(): IdeServices {
+  return {
+    windows,
+    t: (key, params) => i18n.t(key, params),
+    runCommand: (id) => commands.run(id),
+    keymap: config.keymap,
+    connected: session.connected,
+    notes: {
+      all: notifications.notes,
+      notify: (text, kind) => notifications.notify(text, kind),
+      settle: (id, text, kind) => notifications.settle(id, text, kind),
+      dismiss: (id) => notifications.dismiss(id),
+      dismissAll: () => notifications.dismissAll(),
+    },
+    settings: config.settings,
+    settingsOf: (section, defaults) => ({
+      get value() {
+        return sectionOf(config.settings.value, section, defaults);
+      },
+    }),
+    project: session.attached,
+    workspaces: {
+      current: session.current,
+      live: session.workspaces,
+      open: (root) => session.openProject(root),
+      switchTo: (id) => session.switchProject(id),
+    },
+    tree: {
+      list: (path) => rpc.call('tree.list', { path }),
+      onChanged: (handler) => rpc.on('tree.changed', handler),
+    },
+    fs: {
+      create: (path, kind) => rpc.call('fs.create', { path, kind }),
+      move: (from, to) => rpc.call('fs.move', { from, to }),
+      copy: (from, to) => rpc.call('fs.copy', { from, to }),
+      remove: async (path) => {
+        await rpc.call('fs.remove', { path });
+      },
+      write: async (path, text) => {
+        await rpc.call('fs.write', { path, text });
+      },
+      writeBytes: (path, base64) => rpc.call('fs.writeBytes', { path, base64 }),
+      absolute: async (path) => (await rpc.call('fs.absolute', { path })).path,
+    },
+    docs: {
+      open: (path) => rpc.call('doc.open', { path }),
+      close: async (path) => {
+        await rpc.call('doc.close', { path });
+      },
+      edit: (path, text, baseVersion) => rpc.call('doc.edit', { path, text, baseVersion }),
+      save: (path) => rpc.call('doc.save', { path }),
+      reload: (path) => rpc.call('doc.reload', { path }),
+      state: (path) => rpc.call('doc.state', { path }),
+      onChanged: (handler) => rpc.on('doc.changed', handler),
+      onExternal: (handler) => rpc.on('doc.external', handler),
+      onDiverged: (handler) => rpc.on('doc.diverged', handler),
+      onMoved: (handler) => rpc.on('doc.moved', handler),
+      onRemoved: (handler) => rpc.on('doc.removed', handler),
+    },
+    setSetting: async (section, key, value) => {
+      const own = store.all<SettingsSection>('settings').value.find((one) => one.section === section);
+      if (!own) throw new Error(`раздел настроек никто не объявил: ${section}`);
+      const known = (own.defaults as Record<string, unknown>)[key];
+      if (known === undefined) throw new Error(`такой настройки нет: ${section}.${key}`);
+      if (typeof known !== typeof value) throw new Error(`${section}.${key} ждёт ${typeof known}`);
+      await rpc.call('config.set', { section, key, value });
+    },
+  };
+}
+
 export function App() {
+  const surface = useMemo(services, []);
+
   useEffect(() => {
     registerCommands();
-    const surface: ClientSurface = {
-      t: (key, params) => i18n.t(key, params),
-      runCommand: (id) => commands.run(id),
-      keymap: config.keymap,
-      connected: session.connected,
-      notes: {
-        all: notifications.notes,
-        notify: (text, kind) => notifications.notify(text, kind),
-        settle: (id, text, kind) => notifications.settle(id, text, kind),
-        dismiss: (id) => notifications.dismiss(id),
-        dismissAll: () => notifications.dismissAll(),
-      },
-      settings: config.settings,
-      settingsOf: (section, defaults) => ({
-        get value() {
-          return sectionOf(config.settings.value, section, defaults);
-        },
-      }),
-      project: session.attached,
-      workspaces: {
-        current: session.current,
-        live: session.workspaces,
-        open: (root) => session.openProject(root),
-        switchTo: (id) => session.switchProject(id),
-      },
-      tree: {
-        list: (path) => rpc.call('tree.list', { path }),
-        onChanged: (handler) => rpc.on('tree.changed', handler),
-      },
-      fs: {
-        create: (path, kind) => rpc.call('fs.create', { path, kind }),
-        move: (from, to) => rpc.call('fs.move', { from, to }),
-        copy: (from, to) => rpc.call('fs.copy', { from, to }),
-        remove: async (path) => {
-          await rpc.call('fs.remove', { path });
-        },
-        write: async (path, text) => {
-          await rpc.call('fs.write', { path, text });
-        },
-        writeBytes: (path, base64) => rpc.call('fs.writeBytes', { path, base64 }),
-        absolute: async (path) => (await rpc.call('fs.absolute', { path })).path,
-      },
-      docs: {
-        open: (path) => rpc.call('doc.open', { path }),
-        close: async (path) => {
-          await rpc.call('doc.close', { path });
-        },
-        edit: (path, text, baseVersion) => rpc.call('doc.edit', { path, text, baseVersion }),
-        save: (path) => rpc.call('doc.save', { path }),
-        reload: (path) => rpc.call('doc.reload', { path }),
-        state: (path) => rpc.call('doc.state', { path }),
-        onChanged: (handler) => rpc.on('doc.changed', handler),
-        onExternal: (handler) => rpc.on('doc.external', handler),
-        onDiverged: (handler) => rpc.on('doc.diverged', handler),
-        onMoved: (handler) => rpc.on('doc.moved', handler),
-        onRemoved: (handler) => rpc.on('doc.removed', handler),
-      },
-      setSetting: async (section, key, value) => {
-        const own = store.all<SettingsSection>('settings').value.find((one) => one.section === section);
-        if (!own) throw new Error(`раздел настроек никто не объявил: ${section}`);
-        const known = (own.defaults as Record<string, unknown>)[key];
-        if (known === undefined) throw new Error(`такой настройки нет: ${section}.${key}`);
-        if (typeof known !== typeof value) throw new Error(`${section}.${key} ждёт ${typeof known}`);
-        await rpc.call('config.set', { section, key, value });
-      },
-    };
     void plugins.load(surface, store).then(() => {
       const dead = commands.missing();
       if (dead.length) console.warn('[web-ide] команды без реализации:', dead.join(', '));
@@ -116,12 +122,14 @@ export function App() {
   }, []);
 
   return (
-    <div
-      class="app"
-    >
-      <Region name="chrome.top" />
-      <Region name="chrome.main" fallback={<NoShell />} />
-      <PluginSurfaces />
-    </div>
+    <IdeProvider value={surface}>
+      <div
+        class="app"
+      >
+        <Region name="chrome.top" />
+        <Region name="chrome.main" fallback={<NoShell />} />
+        <PluginSurfaces />
+      </div>
+    </IdeProvider>
   );
 }

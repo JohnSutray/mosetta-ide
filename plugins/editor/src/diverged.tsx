@@ -1,9 +1,10 @@
-import { t } from '@ide/api/client';
+import { useT } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import DocPlugin from '@ide/plugin-doc';
 import MergePlugin from '@ide/plugin-merge';
 
 export function DivergedBadge({ path, ide }: { path: string; ide: Ide }) {
+  const t = useT();
   const docs = ide.getPlugin(DocPlugin);
   const why = docs.diverged.value.get(path);
   if (!why) return null;

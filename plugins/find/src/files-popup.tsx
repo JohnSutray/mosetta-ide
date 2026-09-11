@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
-import { runCommand, settingsOf, t } from '@ide/api/client';
+import { useIde, useT } from '@ide/api/client';
 import type CodePlugin from '@ide/plugin-code';
 import { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import { Popup } from '@ide/ui';
@@ -19,6 +19,8 @@ interface ToolProps {
 }
 
 function Tool({ keysFor, windows, command, title, on, disabled, children }: ToolProps) {
+  const ide = useIde();
+  const t = useT();
   return (
     <button
       type="button"
@@ -29,7 +31,7 @@ function Tool({ keysFor, windows, command, title, on, disabled, children }: Tool
       onMouseDown={(event) => event.preventDefault()}
       onClick={() => {
         windows.tips.hide();
-        runCommand(command);
+        ide.runCommand(command);
       }}
     >
       {children}
@@ -38,6 +40,8 @@ function Tool({ keysFor, windows, command, title, on, disabled, children }: Tool
 }
 
 export function FindFilesPopup({ keysFor, windows, files, code }: { keysFor: (command: string) => string[]; windows: Windows; files: FindFiles; code: CodePlugin }) {
+  const ide = useIde();
+  const t = useT();
   const query = useRef<HTMLInputElement>(null);
   const replace = useRef<HTMLInputElement>(null);
   const mask = useRef<HTMLInputElement>(null);
@@ -55,7 +59,7 @@ export function FindFilesPopup({ keysFor, windows, files, code }: { keysFor: (co
     list.current?.querySelector('.fif-row.is-current')?.scrollIntoView({ block: 'nearest' });
   }, [files.selected.value, files.hits.value]);
 
-  const editor = settingsOf('editor', EDITOR_DEFAULTS).value;
+  const editor = ide.settingsOf('editor', EDITOR_DEFAULTS).value;
   if (!files.open.value) return null;
 
   const preview = files.preview.value;

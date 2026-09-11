@@ -1,15 +1,5 @@
 import { effect, signal } from '@preact/signals';
-import {
-  activate,
-  configSection,
-  project,
-  remote,
-  runCommand,
-  setSetting,
-  stub,
-  t,
-  type Ide,
-} from '@ide/api/client';
+import { activate, configSection, remote, stub, type Ide } from '@ide/api/client';
 import UiPlugin, { ChoicePopup, PickPopup } from '@ide/ui';
 import type { PackageManagerInfo } from './managers.js';
 import type { Opener } from '@ide/plugin-search';
@@ -49,7 +39,7 @@ export default class NpmScripts {
       if (this.managerPicker.value) void this.refreshManagers();
     });
     effect(() => {
-      if (project.value) void this.refreshManagers();
+      if (this.ide.project.value) void this.refreshManagers();
       else this.managers.value = [];
     });
     this.ide.registry('toolbar.widget').add({
@@ -61,8 +51,8 @@ export default class NpmScripts {
         return (
           <button
             class="scripts-manager-label"
-            title={t('scripts.manager.hint')}
-            onClick={() => runCommand('scripts.packageManager')}
+            title={this.ide.t('scripts.manager.hint')}
+            onClick={() => this.ide.runCommand('scripts.packageManager')}
           >
             {current}
           </button>
@@ -73,23 +63,23 @@ export default class NpmScripts {
       this.managerPicker.value ? (
         <ChoicePopup windows={this.ide.windows}
           id="scripts.packageManager"
-          title={t('scripts.manager.title')}
-          note={t('scripts.manager.note')}
+          title={this.ide.t('scripts.manager.title')}
+          note={this.ide.t('scripts.manager.note')}
           rows={this.managers.value.map((one) => ({
             path: one.path,
             name: one.name,
             ref: one.path,
             current: one.current,
             mark: one.suggested
-              ? t('scripts.manager.byProject')
+              ? this.ide.t('scripts.manager.byProject')
               : one.current
-                ? t('scripts.manager.inUse')
+                ? this.ide.t('scripts.manager.inUse')
                 : undefined,
           }))}
-          empty={t('scripts.manager.empty')}
-          customPlaceholder={t('scripts.manager.custom')}
-          apply={t('scripts.manager.apply')}
-          reset={t('scripts.manager.default')}
+          empty={this.ide.t('scripts.manager.empty')}
+          customPlaceholder={this.ide.t('scripts.manager.custom')}
+          apply={this.ide.t('scripts.manager.apply')}
+          reset={this.ide.t('scripts.manager.default')}
           onChoose={(ref) => void this.chooseManager(ref)}
           onClose={() => (this.managerPicker.value = false)}
         />
@@ -125,7 +115,7 @@ export default class NpmScripts {
 
   async chooseManager(ref: string): Promise<void> {
     try {
-      await setSetting('tools', 'packageManager', ref);
+      await this.ide.setSetting('tools', 'packageManager', ref);
       this.managerPicker.value = false;
       await this.refreshManagers();
       this.ide.say(ref === '' ? 'package manager: default' : `package manager: ${ref}`);
@@ -178,10 +168,10 @@ export default class NpmScripts {
     return (
       <PickPopup windows={this.ide.windows}
         id="scripts"
-        title={t('scripts.title')}
+        title={this.ide.t('scripts.title')}
         items={items}
-        placeholder={t('scripts.filter')}
-        empty={t('scripts.empty')}
+        placeholder={this.ide.t('scripts.filter')}
+        empty={this.ide.t('scripts.empty')}
         size={{ w: 620, h: 420 }}
         min={{ w: 420, h: 240 }}
         onClose={() => (this.open.value = false)}

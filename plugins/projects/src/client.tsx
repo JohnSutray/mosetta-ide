@@ -7,9 +7,11 @@ import { STYLE } from './style.js';
 import type { DirSuggestion, RecentProject } from './types.js';
 
 export default class ProjectsPlugin implements ProjectsRemote {
-  readonly projects = new Projects(this);
+  readonly projects: Projects;
 
-  constructor(private readonly ide: Ide) {}
+  constructor(private readonly ide: Ide) {
+    this.projects = new Projects(this, ide.workspaces);
+  }
 
   @remote() roots(): Promise<DirSuggestion[]> {
     return stub();

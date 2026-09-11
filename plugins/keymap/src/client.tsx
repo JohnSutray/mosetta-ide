@@ -1,4 +1,4 @@
-import { activate, keymap, registry, t } from '@ide/api/client';
+import { activate, registry } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import type { KeyBinding, KeyHost, KeyOs, KeyScope } from '@ide/protocol';
 import { effect } from '@preact/signals';
@@ -36,8 +36,8 @@ export default class KeymapPlugin {
   constructor(private readonly ide: Ide) {
     this.echo = new KeysEcho({
       sayOnce: (slot, message) => ide.sayOnce(slot, message),
-      t,
-      keymap: () => keymap.value,
+      t: ide.t,
+      keymap: () => this.ide.keymap.value,
     });
   }
 
@@ -57,7 +57,7 @@ export default class KeymapPlugin {
     },
     bindings: {
       get value() {
-        return keymap.value.bindings;
+        return plugin.ide.keymap.value.bindings;
       },
     },
     humanize: (key: string) => keyHost.humanize(key),
@@ -70,11 +70,11 @@ export default class KeymapPlugin {
   }))(this);
 
   keysFor(command: string): string[] {
-    return keysFor(command);
+    return keysFor(this.ide.keymap.value.bindings, command);
   }
 
   chordHeld(command: string, event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean }): boolean {
-    return chordHeld(command, event);
+    return chordHeld(this.ide.keymap.value.bindings, command, event);
   }
 
   primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
@@ -98,9 +98,10 @@ export default class KeymapPlugin {
         (key) => this.echo.noteUnbound(key),
         this.echo,
         this.ide.windows,
+        (id) => this.ide.runCommand(id),
       );
       const dispatcher = this.dispatcher;
-      effect(() => dispatcher.setKeymap(keymap.value));
+      effect(() => dispatcher.setKeymap(this.ide.keymap.value));
     }
 
     this.ide.windows.updateHost({ catchesKeys: (context) => context !== undefined && keyRules.catchesKeys(context) });

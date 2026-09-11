@@ -1,4 +1,3 @@
-import { project, t } from '@ide/api/client';
 import type { Ide } from '@ide/api/client';
 import CodePlugin from '@ide/plugin-code';
 import { Diff3, type Region, type Choice, type SideChoice } from './diff3.js';
@@ -96,7 +95,7 @@ export class Merge {
     this.ide.getPlugin(DocPlugin).onMergeRequested((path) => this.openFor(path));
 
     effect(() => {
-      if (project.value) void this.load();
+      if (this.ide.project.value) void this.load();
       else this.reset();
     });
 
@@ -115,7 +114,7 @@ export class Merge {
         if (this.focusOn(path)) this.promised.delete(path);
       }
 
-      if (!had) this.ide.say(t('merge.appeared', { count: String(state.files.length) }));
+      if (!had) this.ide.say(this.ide.t('merge.appeared', { count: String(state.files.length) }));
     });
   }
 
@@ -130,7 +129,7 @@ export class Merge {
 
   show(): void {
     if (!this.session.value) {
-      this.ide.say(t('merge.none'));
+      this.ide.say(this.ide.t('merge.none'));
       return;
     }
     this.open.value = true;
@@ -219,7 +218,7 @@ export class Merge {
         this.path.value = rest?.files.find((item) => !item.done)?.path ?? null;
         if (!rest) this.open.value = false;
       });
-      if (!rest) this.ide.say(t('merge.done'));
+      if (!rest) this.ide.say(this.ide.t('merge.done'));
     } catch (err) {
       this.ide.complain(describeMerge(err));
     }

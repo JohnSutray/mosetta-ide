@@ -1,4 +1,4 @@
-import { t } from '@ide/api/client';
+import { useT } from '@ide/api/client';
 import type { Git, PushWindow } from './state.js';
 import { useRef } from 'preact/hooks';
 import type { GitCommit } from './types.js';
@@ -23,6 +23,7 @@ export interface PushProps {
 }
 
 export function Push({ windows, git, push }: PushProps) {
+  const t = useT();
   const split = useRef<HTMLDivElement>(null);
   const files = useRef<HTMLDivElement>(null);
 
@@ -165,6 +166,7 @@ export function Push({ windows, git, push }: PushProps) {
 }
 
 function Message({ push }: { push: PushWindow }) {
+  const t = useT();
   const commit = push.commit.value;
   if (!commit) return <div class="push-empty">{t('push.pickCommit')}</div>;
   return (

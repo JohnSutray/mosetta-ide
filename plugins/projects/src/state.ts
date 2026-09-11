@@ -1,4 +1,4 @@
-import { workspaces } from '@ide/api/client';
+import type { WorkspacesAccess } from '@ide/api/client';
 import { batch, effect, signal } from '@preact/signals';
 import type { DirSuggestion, RecentProject } from './types.js';
 
@@ -28,9 +28,12 @@ export class Projects {
   private token = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private readonly remote: ProjectsRemote) {
+  constructor(
+    private readonly remote: ProjectsRemote,
+    private readonly workspaces: WorkspacesAccess,
+  ) {
     effect(() => {
-      if (workspaces.current.value) this.hide();
+      if (this.workspaces.current.value) this.hide();
       else this.show();
     });
   }
@@ -46,7 +49,7 @@ export class Projects {
   }
 
   hide(): void {
-    if (!workspaces.current.value) return;
+    if (!this.workspaces.current.value) return;
     batch(() => {
       this.visible.value = false;
       this.closeSuggest();
@@ -140,13 +143,13 @@ export class Projects {
 
   choose(root: string, liveId?: string): void {
     if (root === '' && !liveId) return;
-    if (liveId && workspaces.current.value?.id === liveId) {
+    if (liveId && this.workspaces.current.value?.id === liveId) {
       this.hide();
       return;
     }
-    const going = liveId ? workspaces.switchTo(liveId) : workspaces.open(root);
+    const going = liveId ? this.workspaces.switchTo(liveId) : this.workspaces.open(root);
     void going.then(async () => {
-      if (!workspaces.current.value) return;
+      if (!this.workspaces.current.value) return;
       if (!liveId) await this.remote.remember().catch(() => undefined);
       this.hide();
       void this.load();

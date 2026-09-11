@@ -1,4 +1,4 @@
-import { activate, configSection, project, registry, remote, settingsOf, stub, t, type Ide } from '@ide/api/client';
+import { activate, configSection, IdeProvider, registry, remote, stub, type Ide } from '@ide/api/client';
 import CodePlugin from '@ide/plugin-code';
 import LspPlugin from '@ide/plugin-lsp';
 import { computed, effect, signal } from '@preact/signals';
@@ -35,7 +35,7 @@ export default class CompletionPlugin {
 
   @activate() protected start(): void {
     this.ide.css(STYLE);
-    const settings = computed(() => settingsOf('completion', COMPLETION_DEFAULTS).value);
+    const settings = computed(() => this.ide.settingsOf('completion', COMPLETION_DEFAULTS).value);
     const history = new ChoiceHistory(signal<Record<string, number>>({}), (label) => {
       void this.askChose({ label }).catch(() => undefined);
     });
@@ -44,7 +44,7 @@ export default class CompletionPlugin {
       history.heard(heard.label, heard.times);
     });
     effect(() => {
-      if (!project.value) return;
+      if (!this.ide.project.value) return;
       void this.askChoices()
         .then((all) => history.replace(all))
         .catch(() => undefined);
@@ -55,7 +55,7 @@ export default class CompletionPlugin {
       () => sources.all.value.filter((source) => this.enabled(source.id, settings.value)),
       () => Date.now(),
       (what, detail) =>
-        this.ide.sayOnce('completion', what === 'empty' ? t('completion.empty') : `${t('completion.failed')} ${detail}`),
+        this.ide.sayOnce('completion', what === 'empty' ? this.ide.t('completion.empty') : `${this.ide.t('completion.failed')} ${detail}`),
     );
 
     const own: Source[] = [
@@ -81,15 +81,17 @@ export default class CompletionPlugin {
       () => settings.value.auto,
       (dom) => {
         render(
-          <CompletionList
-            code={this.ide.getPlugin(CodePlugin)}
-            session={session}
-            path={() => this.docs.openDoc.value?.path ?? null}
-            onPick={(index) => {
-              session.select(index);
-              bridge.accept('insert');
-            }}
-          />,
+          <IdeProvider value={this.ide}>
+            <CompletionList
+              code={this.ide.getPlugin(CodePlugin)}
+              session={session}
+              path={() => this.docs.openDoc.value?.path ?? null}
+              onPick={(index) => {
+                session.select(index);
+                bridge.accept('insert');
+              }}
+            />
+          </IdeProvider>,
           dom,
         );
         return () => render(null, dom);

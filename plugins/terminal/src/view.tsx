@@ -1,15 +1,14 @@
-import { settingsOf } from '@ide/api/client';
+import { useIde, useT, type IdeServices } from '@ide/api/client';
 import { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import type { Palette } from '@ide/plugin-theme';
 import { TERMINAL_DEFAULTS } from './settings.js';
 import { useEffect, useRef } from 'preact/hooks';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
-import { t } from '@ide/api/client';
 
 import type { Attached } from './types.js';
 
-function fontOf(): string {
+function fontOf(settingsOf: IdeServices['settingsOf']): string {
   const own = settingsOf('terminal', TERMINAL_DEFAULTS).value.fontFamily.trim();
   const family = own || settingsOf('editor', EDITOR_DEFAULTS).value.fontFamily;
   return `'${family}', 'SF Mono', Menlo, monospace`;
@@ -24,6 +23,8 @@ export interface Screen {
 }
 
 export function TerminalView({ screen, palette }: { screen: Screen; palette: Palette }) {
+  const ide = useIde();
+  const t = useT();
   const dc = palette;
   const host = useRef<HTMLDivElement>(null);
   const name = screen.name;
@@ -33,7 +34,7 @@ export function TerminalView({ screen, palette }: { screen: Screen; palette: Pal
     let disposed = false;
 
     const term = new Terminal({
-      fontFamily: fontOf(),
+      fontFamily: fontOf(ide.settingsOf),
       fontSize: 12.5,
       lineHeight: 1.2,
       cursorBlink: true,

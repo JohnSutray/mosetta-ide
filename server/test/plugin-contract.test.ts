@@ -13,9 +13,9 @@ function source(file: string): string {
 }
 
 function surfaceMembers(text: string): string[] {
-  const at = text.indexOf('export interface ClientSurface');
+  const at = text.indexOf('export interface IdeServices');
   const body = text.slice(text.indexOf('{', at) + 1, text.indexOf('\n}', at));
-  return [...body.matchAll(/^\s*(\w+):/gm)].map((m) => m[1]!);
+  return [...body.matchAll(/^\s*(?:readonly\s+)?(\w+):/gm)].map((m) => m[1]!);
 }
 
 function clientTable(): string[] {
@@ -25,9 +25,9 @@ function clientTable(): string[] {
 }
 
 describe('контракт @ide/api', () => {
-  it('приложение обязано отдать ровно то, что объявлено declare', () => {
-    const text = source('client.ts');
-    expect([...names.injected(text)].sort()).toEqual([...surfaceMembers(text)].sort());
+  it('имён без кода в контракте нет: службы — поля ide (ADR-0206)', () => {
+    expect(names.injected(source('client.ts'))).toEqual([]);
+    expect(surfaceMembers(source('client.ts'))).toContain('t');
   });
 
   it('хостовое наружу не отдаётся', () => {
@@ -76,7 +76,8 @@ describe('контракт @ide/api', () => {
     expect(text).toContain('export const thing = m["thing"];');
     expect(text).toContain('не поднят');
     const api = await shared.exportsOf('@ide/api/client', 'client');
-    expect(api).toContain('t');
+    expect(api).toContain('useT');
+    expect(api).not.toContain('t');
     expect(api).toContain('registry');
     expect(api).not.toContain('attach');
   });

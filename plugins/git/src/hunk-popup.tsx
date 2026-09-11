@@ -1,10 +1,11 @@
-import { t } from '@ide/api/client';
+import { useT } from '@ide/api/client';
 import type { GitMarks } from './marks.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import type { Windows } from '@ide/windows';
 import type DocPlugin from '@ide/plugin-doc';
 
 export function HunkPopup({ docs, windows, marks }: { docs: DocPlugin; windows: Windows; marks: GitMarks }) {
+  const t = useT();
   const open = marks.popup.value;
   const self = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(open ? open.box.bottom + 4 : 0);
