@@ -98,6 +98,7 @@ export default class KeymapPlugin {
         (key) => this.echo.noteUnbound(key),
         this.echo,
         (id) => this.ide.runCommand(id),
+        this.ide.mount,
       );
       const dispatcher = this.dispatcher;
       effect(() => dispatcher.setKeymap(this.ide.keymap.value));

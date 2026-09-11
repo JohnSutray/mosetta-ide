@@ -1,4 +1,5 @@
 import { signal } from '@preact/signals';
+import type { Mount } from '@ide/api/client';
 import type { KeyContext } from '@ide/protocol';
 import { Geometry, type Remember } from './geometry.js';
 import type { MenuApi } from './menu-state.js';
@@ -12,7 +13,7 @@ export interface KeyCapture {
 }
 
 export class Windows {
-  readonly popups = new Popups();
+  readonly popups: Popups;
   readonly tips = new Tips();
   readonly geometry: Geometry;
   readonly activePick = signal<PickApi | null>(null);
@@ -21,8 +22,10 @@ export class Windows {
   constructor(
     remember: Remember,
     private readonly captures: () => readonly KeyCapture[],
+    mount: Pick<Mount, 'size' | 'idle'>,
   ) {
-    this.geometry = new Geometry(remember);
+    this.popups = new Popups((el) => mount.idle(el));
+    this.geometry = new Geometry(remember, mount.size);
   }
 
   catchesKeys(context: KeyContext): boolean {

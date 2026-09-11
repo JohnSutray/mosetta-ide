@@ -32,7 +32,7 @@ export default class TreePlugin {
   readonly ops: TreeOps;
   readonly follow: TreeFollow;
   readonly typeahead: TreeTypeahead;
-  readonly menu = new TreeMenuState();
+  readonly menu = new TreeMenuState(() => this.ide.mount.bounds());
   readonly tints: TreeTints;
   readonly shown;
 
@@ -52,7 +52,7 @@ export default class TreePlugin {
 
   constructor(private readonly ide: Ide) {
     this.files = new FileTree(this.ide.tree, (message) => ide.complain(message));
-    this.selection = new TreeSelection(this.files);
+    this.selection = new TreeSelection(this.files, (el) => this.ide.mount.idle(el));
     this.ops = new TreeOps(this.selection, this.prompt, this.files, ide, (path) => this.askReveal({ path }));
     this.follow = new TreeFollow(this.selection, ide);
     this.typeahead = new TreeTypeahead(this.selection, () => ide.getPlugin(SearchPlugin).layout);
@@ -155,7 +155,7 @@ export default class TreePlugin {
       if (path) untracked(() => void this.follow.now());
     });
 
-    document.addEventListener('mousedown', (event) => {
+    this.ide.mount.listen('mousedown', (event) => {
       if (!(event.target as HTMLElement).closest('.tree-menu')) this.menu.close();
     });
   }

@@ -106,7 +106,7 @@ export const STYLE = `
   align-items: center;
   flex-wrap: wrap;
   gap: 6px 8px;
-  max-width: min(42ch, calc(100vw - 24px));
+  max-width: min(42ch, calc(var(--mount-w, 100vw) - 24px));
   padding: 5px 9px;
   background: #1f2224;
   border: 1px solid var(--divider);
@@ -135,7 +135,7 @@ export const STYLE = `
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 8vh;
+  padding-top: calc(var(--mount-h, 100vh) * 0.08);
   z-index: 50;
 }
 .se-backdrop.is-clear { background: transparent; }

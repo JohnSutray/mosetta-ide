@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import type { Visit } from './types.js';
 import type DocPlugin from '@ide/plugin-doc';
+import { type Mount } from '@ide/api/client';
 
 export interface VisitsRemote {
   list(): Promise<Visit[]>;
@@ -85,9 +86,8 @@ export class Visits {
     void this.jump(this.at.value + 1);
   }
 
-  installMouseNav(): () => void {
+  installMouseNav(mount: Pick<Mount, 'listen'>): () => void {
     const noMenu = (event: Event) => event.preventDefault();
-    window.addEventListener('contextmenu', noMenu, { capture: true });
 
     const onDown = (event: MouseEvent) => {
       if (event.button !== 3 && event.button !== 4) return;
@@ -99,14 +99,14 @@ export class Visits {
     const swallow = (event: MouseEvent) => {
       if (event.button === 3 || event.button === 4) event.preventDefault();
     };
-    window.addEventListener('mousedown', onDown, { capture: true });
-    window.addEventListener('auxclick', swallow, { capture: true });
-    window.addEventListener('mouseup', swallow, { capture: true });
+    const offs = [
+      mount.listen('contextmenu', noMenu, { capture: true }),
+      mount.listen('mousedown', onDown, { capture: true }),
+      mount.listen('auxclick', swallow, { capture: true }),
+      mount.listen('mouseup', swallow, { capture: true }),
+    ];
     return () => {
-      window.removeEventListener('contextmenu', noMenu, { capture: true });
-      window.removeEventListener('mousedown', onDown, { capture: true });
-      window.removeEventListener('auxclick', swallow, { capture: true });
-      window.removeEventListener('mouseup', swallow, { capture: true });
+      for (const off of offs) off();
     };
   }
 

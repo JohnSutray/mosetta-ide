@@ -79,7 +79,7 @@ export default class Layout {
           min: panel.minWidth ?? this.fallbackMin,
           max: Math.max(
             panel.minWidth ?? this.fallbackMin,
-            window.innerWidth - this.keepFree,
+            this.ide.mount.size.value.w - this.keepFree,
           ),
         })}
       />

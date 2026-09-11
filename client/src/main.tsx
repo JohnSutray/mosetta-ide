@@ -4,4 +4,4 @@ import './styles.css';
 const root = document.getElementById('root');
 if (!root) throw new Error('нет #root');
 
-new Core().start(root);
+new Core(root, { page: true }).start();

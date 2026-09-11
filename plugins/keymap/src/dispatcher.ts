@@ -2,6 +2,7 @@ import type { KeysEcho } from './echo.js';
 import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
 import { keyHost } from './host.js';
 import { reserved } from './reserved.js';
+import type { Mount } from '@ide/api/client';
 
 export type ContextResolver = () => readonly KeyContext[];
 
@@ -140,10 +141,15 @@ export class Dispatcher {
     private readonly onUnbound: (key: string) => void,
     private readonly echo: KeysEcho,
     private readonly run: (id: string) => boolean,
+    mount: Pick<Mount, 'listen'>,
   ) {
-    window.addEventListener('keydown', this.onKeyDown, { capture: true });
-    window.addEventListener('keyup', this.onKeyUp, { capture: true });
+    this.offs = [
+      mount.listen('keydown', this.onKeyDown, { capture: true }),
+      mount.listen('keyup', this.onKeyUp, { capture: true }),
+    ];
   }
+
+  private readonly offs: Array<() => void>;
 
   setKeymap(keymap: Keymap): void {
     this.bindings = keymap.bindings.filter((binding) => keyRules.appliesHere(binding));
@@ -153,8 +159,7 @@ export class Dispatcher {
   }
 
   dispose(): void {
-    window.removeEventListener('keydown', this.onKeyDown, { capture: true });
-    window.removeEventListener('keyup', this.onKeyUp, { capture: true });
+    for (const off of this.offs) off();
   }
 
   private surfaceCommand(): string | undefined {

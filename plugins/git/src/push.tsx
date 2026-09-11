@@ -1,4 +1,4 @@
-import { useT } from '@ide/api/client';
+import { useIde, useT } from '@ide/api/client';
 import type { Git, PushWindow } from './state.js';
 import { useRef } from 'preact/hooks';
 import type { GitCommit } from './types.js';
@@ -24,16 +24,17 @@ export interface PushProps {
 
 export function Push({ windows, git, push }: PushProps) {
   const t = useT();
+  const mount = useIde().mount;
   const split = useRef<HTMLDivElement>(null);
   const files = useRef<HTMLDivElement>(null);
 
   const limits = () => {
-    const full = split.current?.getBoundingClientRect().width ?? window.innerWidth;
+    const full = split.current?.getBoundingClientRect().width ?? mount.size.value.w;
     return { min: FILES_MIN, max: Math.max(FILES_MIN, full - COMMITS_MIN) };
   };
 
   const messageLimits = () => {
-    const full = files.current?.getBoundingClientRect().height ?? window.innerHeight;
+    const full = files.current?.getBoundingClientRect().height ?? mount.size.value.h;
     return { min: MESSAGE_MIN, max: Math.max(MESSAGE_MIN, full - TREE_MIN) };
   };
 

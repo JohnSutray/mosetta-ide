@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { signal } from '@preact/signals';
 import { Geometry } from '../src/windows/geometry.js';
 
-const geometry = new Geometry(<T>(_key: string, initial: T) => signal(initial));
+const geometry = new Geometry(<T>(_key: string, initial: T) => signal(initial), { value: { w: 1280, h: 720 } });
 
 const BOX = { w: 1600, h: 1000 };
 const MIN = { w: 320, h: 220 };

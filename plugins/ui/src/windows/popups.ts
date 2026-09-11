@@ -13,6 +13,8 @@ export class Popups {
 
   private readonly cameFrom = new Map<string, HTMLElement>();
 
+  constructor(private readonly idle: (el: Element | null) => boolean = (el) => el === null || el === document.body) {}
+
   get anyOpen(): boolean {
     return this.stack.value.length > 0;
   }
@@ -53,7 +55,7 @@ export class Popups {
       if (!from.isConnected) return;
       const now = this.active();
       const nobody =
-        !now || now === document.body || !now.isConnected || (popup ? popup.contains(now) : false);
+        !now || this.idle(now) || !now.isConnected || (popup ? popup.contains(now) : false);
       if (!nobody) return;
       from.focus({ preventScroll: true });
     };

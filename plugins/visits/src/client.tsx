@@ -54,6 +54,6 @@ export default class VisitsPlugin implements VisitsRemote {
       else visits.forget();
     });
 
-    visits.installMouseNav();
+    visits.installMouseNav(this.ide.mount);
   }
 }

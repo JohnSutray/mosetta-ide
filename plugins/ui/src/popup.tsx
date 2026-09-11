@@ -1,4 +1,4 @@
-import { useT } from '@ide/api/client';
+import { useIde, useT } from '@ide/api/client';
 import type { Size } from './windows/geometry.js';
 import type { Windows } from './windows/windows.js';
 import type { ComponentChildren } from 'preact';
@@ -37,10 +37,11 @@ export function Popup({ windows,
   children: ComponentChildren;
 }) {
   const t = useT();
+  const mount = useIde().mount;
   const box = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
   const want = full ? windows.geometry.viewport.value : windows.geometry.sizeOf(id, size);
-  const at = anchor ? windows.geometry.fitAnchored(want, anchor, windows.geometry.viewport.value, min) : null;
+  const at = anchor ? windows.geometry.fitAnchored(want, mount.local(anchor.x, anchor.y), windows.geometry.viewport.value, min) : null;
   const current = at ? { w: at.w, h: at.h } : want;
 
   const closing = useRef(onEscape ?? onClose);

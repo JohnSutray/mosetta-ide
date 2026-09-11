@@ -49,7 +49,10 @@ export class Prompt {
 }
 
 export class TreeSelection {
-  constructor(private readonly files: FileTree) {}
+  constructor(
+    private readonly files: FileTree,
+    private readonly idle: (el: Element | null) => boolean = (el) => el === null || el === document.body,
+  ) {}
 
   readonly focus = signal<string | null>(null);
 
@@ -185,7 +188,7 @@ export class TreeSelection {
   }
 
   takeKeyboard(): void {
-    if (document.activeElement !== document.body) return;
+    if (!this.idle(document.activeElement)) return;
     this.focusTree();
   }
 

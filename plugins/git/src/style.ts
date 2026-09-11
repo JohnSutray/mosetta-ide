@@ -68,7 +68,7 @@ export const STYLE = `
 
 .git-log {
   margin: 0;
-  max-height: 30vh;
+  max-height: calc(var(--mount-h, 100vh) * 0.3);
   overflow: auto;
   padding: 6px 10px;
   border-top: 1px solid var(--divider);
@@ -351,8 +351,8 @@ export const STYLE = `
   position: fixed;
   z-index: 60;
   border-radius: 0;
-  max-width: min(70vw, 720px);
-  max-height: 50vh;
+  max-width: min(calc(var(--mount-w, 100vw) * 0.7), 720px);
+  max-height: calc(var(--mount-h, 100vh) * 0.5);
   overflow: auto;
   display: flex;
   flex-direction: column;

@@ -1,4 +1,4 @@
-import { useT } from '@ide/api/client';
+import { useIde, useT } from '@ide/api/client';
 import type { GitMarks } from './marks.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import type { Windows } from '@ide/ui';
@@ -6,6 +6,7 @@ import type DocPlugin from '@ide/plugin-doc';
 
 export function HunkPopup({ docs, windows, marks }: { docs: DocPlugin; windows: Windows; marks: GitMarks }) {
   const t = useT();
+  const mount = useIde().mount;
   const open = marks.popup.value;
   const self = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(open ? open.box.bottom + 4 : 0);
@@ -16,7 +17,8 @@ export function HunkPopup({ docs, windows, marks }: { docs: DocPlugin; windows: 
     const height = self.current.getBoundingClientRect().height;
     const below = open.box.bottom + 4;
     const above = open.box.top - height - 4;
-    setTop(below + height <= window.innerHeight - 8 || above < 8 ? below : above);
+    const edge = mount.bounds();
+    setTop(below + height <= edge.bottom - 8 || above < edge.top + 8 ? below : above);
   }, [open]);
 
   useEffect(() => {
@@ -25,16 +27,17 @@ export function HunkPopup({ docs, windows, marks }: { docs: DocPlugin; windows: 
     const away = (event: MouseEvent) => {
       if (!(event.target as HTMLElement).closest('.hunk-popup')) marks.close();
     };
-    window.addEventListener('mousedown', away, { capture: true });
+    const off = mount.listen('mousedown', away, { capture: true });
     return () => {
       windows.popups.leave('hunk');
-      window.removeEventListener('mousedown', away, { capture: true });
+      off();
     };
   }, [open, alive]);
 
   if (!open || !alive) return null;
 
   const { hunk, box } = open;
+  const spot = mount.local(box.left, top);
   const title =
     hunk.kind === 'added'
       ? t('git.hunk.added')
@@ -46,7 +49,7 @@ export function HunkPopup({ docs, windows, marks }: { docs: DocPlugin; windows: 
     <div
       ref={self}
       class="hunk-popup"
-      style={{ left: `${Math.round(box.left)}px`, top: `${Math.round(top)}px` }}
+      style={{ left: `${Math.round(spot.x)}px`, top: `${Math.round(spot.y)}px` }}
     >
       <div class="hunk-head">
         <span class="hunk-title">{title}</span>

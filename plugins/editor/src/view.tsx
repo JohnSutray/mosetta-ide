@@ -6,6 +6,7 @@ import {
   lineNumbers,
   highlightActiveLineGutter,
   drawSelection,
+  tooltips,
   highlightSpecialChars,
 } from '@codemirror/view';
 import { history } from '@codemirror/commands';
@@ -83,6 +84,7 @@ export function CodeEditor({
       highlightSpecialChars(),
       history(),
       drawSelection(),
+      tooltips({ parent: document.body }),
       indentOnInput(),
       bracketMatching(),
       activeLine,

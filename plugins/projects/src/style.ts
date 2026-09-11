@@ -51,7 +51,7 @@ export const STYLE = `
   left: 0;
   right: 0;
   z-index: 5;
-  max-height: 40vh;
+  max-height: calc(var(--mount-h, 100vh) * 0.4);
   overflow: auto;
   border: 1px solid var(--divider);
   border-radius: 2px;

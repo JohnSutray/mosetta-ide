@@ -9,7 +9,7 @@ export const STYLE = `
   flex-direction: column;
   align-items: flex-end;
   gap: 6px;
-  max-width: min(420px, 46vw);
+  max-width: min(420px, calc(var(--mount-w, 100vw) * 0.46));
 }
 
 .notes-all {

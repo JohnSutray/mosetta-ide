@@ -98,6 +98,27 @@ export interface IdeServices {
   readonly keymap: { readonly value: Keymap };
   readonly connected: { readonly value: boolean };
   readonly notes: NotesAccess;
+  readonly mount: Mount;
+}
+
+export interface Bounds {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+export interface Mount {
+  readonly size: { readonly value: { w: number; h: number } };
+  bounds(): Bounds;
+  local(x: number, y: number): { x: number; y: number };
+  idle(el: Element | null): boolean;
+  listen<K extends keyof HTMLElementEventMap>(
+    type: K,
+    handler: (event: HTMLElementEventMap[K]) => void,
+    options?: { capture?: boolean },
+  ): () => void;
+  title(text: string): void;
 }
 
 const IdeContext = createContext<IdeServices | null>(null);

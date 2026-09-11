@@ -1,4 +1,4 @@
-import { useT } from '@ide/api/client';
+import { useIde, useT } from '@ide/api/client';
 import type { Windows } from './windows/windows.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 
@@ -22,6 +22,8 @@ export function Menu({ windows,
   class?: string;
 }) {
   const t = useT();
+  const mount = useIde().mount;
+  const spot = mount.local(x, y);
   const box = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);
 
@@ -33,7 +35,7 @@ export function Menu({ windows,
       windows.popups.leave('menu');
       const here = document.activeElement;
       const mine = here === box.current || (here !== null && box.current?.contains(here));
-      if (mine || here === document.body) came?.focus();
+      if (mine || mount.idle(here)) came?.focus();
     };
   }, []);
 
@@ -60,7 +62,7 @@ export function Menu({ windows,
       class={`branch-menu ${extra}`}
       data-keys="menu"
       tabIndex={-1}
-      style={{ left: `${x}px`, top: `${y}px` }}
+      style={{ left: `${spot.x}px`, top: `${spot.y}px` }}
     >
       {items.map((item, index) => (
         <button

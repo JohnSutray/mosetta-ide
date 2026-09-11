@@ -10,6 +10,7 @@ import { Commands } from './keys/commands.js';
 import { Session } from './state/session.js';
 import { Registry } from './state/registry.js';
 import { Plugins } from './state/plugins.js';
+import { RootMount, type MountOptions } from './state/mount.js';
 import { App } from './ui/app.js';
 
 export class Core {
@@ -27,17 +28,23 @@ export class Core {
     memory: this.memory,
     i18n: this.i18n,
   });
-  readonly services: IdeServices = this.serve();
+  readonly mount: RootMount;
+  readonly services: IdeServices;
 
-  constructor() {
+  constructor(
+    private readonly root: HTMLElement,
+    options: MountOptions,
+  ) {
+    this.mount = new RootMount(root, options);
+    this.services = this.serve();
     this.store.declare('chrome.top', 'core');
     this.store.declare('chrome.main', 'core');
     this.store.declare('settings', 'core', SETTINGS_SCHEMA);
   }
 
-  start(root: HTMLElement): void {
+  start(): void {
     this.rpc.connect();
-    render(<App core={this} />, root);
+    render(<App core={this} />, this.root);
     void this.plugins.load(this.services, this.store).then(() => {
       const dead = this.commands.missing();
       if (dead.length) console.warn('[web-ide] команды без реализации:', dead.join(', '));
@@ -103,6 +110,7 @@ export class Core {
         onMoved: (handler) => this.rpc.on('doc.moved', handler),
         onRemoved: (handler) => this.rpc.on('doc.removed', handler),
       },
+      mount: this.mount,
       setSetting: async (section, key, value) => {
         const own = this.store.all<SettingsSection>('settings').value.find((one) => one.section === section);
         if (!own) throw new Error(`раздел настроек никто не объявил: ${section}`);

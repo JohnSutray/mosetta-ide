@@ -1,5 +1,5 @@
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
-import type { Ide } from '@ide/api/client';
+import type { Ide, Mount } from '@ide/api/client';
 import type { Fuzzy, FuzzyHit } from '@ide/ui';
 import type {
   GitAction,
@@ -205,7 +205,7 @@ export class BranchesWindow {
 
   constructor(
     private readonly git: Git,
-    private readonly ide: Pick<Ide, 'on' | 'complain' | 't'>,
+    private readonly ide: Pick<Ide, 'on' | 'complain' | 't'> & { readonly mount: Pick<Mount, 'bounds'> },
     private readonly fuzzy: () => Pick<Fuzzy, 'find'>,
   ) {
     this.ide.on('state', () => {
@@ -274,11 +274,12 @@ export class BranchesWindow {
       this.menu.value = null;
       return;
     }
-    const fitsRight = rect.right + MENU_W < window.innerWidth;
+    const edge = this.ide.mount.bounds();
+    const fitsRight = rect.right + MENU_W < edge.right;
     this.menu.value = {
       name,
-      x: fitsRight ? rect.right - 8 : Math.max(8, rect.right - MENU_W),
-      y: Math.min(rect.top, Math.max(8, window.innerHeight - MENU_H)),
+      x: fitsRight ? rect.right - 8 : Math.max(edge.left + 8, rect.right - MENU_W),
+      y: Math.min(rect.top, Math.max(edge.top + 8, edge.bottom - MENU_H)),
     };
   }
 

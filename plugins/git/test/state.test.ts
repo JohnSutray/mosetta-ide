@@ -19,6 +19,7 @@ function fakeIde() {
     },
     working: () => () => undefined,
     t: (key: string) => key,
+    mount: { bounds: () => ({ left: 0, top: 0, right: 1280, bottom: 720 }) },
     complain: (message: string) => complaints.push(message),
   };
 }

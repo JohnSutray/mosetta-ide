@@ -13,6 +13,7 @@ import { attach, hooksOf, registriesOf, sectionsOf } from './client.js';
 import { sectionOf } from './section.js';
 import type {
   IdeServices,
+  Mount,
   Note,
   NoteKind,
   NotesAccess,
@@ -149,6 +150,18 @@ export class FakeSurface implements IdeServices {
         return sectionOf(all.value, section, defaults);
       },
     };
+  };
+
+  readonly titles: string[] = [];
+  readonly mount: Mount = {
+    size: signal({ w: 1280, h: 720 }),
+    bounds: () => ({ left: 0, top: 0, right: 1280, bottom: 720 }),
+    local: (x, y) => ({ x, y }),
+    idle: (el) => el === null,
+    listen: () => () => {},
+    title: (text) => {
+      this.titles.push(text);
+    },
   };
 
   tip: Tip | null = null;
@@ -326,6 +339,7 @@ export class FakeIde implements Ide {
   get tree() { return this.host.surface.tree; }
   get fs() { return this.host.surface.fs; }
   get docs() { return this.host.surface.docs; }
+  get mount() { return this.host.surface.mount; }
 
   getPlugin<T>(ctor: PluginClass<T>): T {
     return this.host.plugin(ctor);

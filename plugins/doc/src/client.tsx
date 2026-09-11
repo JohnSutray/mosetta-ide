@@ -35,7 +35,7 @@ export default class DocPlugin {
       const ws = this.ide.workspaces.current.value;
       const file = this.doc.open.value;
       if (!ws) return;
-      document.title = file ? `${file.path} — ${ws.name}` : ws.name;
+      this.ide.mount.title(file ? `${file.path} — ${ws.name}` : ws.name);
     });
   }
 

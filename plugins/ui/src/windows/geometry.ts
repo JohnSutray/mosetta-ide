@@ -1,4 +1,4 @@
-import { signal, type Signal } from '@preact/signals';
+import type { Signal } from '@preact/signals';
 export type Remember = <T>(key: string, initial: T) => Signal<T>;
 
 export interface Size {
@@ -17,20 +17,14 @@ export class Geometry {
   readonly widths: Signal<Record<string, number>>;
   readonly popupSizes: Signal<Record<string, Size>>;
 
-  readonly viewport = signal(this.measure());
+  readonly viewport: { readonly value: Size };
 
-  constructor(remember: Remember) {
+  constructor(remember: Remember, size: { readonly value: Size }) {
+    this.viewport = size;
     this.widths = remember<Record<string, number>>(this.widthsKey, {});
     this.widths.value = this.cleanWidths(this.widths.peek());
     this.popupSizes = remember<Record<string, Size>>(this.sizesKey, {});
     this.popupSizes.value = this.cleanSizes(this.popupSizes.peek());
-    if (typeof window === 'undefined') return;
-    window.addEventListener('resize', () => {
-      const now = this.measure();
-      if (now.w !== this.viewport.value.w || now.h !== this.viewport.value.h) {
-        this.viewport.value = now;
-      }
-    });
   }
 
   widthOf(id: string, fallback: number): number {
@@ -106,10 +100,5 @@ export class Geometry {
       if (size && Number.isFinite(size.w) && Number.isFinite(size.h)) out[id] = size;
     }
     return out;
-  }
-
-  private measure(): Size {
-    if (typeof window === 'undefined') return { w: 1280, h: 720 };
-    return { w: window.innerWidth, h: window.innerHeight };
   }
 }

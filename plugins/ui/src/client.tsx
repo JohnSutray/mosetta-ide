@@ -25,6 +25,7 @@ export default class UiPlugin {
     this.windows = new Windows(
       <T,>(key: string, initial: T) => ide.remember<T>(key, initial),
       () => ide.registry<KeyCapture>('ui.captures').all.value,
+      ide.mount,
     );
   }
 
