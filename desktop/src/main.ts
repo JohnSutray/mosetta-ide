@@ -6,7 +6,7 @@ import { AppScheme } from './scheme.js';
 import { AppMenu, IdeWindows, TrayIcon } from './shell.js';
 
 class Desktop {
-  private readonly paths = new DesktopPaths(path.resolve(__dirname, '..', '..'));
+  private readonly paths = new DesktopPaths(path.resolve(__dirname, '..'));
   private readonly scheme = new AppScheme(this.paths.client);
   private readonly daemon = new Daemon({
     serverDir: this.paths.server,
@@ -20,6 +20,7 @@ class Desktop {
 
   run(): void {
     app.setName('Mosetta IDE');
+    if (process.platform === 'win32') app.setAppUserModelId('com.mosetta.ide');
     const debug = process.env.MOSETTA_DEBUG_PORT;
     if (debug) app.commandLine.appendSwitch('remote-debugging-port', debug);
     if (!app.requestSingleInstanceLock()) {

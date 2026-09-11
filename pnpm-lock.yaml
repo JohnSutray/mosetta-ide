@@ -53,6 +53,9 @@ importers:
       '@mosetta/ide-protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@preact/preset-vite':
+        specifier: ^2.9.3
+        version: 2.10.6(@babel/core@7.29.7)(preact@10.29.8)(rollup@4.62.4)(vite@6.4.3(@types/node@22.20.1)(tsx@4.23.12))
       '@preact/signals':
         specifier: ^1.3.1
         version: 1.3.4(preact@10.29.8)
@@ -62,16 +65,13 @@ importers:
       preact:
         specifier: ^10.25.3
         version: 10.29.8
-    devDependencies:
-      '@preact/preset-vite':
-        specifier: ^2.9.3
-        version: 2.10.6(@babel/core@7.29.7)(preact@10.29.8)(rollup@4.62.4)(vite@6.4.3(@types/node@22.20.1)(tsx@4.23.12))
-      '@types/node':
-        specifier: ^22.10.2
-        version: 22.20.1
       vite:
         specifier: ^6.0.5
         version: 6.4.3(@types/node@22.20.1)(tsx@4.23.12)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.20.1
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@22.20.1)
@@ -90,6 +90,9 @@ importers:
       esbuild:
         specifier: 0.25.12
         version: 0.25.12
+      vite:
+        specifier: ^6.0.5
+        version: 6.4.3(@types/node@22.20.1)(tsx@4.23.12)
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
@@ -866,6 +869,9 @@ importers:
       '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../plugins/api
+      '@mosetta/ide-client':
+        specifier: workspace:*
+        version: link:../client
       '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../plugins/code
@@ -947,6 +953,9 @@ importers:
       esbuild:
         specifier: 0.25.12
         version: 0.25.12
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.12
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
@@ -960,9 +969,6 @@ importers:
       '@types/ws':
         specifier: ^8.5.13
         version: 8.18.1
-      tsx:
-        specifier: ^4.19.2
-        version: 4.23.12
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.1)

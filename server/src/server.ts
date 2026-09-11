@@ -2,6 +2,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { SharedModules } from './plugins/shared.js';
 import { PluginHost } from './plugins/host.js';
 import { WebSocketServer } from 'ws';
@@ -66,7 +67,8 @@ export class Boot {
       void env.shellEnv.prime((spec) => env.processes.run(spec), env.shellEnv.loginShell(), os.homedir());
     }
     const here = fileURLToPath(new URL('..', import.meta.url));
-    const shared = new SharedModules(here, path.resolve(here, '../client'));
+    const client = path.dirname(createRequire(import.meta.url).resolve('@mosetta/ide-client/package.json'));
+    const shared = new SharedModules(here, client);
     const plugins = new PluginHost(log, stateDir, shared, {
       settings: () => config.settings,
       environment: () => env.shellEnv.current ?? {},

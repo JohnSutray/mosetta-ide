@@ -9,3 +9,4 @@ client/.vite/
 /img*.png
 
 desktop/.build/
+desktop/defaults/
