@@ -1,7 +1,9 @@
 import { useIde, useT, type SettingsEntry } from '@mosetta/ide-api/client';
 import type { SettingValue } from '@mosetta/ide-protocol';
-import { Popup, type Windows } from '@mosetta/ide-plugin-ui';
-import type { SettingRow, SettingsModel, SettingsWindow } from './state.js';
+import { Chevron, Popup, type Windows } from '@mosetta/ide-plugin-ui';
+import { useState } from 'preact/hooks';
+import { ResetIcon } from './icons.js';
+import type { SettingGroup, SettingRow, SettingsModel, SettingsWindow } from './state.js';
 
 export function SettingsPopup({
   windows,
@@ -50,26 +52,26 @@ export function SettingsPopup({
       </div>
       <div class="settings-list">
         {groups.map((group) => (
-          <section class="settings-group" key={group.owner}>
-            <div class="settings-group-head">
-              <span class="settings-group-title">{t(group.title)}</span>
-              <span class="settings-group-owner">{group.owner}</span>
-            </div>
+          <Group key={group.owner} group={group} open={win.isOpen(group.owner)} onToggle={() => win.toggleGroup(group.owner)}>
             {group.rows.map((row) => (
               <div class={`settings-row ${row.overridden ? 'is-set' : ''}`} key={row.path}>
                 <div class="settings-name">
+                  <span class="settings-chip is-path">{row.path}</span>
                   <span class="settings-label">{label(row)}</span>
-                  <span class="settings-path">{row.path}</span>
                 </div>
                 <div class="settings-value">
-                  <Field row={row} model={model} write={write} auto={t('settings.auto')} note={t('settings.inFile')} />
+                  <Field row={row} write={write} />
                 </div>
-                <button class="settings-reset" disabled={!row.overridden} title={t('settings.reset')} onClick={() => reset(row)}>
-                  {t('settings.resetShort')}
-                </button>
+                <div class="settings-tail">
+                  {row.overridden && (
+                    <button class="settings-reset" title={t('settings.reset')} onClick={() => reset(row)}>
+                      <ResetIcon />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
-          </section>
+          </Group>
         ))}
         {groups.length === 0 && <div class="settings-empty">{t('settings.nothing')}</div>}
       </div>
@@ -77,29 +79,48 @@ export function SettingsPopup({
   );
 }
 
-function Field({
-  row,
-  model,
-  write,
-  auto,
-  note,
+function Group({
+  group,
+  open,
+  onToggle,
+  children,
 }: {
-  row: SettingRow;
-  model: SettingsModel;
-  write: (row: SettingRow, value: SettingValue) => void;
-  auto: string;
-  note: string;
+  group: SettingGroup;
+  open: boolean;
+  onToggle: () => void;
+  children: preact.ComponentChildren;
 }) {
+  const t = useT();
+  const changed = group.rows.filter((row) => row.overridden).length;
+  return (
+    <section class={`settings-group ${open ? 'is-open' : ''}`}>
+      <button class="settings-group-head" aria-expanded={open} onClick={onToggle}>
+        <span class={`chevron ${open ? 'is-open' : ''}`}>
+          <Chevron />
+        </span>
+        <span class="settings-group-title">{t(group.title)}</span>
+        <span class="settings-chip is-owner">{group.owner}</span>
+        <span class="settings-group-count">
+          {t(group.rows.length === 1 ? 'settings.countOne' : 'settings.count', { count: group.rows.length })}
+          {changed > 0 && <span class="settings-group-changed">{t('settings.changed', { count: changed })}</span>}
+        </span>
+      </button>
+      {open && <div class="settings-rows">{children}</div>}
+    </section>
+  );
+}
+
+function Field({ row, write }: { row: SettingRow; write: (row: SettingRow, value: SettingValue) => void }) {
+  const t = useT();
   switch (row.kind) {
-    case 'boolean':
+    case 'boolean': {
+      const on = row.value === true;
       return (
-        <input
-          type="checkbox"
-          class="settings-check"
-          checked={row.value === true}
-          onChange={(event) => write(row, (event.target as HTMLInputElement).checked)}
-        />
+        <button type="button" role="switch" aria-checked={on} class={`settings-switch ${on ? 'is-on' : ''}`} onClick={() => write(row, !on)}>
+          <span class="settings-knob" />
+        </button>
       );
+    }
     case 'number':
       return (
         <input
@@ -117,28 +138,18 @@ function Field({
         <select class="field settings-choice" value={String(row.value)} onChange={(event) => write(row, (event.target as HTMLSelectElement).value)}>
           {(row.options ?? []).map((one) => (
             <option key={one} value={one}>
-              {one === '' ? auto : one}
+              {one === '' ? t('settings.auto') : one}
             </option>
           ))}
         </select>
       );
-    case 'list': {
-      const list = Array.isArray(row.value) ? (row.value as string[]) : [];
-      return (
-        <textarea
-          class="field settings-lines"
-          rows={Math.min(6, Math.max(2, list.length + 1))}
-          spellcheck={false}
-          value={list.join('\n')}
-          onChange={(event) => write(row, model.lines((event.target as HTMLTextAreaElement).value))}
-        />
-      );
-    }
+    case 'list':
+      return <Chips values={Array.isArray(row.value) ? (row.value as string[]) : []} onChange={(next) => write(row, next)} />;
     case 'object':
       return (
         <span class="settings-object">
           <code>{JSON.stringify(row.value)}</code>
-          <span class="settings-note">{note}</span>
+          <span class="settings-note">{t('settings.inFile')}</span>
         </span>
       );
     default:
@@ -151,4 +162,44 @@ function Field({
         />
       );
   }
+}
+
+function Chips({ values, onChange }: { values: string[]; onChange: (next: string[]) => void }) {
+  const t = useT();
+  const [draft, setDraft] = useState('');
+  const add = () => {
+    const value = draft.trim();
+    setDraft('');
+    if (value === '' || values.includes(value)) return;
+    onChange([...values, value]);
+  };
+  return (
+    <div class="settings-chips">
+      {values.map((value) => (
+        <span class="settings-chip is-value" key={value}>
+          {value}
+          <button class="settings-chip-x" title={t('settings.remove')} onClick={() => onChange(values.filter((one) => one !== value))}>
+            ×
+          </button>
+        </span>
+      ))}
+      <span class="settings-chip-new">
+        <input
+          class="settings-chip-input"
+          value={draft}
+          placeholder={t('settings.addPlaceholder')}
+          spellcheck={false}
+          onInput={(event) => setDraft((event.target as HTMLInputElement).value)}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            add();
+          }}
+        />
+        <button class="settings-chip-add" title={t('settings.add')} onClick={add}>
+          +
+        </button>
+      </span>
+    </div>
+  );
 }

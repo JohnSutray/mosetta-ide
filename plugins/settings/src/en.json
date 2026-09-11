@@ -5,8 +5,13 @@
   "settings.title": "Settings",
   "settings.filter": "Filter by name or path",
   "settings.reset": "Back to the default: the key leaves settings.json",
-  "settings.resetShort": "reset",
   "settings.nothing": "Nothing matches",
   "settings.auto": "auto",
-  "settings.inFile": "Edit it in settings.json"
+  "settings.inFile": "Edit it in settings.json",
+  "settings.count": "{count} settings",
+  "settings.changed": "{count} changed",
+  "settings.add": "Add",
+  "settings.addPlaceholder": "add…",
+  "settings.remove": "Remove",
+  "settings.countOne": "1 setting"
 }

@@ -82,6 +82,18 @@ export class SettingsModel {
 export class SettingsWindow {
   readonly open = signal(false);
   readonly term = signal('');
+  readonly expanded = signal<ReadonlySet<string>>(new Set());
+
+  toggleGroup(owner: string): void {
+    const next = new Set(this.expanded.value);
+    if (next.has(owner)) next.delete(owner);
+    else next.add(owner);
+    this.expanded.value = next;
+  }
+
+  isOpen(owner: string): boolean {
+    return this.term.value.trim() !== '' || this.expanded.value.has(owner);
+  }
 
   toggle(): void {
     if (this.open.value) this.close();

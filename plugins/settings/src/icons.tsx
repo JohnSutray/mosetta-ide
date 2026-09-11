@@ -19,3 +19,12 @@ export function SettingsIcon({ filled = false }: { filled?: boolean }): JSX.Elem
     </svg>
   );
 }
+
+export function ResetIcon(): JSX.Element {
+  return (
+    <svg {...common} width={13} height={13}>
+      <path d="M3.2 6.2A5 5 0 1 1 3.6 10" />
+      <path d="M2.6 2.8v3.6h3.6" />
+    </svg>
+  );
+}

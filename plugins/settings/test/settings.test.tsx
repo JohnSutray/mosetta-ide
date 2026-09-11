@@ -3,7 +3,7 @@ import { configSection, plugin, type SettingsEntry } from '@mosetta/ide-api/clie
 import { FakeHost } from '@mosetta/ide-api/testing';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 import SettingsPlugin from '../src/client.js';
-import { SettingsModel } from '../src/state.js';
+import { SettingsModel, SettingsWindow } from '../src/state.js';
 
 @plugin({ title: 'plugin.toy' })
 @configSection({
@@ -77,5 +77,18 @@ describe('редактор настроек', () => {
     host.run('settings.show');
     expect(settings.window.open.value).toBe(false);
     expect(settings.window.term.value, 'поиск не переживает закрытие').toBe('');
+  });
+
+  it('секции свёрнуты по умолчанию; поиск раскрывает все', () => {
+    const win = new SettingsWindow();
+    expect(win.isOpen('@mosetta/ide-plugin-git')).toBe(false);
+    win.toggleGroup('@mosetta/ide-plugin-git');
+    expect(win.isOpen('@mosetta/ide-plugin-git')).toBe(true);
+    expect(win.isOpen('@mosetta/ide-plugin-lsp')).toBe(false);
+    win.term.value = 'font';
+    expect(win.isOpen('@mosetta/ide-plugin-lsp')).toBe(true);
+    win.toggleGroup('@mosetta/ide-plugin-git');
+    win.term.value = '';
+    expect(win.isOpen('@mosetta/ide-plugin-git')).toBe(false);
   });
 });

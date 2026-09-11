@@ -162,6 +162,12 @@ export const STYLE = `
   align-items: center;
   gap: 6px;
 }
+.popup-close {
+  display: flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; flex: none; border-radius: 4px;
+  background: var(--control-bg); color: #b9c2c6; font-size: 12px; line-height: 1; cursor: pointer;
+}
+.popup-close:hover { background: #6b3a39; color: #ffd7d6; }
 .popup-esc {
   color: var(--muted);
   font: 10px var(--ui-font);

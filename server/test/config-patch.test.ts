@@ -147,4 +147,12 @@ describe('сброс настройки к заводской (ADR-0213)', () =>
     expect(written).not.toBe(tidy);
     expect(patch.unset(written, 'editor', 'lineNumbers').text).toBe(tidy);
   });
+
+  it('однострочный раздел: вписать, поменять и сбросить — байт в байт', () => {
+    const inline = `{\n  "find": { "masks": ["*.ts"] },\n  "git": {}\n}\n`;
+    const written = patch.setting(inline, 'find', 'masksOff', ['*.min.js']).text;
+    const emptied = patch.setting(written, 'find', 'masksOff', []).text;
+    expect(patch.unset(emptied, 'find', 'masksOff').text).toBe(inline);
+    expect(patch.unset(inline, 'find', 'masks').text).toBe(`{\n  "find": { },\n  "git": {}\n}\n`);
+  });
 });

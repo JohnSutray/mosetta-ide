@@ -102,7 +102,7 @@ function tryRemove(text: string, section: string, key: string): string | null {
   const body = text.slice(from);
   const before = new RegExp(`,\\s*"${key}"\\s*:\\s*${value}`).exec(body);
   if (before) return cut(text, from + before.index, from + before.index + before[0].length);
-  const after = new RegExp(`"${key}"\\s*:\\s*${value}[ \\t]*,[ \\t]*`).exec(body);
+  const after = new RegExp(`"${key}"\\s*:\\s*${value}[ \\t]*,`).exec(body);
   if (after) return cut(text, from + after.index, from + after.index + after[0].length);
   const alone = new RegExp(`"${key}"\\s*:\\s*${value}`).exec(body);
   if (alone) return cut(text, from + alone.index, from + alone.index + alone[0].length);
