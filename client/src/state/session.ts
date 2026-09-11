@@ -1,17 +1,14 @@
 import { signal } from '@preact/signals';
 import type { LogLine, WorkspaceInfo } from '@ide/protocol';
 import { RpcClient, RpcFailure } from '../rpc/client.js';
-import { complain } from './notifications.js';
-import { config } from './config.js';
-import { say } from './notifications.js';
-import { i18n } from '../i18n/index.js';
+import type { Notifications } from './notifications.js';
+import type { Config } from './config.js';
+import type { I18n } from '../i18n/index.js';
 
 export type RpcLike = Pick<RpcClient, 'call' | 'on'>;
 
-export const rpc = new RpcClient();
-
 export class Session {
-  readonly connected = rpc.connected;
+  readonly connected: RpcClient['connected'];
   readonly workspaces = signal<WorkspaceInfo[]>([]);
   readonly current = signal<WorkspaceInfo | null>(null);
   readonly attached = signal<WorkspaceInfo | null>(null);
@@ -23,7 +20,13 @@ export class Session {
   private restored = false;
   private everConnected = false;
 
-  constructor(private readonly rpc: RpcClient) {
+  constructor(
+    private readonly rpc: RpcClient,
+    private readonly config: Config,
+    private readonly notes: Pick<Notifications, 'say' | 'complain'>,
+    private readonly i18n: Pick<I18n, 't'>,
+  ) {
+    this.connected = rpc.connected;
     this.listen();
   }
 
@@ -43,7 +46,7 @@ export class Session {
       rememberInUrl(info.root);
       await this.afterAttach();
     } catch (err) {
-      complain(describe(err));
+      this.notes.complain(describe(err));
     }
   }
 
@@ -56,7 +59,7 @@ export class Session {
       rememberInUrl(info.root);
       await this.afterAttach();
     } catch (err) {
-      complain(describe(err));
+      this.notes.complain(describe(err));
     }
   }
 
@@ -77,9 +80,9 @@ export class Session {
       const info = await this.rpc.call('workspace.open', { root: ws.root });
       this.current.value = info;
       await this.afterAttach();
-      say(i18n.t('session.resumed'));
+      this.notes.say(this.i18n.t('session.resumed'));
     } catch (err) {
-      complain(describe(err));
+      this.notes.complain(describe(err));
     }
   }
 
@@ -100,7 +103,7 @@ export class Session {
       this.everConnected = true;
     });
 
-    this.rpc.on('config.changed', (bundle) => config.apply(bundle));
+    this.rpc.on('config.changed', (bundle) => this.config.apply(bundle));
 
     this.rpc.on('workspace.list', (list) => {
       this.workspaces.value = list;
@@ -147,5 +150,3 @@ function describe(err: unknown): string {
   if (err instanceof RpcFailure) return err.message;
   return err instanceof Error ? err.message : String(err);
 }
-
-export const session = new Session(rpc);

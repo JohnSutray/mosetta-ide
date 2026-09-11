@@ -40,5 +40,3 @@ export class I18n {
     return [...this.missing];
   }
 }
-
-export const i18n = new I18n();

@@ -1,6 +1,6 @@
-import { plugins } from '../state/plugins.js';
+import type { Plugins } from '../state/plugins.js';
 
-export function PluginSurfaces() {
+export function PluginSurfaces({ plugins }: { plugins: Plugins }) {
   return <>{plugins.surfaces.value.map((view, at) => <View key={at} render={view} />)}</>;
 }
 

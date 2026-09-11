@@ -1,5 +1,5 @@
 import type { MemoryDoc, MemoryEvent, ProcessHandle, Project, ProjectMemory, ProjectResource, RunAsk } from '@ide/api/server';
-import { processes } from '../env/processes.js';
+import type { Processes } from '../env/processes.js';
 import type { Workspace } from '../workspace/workspace.js';
 
 export class PluginProject implements Project {
@@ -8,6 +8,7 @@ export class PluginProject implements Project {
   constructor(
     private readonly ws: Workspace,
     private readonly plugin: string,
+    private readonly processes: Pick<Processes, 'adopt' | 'start'>,
   ) {
     const ram = ws.services.ram;
     const lend = (
@@ -72,11 +73,11 @@ export class PluginProject implements Project {
     info: { pid: number | undefined; command: string; reason: string },
     kill: () => void,
   ): () => void {
-    return processes.adopt({ ...info, owner: this.ws.root }, kill);
+    return this.processes.adopt({ ...info, owner: this.ws.root }, kill);
   }
 
   start(ask: RunAsk): ProcessHandle {
-    const handle = processes.start({
+    const handle = this.processes.start({
       ...ask,
       cwd: ask.cwd ?? this.ws.root,
       owner: this.ws.root,

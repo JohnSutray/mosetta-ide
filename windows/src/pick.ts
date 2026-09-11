@@ -1,4 +1,4 @@
-import { signal } from '@preact/signals';
+
 
 export interface PickApi {
   next(): void;
@@ -6,5 +6,3 @@ export interface PickApi {
   accept(): void;
   expand?(): void;
 }
-
-export const activePick = signal<PickApi | null>(null);

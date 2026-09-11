@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { EventName, EventPayload } from '@ide/protocol';
-import { Plugins } from '../src/state/plugins.js';
+import { Plugins, type PluginDeps } from '../src/state/plugins.js';
+import { Memory } from '../src/state/persist.js';
 import type { RpcLike } from '../src/state/session.js';
+
+const deps = (): PluginDeps => ({
+  commands: { registerPlugin: () => {} },
+  notes: { say: () => {}, complain: () => {}, notify: () => 0, settle: () => 0 },
+  memory: new Memory(),
+  i18n: { add: () => {} },
+});
 
 class FakeSocket implements RpcLike {
   private readonly listeners = new Map<string, Set<(payload: never) => void>>();
@@ -32,7 +40,7 @@ describe('события плагинов', () => {
   it('плагин слышит своё', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
-    new Plugins(socket).bound('@ide/plugin-terminal').on('data', (p) => heard.push(p));
+    new Plugins(socket, deps()).bound('@ide/plugin-terminal').on('data', (p) => heard.push(p));
 
     socket.send('@ide/plugin-terminal', 'data', { name: 'root::dev', data: 'привет' });
     expect(heard).toEqual([{ name: 'root::dev', data: 'привет' }]);
@@ -41,7 +49,7 @@ describe('события плагинов', () => {
   it('чужого плагина не слышит', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
-    new Plugins(socket).bound('@ide/plugin-terminal').on('data', (p) => heard.push(p));
+    new Plugins(socket, deps()).bound('@ide/plugin-terminal').on('data', (p) => heard.push(p));
 
     socket.send('@ide/plugin-git', 'data', 'чужое');
     expect(heard).toEqual([]);
@@ -50,7 +58,7 @@ describe('события плагинов', () => {
   it('чужое событие своего плагина не слышит', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
-    new Plugins(socket).bound('@ide/plugin-terminal').on('data', (p) => heard.push(p));
+    new Plugins(socket, deps()).bound('@ide/plugin-terminal').on('data', (p) => heard.push(p));
 
     socket.send('@ide/plugin-terminal', 'exit', { exitCode: 0 });
     expect(heard).toEqual([]);
@@ -58,7 +66,7 @@ describe('события плагинов', () => {
 
   it('два слушателя одного события слышат оба', () => {
     const socket = new FakeSocket();
-    const ide = new Plugins(socket).bound('@ide/plugin-terminal');
+    const ide = new Plugins(socket, deps()).bound('@ide/plugin-terminal');
     const heard: string[] = [];
     ide.on('data', () => heard.push('первый'));
     ide.on('data', () => heard.push('второй'));
@@ -70,7 +78,7 @@ describe('события плагинов', () => {
   it('отписка отписывает', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
-    const off = new Plugins(socket)
+    const off = new Plugins(socket, deps())
       .bound('@ide/plugin-terminal')
       .on('data', (p) => heard.push(p));
 
@@ -86,8 +94,8 @@ describe('события плагинов', () => {
     const first = new FakeSocket();
     const second = new FakeSocket();
     const heard: string[] = [];
-    new Plugins(first).bound('@ide/plugin-terminal').on('data', () => heard.push('первая'));
-    new Plugins(second).bound('@ide/plugin-terminal').on('data', () => heard.push('вторая'));
+    new Plugins(first, deps()).bound('@ide/plugin-terminal').on('data', () => heard.push('первая'));
+    new Plugins(second, deps()).bound('@ide/plugin-terminal').on('data', () => heard.push('вторая'));
 
     first.send('@ide/plugin-terminal', 'data', null);
     expect(heard).toEqual(['первая']);

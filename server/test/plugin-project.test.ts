@@ -2,8 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { EventName, EventPayload } from '@ide/protocol';
 import { ConfigStore } from '../src/config/store.js';
 import { PluginProject } from '../src/plugins/project.js';
+import { Env } from '../src/env/env.js';
 import { Workspace } from '../src/workspace/workspace.js';
 import { makeProject, removeProject, TEST_CONFIG_DIR } from './helpers.js';
+
+const env = new Env();
 
 class FakeTab {
   readonly heard: Array<{ event: string; payload: unknown }> = [];
@@ -29,7 +32,7 @@ describe('проект, отданный плагину', () => {
   beforeEach(async () => {
     root = await makeProject('plugin-project', { 'один.txt': 'раз' });
     const config = await ConfigStore.load(TEST_CONFIG_DIR);
-    ws = new Workspace(root, config);
+    ws = new Workspace(root, config, env.processes);
     tab = new FakeTab();
     ws.attach(tab);
   });
@@ -40,28 +43,28 @@ describe('проект, отданный плагину', () => {
   });
 
   it('корень и имя — те же, что у проекта', () => {
-    const project = new PluginProject(ws, '@ide/plugin-игрушка');
+    const project = new PluginProject(ws, '@ide/plugin-игрушка', env.processes);
     expect(project.root).toBe(root);
     expect(project.name).toBe(ws.name);
   });
 
   it('ресурс создаётся один раз', () => {
-    const project = new PluginProject(ws, '@ide/plugin-игрушка');
+    const project = new PluginProject(ws, '@ide/plugin-игрушка', env.processes);
     const first = project.use('вещь', () => new Toy());
     const second = project.use('вещь', () => new Toy());
     expect(second).toBe(first);
   });
 
   it('ключи разложены по плагинам: одинаковое имя — разные вещи', () => {
-    const first = new PluginProject(ws, '@ide/plugin-первый');
-    const second = new PluginProject(ws, '@ide/plugin-второй');
+    const first = new PluginProject(ws, '@ide/plugin-первый', env.processes);
+    const second = new PluginProject(ws, '@ide/plugin-второй', env.processes);
     expect(second.use('вещь', () => new Toy())).not.toBe(
       first.use('вещь', () => new Toy()),
     );
   });
 
   it('ресурс гасится вместе с проектом', async () => {
-    const project = new PluginProject(ws, '@ide/plugin-игрушка');
+    const project = new PluginProject(ws, '@ide/plugin-игрушка', env.processes);
     const toy = project.use('вещь', () => new Toy());
     expect(toy.disposed).toBe(false);
 
@@ -70,7 +73,7 @@ describe('проект, отданный плагину', () => {
   });
 
   it('событие доезжает до вкладки конвертом с именем плагина', () => {
-    const project = new PluginProject(ws, '@ide/plugin-игрушка');
+    const project = new PluginProject(ws, '@ide/plugin-игрушка', env.processes);
     project.emit('data', { name: 'root::dev', data: 'привет' });
 
     expect(tab.heard).toEqual([
@@ -88,14 +91,14 @@ describe('проект, отданный плагину', () => {
   it('событие слышат ВСЕ вкладки этого проекта', () => {
     const second = new FakeTab();
     ws.attach(second);
-    new PluginProject(ws, '@ide/plugin-игрушка').emit('data', 'раз');
+    new PluginProject(ws, '@ide/plugin-игрушка', env.processes).emit('data', 'раз');
 
     expect(tab.heard).toHaveLength(1);
     expect(second.heard).toHaveLength(1);
   });
 
   it('удержание держит проект тёплым, отпускание — отпускает', () => {
-    const project = new PluginProject(ws, '@ide/plugin-игрушка');
+    const project = new PluginProject(ws, '@ide/plugin-игрушка', env.processes);
     ws.detach(tab);
     expect(ws.idle).toBe(true);
 
@@ -108,7 +111,7 @@ describe('проект, отданный плагину', () => {
   });
 
   it('закрытый проект не даёт завести в себе новое', async () => {
-    const project = new PluginProject(ws, '@ide/plugin-игрушка');
+    const project = new PluginProject(ws, '@ide/plugin-игрушка', env.processes);
     await ws.dispose();
     expect(() => project.use('вещь', () => new Toy())).toThrow();
   });

@@ -41,22 +41,12 @@ export class Notifications {
   dismissAll(): void {
     this.notes.value = [];
   }
-}
 
-export const notifications = new Notifications();
+  say(message: string): void {
+    this.notify(message, 'info');
+  }
 
-export function say(message: string): void {
-  notifications.notify(message, 'info');
-}
-
-export function complain(message: string): void {
-  notifications.notify(message, 'error');
-}
-
-export function notify(text: string, kind: NoteKind = 'info'): number {
-  return notifications.notify(text, kind);
-}
-
-export function settle(id: number, text: string, kind: NoteKind = 'info'): number {
-  return notifications.settle(id, text, kind);
+  complain(message: string): void {
+    this.notify(message, 'error');
+  }
 }

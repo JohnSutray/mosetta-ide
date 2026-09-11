@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { forget, keep, persisted, recall } from '../src/state/persist.js';
+import { Memory, type Scope } from '../src/state/persist.js';
+
+const memory = new Memory();
+const persisted = <T,>(key: string, initial: T, scope?: Scope) => memory.signal(key, initial, scope);
+const recall = <T,>(key: string, fallback: T) => memory.recall(key, fallback);
+const keep = (key: string, value: unknown, scope?: Scope) => memory.keep(key, value, scope);
+const forget = (key: string, scope?: Scope) => memory.forget(key, scope);
 
 function fakeStore() {
   const map = new Map<string, string>();

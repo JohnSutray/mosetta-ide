@@ -1,8 +1,8 @@
 
-export { host, installHost, updateHost, type UiHost } from './host.js';
-export { popups, type OpenPopup } from './popups.js';
-export { activePick, type PickApi } from './pick.js';
-export { activeMenu, type MenuApi } from './menu-state.js';
-export { tips, Tips, type TipBox, type TipSpot } from './tips.js';
-export { geometry, type Size } from './geometry.js';
-export { windows, Windows } from './windows.js';
+export { NOBODY, type UiHost } from './host.js';
+export { Popups, type OpenPopup } from './popups.js';
+export type { PickApi } from './pick.js';
+export type { MenuApi } from './menu-state.js';
+export { Tips, type TipBox, type TipSpot } from './tips.js';
+export { Geometry, type Size } from './geometry.js';
+export { Windows } from './windows.js';

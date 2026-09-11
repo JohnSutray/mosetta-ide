@@ -2,16 +2,6 @@ import type { LogLevel, LogLine } from '@ide/protocol';
 
 type Sink = (line: LogLine) => void;
 
-const sinks = new Set<Sink>();
-
-function emit(level: LogLevel, scope: string, message: string) {
-  const line: LogLine = { level, scope, message, at: Date.now() };
-  for (const sink of sinks) sink(line);
-  const stamp = new Date(line.at).toISOString().slice(11, 23);
-  const out = level === 'error' || level === 'warn' ? process.stderr : process.stdout;
-  out.write(`${stamp} ${level.padEnd(5)} ${scope}: ${message}\n`);
-}
-
 export interface Logger {
   debug(message: string): void;
   info(message: string): void;
@@ -20,18 +10,28 @@ export interface Logger {
 }
 
 export class Journal {
+  private readonly sinks = new Set<Sink>();
+
   onLog(sink: Sink): () => void {
-    sinks.add(sink);
-    return () => sinks.delete(sink);
+    this.sinks.add(sink);
+    return () => this.sinks.delete(sink);
   }
 
   logger(scope: string): Logger {
     return {
-      debug: (m) => emit('debug', scope, m),
-      info: (m) => emit('info', scope, m),
-      warn: (m) => emit('warn', scope, m),
-      error: (m) => emit('error', scope, m),
+      debug: (m) => this.emit('debug', scope, m),
+      info: (m) => this.emit('info', scope, m),
+      warn: (m) => this.emit('warn', scope, m),
+      error: (m) => this.emit('error', scope, m),
     };
+  }
+
+  private emit(level: LogLevel, scope: string, message: string): void {
+    const line: LogLine = { level, scope, message, at: Date.now() };
+    for (const sink of this.sinks) sink(line);
+    const stamp = new Date(line.at).toISOString().slice(11, 23);
+    const out = level === 'error' || level === 'warn' ? process.stderr : process.stdout;
+    out.write(`${stamp} ${level.padEnd(5)} ${scope}: ${message}\n`);
   }
 
   describeError(err: unknown): string {

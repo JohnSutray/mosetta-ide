@@ -21,7 +21,8 @@ import { sectionOf } from '@ide/api/section';
 import { PluginProject } from './project.js';
 import type { Workspace } from '../workspace/workspace.js';
 import type { Logger } from '../log.js';
-import { processes } from '../env/processes.js';
+import { Env } from '../env/env.js';
+import type { Processes } from '../env/processes.js';
 
 interface Loaded {
   info: PluginInfo;
@@ -35,6 +36,7 @@ export interface Machine {
   settings(): Settings;
   environment(): Record<string, string>;
   which(name: string): string | null;
+  readonly processes: Pick<Processes, 'run' | 'stream' | 'adopt' | 'start'>;
 }
 
 export class PluginHost {
@@ -55,16 +57,21 @@ export class PluginHost {
       },
       environment: () => ({}),
       which: () => null,
+      processes: new Env().processes,
     },
   ) {
     this.build = new PluginBuild(shared);
+  }
+
+  projectFor(ws: Workspace, plugin: string): PluginProject {
+    return new PluginProject(ws, plugin, this.machine.processes);
   }
 
   projectOpened(ws: Workspace): void {
     for (const [name, handlers] of this.projectHandlers) {
       for (const handler of handlers) {
         try {
-          handler(new PluginProject(ws, name));
+          handler(this.projectFor(ws, name));
         } catch (err) {
           this.log.warn(`плагин ${name} не принял проект ${ws.name}: ${String(err)}`);
         }
@@ -241,9 +248,9 @@ export class PluginHost {
         settings: (section, defaults) => sectionOf(this.machine.settings(), section, defaults),
         environment: () => this.machine.environment(),
         which: (name) => this.machine.which(name),
-        run: (ask) => processes.run({ ...ask, reason: `${name}: ${ask.reason}` }),
+        run: (ask) => this.machine.processes.run({ ...ask, reason: `${name}: ${ask.reason}` }),
         stream: (ask, onChunk) =>
-          processes.stream({ ...ask, reason: `${name}: ${ask.reason}` }, onChunk),
+          this.machine.processes.stream({ ...ask, reason: `${name}: ${ask.reason}` }, onChunk),
         log: this.log,
         dir,
         state: path.join(this.stateDir, 'plugins', name.replace(/[^\w.-]/g, '_')),

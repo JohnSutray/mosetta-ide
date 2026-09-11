@@ -44,5 +44,3 @@ export class Tips {
     this.spot.value = null;
   }
 }
-
-export const tips = new Tips();

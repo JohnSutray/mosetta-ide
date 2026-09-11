@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { shellEnv } from './shell-env.js';
 
 function suffixesFor(name: string): string[] {
   if (process.platform !== 'win32') return [''];
@@ -21,8 +20,10 @@ function exists(file: string): boolean {
 }
 
 export class Which {
+  constructor(private readonly env: { readonly path: string | null }) {}
+
   onPath(name: string): string | null {
-    const search = shellEnv.path ?? process.env.PATH ?? '';
+    const search = this.env.path ?? process.env.PATH ?? '';
     const dirs = search.split(path.delimiter).filter((dir) => dir !== '');
     for (const dir of dirs) {
       for (const suffix of suffixesFor(name)) {
@@ -33,5 +34,3 @@ export class Which {
     return null;
   }
 }
-
-export const which = new Which();

@@ -7,9 +7,7 @@ import { PluginHost } from './plugins/host.js';
 import { WebSocketServer } from 'ws';
 import { DEFAULT_PORT, WS_PATH } from '@ide/protocol';
 import { ConfigStore } from './config/store.js';
-import { which } from './env/which.js';
-import { shellEnv } from './env/shell-env.js';
-import { processes } from './env/processes.js';
+import { Env } from './env/env.js';
 import { journal } from './log.js';
 import { Session } from './rpc/session.js';
 import { WorkspaceRegistry } from './workspace/registry.js';
@@ -50,21 +48,23 @@ export class Boot {
     const startedAt = Date.now();
     const stateDir = options.stateDir ?? path.join(os.homedir(), '.web-ide');
     const config = await ConfigStore.load(options.configDir);
+    const env = new Env();
     if (options.watchConfig ?? true) config.watch();
 
     if (options.shellEnv ?? true) {
-      void shellEnv.prime((spec) => processes.run(spec), shellEnv.loginShell(), os.homedir());
+      void env.shellEnv.prime((spec) => env.processes.run(spec), env.shellEnv.loginShell(), os.homedir());
     }
     const here = fileURLToPath(new URL('..', import.meta.url));
     const shared = new SharedModules(here, path.resolve(here, '../client'));
     const plugins = new PluginHost(log, stateDir, shared, {
       settings: () => config.settings,
-      environment: () => shellEnv.current ?? {},
-      which: (name) => which.onPath(name),
+      environment: () => env.shellEnv.current ?? {},
+      which: (name) => env.which.onPath(name),
+      processes: env.processes,
     });
     await plugins.load(config.settings.plugins.enabled);
 
-    const registry = new WorkspaceRegistry(config, { idleMs: options.idleMs });
+    const registry = new WorkspaceRegistry(config, env.processes, { idleMs: options.idleMs });
     registry.onOpen((ws) => plugins.projectOpened(ws));
 
     const http_ = http.createServer((req, res) => {

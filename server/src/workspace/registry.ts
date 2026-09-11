@@ -4,6 +4,7 @@ import { disk } from '../fs/os-fs.js';
 import { RpcError } from '../errors.js';
 import { journal } from '../log.js';
 import { Workspace } from './workspace.js';
+import type { Processes } from '../env/processes.js';
 
 const log = journal.logger('workspaces');
 
@@ -22,6 +23,7 @@ export class WorkspaceRegistry {
 
   constructor(
     private readonly config: ConfigStore,
+    private readonly processes: Pick<Processes, 'killOwned'>,
     options: RegistryOptions = {},
   ) {
     this.idleMs = options.idleMs ?? 15 * 60_000;
@@ -36,7 +38,7 @@ export class WorkspaceRegistry {
       return existing;
     }
 
-    const ws = new Workspace(real, this.config);
+    const ws = new Workspace(real, this.config, this.processes);
     this.byRoot.set(real, ws);
     this.byId.set(ws.id, ws);
     log.info(`открыт ${real} (${ws.id})`);

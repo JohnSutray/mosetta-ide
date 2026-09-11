@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Processes } from '../src/env/processes.js';
+import { Env } from '../src/env/env.js';
 
 const node = process.execPath;
 
@@ -9,7 +9,7 @@ function script(body: string): string[] {
 
 describe('запуск подпроцессов', () => {
   it('вывод доезжает целиком, код возврата виден', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const ran = await processes.run({
       command: node,
       args: script('process.stdout.write("привет"); process.exit(0)'),
@@ -22,7 +22,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('чужой отказ — это ответ, а не исключение', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const ran = await processes.run({
       command: node,
       args: script('process.stderr.write("так нельзя"); process.exit(3)'),
@@ -34,7 +34,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('несуществующая команда не роняет запрос', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const ran = await processes.run({
       command: 'этого-точно-нет-на-машине',
       args: [],
@@ -46,7 +46,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('зависший убивается и говорит, что убит по таймауту', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const ran = await processes.run({
       command: node,
       args: script('setInterval(() => {}, 1000)'),
@@ -58,7 +58,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('переполнение вывода СКАЗАНО вслух, а не проглочено', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const ran = await processes.run({
       command: node,
       args: script('process.stdout.write("x".repeat(200000))'),
@@ -71,7 +71,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('поток отдаёт вывод по мере появления, а не в конце', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const seen: string[] = [];
     const ran = await processes.stream(
       {
@@ -90,7 +90,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('оба потока текут в один: прогресс печатается в stderr', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const seen: string[] = [];
     await processes.stream(
       {
@@ -104,7 +104,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('учёт показывает живых и забывает мёртвых', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const handle = processes.start({
       command: node,
       args: script('setInterval(() => {}, 1000)'),
@@ -125,7 +125,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('закрытие проекта прибирает осиротевшее', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const orphan = processes.start({
       command: node,
       args: script('setInterval(() => {}, 1000)'),
@@ -148,7 +148,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('приёмыш виден в учёте, но не гасится вместе с чужим', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     let killed = false;
     const forget = processes.adopt(
       { pid: 4242, command: 'zsh', reason: 'терминал root::dev', owner: '/проект' },
@@ -164,7 +164,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('намерение «машинный вывод» доезжает до процесса', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const ran = await processes.run({
       command: node,
       args: script('process.stdout.write(String(process.env.LC_ALL))'),
@@ -175,7 +175,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('намерение «не спрашивать» гасит запрос пароля', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const ran = await processes.run({
       command: node,
       args: script('process.stdout.write(String(process.env.GIT_TERMINAL_PROMPT))'),
@@ -186,7 +186,7 @@ describe('запуск подпроцессов', () => {
   });
 
   it('свои переменные сильнее намерения: инструмент знает про себя больше', async () => {
-    const processes = new Processes();
+    const processes = new Env().processes;
     const ran = await processes.run({
       command: node,
       args: script('process.stdout.write(String(process.env.LC_ALL))'),

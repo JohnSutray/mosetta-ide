@@ -58,7 +58,7 @@ describe('контракт @ide/api', () => {
   it('экспорты пакета спрашиваются у esbuild, а не переписываются руками', async () => {
     const shared = new SharedModules(path.resolve(here, '..'), path.resolve(here, '../../client'));
     const windows = await shared.exportsOf('@ide/windows', 'client');
-    for (const name of ['popups', 'activePick', 'activeMenu', 'tips', 'geometry', 'host', 'installHost']) {
+    for (const name of ['Windows', 'Popups', 'Tips', 'Geometry', 'NOBODY']) {
       expect(windows, `@ide/windows: нет ${name}`).toContain(name);
     }
     const hooks = await shared.exportsOf('preact/hooks', 'client');

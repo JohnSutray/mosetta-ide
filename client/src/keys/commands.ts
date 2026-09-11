@@ -1,5 +1,5 @@
 import { COMMAND_IDS, COMMANDS, type CommandId } from '@ide/protocol';
-import { popups } from '@ide/windows';
+import type { Popups } from '@ide/windows';
 
 type Runner = () => void | Promise<void>;
 
@@ -7,6 +7,8 @@ export class Commands {
   private readonly registry = new Map<string, Runner>();
 
   private readonly fromPlugin = new Set<string>();
+
+  constructor(private readonly popups: Pick<Popups, 'stack'>) {}
 
   register(id: CommandId, run: Runner): void {
     this.registry.set(id, run);
@@ -23,13 +25,13 @@ export class Commands {
 
   opensOpenPopup(id: string): boolean {
     const popup = this.opensPopup(id);
-    return popup !== undefined && popups.stack.value.some((item) => item.id === popup);
+    return popup !== undefined && this.popups.stack.value.some((item) => item.id === popup);
   }
 
   run(id: string): boolean {
     const popup = this.opensPopup(id);
     const open =
-      popup === undefined ? undefined : popups.stack.value.find((item) => item.id === popup);
+      popup === undefined ? undefined : this.popups.stack.value.find((item) => item.id === popup);
     if (open) {
       open.close();
       return true;
@@ -57,5 +59,3 @@ export class Commands {
     return this.fromPlugin.has(id) ? id : undefined;
   }
 }
-
-export const commands = new Commands();

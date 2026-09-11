@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { which } from './which.js';
+import type { Which } from './which.js';
 
 export interface LaunchPlan {
   command: string;
@@ -16,10 +16,12 @@ function quote(part: string): string {
 }
 
 export class Exec {
+  constructor(private readonly which: Pick<Which, 'onPath'>) {}
+
   plan(command: string, args: string[]): LaunchPlan {
     if (process.platform !== 'win32') return { command, args, shell: false };
 
-    const resolved = path.isAbsolute(command) ? command : which.onPath(command);
+    const resolved = path.isAbsolute(command) ? command : this.which.onPath(command);
     if (resolved && !BATCH.has(path.extname(resolved).toLowerCase())) {
       return { command: resolved, args, shell: false };
     }
@@ -27,5 +29,3 @@ export class Exec {
     return { command: quote(command), args: args.map(quote), shell: true };
   }
 }
-
-export const exec = new Exec();

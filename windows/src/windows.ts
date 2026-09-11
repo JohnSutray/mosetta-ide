@@ -1,21 +1,33 @@
-import { geometry } from './geometry.js';
-import { host, updateHost, type UiHost } from './host.js';
-import { activeMenu } from './menu-state.js';
-import { activePick } from './pick.js';
-import { popups } from './popups.js';
-import { tips } from './tips.js';
+import { signal } from '@preact/signals';
+import { Geometry } from './geometry.js';
+import { NOBODY, type UiHost } from './host.js';
+import type { MenuApi } from './menu-state.js';
+import type { PickApi } from './pick.js';
+import { Popups } from './popups.js';
+import { Tips } from './tips.js';
 
 export class Windows {
-  readonly popups = popups;
-  readonly tips = tips;
-  readonly geometry = geometry;
-  readonly activePick = activePick;
-  readonly activeMenu = activeMenu;
-  readonly host = host;
+  private current: UiHost;
+
+  readonly host: UiHost = {
+    t: (key, params) => this.current.t(key, params),
+    catchesKeys: (context) => this.current.catchesKeys(context),
+    keep: (key, value) => this.current.keep(key, value),
+    recall: (key, fallback) => this.current.recall(key, fallback),
+  };
+
+  readonly popups = new Popups();
+  readonly tips = new Tips();
+  readonly geometry: Geometry;
+  readonly activePick = signal<PickApi | null>(null);
+  readonly activeMenu = signal<MenuApi | null>(null);
+
+  constructor(host: UiHost = NOBODY) {
+    this.current = host;
+    this.geometry = new Geometry(this.host);
+  }
 
   updateHost(part: Partial<UiHost>): void {
-    updateHost(part);
+    this.current = { ...this.current, ...part };
   }
 }
-
-export const windows = new Windows();

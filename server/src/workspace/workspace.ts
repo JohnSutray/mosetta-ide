@@ -4,7 +4,7 @@ import type { EventName, EventPayload, WorkspaceInfo } from '@ide/protocol';
 import { journal, type Logger } from '../log.js';
 import type { ConfigStore } from '../config/store.js';
 import { paths } from './paths.js';
-import { processes } from '../env/processes.js';
+import type { Processes } from '../env/processes.js';
 import { Services } from './services.js';
 
 export interface WorkspaceResource {
@@ -31,6 +31,7 @@ export class Workspace {
   constructor(
     root: string,
     private readonly config: ConfigStore,
+    private readonly processes: Pick<Processes, 'killOwned'>,
   ) {
     this.root = root;
     this.name = path.basename(root) || root;
@@ -110,7 +111,7 @@ export class Workspace {
       }
     }
     this.resources.clear();
-    const orphans = processes.killOwned(this.root);
+    const orphans = this.processes.killOwned(this.root);
     if (orphans > 0) this.log.warn(`убито осиротевших подпроцессов: ${orphans}`);
     this.log.info('закрыт');
   }

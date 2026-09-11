@@ -61,21 +61,3 @@ export class Memory {
     }
   }
 }
-
-export const memory = new Memory();
-
-export function persisted<T>(key: string, initial: T, scope: Scope = 'both'): Signal<T> {
-  return memory.signal(key, initial, scope);
-}
-
-export function recall<T>(key: string, fallback: T): T {
-  return memory.recall(key, fallback);
-}
-
-export function keep(key: string, value: unknown, scope: Scope = 'both'): void {
-  memory.keep(key, value, scope);
-}
-
-export function forget(key: string, scope: Scope = 'both'): void {
-  memory.forget(key, scope);
-}

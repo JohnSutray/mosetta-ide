@@ -1,6 +1,5 @@
 import { spawn, type ChildProcess, type ChildProcessWithoutNullStreams } from 'node:child_process';
-import { exec } from './exec.js';
-import { shellEnv } from './shell-env.js';
+import type { Exec } from './exec.js';
 import { journal } from '../log.js';
 
 const log = journal.logger('proc');
@@ -75,7 +74,10 @@ export class Processes {
   private readonly live = new Map<number, Entry>();
   private next = 1;
 
-  constructor(private readonly userEnv: UserEnv = shellEnv) {}
+  constructor(
+    private readonly userEnv: UserEnv,
+    private readonly exec: Pick<Exec, 'plan'>,
+  ) {}
 
   run(spec: RunSpec): Promise<Ran> {
     return this.collect(spec, null);
@@ -86,7 +88,7 @@ export class Processes {
   }
 
   start(spec: RunSpec): Handle {
-    const plan = exec.plan(spec.command, spec.args);
+    const plan = this.exec.plan(spec.command, spec.args);
     const child = spawn(plan.command, plan.args, {
       cwd: spec.cwd,
       env: this.envFor(spec),
@@ -187,7 +189,7 @@ export class Processes {
   }
 
   private collect(spec: RunSpec, onChunk: ((text: string) => void) | null): Promise<Ran> {
-    const plan = exec.plan(spec.command, spec.args);
+    const plan = this.exec.plan(spec.command, spec.args);
     return new Promise((resolve) => {
       const child = spawn(plan.command, plan.args, {
         cwd: spec.cwd,
@@ -268,5 +270,3 @@ export class Processes {
     });
   }
 }
-
-export const processes = new Processes();

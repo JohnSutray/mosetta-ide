@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ShellEnv, type Harvester } from '../src/env/shell-env.js';
 import { Processes } from '../src/env/processes.js';
+import { Exec } from '../src/env/exec.js';
+import { Which } from '../src/env/which.js';
+
+const plan = () => new Exec(new Which({ path: null }));
 
 function fakeShell(stdout: string, ok = true): Harvester {
   return async () => ({ ok, stdout, stderr: ok ? '' : 'оболочка отказалась', timedOut: false });
@@ -12,7 +16,7 @@ describe('окружение человека', () => {
   it('разбирает ответ настоящей оболочки', async () => {
     if (process.platform === 'win32') return;
     const env = new ShellEnv();
-    const processes = new Processes();
+    const processes = new Processes({ current: null }, plan());
     await env.prime((spec) => processes.run(spec), { file: '/bin/sh', args: [] }, process.cwd());
 
     expect(env.current).not.toBe(null);
@@ -129,7 +133,7 @@ describe('окружение человека доезжает до запуск
   const read = (name: string) => ['-e', `process.stdout.write(String(process.env.${name}))`];
 
   it('намерение «user-shell» подмешивает собранное', async () => {
-    const processes = new Processes({ current: { НАШЕЛ: 'из оболочки' } });
+    const processes = new Processes({ current: { НАШЕЛ: 'из оболочки' } }, plan());
     const ran = await processes.run({
       command: node,
       args: read('НАШЕЛ'),
@@ -140,13 +144,13 @@ describe('окружение человека доезжает до запуск
   });
 
   it('без намерения окружение сервера остаётся нетронутым', async () => {
-    const processes = new Processes({ current: { НАШЕЛ: 'из оболочки' } });
+    const processes = new Processes({ current: { НАШЕЛ: 'из оболочки' } }, plan());
     const ran = await processes.run({ command: node, args: read('НАШЕЛ'), reason: 'тест' });
     expect(ran.stdout).toBe('undefined');
   });
 
   it('пока оболочка не ответила, работаем на окружении сервера', async () => {
-    const processes = new Processes({ current: null });
+    const processes = new Processes({ current: null }, plan());
     const ran = await processes.run({
       command: node,
       args: read('PATH'),
@@ -157,7 +161,7 @@ describe('окружение человека доезжает до запуск
   });
 
   it('своё у инструмента сильнее окружения человека', async () => {
-    const processes = new Processes({ current: { НАШЕЛ: 'из оболочки' } });
+    const processes = new Processes({ current: { НАШЕЛ: 'из оболочки' } }, plan());
     const ran = await processes.run({
       command: node,
       args: read('НАШЕЛ'),

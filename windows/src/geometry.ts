@@ -1,5 +1,5 @@
-import { signal } from '@preact/signals';
-import { host } from './host.js';
+import { signal, type Signal } from '@preact/signals';
+import type { UiHost } from './host.js';
 
 export interface Size {
   w: number;
@@ -14,12 +14,14 @@ export class Geometry {
   private readonly widthsKey = 'panel-widths';
   private readonly sizesKey = 'popup-sizes';
 
-  readonly widths = signal<Record<string, number>>(this.readWidths());
-  readonly popupSizes = signal<Record<string, Size>>(this.readSizes());
+  readonly widths: Signal<Record<string, number>>;
+  readonly popupSizes: Signal<Record<string, Size>>;
 
   readonly viewport = signal(this.measure());
 
-  constructor() {
+  constructor(private readonly host: UiHost) {
+    this.widths = signal(this.readWidths());
+    this.popupSizes = signal(this.readSizes());
     if (typeof window === 'undefined') return;
     window.addEventListener('resize', () => {
       const now = this.measure();
@@ -39,7 +41,7 @@ export class Geometry {
     const width = Math.round(Math.min(max, Math.max(min, px)));
     if (this.widths.value[id] === width) return;
     this.widths.value = { ...this.widths.value, [id]: width };
-    host.keep(this.widthsKey, this.widths.value);
+    this.host.keep(this.widthsKey, this.widths.value);
   }
 
   sizeOf(id: string, fallback: Size): Size {
@@ -59,13 +61,13 @@ export class Geometry {
     const known = this.popupSizes.value[id];
     if (known && known.w === next.w && known.h === next.h) return;
     this.popupSizes.value = { ...this.popupSizes.value, [id]: next };
-    host.keep(this.sizesKey, this.popupSizes.value);
+    this.host.keep(this.sizesKey, this.popupSizes.value);
   }
 
   resetPopupSize(id: string): void {
     const { [id]: _dropped, ...rest } = this.popupSizes.value;
     this.popupSizes.value = rest;
-    host.keep(this.sizesKey, rest);
+    this.host.keep(this.sizesKey, rest);
   }
 
   fitAnchored(
@@ -92,7 +94,7 @@ export class Geometry {
 
   private readWidths(): Record<string, number> {
     const out: Record<string, number> = {};
-    for (const [id, value] of Object.entries(host.recall<Record<string, unknown>>('panel-widths', {}))) {
+    for (const [id, value] of Object.entries(this.host.recall<Record<string, unknown>>('panel-widths', {}))) {
       if (typeof value === 'number' && Number.isFinite(value)) out[id] = value;
     }
     return out;
@@ -100,7 +102,7 @@ export class Geometry {
 
   private readSizes(): Record<string, Size> {
     const out: Record<string, Size> = {};
-    for (const [id, value] of Object.entries(host.recall<Record<string, unknown>>('popup-sizes', {}))) {
+    for (const [id, value] of Object.entries(this.host.recall<Record<string, unknown>>('popup-sizes', {}))) {
       const size = value as Size;
       if (size && Number.isFinite(size.w) && Number.isFinite(size.h)) out[id] = size;
     }
@@ -112,5 +114,3 @@ export class Geometry {
     return { w: window.innerWidth, h: window.innerHeight };
   }
 }
-
-export const geometry = new Geometry();

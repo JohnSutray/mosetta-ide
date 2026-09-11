@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { popups } from '@ide/windows';
+import { Popups } from '@ide/windows';
+
+const popups = new Popups();
 
 interface FakeEl {
   isConnected: boolean;

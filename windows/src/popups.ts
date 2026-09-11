@@ -67,5 +67,3 @@ export class Popups {
     return el && typeof el.focus === 'function' ? el : null;
   }
 }
-
-export const popups = new Popups();

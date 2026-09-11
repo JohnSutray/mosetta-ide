@@ -1,6 +1,6 @@
-import { commands } from '../keys/commands.js';
-import { rpc as socket, type RpcLike } from './session.js';
-import { complain, notify, say, settle } from './notifications.js';
+import type { Commands } from '../keys/commands.js';
+import type { RpcLike } from './session.js';
+import type { Notifications } from './notifications.js';
 import { signal, type Signal } from '@preact/signals';
 import type { PluginInfo } from '@ide/protocol';
 import {
@@ -21,10 +21,17 @@ import {
   type PluginClass,
   type RegistryHandle,
 } from '@ide/api/client';
-import { persisted } from './persist.js';
+import type { Memory } from './persist.js';
 import { sharedModules } from './shared-modules.js';
 import type { Registry } from './registry.js';
-import { i18n } from '../i18n/index.js';
+import type { I18n } from '../i18n/index.js';
+
+export interface PluginDeps {
+  commands: Pick<Commands, 'registerPlugin'>;
+  notes: Pick<Notifications, 'say' | 'complain' | 'notify' | 'settle'>;
+  memory: Pick<Memory, 'signal'>;
+  i18n: Pick<I18n, 'add'>;
+}
 
 interface Built {
   name: string;
@@ -33,7 +40,10 @@ interface Built {
 }
 
 export class Plugins {
-  constructor(private readonly rpc: RpcLike = socket) {}
+  constructor(
+    private readonly rpc: RpcLike,
+    private readonly deps: PluginDeps,
+  ) {}
 
   readonly list = signal<PluginInfo[]>([]);
   readonly surfaces = signal<Array<() => unknown>>([]);
@@ -78,15 +88,15 @@ export class Plugins {
 
     for (const info of list) {
       if (info.state !== 'ok') {
-        complain(`${info.name}: ${info.error ?? 'не поднялся'}`);
+        this.deps.notes.complain(`${info.name}: ${info.error ?? 'не поднялся'}`);
         continue;
       }
-      i18n.add(info.name, info.strings);
+      this.deps.i18n.add(info.name, info.strings);
       if (!info.hasClient) continue;
       try {
         built.push(await this.build(info));
       } catch (err) {
-        complain(`${info.name}: ${err instanceof Error ? err.message : String(err)}`);
+        this.deps.notes.complain(`${info.name}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
 
@@ -98,7 +108,7 @@ export class Plugins {
       try {
         await hooksOf(one.instance).start?.();
       } catch (err) {
-        complain(`${one.name}: ${err instanceof Error ? err.message : String(err)}`);
+        this.deps.notes.complain(`${one.name}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
   }
@@ -146,8 +156,8 @@ export class Plugins {
         call: (method: string, params: unknown) =>
           this.rpc.call('plugins.call', { name, method, params }),
       },
-      command(id: string, run: () => void) {
-        commands.registerPlugin(id, run);
+      command: (id: string, run: () => void) => {
+        this.deps.commands.registerPlugin(id, run);
       },
       registry: <T,>(key: string): RegistryHandle<T> => {
         const store_ = this.registryOf();
@@ -158,9 +168,8 @@ export class Plugins {
           },
         };
       },
-      remember<T>(key: string, initial: T, scope: 'tab' | 'both' = 'both'): Signal<T> {
-        return persisted(`${name}/${key}`, initial, scope);
-      },
+      remember: <T,>(key: string, initial: T, scope: 'tab' | 'both' = 'both'): Signal<T> =>
+        this.deps.memory.signal(`${name}/${key}`, initial, scope),
 
       css(text: string) {
         const tag = document.createElement('style');
@@ -181,19 +190,17 @@ export class Plugins {
       surface: (view: () => unknown) => {
         this.surfaces.value = [...this.surfaces.value, view];
       },
-      say: (message: string) => say(message),
-      complain: (message: string) => complain(message),
+      say: (message: string) => this.deps.notes.say(message),
+      complain: (message: string) => this.deps.notes.complain(message),
       sayOnce: (slot: string, message: string) => {
-        this.slots.set(slot, settle(this.slots.get(slot) ?? 0, message));
+        this.slots.set(slot, this.deps.notes.settle(this.slots.get(slot) ?? 0, message));
       },
       working: (text: string) => {
-        const note = notify(text, 'work');
+        const note = this.deps.notes.notify(text, 'work');
         return (done: string, failed = false) => {
-          settle(note, done, failed ? 'error' : 'info');
+          this.deps.notes.settle(note, done, failed ? 'error' : 'info');
         };
       },
     };
   }
 }
-
-export const plugins = new Plugins();

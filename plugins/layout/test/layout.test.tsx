@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, nodes, of } from '@ide/api/testing';
 import { Resizer } from '@ide/ui';
-import { geometry } from '@ide/windows';
 import Layout from '../src/client.js';
 import type { PanelWish } from '../src/schema.js';
 
 const NAME = '@ide/plugin-layout';
 
-(globalThis as { window?: { innerWidth: number } }).window = { innerWidth: 1200 };
+(globalThis as { window?: object }).window = { innerWidth: 1200, innerHeight: 800, addEventListener: () => {} };
 
 function wish(id: string, side: PanelWish['side'], extra: Partial<PanelWish> = {}): PanelWish {
   return {
@@ -100,7 +99,7 @@ describe('раскладка', () => {
     const width = () =>
       (of(main(), 'section')[0]!.props['style'] as { width: string }).width;
     expect(width()).toBe('260px');
-    geometry.setWidth('tree', 410, { min: 0, max: 4000 });
+    host.surface.windows.geometry.setWidth('tree', 410, { min: 0, max: 4000 });
     expect(width()).toBe('410px');
   });
 

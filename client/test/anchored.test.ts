@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { geometry } from '@ide/windows';
+import { Geometry, NOBODY } from '@ide/windows';
+
+const geometry = new Geometry(NOBODY);
 
 const BOX = { w: 1600, h: 1000 };
 const MIN = { w: 320, h: 220 };

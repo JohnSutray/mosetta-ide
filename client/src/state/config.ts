@@ -12,5 +12,3 @@ export class Config {
     this.sources.value = bundle.sources;
   }
 }
-
-export const config = new Config();

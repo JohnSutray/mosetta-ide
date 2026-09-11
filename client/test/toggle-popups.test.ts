@@ -1,6 +1,9 @@
-import { commands } from '../src/keys/commands.js';
+import { Commands } from '../src/keys/commands.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { popups } from '@ide/windows';
+import { Popups } from '@ide/windows';
+
+const popups = new Popups();
+const commands = new Commands(popups);
 
 describe('повторное нажатие закрывает окно', () => {
   beforeEach(() => {

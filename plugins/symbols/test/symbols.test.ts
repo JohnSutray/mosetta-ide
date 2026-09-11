@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
-import { activePick } from '@ide/windows';
 import Editor from '@ide/plugin-editor';
 import DocPlugin from '@ide/plugin-doc';
 import LspPlugin, { type SymbolSite } from '@ide/plugin-lsp';
@@ -62,14 +61,14 @@ describe('символы', () => {
     const list = symbols.list.value!;
     expect(list.kind).toBe('usages');
     expect(list.sites.map((one) => one.path)).toEqual(['c.ts', 'd.ts']);
-    expect(activePick.value).not.toBeNull();
+    expect(host.surface.windows.activePick.value).not.toBeNull();
 
-    activePick.value!.next();
+    host.surface.windows.activePick.value!.next();
     expect(symbols.list.value!.at).toBe(1);
-    activePick.value!.accept();
+    host.surface.windows.activePick.value!.accept();
     await new Promise((r) => setTimeout(r, 0));
     expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'd.ts', line: 9, character: 0 });
-    expect(activePick.value).toBeNull();
+    expect(host.surface.windows.activePick.value).toBeNull();
   });
 
   it('импорты спрятаны, пока кроме них есть что показать', async () => {

@@ -101,5 +101,3 @@ export class ShellEnv {
     return out;
   }
 }
-
-export const shellEnv = new ShellEnv();
