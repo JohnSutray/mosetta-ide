@@ -22,6 +22,22 @@ import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
 import { setHeadText, type GitMarks } from './git-marks.js';
 import { lspHover } from './hover.js';
 
+class TooltipLayer {
+  private readonly id = 'cm-tooltip-layer';
+
+  host(doc: Document): HTMLElement {
+    const known = doc.getElementById(this.id);
+    if (known) return known;
+    const layer = doc.createElement('div');
+    layer.id = this.id;
+    layer.style.cssText = 'position: fixed; top: 0; left: 0; width: 0; height: 0; z-index: 200;';
+    doc.body.append(layer);
+    return layer;
+  }
+}
+
+const tooltipLayer = new TooltipLayer();
+
 const externalUpdate = Annotation.define<boolean>();
 
 interface Props {
@@ -84,7 +100,7 @@ export function CodeEditor({
       highlightSpecialChars(),
       history(),
       drawSelection(),
-      tooltips({ parent: document.body }),
+      tooltips({ parent: tooltipLayer.host(document) }),
       indentOnInput(),
       bracketMatching(),
       activeLine,
