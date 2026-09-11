@@ -1,4 +1,4 @@
-import type { Windows } from '@ide/windows';
+import type { Windows } from '@ide/ui';
 import { useT } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import { Popup } from '@ide/ui';

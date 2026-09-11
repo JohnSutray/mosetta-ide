@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { WorkspaceInfo } from '@ide/protocol';
 import { FakeHost } from '@ide/api/testing';
 import ProjectsPlugin from '../src/client.js';
+import UiPlugin from '@ide/ui';
 
 function ws(id: string, root: string): WorkspaceInfo {
   return { id, root, name: root.slice(root.lastIndexOf('/') + 1), sessions: 1, held: [], openedAt: 0 };
@@ -11,6 +12,7 @@ const NAME = '@ide/plugin-projects';
 
 async function raise() {
   const host = new FakeHost();
+  host.add(UiPlugin, '@ide/ui');
   const plugin = host.add(ProjectsPlugin, NAME);
   const ide = host.ide(NAME);
   ide.answers.set('roots', () => []);

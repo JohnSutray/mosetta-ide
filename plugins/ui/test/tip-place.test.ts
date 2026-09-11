@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Tips, type TipSpot } from '@ide/windows';
+import { Tips, type TipSpot } from '../src/windows/tips.js';
 
 const VIEW = { width: 800, height: 600 };
 const TIP = { width: 200, height: 40 };

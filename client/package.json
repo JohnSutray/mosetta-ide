@@ -23,7 +23,6 @@
     "@codemirror/view": "^6.35.3",
     "@ide/api": "workspace:*",
     "@ide/protocol": "workspace:*",
-    "@ide/windows": "workspace:*",
     "@lezer/highlight": "^1.2.1",
     "@preact/signals": "^1.3.1",
     "ajv": "^8.17.1",

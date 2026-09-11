@@ -1,7 +1,6 @@
 import { render } from 'preact';
 import { SETTINGS_SCHEMA, type IdeServices, type SettingsSection } from '@ide/api/client';
 import { sectionOf } from '@ide/api/section';
-import { Windows } from '@ide/windows';
 import { RpcClient } from './rpc/client.js';
 import { Notifications } from './state/notifications.js';
 import { Config } from './state/config.js';
@@ -19,13 +18,7 @@ export class Core {
   readonly config = new Config();
   readonly i18n = new I18n();
   readonly memory = new Memory();
-  readonly windows = new Windows({
-    t: (key, params) => this.i18n.t(key, params),
-    catchesKeys: () => false,
-    keep: (key, value) => this.memory.keep(key, value),
-    recall: (key, fallback) => this.memory.recall(key, fallback),
-  });
-  readonly commands = new Commands(this.windows.popups);
+  readonly commands = new Commands();
   readonly session = new Session(this.rpc, this.config, this.notifications, this.i18n);
   readonly store = new Registry((message) => this.notifications.complain(message));
   readonly plugins = new Plugins(this.rpc, {
@@ -43,7 +36,6 @@ export class Core {
   }
 
   start(root: HTMLElement): void {
-    this.registerCommands();
     this.rpc.connect();
     render(<App core={this} />, root);
     void this.plugins.load(this.services, this.store).then(() => {
@@ -52,25 +44,9 @@ export class Core {
     });
   }
 
-  private registerCommands(): void {
-    this.commands.register('pick.next', () => this.windows.activePick.value?.next());
-    this.commands.register('pick.prev', () => this.windows.activePick.value?.prev());
-    this.commands.register('pick.accept', () => this.windows.activePick.value?.accept());
-    this.commands.register('pick.expand', () => this.windows.activePick.value?.expand?.());
-
-    this.commands.register('menu.next', () => this.windows.activeMenu.value?.next());
-    this.commands.register('menu.prev', () => this.windows.activeMenu.value?.prev());
-    this.commands.register('menu.accept', () => this.windows.activeMenu.value?.accept());
-
-    this.commands.register('popup.close', () => {
-      this.windows.popups.closeTop();
-    });
-  }
-
   private serve(): IdeServices {
     const config = this.config;
     return {
-      windows: this.windows,
       t: (key, params) => this.i18n.t(key, params),
       runCommand: (id) => this.commands.run(id),
       keymap: this.config.keymap,

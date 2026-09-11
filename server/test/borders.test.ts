@@ -6,7 +6,7 @@ import { BORDER_DEBT } from './borders.debt.js';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
-const CORE = new Set(['@ide/protocol', '@ide/api', '@ide/client', '@ide/server', '@ide/windows']);
+const CORE = new Set(['@ide/protocol', '@ide/api', '@ide/client', '@ide/server']);
 
 const LANGUAGE: Record<string, readonly string[]> = {
   '@ide/api': ['activate', 'command', 'configSection', 'IdeProvider', 'registry', 'remote', 'stub', 'useIde', 'useT'],
@@ -21,7 +21,7 @@ interface Pkg {
 }
 
 function packages(): Pkg[] {
-  const dirs = ['protocol', 'windows', 'code', 'client', 'server'].concat(
+  const dirs = ['protocol', 'client', 'server'].concat(
     fs.readdirSync(path.join(ROOT, 'plugins')).map((name) => path.join('plugins', name)),
   );
   const out: Pkg[] = [];

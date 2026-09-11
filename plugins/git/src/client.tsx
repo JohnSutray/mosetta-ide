@@ -73,10 +73,10 @@ export default class GitPlugin implements GitRemote {
     this.ide.registry('tree.tint').add({ id: 'git', tint: this.git.tint });
 
     this.ide.surface(() => (
-      <Branches windows={this.ide.windows} git={this.git} window={this.branchesWindow} push={this.pushWindow} />
+      <Branches windows={this.ide.getPlugin(UiPlugin).windows} git={this.git} window={this.branchesWindow} push={this.pushWindow} />
     ));
-    this.ide.surface(() => <Push windows={this.ide.windows} git={this.git} push={this.pushWindow} />);
-    this.ide.surface(() => <HunkPopup docs={this.docs} windows={this.ide.windows} marks={this.marks} />);
+    this.ide.surface(() => <Push windows={this.ide.getPlugin(UiPlugin).windows} git={this.git} push={this.pushWindow} />);
+    this.ide.surface(() => <HunkPopup docs={this.docs} windows={this.ide.getPlugin(UiPlugin).windows} marks={this.marks} />);
 
     const editor = this.ide.getPlugin(Editor);
     editor.onHunk((hunk, box) => this.marks.show(hunk, box));
@@ -139,11 +139,11 @@ export default class GitPlugin implements GitRemote {
       <button
         class="branch-label"
         onMouseEnter={(event) =>
-          this.ide.windows.tips.show(event.currentTarget as Element, this.ide.t('toolbar.branches'), this.ide.getPlugin(KeymapPlugin).keysFor('git.branches'))
+          this.ide.getPlugin(UiPlugin).windows.tips.show(event.currentTarget as Element, this.ide.t('toolbar.branches'), this.ide.getPlugin(KeymapPlugin).keysFor('git.branches'))
         }
-        onMouseLeave={() => this.ide.windows.tips.hide()}
+        onMouseLeave={() => this.ide.getPlugin(UiPlugin).windows.tips.hide()}
         onClick={() => {
-          this.ide.windows.tips.hide();
+          this.ide.getPlugin(UiPlugin).windows.tips.hide();
           this.ide.runCommand('git.branches');
         }}
       >

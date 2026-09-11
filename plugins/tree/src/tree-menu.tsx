@@ -1,4 +1,4 @@
-import type { Windows } from '@ide/windows';
+import type { Windows } from '@ide/ui';
 import { Menu, type MenuItem } from '@ide/ui';
 import type { TreeMenuState } from './menu.js';
 import type { TreeOps, TreeSelection } from './state.js';

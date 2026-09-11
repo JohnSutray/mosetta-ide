@@ -31,8 +31,7 @@
     "@ide/plugin-doc": "workspace:*",
     "@ide/protocol": "workspace:*",
     "@ide/ui": "workspace:*",
-    "@ide/plugin-code": "workspace:*",
-    "@ide/windows": "workspace:*"
+    "@ide/plugin-code": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

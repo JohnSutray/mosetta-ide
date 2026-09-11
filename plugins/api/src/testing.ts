@@ -1,4 +1,3 @@
-import { Windows } from '@ide/windows';
 import Ajv, { type ValidateFunction } from 'ajv';
 import { signal, type Signal } from '@preact/signals';
 import type {
@@ -142,7 +141,6 @@ export class FakeNotes implements NotesAccess {
 }
 
 export class FakeSurface implements IdeServices {
-  readonly windows = new Windows();
   readonly settings: Signal<Settings | null> = signal(null);
   readonly settingsOf = <T extends object>(section: string, defaults: T): { readonly value: T } => {
     const all = this.settings;
@@ -315,7 +313,6 @@ export class FakeIde implements Ide {
     private readonly host: FakeHost,
   ) {}
 
-  get windows(): Windows { return this.host.surface.windows; }
   get t() { return this.host.surface.t; }
   get runCommand() { return this.host.surface.runCommand; }
   get settings() { return this.host.surface.settings; }

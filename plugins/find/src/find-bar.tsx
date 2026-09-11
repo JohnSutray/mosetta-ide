@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
 import { useIde, useT } from '@ide/api/client';
-import type { Windows } from '@ide/windows';
+import type { Windows } from '@ide/ui';
 import type { FindState } from './find.js';
 
 interface ToolProps {

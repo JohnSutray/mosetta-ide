@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { Windows } from '@ide/windows';
+import type { Windows } from '@ide/ui';
 import { FakeHost, nodes, of } from '@ide/api/testing';
 import KeymapPlugin from '@ide/plugin-keymap';
 import KeysPlugin from '../src/client.js';
 import { KeysSheet } from '../src/popup.js';
+import UiPlugin from '@ide/ui';
 
 let keys: KeymapPlugin['keys'];
 let windows: Windows;
@@ -11,10 +12,11 @@ let t: (key: string, params?: Record<string, string | number>) => string;
 
 async function raise() {
   const host = new FakeHost();
+  host.add(UiPlugin, '@ide/ui');
   keys = host.add(KeymapPlugin, '@ide/plugin-keymap').keys;
   const plugin = host.add(KeysPlugin, '@ide/plugin-keys');
   t = host.surface.t;
-  windows = host.surface.windows;
+  windows = host.plugin(UiPlugin).windows;
   await host.start();
   const mine = `${keys.host}:${keys.os}` as const;
   const alien = keys.os === 'win' ? 'browser:mac' : 'browser:win';

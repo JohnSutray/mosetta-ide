@@ -11,6 +11,7 @@ import { layout } from './layout.js';
 import { matcher } from './matcher.js';
 import { textIndex } from './text.js';
 import DocPlugin from '@ide/plugin-doc';
+import UiPlugin from '@ide/ui';
 
 export type { Found, IndexHit, IndexKind, Opener, SearchStats } from './types.js';
 export { layout, Layout } from './layout.js';
@@ -60,6 +61,6 @@ export default class SearchPlugin implements SearchRemote {
       active: search.open,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <SearchEverywhere windows={this.ide.windows} search={search} code={this.ide.getPlugin(CodePlugin)} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <SearchEverywhere windows={this.ide.getPlugin(UiPlugin).windows} search={search} code={this.ide.getPlugin(CodePlugin)} />);
   }
 }

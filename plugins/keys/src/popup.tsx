@@ -1,4 +1,4 @@
-import type { Windows } from '@ide/windows';
+import type { Windows } from '@ide/ui';
 import { useT, type IdeServices } from '@ide/api/client';
 import { Fragment } from 'preact';
 import type { KeyBinding, KeyContext, KeyScope } from '@ide/protocol';

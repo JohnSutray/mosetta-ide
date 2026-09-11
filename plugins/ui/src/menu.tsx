@@ -1,4 +1,5 @@
-import type { Windows } from '@ide/windows';
+import { useT } from '@ide/api/client';
+import type { Windows } from './windows/windows.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 
 export interface MenuItem {
@@ -20,6 +21,7 @@ export function Menu({ windows,
   onClose: () => void;
   class?: string;
 }) {
+  const t = useT();
   const box = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);
 
@@ -72,7 +74,7 @@ export function Menu({ windows,
             item.run();
           }}
         >
-          {windows.host.t(item.label)}
+          {t(item.label)}
         </button>
       ))}
     </div>

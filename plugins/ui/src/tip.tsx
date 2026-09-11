@@ -1,4 +1,4 @@
-import type { Tips } from '@ide/windows';
+import type { Tips } from './windows/tips.js';
 import { useLayoutEffect, useRef } from 'preact/hooks';
 
 export function Tip({ tips }: { tips: Tips }) {

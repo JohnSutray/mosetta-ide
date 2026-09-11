@@ -5,6 +5,7 @@ import { KeysPopup } from './popup.js';
 import { KeysWindow } from './state.js';
 import { STYLE } from './style.js';
 import KeymapPlugin from '@ide/plugin-keymap';
+import UiPlugin from '@ide/ui';
 
 export default class KeysPlugin {
   readonly window = new KeysWindow();
@@ -23,6 +24,6 @@ export default class KeysPlugin {
       active: this.window.open,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <KeysPopup keys={this.ide.getPlugin(KeymapPlugin).keys} windows={this.ide.windows} window={this.window} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <KeysPopup keys={this.ide.getPlugin(KeymapPlugin).keys} windows={this.ide.getPlugin(UiPlugin).windows} window={this.window} />);
   }
 }

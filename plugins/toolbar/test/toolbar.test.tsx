@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, of, nodes } from '@ide/api/testing';
 import Toolbar from '../src/client.js';
 import KeymapPlugin from '@ide/plugin-keymap';
+import UiPlugin from '@ide/ui';
 
 const NAME = '@ide/plugin-toolbar';
 
@@ -27,10 +28,11 @@ describe('тулбар', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
+    host.add(UiPlugin, '@ide/ui');
     host.add(KeymapPlugin, '@ide/plugin-keymap');
     host.add(Toolbar, NAME);
     await host.start();
-    top = host.registry.all<() => unknown>('chrome.top')[0]!;
+    top = host.registry.all<() => unknown>('chrome.top')[host.registry.authors('chrome.top').indexOf(NAME)]!;
   });
 
   it('объявляет свои ключи до того, как кто-то начал писать', () => {
@@ -100,7 +102,7 @@ describe('тулбар', () => {
     (button.props['onMouseEnter'] as (e: unknown) => void)({
       currentTarget: { getBoundingClientRect: () => ({ left: 0, top: 0, bottom: 0 }) },
     });
-    expect(host.surface.windows.tips.spot.value).toEqual({
+    expect(host.plugin(UiPlugin).windows.tips.spot.value).toEqual({
       x: 0,
       y: 6,
       above: -6,
@@ -108,7 +110,7 @@ describe('тулбар', () => {
       keys: [host.plugin(KeymapPlugin).keys.humanize('meta+1')],
     });
     (button.props['onMouseLeave'] as () => void)();
-    expect(host.surface.windows.tips.spot.value).toBeNull();
+    expect(host.plugin(UiPlugin).windows.tips.spot.value).toBeNull();
   });
 
   it('число на кнопке показывается только когда оно есть', () => {

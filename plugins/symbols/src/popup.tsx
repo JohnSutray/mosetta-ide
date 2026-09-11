@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import type CodePlugin from '@ide/plugin-code';
 import { EDITOR_DEFAULTS } from '@ide/plugin-code';
 import { Popup, Resizer } from '@ide/ui';
-import type { Windows } from '@ide/windows';
+import type { Windows } from '@ide/ui';
 import type { Symbols } from './state.js';
 
 const SIZE = { w: 620, h: 420 };

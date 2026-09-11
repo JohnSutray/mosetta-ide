@@ -1,4 +1,4 @@
-import type { Windows } from '@ide/windows';
+import type { Windows } from './windows/windows.js';
 import { useRef } from 'preact/hooks';
 
 export function Resizer({ windows,

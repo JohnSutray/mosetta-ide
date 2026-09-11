@@ -1,7 +1,7 @@
 import { useT } from '@ide/api/client';
 import type { GitMarks } from './marks.js';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import type { Windows } from '@ide/windows';
+import type { Windows } from '@ide/ui';
 import type DocPlugin from '@ide/plugin-doc';
 
 export function HunkPopup({ docs, windows, marks }: { docs: DocPlugin; windows: Windows; marks: GitMarks }) {

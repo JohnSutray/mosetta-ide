@@ -4,7 +4,7 @@ import { useRef } from 'preact/hooks';
 import type { GitCommit } from './types.js';
 import { ChangedTree } from './changed-tree.js';
 import { Popup, Resizer } from '@ide/ui';
-import type { Windows } from '@ide/windows';
+import type { Windows } from '@ide/ui';
 
 const FILES_ID = 'push.files';
 const FILES_DEFAULT = 460;

@@ -1,7 +1,7 @@
 /// <reference path="./raw.d.ts" />
 import { batch, signal } from '@preact/signals';
 import { activate, configSection, remote, stub, type Ide } from '@ide/api/client';
-import { ChoicePopup } from '@ide/ui';
+import UiPlugin, { ChoicePopup } from '@ide/ui';
 import { TerminalIcon } from './icon.js';
 import ThemePlugin from '@ide/plugin-theme';
 import { TerminalView } from './view.js';
@@ -62,7 +62,7 @@ export default class TerminalPlugin {
     });
     this.ide.registry<() => unknown>('chrome.top').add(() =>
       this.shellPicker.value ? (
-        <ChoicePopup windows={this.ide.windows}
+        <ChoicePopup windows={this.ide.getPlugin(UiPlugin).windows}
           id="terminal.shell"
           title={this.ide.t('terminal.shell.title')}
           note={this.ide.t('terminal.shell.note')}

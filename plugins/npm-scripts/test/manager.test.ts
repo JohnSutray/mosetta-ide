@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
 import NpmScripts from '../src/client.js';
 import TerminalPlugin from '@ide/plugin-terminal';
+import UiPlugin from '@ide/ui';
 
 const NAME = '@ide/plugin-npm-scripts';
 
 async function raise() {
   const host = new FakeHost();
+  host.add(UiPlugin, '@ide/ui');
   host.add(TerminalPlugin, '@ide/plugin-terminal');
   host.ide('@ide/plugin-terminal').answers.set('list', () => []);
   host.ide('@ide/plugin-terminal').answers.set('shells', () => []);

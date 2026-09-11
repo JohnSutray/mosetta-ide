@@ -4,6 +4,7 @@ import Editor from '@ide/plugin-editor';
 import DocPlugin from '@ide/plugin-doc';
 import LspPlugin, { type SymbolSite } from '@ide/plugin-lsp';
 import SymbolsPlugin from '../src/client.js';
+import UiPlugin from '@ide/ui';
 
 function site(path: string, line: number, preview = 'foo()', isImport = false): SymbolSite {
   return { path, line, character: 0, preview, isImport };
@@ -15,6 +16,7 @@ async function raise() {
   fake.definitions = [];
   fake.referencesFound = [];
   const host = new FakeHost();
+  host.add(UiPlugin, '@ide/ui');
   (globalThis as Record<string, unknown>)['document'] ??= {};
   host.add(DocPlugin, '@ide/plugin-doc');
   host.add(LspPlugin, '@ide/plugin-lsp');
@@ -61,14 +63,14 @@ describe('символы', () => {
     const list = symbols.list.value!;
     expect(list.kind).toBe('usages');
     expect(list.sites.map((one) => one.path)).toEqual(['c.ts', 'd.ts']);
-    expect(host.surface.windows.activePick.value).not.toBeNull();
+    expect(host.plugin(UiPlugin).windows.activePick.value).not.toBeNull();
 
-    host.surface.windows.activePick.value!.next();
+    host.plugin(UiPlugin).windows.activePick.value!.next();
     expect(symbols.list.value!.at).toBe(1);
-    host.surface.windows.activePick.value!.accept();
+    host.plugin(UiPlugin).windows.activePick.value!.accept();
     await new Promise((r) => setTimeout(r, 0));
     expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'd.ts', line: 9, character: 0 });
-    expect(host.surface.windows.activePick.value).toBeNull();
+    expect(host.plugin(UiPlugin).windows.activePick.value).toBeNull();
   });
 
   it('импорты спрятаны, пока кроме них есть что показать', async () => {

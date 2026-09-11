@@ -3,6 +3,7 @@ import { batch, signal, type Signal } from '@preact/signals';
 import type { SymbolSite } from '@ide/plugin-lsp';
 import type { SymbolSpot } from '@ide/plugin-editor';
 import DocPlugin from '@ide/plugin-doc';
+import UiPlugin from '@ide/ui';
 
 export type SymbolKind = 'definition' | 'usages';
 
@@ -43,7 +44,7 @@ export class Symbols {
       this.list.value = null;
       this.preview.value = null;
     });
-    if (this.ide.windows.activePick.value === this.pick) this.ide.windows.activePick.value = null;
+    if (this.ide.getPlugin(UiPlugin).windows.activePick.value === this.pick) this.ide.getPlugin(UiPlugin).windows.activePick.value = null;
   }
 
   private readonly pick = {
@@ -137,7 +138,7 @@ export class Symbols {
 
   private show(list: Omit<SymbolList, 'at'>): void {
     this.list.value = { ...list, at: 0 };
-    this.ide.windows.activePick.value = this.pick;
+    this.ide.getPlugin(UiPlugin).windows.activePick.value = this.pick;
     this.select(0);
   }
 

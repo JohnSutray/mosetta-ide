@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
 import TerminalPlugin from '../src/client.js';
+import UiPlugin from '@ide/ui';
 
 const NAME = '@ide/plugin-terminal';
 
 async function raise() {
   const host = new FakeHost();
+  host.add(UiPlugin, '@ide/ui');
   const plugin = host.add(TerminalPlugin, NAME);
   host.ide(NAME).answers.set('list', () => []);
   host.ide(NAME).answers.set('shells', () => [
@@ -41,6 +43,7 @@ describe('оболочка терминала', () => {
 
   it('сервер не ответил — говорим вслух, а не показываем пустоту', async () => {
     const host = new FakeHost();
+    host.add(UiPlugin, '@ide/ui');
     const plugin = host.add(TerminalPlugin, NAME);
     host.ide(NAME).answers.set('list', () => []);
     host.ide(NAME).answers.set('shells', () => {

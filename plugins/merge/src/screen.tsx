@@ -1,4 +1,4 @@
-import type { Windows } from '@ide/windows';
+import type { Windows } from '@ide/ui';
 import { useIde, useT } from '@ide/api/client';
 import type { MergeFile } from './types.js';
 import { MergeColumns } from './columns.js';

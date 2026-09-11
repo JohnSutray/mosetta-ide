@@ -1,4 +1,4 @@
-import type { Windows } from '@ide/windows';
+import type { Windows } from '@ide/ui';
 import { useIde, useT } from '@ide/api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import type CodePlugin from '@ide/plugin-code';

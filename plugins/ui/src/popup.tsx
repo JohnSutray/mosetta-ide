@@ -1,4 +1,6 @@
-import type { Size, Windows } from '@ide/windows';
+import { useT } from '@ide/api/client';
+import type { Size } from './windows/geometry.js';
+import type { Windows } from './windows/windows.js';
 import type { ComponentChildren } from 'preact';
 import type { KeyContext } from '@ide/protocol';
 import { useEffect, useRef } from 'preact/hooks';
@@ -34,6 +36,7 @@ export function Popup({ windows,
   onMouseDown?: (event: MouseEvent) => void;
   children: ComponentChildren;
 }) {
+  const t = useT();
   const box = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
   const want = full ? windows.geometry.viewport.value : windows.geometry.sizeOf(id, size);
@@ -61,6 +64,7 @@ export function Popup({ windows,
         ref={box}
         class={`popup ${at ? 'is-anchored' : ''} ${full ? 'is-full' : ''} ${extra}`}
         data-keys={keys}
+        data-command={id}
         tabIndex={-1}
         style={{
           width: `${current.w}px`,
@@ -73,12 +77,12 @@ export function Popup({ windows,
         }}
       >
         <span class="popup-exit">
-          {!windows.host.catchesKeys(keys) && (
-            <span class="popup-esc" title={windows.host.t('popup.escape')}>
-              {windows.host.t('popup.esc')}
+          {!windows.catchesKeys(keys) && (
+            <span class="popup-esc" title={t('popup.escape')}>
+              {t('popup.esc')}
             </span>
           )}
-          <span class="popup-close" title={windows.host.t('popup.close')} onClick={onClose}>
+          <span class="popup-close" title={t('popup.close')} onClick={onClose}>
             ×
           </span>
         </span>
@@ -88,7 +92,7 @@ export function Popup({ windows,
         {!full && (
         <span
           class="popup-grip"
-          title={windows.host.t('popup.resize')}
+          title={t('popup.resize')}
           onPointerDown={(event) => {
             event.preventDefault();
             const rect = box.current?.getBoundingClientRect();

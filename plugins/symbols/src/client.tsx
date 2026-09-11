@@ -6,6 +6,7 @@ import LspPlugin from '@ide/plugin-lsp';
 import { SymbolsPopup } from './popup.js';
 import { Symbols } from './state.js';
 import { STYLE } from './style.js';
+import UiPlugin from '@ide/ui';
 
 export default class SymbolsPlugin {
   readonly symbols: Symbols;
@@ -17,6 +18,6 @@ export default class SymbolsPlugin {
   @activate() protected start(): void {
     this.ide.css(STYLE);
     this.ide.getPlugin(Editor).onSymbolAsk((spot) => void this.symbols.ask(spot));
-    this.ide.registry<() => unknown>('chrome.top').add(() => <SymbolsPopup windows={this.ide.windows} symbols={this.symbols} code={this.ide.getPlugin(CodePlugin)} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <SymbolsPopup windows={this.ide.getPlugin(UiPlugin).windows} symbols={this.symbols} code={this.ide.getPlugin(CodePlugin)} />);
   }
 }

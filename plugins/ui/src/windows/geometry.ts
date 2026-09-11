@@ -1,5 +1,5 @@
 import { signal, type Signal } from '@preact/signals';
-import type { UiHost } from './host.js';
+export type Remember = <T>(key: string, initial: T) => Signal<T>;
 
 export interface Size {
   w: number;
@@ -19,9 +19,11 @@ export class Geometry {
 
   readonly viewport = signal(this.measure());
 
-  constructor(private readonly host: UiHost) {
-    this.widths = signal(this.readWidths());
-    this.popupSizes = signal(this.readSizes());
+  constructor(remember: Remember) {
+    this.widths = remember<Record<string, number>>(this.widthsKey, {});
+    this.widths.value = this.cleanWidths(this.widths.peek());
+    this.popupSizes = remember<Record<string, Size>>(this.sizesKey, {});
+    this.popupSizes.value = this.cleanSizes(this.popupSizes.peek());
     if (typeof window === 'undefined') return;
     window.addEventListener('resize', () => {
       const now = this.measure();
@@ -41,7 +43,6 @@ export class Geometry {
     const width = Math.round(Math.min(max, Math.max(min, px)));
     if (this.widths.value[id] === width) return;
     this.widths.value = { ...this.widths.value, [id]: width };
-    this.host.keep(this.widthsKey, this.widths.value);
   }
 
   sizeOf(id: string, fallback: Size): Size {
@@ -61,13 +62,11 @@ export class Geometry {
     const known = this.popupSizes.value[id];
     if (known && known.w === next.w && known.h === next.h) return;
     this.popupSizes.value = { ...this.popupSizes.value, [id]: next };
-    this.host.keep(this.sizesKey, this.popupSizes.value);
   }
 
   resetPopupSize(id: string): void {
     const { [id]: _dropped, ...rest } = this.popupSizes.value;
     this.popupSizes.value = rest;
-    this.host.keep(this.sizesKey, rest);
   }
 
   fitAnchored(
@@ -92,17 +91,17 @@ export class Geometry {
     };
   }
 
-  private readWidths(): Record<string, number> {
+  private cleanWidths(raw: Record<string, unknown>): Record<string, number> {
     const out: Record<string, number> = {};
-    for (const [id, value] of Object.entries(this.host.recall<Record<string, unknown>>('panel-widths', {}))) {
+    for (const [id, value] of Object.entries(raw)) {
       if (typeof value === 'number' && Number.isFinite(value)) out[id] = value;
     }
     return out;
   }
 
-  private readSizes(): Record<string, Size> {
+  private cleanSizes(raw: Record<string, unknown>): Record<string, Size> {
     const out: Record<string, Size> = {};
-    for (const [id, value] of Object.entries(this.host.recall<Record<string, unknown>>('popup-sizes', {}))) {
+    for (const [id, value] of Object.entries(raw)) {
       const size = value as Size;
       if (size && Number.isFinite(size.w) && Number.isFinite(size.h)) out[id] = size;
     }

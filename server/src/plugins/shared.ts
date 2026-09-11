@@ -12,7 +12,6 @@ export const CORE_PROVIDED = [
   '@codemirror/commands',
   '@codemirror/language',
   '@codemirror/search',
-  '@ide/windows',
   '@lezer/highlight',
   '@codemirror/lang-javascript',
   '@codemirror/lang-json',

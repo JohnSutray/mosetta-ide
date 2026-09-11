@@ -9,6 +9,7 @@ import type { MergeSession } from './types.js';
 
 export type { MergeFile, MergeSession, MergeSide, MergeSource } from './types.js';
 import { STYLE } from './style.js';
+import UiPlugin from '@ide/ui';
 
 export default class MergePlugin implements MergeRemote {
   readonly merge: Merge;
@@ -76,6 +77,6 @@ export default class MergePlugin implements MergeRemote {
       badge: merge.pending,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <MergeScreen windows={this.ide.windows} merge={merge} code={this.ide.getPlugin(CodePlugin)} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <MergeScreen windows={this.ide.getPlugin(UiPlugin).windows} merge={merge} code={this.ide.getPlugin(CodePlugin)} />);
   }
 }

@@ -1,4 +1,3 @@
-import type { Windows } from '@ide/windows';
 import { createContext, createElement, type ComponentChildren } from 'preact';
 import { useContext } from 'preact/hooks';
 import type { Signal } from '@preact/signals';
@@ -86,7 +85,6 @@ export interface HunkBox {
 }
 
 export interface IdeServices {
-  readonly windows: Windows;
   readonly t: (key: string, params?: Record<string, string | number>) => string;
   readonly runCommand: (id: string) => boolean;
   readonly settings: { readonly value: Settings | null };

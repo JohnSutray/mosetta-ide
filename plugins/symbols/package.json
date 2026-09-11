@@ -21,7 +21,6 @@
     "@ide/plugin-lsp": "workspace:*",
     "@ide/protocol": "workspace:*",
     "@ide/ui": "workspace:*",
-    "@ide/windows": "workspace:*",
     "@ide/plugin-code": "workspace:*"
   },
   "peerDependencies": {

@@ -7,7 +7,6 @@ import * as cmView from '@codemirror/view';
 import * as cmCommands from '@codemirror/commands';
 import * as cmLanguage from '@codemirror/language';
 import * as cmSearch from '@codemirror/search';
-import * as windows from '@ide/windows';
 import * as lezerHighlight from '@lezer/highlight';
 import * as langJavascript from '@codemirror/lang-javascript';
 import * as langJson from '@codemirror/lang-json';
@@ -25,7 +24,6 @@ export const sharedModules: Record<string, unknown> = {
   '@codemirror/commands': cmCommands,
   '@codemirror/language': cmLanguage,
   '@codemirror/search': cmSearch,
-  '@ide/windows': windows,
   '@lezer/highlight': lezerHighlight,
   '@codemirror/lang-javascript': langJavascript,
   '@codemirror/lang-json': langJson,

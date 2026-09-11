@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
 import DocPlugin from '@ide/plugin-doc';
 import MergePlugin, { type MergeSession } from '../src/client.js';
+import UiPlugin from '@ide/ui';
 
 function session(paths: string[], done: string[] = []): MergeSession {
   return {
@@ -20,6 +21,7 @@ function session(paths: string[], done: string[] = []): MergeSession {
 
 async function raise() {
   const host = new FakeHost();
+  host.add(UiPlugin, '@ide/ui');
   (globalThis as Record<string, unknown>)['document'] ??= {};
   host.add(DocPlugin, '@ide/plugin-doc');
   const plugin = host.add(MergePlugin, '@ide/plugin-merge');

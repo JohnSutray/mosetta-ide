@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, nodes, of } from '@ide/api/testing';
-import { Resizer } from '@ide/ui';
+import UiPlugin, { Resizer } from '@ide/ui';
 import Layout from '../src/client.js';
 import type { PanelWish } from '../src/schema.js';
 
@@ -36,6 +36,7 @@ describe('раскладка', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
+    host.add(UiPlugin, '@ide/ui');
     host.add(Layout, NAME);
     await host.start();
     main = host.registry.all<() => unknown>('chrome.main')[0]!;
@@ -99,7 +100,7 @@ describe('раскладка', () => {
     const width = () =>
       (of(main(), 'section')[0]!.props['style'] as { width: string }).width;
     expect(width()).toBe('260px');
-    host.surface.windows.geometry.setWidth('tree', 410, { min: 0, max: 4000 });
+    host.plugin(UiPlugin).windows.geometry.setWidth('tree', 410, { min: 0, max: 4000 });
     expect(width()).toBe('410px');
   });
 

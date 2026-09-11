@@ -16,8 +16,7 @@
   "dependencies": {
     "@ide/api": "workspace:*",
     "@ide/plugin-keymap": "workspace:*",
-    "@ide/ui": "workspace:*",
-    "@ide/windows": "workspace:*"
+    "@ide/ui": "workspace:*"
   },
   "peerDependencies": {
     "@ide/protocol": "workspace:*",

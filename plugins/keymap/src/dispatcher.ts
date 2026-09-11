@@ -1,4 +1,3 @@
-import type { Windows } from '@ide/windows';
 import type { KeysEcho } from './echo.js';
 import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@ide/protocol';
 import { keyHost } from './host.js';
@@ -140,7 +139,6 @@ export class Dispatcher {
     private readonly resolveContext: ContextResolver,
     private readonly onUnbound: (key: string) => void,
     private readonly echo: KeysEcho,
-    private readonly windows: Pick<Windows, 'popups'>,
     private readonly run: (id: string) => boolean,
   ) {
     window.addEventListener('keydown', this.onKeyDown, { capture: true });
@@ -157,6 +155,12 @@ export class Dispatcher {
   dispose(): void {
     window.removeEventListener('keydown', this.onKeyDown, { capture: true });
     window.removeEventListener('keyup', this.onKeyUp, { capture: true });
+  }
+
+  private surfaceCommand(): string | undefined {
+    if (typeof document === 'undefined') return undefined;
+    const here = document.activeElement as HTMLElement | null;
+    return here?.closest<HTMLElement>('[data-command]')?.dataset['command'];
   }
 
   private fire(key: string, event: KeyboardEvent): boolean {
@@ -176,7 +180,7 @@ export class Dispatcher {
     if (
       CAPTURING.has(context) &&
       (binding.when ?? 'global') !== context &&
-      !this.windows.popups.stack.value.some((item) => item.id === binding.command)
+      binding.command !== this.surfaceCommand()
     ) {
       event.preventDefault();
       event.stopPropagation();

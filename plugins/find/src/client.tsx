@@ -14,6 +14,7 @@ import { STYLE } from './style.js';
 import { FindFilesIcon } from './icons.js';
 import DocPlugin from '@ide/plugin-doc';
 import KeymapPlugin from '@ide/plugin-keymap';
+import UiPlugin from '@ide/ui';
 
 export type { FileHit, GrepResult } from './grep.js';
 
@@ -54,7 +55,7 @@ export default class FindPlugin implements FindFilesRemote {
   @activate() protected start(): void {
     this.ide.css(STYLE);
     this.ide.registry('editor.extension').add({ id: 'find', extension: this.extension() });
-    this.ide.registry<() => unknown>('chrome.top').add(() => <FindFilesPopup keysFor={(command: string) => this.ide.getPlugin(KeymapPlugin).keysFor(command)} windows={this.ide.windows} files={this.files} code={this.ide.getPlugin(CodePlugin)} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <FindFilesPopup keysFor={(command: string) => this.ide.getPlugin(KeymapPlugin).keysFor(command)} windows={this.ide.getPlugin(UiPlugin).windows} files={this.files} code={this.ide.getPlugin(CodePlugin)} />);
     this.ide.registry('toolbar.button').add({
       id: 'find.files',
       title: 'toolbar.findFiles',
@@ -101,7 +102,7 @@ export default class FindPlugin implements FindFilesRemote {
           dom.className = 'find-host';
           render(
             <IdeProvider value={this.ide}>
-              <FindBar keysFor={(command: string) => this.ide.getPlugin(KeymapPlugin).keysFor(command)} windows={this.ide.windows} find={find} />
+              <FindBar keysFor={(command: string) => this.ide.getPlugin(KeymapPlugin).keysFor(command)} windows={this.ide.getPlugin(UiPlugin).windows} find={find} />
             </IdeProvider>,
             dom,
           );

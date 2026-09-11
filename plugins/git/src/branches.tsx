@@ -3,7 +3,7 @@ import type { BranchesWindow, Git, PushWindow } from './state.js';
 import { useEffect, useRef } from 'preact/hooks';
 import type { GitBranch } from './types.js';
 import { Chevron, Icon, Menu, Popup, type MenuItem } from '@ide/ui';
-import type { Windows } from '@ide/windows';
+import type { Windows } from '@ide/ui';
 
 export interface BranchesProps {
   windows: Windows;

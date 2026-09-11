@@ -5,6 +5,7 @@ import { ProjectsPopup } from './popup.js';
 import { Projects, type ProjectsRemote } from './state.js';
 import { STYLE } from './style.js';
 import type { DirSuggestion, RecentProject } from './types.js';
+import UiPlugin from '@ide/ui';
 
 export default class ProjectsPlugin implements ProjectsRemote {
   readonly projects: Projects;
@@ -60,6 +61,6 @@ export default class ProjectsPlugin implements ProjectsRemote {
       active: projects.visible,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <ProjectsPopup windows={this.ide.windows} projects={projects} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <ProjectsPopup windows={this.ide.getPlugin(UiPlugin).windows} projects={projects} />);
   }
 }

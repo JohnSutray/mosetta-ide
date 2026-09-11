@@ -6,6 +6,7 @@ import LspPlugin from '@ide/plugin-lsp';
 import Editor from '@ide/plugin-editor';
 import FindPlugin from '../src/client.js';
 import { FindState } from '../src/find.js';
+import UiPlugin from '@ide/ui';
 
 const NAME = '@ide/plugin-find';
 
@@ -51,6 +52,7 @@ describe('плагин поиска', () => {
   async function up() {
     (globalThis as Record<string, unknown>)['document'] ??= {};
     const host = new FakeHost();
+    host.add(UiPlugin, '@ide/ui');
     host.add(DocPlugin, '@ide/plugin-doc');
     host.add(LspPlugin, '@ide/plugin-lsp');
     host.add(Editor, '@ide/plugin-editor');

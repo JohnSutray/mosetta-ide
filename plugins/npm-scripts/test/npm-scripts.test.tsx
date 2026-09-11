@@ -3,6 +3,7 @@ import { FakeHost } from '@ide/api/testing';
 import NpmScripts, { type ScriptInfo } from '../src/client.js';
 import TerminalPlugin from '@ide/plugin-terminal';
 import type { Opener } from '@ide/plugin-search';
+import UiPlugin from '@ide/ui';
 
 const NAME = '@ide/plugin-npm-scripts';
 
@@ -23,6 +24,7 @@ describe('скрипты', () => {
 
   beforeEach(async () => {
     host = new FakeHost();
+    host.add(UiPlugin, '@ide/ui');
     terminal = host.add(TerminalPlugin, '@ide/plugin-terminal');
     host.ide('@ide/plugin-terminal').answers.set('list', () => []);
     host.ide('@ide/plugin-terminal').answers.set('shells', () => []);
@@ -122,6 +124,7 @@ describe('скрипты', () => {
 
   it('состояние — поля экземпляра, а не модульные сигналы', () => {
     const second = new FakeHost();
+    second.add(UiPlugin, '@ide/ui');
     second.add(NpmScripts, NAME);
     host.run('scripts.open');
     expect(popup()).not.toBeNull();

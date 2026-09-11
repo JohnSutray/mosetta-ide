@@ -1,4 +1,4 @@
-import type { Windows } from '@ide/windows';
+import type { Windows } from './windows/windows.js';
 import { useState } from 'preact/hooks';
 import { Popup } from './popup.js';
 

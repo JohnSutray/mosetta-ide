@@ -17,6 +17,7 @@ import { TreeMenu } from './tree-menu.js';
 import DocPlugin from '@ide/plugin-doc';
 import KeymapPlugin from '@ide/plugin-keymap';
 import SearchPlugin from '@ide/plugin-search';
+import UiPlugin from '@ide/ui';
 
 @registry({ key: 'tree.tint', schema: TINT_SCHEMA })
 @configSection({ section: 'tree', defaults: TREE_DEFAULTS })
@@ -144,8 +145,8 @@ export default class TreePlugin {
 
     this.ide.registry<() => unknown>('chrome.top').add(() => (
       <>
-        <Prompt windows={this.ide.windows} prompt={this.prompt} selection={this.selection} />
-        <TreeMenu windows={this.ide.windows} menu={this.menu} selection={this.selection} ops={this.ops} />
+        <Prompt windows={this.ide.getPlugin(UiPlugin).windows} prompt={this.prompt} selection={this.selection} />
+        <TreeMenu windows={this.ide.getPlugin(UiPlugin).windows} menu={this.menu} selection={this.selection} ops={this.ops} />
       </>
     ));
 

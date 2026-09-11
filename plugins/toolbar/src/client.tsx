@@ -3,6 +3,7 @@ import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarWidget } 
 import { TOOLBAR_DEFAULTS } from './settings.js';
 import { STYLE } from './style.js';
 import KeymapPlugin from '@ide/plugin-keymap';
+import UiPlugin from '@ide/ui';
 
 @registry({ key: 'toolbar.button', schema: BUTTON_SCHEMA })
 @registry({ key: 'toolbar.widget', schema: WIDGET_SCHEMA })
@@ -45,11 +46,11 @@ export default class Toolbar {
         key={entry.id}
         class={`tool ${active ? 'is-active' : ''}`}
         onMouseEnter={(event) =>
-          this.ide.windows.tips.show(event.currentTarget as Element, this.ide.t(entry.title), this.ide.getPlugin(KeymapPlugin).keysFor(entry.command))
+          this.ide.getPlugin(UiPlugin).windows.tips.show(event.currentTarget as Element, this.ide.t(entry.title), this.ide.getPlugin(KeymapPlugin).keysFor(entry.command))
         }
-        onMouseLeave={() => this.ide.windows.tips.hide()}
+        onMouseLeave={() => this.ide.getPlugin(UiPlugin).windows.tips.hide()}
         onClick={() => {
-          this.ide.windows.tips.hide();
+          this.ide.getPlugin(UiPlugin).windows.tips.hide();
           this.ide.runCommand(entry.command);
         }}
       >

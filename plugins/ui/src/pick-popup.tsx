@@ -1,4 +1,6 @@
-import type { Size, Windows } from '@ide/windows';
+import { useT } from '@ide/api/client';
+import type { Size } from './windows/geometry.js';
+import type { Windows } from './windows/windows.js';
 import { Fragment } from 'preact';
 import type { ComponentChildren, JSX } from 'preact';
 
@@ -47,6 +49,7 @@ export function PickPopup<T>({ windows,
   extra,
   onMouseDown,
 }: PickProps<T>) {
+  const t = useT();
   const field = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState('');
@@ -131,7 +134,7 @@ export function PickPopup<T>({ windows,
           );
         })}
         {shown.length === 0 && (
-          <div class="se-empty">{items.length === 0 ? empty : windows.host.t('pick.nothing')}</div>
+          <div class="se-empty">{items.length === 0 ? empty : t('pick.nothing')}</div>
         )}
       </div>
 

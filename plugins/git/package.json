@@ -25,7 +25,6 @@
     "@ide/plugin-editor": "workspace:*",
     "@ide/plugin-keymap": "workspace:*",
     "@ide/ui": "workspace:*",
-    "@ide/windows": "workspace:*",
     "@ide/plugin-code": "workspace:*"
   },
   "peerDependencies": {

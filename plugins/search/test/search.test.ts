@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { FakeHost } from '@ide/api/testing';
 import DocPlugin from '@ide/plugin-doc';
 import SearchPlugin, { type IndexHit } from '../src/client.js';
+import UiPlugin from '@ide/ui';
 
 function hit(kind: string, label: string, path = `${label}.ts`, line?: number): IndexHit {
   return { kind, label, path, line, matches: [], score: 1 };
@@ -11,6 +12,7 @@ const NAME = '@ide/plugin-search';
 
 async function raise() {
   const host = new FakeHost();
+  host.add(UiPlugin, '@ide/ui');
   (globalThis as Record<string, unknown>)['document'] ??= {};
   host.add(DocPlugin, '@ide/plugin-doc');
   const plugin = host.add(SearchPlugin, NAME);
