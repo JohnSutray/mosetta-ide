@@ -55,10 +55,10 @@ export function SettingsPopup({
           <Group key={group.owner} group={group} open={win.isOpen(group.owner)} onToggle={() => win.toggleGroup(group.owner)}>
             {group.rows.map((row) => (
               <div class={`settings-row ${row.overridden ? 'is-set' : ''}`} key={row.path}>
-                <div class="settings-name">
-                  <span class="settings-chip is-path">{row.path}</span>
-                  <span class="settings-label">{label(row)}</span>
-                </div>
+                <span class="settings-chip is-path" title={row.path}>
+                  {row.path}
+                </span>
+                <span class="settings-label">{label(row)}</span>
                 <div class="settings-value">
                   <Field row={row} write={write} />
                 </div>
@@ -98,7 +98,9 @@ function Group({
         <span class={`chevron ${open ? 'is-open' : ''}`}>
           <Chevron />
         </span>
-        <span class="settings-group-title">{t(group.title)}</span>
+        <span class="settings-group-title" title={t(group.title)}>
+          {t(group.title)}
+        </span>
         <span class="settings-chip is-owner">{group.owner}</span>
         <span class="settings-group-count">
           {t(group.rows.length === 1 ? 'settings.countOne' : 'settings.count', { count: group.rows.length })}
