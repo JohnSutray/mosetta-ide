@@ -1,18 +1,17 @@
 import type { KeyHost, KeyOs } from './types.js';
 
 export function HostIcon({ host }: { host: KeyHost }) {
-  const common = { fill: 'none', stroke: 'currentColor', 'stroke-width': 1.2 } as const;
   if (host === 'browser') {
     return (
-      <svg width={13} height={13} viewBox="0 0 12 12" {...common}>
-        <rect x={1} y={2} width={10} height={8} rx={1.5} />
-        <path d="M1 4.5h10" />
-        <circle cx={2.6} cy={3.2} r={0.45} fill="currentColor" stroke="none" />
+      <svg width={13} height={13} viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width={1.2}>
+        <circle cx={6} cy={6} r={4.9} />
+        <circle cx={6} cy={6} r={1.9} />
+        <path d="M6 4.1V1.1M7.65 6.95l2.6 1.5M4.35 6.95l-2.6 1.5" />
       </svg>
     );
   }
   return (
-    <svg width={13} height={13} viewBox="0 0 12 12" {...common}>
+    <svg width={13} height={13} viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width={1.2}>
       <rect x={1} y={2} width={10} height={8} rx={1.5} />
       <path d="M1 4.2h10" />
       <path d="M3.4 6.6h5.2" />
@@ -41,9 +40,11 @@ export function OsIcon({ os }: { os: KeyOs }) {
   }
   return (
     <svg width={13} height={13} viewBox="0 0 12 12" fill="currentColor">
-      <path d="M6 1c-1.5 0-2.5 1.1-2.5 2.6v.8c0 .6-1 1.7-1 3.2C2.5 9.2 4 10.2 6 10.2s3.5-1 3.5-2.6c0-1.5-1-2.6-1-3.2v-.8C8.5 2.1 7.5 1 6 1z" />
+      <circle cx={5.7} cy={3} r={2.1} />
+      <path d="M7.5 2.4 9.4 3.1 7.5 3.8z" />
+      <path d="M6 4.7c-2 0-3.1 1.7-3.1 3.3 0 1.5 1 2.5 3.1 2.5s3.1-1 3.1-2.5c0-1.6-1.1-3.3-3.1-3.3z" />
       <path
-        d="M4.4 10.3 3 11.2M7.6 10.3 9 11.2"
+        d="M4.3 10.3 2.8 11.3M7.7 10.3 9.2 11.3"
         stroke="currentColor"
         stroke-width={1.3}
         stroke-linecap="round"
