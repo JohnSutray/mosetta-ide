@@ -53,6 +53,16 @@ describe('мои правки раскладки', () => {
     expect(mine.drop(added, factory, { command: 'keys.show', key: 'meta+f12' }).bindings).toEqual([]);
   });
 
+  it('снятые мной строки видны отдельно — иначе их не вернуть', () => {
+    const gone = mine.drop(empty, factory, factory.bindings[0]!);
+    expect(mine.removed(gone).map((one) => one.key)).toEqual(['meta+s']);
+    expect(live(gone).bindings.some((one) => one.key === 'meta+s')).toBe(false);
+
+    const back = mine.restore(gone, 'file.save');
+    expect(mine.removed(back)).toEqual([]);
+    expect(live(back)).toEqual(live(empty));
+  });
+
   it('место — это клавиша, контекст и окружение', () => {
     const added = mine.add(empty, { command: 'tree.open', key: 'enter' });
     expect(mine.isMine(added, { command: 'tree.open', key: 'enter', when: 'tree' })).toBe(false);

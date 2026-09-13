@@ -7,13 +7,11 @@ export const STYLE = `
 .keymap-row {
   display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
   align-items: center; gap: 10px; padding: 3px var(--keymap-inset); border-radius: 4px;
+  cursor: pointer;
 }
 .keymap-row:hover { background: rgba(255, 255, 255, 0.03); }
 .keymap-row.is-mine .keymap-command { color: var(--accent); }
-.keymap-chord {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 0; border: none; background: transparent; cursor: pointer;
-}
+.keymap-chord { display: inline-flex; align-items: center; gap: 4px; }
 .keymap-chord .chevron { color: var(--divider); }
 .keymap-row:hover .keymap-chord .chevron, .keymap-chord .chevron.is-open { color: var(--muted); }
 .keymap-command { min-width: 0; color: var(--fg); font: 13px var(--ui-font); }
@@ -36,10 +34,15 @@ export const STYLE = `
   background: var(--control-bg); color: var(--fg); font: 11px var(--mono, monospace); white-space: nowrap;
 }
 .keymap-kbd.is-big { font-size: 13px; padding: 3px 10px; }
+.keymap-rows.is-gone { margin-bottom: 4px; }
+.keymap-row.is-gone { cursor: default; }
+.keymap-row.is-gone .keymap-command { color: var(--muted); text-decoration: line-through; }
+.keymap-kbd.is-dead { color: var(--muted); text-decoration: line-through; }
 .keymap-empty { padding: 16px; color: var(--muted); text-align: center; }
 
 .keymap-catch {
   grid-column: 1 / -1;
+  cursor: default;
   display: flex; flex-direction: column; gap: 8px;
   margin: 6px 0; padding: 10px; border: 1px solid var(--divider); border-radius: 6px;
   background: var(--bg);

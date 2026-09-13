@@ -16,5 +16,6 @@
   "keymap.restore": "factory",
   "keymap.drop": "remove",
   "keymap.mine": "mine",
-  "keymap.nothing": "Nothing matches"
+  "keymap.nothing": "Nothing matches",
+  "keymap.removed": "removed by me"
 }

@@ -69,18 +69,51 @@ export function KeymapEditor({ plugin }: { plugin: KeymapPlugin }) {
         />
       )}
 
+      {personalKeymap.removed(mine).length > 0 && (
+        <div class="keymap-rows is-gone">
+          {personalKeymap.removed(mine).map((one) => (
+            <div class="keymap-row is-gone" key={`gone:${keymapRules.slotOf(one)}`}>
+              <span class="keymap-chord">
+                <span class="chevron is-hidden">
+                  <Chevron />
+                </span>
+                <kbd class="keymap-kbd is-dead">{plugin.keys.humanize(one.key)}</kbd>
+              </span>
+              <span class="keymap-command">{commandLabel(t, one.command)}</span>
+              <span class="keymap-where">
+                {one.when && <span class="keymap-chip">{one.when}</span>}
+                <span class="keymap-chip is-mine">{t('keymap.removed')}</span>
+              </span>
+              <span class="keymap-actions">
+                <button class="keymap-act" onClick={() => save(personalKeymap.restore(mine, one.command))}>
+                  {t('keymap.restore')}
+                </button>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div class="keymap-rows">
         {rows.map((one) => {
           const own = personalKeymap.isMine(mine, one);
           const open = editing !== null && keymapRules.slotOf(editing) === keymapRules.slotOf(one);
           return (
-            <div class={`keymap-row ${own ? 'is-mine' : ''}`} key={`${keymapRules.slotOf(one)}:${one.command}`}>
-              <button class="keymap-chord" onClick={() => setEditing(open ? null : one)}>
+            <div
+              class={`keymap-row ${own ? 'is-mine' : ''}`}
+              key={`${keymapRules.slotOf(one)}:${one.command}`}
+              onClick={(event) => {
+                const at = event.target as HTMLElement;
+                if (at.closest('.keymap-catch') || at.closest('.keymap-act')) return;
+                setEditing(open ? null : one);
+              }}
+            >
+              <span class="keymap-chord">
                 <span class={`chevron ${open ? 'is-open' : ''}`}>
                   <Chevron />
                 </span>
                 <kbd class="keymap-kbd">{plugin.keys.humanize(one.key)}</kbd>
-              </button>
+              </span>
               <span class="keymap-command">{commandLabel(t, one.command)}</span>
               <span class="keymap-where">
                 {one.when && <span class="keymap-chip">{one.when}</span>}

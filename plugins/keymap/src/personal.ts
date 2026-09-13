@@ -28,6 +28,10 @@ export class PersonalKeymap {
     return { ...rest, bindings: [...rest.bindings, this.removalOf(was)] };
   }
 
+  removed(mine: Keymap): KeyBinding[] {
+    return mine.bindings.filter((one) => one.remove === true);
+  }
+
   isMine(mine: Keymap, binding: KeyBinding): boolean {
     const slot = keymapRules.slotOf(binding);
     return mine.bindings.some((one) => keymapRules.slotOf(one) === slot);
