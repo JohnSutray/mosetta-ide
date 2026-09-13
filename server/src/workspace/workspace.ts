@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import type { EventName, EventPayload, WorkspaceInfo } from '@mosetta/ide-protocol';
 import { journal, type Logger } from '../log.js';
 import type { ConfigStore } from '../config/store.js';
+import { ProjectConfig } from '../config/project.js';
 import { paths } from './paths.js';
 import type { Processes } from '../env/processes.js';
 import { Services } from './services.js';
@@ -47,8 +48,13 @@ export class Workspace {
     return this.use('services', (ws) => new Services(ws, this.config, this.log));
   }
 
+  get projectConfig(): ProjectConfig {
+    return this.use('project-config', (ws) => new ProjectConfig(ws, this.config));
+  }
+
   async boot(): Promise<void> {
     await this.services.boot();
+    await this.projectConfig.load();
   }
 
   relative(absolute: string): string {

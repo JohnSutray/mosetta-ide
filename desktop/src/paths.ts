@@ -32,18 +32,10 @@ export class DesktopPaths {
 
   seedConfig(): string[] {
     fs.mkdirSync(this.config, { recursive: true });
-    const source = [path.join(this.pkg, 'defaults'), path.join(this.pkg, '..', 'config')].find((dir) =>
-      fs.existsSync(path.join(dir, 'keymap.json')),
-    );
-    if (!source) return [];
-    const seeded: string[] = [];
-    for (const name of ['keymap.json', 'settings.json']) {
-      const from = path.join(source, name);
-      const target = path.join(this.config, name);
-      if (fs.existsSync(target) || !fs.existsSync(from)) continue;
-      fs.copyFileSync(from, target);
-      seeded.push(name);
-    }
-    return seeded;
+    const from = path.join(this.pkg, '..', 'config', 'settings.json');
+    const target = path.join(this.config, 'settings.json');
+    if (fs.existsSync(target) || !fs.existsSync(from)) return [];
+    fs.copyFileSync(from, target);
+    return ['settings.json'];
   }
 }

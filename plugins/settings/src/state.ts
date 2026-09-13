@@ -3,6 +3,8 @@ import type { SettingsEntry } from '@mosetta/ide-api/client';
 
 export type SettingKind = 'boolean' | 'number' | 'string' | 'choice' | 'list' | 'object';
 
+export type SettingAt = 'default' | 'user' | 'project';
+
 export interface SettingRow {
   section: string;
   key: string;
@@ -12,6 +14,7 @@ export interface SettingRow {
   value: unknown;
   fallback: unknown;
   overridden: boolean;
+  at: SettingAt;
   options?: readonly string[];
 }
 
@@ -35,6 +38,7 @@ export class SettingsModel {
     entries: readonly SettingsEntry[],
     settings: unknown,
     file: Record<string, Record<string, unknown>>,
+    project: Record<string, Record<string, unknown>> = {},
   ): SettingGroup[] {
     const live = (settings ?? {}) as Record<string, Record<string, unknown> | undefined>;
     const byOwner = new Map<string, SettingGroup>();
@@ -43,16 +47,19 @@ export class SettingsModel {
       byOwner.set(entry.owner, group);
       for (const [key, fallback] of Object.entries(entry.defaults as Record<string, unknown>)) {
         const own = file[entry.section]?.[key];
+        const theirs = project[entry.section]?.[key];
         const options = entry.fields?.[key]?.options;
+        const at: SettingAt = theirs !== undefined ? 'project' : own !== undefined ? 'user' : 'default';
         group.rows.push({
           section: entry.section,
           key,
           path: `${entry.section}.${key}`,
           label: `settings.${entry.section}.${key}`,
           kind: this.kindOf(fallback, options),
-          value: own ?? live[entry.section]?.[key] ?? fallback,
+          value: theirs ?? own ?? live[entry.section]?.[key] ?? fallback,
           fallback,
-          overridden: own !== undefined,
+          overridden: at !== 'default',
+          at,
           options,
         });
       }

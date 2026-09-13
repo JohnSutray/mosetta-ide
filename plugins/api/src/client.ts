@@ -9,6 +9,7 @@ import type {
   Keymap,
   Settings,
   WorkspaceInfo,
+  SettingScope,
   SettingValue,
 } from '@mosetta/ide-protocol';
 
@@ -93,12 +94,19 @@ export interface IdeServices {
   readonly tree: TreeWire;
   readonly fs: FsAccess;
   readonly docs: DocWire;
-  readonly setSetting: (section: string, key: string, value: SettingValue) => Promise<void>;
+  readonly setSetting: (
+    section: string,
+    key: string,
+    value: SettingValue,
+    scope?: SettingScope,
+  ) => Promise<void>;
   readonly workspaces: WorkspacesAccess;
   readonly keymap: { readonly value: Keymap };
   readonly connected: { readonly value: boolean };
   readonly notes: NotesAccess;
   readonly settingsFile: { readonly value: Record<string, Record<string, unknown>> };
+  readonly projectFile: { readonly value: Record<string, Record<string, unknown>> };
+  readonly projectPath: { readonly value: string | null };
   readonly resetSetting: (section: string, key: string) => Promise<void>;
   readonly mount: Mount;
 }

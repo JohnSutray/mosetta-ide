@@ -7,6 +7,7 @@ import type {
   Keymap,
   Settings,
   WorkspaceInfo,
+  SettingScope,
   SettingValue,
 } from '@mosetta/ide-protocol';
 import { attach, hooksOf, passportOf, registriesOf, sectionsOf } from './client.js';
@@ -153,6 +154,8 @@ export class FakeSurface implements IdeServices {
   };
 
   readonly settingsFile: Signal<Record<string, Record<string, unknown>>> = signal({});
+  readonly projectFile: Signal<Record<string, Record<string, unknown>>> = signal({});
+  readonly projectPath: Signal<string | null> = signal('/tmp/stand/.mosetta/settings.json');
   readonly settingResets: Array<{ section: string; key: string }> = [];
   readonly resetSetting = async (section: string, key: string): Promise<void> => {
     this.settingResets.push({ section, key });
@@ -219,7 +222,7 @@ export class FakeSurface implements IdeServices {
     absolute: async (path) => `/абсолютно/${path}`,
   };
   readonly docs = new FakeDocWire();
-  readonly settingWrites: Array<{ section: string; key: string; value: SettingValue }> = [];
+  readonly settingWrites: Array<{ section: string; key: string; value: SettingValue; scope?: SettingScope }> = [];
   readonly workspaceCurrent: Signal<WorkspaceInfo | null> = signal(null);
   readonly workspaceLive: Signal<WorkspaceInfo[]> = signal([]);
   readonly workspaceCalls: Array<{ op: string; args: unknown[] }> = [];
@@ -246,8 +249,13 @@ export class FakeSurface implements IdeServices {
 
   readonly runCommand = (id: string): boolean => this.host.run(id);
 
-  readonly setSetting = async (section: string, key: string, value: SettingValue): Promise<void> => {
-    this.settingWrites.push({ section, key, value });
+  readonly setSetting = async (
+    section: string,
+    key: string,
+    value: SettingValue,
+    scope?: SettingScope,
+  ): Promise<void> => {
+    this.settingWrites.push({ section, key, value, ...(scope ? { scope } : {}) });
   };
 }
 
@@ -347,6 +355,8 @@ export class FakeIde implements Ide {
   get docs() { return this.host.surface.docs; }
   get mount() { return this.host.surface.mount; }
   get settingsFile() { return this.host.surface.settingsFile; }
+  get projectFile() { return this.host.surface.projectFile; }
+  get projectPath() { return this.host.surface.projectPath; }
   get resetSetting() { return this.host.surface.resetSetting; }
 
   getPlugin<T>(ctor: PluginClass<T>): T {

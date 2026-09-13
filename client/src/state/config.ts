@@ -7,6 +7,8 @@ export class Config {
   readonly sources = signal<string[]>([]);
   readonly user = signal<Record<string, Record<string, unknown>>>({});
   readonly defaults = signal<Settings | null>(null);
+  readonly project = signal<Record<string, Record<string, unknown>>>({});
+  readonly projectFile = signal<string | null>(null);
 
   apply(bundle: ConfigBundle): void {
     this.settings.value = bundle.settings;
@@ -14,5 +16,7 @@ export class Config {
     this.sources.value = bundle.sources;
     this.user.value = bundle.user ?? {};
     this.defaults.value = bundle.defaults ?? null;
+    this.project.value = bundle.project ?? {};
+    this.projectFile.value = bundle.projectFile ?? null;
   }
 }

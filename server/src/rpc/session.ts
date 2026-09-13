@@ -37,10 +37,10 @@ export class Session implements SessionContext {
 
     this.unsubscribe.push(this.registry.onChange((list) => this.notify('workspace.list', list)));
     this.unsubscribe.push(journal.onLog((line) => this.notify('log', line)));
-    this.unsubscribe.push(this.config.onChange((bundle) => this.notify('config.changed', bundle)));
+    this.unsubscribe.push(this.config.onChange(() => this.sendConfig()));
 
     this.notify('workspace.list', this.registry.list());
-    this.notify('config.changed', this.config.current);
+    this.sendConfig();
   }
 
   get workspace(): Workspace | null {
@@ -58,12 +58,18 @@ export class Session implements SessionContext {
     this.current = workspace;
     workspace.attach(this);
     this.notify('workspace.attached', workspace.info());
+    this.sendConfig();
   }
 
   detach(): void {
     if (!this.current) return;
     this.releaseCurrent();
     this.notify('workspace.attached', null);
+    this.sendConfig();
+  }
+
+  private sendConfig(): void {
+    this.notify('config.changed', this.current?.projectConfig.bundle ?? this.config.current);
   }
 
   notify<E extends EventName>(event: E, payload: EventPayload<E>): void {

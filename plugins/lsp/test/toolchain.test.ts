@@ -16,21 +16,15 @@ const settings: LspSettings = {
       preferences: { quotePreference: 'double', includePackageJsonAutoImports: 'off' },
     },
   },
-  projects: { 'web-ide': { typescript: { quotePreference: 'single', importModuleSpecifierEnding: 'js' } } },
 };
 
 describe('настройки языкового сервера по слоям', () => {
-  it('проект перекрывает общее, чужой проект его не видит', () => {
-    expect(toolchain.preferencesFor(settings, 'typescript', '/Users/me/WebstormProjects/web-ide')).toEqual({
-      quotePreference: 'single',
-      includePackageJsonAutoImports: 'off',
-      importModuleSpecifierEnding: 'js',
-    });
-    expect(toolchain.preferencesFor(settings, 'typescript', '/elsewhere/other')).toEqual({
+  it('берутся из настроек сервера — теми, какими их слил конфиг', () => {
+    expect(toolchain.preferencesFor(settings, 'typescript')).toEqual({
       quotePreference: 'double',
       includePackageJsonAutoImports: 'off',
     });
-    expect(toolchain.preferencesFor(LSP_DEFAULTS, 'typescript', '/x/web-ide')).toEqual({});
+    expect(toolchain.preferencesFor(LSP_DEFAULTS, 'typescript')).toEqual({});
   });
 
   it('заводские остаются, если их не перекрыли; перекрытое — побеждает', () => {

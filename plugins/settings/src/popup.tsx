@@ -2,8 +2,7 @@ import { useIde, useT, type SettingsEntry } from '@mosetta/ide-api/client';
 import type { SettingValue } from '@mosetta/ide-protocol';
 import { Chevron, Popup, type Windows } from '@mosetta/ide-plugin-ui';
 import { useRef, useState } from 'preact/hooks';
-import { ResetIcon } from './icons.js';
-import type { SettingGroup, SettingRow, SettingsModel, SettingsWindow } from './state.js';
+import type { SettingAt, SettingGroup, SettingRow, SettingsModel, SettingsWindow } from './state.js';
 
 export function SettingsPopup({
   windows,
@@ -25,10 +24,19 @@ export function SettingsPopup({
     const text = t(row.label);
     return text === row.label ? row.key : text;
   };
-  const groups = model.filter(model.groups(entries.value, ide.settings.value, ide.settingsFile.value), win.term.value, label);
+  const groups = model.filter(
+    model.groups(entries.value, ide.settings.value, ide.settingsFile.value, ide.projectFile.value),
+    win.term.value,
+    label,
+  );
   const fail = (err: unknown) => ide.notes.notify(err instanceof Error ? err.message : String(err), 'error');
-  const write = (row: SettingRow, value: SettingValue) => void ide.setSetting(row.section, row.key, value).catch(fail);
-  const reset = (row: SettingRow) => void ide.resetSetting(row.section, row.key).catch(fail);
+  const write = (row: SettingRow, value: SettingValue) =>
+    void ide.setSetting(row.section, row.key, value, row.at === 'project' ? 'project' : 'user').catch(fail);
+  const place = (row: SettingRow, at: SettingAt) => {
+    if (at === row.at) return;
+    if (at === 'default') return void ide.resetSetting(row.section, row.key).catch(fail);
+    void ide.setSetting(row.section, row.key, row.value as SettingValue, at).catch(fail);
+  };
 
   return (
     <Popup
@@ -36,8 +44,8 @@ export function SettingsPopup({
       id="settings.show"
       keys="settings"
       class="settings"
-      size={{ w: 900, h: 640 }}
-      min={{ w: 560, h: 320 }}
+      size={{ w: 1040, h: 660 }}
+      min={{ w: 640, h: 320 }}
       onClose={() => win.close()}
     >
       <div class="settings-top">
@@ -81,11 +89,7 @@ export function SettingsPopup({
                   <Field row={row} write={write} />
                 </div>
                 <div class="settings-tail">
-                  {row.overridden && (
-                    <button class="settings-reset" title={t('settings.reset')} onClick={() => reset(row)}>
-                      <ResetIcon />
-                    </button>
-                  )}
+                  <Scope row={row} canProject={ide.projectPath.value !== null} onPlace={place} />
                 </div>
               </div>
             ))}
@@ -94,6 +98,40 @@ export function SettingsPopup({
         {groups.length === 0 && <div class="settings-empty">{t('settings.nothing')}</div>}
       </div>
     </Popup>
+  );
+}
+
+function Scope({
+  row,
+  canProject,
+  onPlace,
+}: {
+  row: SettingRow;
+  canProject: boolean;
+  onPlace: (row: SettingRow, at: SettingAt) => void;
+}) {
+  const t = useT();
+  if (row.kind === 'object') return null;
+  const stops: SettingAt[] = ['default', 'user', 'project'];
+  return (
+    <div class="settings-scope" role="radiogroup">
+      {stops.map((at) => {
+        const off = at === 'project' && !canProject;
+        return (
+          <button
+            key={at}
+            class={`settings-stop ${row.at === at ? 'is-on' : ''}`}
+            role="radio"
+            aria-checked={row.at === at}
+            disabled={off}
+            title={t(off ? 'settings.scope.noProject' : `settings.scope.${at}Tip`)}
+            onClick={() => onPlace(row, at)}
+          >
+            {t(`settings.scope.${at}`)}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -128,6 +166,7 @@ function Group({
 }) {
   const t = useT();
   const changed = group.rows.filter((row) => row.overridden).length;
+  const fromProject = group.rows.filter((row) => row.at === 'project').length;
   return (
     <section class={`settings-group ${open ? 'is-open' : ''}`}>
       <button class="settings-group-head" aria-expanded={open} onClick={onToggle}>
@@ -139,6 +178,9 @@ function Group({
         </span>
         <span class="settings-chip is-owner">{group.owner}</span>
         <span class="settings-group-count">
+          {fromProject > 0 && (
+            <span class="settings-group-project">{t('settings.inProject', { count: fromProject })}</span>
+          )}
           {changed > 0 && <span class="settings-group-changed">{t('settings.changed', { count: changed })}</span>}
           {t(group.rows.length === 1 ? 'settings.countOne' : 'settings.count', { count: group.rows.length })}
         </span>
@@ -187,7 +229,7 @@ function Field({ row, write }: { row: SettingRow; write: (row: SettingRow, value
       return (
         <span class="settings-object">
           <code>{JSON.stringify(row.value)}</code>
-          <span class="settings-note">{t('settings.inFile')}</span>
+          <span class="settings-note">{t(row.at === 'project' ? 'settings.inProjectFile' : 'settings.inFile')}</span>
         </span>
       );
     default:

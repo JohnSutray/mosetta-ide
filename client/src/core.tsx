@@ -127,10 +127,12 @@ export class Core {
       },
       mount: this.mount,
       settingsFile: this.config.user,
+      projectFile: this.config.project,
+      projectPath: this.config.projectFile,
       resetSetting: async (section, key) => {
         await this.rpc.call('config.reset', { section, key });
       },
-      setSetting: async (section, key, value) => {
+      setSetting: async (section, key, value, scope) => {
         const own = this.store.all<SettingsEntry>('settings').value.find((one) => one.section === section);
         if (!own) throw new Error(`раздел настроек никто не объявил: ${section}`);
         const known = (own.defaults as Record<string, unknown>)[key];
@@ -140,7 +142,7 @@ export class Core {
         if (options && typeof value === 'string' && !options.includes(value)) {
           throw new Error(`${section}.${key}: «${value}» — не из вариантов ${options.join(', ')}`);
         }
-        await this.rpc.call('config.set', { section, key, value });
+        await this.rpc.call('config.set', { section, key, value, scope });
       },
     };
   }

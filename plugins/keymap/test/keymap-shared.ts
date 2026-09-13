@@ -3,18 +3,15 @@ import { fileURLToPath } from 'node:url';
 import type { KeyBinding, KeyScope, Keymap } from '@mosetta/ide-protocol';
 
 export function keymap(): Keymap {
-  return jsonc<Keymap>('keymap.json');
+  return read<Keymap>('../../../server/src/config/keymap.json');
 }
 
 export function toolbarOrder(): string[] {
-  return jsonc<{ toolbar?: { order?: string[] } }>('settings.json').toolbar?.order ?? [];
+  return read<{ toolbar?: { order?: string[] } }>('../../../config/settings.json').toolbar?.order ?? [];
 }
 
-function jsonc<T>(name: string): T {
-  const raw = fs.readFileSync(
-    fileURLToPath(new URL(`../../../config/${name}`, import.meta.url)),
-    'utf8',
-  );
+function read<T>(where: string): T {
+  const raw = fs.readFileSync(fileURLToPath(new URL(where, import.meta.url)), 'utf8');
   const clean = raw
     .replace(/^\s*\/\/.*$/gm, '')
     .replace(/\/\*[\s\S]*?\*\//g, '')

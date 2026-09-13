@@ -25,11 +25,8 @@ function resolveTsserver(root: string, dir: string, log: Logger): string | null 
 export class Toolchain {
   constructor(private readonly dir: string) {}
 
-  preferencesFor(lsp: LspSettings, name: string, root: string): Record<string, unknown> {
-    return {
-      ...(lsp.servers[name]?.preferences ?? {}),
-      ...(lsp.projects?.[path.basename(root)]?.[name] ?? {}),
-    };
+  preferencesFor(lsp: LspSettings, name: string): Record<string, unknown> {
+    return { ...(lsp.servers[name]?.preferences ?? {}) };
   }
 
   optionsFor(name: string, root: string, log: Logger, preferences: Record<string, unknown> = {}): InitOptions {

@@ -54,6 +54,28 @@ describe('редактор настроек', () => {
     expect(group!.rows.filter((row) => row.overridden).map((row) => row.key)).toEqual(['size']);
   });
 
+  it('проектное значение перебивает личное, и это видно по слою', async () => {
+    const { entries } = await raise();
+    const [group] = new SettingsModel().groups(
+      entries,
+      { toy: { size: 14 } },
+      { toy: { size: 14, name: 'моё' } },
+      { toy: { size: 21 } },
+    );
+    const rows = Object.fromEntries(group!.rows.map((row) => [row.key, row]));
+    expect(rows.size, 'проектное побеждает').toMatchObject({ value: 21, at: 'project', overridden: true });
+    expect(rows.name, 'личное — там, где проект молчит').toMatchObject({ value: 'моё', at: 'user', overridden: true });
+    expect(rows.on, 'нетронутое — заводское').toMatchObject({ value: true, at: 'default', overridden: false });
+  });
+
+  it('проекта нет — слоёв два', async () => {
+    const { entries } = await raise();
+    const [group] = new SettingsModel().groups(entries, null, { toy: { size: 14 } });
+    const rows = Object.fromEntries(group!.rows.map((row) => [row.key, row]));
+    expect(rows.size).toMatchObject({ value: 14, at: 'user' });
+    expect(rows.name).toMatchObject({ at: 'default' });
+  });
+
   it('поиск — по надписи и по пути', async () => {
     const { entries } = await raise();
     const model = new SettingsModel();

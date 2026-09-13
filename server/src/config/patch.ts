@@ -109,6 +109,38 @@ function tryRemove(text: string, section: string, key: string): string | null {
   return null;
 }
 
+function tryRemoveSection(text: string, section: string): string | null {
+  const empty = `"${section}"\\s*:\\s*\\{\\s*\\}`;
+  const before = new RegExp(`,\\s*${empty}`).exec(text);
+  if (before) return cut(text, before.index, before.index + before[0].length);
+  const after = new RegExp(`${empty}[ \\t]*,`).exec(text);
+  if (after) return cut(text, after.index, after.index + after[0].length);
+  const alone = new RegExp(empty).exec(text);
+  if (alone) return cut(text, alone.index, alone.index + alone[0].length);
+  return null;
+}
+
+function sectionRemovedCleanly(before: string, after: string, section: string): boolean {
+  try {
+    const a = jsonc.parse<Record<string, unknown>>(before, 'settings.json') ?? {};
+    const b = jsonc.parse<Record<string, unknown>>(after, 'settings.json') ?? {};
+    const expected = { ...a };
+    delete expected[section];
+    return JSON.stringify(expected) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+}
+
+function isEmptySection(text: string, section: string): boolean {
+  try {
+    const value = jsonc.parse<Record<string, unknown>>(text, 'settings.json')?.[section];
+    return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length === 0;
+  } catch {
+    return false;
+  }
+}
+
 function rewriteWithout(text: string, section: string, key: string): string {
   let parsed: Record<string, unknown> = {};
   try {
@@ -125,7 +157,32 @@ function rewriteWithout(text: string, section: string, key: string): string {
   return `${JSON.stringify(parsed, null, 2)}\n`;
 }
 
+function topLevel(text: string, key: string): unknown {
+  try {
+    return jsonc.parse<Record<string, unknown>>(text, 'settings.json')?.[key];
+  } catch {
+    return undefined;
+  }
+}
+
 export class Patch {
+  section(raw: string, key: string, valueText: string, note?: string): PatchResult {
+    const text = raw.trim() === '' ? '{\n}\n' : raw;
+    if (topLevel(text, key) !== undefined) return { text, rewritten: false };
+    const brace = text.indexOf('{');
+    if (brace === -1) return { text, rewritten: false };
+    const rest = text.slice(brace + 1);
+    const tail = rest.trimStart().startsWith('}') ? '' : ',';
+    const head = note ? `\n  // ${note}` : '';
+    const body = valueText
+      .split('\n')
+      .map((line, at) => (at === 0 ? line : `  ${line}`))
+      .join('\n');
+    const next = `${text.slice(0, brace + 1)}${head}\n  "${key}": ${body}${tail}\n${rest.replace(/^\n/, '')}`;
+    if (topLevel(next, key) === undefined) return { text, rewritten: false };
+    return { text: next, rewritten: false };
+  }
+
   setting(
     raw: string,
     section: string,
@@ -143,8 +200,16 @@ export class Patch {
   unset(raw: string, section: string, key: string): PatchResult {
     if (valueAt(raw, section, key) === undefined) return { text: raw, rewritten: false };
     const minimal = tryRemove(raw, section, key);
-    if (minimal !== null && removedCleanly(raw, minimal, section, key)) return { text: minimal, rewritten: false };
+    if (minimal !== null && removedCleanly(raw, minimal, section, key)) {
+      return { text: this.tidy(minimal, section), rewritten: false };
+    }
     return { text: rewriteWithout(raw, section, key), rewritten: true };
+  }
+
+  private tidy(text: string, section: string): string {
+    if (!isEmptySection(text, section)) return text;
+    const without = tryRemoveSection(text, section);
+    return without !== null && sectionRemovedCleanly(text, without, section) ? without : text;
   }
 }
 

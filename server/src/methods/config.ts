@@ -22,7 +22,8 @@ function complaintFor(section: string, key: string, value: SettingValue): string
 }
 
 export class ConfigMethods {
-  readonly get: Handler<'config.get'> = (_params, ctx) => ctx.config.current;
+  readonly get: Handler<'config.get'> = (_params, ctx) =>
+    ctx.session.workspace?.projectConfig.bundle ?? ctx.config.current;
 
   readonly set: Handler<'config.set'> = async (params, ctx) => {
     if (
@@ -37,7 +38,14 @@ export class ConfigMethods {
     const complaint = complaintFor(params.section, params.key, value);
     if (complaint) throw RpcError.invalidParams(complaint);
 
-    await ctx.config.set(params.section, params.key, value);
+    if (params.scope === 'project') {
+      const project = ctx.session.requireWorkspace().projectConfig;
+      await project.set(params.section, params.key, value);
+      await ctx.config.unset(params.section, params.key);
+    } else {
+      await ctx.config.set(params.section, params.key, value);
+      await ctx.session.workspace?.projectConfig.unset(params.section, params.key);
+    }
     return { section: params.section, key: params.key, value };
   };
 
@@ -46,6 +54,7 @@ export class ConfigMethods {
       throw RpcError.invalidParams('нужны section и key');
     }
     await ctx.config.unset(params.section, params.key);
+    await ctx.session.workspace?.projectConfig.unset(params.section, params.key);
     return { section: params.section, key: params.key };
   };
 }

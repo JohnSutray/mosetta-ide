@@ -55,6 +55,7 @@ export interface KeyBinding {
   command: string;
   key: string;
   when?: KeyContext;
+  remove?: true;
   where?: KeyScope[];
 }
 
@@ -63,10 +64,14 @@ export interface Keymap {
   bindings: KeyBinding[];
 }
 
+export type SettingScope = 'user' | 'project';
+
 export interface ConfigBundle {
   settings: Settings;
   keymap: Keymap;
   sources: string[];
   user: Record<string, Record<string, unknown>>;
   defaults: Settings;
+  project: Record<string, Record<string, unknown>>;
+  projectFile: string | null;
 }

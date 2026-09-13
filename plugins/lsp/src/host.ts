@@ -1,4 +1,3 @@
-import path from 'node:path';
 import type { Ide, Project, ProjectResource } from '@mosetta/ide-api/server';
 import { LspServer } from './lsp-server.js';
 import { LSP_DEFAULTS } from './settings.js';
@@ -21,9 +20,10 @@ export class LspHost implements ProjectResource {
     const lsp = this.ide.settings('lsp', LSP_DEFAULTS);
     for (const [name, settings] of Object.entries(lsp.servers)) {
       if (!settings.enabled) continue;
-      const preferences = this.toolchain.preferencesFor(lsp, name, this.project.root);
-      const own = lsp.projects?.[path.basename(this.project.root)]?.[name];
-      if (own) this.ide.log.info(`${name}: настройки проекта — ${Object.keys(own).join(', ')}`);
+      const preferences = this.toolchain.preferencesFor(lsp, name);
+      if (Object.keys(preferences).length > 0) {
+        this.ide.log.info(`${name}: настройки — ${Object.keys(preferences).join(', ')}`);
+      }
       const server = new LspServer(
         name,
         { ...settings, preferences },

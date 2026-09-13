@@ -13,11 +13,12 @@ import type { SettingValue } from '@mosetta/ide-protocol';
 import { journal } from '../log.js';
 import { defaults } from './defaults.js';
 import { jsonc } from './jsonc.js';
+import { LegacyKeymap } from './legacy.js';
 import { patch } from './patch.js';
 
 const log = journal.logger('config');
 
-const WATCHED = new Set(['settings.json', 'keymap.json']);
+const WATCHED = new Set(['settings.json']);
 
 export class ConfigStore {
   private bundle: ConfigBundle;
@@ -39,7 +40,10 @@ export class ConfigStore {
       sources: [],
       user: {},
       defaults: defaults.settings,
+      project: {},
+      projectFile: null,
     });
+    await new LegacyKeymap(keymapRules).retire(dir);
     store.bundle = await store.read();
     return store;
   }
@@ -131,16 +135,21 @@ export class ConfigStore {
   }
 
   private async read(): Promise<ConfigBundle> {
-    const sources: string[] = [];
-    const user = await this.readFile<Partial<Settings>>('settings.json', sources);
-    const settings = mergeSettings(defaults.settings, user);
-    const rawKeymap = await this.readFile<Keymap>('keymap.json', sources);
+    const sources: string[] = [defaults.keymapFile];
+    const user = await this.readFile<Record<string, unknown>>('settings.json', sources);
+    const { keymap: personal, ...rest } = user ?? {};
+    const settings = mergeSettings(defaults.settings, rest as Partial<Settings>);
     return {
       settings,
-      keymap: keymapRules.validate(rawKeymap),
+      keymap: keymapRules.layer(
+        keymapRules.validate(defaults.keymap()),
+        keymapRules.validate((personal ?? null) as Keymap | null),
+      ),
       sources,
       user: (user ?? {}) as Record<string, Record<string, unknown>>,
       defaults: defaults.settings,
+      project: {},
+      projectFile: null,
     };
   }
 
@@ -164,7 +173,7 @@ export class ConfigStore {
   }
 }
 
-function mergeSettings(base: Settings, override: Partial<Settings> | null): Settings {
+export function mergeSettings(base: Settings, override: Partial<Settings> | null): Settings {
   if (!override) return base;
   return deepMerge(base, override) as Settings;
 }
@@ -209,28 +218,66 @@ export class KeymapRules {
     const bindings: KeyBinding[] = [];
 
     for (const binding of raw.bindings) {
-      if (!binding || typeof binding.key !== 'string' || typeof binding.command !== 'string') {
-        log.error(`битый биндинг в keymap.json: ${JSON.stringify(binding)}`);
+      const removal = binding?.remove === true;
+      if (!binding || typeof binding.key !== 'string' || (!removal && typeof binding.command !== 'string')) {
+        log.error(`битая строка раскладки: ${JSON.stringify(binding)}`);
         continue;
       }
-      if (!isCommandId(binding.command)) {
-        log.debug(`keymap.json: ${binding.command} — не наша команда, ждём плагин`);
+      if (!removal && !isCommandId(binding.command)) {
+        log.debug(`раскладка: ${binding.command} — не наша команда, ждём плагин`);
       }
-      const where = [...(binding.where ?? [])].sort().join(',');
-      const slot = `${where}|${binding.when ?? 'global'}:${this.normalizeKey(binding.key)}`;
+      const slot = this.slotOf(binding);
       const previous = seen.get(slot);
       if (previous) {
         log.error(
-          `keymap.json: ${binding.key} (${binding.when ?? 'global'}) занята ` +
+          `раскладка: ${binding.key} (${binding.when ?? 'global'}) занята ` +
             `командой ${previous.command}, ${binding.command} проигнорирована`,
         );
         continue;
       }
       seen.set(slot, binding);
-      bindings.push({ ...binding, key: this.normalizeKey(binding.key) });
+      bindings.push({ ...binding, command: binding.command ?? '', key: this.normalizeKey(binding.key) });
     }
 
     return { version: raw.version ?? 1, bindings };
+  }
+
+  slotOf(binding: KeyBinding): string {
+    const where = [...(binding.where ?? [])].sort().join(',');
+    return `${where}|${binding.when ?? 'global'}:${this.normalizeKey(binding.key)}`;
+  }
+
+  layer(factory: Keymap, personal: Keymap): Keymap {
+    const order: string[] = [];
+    const bySlot = new Map<string, KeyBinding>();
+    const put = (binding: KeyBinding): void => {
+      const slot = this.slotOf(binding);
+      if (binding.remove) {
+        bySlot.delete(slot);
+        return;
+      }
+      if (!bySlot.has(slot)) order.push(slot);
+      bySlot.set(slot, binding);
+    };
+    for (const binding of factory.bindings) put(binding);
+    for (const binding of personal.bindings) put(binding);
+    return {
+      version: factory.version,
+      bindings: order.flatMap((slot) => {
+        const binding = bySlot.get(slot);
+        return binding ? [binding] : [];
+      }),
+    };
+  }
+
+  diff(factory: Keymap, mine: Keymap): Keymap {
+    const factorySlots = new Map(factory.bindings.map((binding) => [this.slotOf(binding), binding]));
+    const bindings: KeyBinding[] = [];
+    for (const binding of mine.bindings) {
+      const before = factorySlots.get(this.slotOf(binding));
+      if (!before || before.command !== binding.command) bindings.push(binding);
+    }
+    return { version: mine.version, bindings };
   }
 
   normalizeKey(key: string): string {

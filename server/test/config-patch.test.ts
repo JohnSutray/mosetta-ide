@@ -153,6 +153,26 @@ describe('сброс настройки к заводской (ADR-0213)', () =>
     const written = patch.setting(inline, 'find', 'masksOff', ['*.min.js']).text;
     const emptied = patch.setting(written, 'find', 'masksOff', []).text;
     expect(patch.unset(emptied, 'find', 'masksOff').text).toBe(inline);
-    expect(patch.unset(inline, 'find', 'masks').text).toBe(`{\n  "find": { },\n  "git": {}\n}\n`);
+    expect(patch.unset(inline, 'find', 'masks').text).toBe(`{\n  "git": {}\n}\n`);
+  });
+
+  it('раздел, из которого убрали последний ключ, уходит целиком (ADR-0214)', () => {
+    const one = `{\n  "find": {\n    "maxHits": 500\n  }\n}\n`;
+    expect(patch.unset(one, 'find', 'maxHits').text).toBe(`{\n}\n`);
+
+    const first = `{\n  "find": { "maxHits": 500 },\n  "tree": { "followEditor": true }\n}\n`;
+    expect(patch.unset(first, 'find', 'maxHits').text).toBe(`{\n  "tree": { "followEditor": true }\n}\n`);
+  });
+
+  it('перенести настройку и вернуть — файл байт в байт', () => {
+    const before = `// проектный\n{\n  "lsp": {\n    "servers": {}\n  }\n}\n`;
+    const with_ = patch.setting(before, 'find', 'maxHits', 500).text;
+    expect(with_).toContain('"maxHits": 500');
+    expect(patch.unset(with_, 'find', 'maxHits').text).toBe(before);
+  });
+
+  it('раздел с комментарием внутри пустым не считается', () => {
+    const noisy = `{\n  "find": {\n    // тут будут маски\n    "maxHits": 500\n  }\n}\n`;
+    expect(patch.unset(noisy, 'find', 'maxHits').text).toBe(`{\n  "find": {\n    // тут будут маски\n  }\n}\n`);
   });
 });

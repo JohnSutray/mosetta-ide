@@ -14,7 +14,7 @@ function pluginSources(): string[] {
     .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(PLUGINS, entry.name, 'src')))
     .flatMap((entry) => sources(path.join(PLUGINS, entry.name, 'src')));
 }
-const KEYMAP = fileURLToPath(new URL('../../../config/keymap.json', import.meta.url));
+const KEYMAP = fileURLToPath(new URL('../../../server/src/config/keymap.json', import.meta.url));
 const PROTOCOL = fileURLToPath(new URL('../../../protocol/src/config.ts', import.meta.url));
 
 function sources(dir: string): string[] {

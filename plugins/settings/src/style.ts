@@ -12,7 +12,7 @@ export const STYLE = `
 .settings-filter-x:hover { background: #6b3a39; color: #ffd7d6; }
 .settings-list {
   --settings-title: 168px;      
-  --settings-value: 340px;      
+  --settings-value: 300px;      
   --settings-input: 132px;      
   --settings-input-open: 360px; 
   flex: 1; overflow: auto; padding: 6px 0 12px;
@@ -30,10 +30,11 @@ export const STYLE = `
 .settings-group-title { overflow: hidden; font: 600 13px var(--ui-font); text-overflow: ellipsis; white-space: nowrap; }
 .settings-group-count { justify-self: end; display: flex; gap: 10px; color: var(--muted); font: 11px var(--ui-font); }
 .settings-group-changed { color: var(--accent); }
+.settings-group-project { color: #8fc891; }
 
 .settings-rows {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) minmax(0, min(var(--settings-value), 45%)) 28px;
+  grid-template-columns: max-content minmax(0, 1fr) minmax(0, min(var(--settings-value), 40%)) max-content;
   align-items: center; gap: 0 14px;
   margin: 0 14px 10px 22px; padding-left: 12px; border-left: 1px solid var(--divider);
 }
@@ -94,13 +95,20 @@ export const STYLE = `
 .settings-object code { overflow: hidden; color: var(--muted); font: 11px var(--mono, monospace); text-overflow: ellipsis; white-space: nowrap; }
 .settings-note { color: var(--muted); font: 11px var(--ui-font); }
 
-.settings-tail { display: flex; justify-content: center; }
-.settings-reset {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; padding: 0; border: none; border-radius: 4px;
-  background: var(--control-bg); color: var(--fg); cursor: pointer;
+.settings-tail { display: flex; justify-content: flex-end; }
+.settings-scope {
+  display: inline-flex; align-items: center; flex: none;
+  padding: 1px; border-radius: 5px; background: var(--bg);
 }
-.settings-reset:hover { background: #6b3a39; color: #ffd7d6; }
+.settings-stop {
+  padding: 2px 7px; border: none; border-radius: 4px;
+  background: transparent; color: var(--muted);
+  font: 11px var(--ui-font); cursor: pointer; white-space: nowrap;
+}
+.settings-stop:hover:not(:disabled) { color: var(--fg); }
+.settings-stop.is-on { background: var(--control-bg); color: var(--fg); }
+.settings-stop.is-on:last-child { background: #3a5a3c; color: #d7f0d8; }
+.settings-stop:disabled { opacity: 0.35; cursor: default; }
 .settings-hit { background: #6b5d2a; border-radius: 2px; color: #f2ecd8; font-weight: inherit; }
 
 .settings-empty { padding: 24px; color: var(--muted); text-align: center; }
