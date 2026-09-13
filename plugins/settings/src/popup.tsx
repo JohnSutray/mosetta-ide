@@ -1,7 +1,7 @@
 import { useIde, useT, type SettingsEntry } from '@mosetta/ide-api/client';
 import type { SettingValue } from '@mosetta/ide-protocol';
 import { Chevron, Popup, type Windows } from '@mosetta/ide-plugin-ui';
-import { useState } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
 import { ResetIcon } from './icons.js';
 import type { SettingGroup, SettingRow, SettingsModel, SettingsWindow } from './state.js';
 
@@ -18,6 +18,7 @@ export function SettingsPopup({
 }) {
   const ide = useIde();
   const t = useT();
+  const field = useRef<HTMLInputElement>(null);
   if (!win.open.value) return null;
 
   const label = (row: SettingRow) => {
@@ -41,14 +42,29 @@ export function SettingsPopup({
     >
       <div class="settings-top">
         <span class="settings-title">{t('settings.title')}</span>
-        <input
-          class="field settings-filter"
-          placeholder={t('settings.filter')}
-          value={win.term.value}
-          spellcheck={false}
-          autocomplete="off"
-          onInput={(event) => (win.term.value = (event.target as HTMLInputElement).value)}
-        />
+        <span class="settings-search">
+          <input
+            ref={field}
+            class="field settings-filter"
+            placeholder={t('settings.filter')}
+            value={win.term.value}
+            spellcheck={false}
+            autocomplete="off"
+            onInput={(event) => (win.term.value = (event.target as HTMLInputElement).value)}
+          />
+          {win.term.value !== '' && (
+            <button
+              class="settings-filter-x"
+              title={t('settings.clear')}
+              onClick={() => {
+                win.term.value = '';
+                field.current?.focus();
+              }}
+            >
+              ×
+            </button>
+          )}
+        </span>
       </div>
       <div class="settings-list">
         {groups.map((group) => (
@@ -56,9 +72,11 @@ export function SettingsPopup({
             {group.rows.map((row) => (
               <div class={`settings-row ${row.overridden ? 'is-set' : ''}`} key={row.path}>
                 <span class="settings-chip is-path" title={row.path}>
-                  {row.path}
+                  <Hit text={row.path} term={win.term.value} model={model} />
                 </span>
-                <span class="settings-label">{label(row)}</span>
+                <span class="settings-label">
+                  <Hit text={label(row)} term={win.term.value} model={model} />
+                </span>
                 <div class="settings-value">
                   <Field row={row} write={write} />
                 </div>
@@ -76,6 +94,24 @@ export function SettingsPopup({
         {groups.length === 0 && <div class="settings-empty">{t('settings.nothing')}</div>}
       </div>
     </Popup>
+  );
+}
+
+function Hit({ text, term, model }: { text: string; term: string; model: SettingsModel }) {
+  const parts = model.split(text, term);
+  if (parts.length === 1) return <>{text}</>;
+  return (
+    <>
+      {parts.map((part, at) =>
+        part.hit ? (
+          <mark class="settings-hit" key={at}>
+            {part.text}
+          </mark>
+        ) : (
+          <>{part.text}</>
+        ),
+      )}
+    </>
   );
 }
 
@@ -103,8 +139,8 @@ function Group({
         </span>
         <span class="settings-chip is-owner">{group.owner}</span>
         <span class="settings-group-count">
-          {t(group.rows.length === 1 ? 'settings.countOne' : 'settings.count', { count: group.rows.length })}
           {changed > 0 && <span class="settings-group-changed">{t('settings.changed', { count: changed })}</span>}
+          {t(group.rows.length === 1 ? 'settings.countOne' : 'settings.count', { count: group.rows.length })}
         </span>
       </button>
       {open && <div class="settings-rows">{children}</div>}

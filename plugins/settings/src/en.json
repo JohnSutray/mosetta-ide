@@ -13,5 +13,6 @@
   "settings.add": "Add",
   "settings.addPlaceholder": "add…",
   "settings.remove": "Remove",
+  "settings.clear": "Clear the filter",
   "settings.countOne": "1 setting"
 }

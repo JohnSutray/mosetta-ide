@@ -71,6 +71,23 @@ export class SettingsModel {
       .filter((group) => group.rows.length > 0);
   }
 
+  split(text: string, term: string): Array<{ text: string; hit: boolean }> {
+    const needle = term.trim().toLowerCase();
+    if (needle === '') return [{ text, hit: false }];
+    const hay = text.toLowerCase();
+    const parts: Array<{ text: string; hit: boolean }> = [];
+    let at = 0;
+    for (;;) {
+      const found = hay.indexOf(needle, at);
+      if (found < 0) break;
+      if (found > at) parts.push({ text: text.slice(at, found), hit: false });
+      parts.push({ text: text.slice(found, found + needle.length), hit: true });
+      at = found + needle.length;
+    }
+    if (at < text.length) parts.push({ text: text.slice(at), hit: false });
+    return parts.length > 0 ? parts : [{ text, hit: false }];
+  }
+
   lines(text: string): string[] {
     return text
       .split('\n')

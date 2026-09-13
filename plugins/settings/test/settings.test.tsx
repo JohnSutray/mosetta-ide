@@ -68,6 +68,27 @@ describe('редактор настроек', () => {
     expect(new SettingsModel().lines(' *.ts \n\n*.tsx\n')).toEqual(['*.ts', '*.tsx']);
   });
 
+  it('найденное режется на куски — подсвечивать будем подложкой', () => {
+    const model = new SettingsModel();
+    expect(model.split('editor.fontSize', '')).toEqual([{ text: 'editor.fontSize', hit: false }]);
+    expect(model.split('editor.fontSize', 'font')).toEqual([
+      { text: 'editor.', hit: false },
+      { text: 'font', hit: true },
+      { text: 'Size', hit: false },
+    ]);
+    expect(model.split('Font family', 'fa'), 'ищем без оглядки на регистр').toEqual([
+      { text: 'Font ', hit: false },
+      { text: 'fa', hit: true },
+      { text: 'mily', hit: false },
+    ]);
+    expect(model.split('tools.tools', 'tools'), 'совпадений может быть несколько').toEqual([
+      { text: 'tools', hit: true },
+      { text: '.', hit: false },
+      { text: 'tools', hit: true },
+    ]);
+    expect(model.split('editor.fontSize', 'нет такого')).toEqual([{ text: 'editor.fontSize', hit: false }]);
+  });
+
   it('окно зовётся командой и кнопкой тулбара; своя клавиша закрывает', async () => {
     const { host, settings } = await raise();
     expect(host.registry.all<{ id: string; command: string }>('toolbar.button').find((one) => one.id === 'settings')?.command).toBe('settings.show');

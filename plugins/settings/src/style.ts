@@ -1,7 +1,15 @@
 export const STYLE = `
 .settings-top { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--divider); }
 .settings-title { flex: none; color: var(--fg); font: 600 14px var(--ui-font); }
-.settings-filter { flex: 1; }
+.settings-search { position: relative; display: flex; align-items: center; flex: none; }
+.settings-filter { box-sizing: border-box; width: 240px; padding-right: 24px; }
+.settings-filter-x {
+  position: absolute; right: 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; padding: 0; border: none; border-radius: 3px;
+  background: var(--control-bg); color: var(--fg); font: 12px var(--ui-font); cursor: pointer;
+}
+.settings-filter-x:hover { background: #6b3a39; color: #ffd7d6; }
 .settings-list {
   --settings-title: 168px;      
   --settings-value: 340px;      
@@ -93,5 +101,7 @@ export const STYLE = `
   background: var(--control-bg); color: var(--fg); cursor: pointer;
 }
 .settings-reset:hover { background: #6b3a39; color: #ffd7d6; }
+.settings-hit { background: #6b5d2a; border-radius: 2px; color: #f2ecd8; font-weight: inherit; }
+
 .settings-empty { padding: 24px; color: var(--muted); text-align: center; }
 `;
