@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { useIde, useT } from '@mosetta/ide-api/client';
 import type { IdeServices } from '@mosetta/ide-api/client';
-import { keyHost } from './host.js';
+import { HostIcon } from './icons.jsx';
+import { scopes } from './scopes.js';
 import { Keyboard } from './keyboard.jsx';
 import { personalKeymap } from './personal.js';
 import { keymapRules } from './rules.js';
 import type KeymapPlugin from './client.jsx';
-import type { KeyBinding, Keymap, KeyScope } from './types.js';
+import type { KeyBinding, KeyContext, KeyHost, Keymap, KeyOs, KeyScope } from './types.js';
 
 export function KeymapEditor({ plugin }: { plugin: KeymapPlugin }) {
   const ide = useIde();
@@ -17,7 +18,6 @@ export function KeymapEditor({ plugin }: { plugin: KeymapPlugin }) {
 
   const layout = plugin.layout.value;
   const mine = plugin.personal.value;
-  const here = `${keyHost.host}:${keyHost.os}` as KeyScope;
 
   const rows = useMemo(() => {
     const needle = term.trim().toLowerCase();
@@ -81,7 +81,8 @@ export function KeymapEditor({ plugin }: { plugin: KeymapPlugin }) {
               </span>
               <span class="keymap-command">{commandLabel(t, one.command)}</span>
               <span class="keymap-where">
-                {one.when && <span class="keymap-chip">{one.when}</span>}
+                {one.when && <span class="keymap-chip">{contextName(t, one.when)}</span>}
+                <Where where={one.where} />
                 <span class="keymap-chip is-mine">{t('keymap.removed')}</span>
               </span>
               <span class="keymap-actions">
@@ -116,8 +117,8 @@ export function KeymapEditor({ plugin }: { plugin: KeymapPlugin }) {
               </span>
               <span class="keymap-command">{commandLabel(t, one.command)}</span>
               <span class="keymap-where">
-                {one.when && <span class="keymap-chip">{one.when}</span>}
-                {one.where && !one.where.includes(here) && <span class="keymap-chip is-alien">{one.where.join(', ')}</span>}
+                {one.when && <span class="keymap-chip">{contextName(t, one.when)}</span>}
+                <Where where={one.where} />
                 {own && <span class="keymap-chip is-mine">{t('keymap.mine')}</span>}
               </span>
               <span class="keymap-actions">
@@ -151,6 +152,22 @@ export function KeymapEditor({ plugin }: { plugin: KeymapPlugin }) {
   );
 }
 
+function Where({ where }: { where?: readonly KeyScope[] }) {
+  const t = useT();
+  const parts = scopes.summary(where);
+  if (parts.length === 0) return null;
+  return (
+    <>
+      {parts.map((one) => (
+        <span class="keymap-chip is-where" key={one.host} title={t(`keymap.host.${one.host}`)}>
+          <HostIcon host={one.host} />
+          {!one.all && one.oses.map((os) => <span class="keymap-os" key={os}>{t(`keymap.os.${os}`)}</span>)}
+        </span>
+      ))}
+    </>
+  );
+}
+
 function Chord({
   plugin,
   title,
@@ -170,6 +187,9 @@ function Chord({
   const [chord, setChord] = useState(binding?.key ?? '');
   const [command, setCommand] = useState(binding?.command ?? '');
   const [picking, setPicking] = useState(binding === null);
+  const [listening, setListening] = useState(false);
+  const [when, setWhen] = useState<KeyContext | ''>(binding?.when ?? '');
+  const [cells, setCells] = useState(() => scopes.cells(binding?.where));
   const echo = plugin.keys.echo.value;
   const caught = useRef<string | null>(null);
 
@@ -192,16 +212,69 @@ function Chord({
     return all.slice(0, 8);
   }, [commands, command, t]);
 
-  const ready = chord !== '' && commands.some((one) => one.id === command);
+  const ready = chord !== '' && commands.some((one) => one.id === command) && !scopes.empty(cells);
+
+  const flip = (host: KeyHost, os: KeyOs) => {
+    const own = cells[host];
+    setCells({ ...cells, [host]: own.includes(os) ? own.filter((one) => one !== os) : [...own, os] });
+  };
 
   return (
     <div class="keymap-catch">
       <div class="keymap-catch-title">{title}</div>
       <div class="keymap-catch-row">
-        <div class="keymap-trap" ref={trap} tabIndex={0} data-keys="keymap-edit">
-          {chord ? <kbd class="keymap-kbd is-big">{plugin.keys.humanize(chord)}</kbd> : t('keymap.press')}
+        <div class="keymap-trap-box">
+          <div
+            class={`keymap-trap ${listening ? 'is-listening' : ''}`}
+            ref={trap}
+            tabIndex={0}
+            data-keys="keymap-edit"
+            onFocus={() => setListening(true)}
+            onBlur={() => setListening(false)}
+          >
+            {chord ? <kbd class="keymap-kbd is-big">{plugin.keys.humanize(chord)}</kbd> : t('keymap.press')}
+          </div>
+          <span class={`keymap-hint ${listening ? 'is-listening' : ''}`}>
+            {t(listening ? 'keymap.listening' : 'keymap.clickToRebind')}
+          </span>
         </div>
         <Keyboard chord={chord} />
+      </div>
+
+      <div class="keymap-catch-row">
+        <label class="keymap-label">{t('keymap.when')}</label>
+        <select
+          class="field keymap-when"
+          value={when}
+          onChange={(event) => setWhen((event.target as HTMLSelectElement).value as KeyContext | '')}
+        >
+          <option value="">{t('keymap.anywhere')}</option>
+          {CONTEXTS.map((one) => (
+            <option key={one} value={one}>
+              {contextName(t, one)}
+            </option>
+          ))}
+        </select>
+
+        <label class="keymap-label">{t('keymap.where')}</label>
+        <div class="keymap-scopes">
+          {scopes.hosts.map((host) => (
+            <div class="keymap-scope-row" key={host}>
+              <span class="keymap-scope-host" title={t(`keymap.host.${host}`)}>
+                <HostIcon host={host} />
+              </span>
+              {scopes.oses.map((os) => (
+                <button
+                  key={os}
+                  class={`keymap-scope ${cells[host].includes(os) ? 'is-on' : ''}`}
+                  onClick={() => flip(host, os)}
+                >
+                  {t(`keymap.os.${os}`)}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div class="keymap-catch-row">
@@ -216,7 +289,11 @@ function Chord({
             setPicking(true);
           }}
         />
-        <button class="button" disabled={!ready} onClick={() => ready && onDone(bindingOf(binding, chord, command))}>
+        <button
+          class="button"
+          disabled={!ready}
+          onClick={() => ready && onDone(bindingOf(chord, command, when, scopes.where(cells)))}
+        >
           {t('keymap.apply')}
         </button>
         <button class="button" onClick={onCancel}>
@@ -254,13 +331,42 @@ function Chevron() {
   );
 }
 
-function bindingOf(was: KeyBinding | null, key: string, command: string): KeyBinding {
+function bindingOf(key: string, command: string, when: KeyContext | '', where?: KeyScope[]): KeyBinding {
   return {
     command,
     key: keymapRules.normalizeKey(key),
-    ...(was?.when ? { when: was.when } : {}),
-    ...(was?.where ? { where: was.where } : {}),
+    ...(when ? { when } : {}),
+    ...(where ? { where } : {}),
   };
+}
+
+const CONTEXTS: KeyContext[] = [
+  'editor',
+  'tree',
+  'search',
+  'projects',
+  'pick',
+  'prompt',
+  'menu',
+  'terminal',
+  'merge',
+  'settings',
+  'find',
+  'find-multiline',
+  'find-replace',
+  'find-files',
+  'find-files-mask',
+  'completion',
+  'branch-name',
+  'push',
+  'keys',
+  'keymap-edit',
+  'editable',
+];
+
+function contextName(t: IdeServices['t'], context: KeyContext): string {
+  const said = t(`keymap.context.${context}`);
+  return said === `keymap.context.${context}` ? context : said;
 }
 
 function commandLabel(t: IdeServices['t'], id: string): string {

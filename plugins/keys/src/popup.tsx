@@ -142,5 +142,5 @@ function commandName(t: IdeServices['t'], id: string): string {
 }
 
 function contextName(t: IdeServices['t'], context: KeyContext): string {
-  return t(`keys.context.${context}`);
+  return t(`keymap.context.${context}`);
 }
