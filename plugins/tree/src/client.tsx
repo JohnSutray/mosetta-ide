@@ -8,7 +8,7 @@ import { TreeFollow } from './follow.js';
 import { TreeTypeahead } from './typeahead.js';
 import { TreeMenuState } from './menu.js';
 import { Prompt as PromptState, TreeOps, TreeSelection } from './state.js';
-import { TREE_DEFAULTS } from './settings.js';
+import { TREE_DEFAULTS , TREE_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
 import { TINT_SCHEMA, TreeTints, type TintSource } from './tints.js';
 import { Prompt } from './prompt.js';
@@ -20,7 +20,7 @@ import SearchPlugin from '@mosetta/ide-plugin-search';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
 @registry({ key: 'tree.tint', schema: TINT_SCHEMA })
-@configSection({ section: 'tree', defaults: TREE_DEFAULTS })
+@configSection({ section: 'tree', defaults: TREE_DEFAULTS, schema: TREE_SCHEMA })
 @plugin({ title: 'plugin.tree' })
 export default class TreePlugin {
   private get docs(): DocPlugin {

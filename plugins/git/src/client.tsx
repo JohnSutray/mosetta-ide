@@ -7,7 +7,7 @@ import { Branches } from './branches.js';
 import { Push } from './push.js';
 import { HunkPopup } from './hunk-popup.js';
 import { BranchIcon, PushIcon } from './icons.js';
-import { GIT_DEFAULTS } from './settings.js';
+import { GIT_DEFAULTS , GIT_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
 import type {
   GitAction,
@@ -21,7 +21,7 @@ import DocPlugin from '@mosetta/ide-plugin-doc';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
-@configSection({ section: 'git', defaults: GIT_DEFAULTS })
+@configSection({ section: 'git', defaults: GIT_DEFAULTS, schema: GIT_SCHEMA })
 @plugin({ title: 'plugin.git' })
 export default class GitPlugin implements GitRemote {
   private get docs(): DocPlugin {

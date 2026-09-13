@@ -9,7 +9,7 @@ import { FindBar } from './find-bar.js';
 import { FindFiles, type FilesAsk, type FindFilesRemote } from './files.js';
 import { FindFilesPopup } from './files-popup.js';
 import type { GrepResult } from './grep.js';
-import { FIND_DEFAULTS } from './settings.js';
+import { FIND_DEFAULTS , FIND_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
 import { FindFilesIcon } from './icons.js';
 import DocPlugin from '@mosetta/ide-plugin-doc';
@@ -18,7 +18,7 @@ import UiPlugin from '@mosetta/ide-plugin-ui';
 
 export type { FileHit, GrepResult } from './grep.js';
 
-@configSection({ section: 'find', defaults: FIND_DEFAULTS })
+@configSection({ section: 'find', defaults: FIND_DEFAULTS, schema: FIND_SCHEMA })
 @plugin({ title: 'plugin.find' })
 export default class FindPlugin implements FindFilesRemote {
   readonly find = new FindState();

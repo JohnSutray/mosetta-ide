@@ -6,12 +6,12 @@ import { TerminalIcon } from './icon.js';
 import ThemePlugin from '@mosetta/ide-plugin-theme';
 import { TerminalView } from './view.js';
 import { Chips } from './chips.js';
-import { TERMINAL_DEFAULTS } from './settings.js';
+import { TERMINAL_DEFAULTS , TERMINAL_SCHEMA} from './settings.js';
 import xtermCss from '@xterm/xterm/css/xterm.css?raw';
 import { STYLE } from './style.js';
 import type { Attached, OpenAsk, ShellInfo, TerminalInfo } from './types.js';
 
-@configSection({ section: 'terminal', defaults: TERMINAL_DEFAULTS })
+@configSection({ section: 'terminal', defaults: TERMINAL_DEFAULTS, schema: TERMINAL_SCHEMA })
 @plugin({ title: 'plugin.terminal' })
 export default class TerminalPlugin {
   private readonly list = signal<TerminalInfo[]>([]);

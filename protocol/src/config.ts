@@ -10,6 +10,20 @@ export interface FsSettings {
   watchDebounceMs: number;
 }
 
+export const FS_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    hidden: { type: 'array', items: { type: 'string' } },
+    noScan: { type: 'array', items: { type: 'string' } },
+    maxFileMb: { type: 'number' },
+    preloadBudgetMb: { type: 'number' },
+    textExtensions: { type: 'array', items: { type: 'string' } },
+    watch: { type: 'boolean' },
+    watchDebounceMs: { type: 'number' },
+  },
+} as const;
+
 export interface PluginSettings {
   enabled: string[];
 }

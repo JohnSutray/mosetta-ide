@@ -13,7 +13,7 @@ interface Schema {
 }
 
 export class Registry {
-  private readonly entries = new Map<string, Signal<Entry[]>>();
+  private readonly slots = new Map<string, Signal<Entry[]>>();
   private readonly schemas = new Map<string, Schema>();
   private readonly views = new Map<string, ReadonlySignal<unknown[]>>();
   private readonly ajv = new Ajv({ allErrors: true, strict: false });
@@ -30,17 +30,23 @@ export class Registry {
     }
     if (!schema) return;
     this.schemas.set(key, { by, validate: this.ajv.compile(schema), spec: schema });
-    for (const entry of this.slot(key).peek()) this.check(key, entry);
+    const slot = this.slot(key);
+    const kept = slot.peek().filter((entry) => this.check(key, entry));
+    if (kept.length !== slot.peek().length) slot.value = kept;
   }
 
   add<T>(key: string, value: T, by: string): () => void {
     const entry: Entry = { by, value };
+    if (!this.check(key, entry)) return () => undefined;
     const slot = this.slot(key);
-    this.check(key, entry);
     slot.value = [...slot.value, entry];
     return () => {
       slot.value = slot.value.filter((item) => item !== entry);
     };
+  }
+
+  entries<T>(key: string): ReadonlySignal<Array<{ by: string; value: T }>> {
+    return this.slot(key) as unknown as ReadonlySignal<Array<{ by: string; value: T }>>;
   }
 
   all<T>(key: string): ReadonlySignal<T[]> {
@@ -53,33 +59,48 @@ export class Registry {
     return view as ReadonlySignal<T[]>;
   }
 
+  inspect(key: string, value: unknown): { paths: string[]; why: string } | null {
+    const schema = this.schemas.get(key);
+    if (!schema || schema.validate(value)) return null;
+    const paths = [...new Set((schema.validate.errors ?? []).map((error) => pathOf(error)))].filter(Boolean);
+    return { paths, why: why(schema.validate) };
+  }
+
   describe(): Array<{ key: string; schema?: object; declaredBy?: string; count: number }> {
-    const keys = new Set([...this.entries.keys(), ...this.schemas.keys()]);
+    const keys = new Set([...this.slots.keys(), ...this.schemas.keys()]);
     return [...keys].sort().map((key) => {
       const schema = this.schemas.get(key);
       return {
         key,
         ...(schema ? { schema: schema.spec, declaredBy: schema.by } : {}),
-        count: this.entries.get(key)?.peek().length ?? 0,
+        count: this.slots.get(key)?.peek().length ?? 0,
       };
     });
   }
 
   private slot(key: string): Signal<Entry[]> {
-    let found = this.entries.get(key);
+    let found = this.slots.get(key);
     if (!found) {
       found = signal<Entry[]>([]);
-      this.entries.set(key, found);
+      this.slots.set(key, found);
     }
     return found;
   }
 
-  private check(key: string, entry: Entry): void {
+  private check(key: string, entry: Entry): boolean {
     const schema = this.schemas.get(key);
-    if (!schema) return;
-    if (schema.validate(entry.value)) return;
+    if (!schema) return true;
+    if (schema.validate(entry.value)) return true;
     this.complain(`${entry.by} пишет в «${key}» запись не той формы: ${why(schema.validate)}`);
+    return false;
   }
+}
+
+function pathOf(error: { instancePath?: string; params?: unknown }): string {
+  const params = error.params as Record<string, unknown> | undefined;
+  const extra = params?.['additionalProperty'];
+  const base = error.instancePath ?? '';
+  return typeof extra === 'string' ? `${base}/${extra}` : base;
 }
 
 export function why(validate: ValidateFunction): string {

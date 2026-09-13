@@ -1,7 +1,15 @@
 import { render } from 'preact';
 import { effect } from '@preact/signals';
-import { SETTINGS_SCHEMA, type IdeServices, type SettingsEntry } from '@mosetta/ide-api/client';
-import { sectionOf } from '@mosetta/ide-api/section';
+import {
+  PROJECT_LAYER,
+  SETTINGS_SCHEMA,
+  settingsKey,
+  USER_LAYER,
+  type IdeServices,
+  type SettingsEntry,
+} from '@mosetta/ide-api/client';
+import { overlay } from '@mosetta/ide-api/section';
+import { SettingsLayers } from './state/settings-layers.js';
 import { RpcClient } from './rpc/client.js';
 import { Notifications } from './state/notifications.js';
 import { Config } from './state/config.js';
@@ -12,7 +20,7 @@ import { Session } from './state/session.js';
 import { Registry } from './state/registry.js';
 import { Plugins } from './state/plugins.js';
 import { RootMount, type MountOptions } from './state/mount.js';
-import { legacyNames } from '@mosetta/ide-protocol';
+import { FS_SCHEMA, legacyNames } from '@mosetta/ide-protocol';
 import { App } from './ui/app.js';
 
 export class Core {
@@ -32,6 +40,7 @@ export class Core {
   });
   readonly mount: RootMount;
   private coreDeclared = false;
+  private readonly layers = new SettingsLayers(this.store, (message) => this.notifications.complain(message));
   readonly services: IdeServices;
 
   constructor(
@@ -46,6 +55,7 @@ export class Core {
     });
     this.mount = new RootMount(root, options);
     this.services = this.serve();
+    this.session.onConfigChanged(() => this.applyLayers());
     this.store.declare('chrome.top', 'core');
     this.store.declare('chrome.main', 'core');
     this.store.declare('settings', 'core', SETTINGS_SCHEMA);
@@ -53,8 +63,19 @@ export class Core {
       const core = this.config.defaults.value;
       if (!core || this.coreDeclared) return;
       this.coreDeclared = true;
-      this.store.add<SettingsEntry>('settings', { section: 'fs', defaults: core.fs, owner: 'core', title: 'settings.core' }, 'core');
+      this.store.add<SettingsEntry>(
+        'settings',
+        { section: 'fs', defaults: core.fs, schema: FS_SCHEMA, owner: 'core', title: 'settings.core' },
+        'core',
+      );
+      this.store.declare(settingsKey('fs'), 'core', FS_SCHEMA);
+      this.store.add(settingsKey('fs'), core.fs, 'core');
     });
+  }
+
+  applyLayers(): void {
+    this.layers.apply(USER_LAYER, this.config.user.value);
+    this.layers.apply(PROJECT_LAYER, this.config.project.value);
   }
 
   start(): void {
@@ -67,7 +88,7 @@ export class Core {
   }
 
   private serve(): IdeServices {
-    const config = this.config;
+    const store = this.store;
     return {
       t: (key, params) => this.i18n.t(key, params),
       runCommand: (id) => this.commands.run(id),
@@ -81,11 +102,14 @@ export class Core {
         dismissAll: () => this.notifications.dismissAll(),
       },
       settings: this.config.settings,
-      settingsOf: (section, defaults) => ({
-        get value() {
-          return sectionOf(config.settings.value, section, defaults);
-        },
-      }),
+      settingsOf: (section, defaults) => {
+        const layers = store.entries<object>(settingsKey(section));
+        return {
+          get value() {
+            return layers.value.reduce<typeof defaults>((acc, one) => overlay(acc, one.value), defaults);
+          },
+        };
+      },
       project: this.session.attached,
       workspaces: {
         current: this.session.current,
@@ -126,8 +150,6 @@ export class Core {
         onRemoved: (handler) => this.rpc.on('doc.removed', handler),
       },
       mount: this.mount,
-      settingsFile: this.config.user,
-      projectFile: this.config.project,
       projectPath: this.config.projectFile,
       resetSetting: async (section, key) => {
         await this.rpc.call('config.reset', { section, key });

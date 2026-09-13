@@ -9,11 +9,13 @@ export function SettingsPopup({
   window: win,
   model,
   entries,
+  layersOf,
 }: {
   windows: Windows;
   window: SettingsWindow;
   model: SettingsModel;
   entries: { readonly value: readonly SettingsEntry[] };
+  layersOf: (section: string) => ReadonlyArray<{ by: string; value: unknown }>;
 }) {
   const ide = useIde();
   const t = useT();
@@ -24,11 +26,7 @@ export function SettingsPopup({
     const text = t(row.label);
     return text === row.label ? row.key : text;
   };
-  const groups = model.filter(
-    model.groups(entries.value, ide.settings.value, ide.settingsFile.value, ide.projectFile.value),
-    win.term.value,
-    label,
-  );
+  const groups = model.filter(model.groups(entries.value, layersOf), win.term.value, label);
   const fail = (err: unknown) => ide.notes.notify(err instanceof Error ? err.message : String(err), 'error');
   const write = (row: SettingRow, value: SettingValue) =>
     void ide.setSetting(row.section, row.key, value, row.at === 'project' ? 'project' : 'user').catch(fail);

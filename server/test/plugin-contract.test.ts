@@ -50,6 +50,14 @@ describe('контракт @mosetta/ide-api', () => {
     expect(marked.sort()).toEqual(BORROWED.sort());
   });
 
+  it('на столе лежат ровно те имена контракта, что обещаны плагину (ADR-0215)', () => {
+    const text = fs.readFileSync(path.resolve(here, '../../client/src/state/plugins.ts'), 'utf8');
+    const at = text.indexOf("'@mosetta/ide-api/client': {");
+    const body = text.slice(text.indexOf('{', at) + 1, text.indexOf('\n        },', at));
+    const onTable = [...body.matchAll(/^\s*(\w+)(?::\s*\w+)?,$/gm)].map((m) => m[1]!);
+    expect(onTable.sort()).toEqual(names.offered(source('client.ts')).sort());
+  });
+
   it('клиент кладёт на стол ровно то, для чего сервер делает заглушки', () => {
     const server = CORE_PROVIDED.filter((one) => one !== '@mosetta/ide-api/client');
     expect([...clientTable()].sort()).toEqual([...server].sort());

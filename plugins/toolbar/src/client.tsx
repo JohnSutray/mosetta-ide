@@ -1,13 +1,13 @@
 import { activate, configSection, plugin, registry, type Ide } from '@mosetta/ide-api/client';
 import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarWidget } from './schema.js';
-import { TOOLBAR_DEFAULTS } from './settings.js';
+import { TOOLBAR_DEFAULTS , TOOLBAR_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
 @registry({ key: 'toolbar.button', schema: BUTTON_SCHEMA })
 @registry({ key: 'toolbar.widget', schema: WIDGET_SCHEMA })
-@configSection({ section: 'toolbar', defaults: TOOLBAR_DEFAULTS })
+@configSection({ section: 'toolbar', defaults: TOOLBAR_DEFAULTS, schema: TOOLBAR_SCHEMA })
 @plugin({ title: 'plugin.toolbar' })
 export default class Toolbar {
   constructor(private readonly ide: Ide) {}

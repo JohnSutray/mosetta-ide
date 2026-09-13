@@ -15,3 +15,16 @@ export const EDITOR_DEFAULTS: EditorSettings = {
   caretWidth: 2,
   ligatures: false,
 };
+
+export const EDITOR_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    fontFamily: { type: 'string' },
+    fontSize: { type: 'number' },
+    tabSize: { type: 'number' },
+    lineNumbers: { type: 'boolean' },
+    caretWidth: { type: 'number' },
+    ligatures: { type: 'boolean' },
+  },
+} as const;

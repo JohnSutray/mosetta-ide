@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { configSection, plugin, type SettingsEntry } from '@mosetta/ide-api/client';
+import { configSection, plugin, PROJECT_LAYER, USER_LAYER, type SettingsEntry } from '@mosetta/ide-api/client';
 import { FakeHost } from '@mosetta/ide-api/testing';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 import SettingsPlugin from '../src/client.js';
@@ -31,9 +31,16 @@ describe('редактор настроек', () => {
     expect(entries[0]).toMatchObject({ section: 'toy', owner: '@mosetta/ide-plugin-toy', title: 'plugin.toy' });
   });
 
+  function layers(user?: object, project?: object) {
+    return () => [
+      ...(user ? [{ by: USER_LAYER, value: user }] : []),
+      ...(project ? [{ by: PROJECT_LAYER, value: project }] : []),
+    ];
+  }
+
   it('вид поля выводится из умолчания, варианты делают выбор', async () => {
     const { entries } = await raise();
-    const [group] = new SettingsModel().groups(entries, null, {});
+    const [group] = new SettingsModel().groups(entries, layers());
     expect(group!.title).toBe('plugin.toy');
     expect(Object.fromEntries(group!.rows.map((row) => [row.key, row.kind]))).toEqual({
       on: 'boolean',
@@ -48,7 +55,7 @@ describe('редактор настроек', () => {
 
   it('своё значение — из файла и помечено; сбрасывать есть что только у него', async () => {
     const { entries } = await raise();
-    const [group] = new SettingsModel().groups(entries, { toy: { size: 14 } }, { toy: { size: 14 } });
+    const [group] = new SettingsModel().groups(entries, layers({ size: 14 }));
     const size = group!.rows.find((row) => row.key === 'size')!;
     expect(size).toMatchObject({ value: 14, fallback: 12, overridden: true });
     expect(group!.rows.filter((row) => row.overridden).map((row) => row.key)).toEqual(['size']);
@@ -56,12 +63,7 @@ describe('редактор настроек', () => {
 
   it('проектное значение перебивает личное, и это видно по слою', async () => {
     const { entries } = await raise();
-    const [group] = new SettingsModel().groups(
-      entries,
-      { toy: { size: 14 } },
-      { toy: { size: 14, name: 'моё' } },
-      { toy: { size: 21 } },
-    );
+    const [group] = new SettingsModel().groups(entries, layers({ size: 14, name: 'моё' }, { size: 21 }));
     const rows = Object.fromEntries(group!.rows.map((row) => [row.key, row]));
     expect(rows.size, 'проектное побеждает').toMatchObject({ value: 21, at: 'project', overridden: true });
     expect(rows.name, 'личное — там, где проект молчит').toMatchObject({ value: 'моё', at: 'user', overridden: true });
@@ -70,7 +72,7 @@ describe('редактор настроек', () => {
 
   it('проекта нет — слоёв два', async () => {
     const { entries } = await raise();
-    const [group] = new SettingsModel().groups(entries, null, { toy: { size: 14 } });
+    const [group] = new SettingsModel().groups(entries, layers({ size: 14 }));
     const rows = Object.fromEntries(group!.rows.map((row) => [row.key, row]));
     expect(rows.size).toMatchObject({ value: 14, at: 'user' });
     expect(rows.name).toMatchObject({ at: 'default' });
@@ -79,7 +81,7 @@ describe('редактор настроек', () => {
   it('поиск — по надписи и по пути', async () => {
     const { entries } = await raise();
     const model = new SettingsModel();
-    const groups = model.groups(entries, null, {});
+    const groups = model.groups(entries, layers());
     const label = (row: { key: string }) => (row.key === 'on' ? 'Turn it on' : row.key);
     expect(model.filter(groups, 'toy.mas', label)[0]!.rows.map((row) => row.key)).toEqual(['masks']);
     expect(model.filter(groups, 'turn', label)[0]!.rows.map((row) => row.key)).toEqual(['on']);

@@ -27,7 +27,20 @@ import type {
   RegistryHandle,
 } from './client.js';
 
-export { activate, configSection, IdeProvider, plugin, registry, remote, stub, useIde, useT } from './client.js';
+export {
+  activate,
+  configSection,
+  IdeProvider,
+  plugin,
+  PROJECT_LAYER,
+  registry,
+  remote,
+  settingsKey,
+  stub,
+  useIde,
+  USER_LAYER,
+  useT,
+} from './client.js';
 
 export interface Tip {
   text: string;
@@ -153,8 +166,6 @@ export class FakeSurface implements IdeServices {
     };
   };
 
-  readonly settingsFile: Signal<Record<string, Record<string, unknown>>> = signal({});
-  readonly projectFile: Signal<Record<string, Record<string, unknown>>> = signal({});
   readonly projectPath: Signal<string | null> = signal('/tmp/stand/.mosetta/settings.json');
   readonly settingResets: Array<{ section: string; key: string }> = [];
   readonly resetSetting = async (section: string, key: string): Promise<void> => {
@@ -273,12 +284,14 @@ export class FakeRegistry {
     }
     if (!schema) return;
     this.schemas.set(key, { by, validate: this.ajv.compile(schema) });
-    for (const entry of this.slot(key).peek()) this.check(key, entry.by, entry.value);
+    const slot = this.slot(key);
+    const kept = slot.peek().filter((entry) => this.check(key, entry.by, entry.value));
+    if (kept.length !== slot.peek().length) slot.value = kept;
   }
 
   add<T>(key: string, value: T, by: string): () => void {
     const entry = { by, value };
-    this.check(key, by, value);
+    if (!this.check(key, by, value)) return () => undefined;
     const slot = this.slot(key);
     slot.value = [...slot.value, entry];
     return () => {
@@ -288,6 +301,10 @@ export class FakeRegistry {
 
   all<T>(key: string): T[] {
     return this.slot(key).value.map((entry) => entry.value as T);
+  }
+
+  layers<T>(key: string): Array<{ by: string; value: T }> {
+    return this.slot(key).value as Array<{ by: string; value: T }>;
   }
 
   authors(key: string): string[] {
@@ -307,10 +324,11 @@ export class FakeRegistry {
     return found;
   }
 
-  private check(key: string, by: string, value: unknown): void {
+  private check(key: string, by: string, value: unknown): boolean {
     const schema = this.schemas.get(key);
-    if (!schema || schema.validate(value)) return;
+    if (!schema || schema.validate(value)) return true;
     this.complain(`${by} пишет в «${key}» запись не той формы: ${why(schema.validate)}`);
+    return false;
   }
 }
 
@@ -354,8 +372,6 @@ export class FakeIde implements Ide {
   get fs() { return this.host.surface.fs; }
   get docs() { return this.host.surface.docs; }
   get mount() { return this.host.surface.mount; }
-  get settingsFile() { return this.host.surface.settingsFile; }
-  get projectFile() { return this.host.surface.projectFile; }
   get projectPath() { return this.host.surface.projectPath; }
   get resetSetting() { return this.host.surface.resetSetting; }
 
@@ -404,6 +420,9 @@ export class FakeIde implements Ide {
       add: (value: T) => store.add(key, value, name),
       get all() {
         return { get value() { return store.all<T>(key); } };
+      },
+      get entries() {
+        return { get value() { return store.layers<T>(key); } };
       },
     };
   }

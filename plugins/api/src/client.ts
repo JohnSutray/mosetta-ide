@@ -104,8 +104,6 @@ export interface IdeServices {
   readonly keymap: { readonly value: Keymap };
   readonly connected: { readonly value: boolean };
   readonly notes: NotesAccess;
-  readonly settingsFile: { readonly value: Record<string, Record<string, unknown>> };
-  readonly projectFile: { readonly value: Record<string, Record<string, unknown>> };
   readonly projectPath: { readonly value: string | null };
   readonly resetSetting: (section: string, key: string) => Promise<void>;
   readonly mount: Mount;
@@ -183,6 +181,7 @@ export interface RegistrySpec {
 export interface RegistryHandle<T> {
   add(value: T): () => void;
   readonly all: { readonly value: T[] };
+  readonly entries: { readonly value: Array<{ by: string; value: T }> };
 }
 
 export function registry(spec: RegistrySpec) {
@@ -196,10 +195,6 @@ export function registry(spec: RegistrySpec) {
 
 const declared = new WeakMap<object, RegistrySpec[]>();
 
-export function registriesOf(ctor: object): RegistrySpec[] {
-  return declared.get(ctor) ?? [];
-}
-
 export interface SettingField {
   options?: readonly string[];
 }
@@ -208,7 +203,15 @@ export interface SettingsSection {
   section: string;
   defaults: object;
   fields?: Record<string, SettingField>;
+  schema?: object;
 }
+
+export function settingsKey(section: string): string {
+  return `settings.${section}`;
+}
+
+export const USER_LAYER = 'settings.json';
+export const PROJECT_LAYER = '.mosetta/settings.json';
 
 export function configSection(spec: SettingsSection) {
   return function (target: object, ctx: ClassDecoratorContext): void {
@@ -239,27 +242,6 @@ export function plugin(spec: PluginSpec) {
 
 const passports = new WeakMap<object, PluginSpec>();
 
-export function passportOf(ctor: object): PluginSpec | null {
-  return passports.get(ctor) ?? null;
-}
-
-export function sectionsOf(ctor: object): SettingsSection[] {
-  return sections.get(ctor) ?? [];
-}
-
-export const SETTINGS_SCHEMA = {
-  type: 'object',
-  required: ['section', 'defaults', 'owner', 'title'],
-  additionalProperties: false,
-  properties: {
-    section: { type: 'string' },
-    defaults: { type: 'object' },
-    fields: { type: 'object' },
-    owner: { type: 'string' },
-    title: { type: 'string' },
-  },
-} as const;
-
 export function activate() {
   return function (method: () => unknown, ctx: ClassMethodDecoratorContext): void {
     void ctx;
@@ -285,6 +267,29 @@ export function remote(name?: string) {
 export function stub(): never {
   throw new Error('метод не подменён: забыт декоратор @remote?');
 }
+
+export function registriesOf(ctor: object): RegistrySpec[] {
+  return declared.get(ctor) ?? [];
+}
+export function passportOf(ctor: object): PluginSpec | null {
+  return passports.get(ctor) ?? null;
+}
+export function sectionsOf(ctor: object): SettingsSection[] {
+  return sections.get(ctor) ?? [];
+}
+export const SETTINGS_SCHEMA = {
+  type: 'object',
+  required: ['section', 'defaults', 'owner', 'title'],
+  additionalProperties: false,
+  properties: {
+    section: { type: 'string' },
+    defaults: { type: 'object' },
+    fields: { type: 'object' },
+    schema: { type: 'object' },
+    owner: { type: 'string' },
+    title: { type: 'string' },
+  },
+} as const;
 
 interface Hooks {
   start?: () => unknown;

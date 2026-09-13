@@ -1,7 +1,7 @@
 import { activate, configSection, plugin, remote, stub } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
-import { LSP_DEFAULTS } from './settings.js';
+import { LSP_DEFAULTS , LSP_SCHEMA} from './settings.js';
 import { Lsp } from './state.js';
 
 export { LSP_DEFAULTS, type LspServerSettings, type LspSettings } from './settings.js';
@@ -33,7 +33,7 @@ export type {
   TextEdit,
 } from './types.js';
 
-@configSection({ section: 'lsp', defaults: LSP_DEFAULTS })
+@configSection({ section: 'lsp', defaults: LSP_DEFAULTS, schema: LSP_SCHEMA })
 @plugin({ title: 'plugin.lsp' })
 export default class LspPlugin {
   private get docs(): DocPlugin {

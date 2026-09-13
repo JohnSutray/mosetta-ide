@@ -9,7 +9,7 @@ import { MethodNames } from './method-names.js';
 import { CodePainter } from './paint-line.js';
 import { plugin } from '@mosetta/ide-api/client';
 
-export { EDITOR_DEFAULTS, type EditorSettings } from './settings.js';
+export { EDITOR_DEFAULTS, EDITOR_SCHEMA, type EditorSettings } from './settings.js';
 export type { Chunk, CodeChunk } from './paint-line.js';
 export type { Hunk, HunkKind, Step } from './line-diff.js';
 export type { CodeViewProps } from './code-view.js';

@@ -19,6 +19,7 @@ export class Session {
 
   private restored = false;
   private everConnected = false;
+  private onConfig: (() => void) | null = null;
 
   constructor(
     private readonly rpc: RpcClient,
@@ -28,6 +29,10 @@ export class Session {
   ) {
     this.connected = rpc.connected;
     this.listen();
+  }
+
+  onConfigChanged(handler: () => void): void {
+    this.onConfig = handler;
   }
 
   owns(...parts: Array<{ reset(): void }>): void {
@@ -103,7 +108,10 @@ export class Session {
       this.everConnected = true;
     });
 
-    this.rpc.on('config.changed', (bundle) => this.config.apply(bundle));
+    this.rpc.on('config.changed', (bundle) => {
+      this.config.apply(bundle);
+      this.onConfig?.();
+    });
 
     this.rpc.on('workspace.list', (list) => {
       this.workspaces.value = list;

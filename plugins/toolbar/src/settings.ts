@@ -15,3 +15,9 @@ export const TOOLBAR_DEFAULTS: ToolbarSettings = {
     'tree.follow',
   ],
 };
+
+export const TOOLBAR_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: { order: { type: 'array', items: { type: 'string' } } },
+} as const;

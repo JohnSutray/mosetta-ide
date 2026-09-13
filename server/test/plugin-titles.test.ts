@@ -26,4 +26,21 @@ describe('паспорта плагинов', () => {
     }
     expect(missing).toEqual([]);
   });
+
+  it('у каждого объявленного раздела настроек есть схема значения (ADR-0215)', () => {
+    const missing: string[] = [];
+    for (const dir of fs.readdirSync(plugins)) {
+      const file = path.join(plugins, dir, 'package.json');
+      if (!fs.existsSync(file)) continue;
+      const pkg = JSON.parse(fs.readFileSync(file, 'utf8')) as { name: string; ide?: { client?: string } };
+      if (!pkg.ide?.client) continue;
+      const source = fs.readFileSync(path.join(plugins, dir, pkg.ide.client), 'utf8');
+      for (const found of source.matchAll(/@configSection\(\{([^}]*)\}\)/g)) {
+        const spec = found[1] ?? '';
+        const section = /section:\s*'([^']+)'/.exec(spec)?.[1] ?? '?';
+        if (!/schema:\s*\w+/.test(spec)) missing.push(`${pkg.name}: раздел «${section}» без схемы значения`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
 });

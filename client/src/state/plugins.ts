@@ -9,6 +9,9 @@ import {
   hooksOf,
   registriesOf,
   sectionsOf,
+  settingsKey,
+  USER_LAYER,
+  PROJECT_LAYER,
   configSection,
   passportOf,
   plugin as pluginHook,
@@ -67,6 +70,9 @@ export class Plugins {
           registry: registryHook,
           configSection,
           plugin: pluginHook,
+          settingsKey,
+          USER_LAYER,
+          PROJECT_LAYER,
         },
       },
     };
@@ -109,6 +115,8 @@ export class Plugins {
       if (!title) this.deps.notes.complain(`${one.name}: у плагина нет названия — @plugin({ title }) (ADR-0213)`);
       for (const spec of sectionsOf(one.ctor)) {
         registry.add('settings', { ...spec, owner: one.name, title: title ?? one.name }, one.name);
+        registry.declare(settingsKey(spec.section), one.name, spec.schema);
+        registry.add(settingsKey(spec.section), spec.defaults, one.name);
       }
     }
     for (const one of built) {
@@ -172,6 +180,9 @@ export class Plugins {
           add: (value: T) => store_.add(key, value, name),
           get all() {
             return store_.all<T>(key);
+          },
+          get entries() {
+            return store_.entries<T>(key);
           },
         };
       },

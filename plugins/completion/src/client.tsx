@@ -9,7 +9,7 @@ import { ChoiceHistory } from './history.js';
 import { CompletionList } from './popup.js';
 import { Ranker } from './ranker.js';
 import { CompletionSession } from './session.js';
-import { COMPLETION_DEFAULTS, type CompletionSettings } from './settings.js';
+import { COMPLETION_DEFAULTS, type CompletionSettings , COMPLETION_SCHEMA} from './settings.js';
 import { BufferWords } from './sources/buffer.js';
 import { LspCompletions } from './sources/lsp.js';
 import { Postfix } from './sources/postfix.js';
@@ -21,7 +21,7 @@ import SearchPlugin from '@mosetta/ide-plugin-search';
 export type { Answer, Ask, Details, Item, ItemKind, Source } from './types.js';
 
 @registry({ key: 'completion.source', schema: SOURCE_SCHEMA })
-@configSection({ section: 'completion', defaults: COMPLETION_DEFAULTS })
+@configSection({ section: 'completion', defaults: COMPLETION_DEFAULTS, schema: COMPLETION_SCHEMA })
 @plugin({ title: 'plugin.completion' })
 export default class CompletionPlugin {
   private get docs(): DocPlugin {

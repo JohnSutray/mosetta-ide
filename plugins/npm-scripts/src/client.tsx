@@ -4,7 +4,7 @@ import UiPlugin, { ChoicePopup, PickPopup } from '@mosetta/ide-plugin-ui';
 import type { PackageManagerInfo } from './managers.js';
 import type { Opener } from '@mosetta/ide-plugin-search';
 import { NpmIcon } from './icon.js';
-import { TOOLS_DEFAULTS } from './settings.js';
+import { TOOLS_DEFAULTS , TOOLS_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
 import { scriptId } from './script-id.js';
 import TerminalPlugin from '@mosetta/ide-plugin-terminal';
@@ -17,7 +17,7 @@ export interface ScriptInfo {
   path: string;
 }
 
-@configSection({ section: 'tools', defaults: TOOLS_DEFAULTS })
+@configSection({ section: 'tools', defaults: TOOLS_DEFAULTS, schema: TOOLS_SCHEMA })
 @plugin({ title: 'plugin.npm-scripts' })
 export default class NpmScripts {
   private readonly open = signal(false);

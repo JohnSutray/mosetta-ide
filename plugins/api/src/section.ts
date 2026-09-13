@@ -1,5 +1,8 @@
 export function sectionOf<T extends object>(all: object | null | undefined, section: string, defaults: T): T {
-  const raw = (all as Record<string, unknown> | null | undefined)?.[section];
+  return overlay(defaults, (all as Record<string, unknown> | null | undefined)?.[section]);
+}
+
+export function overlay<T extends object>(defaults: T, raw: unknown): T {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ...(defaults as Record<string, unknown>) } as T;
   const out: Record<string, unknown> = { ...(defaults as Record<string, unknown>) };
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {

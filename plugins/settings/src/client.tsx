@@ -1,4 +1,4 @@
-import { activate, plugin, type Ide, type SettingsEntry } from '@mosetta/ide-api/client';
+import { activate, plugin, settingsKey, type Ide, type SettingsEntry } from '@mosetta/ide-api/client';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 import { SettingsIcon } from './icons.js';
 import { SettingsPopup } from './popup.js';
@@ -23,10 +23,17 @@ export default class SettingsPlugin {
       active: this.window.open,
     });
     const entries = this.ide.registry<SettingsEntry>('settings').all;
+    const layersOf = (section: string) => this.ide.registry<object>(settingsKey(section)).entries.value;
     this.ide
       .registry<() => unknown>('chrome.top')
       .add(() => (
-        <SettingsPopup windows={this.ide.getPlugin(UiPlugin).windows} window={this.window} model={this.model} entries={entries} />
+        <SettingsPopup
+          windows={this.ide.getPlugin(UiPlugin).windows}
+          window={this.window}
+          model={this.model}
+          entries={entries}
+          layersOf={layersOf}
+        />
       ));
   }
 }

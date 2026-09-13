@@ -31,9 +31,9 @@ export class ContractNames {
   }
 
   real(text: string): string[] {
-    return [...this.forPlugins(text).matchAll(/^export (?:abstract class|function) (\w+)/gm)].map(
-      (m) => m[1]!,
-    );
+    return [
+      ...this.forPlugins(text).matchAll(/^export (?:abstract class|function|const) (\w+)/gm),
+    ].map((m) => m[1]!);
   }
 
   offered(text: string): string[] {

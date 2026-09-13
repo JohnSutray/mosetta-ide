@@ -49,11 +49,31 @@ describe('реестр', () => {
     expect(complaints[0]).toContain('«comand»');
   });
 
-  it('запись не той формы всё равно ложится', () => {
-    const { registry } = store();
+  it('запись не той формы НЕ ложится (ADR-0215)', () => {
+    const { registry, complaints } = store();
     registry.declare('toolbar.button', 'core', BUTTON);
     registry.add('toolbar.button', { id: 'tree' }, '@mosetta/ide-plugin-tree');
-    expect(registry.all('toolbar.button').value).toHaveLength(1);
+    expect(registry.all('toolbar.button').value).toHaveLength(0);
+    expect(complaints).toHaveLength(1);
+  });
+
+  it('запись, легшая до схемы, уходит, когда схема пришла', () => {
+    const { registry, complaints } = store();
+    registry.add('toolbar.button', { id: 'tree', command: 'panel.tree' }, '@mosetta/ide-plugin-tree');
+    registry.add('toolbar.button', { id: 'git' }, '@mosetta/ide-plugin-git');
+    registry.declare('toolbar.button', 'core', BUTTON);
+    expect(registry.all<{ id: string }>('toolbar.button').value.map((one) => one.id)).toEqual(['tree']);
+    expect(complaints[0]).toContain('@mosetta/ide-plugin-git');
+  });
+
+  it('авторство записи видно отдельно от значения', () => {
+    const { registry } = store();
+    registry.add('settings.lsp', { startOnOpen: true }, '@mosetta/ide-plugin-lsp');
+    registry.add('settings.lsp', { startOnOpen: false }, 'settings.json');
+    expect(registry.entries<{ startOnOpen: boolean }>('settings.lsp').value).toEqual([
+      { by: '@mosetta/ide-plugin-lsp', value: { startOnOpen: true } },
+      { by: 'settings.json', value: { startOnOpen: false } },
+    ]);
   });
 
   it('две схемы на один ключ — жалоба с именем первого', () => {

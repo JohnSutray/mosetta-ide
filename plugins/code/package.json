@@ -12,7 +12,8 @@
   "ide": {
     "client": "src/client.tsx",
     "shares": [
-      "EDITOR_DEFAULTS"
+      "EDITOR_DEFAULTS",
+      "EDITOR_SCHEMA"
     ],
     "strings": "src/en.json"
   },

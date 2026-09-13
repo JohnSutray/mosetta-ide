@@ -4,7 +4,7 @@ import type { Ide } from '@mosetta/ide-api/client';
 import { SearchIcon } from './icons.js';
 import { SearchEverywhere } from './popup.js';
 import { Search, type SearchRemote } from './state.js';
-import { INDEX_DEFAULTS } from './settings.js';
+import { INDEX_DEFAULTS , INDEX_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
 import { OPENER_SCHEMA, type IndexHit, type IndexKind, type Opener } from './types.js';
 import { layout } from './layout.js';
@@ -19,7 +19,7 @@ export { matcher, Matcher, type Match } from './matcher.js';
 export { textIndex, TextIndex, type Indexed } from './text.js';
 
 @registry({ key: 'search.opener', schema: OPENER_SCHEMA })
-@configSection({ section: 'index', defaults: INDEX_DEFAULTS })
+@configSection({ section: 'index', defaults: INDEX_DEFAULTS, schema: INDEX_SCHEMA })
 @plugin({ title: 'plugin.search' })
 export default class SearchPlugin implements SearchRemote {
   readonly layout = layout;
