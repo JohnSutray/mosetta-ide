@@ -5,7 +5,7 @@ import { FACTORY_KEYMAP, KEYMAP_SCHEMA } from './keymap.js';
 import { keymapRules } from './rules.js';
 import { KeymapEditor } from './editor.jsx';
 import { STYLE } from './style.js';
-import type { KeyBinding, KeyContext, KeyHost, KeyOs, KeyScope, Keymap } from './types.js';
+import type { KeyBinding, KeyContext, KeyHost, KeyOs, KeyScope, Keymap, TipsLike } from './types.js';
 import { keyContexts } from './context.js';
 import { Dispatcher, keyRules } from './dispatcher.js';
 import { KeysEcho, type KeyEcho } from './echo.js';
@@ -20,7 +20,7 @@ export { keyHost, KeyHostInfo } from './host.js';
 export { reserved } from './reserved.js';
 export type { KeyEcho } from './echo.js';
 export type { ReservedKey as TakenKey } from './reserved.js';
-export type { KeyBinding, KeyContext, KeyHost, KeyOs, KeyScope, Keymap } from './types.js';
+export type { KeyBinding, KeyContext, KeyHost, KeyOs, KeyScope, Keymap, TipsLike } from './types.js';
 export { keymapRules } from './rules.js';
 export { FACTORY_KEYMAP, KEYMAP_SCHEMA } from './keymap.js';
 
@@ -100,6 +100,10 @@ export default class KeymapPlugin {
       },
     },
   }))(this);
+
+  get tips(): TipsLike | null {
+    return this.ide.registry<TipsLike>('ui.tips').all.value[0] ?? null;
+  }
 
   keysFor(command: string): string[] {
     return keysFor(this.layout.value.bindings, command);

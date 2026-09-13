@@ -1,10 +1,10 @@
 export const STYLE = `
-.keymap-editor { --keymap-inset: 10px; display: flex; flex-direction: column; gap: 10px; padding: 4px 0 10px; }
+.keymap-editor { --keymap-inset: 14px; display: flex; flex-direction: column; gap: 10px; padding: 4px 0 10px; }
 .keymap-top { display: flex; align-items: center; gap: 8px; padding: 0 var(--keymap-inset); }
 .keymap-filter { box-sizing: border-box; width: 240px; }
 .keymap-rows {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+  grid-template-columns: max-content minmax(0, 1fr) max-content max-content max-content max-content;
   align-items: center; gap: 0 10px;
   padding: 0 var(--keymap-inset);
 }
@@ -15,18 +15,24 @@ export const STYLE = `
   cursor: pointer;
 }
 .keymap-row:hover { background: rgba(255, 255, 255, 0.03); }
+.keymap-row.is-head { cursor: default; color: var(--muted); font: 10px var(--ui-font); text-transform: uppercase; letter-spacing: .04em; }
+.keymap-row.is-head:hover { background: none; }
+.keymap-row.is-head .keymap-chord { padding-left: 16px; }
 .keymap-row.is-mine .keymap-command { color: var(--accent); }
 .keymap-chord { display: inline-flex; align-items: center; gap: 4px; }
 .keymap-chord .chevron { color: var(--divider); }
 .keymap-row:hover .keymap-chord .chevron, .keymap-chord .chevron.is-open { color: var(--muted); }
 .keymap-command { min-width: 0; color: var(--fg); font: 13px var(--ui-font); }
-.keymap-where { display: flex; align-items: center; gap: 4px; }
-.keymap-actions { display: flex; gap: 4px; }
+.keymap-context, .keymap-where, .keymap-tags { display: flex; align-items: center; gap: 4px; }
+.keymap-any { color: var(--muted); font: 11px var(--ui-font); opacity: .7; }
+.keymap-actions { display: flex; gap: 2px; justify-content: flex-end; }
 .keymap-act {
-  padding: 1px 7px; border: none; border-radius: 9px;
-  background: var(--control-bg); color: var(--muted); font: 11px var(--ui-font); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; padding: 0; border: none; border-radius: 5px;
+  background: transparent; color: var(--muted); cursor: pointer;
 }
-.keymap-act:hover { background: var(--control-bg-hover); color: var(--fg); }
+.keymap-act:hover { background: var(--control-bg); color: var(--fg); }
+.keymap-act.is-danger:hover { background: rgba(255, 107, 104, 0.14); color: var(--error); }
 .keymap-chip {
   display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 9px;
   background: var(--control-bg); color: var(--muted); font: 11px var(--mono, monospace); white-space: nowrap;
@@ -67,7 +73,7 @@ export const STYLE = `
 .keymap-hint.is-listening { color: var(--accent); }
 
 .keymap-label { color: var(--muted); font: 11px var(--ui-font); }
-.keymap-when { box-sizing: border-box; width: 190px; }
+.keymap-when { box-sizing: border-box; width: 190px; padding-right: 10px; }
 .keymap-scopes { display: flex; flex-direction: column; gap: 3px; }
 .keymap-scope-row { display: flex; align-items: center; gap: 3px; }
 .keymap-scope-host { display: inline-flex; color: var(--muted); padding-right: 2px; }
@@ -78,7 +84,6 @@ export const STYLE = `
 }
 .keymap-scope:hover { color: var(--fg); }
 .keymap-scope.is-on { background: var(--treesel); border-color: var(--treesel); color: #e8f1ff; }
-.keymap-command-input { box-sizing: border-box; width: 260px; }
 
 .keymap-board { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
 .keymap-board-row { display: flex; gap: 3px; }
@@ -91,7 +96,15 @@ export const STYLE = `
 }
 .keymap-cap.is-down { background: var(--treesel); border-color: var(--treesel); color: #e8f1ff; }
 
-.keymap-picks { display: flex; flex-direction: column; max-height: 180px; overflow: auto; }
+.keymap-combo { position: relative; flex: none; }
+.keymap-command-input { box-sizing: border-box; width: 260px; }
+.keymap-picks {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 5;
+  display: flex; flex-direction: column;
+  min-width: 100%; width: max-content; max-width: 620px; max-height: 240px; overflow: auto;
+  padding: 4px; border: 1px solid var(--divider); border-radius: 6px;
+  background: var(--panel-bg); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
 .keymap-pick {
   display: grid; grid-template-columns: max-content max-content minmax(0, 1fr);
   align-items: center; gap: 8px; padding: 3px 6px; border: none; border-radius: 4px;

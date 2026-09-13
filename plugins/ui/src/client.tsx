@@ -5,6 +5,9 @@ import { STYLE } from './style.js';
 import { fuzzy } from './fuzzy.js';
 import { matches } from './pick-popup.js';
 import { Windows, type KeyCapture } from './windows/windows.js';
+import type { Tips } from './windows/tips.js';
+
+const TIPS_SCHEMA = { type: 'object' } as const;
 
 const CAPTURE_SCHEMA = {
   type: 'object',
@@ -15,6 +18,7 @@ const CAPTURE_SCHEMA = {
 export * from './index.js';
 
 @registry({ key: 'ui.captures', schema: CAPTURE_SCHEMA })
+@registry({ key: 'ui.tips', schema: TIPS_SCHEMA })
 @plugin({ title: 'plugin.ui' })
 export default class UiPlugin {
   readonly fuzzy = fuzzy;
@@ -33,6 +37,7 @@ export default class UiPlugin {
   @activate() protected start(): void {
     this.ide.css(STYLE);
     this.ide.registry<() => unknown>('chrome.top').add(() => <Tip tips={this.windows.tips} />);
+    this.ide.registry<Tips>('ui.tips').add(this.windows.tips);
 
     const windows = this.windows;
     this.ide.command('pick.next', () => windows.activePick.value?.next());

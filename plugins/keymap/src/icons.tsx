@@ -53,3 +53,23 @@ export function OsIcon({ os }: { os: KeyOs }) {
     </svg>
   );
 }
+
+export function TrashIcon() {
+  return (
+    <svg width={13} height={13} viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width={1.1}>
+      <path d="M2.4 3.3h7.2" stroke-linecap="round" />
+      <path d="M4.7 3.3V2.2h2.6v1.1" />
+      <path d="M3.4 3.3l.5 6.1c0 .3.3.5.6.5h3c.3 0 .6-.2.6-.5l.5-6.1" stroke-linejoin="round" />
+      <path d="M5.1 5.2v3M6.9 5.2v3" stroke-linecap="round" />
+    </svg>
+  );
+}
+
+export function RevertIcon() {
+  return (
+    <svg width={13} height={13} viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width={1.1}>
+      <path d="M2.6 6a3.6 3.6 0 1 0 1.1-2.6" stroke-linecap="round" />
+      <path d="M2.1 1.9v2.2h2.2" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  );
+}

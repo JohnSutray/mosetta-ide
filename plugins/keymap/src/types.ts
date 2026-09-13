@@ -43,3 +43,8 @@ export interface Keymap {
 }
 
 export type SettingScope = 'user' | 'project';
+
+export interface TipsLike {
+  show(target: Element, title: string, keys?: string[]): void;
+  hide(): void;
+}
