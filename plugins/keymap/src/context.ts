@@ -1,4 +1,4 @@
-import type { KeyContext } from '@mosetta/ide-protocol';
+import type { KeyContext } from './types.js';
 
 export class KeyContexts {
   readonly attr = 'data-keys';

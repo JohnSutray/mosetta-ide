@@ -20,7 +20,7 @@ import { Session } from './state/session.js';
 import { Registry } from './state/registry.js';
 import { Plugins } from './state/plugins.js';
 import { RootMount, type MountOptions } from './state/mount.js';
-import { FS_SCHEMA, legacyNames } from '@mosetta/ide-protocol';
+import { COMMANDS, FS_SCHEMA, legacyNames } from '@mosetta/ide-protocol';
 import { App } from './ui/app.js';
 
 export class Core {
@@ -89,10 +89,19 @@ export class Core {
 
   private serve(): IdeServices {
     const store = this.store;
+    const plugins = this.plugins;
     return {
       t: (key, params) => this.i18n.t(key, params),
       runCommand: (id) => this.commands.run(id),
-      keymap: this.config.keymap,
+      knownCommands: {
+        get value() {
+          const all = new Map<string, string>(Object.entries(COMMANDS));
+          for (const one of plugins.list.value) {
+            for (const [id, about] of Object.entries(one.commands ?? {})) all.set(id, about);
+          }
+          return [...all].map(([id, about]) => ({ id, about })).sort((a, b) => a.id.localeCompare(b.id));
+        },
+      },
       connected: this.session.connected,
       notes: {
         all: this.notifications.notes,

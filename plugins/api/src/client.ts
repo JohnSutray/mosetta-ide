@@ -6,7 +6,6 @@ import type {
   DocState,
   DocVersion,
   EntryKind,
-  Keymap,
   Settings,
   WorkspaceInfo,
   SettingScope,
@@ -88,6 +87,7 @@ export interface HunkBox {
 export interface IdeServices {
   readonly t: (key: string, params?: Record<string, string | number>) => string;
   readonly runCommand: (id: string) => boolean;
+  readonly knownCommands: { readonly value: ReadonlyArray<{ id: string; about: string }> };
   readonly settings: { readonly value: Settings | null };
   readonly settingsOf: <T extends object>(section: string, defaults: T) => { readonly value: T };
   readonly project: { readonly value: WorkspaceInfo | null };
@@ -101,7 +101,7 @@ export interface IdeServices {
     scope?: SettingScope,
   ) => Promise<void>;
   readonly workspaces: WorkspacesAccess;
-  readonly keymap: { readonly value: Keymap };
+
   readonly connected: { readonly value: boolean };
   readonly notes: NotesAccess;
   readonly projectPath: { readonly value: string | null };
@@ -203,6 +203,7 @@ export interface SettingsSection {
   section: string;
   defaults: object;
   fields?: Record<string, SettingField>;
+  editor?: () => unknown;
   schema?: object;
 }
 
@@ -286,6 +287,7 @@ export const SETTINGS_SCHEMA = {
     defaults: { type: 'object' },
     fields: { type: 'object' },
     schema: { type: 'object' },
+    editor: {},
     owner: { type: 'string' },
     title: { type: 'string' },
   },

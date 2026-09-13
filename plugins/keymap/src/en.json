@@ -2,5 +2,19 @@
   "command.key.reserved": "Reserved key (does nothing)",
   "keys.unbound": "{key} does nothing. {help} lists every key.",
   "command.field.native": "Field: the browser handles it",
-  "plugin.keymap": "Keymap"
+  "plugin.keymap": "Keymap",
+  "settings.keymap.bindings": "Key bindings",
+  "settings.keymap.version": "Format version",
+  "keymap.filter": "Filter by key or command",
+  "keymap.add": "add a key",
+  "keymap.addTitle": "New binding",
+  "keymap.rebind": "Rebind",
+  "keymap.press": "press a shortcut",
+  "keymap.command": "command",
+  "keymap.apply": "apply",
+  "keymap.cancel": "cancel",
+  "keymap.restore": "factory",
+  "keymap.drop": "remove",
+  "keymap.mine": "mine",
+  "keymap.nothing": "Nothing matches"
 }

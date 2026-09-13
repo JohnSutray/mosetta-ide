@@ -6,6 +6,103 @@ export interface PatchResult {
   rewritten: boolean;
 }
 
+function valueEnd(text: string, at: number): number | null {
+  const first = text[at];
+  if (first === '"') return stringEnd(text, at);
+  if (first !== '{' && first !== '[') {
+    const flat = /^(?:true|false|null|-?\d+(?:\.\d+)?)/.exec(text.slice(at));
+    return flat ? at + flat[0].length : null;
+  }
+  let depth = 0;
+  for (let i = at; i < text.length; i += 1) {
+    const ch = text[i];
+    if (ch === '"') {
+      const end = stringEnd(text, i);
+      if (end === null) return null;
+      i = end - 1;
+      continue;
+    }
+    if (ch === '/' && text[i + 1] === '/') {
+      const line = text.indexOf('\n', i);
+      if (line === -1) return null;
+      i = line;
+      continue;
+    }
+    if (ch === '/' && text[i + 1] === '*') {
+      const close = text.indexOf('*/', i + 2);
+      if (close === -1) return null;
+      i = close + 1;
+      continue;
+    }
+    if (ch === '{' || ch === '[') depth += 1;
+    else if (ch === '}' || ch === ']') {
+      depth -= 1;
+      if (depth === 0) return i + 1;
+    }
+  }
+  return null;
+}
+
+function stringEnd(text: string, at: number): number | null {
+  for (let i = at + 1; i < text.length; i += 1) {
+    if (text[i] === '\\') {
+      i += 1;
+      continue;
+    }
+    if (text[i] === '"') return i + 1;
+  }
+  return null;
+}
+
+const ONE_LINE = 160;
+
+function render(value: SettingValue, indent: string): string {
+  const compact = JSON.stringify(value);
+  if (compact === undefined) return 'null';
+  const line = spaced(compact);
+  const rows = Array.isArray(value) && value.some((one) => typeof one === 'object' && one !== null);
+  if (!rows && (line.length + indent.length <= ONE_LINE || typeof value !== 'object' || value === null)) {
+    return line;
+  }
+  const inner = `${indent}  `;
+  const parts = Array.isArray(value)
+    ? value.map((one) => render(one, inner))
+    : Object.entries(value).map(([key, one]) => `${JSON.stringify(key)}: ${render(one, inner)}`);
+  const [open, close] = Array.isArray(value) ? ['[', ']'] : ['{', '}'];
+  return `${open}\n${inner}${parts.join(`,\n${inner}`)}\n${indent}${close}`;
+}
+
+function spaced(json: string): string {
+  let out = '';
+  let inString = false;
+  for (let i = 0; i < json.length; i += 1) {
+    const ch = json[i]!;
+    if (inString) {
+      out += ch;
+      if (ch === '\\') {
+        out += json[i + 1] ?? '';
+        i += 1;
+      } else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      out += ch;
+      continue;
+    }
+    if (ch === ':' || ch === ',') out += `${ch} `;
+    else if (ch === '{') out += '{ ';
+    else if (ch === '}') out += ' }';
+    else out += ch;
+  }
+  return out.replace(/\{ \}/g, '{}');
+}
+
+function indentAt(text: string, at: number): string {
+  const start = text.lastIndexOf('\n', at - 1) + 1;
+  return /^[ \t]*/.exec(text.slice(start, at))?.[0] ?? '';
+}
+
 function applied(text: string, section: string, key: string, value: SettingValue): boolean {
   try {
     const parsed = jsonc.parse<Record<string, Record<string, unknown>>>(text, 'settings.json');
@@ -21,7 +118,7 @@ function tryMinimal(
   key: string,
   value: SettingValue,
 ): string | null {
-  const quoted = JSON.stringify(value);
+  const quoted = render(value, '  ');
   const head = new RegExp(`("${section}"\\s*:\\s*\\{)`);
   const at = head.exec(text);
   if (!at) {
@@ -34,15 +131,14 @@ function tryMinimal(
   }
 
   const body = text.slice(at.index + at[0].length);
-  const field = new RegExp(
-    `("${key}"\\s*:\\s*)("(?:[^"\\\\]|\\\\.)*"|true|false|-?\\d+(?:\\.\\d+)?|\\[[^\\]]*\\])`,
-  );
+  const field = new RegExp(`("${key}"\\s*:\\s*)`);
   const found = field.exec(body);
   if (found) {
-    const prefix = found[1] ?? '';
-    const old = found[2] ?? '';
-    const start = at.index + at[0].length + found.index + prefix.length;
-    return text.slice(0, start) + quoted + text.slice(start + old.length);
+    const start = at.index + at[0].length + found.index + (found[1] ?? '').length;
+    const end = valueEnd(text, start);
+    if (end !== null) {
+      return text.slice(0, start) + render(value, indentAt(text, start)) + text.slice(end);
+    }
   }
   const start = at.index + at[0].length;
   const tail = body.trimStart().startsWith('}') ? '' : ',';
@@ -98,15 +194,17 @@ function tryRemove(text: string, section: string, key: string): string | null {
   const head = new RegExp(`"${section}"\\s*:\\s*\\{`).exec(text);
   if (!head) return null;
   const from = head.index + head[0].length;
-  const value = `(?:"(?:[^"\\\\]|\\\\.)*"|true|false|null|-?\\d+(?:\\.\\d+)?|\\[[^\\]]*\\])`;
   const body = text.slice(from);
-  const before = new RegExp(`,\\s*"${key}"\\s*:\\s*${value}`).exec(body);
-  if (before) return cut(text, from + before.index, from + before.index + before[0].length);
-  const after = new RegExp(`"${key}"\\s*:\\s*${value}[ \\t]*,`).exec(body);
-  if (after) return cut(text, from + after.index, from + after.index + after[0].length);
-  const alone = new RegExp(`"${key}"\\s*:\\s*${value}`).exec(body);
-  if (alone) return cut(text, from + alone.index, from + alone.index + alone[0].length);
-  return null;
+  const found = new RegExp(`"${key}"\\s*:\\s*`).exec(body);
+  if (!found) return null;
+  const start = from + found.index;
+  const end = valueEnd(text, start + found[0].length);
+  if (end === null) return null;
+  const comma = /^[ \t]*,/.exec(text.slice(end));
+  const room = /,\s*$/.exec(text.slice(from, start));
+  if (room) return cut(text, start - room[0].length, end);
+  if (comma) return cut(text, start, end + comma[0].length);
+  return cut(text, start, end);
 }
 
 function tryRemoveSection(text: string, section: string): string | null {

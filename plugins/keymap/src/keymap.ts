@@ -1,4 +1,6 @@
-{
+import type { Keymap } from './types.js';
+
+export const FACTORY_KEYMAP: Keymap = {
   "version": 2,
   "bindings": [
 
@@ -270,4 +272,27 @@
     { "command": "edit.addCursorBelow", "key": "alt+arrowdown", "when": "editor", "where": ["browser:mac", "electron:mac"] },
     { "command": "edit.addCursorBelow", "key": "control+arrowdown", "when": "editor", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] }
   ]
-}
+};
+
+export const KEYMAP_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    version: { type: 'number' },
+    bindings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['key'],
+        properties: {
+          command: { type: 'string' },
+          key: { type: 'string' },
+          when: { type: 'string' },
+          where: { type: 'array', items: { type: 'string' } },
+          remove: { const: true },
+        },
+      },
+    },
+  },
+} as const;

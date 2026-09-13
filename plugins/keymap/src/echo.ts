@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import type { KeyContext, Keymap } from '@mosetta/ide-protocol';
+import type { KeyContext, Keymap } from './types.js';
 import { keyHost } from './host.js';
 import { keyRules } from './dispatcher.js';
 

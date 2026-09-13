@@ -111,5 +111,7 @@ export const STYLE = `
 .settings-stop:disabled { opacity: 0.35; cursor: default; }
 .settings-hit { background: #6b5d2a; border-radius: 2px; color: #f2ecd8; font-weight: inherit; }
 
+.settings-own { grid-column: 1 / -1; min-width: 0; }
+
 .settings-empty { padding: 24px; color: var(--muted); text-align: center; }
 `;

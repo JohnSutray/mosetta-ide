@@ -1,7 +1,11 @@
-import { activate, plugin, registry } from '@mosetta/ide-api/client';
+import { activate, configSection, plugin, registry, settingsKey, USER_LAYER } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
-import type { KeyBinding, KeyContext, KeyHost, KeyOs, KeyScope } from '@mosetta/ide-protocol';
-import { effect } from '@preact/signals';
+import { computed, effect, type ReadonlySignal } from '@preact/signals';
+import { FACTORY_KEYMAP, KEYMAP_SCHEMA } from './keymap.js';
+import { keymapRules } from './rules.js';
+import { KeymapEditor } from './editor.jsx';
+import { STYLE } from './style.js';
+import type { KeyBinding, KeyContext, KeyHost, KeyOs, KeyScope, Keymap } from './types.js';
 import { keyContexts } from './context.js';
 import { Dispatcher, keyRules } from './dispatcher.js';
 import { KeysEcho, type KeyEcho } from './echo.js';
@@ -16,6 +20,11 @@ export { keyHost, KeyHostInfo } from './host.js';
 export { reserved } from './reserved.js';
 export type { KeyEcho } from './echo.js';
 export type { ReservedKey as TakenKey } from './reserved.js';
+export type { KeyBinding, KeyContext, KeyHost, KeyOs, KeyScope, Keymap } from './types.js';
+export { keymapRules } from './rules.js';
+export { FACTORY_KEYMAP, KEYMAP_SCHEMA } from './keymap.js';
+
+let keymapPlugin: KeymapPlugin | null = null;
 
 export interface InputMechanicsEntry {
   id: string;
@@ -28,17 +37,39 @@ const MECHANICS_SCHEMA = {
   properties: { id: { type: 'string' }, keys: {} },
 } as const;
 
+@configSection({
+  section: 'keymap',
+  defaults: FACTORY_KEYMAP,
+  schema: KEYMAP_SCHEMA,
+  editor: () => <KeymapEditor plugin={keymapPlugin!} />,
+})
 @registry({ key: 'keys.mechanics', schema: MECHANICS_SCHEMA })
 @plugin({ title: 'plugin.keymap' })
 export default class KeymapPlugin {
   readonly echo: KeysEcho;
   private dispatcher: Dispatcher | null = null;
 
+  readonly layout: ReadonlySignal<Keymap>;
+  readonly personal: ReadonlySignal<Keymap>;
+
   constructor(private readonly ide: Ide) {
+    keymapRules.speakThrough((message) => ide.notes.notify(message, 'error'));
+    const layers = ide.registry<Keymap>(settingsKey('keymap')).entries;
+    this.layout = computed(() =>
+      layers.value.reduce<Keymap>(
+        (all, one) => keymapRules.layer(all, keymapRules.validate(one.value)),
+        { version: 1, bindings: [] },
+      ),
+    );
+    this.personal = computed(() => {
+      const own = layers.value.find((one) => one.by === USER_LAYER)?.value;
+      return keymapRules.validate((own ?? null) as Keymap | null);
+    });
+    keymapPlugin = this;
     this.echo = new KeysEcho({
       sayOnce: (slot, message) => ide.sayOnce(slot, message),
       t: ide.t,
-      keymap: () => this.ide.keymap.value,
+      keymap: () => this.layout.value,
     });
   }
 
@@ -58,7 +89,7 @@ export default class KeymapPlugin {
     },
     bindings: {
       get value() {
-        return plugin.ide.keymap.value.bindings;
+        return plugin.layout.value.bindings;
       },
     },
     humanize: (key: string) => keyHost.humanize(key),
@@ -71,11 +102,11 @@ export default class KeymapPlugin {
   }))(this);
 
   keysFor(command: string): string[] {
-    return keysFor(this.ide.keymap.value.bindings, command);
+    return keysFor(this.layout.value.bindings, command);
   }
 
   chordHeld(command: string, event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean }): boolean {
-    return chordHeld(this.ide.keymap.value.bindings, command, event);
+    return chordHeld(this.layout.value.bindings, command, event);
   }
 
   primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
@@ -83,6 +114,7 @@ export default class KeymapPlugin {
   }
 
   @activate() protected start(): void {
+    this.ide.css(STYLE);
     this.ide.command('key.reserved', () => {});
     this.ide.command('field.native', () => {});
 
@@ -102,7 +134,7 @@ export default class KeymapPlugin {
         this.ide.mount,
       );
       const dispatcher = this.dispatcher;
-      effect(() => dispatcher.setKeymap(this.ide.keymap.value));
+      effect(() => dispatcher.setKeymap(this.layout.value));
     }
 
     this.ide

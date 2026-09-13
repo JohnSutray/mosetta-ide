@@ -4,8 +4,10 @@ import { defaults } from '../config/defaults.js';
 import type { Handler } from '../rpc/context.js';
 
 function kindOf(value: unknown): string | null {
-  if (Array.isArray(value)) return value.every((one) => typeof one === 'string') ? 'string[]' : null;
+  if (Array.isArray(value)) return value.every((one) => typeof one === 'string') ? 'string[]' : 'array';
+  if (value === null) return null;
   const kind = typeof value;
+  if (kind === 'object') return 'object';
   return kind === 'string' || kind === 'boolean' || kind === 'number' ? kind : null;
 }
 
@@ -16,7 +18,7 @@ function complaintFor(section: string, key: string, value: SettingValue): string
   const known = own[key];
   if (known === undefined) return `такой настройки нет: ${section}.${key}`;
   const expected = kindOf(known);
-  if (expected === null) return `${section}.${key} правят руками: это не строка, не число, не флаг и не список строк`;
+  if (expected === null) return `${section}.${key} правят руками: такое значение не записать`;
   if (expected !== kindOf(value)) return `${section}.${key} ждёт ${expected}`;
   return null;
 }
@@ -32,7 +34,7 @@ export class ConfigMethods {
       typeof params.key !== 'string' ||
       kindOf(params.value) === null
     ) {
-      throw RpcError.invalidParams('нужны section, key и value: строка, число, флаг или список строк');
+      throw RpcError.invalidParams('нужны section, key и value: скаляр, список или объект');
     }
     const value = typeof params.value === 'string' ? params.value.trim() : params.value;
     const complaint = complaintFor(params.section, params.key, value);

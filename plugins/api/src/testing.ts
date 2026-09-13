@@ -4,7 +4,6 @@ import type {
   DirEntry,
   DocState,
   DocVersion,
-  Keymap,
   Settings,
   WorkspaceInfo,
   SettingScope,
@@ -185,7 +184,6 @@ export class FakeSurface implements IdeServices {
   };
 
   tip: Tip | null = null;
-  readonly keymap: Signal<Keymap> = signal({ version: 1, bindings: [] });
   readonly connected: Signal<boolean> = signal(true);
   readonly notes = new FakeNotes();
 
@@ -259,6 +257,7 @@ export class FakeSurface implements IdeServices {
   };
 
   readonly runCommand = (id: string): boolean => this.host.run(id);
+  readonly knownCommands: Signal<Array<{ id: string; about: string }>> = signal([]);
 
   readonly setSetting = async (
     section: string,
@@ -360,12 +359,12 @@ export class FakeIde implements Ide {
 
   get t() { return this.host.surface.t; }
   get runCommand() { return this.host.surface.runCommand; }
+  get knownCommands() { return this.host.surface.knownCommands; }
   get settings() { return this.host.surface.settings; }
   get settingsOf() { return this.host.surface.settingsOf; }
   get setSetting() { return this.host.surface.setSetting; }
   get project() { return this.host.surface.project; }
   get workspaces() { return this.host.surface.workspaces; }
-  get keymap() { return this.host.surface.keymap; }
   get connected() { return this.host.surface.connected; }
   get notes() { return this.host.surface.notes; }
   get tree() { return this.host.surface.tree; }

@@ -1,4 +1,4 @@
-import type { KeyBinding } from '@mosetta/ide-protocol';
+import type { KeyBinding } from './types.js';
 import { keyHost } from './host.js';
 import { keyRules } from './dispatcher.js';
 

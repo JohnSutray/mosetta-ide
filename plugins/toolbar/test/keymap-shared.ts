@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import type { KeyBinding, KeyScope, Keymap } from '@mosetta/ide-protocol';
+import { FACTORY_KEYMAP } from '../../keymap/src/keymap.js';
+import type { KeyBinding, KeyScope, Keymap } from '../../keymap/src/types.js';
 
 export function keymap(): Keymap {
-  return read<Keymap>('../../../server/src/config/keymap.json');
+  return FACTORY_KEYMAP;
 }
 
 export function toolbarOrder(): string[] {

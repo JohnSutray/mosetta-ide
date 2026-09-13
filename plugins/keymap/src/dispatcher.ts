@@ -1,5 +1,5 @@
 import type { KeysEcho } from './echo.js';
-import type { KeyBinding, KeyContext, KeyScope, Keymap } from '@mosetta/ide-protocol';
+import type { KeyBinding, KeyContext, KeyScope, Keymap } from './types.js';
 import { keyHost } from './host.js';
 import { reserved } from './reserved.js';
 import type { Mount } from '@mosetta/ide-api/client';
@@ -8,7 +8,7 @@ export type ContextResolver = () => readonly KeyContext[];
 
 const CLIPBOARD = new Set<string>(['tree.copy', 'tree.cut', 'tree.paste']);
 
-const CAPTURING = new Set<KeyContext>(['keys']);
+const CAPTURING = new Set<KeyContext>(['keys', 'keymap-edit']);
 
 const OWNING = new Set<KeyContext>(['terminal']);
 

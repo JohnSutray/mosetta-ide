@@ -2,18 +2,11 @@ import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  isCommandId,
-  type ConfigBundle,
-  type KeyBinding,
-  type Keymap,
-  type Settings,
-} from '@mosetta/ide-protocol';
+import type { ConfigBundle, Settings } from '@mosetta/ide-protocol';
 import type { SettingValue } from '@mosetta/ide-protocol';
 import { journal } from '../log.js';
 import { defaults } from './defaults.js';
 import { jsonc } from './jsonc.js';
-import { LegacyKeymap } from './legacy.js';
 import { patch } from './patch.js';
 
 const log = journal.logger('config');
@@ -36,14 +29,12 @@ export class ConfigStore {
   static async load(dir = defaultConfigDir()): Promise<ConfigStore> {
     const store = new ConfigStore(dir, {
       settings: defaults.settings,
-      keymap: defaults.emptyKeymap,
       sources: [],
       user: {},
       defaults: defaults.settings,
       project: {},
       projectFile: null,
     });
-    await new LegacyKeymap(keymapRules).retire(dir);
     store.bundle = await store.read();
     return store;
   }
@@ -135,16 +126,11 @@ export class ConfigStore {
   }
 
   private async read(): Promise<ConfigBundle> {
-    const sources: string[] = [defaults.keymapFile];
+    const sources: string[] = [];
     const user = await this.readFile<Record<string, unknown>>('settings.json', sources);
-    const { keymap: personal, ...rest } = user ?? {};
-    const settings = mergeSettings(defaults.settings, rest as Partial<Settings>);
+    const settings = mergeSettings(defaults.settings, user as Partial<Settings>);
     return {
       settings,
-      keymap: keymapRules.layer(
-        keymapRules.validate(defaults.keymap()),
-        keymapRules.validate((personal ?? null) as Keymap | null),
-      ),
       sources,
       user: (user ?? {}) as Record<string, Record<string, unknown>>,
       defaults: defaults.settings,
@@ -192,110 +178,8 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-const ALIASES: Record<string, string> = {
-  cmd: 'meta',
-  command: 'meta',
-  win: 'meta',
-  windows: 'meta',
-  super: 'meta',
-  ctrl: 'control',
-  option: 'alt',
-  opt: 'alt',
-  esc: 'escape',
-  return: 'enter',
-};
-
 function defaultConfigDir(): string {
   if (process.env.IDE_CONFIG_DIR) return path.resolve(process.env.IDE_CONFIG_DIR);
   const here = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(here, '..', '..', '..', 'config');
 }
-
-export class KeymapRules {
-  validate(raw: Keymap | null): Keymap {
-    if (!raw || !Array.isArray(raw.bindings)) return defaults.emptyKeymap;
-    const seen = new Map<string, KeyBinding>();
-    const bindings: KeyBinding[] = [];
-
-    for (const binding of raw.bindings) {
-      const removal = binding?.remove === true;
-      if (!binding || typeof binding.key !== 'string' || (!removal && typeof binding.command !== 'string')) {
-        log.error(`битая строка раскладки: ${JSON.stringify(binding)}`);
-        continue;
-      }
-      if (!removal && !isCommandId(binding.command)) {
-        log.debug(`раскладка: ${binding.command} — не наша команда, ждём плагин`);
-      }
-      const slot = this.slotOf(binding);
-      const previous = seen.get(slot);
-      if (previous) {
-        log.error(
-          `раскладка: ${binding.key} (${binding.when ?? 'global'}) занята ` +
-            `командой ${previous.command}, ${binding.command} проигнорирована`,
-        );
-        continue;
-      }
-      seen.set(slot, binding);
-      bindings.push({ ...binding, command: binding.command ?? '', key: this.normalizeKey(binding.key) });
-    }
-
-    return { version: raw.version ?? 1, bindings };
-  }
-
-  slotOf(binding: KeyBinding): string {
-    const where = [...(binding.where ?? [])].sort().join(',');
-    return `${where}|${binding.when ?? 'global'}:${this.normalizeKey(binding.key)}`;
-  }
-
-  layer(factory: Keymap, personal: Keymap): Keymap {
-    const order: string[] = [];
-    const bySlot = new Map<string, KeyBinding>();
-    const put = (binding: KeyBinding): void => {
-      const slot = this.slotOf(binding);
-      if (binding.remove) {
-        bySlot.delete(slot);
-        return;
-      }
-      if (!bySlot.has(slot)) order.push(slot);
-      bySlot.set(slot, binding);
-    };
-    for (const binding of factory.bindings) put(binding);
-    for (const binding of personal.bindings) put(binding);
-    return {
-      version: factory.version,
-      bindings: order.flatMap((slot) => {
-        const binding = bySlot.get(slot);
-        return binding ? [binding] : [];
-      }),
-    };
-  }
-
-  diff(factory: Keymap, mine: Keymap): Keymap {
-    const factorySlots = new Map(factory.bindings.map((binding) => [this.slotOf(binding), binding]));
-    const bindings: KeyBinding[] = [];
-    for (const binding of mine.bindings) {
-      const before = factorySlots.get(this.slotOf(binding));
-      if (!before || before.command !== binding.command) bindings.push(binding);
-    }
-    return { version: mine.version, bindings };
-  }
-
-  normalizeKey(key: string): string {
-    if (key.toLowerCase().startsWith('double:')) {
-      const name = key.slice('double:'.length).trim().toLowerCase();
-      return `double:${ALIASES[name] ?? name}`;
-    }
-    const parts = key
-      .toLowerCase()
-      .split('+')
-      .map((p) => p.trim())
-      .filter(Boolean)
-      .map((p) => ALIASES[p] ?? p);
-    const main = parts.pop() ?? '';
-    const order = ['meta', 'control', 'alt', 'shift'];
-    const mods = order.filter((m) => parts.includes(m));
-    return [...mods, main].join('+');
-  }
-}
-
-export const keymapRules = new KeymapRules();

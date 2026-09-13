@@ -1,7 +1,7 @@
 import type { Windows } from '@mosetta/ide-plugin-ui';
 import { useT, type IdeServices } from '@mosetta/ide-api/client';
 import { Fragment } from 'preact';
-import type { KeyBinding, KeyContext, KeyScope } from '@mosetta/ide-protocol';
+import type { KeyBinding, KeyContext, KeyScope } from '@mosetta/ide-plugin-keymap';
 import { Popup } from '@mosetta/ide-plugin-ui';
 import type { KeysWindow } from './state.js';
 import type KeymapPlugin from '@mosetta/ide-plugin-keymap';

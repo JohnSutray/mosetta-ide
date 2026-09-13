@@ -22,6 +22,7 @@ export interface SettingGroup {
   owner: string;
   title: string;
   rows: SettingRow[];
+  editor?: () => unknown;
 }
 
 export class SettingsModel {
@@ -40,7 +41,9 @@ export class SettingsModel {
   ): SettingGroup[] {
     const byOwner = new Map<string, SettingGroup>();
     for (const entry of entries) {
-      const group = byOwner.get(entry.owner) ?? { owner: entry.owner, title: entry.title, rows: [] };
+      const group =
+        byOwner.get(entry.owner) ??
+        ({ owner: entry.owner, title: entry.title, rows: [], ...(entry.editor ? { editor: entry.editor } : {}) } as SettingGroup);
       byOwner.set(entry.owner, group);
       const layers = layersOf(entry.section);
       const from = (layer: string): Record<string, unknown> =>

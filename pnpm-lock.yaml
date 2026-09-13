@@ -845,6 +845,9 @@ importers:
       '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
+      '@mosetta/ide-plugin-keymap':
+        specifier: workspace:*
+        version: link:../keymap
       '@mosetta/ide-protocol':
         specifier: workspace:*
         version: link:../../protocol

@@ -1,7 +1,4 @@
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import type { Keymap, Settings } from '@mosetta/ide-protocol';
-import { jsonc } from './jsonc.js';
+import type { Settings } from '@mosetta/ide-protocol';
 
 export class Defaults {
   readonly settings: Settings = {
@@ -49,18 +46,6 @@ export class Defaults {
       watchDebounceMs: 60,
     },
   };
-
-  readonly emptyKeymap: Keymap = { version: 1, bindings: [] };
-
-  private factory: Keymap | null = null;
-
-  readonly keymapFile = fileURLToPath(new URL('./keymap.json', import.meta.url));
-
-  keymap(): Keymap {
-    if (this.factory) return this.factory;
-    this.factory = jsonc.parse<Keymap>(fs.readFileSync(this.keymapFile, 'utf8'), this.keymapFile) ?? this.emptyKeymap;
-    return this.factory;
-  }
 }
 
 export const defaults = new Defaults();

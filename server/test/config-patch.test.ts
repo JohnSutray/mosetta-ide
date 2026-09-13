@@ -171,6 +171,46 @@ describe('сброс настройки к заводской (ADR-0213)', () =>
     expect(patch.unset(with_, 'find', 'maxHits').text).toBe(before);
   });
 
+  it('объект и массив объектов пишутся точечно, комментарии соседей целы (ADR-0216)', () => {
+    const before = [
+      '// мой конфиг',
+      '{',
+      '  // чем запускать',
+      '  "terminal": { "shell": "zsh" },',
+      '  "keymap": {',
+      '    "version": 1,',
+      '    // моя клавиша',
+      '    "bindings": [{ "command": "file.save", "key": "meta+s" }]',
+      '  }',
+      '}',
+      '',
+    ].join('\n');
+
+    const written = patch.setting(before, 'keymap', 'bindings', [
+      { command: 'file.save', key: 'meta+s' },
+      { command: 'keys.show', key: 'meta+9', when: 'global' },
+    ]);
+    expect(written.rewritten, 'точечно, а не пересборкой').toBe(false);
+    expect(written.text).toContain('// мой конфиг');
+    expect(written.text).toContain('// чем запускать');
+    expect(written.text).toContain('"shell": "zsh"');
+    expect(written.text).toContain('"keys.show"');
+    expect(written.text).toContain('"version": 1');
+
+    expect(written.text).toContain('      { "command": "file.save", "key": "meta+s" },');
+    expect(written.text.split('\n').filter((line) => line.includes('"command"'))).toHaveLength(2);
+  });
+
+  it('объектное значение пишется и убирается целиком', () => {
+    const before = `{\n  "lsp": {\n    "servers": { "typescript": { "enabled": true } }\n  }\n}\n`;
+    const written = patch.setting(before, 'lsp', 'servers', {
+      typescript: { enabled: false, args: ['--stdio'] },
+    });
+    expect(written.rewritten).toBe(false);
+    expect(written.text).toContain('"--stdio"');
+    expect(patch.unset(written.text, 'lsp', 'servers').text).toBe(`{\n}\n`);
+  });
+
   it('раздел с комментарием внутри пустым не считается', () => {
     const noisy = `{\n  "find": {\n    // тут будут маски\n    "maxHits": 500\n  }\n}\n`;
     expect(patch.unset(noisy, 'find', 'maxHits').text).toBe(`{\n  "find": {\n    // тут будут маски\n  }\n}\n`);

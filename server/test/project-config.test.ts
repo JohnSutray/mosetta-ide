@@ -103,9 +103,8 @@ describe('проектные настройки (ADR-0214)', () => {
     const other = await connect(server);
     await other.call('workspace.open', { root });
     const bundle = await other.call('config.get', null);
-    expect(bundle.project.keymap).toBeUndefined();
-    expect(bundle.keymap.bindings.some((b) => b.key === 'meta+k' && b.command === 'file.save')).toBe(false);
-    expect(bundle.keymap.bindings.length, 'заводская раскладка на месте').toBeGreaterThan(50);
+    expect(bundle.project.keymap, 'раздел keymap из проектного файла не берётся').toBeUndefined();
+    expect(bundle.settings.keymap, 'и в эффективные настройки не попадает').toBeUndefined();
     await other.close();
   });
 });

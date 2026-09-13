@@ -2,7 +2,7 @@ import { useIde, useT } from '@mosetta/ide-api/client';
 import type { Size } from './windows/geometry.js';
 import type { Windows } from './windows/windows.js';
 import type { ComponentChildren } from 'preact';
-import type { KeyContext } from '@mosetta/ide-protocol';
+import type { KeyContext } from '@mosetta/ide-plugin-keymap';
 import { useEffect, useRef } from 'preact/hooks';
 
 export function Popup({ windows,

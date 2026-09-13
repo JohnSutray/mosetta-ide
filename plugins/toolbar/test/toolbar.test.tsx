@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, of, nodes } from '@mosetta/ide-api/testing';
 import Toolbar from '../src/client.js';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
+import { settingsKey, USER_LAYER } from '@mosetta/ide-api/client';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
 const NAME = '@mosetta/ide-plugin-toolbar';
@@ -96,7 +97,11 @@ describe('тулбар', () => {
   });
 
   it('подсказка берёт клавиши из раскладки, а не из словаря', () => {
-    host.surface.keymap.value = { version: 1, bindings: [{ command: 'panel.tree', key: 'meta+1' }] };
+    host.registry.add(
+      settingsKey('keymap'),
+      { version: 1, bindings: [{ command: 'panel.tree', key: 'meta+1' }] },
+      USER_LAYER,
+    );
     host.registry.add('toolbar.button', wish('tree'), 'core');
     const button = of(top(), 'button')[0]!;
     (button.props['onMouseEnter'] as (e: unknown) => void)({

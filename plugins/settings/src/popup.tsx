@@ -75,7 +75,10 @@ export function SettingsPopup({
       <div class="settings-list">
         {groups.map((group) => (
           <Group key={group.owner} group={group} open={win.isOpen(group.owner)} onToggle={() => win.toggleGroup(group.owner)}>
-            {group.rows.map((row) => (
+            {group.editor ? (
+              <div class="settings-own">{group.editor() as preact.ComponentChildren}</div>
+            ) : null}
+            {!group.editor && group.rows.map((row) => (
               <div class={`settings-row ${row.overridden ? 'is-set' : ''}`} key={row.path}>
                 <span class="settings-chip is-path" title={row.path}>
                   <Hit text={row.path} term={win.term.value} model={model} />

@@ -5,6 +5,7 @@ import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import KeysPlugin from '../src/client.js';
 import { KeysSheet } from '../src/popup.js';
 import UiPlugin from '@mosetta/ide-plugin-ui';
+import { settingsKey, USER_LAYER } from '@mosetta/ide-api/client';
 
 let keys: KeymapPlugin['keys'];
 let windows: Windows;
@@ -20,14 +21,14 @@ async function raise() {
   await host.start();
   const mine = `${keys.host}:${keys.os}` as const;
   const alien = keys.os === 'win' ? 'browser:mac' : 'browser:win';
-  host.surface.keymap.value = {
+  host.registry.add(settingsKey('keymap'), {
     version: 1,
     bindings: [
       { command: 'file.save', key: 'meta+s', where: [mine] },
       { command: 'file.save', key: 'control+s', where: [alien] },
       { command: 'tree.next', key: 'arrowdown', when: 'tree' },
     ],
-  };
+  }, USER_LAYER);
   return { host, plugin };
 }
 

@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Mount } from '@mosetta/ide-api/client';
-import type { KeyContext } from '@mosetta/ide-protocol';
+import type { KeyContext } from '@mosetta/ide-plugin-keymap';
 import { Geometry, type Remember } from './geometry.js';
 import type { MenuApi } from './menu-state.js';
 import type { PickApi } from './pick.js';

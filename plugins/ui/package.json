@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-plugin-keymap": "workspace:*",
     "@mosetta/ide-protocol": "workspace:*"
   },
   "peerDependencies": {

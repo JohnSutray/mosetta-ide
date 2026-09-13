@@ -1,4 +1,4 @@
-import type { KeyBinding } from '@mosetta/ide-protocol';
+import type { KeyBinding } from './types.js';
 import { keyRules } from './dispatcher.js';
 
 function modifiersOf(bindings: readonly KeyBinding[], command: string): Set<string>[] {

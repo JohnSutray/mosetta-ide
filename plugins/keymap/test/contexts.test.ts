@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import type { Keymap } from '@mosetta/ide-protocol';
+import { FACTORY_KEYMAP } from '../src/keymap.js';
+import type { Keymap } from '../src/types.js';
 
 const SRC = fileURLToPath(new URL('../../../client/src', import.meta.url));
 const PLUGINS = fileURLToPath(new URL('../..', import.meta.url));
@@ -14,8 +15,7 @@ function pluginSources(): string[] {
     .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(PLUGINS, entry.name, 'src')))
     .flatMap((entry) => sources(path.join(PLUGINS, entry.name, 'src')));
 }
-const KEYMAP = fileURLToPath(new URL('../../../server/src/config/keymap.json', import.meta.url));
-const PROTOCOL = fileURLToPath(new URL('../../../protocol/src/config.ts', import.meta.url));
+const PROTOCOL = fileURLToPath(new URL('../src/types.ts', import.meta.url));
 
 function sources(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -38,12 +38,7 @@ function declared(): Set<string> {
 }
 
 function keymap(): Keymap {
-  const raw = fs.readFileSync(KEYMAP, 'utf8');
-  const clean = raw
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/,(\s*[}\]])/g, '$1');
-  return JSON.parse(clean) as Keymap;
+  return FACTORY_KEYMAP;
 }
 
 function registry(): Set<string> {

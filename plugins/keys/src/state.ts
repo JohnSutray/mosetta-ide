@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import type { KeyHost } from '@mosetta/ide-protocol';
+import type { KeyHost } from '@mosetta/ide-plugin-keymap';
 
 export class KeysWindow {
   readonly open = signal(false);
