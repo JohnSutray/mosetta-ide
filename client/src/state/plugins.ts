@@ -10,6 +10,7 @@ import {
   registriesOf,
   sectionsOf,
   settingsKey,
+  inLayerOrder,
   USER_LAYER,
   PROJECT_LAYER,
   configSection,
@@ -73,6 +74,7 @@ export class Plugins {
           settingsKey,
           USER_LAYER,
           PROJECT_LAYER,
+          inLayerOrder,
         },
       },
     };

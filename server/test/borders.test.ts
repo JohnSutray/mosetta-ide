@@ -18,6 +18,7 @@ const LANGUAGE: Record<string, readonly string[]> = {
     'PROJECT_LAYER',
     'registry',
     'remote',
+    'inLayerOrder',
     'settingsKey',
     'stub',
     'useIde',

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { PersonalKeymap } from '../src/personal.js';
+import { inLayerOrder, USER_LAYER } from '@mosetta/ide-api/client';
+import { PersonalKeymap, personalKeymap } from '../src/personal.js';
 import { keymapRules } from '../src/rules.js';
 import type { Keymap } from '../src/types.js';
 
@@ -67,5 +68,36 @@ describe('мои правки раскладки', () => {
     const added = mine.add(empty, { command: 'tree.open', key: 'enter' });
     expect(mine.isMine(added, { command: 'tree.open', key: 'enter', when: 'tree' })).toBe(false);
     expect(live(added).bindings.filter((one) => one.key === 'enter')).toHaveLength(2);
+  });
+});
+
+describe('стопка слоёв раскладки', () => {
+  const FACTORY: Keymap = {
+    version: 1,
+    bindings: [{ command: 'search.everywhere', key: 'double:shift' }],
+  };
+  const MINE: Keymap = {
+    version: 1,
+    bindings: [{ command: 'search.everywhere', key: 'double:shift', remove: true }],
+  };
+
+  function fold(stack: Array<{ by: string; value: Keymap }>): Keymap {
+    return inLayerOrder(stack).reduce<Keymap>(
+      (all, one) => keymapRules.layer(all, keymapRules.validate(one.value)),
+      { version: 1, bindings: [] },
+    );
+  }
+
+  it('снятие действует, в каком бы порядке слои ни легли', () => {
+    const factory = { by: '@mosetta/ide-plugin-keymap', value: FACTORY };
+    const mine = { by: USER_LAYER, value: MINE };
+    expect(fold([factory, mine]).bindings).toEqual([]);
+    expect(fold([mine, factory]).bindings, 'мой слой лёг в реестр первым').toEqual([]);
+  });
+
+  it('снятая строка не считается живой — иначе она в двух списках сразу', () => {
+    const live = fold([{ by: USER_LAYER, value: MINE }, { by: '@mosetta/ide-plugin-keymap', value: FACTORY }]);
+    expect(personalKeymap.removed(MINE)).toHaveLength(1);
+    expect(live.bindings.some((one) => one.command === 'search.everywhere')).toBe(false);
   });
 });

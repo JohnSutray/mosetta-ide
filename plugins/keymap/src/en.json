@@ -33,7 +33,7 @@
   "keymap.context.terminal": "Terminal",
   "keymap.context.tree": "Project tree",
   "keymap.drop": "remove",
-  "keymap.everywhere": "everywhere",
+  "keymap.everywhere": "at any platform",
   "keymap.filter": "Filter by key or command",
   "keymap.host.browser": "browser",
   "keymap.host.electron": "desktop",

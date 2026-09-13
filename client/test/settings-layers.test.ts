@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PROJECT_LAYER, settingsKey, USER_LAYER } from '@mosetta/ide-api/client';
+import { inLayerOrder, PROJECT_LAYER, settingsKey, USER_LAYER } from '@mosetta/ide-api/client';
 import { overlay } from '@mosetta/ide-api/section';
 import { Registry } from '../src/state/registry.js';
 import { SettingsLayers } from '../src/state/settings-layers.js';
@@ -25,9 +25,10 @@ function stand() {
 }
 
 function fold(store: Registry, section: string, defaults: object): object {
-  return store
-    .entries<object>(settingsKey(section))
-    .value.reduce<object>((acc, one) => overlay(acc, one.value), defaults);
+  return inLayerOrder(store.entries<object>(settingsKey(section)).value).reduce<object>(
+    (acc, one) => overlay(acc, one.value),
+    defaults,
+  );
 }
 
 describe('слои настроек', () => {
@@ -97,5 +98,29 @@ describe('слои настроек', () => {
 
     expect(store.entries(settingsKey('toy')).value).toHaveLength(0);
     expect(complaints[0]).toContain('@mosetta/ide-plugin-toy');
+  });
+
+  it('стопка выстраивается по АВТОРУ, а не по тому, кто лёг первым', () => {
+    const complaints: string[] = [];
+    const store = new Registry((message) => complaints.push(message));
+    store.declare(settingsKey('lsp'), '@mosetta/ide-plugin-lsp', LSP_SCHEMA);
+    const layers = new SettingsLayers(store, (message) => complaints.push(message));
+    layers.apply(USER_LAYER, { lsp: { startOnOpen: false } });
+    store.add(settingsKey('lsp'), DEFAULTS, '@mosetta/ide-plugin-lsp');
+
+    expect(
+      store.entries(settingsKey('lsp')).value.map((one) => one.by),
+      'в реестре они легли моим слоем вперёд',
+    ).toEqual([USER_LAYER, '@mosetta/ide-plugin-lsp']);
+    expect(fold(store, 'lsp', DEFAULTS)).toMatchObject({ startOnOpen: false });
+  });
+
+  it('проектное сильнее моего, а моё — заводского', () => {
+    const stack = [
+      { by: PROJECT_LAYER, value: 3 },
+      { by: '@mosetta/ide-plugin-lsp', value: 1 },
+      { by: USER_LAYER, value: 2 },
+    ];
+    expect(inLayerOrder(stack).map((one) => one.value)).toEqual([1, 2, 3]);
   });
 });

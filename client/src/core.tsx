@@ -1,6 +1,7 @@
 import { render } from 'preact';
 import { effect } from '@preact/signals';
 import {
+  inLayerOrder,
   PROJECT_LAYER,
   SETTINGS_SCHEMA,
   settingsKey,
@@ -117,7 +118,7 @@ export class Core {
         const layers = store.entries<object>(settingsKey(section));
         return {
           get value() {
-            return layers.value.reduce<typeof defaults>((acc, one) => overlay(acc, one.value), defaults);
+            return inLayerOrder(layers.value).reduce<typeof defaults>((acc, one) => overlay(acc, one.value), defaults);
           },
         };
       },

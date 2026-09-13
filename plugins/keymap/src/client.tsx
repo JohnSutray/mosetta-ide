@@ -1,4 +1,12 @@
-import { activate, configSection, plugin, registry, settingsKey, USER_LAYER } from '@mosetta/ide-api/client';
+import {
+  activate,
+  configSection,
+  inLayerOrder,
+  plugin,
+  registry,
+  settingsKey,
+  USER_LAYER,
+} from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
 import { FACTORY_KEYMAP, KEYMAP_SCHEMA } from './keymap.js';
@@ -56,7 +64,7 @@ export default class KeymapPlugin {
     keymapRules.speakThrough((message) => ide.notes.notify(message, 'error'));
     const layers = ide.registry<Keymap>(settingsKey('keymap')).entries;
     this.layout = computed(() =>
-      layers.value.reduce<Keymap>(
+      inLayerOrder(layers.value).reduce<Keymap>(
         (all, one) => keymapRules.layer(all, keymapRules.validate(one.value)),
         { version: 1, bindings: [] },
       ),

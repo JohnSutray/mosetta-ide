@@ -214,6 +214,11 @@ export function settingsKey(section: string): string {
 export const USER_LAYER = 'settings.json';
 export const PROJECT_LAYER = '.mosetta/settings.json';
 
+export function inLayerOrder<T>(entries: ReadonlyArray<{ by: string; value: T }>): Array<{ by: string; value: T }> {
+  const rank = (by: string): number => (by === USER_LAYER ? 1 : by === PROJECT_LAYER ? 2 : 0);
+  return [...entries].sort((a, b) => rank(a.by) - rank(b.by));
+}
+
 export function configSection(spec: SettingsSection) {
   return function (target: object, ctx: ClassDecoratorContext): void {
     void ctx;

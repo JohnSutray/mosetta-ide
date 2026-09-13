@@ -34,6 +34,7 @@ export {
   PROJECT_LAYER,
   registry,
   remote,
+  inLayerOrder,
   settingsKey,
   stub,
   useIde,
