@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { useIde, useT } from '@mosetta/ide-api/client';
 import type { IdeServices } from '@mosetta/ide-api/client';
-import { HostIcon } from './icons.jsx';
+import { HostIcon, OsIcon } from './icons.jsx';
 import { scopes } from './scopes.js';
 import { Keyboard } from './keyboard.jsx';
 import { personalKeymap } from './personal.js';
@@ -159,9 +159,18 @@ function Where({ where }: { where?: readonly KeyScope[] }) {
   return (
     <>
       {parts.map((one) => (
-        <span class="keymap-chip is-where" key={one.host} title={t(`keymap.host.${one.host}`)}>
+        <span
+          class="keymap-chip is-where"
+          key={one.host}
+          title={`${t(`keymap.host.${one.host}`)}: ${one.oses.map((os) => t(`keymap.os.${os}`)).join(', ')}`}
+        >
           <HostIcon host={one.host} />
-          {!one.all && one.oses.map((os) => <span class="keymap-os" key={os}>{t(`keymap.os.${os}`)}</span>)}
+          {!one.all &&
+            one.oses.map((os) => (
+              <span class="keymap-os" key={os}>
+                <OsIcon os={os} />
+              </span>
+            ))}
         </span>
       ))}
     </>
@@ -267,9 +276,10 @@ function Chord({
                 <button
                   key={os}
                   class={`keymap-scope ${cells[host].includes(os) ? 'is-on' : ''}`}
+                  title={`${t(`keymap.host.${host}`)}: ${t(`keymap.os.${os}`)}`}
                   onClick={() => flip(host, os)}
                 >
-                  {t(`keymap.os.${os}`)}
+                  <OsIcon os={os} />
                 </button>
               ))}
             </div>

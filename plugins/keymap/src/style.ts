@@ -33,7 +33,7 @@ export const STYLE = `
 }
 .keymap-chip.is-mine { color: var(--accent); }
 .keymap-chip.is-where { gap: 3px; color: var(--noscan); }
-.keymap-os { font: 10px var(--ui-font); }
+.keymap-os { display: inline-flex; align-items: center; }
 .keymap-kbd {
   display: inline-flex; align-items: center; padding: 1px 6px;
   border: 1px solid var(--divider); border-bottom-width: 2px; border-radius: 4px;
@@ -72,8 +72,9 @@ export const STYLE = `
 .keymap-scope-row { display: flex; align-items: center; gap: 3px; }
 .keymap-scope-host { display: inline-flex; color: var(--muted); padding-right: 2px; }
 .keymap-scope {
-  min-width: 42px; padding: 1px 6px; border: 1px solid var(--divider); border-radius: 4px;
-  background: transparent; color: var(--muted); font: 10px var(--ui-font); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 22px; padding: 0; border: 1px solid var(--divider); border-radius: 4px;
+  background: transparent; color: var(--muted); cursor: pointer;
 }
 .keymap-scope:hover { color: var(--fg); }
 .keymap-scope.is-on { background: var(--treesel); border-color: var(--treesel); color: #e8f1ff; }
