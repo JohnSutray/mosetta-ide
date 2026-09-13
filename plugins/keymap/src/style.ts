@@ -1,16 +1,21 @@
 export const STYLE = `
-.keymap-editor { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 10px; }
-.keymap-top { display: flex; align-items: center; gap: 8px; }
+.keymap-editor { --keymap-inset: 10px; display: flex; flex-direction: column; gap: 10px; padding: 4px 0 10px; }
+.keymap-top { display: flex; align-items: center; gap: 8px; padding: 0 var(--keymap-inset); }
 .keymap-filter { box-sizing: border-box; width: 240px; }
 .keymap-rows { display: flex; flex-direction: column; }
 
 .keymap-row {
   display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
-  align-items: center; gap: 10px; padding: 3px 0; border-radius: 4px;
+  align-items: center; gap: 10px; padding: 3px var(--keymap-inset); border-radius: 4px;
 }
 .keymap-row:hover { background: rgba(255, 255, 255, 0.03); }
 .keymap-row.is-mine .keymap-command { color: var(--accent); }
-.keymap-chord { padding: 0; border: none; background: transparent; cursor: pointer; }
+.keymap-chord {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 0; border: none; background: transparent; cursor: pointer;
+}
+.keymap-chord .chevron { color: var(--divider); }
+.keymap-row:hover .keymap-chord .chevron, .keymap-chord .chevron.is-open { color: var(--muted); }
 .keymap-command { min-width: 0; color: var(--fg); font: 13px var(--ui-font); }
 .keymap-where { display: flex; gap: 4px; }
 .keymap-actions { display: flex; gap: 4px; }

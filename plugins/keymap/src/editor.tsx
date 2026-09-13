@@ -76,6 +76,9 @@ export function KeymapEditor({ plugin }: { plugin: KeymapPlugin }) {
           return (
             <div class={`keymap-row ${own ? 'is-mine' : ''}`} key={`${keymapRules.slotOf(one)}:${one.command}`}>
               <button class="keymap-chord" onClick={() => setEditing(open ? null : one)}>
+                <span class={`chevron ${open ? 'is-open' : ''}`}>
+                  <Chevron />
+                </span>
                 <kbd class="keymap-kbd">{plugin.keys.humanize(one.key)}</kbd>
               </button>
               <span class="keymap-command">{commandLabel(t, one.command)}</span>
@@ -207,6 +210,14 @@ function Chord({
         </div>
       )}
     </div>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg width={12} height={12} viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width={1.5}>
+      <path d="M4.5 2.5 L8 6 L4.5 9.5" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
   );
 }
 
