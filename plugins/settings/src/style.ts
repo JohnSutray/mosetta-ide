@@ -55,8 +55,8 @@ export const STYLE = `
   background: var(--control-bg); color: var(--muted);
   font: 11px var(--mono, monospace); white-space: nowrap;
 }
-.settings-chip.is-path { max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
-.settings-chip.is-owner { overflow: hidden; text-overflow: ellipsis; }
+.settings-chip.is-path { justify-self: start; max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
+.settings-chip.is-owner { justify-self: start; overflow: hidden; text-overflow: ellipsis; }
 .settings-chip.is-value { color: var(--fg); padding-right: 3px; }
 .settings-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
 .settings-chip-x, .settings-chip-add {
