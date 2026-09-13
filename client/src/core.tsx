@@ -10,6 +10,7 @@ import {
 } from '@mosetta/ide-api/client';
 import { overlay } from '@mosetta/ide-api/section';
 import { SettingsLayers } from './state/settings-layers.js';
+import { SettingsWrite } from './state/settings-write.js';
 import { RpcClient } from './rpc/client.js';
 import { Notifications } from './state/notifications.js';
 import { Config } from './state/config.js';
@@ -41,6 +42,7 @@ export class Core {
   readonly mount: RootMount;
   private coreDeclared = false;
   private readonly layers = new SettingsLayers(this.store, (message) => this.notifications.complain(message));
+  private readonly writes = new SettingsWrite(this.store);
   readonly services: IdeServices;
 
   constructor(
@@ -164,15 +166,8 @@ export class Core {
         await this.rpc.call('config.reset', { section, key });
       },
       setSetting: async (section, key, value, scope) => {
-        const own = this.store.all<SettingsEntry>('settings').value.find((one) => one.section === section);
-        if (!own) throw new Error(`раздел настроек никто не объявил: ${section}`);
-        const known = (own.defaults as Record<string, unknown>)[key];
-        if (known === undefined) throw new Error(`такой настройки нет: ${section}.${key}`);
-        if (typeof known !== typeof value) throw new Error(`${section}.${key} ждёт ${typeof known}`);
-        const options = own.fields?.[key]?.options;
-        if (options && typeof value === 'string' && !options.includes(value)) {
-          throw new Error(`${section}.${key}: «${value}» — не из вариантов ${options.join(', ')}`);
-        }
+        const no = this.writes.complain(section, key, value, scope === 'project' ? PROJECT_LAYER : USER_LAYER);
+        if (no) throw new Error(no);
         await this.rpc.call('config.set', { section, key, value, scope });
       },
     };
