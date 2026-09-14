@@ -98,6 +98,11 @@ export const STYLE = `
 
 .keymap-combo { position: relative; flex: none; }
 .keymap-command-input { box-sizing: border-box; width: 260px; }
+.keymap-command-hint {
+  height: 14px; padding: 1px 2px 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--muted); font: 11px var(--ui-font);
+}
 .keymap-picks {
   position: absolute; top: calc(100% + 4px); left: 0; z-index: 5;
   display: flex; flex-direction: column;
@@ -106,11 +111,10 @@ export const STYLE = `
   background: var(--panel-bg); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 .keymap-pick {
-  display: grid; grid-template-columns: max-content max-content minmax(0, 1fr);
+  display: grid; grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center; gap: 8px; padding: 3px 6px; border: none; border-radius: 4px;
   background: transparent; color: var(--fg); font: 12px var(--ui-font); text-align: left; cursor: pointer;
 }
 .keymap-pick:hover, .keymap-pick.is-on { background: var(--control-bg); }
-.keymap-pick-name { white-space: nowrap; }
-.keymap-pick-about { overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.keymap-pick-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 `;

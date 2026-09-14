@@ -271,6 +271,7 @@ function Chord({
   const [chord, setChord] = useState(binding?.key ?? '');
   const [command, setCommand] = useState(binding?.command ?? '');
   const [listening, setListening] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [when, setWhen] = useState<KeyContext | ''>(binding?.when ?? '');
   const [cells, setCells] = useState(() => scopes.cells(binding?.where));
   const echo = plugin.keys.echo.value;
@@ -300,7 +301,12 @@ function Chord({
     );
   }, [commands, command, t]);
 
-  const ready = chord !== '' && commands.some((one) => one.id === command) && !scopes.empty(cells);
+  const chosen = useMemo(() => {
+    const id = command.trim();
+    return commands.some((one) => one.id === id) ? id : null;
+  }, [commands, command]);
+
+  const ready = chord !== '' && chosen !== null && !scopes.empty(cells);
 
   const flip = (host: KeyHost, os: KeyOs) => {
     const own = cells[host];
@@ -373,19 +379,22 @@ function Chord({
             placeholder={t('keymap.command')}
             value={command}
             spellcheck={false}
+            onFocus={() => setPicking(true)}
+            onBlur={() => setPicking(false)}
             onInput={(event) => setCommand((event.target as HTMLInputElement).value)}
           />
-          {matches.length > 0 && (
+          <div class="keymap-command-hint">{chosen ? commandLabel(t, chosen) : ''}</div>
+          {picking && matches.length > 0 && (
             <div class="keymap-picks" ref={picks}>
               {matches.map((one) => (
                 <button
                   class={`keymap-pick ${one.id === command ? 'is-on' : ''}`}
                   key={one.id}
+                  onMouseDown={(event) => event.preventDefault()}
                   onClick={() => setCommand(one.id)}
                 >
                   <span class="keymap-pick-name">{commandLabel(t, one.id)}</span>
                   <span class="keymap-chip">{one.id}</span>
-                  <span class="keymap-pick-about">{one.about}</span>
                 </button>
               ))}
             </div>
