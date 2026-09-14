@@ -83,7 +83,11 @@ export class PluginProject implements Project {
       owner: this.ws.root,
       reason: `${this.plugin}: ${ask.reason}`,
     });
-    return { child: handle.child, kill: (signal) => handle.kill(signal as NodeJS.Signals | undefined) };
+    return {
+      child: handle.child,
+      kill: (signal) => handle.kill(signal as NodeJS.Signals | undefined),
+      memoryMb: () => handle.memoryMb(),
+    };
   }
 }
 

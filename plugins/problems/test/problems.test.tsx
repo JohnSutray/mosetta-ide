@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, nodes, of } from '@mosetta/ide-api/testing';
-import LspPlugin, { type Diagnostic, type FileDiagnostics } from '@mosetta/ide-plugin-lsp';
+import LspPlugin, { type Diagnostic, type FileDiagnostics, type LspSweep } from '@mosetta/ide-plugin-lsp';
 import DocPlugin from '@mosetta/ide-plugin-doc';
 import Problems from '../src/client.js';
 
@@ -81,6 +81,63 @@ describe('панель ошибок', () => {
 
   it('пусто — так и говорит', () => {
     expect(nodes(view()).map((n) => n.props['children'])).toContain('problems.empty');
+  });
+
+  function setSweep(sweep: Partial<LspSweep>): void {
+    host.plugin(LspPlugin).lsp.statuses.value = [
+      {
+        server: 'ts',
+        state: 'ready',
+        openDocs: sweep.checked ?? 0,
+        sweep: { checked: 0, total: 0, mb: null, baseMb: null, budgetMb: 3072, stopped: null, ...sweep },
+      },
+    ];
+  }
+
+  const said = () =>
+    nodes(view()).flatMap((n) => [n.props['children']].flat()).map((one) => String(one));
+
+  it('говорит, что проверено не всё, — и громче всего когда ошибок нет', () => {
+    setSweep({ checked: 380, total: 2010, mb: 1600, budgetMb: 3072, stopped: 'budget' });
+    const texts = said();
+    expect(texts).toContain('problems.empty');
+    expect(texts).toContain('problems.partial.budget(checked=380,total=2010,mb=1600,budget=3072)');
+    expect(texts).toContain('lsp.memoryBudgetMb');
+  });
+
+  it('кнопка ведёт К НАСТРОЙКЕ, а не просто открывает настройки', () => {
+    const asked: string[] = [];
+    host.registry.add('settings.reveal', { id: 'settings', reveal: (q: string) => asked.push(q) }, '@mosetta/ide-plugin-settings');
+    setSweep({ checked: 380, total: 2010, mb: 3110, budgetMb: 3072, stopped: 'budget' });
+
+    const button = nodes(view()).find((one) => one.props['class'] === 'problems-raise');
+    (button!.props['onClick'] as () => void)();
+    expect(asked).toEqual(['memoryBudgetMb']);
+  });
+
+  it('бюджета не хватило на сам проект — говорит именно это', () => {
+    setSweep({ checked: 0, total: 2010, mb: 1800, baseMb: 1800, budgetMb: 3072, stopped: 'baseline' });
+    expect(said()).toContain('problems.partial.baseline(checked=0,total=2010,mb=1800,budget=3072)');
+  });
+
+  it('память не мерится — тоже своя фраза', () => {
+    setSweep({ checked: 2000, total: 8400, mb: null, budgetMb: 3072, stopped: 'blind' });
+    expect(said()).toContain('problems.partial.blind(checked=2000,total=8400,mb=0,budget=3072)');
+  });
+
+  it('обход ещё идёт — говорит, что идёт', () => {
+    setSweep({ checked: 200, total: 2010, mb: 900, budgetMb: 3072, stopped: null });
+    expect(said()).toContain('problems.sweeping(checked=200,total=2010,mb=900,budget=3072)');
+  });
+
+  it('обход прошёл целиком — молчим', () => {
+    setSweep({ checked: 8400, total: 8400, stopped: 'done' });
+    expect(said().some((one) => one.startsWith('problems.partial') || one.startsWith('problems.sweeping'))).toBe(false);
+  });
+
+  it('обхода ещё не было — тоже молчим', () => {
+    host.plugin(LspPlugin).lsp.statuses.value = [{ server: 'ts', state: 'starting', openDocs: 0 }];
+    expect(said().some((one) => one.startsWith('problems.partial'))).toBe(false);
   });
 
   it('показывает файлы целиком, а не только открытый', () => {

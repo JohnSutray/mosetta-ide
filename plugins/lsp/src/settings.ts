@@ -10,14 +10,16 @@ export interface LspServerSettings {
 export interface LspSettings {
   startOnOpen: boolean;
   checkProject: boolean;
-  checkProjectLimit: number;
+  memoryBudgetMb: number;
+  sweepIndicator: boolean;
   servers: Record<string, LspServerSettings>;
 }
 
 export const LSP_DEFAULTS: LspSettings = {
   startOnOpen: true,
   checkProject: true,
-  checkProjectLimit: 2000,
+  memoryBudgetMb: 3072,
+  sweepIndicator: true,
   servers: {},
 };
 
@@ -27,7 +29,8 @@ export const LSP_SCHEMA = {
   properties: {
     startOnOpen: { type: 'boolean' },
     checkProject: { type: 'boolean' },
-    checkProjectLimit: { type: 'number' },
+    memoryBudgetMb: { type: 'number' },
+    sweepIndicator: { type: 'boolean' },
     servers: {
       type: 'object',
       additionalProperties: {

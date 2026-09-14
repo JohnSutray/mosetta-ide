@@ -12,7 +12,10 @@
   "ide": {
     "client": "src/client.tsx",
     "server": "src/server.ts",
-    "strings": "src/en.json"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
+    }
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",

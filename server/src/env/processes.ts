@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { ProcessMemory } from './memory.js';
 import type { Exec } from './exec.js';
 import { journal } from '../log.js';
 
@@ -59,6 +60,7 @@ export interface Handle {
   readonly id: number;
   readonly child: ChildProcessWithoutNullStreams;
   kill(signal?: NodeJS.Signals): void;
+  memoryMb(): Promise<number | null>;
 }
 
 interface Entry {
@@ -77,6 +79,7 @@ export class Processes {
   constructor(
     private readonly userEnv: UserEnv,
     private readonly exec: Pick<Exec, 'plan'>,
+    private readonly memory: Pick<ProcessMemory, 'treeMb'> = new ProcessMemory(),
   ) {}
 
   run(spec: RunSpec): Promise<Ran> {
@@ -104,6 +107,7 @@ export class Processes {
       id,
       child,
       kill: (signal?: NodeJS.Signals) => this.stop(child, signal),
+      memoryMb: () => this.memory.treeMb(child.pid),
     };
   }
 

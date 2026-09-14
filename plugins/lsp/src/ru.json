@@ -1,0 +1,7 @@
+{
+  "lsp.sweep.about": "{server}: проверено {checked} файлов из {total}. Второе число — сколько памяти держит дерево его процессов. Щелчок откроет настройку бюджета",
+  "lsp.sweep.files": "{checked}/{total}",
+  "lsp.sweep.memory": "{mb}/{budget} МБ",
+  "settings.lsp.memoryBudgetMb": "Сколько памяти можно языковому серверу, МБ",
+  "settings.lsp.sweepIndicator": "Показывать обход проекта в тулбаре"
+}

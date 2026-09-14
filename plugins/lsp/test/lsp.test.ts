@@ -80,3 +80,54 @@ describe('языковой сервер у плагина', () => {
     expect(plugin.statuses.value.map((s) => s.state)).toEqual(['ready']);
   });
 });
+
+describe('индикатор обхода', () => {
+  function widget(): { id: string; side: string; view: () => unknown } | undefined {
+    return host.registry
+      .all<{ id: string; side: string; view: () => unknown }>('toolbar.widget')
+      .find((one) => one.id === 'lsp-sweep');
+  }
+
+  function say(sweep: Record<string, unknown> | null): void {
+    plugin.lsp.statuses.value = [
+      {
+        server: 'typescript',
+        state: 'ready',
+        openDocs: 0,
+        ...(sweep ? { sweep: sweep as never } : {}),
+      },
+    ];
+  }
+
+  it('просит место в тулбаре справа', () => {
+    expect(widget()?.side).toBe('right');
+  });
+
+  it('обхода не было — молчит', () => {
+    say(null);
+    expect(widget()!.view()).toBeNull();
+  });
+
+  it('настройка выключает его целиком', () => {
+    say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: null });
+    expect(widget()!.view()).not.toBeNull();
+    host.ide(NAME).settings.value = { lsp: { sweepIndicator: false } } as never;
+    expect(widget()!.view()).toBeNull();
+  });
+
+  it('щелчок ведёт к настройке бюджета, а не просто открывает настройки', () => {
+    const asked: string[] = [];
+    host.registry.add('settings.reveal', { id: 'settings', reveal: (q: string) => asked.push(q) }, '@mosetta/ide-plugin-settings');
+    say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: 'budget' });
+
+    const tree = widget()!.view() as { props: { children: Array<{ props: { onClick: () => void } }> } };
+    tree.props.children[0]!.props.onClick();
+    expect(asked).toEqual(['memoryBudgetMb']);
+  });
+
+  it('без плагина настроек щелчок ничего не ломает', () => {
+    say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: 'budget' });
+    const tree = widget()!.view() as { props: { children: Array<{ props: { onClick: () => void } }> } };
+    expect(() => tree.props.children[0]!.props.onClick()).not.toThrow();
+  });
+});

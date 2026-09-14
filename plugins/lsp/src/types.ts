@@ -31,6 +31,22 @@ export interface LspStatus {
   state: LspState;
   detail?: string;
   openDocs: number;
+  sweep?: LspSweep;
+}
+
+export type SweepStop =
+  | 'done'
+  | 'budget'
+  | 'baseline'
+  | 'blind';
+
+export interface LspSweep {
+  checked: number;
+  total: number;
+  mb: number | null;
+  baseMb: number | null;
+  budgetMb: number;
+  stopped: SweepStop | null;
 }
 
 export interface HoverInfo {
@@ -94,4 +110,13 @@ export interface CompletionDetails {
   detail?: string;
   documentation?: string;
   edits: TextEdit[];
+}
+
+export interface TipsLike {
+  show(target: Element, title: string, keys?: string[]): void;
+  hide(): void;
+}
+
+export interface RevealLike {
+  reveal(query: string): void;
 }

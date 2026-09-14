@@ -46,12 +46,12 @@ export class LspHost implements ProjectResource {
   }
 
   private async checkProject(server: LspServer): Promise<void> {
-    const { checkProject, checkProjectLimit } = this.ide.settings('lsp', LSP_DEFAULTS);
+    const { checkProject, memoryBudgetMb } = this.ide.settings('lsp', LSP_DEFAULTS);
     if (!checkProject) return;
     const skipped = new Set(this.ide.settings('fs', { noScan: [] as string[] }).noScan);
     const skip = (key: string): boolean => key.split('/').some((part) => skipped.has(part));
     try {
-      await server.checkProject(skip, checkProjectLimit);
+      await server.checkProject(skip, memoryBudgetMb);
     } catch (err) {
       this.ide.log.warn(`обход проекта не дошёл до конца: ${String(err)}`);
     }

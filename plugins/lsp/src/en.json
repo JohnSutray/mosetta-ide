@@ -1,8 +1,12 @@
 {
+  "lsp.sweep.about": "{server}: {checked} of {total} files checked. The second number is the memory its process tree holds. Click to open the budget setting",
+  "lsp.sweep.files": "{checked}/{total}",
+  "lsp.sweep.memory": "{mb}/{budget} MB",
   "plugin.lsp": "Language servers",
-  "settings.lsp.startOnOpen": "Start with the project",
   "settings.lsp.checkProject": "Check the whole project",
-  "settings.lsp.checkProjectLimit": "Most files in a project check",
+  "settings.lsp.memoryBudgetMb": "Memory a language server may use, MB",
+  "settings.lsp.projects": "Per-project server settings",
   "settings.lsp.servers": "Language servers",
-  "settings.lsp.projects": "Per-project server settings"
+  "settings.lsp.startOnOpen": "Start with the project",
+  "settings.lsp.sweepIndicator": "Show the project check in the toolbar"
 }

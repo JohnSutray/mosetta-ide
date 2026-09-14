@@ -13,8 +13,10 @@ import type {
   HoverInfo,
   LspState,
   LspStatus,
+  LspSweep,
   Range,
   Severity,
+  SweepStop,
   SymbolSite,
 } from './types.js';
 
@@ -25,6 +27,15 @@ export type LspEvent =
 const SEVERITY: Record<number, Severity> = { 1: 'error', 2: 'warning', 3: 'info', 4: 'hint' };
 
 const TYPED = ['ts', 'tsx', 'mts', 'cts'];
+
+const BLIND_LIMIT = 2000;
+
+const STOP_WORDS: Record<SweepStop, string> = {
+  done: 'прошёл целиком',
+  budget: 'остановлен бюджетом памяти',
+  baseline: 'не начат: бюджета не хватило на сам проект',
+  blind: 'остановлен запасным счётом: память не мерится',
+};
 
 function extensionOf(key: string): string {
   const name = key.slice(key.lastIndexOf('/') + 1);
@@ -40,6 +51,7 @@ export class LspServer {
   private readonly diagnostics = new Map<string, Diagnostic[]>();
   private readonly openDocs = new Set<string>();
   private readonly waiting = new Map<string, () => void>();
+  private sweep: LspSweep | null = null;
   private readonly listeners = new Set<(event: LspEvent) => void>();
   private readonly extensions: Set<string>;
   private nextId = 1;
@@ -161,6 +173,7 @@ export class LspServer {
       state: this.state,
       ...(this.detail ? { detail: this.detail } : {}),
       openDocs: this.openDocs.size,
+      ...(this.sweep ? { sweep: this.sweep } : {}),
     };
   }
 
@@ -170,7 +183,7 @@ export class LspServer {
 
   async checkProject(
     skip: (key: string) => boolean,
-    limit: number,
+    budgetMb: number,
     batch = 20,
   ): Promise<void> {
     if (this.state !== 'ready') return;
@@ -183,13 +196,20 @@ export class LspServer {
       queue.push(file.path);
     }
 
-    const take = limit > 0 ? queue.slice(0, limit) : queue;
-    if (take.length < queue.length) {
+    const baseMb = await this.memoryMb();
+    this.sweep = { checked: 0, total: queue.length, mb: baseMb, baseMb, budgetMb, stopped: null };
+    this.emitStatus();
+    if (queue.length === 0) return this.finish('done', 0, 0);
+
+    if (baseMb !== null && baseMb >= budgetMb) {
       this.log.warn(
-        `${this.name}: проверяю ${take.length} файлов из ${queue.length} — остальные молча пропущены`,
+        `${this.name}: проект сам занимает ${baseMb} МБ при бюджете ${budgetMb} — обход не начат`,
       );
+      return this.finish('baseline', 0, 0);
     }
-    if (take.length === 0) return;
+
+    const blind = baseMb === null;
+    const take = blind ? queue.slice(0, BLIND_LIMIT) : queue;
 
     const started = Date.now();
     let broken = 0;
@@ -201,11 +221,42 @@ export class LspServer {
       for (const key of slice) this.didOpen(key);
       await Promise.all(answers);
       broken += slice.filter((key) => (this.diagnostics.get(key)?.length ?? 0) > 0).length;
+
+      const mb = await this.memoryMb();
+      if (this.sweep) {
+        this.sweep = { ...this.sweep, checked: Math.min(at + slice.length, take.length), mb };
+        this.emitStatus();
+      }
+      if (mb !== null && mb > budgetMb) {
+        this.log.warn(
+          `${this.name}: бюджет ${budgetMb} МБ исчерпан на ${mb} МБ — проверено ` +
+            `${this.sweep?.checked ?? 0} файлов из ${queue.length}`,
+        );
+        return this.finish('budget', broken, started);
+      }
     }
-    this.log.info(
-      `${this.name}: проект проверен — ${take.length} файлов за ${Date.now() - started} мс` +
-        `, ${broken} с ошибками; все остаются открытыми`,
-    );
+    return this.finish(blind && take.length < queue.length ? 'blind' : 'done', broken, started);
+  }
+
+  async memoryMb(): Promise<number | null> {
+    if (!this.process) return null;
+    try {
+      return await this.process.memoryMb();
+    } catch {
+      return null;
+    }
+  }
+
+  private finish(stopped: SweepStop, broken: number, started: number): void {
+    if (this.sweep) this.sweep = { ...this.sweep, stopped };
+    this.emitStatus();
+    if (started > 0) {
+      this.log.info(
+        `${this.name}: обход ${STOP_WORDS[stopped]} — ${this.sweep?.checked ?? 0} файлов из ` +
+          `${this.sweep?.total ?? 0} за ${Date.now() - started} мс, ${broken} с ошибками, ` +
+          `${this.sweep?.mb ?? '?'} МБ; все остаются открытыми`,
+      );
+    }
   }
 
   private expectDiagnostics(key: string, quietMs = 500, capMs = 15_000): Promise<void> {

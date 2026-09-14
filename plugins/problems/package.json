@@ -8,9 +8,9 @@
   },
   "ide": {
     "client": "src/client.tsx",
-    "strings": "src/en.json",
-    "commands": {
-      "panel.problems": "Панель: ошибки"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     }
   },
   "dependencies": {

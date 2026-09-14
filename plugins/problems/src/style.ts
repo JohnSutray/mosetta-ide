@@ -30,6 +30,31 @@ export const STYLE = `
 .problems-count { margin-left: auto; color: var(--muted); }
 .problems-more { padding: 4px 8px; color: var(--muted); font-size: 11px; font-style: italic; }
 
+.problems-partial {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--divider);
+  color: var(--muted);
+  font-size: 11px;
+}
+.problems-raise {
+  margin-left: auto;
+  flex: none;
+  padding: 1px 7px;
+  border: none;
+  border-radius: 4px;
+  background: var(--control-bg);
+  color: var(--fg);
+  font: inherit;
+  font-family: var(--mono, monospace);
+  cursor: pointer;
+}
+.problems-raise:hover { background: #45494a; }
+.problems-raise-key { margin-left: auto; flex: none; font-family: var(--mono, monospace); }
+
 .problem.is-error { background: rgba(255, 107, 104, 0.1); }
 .problem.is-warning { background: rgba(190, 145, 23, 0.12); }
 

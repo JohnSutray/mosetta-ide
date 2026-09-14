@@ -61,6 +61,7 @@ export interface ProcessChild {
 export interface ProcessHandle {
   readonly child: ProcessChild;
   kill(signal?: string): void;
+  memoryMb(): Promise<number | null>;
 }
 
 export interface Project {
