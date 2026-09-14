@@ -1,6 +1,8 @@
 
 * { box-sizing: border-box; }
 
+:focus, :focus-visible { outline: none; }
+
 html, body, #root {
   height: 100%;
   margin: 0;
@@ -19,6 +21,49 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
+}
+
+.app-waiting { flex: 1; }
+
+.splash {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg, #2b2b2b);
+  animation: splash-in 160ms ease-out both;
+}
+.splash.is-leaving {
+  animation: splash-out 220ms ease-in both;
+  pointer-events: none;
+}
+.splash-sheep {
+  animation: splash-bob 620ms steps(1, end) infinite;
+}
+.splash-legs { animation: splash-step 620ms steps(1, end) infinite; }
+.splash-legs-1 { animation-delay: -310ms; }
+@keyframes splash-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes splash-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes splash-bob {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+@keyframes splash-step {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-sheep { animation: none; }
+  .splash-legs-1 { display: none; }
 }
 
 .no-shell {

@@ -16,13 +16,14 @@ import { RpcClient } from './rpc/client.js';
 import { Notifications } from './state/notifications.js';
 import { Config } from './state/config.js';
 import { I18n } from './i18n/index.js';
+import { Startup } from './state/startup.js';
 import { Memory } from './state/persist.js';
 import { Commands } from './keys/commands.js';
 import { Session } from './state/session.js';
 import { Registry } from './state/registry.js';
 import { Plugins } from './state/plugins.js';
 import { RootMount, type MountOptions } from './state/mount.js';
-import { COMMANDS, FS_SCHEMA, legacyNames } from '@mosetta/ide-protocol';
+import { FS_SCHEMA, UI_SCHEMA, legacyNames } from '@mosetta/ide-protocol';
 import { App } from './ui/app.js';
 
 export class Core {
@@ -30,6 +31,7 @@ export class Core {
   readonly notifications = new Notifications();
   readonly config = new Config();
   readonly i18n = new I18n();
+  readonly startup = new Startup();
   readonly memory = new Memory();
   readonly commands = new Commands();
   readonly session = new Session(this.rpc, this.config, this.notifications, this.i18n);
@@ -73,6 +75,25 @@ export class Core {
       );
       this.store.declare(settingsKey('fs'), 'core', FS_SCHEMA);
       this.store.add(settingsKey('fs'), core.fs, 'core');
+      this.store.add<SettingsEntry>(
+        'settings',
+        {
+          section: 'ui',
+          defaults: core.ui,
+          schema: UI_SCHEMA,
+          owner: 'core',
+          title: 'settings.core',
+          fields: { locale: { options: this.i18n.available() } },
+        },
+        'core',
+      );
+      this.store.declare(settingsKey('ui'), 'core', UI_SCHEMA);
+      this.store.add(settingsKey('ui'), core.ui, 'core');
+    });
+
+    effect(() => {
+      const chosen = this.config.settings.value?.ui?.locale;
+      this.i18n.use(typeof chosen === 'string' && chosen !== '' ? chosen : 'en');
     });
   }
 
@@ -83,11 +104,9 @@ export class Core {
 
   start(): void {
     this.rpc.connect();
+    this.startup.begin();
     render(<App core={this} />, this.root);
-    void this.plugins.load(this.services, this.store).then(() => {
-      const dead = this.commands.missing();
-      if (dead.length) console.warn('[web-ide] команды без реализации:', dead.join(', '));
-    });
+    void this.plugins.load(this.services, this.store);
   }
 
   private serve(): IdeServices {
@@ -98,11 +117,7 @@ export class Core {
       runCommand: (id) => this.commands.run(id),
       knownCommands: {
         get value() {
-          const all = new Map<string, string>(Object.entries(COMMANDS));
-          for (const one of plugins.list.value) {
-            for (const [id, about] of Object.entries(one.commands ?? {})) all.set(id, about);
-          }
-          return [...all].map(([id, about]) => ({ id, about })).sort((a, b) => a.id.localeCompare(b.id));
+          return [...plugins.commands.value].sort((a, b) => a.id.localeCompare(b.id));
         },
       },
       connected: this.session.connected,
