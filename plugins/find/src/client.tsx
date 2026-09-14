@@ -1,5 +1,5 @@
 import CodePlugin from '@mosetta/ide-plugin-code';
-import { activate, configSection, IdeProvider, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { activate, command, configSection, IdeProvider, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import { search } from '@codemirror/search';
 import { ViewPlugin } from '@codemirror/view';
 import { computed } from '@preact/signals';
@@ -9,6 +9,7 @@ import { FindBar } from './find-bar.js';
 import { FindFiles, type FilesAsk, type FindFilesRemote } from './files.js';
 import { FindFilesPopup } from './files-popup.js';
 import type { GrepResult } from './grep.js';
+import { HitLine } from './hit-line.js';
 import { FIND_DEFAULTS , FIND_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
 import { FindFilesIcon } from './icons.js';
@@ -23,6 +24,7 @@ export type { FileHit, GrepResult } from './grep.js';
 export default class FindPlugin implements FindFilesRemote {
   readonly find = new FindState();
   readonly files: FindFiles;
+  readonly line = new HitLine((text, path) => this.ide.getPlugin(CodePlugin).painter.paint(text, path));
 
   constructor(private readonly ide: Ide) {
     this.files = new FindFiles(
@@ -56,7 +58,7 @@ export default class FindPlugin implements FindFilesRemote {
   @activate() protected start(): void {
     this.ide.css(STYLE);
     this.ide.registry('editor.extension').add({ id: 'find', extension: this.extension() });
-    this.ide.registry<() => unknown>('chrome.top').add(() => <FindFilesPopup keysFor={(command: string) => this.ide.getPlugin(KeymapPlugin).keysFor(command)} windows={this.ide.getPlugin(UiPlugin).windows} files={this.files} code={this.ide.getPlugin(CodePlugin)} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <FindFilesPopup keysFor={(command: string) => this.ide.getPlugin(KeymapPlugin).keysFor(command)} windows={this.ide.getPlugin(UiPlugin).windows} files={this.files} code={this.ide.getPlugin(CodePlugin)} line={this.line} />);
     this.ide.registry('toolbar.button').add({
       id: 'find.files',
       title: 'toolbar.findFiles',
@@ -64,34 +66,33 @@ export default class FindPlugin implements FindFilesRemote {
       icon: (filled: boolean) => <FindFilesIcon filled={filled} />,
       active: this.files.open,
     });
-
-    const { find, files } = this;
-    this.ide.command('find.open', () => find.open('find'));
-    this.ide.command('find.replace', () => find.open('replace'));
-    this.ide.command('find.next', () => find.next());
-    this.ide.command('find.prev', () => find.prev());
-    this.ide.command('find.close', () => find.close());
-    this.ide.command('find.newline', () => find.newline());
-    this.ide.command('find.toggleCase', () => find.toggleCase());
-    this.ide.command('find.toggleWords', () => find.toggleWords());
-    this.ide.command('find.toggleRegex', () => find.toggleRegex());
-    this.ide.command('find.replaceOne', () => find.replaceOne());
-    this.ide.command('find.replaceAll', () => find.replaceEverything());
-
-    this.ide.command('find.files', () => files.toggle('find'));
-    this.ide.command('find.filesReplace', () => files.toggle('replace'));
-    this.ide.command('findFiles.next', () => files.move(1));
-    this.ide.command('findFiles.prev', () => files.move(-1));
-    this.ide.command('findFiles.accept', () => files.accept());
-    this.ide.command('findFiles.close', () => files.close());
-    this.ide.command('findFiles.nextField', () => files.nextField());
-    this.ide.command('findFiles.toggleCase', () => files.toggleCase());
-    this.ide.command('findFiles.toggleWords', () => files.toggleWords());
-    this.ide.command('findFiles.toggleRegex', () => files.toggleRegex());
-    this.ide.command('findFiles.addMask', () => files.addMask());
-    this.ide.command('findFiles.replaceAll', () => files.replaceAll());
-    this.ide.command('findFiles.replaceFile', () => files.replaceFile());
   }
+
+  @command('find.open') protected openFind(): void { this.find.open('find'); }
+  @command('find.replace') protected openReplace(): void { this.find.open('replace'); }
+  @command('find.next') protected next(): void { this.find.next(); }
+  @command('find.prev') protected prev(): void { this.find.prev(); }
+  @command('find.close') protected close(): void { this.find.close(); }
+  @command('find.newline') protected newline(): void { this.find.newline(); }
+  @command('find.toggleCase') protected toggleCase(): void { this.find.toggleCase(); }
+  @command('find.toggleWords') protected toggleWords(): void { this.find.toggleWords(); }
+  @command('find.toggleRegex') protected toggleRegex(): void { this.find.toggleRegex(); }
+  @command('find.replaceOne') protected replaceOne(): void { this.find.replaceOne(); }
+  @command('find.replaceAll') protected replaceAll(): void { this.find.replaceEverything(); }
+
+  @command('find.files') protected filesFind(): void { this.files.toggle('find'); }
+  @command('find.filesReplace') protected filesReplace(): void { this.files.toggle('replace'); }
+  @command('findFiles.next') protected filesNext(): void { this.files.move(1); }
+  @command('findFiles.prev') protected filesPrev(): void { this.files.move(-1); }
+  @command('findFiles.accept') protected filesAccept(): void { this.files.accept(); }
+  @command('findFiles.close') protected filesClose(): void { this.files.close(); }
+  @command('findFiles.nextField') protected filesNextField(): void { this.files.nextField(); }
+  @command('findFiles.toggleCase') protected filesToggleCase(): void { this.files.toggleCase(); }
+  @command('findFiles.toggleWords') protected filesToggleWords(): void { this.files.toggleWords(); }
+  @command('findFiles.toggleRegex') protected filesToggleRegex(): void { this.files.toggleRegex(); }
+  @command('findFiles.addMask') protected filesAddMask(): void { this.files.addMask(); }
+  @command('findFiles.replaceAll') protected filesReplaceAll(): void { this.files.replaceAll(); }
+  @command('findFiles.replaceFile') protected filesReplaceFile(): void { this.files.replaceFile(); }
 
   private extension() {
     const find = this.find;

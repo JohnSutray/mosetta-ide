@@ -12,32 +12,9 @@
   },
   "ide": {
     "client": "src/client.tsx",
-    "strings": "src/en.json",
-    "commands": {
-      "find.open": "Поиск в файле",
-      "find.replace": "Замена в файле",
-      "find.next": "Поиск: следующее",
-      "find.prev": "Поиск: предыдущее",
-      "find.close": "Поиск: закрыть",
-      "find.newline": "Поиск: многострочный режим",
-      "find.toggleCase": "Поиск: учитывать регистр",
-      "find.toggleWords": "Поиск: целые слова",
-      "find.toggleRegex": "Поиск: регулярное выражение",
-      "find.replaceOne": "Замена: заменить текущее",
-      "find.replaceAll": "Замена: заменить все",
-      "find.files": "Поиск по проекту",
-      "find.filesReplace": "Замена по проекту",
-      "findFiles.next": "Поиск по проекту: вниз",
-      "findFiles.prev": "Поиск по проекту: вверх",
-      "findFiles.accept": "Поиск по проекту: открыть",
-      "findFiles.close": "Поиск по проекту: закрыть",
-      "findFiles.nextField": "Поиск по проекту: следующее поле",
-      "findFiles.toggleCase": "Поиск по проекту: учитывать регистр",
-      "findFiles.toggleWords": "Поиск по проекту: целые слова",
-      "findFiles.toggleRegex": "Поиск по проекту: регулярное выражение",
-      "findFiles.addMask": "Поиск по проекту: добавить маску",
-      "findFiles.replaceAll": "Замена по проекту: заменить все",
-      "findFiles.replaceFile": "Замена по проекту: заменить в этом файле"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     },
     "server": "src/server.ts"
   },
