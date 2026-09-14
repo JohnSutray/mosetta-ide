@@ -31,16 +31,20 @@ textarea.find-field { height: auto; padding: 3px 6px; font-family: 'JetBrains Mo
 .fif-row { display: flex; align-items: center; gap: 6px; }
 .fif-icon { color: var(--muted); font-size: 15px; flex: none; width: 16px; text-align: center; }
 .fif-input {
-  flex: 1;
-  min-width: 0;
-  background: transparent;
-  border: none;
-  outline: none;
+  flex: none;
+  box-sizing: content-box;
+  background: var(--bg);
+  border: 1px solid var(--divider);
+  border-radius: 3px;
+  padding: 2px 8px;
   color: var(--fg);
   font: 15px/1.3 var(--font);
   cursor: text;
 }
+.fif-input:focus { border-color: var(--treesel); }
 .fif-input::placeholder { color: var(--muted); }
+.fif-tools { display: flex; align-items: center; gap: 2px; flex: none; }
+.fif-row .find-tool { height: 26px; display: flex; align-items: center; justify-content: center; }
 .fif-count { color: var(--muted); flex: none; font-variant-numeric: tabular-nums; }
 .fif-count.is-busy { opacity: 0.6; }
 
@@ -74,15 +78,18 @@ textarea.find-field { height: auto; padding: 3px 6px; font-family: 'JetBrains Mo
 }
 .fif-chip-close:hover { background: #6b3a39; color: #ffd7d6; }
 .fif-mask {
-  flex: 1;
-  min-width: 160px;
+  flex: none;
+  box-sizing: content-box;
+  height: 18px;
+  padding: 0 7px;
   background: transparent;
-  border: none;
-  outline: none;
+  border: 1px dashed var(--divider);
+  border-radius: 4px;
   color: var(--fg);
-  font: 12px var(--ui-font);
+  font: 12px 'JetBrains Mono', Menlo, monospace;
   cursor: text;
 }
+.fif-mask:focus { border-style: solid; border-color: var(--treesel); }
 .fif-mask::placeholder { color: var(--muted); }
 
 .fif-body { display: flex; flex: 1; min-height: 0; }
@@ -103,8 +110,7 @@ textarea.find-field { height: auto; padding: 3px 6px; font-family: 'JetBrains Mo
 .fif-row-hit.is-current { background: var(--treesel); }
 .fif-line { flex: none; min-width: 3ch; text-align: right; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 .fif-text { overflow: hidden; text-overflow: ellipsis; font-family: 'JetBrains Mono', Menlo, monospace; font-size: 12px; }
-.fif-text b { color: var(--accent); font-weight: 700; }
-.fif-row-hit.is-current .fif-text b { color: #ffe9bd; }
+.fif-match { background: #32593d; border-radius: 2px; font-weight: inherit; }
 .fif-preview { flex: 1; min-width: 0; overflow: auto; background: var(--bg); }
 .fif-empty { padding: 12px; color: var(--muted); }
 .fif-note { padding: 8px 12px; color: var(--accent); font-size: 12px; }

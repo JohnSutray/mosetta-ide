@@ -90,7 +90,7 @@ export function KeysSheet({ keys, windows, window: win, t }: KeysProps & { t: Id
 
       <div class="keys-list">
         {gone.length > 0 && (
-          <details class="keys-taken" open>
+          <details class="keys-taken">
             <summary>{t('keys.taken', { count: gone.length })}</summary>
             <div class="keys-grid has-who">
               {gone.map((item) => (
@@ -105,7 +105,7 @@ export function KeysSheet({ keys, windows, window: win, t }: KeysProps & { t: Id
         )}
 
         {ours.length > 0 && (
-          <details class="keys-taken is-ours" open>
+          <details class="keys-taken is-ours">
             <summary>{t('keys.soft', { count: ours.length })}</summary>
             <div class="keys-grid has-who">
               {ours.map((item) => (

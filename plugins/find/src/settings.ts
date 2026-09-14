@@ -4,7 +4,26 @@ export interface FindSettings {
   maxHits: number;
 }
 
-export const FIND_DEFAULTS: FindSettings = { masks: [], masksOff: [], maxHits: 500 };
+const SUGGESTED_MASKS = [
+  '*.ts',
+  '*.tsx',
+  '*.js',
+  '*.jsx',
+  '*.json',
+  '*.css',
+  '*.scss',
+  '*.html',
+  '*.vue',
+  '*.svelte',
+  '*.md',
+  '*.yml',
+];
+
+export const FIND_DEFAULTS: FindSettings = {
+  masks: [...SUGGESTED_MASKS],
+  masksOff: [...SUGGESTED_MASKS],
+  maxHits: 500,
+};
 
 export const FIND_SCHEMA = {
   type: 'object',

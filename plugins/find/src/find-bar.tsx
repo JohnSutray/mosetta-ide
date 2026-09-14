@@ -3,6 +3,7 @@ import type { ComponentChildren } from 'preact';
 import { useIde, useT } from '@mosetta/ide-api/client';
 import type { Windows } from '@mosetta/ide-plugin-ui';
 import type { FindState } from './find.js';
+import { ReplaceIcon } from './icons.js';
 
 interface ToolProps {
   keysFor: (command: string) => string[];
@@ -72,8 +73,14 @@ export function FindBar({ keysFor, windows, find }: { keysFor: (command: string)
   return (
     <div class="find-bar">
       <div class="find-row" data-keys="find">
-        <Tool keysFor={keysFor} windows={windows} command={replace ? 'find.open' : 'find.replace'} title={replace ? 'find.hideReplace' : 'find.showReplace'}>
-          {replace ? '▾' : '▸'}
+        <Tool
+          keysFor={keysFor}
+          windows={windows}
+          command={replace ? 'find.open' : 'find.replace'}
+          title={replace ? 'find.hideReplace' : 'find.showReplace'}
+          on={replace}
+        >
+          <ReplaceIcon />
         </Tool>
         {multiline ? (
           <textarea ref={field as never} rows={3} data-keys="find-multiline" {...fieldProps} />

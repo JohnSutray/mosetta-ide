@@ -5,8 +5,9 @@ import type CodePlugin from '@mosetta/ide-plugin-code';
 import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
 import { Popup } from '@mosetta/ide-plugin-ui';
 import type { Windows } from '@mosetta/ide-plugin-ui';
-import type { FileHit } from './grep.js';
 import type { FindFiles } from './files.js';
+import type { HitLine, HitParts } from './hit-line.js';
+import { ReplaceIcon } from './icons.js';
 
 interface ToolProps {
   keysFor: (command: string) => string[];
@@ -39,7 +40,19 @@ function Tool({ keysFor, windows, command, title, on, disabled, children }: Tool
   );
 }
 
-export function FindFilesPopup({ keysFor, windows, files, code }: { keysFor: (command: string) => string[]; windows: Windows; files: FindFiles; code: CodePlugin }) {
+export function FindFilesPopup({
+  keysFor,
+  windows,
+  files,
+  code,
+  line,
+}: {
+  keysFor: (command: string) => string[];
+  windows: Windows;
+  files: FindFiles;
+  code: CodePlugin;
+  line: HitLine;
+}) {
   const ide = useIde();
   const t = useT();
   const query = useRef<HTMLInputElement>(null);
@@ -75,27 +88,38 @@ export function FindFilesPopup({ keysFor, windows, files, code }: { keysFor: (co
           <input
             ref={query}
             class="fif-input"
+            style={{ width: `${width(files.query.value, 36)}ch` }}
             value={files.query.value}
             spellcheck={false}
             placeholder={t('findFiles.placeholder')}
             onFocus={() => files.focusOn('query')}
             onInput={(event) => files.setQuery(event.currentTarget.value)}
           />
-          <Tool keysFor={keysFor} windows={windows} command="findFiles.toggleCase" title="find.case" on={files.caseSensitive.value}>
-            Cc
-          </Tool>
-          <Tool keysFor={keysFor} windows={windows} command="findFiles.toggleWords" title="find.words" on={files.words.value}>
-            W
-          </Tool>
-          <Tool keysFor={keysFor} windows={windows} command="findFiles.toggleRegex" title="find.regex" on={files.regex.value}>
-            .*
-          </Tool>
-          <span class={`fif-count ${files.busy.value ? 'is-busy' : ''}`}>
-            {files.query.value === '' ? '' : `${total}${files.truncated.value ? '+' : ''} · ${files.files.value} ${t('findFiles.files')}`}
+          <span class="fif-tools">
+            <Tool keysFor={keysFor} windows={windows} command="findFiles.toggleCase" title="find.case" on={files.caseSensitive.value}>
+              Cc
+            </Tool>
+            <Tool keysFor={keysFor} windows={windows} command="findFiles.toggleWords" title="find.words" on={files.words.value}>
+              W
+            </Tool>
+            <Tool keysFor={keysFor} windows={windows} command="findFiles.toggleRegex" title="find.regex" on={files.regex.value}>
+              .*
+            </Tool>
+            <Tool
+              keysFor={keysFor}
+              windows={windows}
+              command={replacing ? 'find.files' : 'find.filesReplace'}
+              title={replacing ? 'find.hideReplace' : 'find.showReplace'}
+              on={replacing}
+            >
+              <ReplaceIcon />
+            </Tool>
           </span>
-          <Tool keysFor={keysFor} windows={windows} command={replacing ? 'find.files' : 'find.filesReplace'} title={replacing ? 'find.hideReplace' : 'find.showReplace'}>
-            {replacing ? '▾' : '▸'}
-          </Tool>
+          <span class={`fif-count ${files.busy.value ? 'is-busy' : ''}`}>
+            {files.query.value === ''
+              ? ''
+              : `${total}${files.truncated.value ? '+' : ''} ${t('findFiles.results')} · ${files.files.value} ${t('findFiles.files')}`}
+          </span>
         </div>
         {replacing && (
           <div class="fif-row">
@@ -103,6 +127,7 @@ export function FindFilesPopup({ keysFor, windows, files, code }: { keysFor: (co
             <input
               ref={replace}
               class="fif-input"
+              style={{ width: `${width(files.replacement.value, 36)}ch` }}
               value={files.replacement.value}
               spellcheck={false}
               placeholder={t('find.replacePlaceholder')}
@@ -131,9 +156,12 @@ export function FindFilesPopup({ keysFor, windows, files, code }: { keysFor: (co
           <input
             ref={mask}
             class="fif-mask"
+            style={{ width: `${width(files.maskDraft.value, 7)}ch` }}
             value={files.maskDraft.value}
             spellcheck={false}
             placeholder={t('findFiles.mask')}
+            onMouseEnter={(event) => windows.tips.show(event.currentTarget as Element, t('findFiles.maskTip'), keysFor('findFiles.addMask'))}
+            onMouseLeave={() => windows.tips.hide()}
             onFocus={() => files.focusOn('mask')}
             onInput={(event) => (files.maskDraft.value = event.currentTarget.value)}
           />
@@ -151,7 +179,8 @@ export function FindFilesPopup({ keysFor, windows, files, code }: { keysFor: (co
             ) : (
               <Row
                 key={`${row.hit.path}:${row.hit.line}:${row.hit.from}`}
-                hit={row.hit}
+                parts={line.of(row.hit)}
+                number={row.hit.line + 1}
                 current={row.at === files.selected.value}
                 onPick={() => files.selectAt(row.at)}
                 onOpen={() => files.accept()}
@@ -178,20 +207,33 @@ export function FindFilesPopup({ keysFor, windows, files, code }: { keysFor: (co
   );
 }
 
-function Row({ hit, current, onPick, onOpen }: { hit: FileHit; current: boolean; onPick: () => void; onOpen: () => void }) {
-  const text = hit.text;
-  const lead = Math.max(0, hit.from - 40);
-  const before = text.slice(lead, hit.from);
-  const match = text.slice(hit.from, hit.to);
-  const after = text.slice(hit.to, hit.to + 120);
+function width(value: string, least: number): number {
+  return Math.min(88, Math.max(least, value.length + 1));
+}
+
+function Row({
+  parts,
+  number,
+  current,
+  onPick,
+  onOpen,
+}: {
+  parts: HitParts;
+  number: number;
+  current: boolean;
+  onPick: () => void;
+  onOpen: () => void;
+}) {
   return (
     <div class={`fif-row-hit ${current ? 'is-current' : ''} fif-row`} onMouseMove={current ? undefined : onPick} onClick={onOpen}>
-      <span class="fif-line">{hit.line + 1}</span>
+      <span class="fif-line">{number}</span>
       <span class="fif-text">
-        {lead > 0 && '…'}
-        {before}
-        <b>{match}</b>
-        {after}
+        {parts.cut && '…'}
+        {parts.pieces.map((piece, i) => (
+          <span key={i} class={piece.match ? 'fif-match' : undefined} style={piece.color ? { color: piece.color } : undefined}>
+            {piece.text}
+          </span>
+        ))}
       </span>
     </div>
   );
