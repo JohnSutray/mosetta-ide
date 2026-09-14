@@ -12,8 +12,13 @@ interface Hit {
   line?: number;
   matches: number[];
 }
-function search(c: TestClient, params: { query: string; limit?: number; kinds?: string[] }): Promise<Hit[]> {
-  return c.call('plugins.call', { name: '@mosetta/ide-plugin-search', method: 'search', params }) as Promise<Hit[]>;
+async function search(c: TestClient, params: { query: string; limit?: number; kinds?: string[] }): Promise<Hit[]> {
+  const answer = (await c.call('plugins.call', {
+    name: '@mosetta/ide-plugin-search',
+    method: 'search',
+    params,
+  })) as { hits: Hit[]; total: number };
+  return answer.hits;
 }
 
 const CONFIG = fileURLToPath(new URL('./fixtures/config-watch', import.meta.url));
