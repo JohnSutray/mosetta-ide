@@ -1,4 +1,4 @@
-import { activate, configSection, plugin, registry, remote, stub } from '@mosetta/ide-api/client';
+import { activate, command, configSection, plugin, registry, remote, stub } from '@mosetta/ide-api/client';
 import LspPlugin from '@mosetta/ide-plugin-lsp';
 import type { Ide } from '@mosetta/ide-api/client';
 import { computed, effect, untracked } from '@preact/signals';
@@ -61,6 +61,46 @@ export default class TreePlugin {
     this.shown = ide.remember('panel.tree', true);
   }
 
+  @command('panel.tree')
+  protected togglePanel(): void {
+    if (this.shown.value && this.selection.hasKeyboard()) {
+      this.shown.value = false;
+      return;
+    }
+    this.shown.value = true;
+    this.selection.focusTree();
+  }
+
+  @command('tree.next')
+  protected next(): void { if (this.typeahead.term.value) this.typeahead.move(1); else this.selection.step(1); }
+  @command('tree.prev')
+  protected prev(): void { if (this.typeahead.term.value) this.typeahead.move(-1); else this.selection.step(-1); }
+  @command('tree.findClear') protected findClear(): void { this.typeahead.clear(); }
+  @command('tree.expand') protected expand(): void { this.selection.openBranch(); }
+  @command('tree.collapse') protected collapse(): void { this.selection.closeBranch(); }
+  @command('tree.newFile')
+  protected newFile(): void { this.onFocused((path, isDir) => this.ops.create(path, isDir, 'file')); }
+  @command('tree.newFolder')
+  protected newFolder(): void { this.onFocused((path, isDir) => this.ops.create(path, isDir, 'dir')); }
+
+  @command('tree.open')
+  protected openRow(): void {
+    this.onPicked((path, isDir) => {
+      if (isDir) void this.files.toggle(path);
+      else void this.docs.openFile(path, { focus: true });
+    });
+  }
+
+  @command('tree.rename') protected rename(): void { this.onPicked((path) => this.ops.rename(path)); }
+  @command('tree.delete') protected remove(): void { this.onPicked((path, isDir) => this.ops.remove(path, isDir)); }
+  @command('tree.copy') protected copy(): void { this.onPicked((path) => this.ops.copy(path, false)); }
+  @command('tree.cut') protected cut(): void { this.onPicked((path) => this.ops.copy(path, true)); }
+  @command('tree.paste') protected paste(): void { this.onFocused((path, isDir) => void this.ops.pasteInto(path, isDir)); }
+  @command('tree.copyPath') protected copyPath(): void { this.onPicked((path) => void this.ops.copyAbsolutePath(path)); }
+  @command('tree.reveal') protected reveal(): void { this.onPicked((path) => void this.ops.revealInOs(path)); }
+  @command('tree.follow') protected followEditor(): void { void this.follow.toggle(); }
+  @command('prompt.confirm') protected confirmPrompt(): void { void this.prompt.answer(); }
+
   @activate() protected start(): void {
     this.ide.css(STYLE);
 
@@ -72,39 +112,6 @@ export default class TreePlugin {
       if (this.ide.project.value) void this.files.load('').catch((err) => this.ide.complain(describe(err)));
     });
     this.ide.tree.onChanged((event) => this.files.refresh(event.path));
-
-    this.ide.command('panel.tree', () => {
-      if (this.shown.value && this.selection.hasKeyboard()) {
-        this.shown.value = false;
-        return;
-      }
-      this.shown.value = true;
-      this.selection.focusTree();
-    });
-
-    const { selection, ops, typeahead } = this;
-    this.ide.command('tree.next', () => (typeahead.term.value ? typeahead.move(1) : selection.step(1)));
-    this.ide.command('tree.prev', () => (typeahead.term.value ? typeahead.move(-1) : selection.step(-1)));
-    this.ide.command('tree.findClear', () => typeahead.clear());
-    this.ide.command('tree.expand', () => selection.openBranch());
-    this.ide.command('tree.collapse', () => selection.closeBranch());
-    this.ide.command('tree.newFile', () => this.onFocused((path, isDir) => ops.create(path, isDir, 'file')));
-    this.ide.command('tree.newFolder', () => this.onFocused((path, isDir) => ops.create(path, isDir, 'dir')));
-    this.ide.command('tree.open', () =>
-      this.onPicked((path, isDir) => {
-        if (isDir) void this.files.toggle(path);
-        else void this.docs.openFile(path, { focus: true });
-      }),
-    );
-    this.ide.command('tree.rename', () => this.onPicked((path) => ops.rename(path)));
-    this.ide.command('tree.delete', () => this.onPicked((path, isDir) => ops.remove(path, isDir)));
-    this.ide.command('tree.copy', () => this.onPicked((path) => ops.copy(path, false)));
-    this.ide.command('tree.cut', () => this.onPicked((path) => ops.copy(path, true)));
-    this.ide.command('tree.paste', () => this.onFocused((path, isDir) => void ops.pasteInto(path, isDir)));
-    this.ide.command('tree.copyPath', () => this.onPicked((path) => void ops.copyAbsolutePath(path)));
-    this.ide.command('tree.reveal', () => this.onPicked((path) => void ops.revealInOs(path)));
-    this.ide.command('tree.follow', () => void this.follow.toggle());
-    this.ide.command('prompt.confirm', () => void this.prompt.answer());
 
     this.ide.registry('toolbar.button').add({
       id: 'tree',

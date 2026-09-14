@@ -1,0 +1,4 @@
+{
+  "command.scripts.open": "Скрипты package.json",
+  "command.scripts.packageManager": "Чем запускать скрипты"
+}

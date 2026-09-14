@@ -1,0 +1,5 @@
+{
+  "command.git.branches": "Ветки git",
+  "command.git.fetch": "Забрать обновления удалёнки",
+  "command.git.push": "Push текущей ветки"
+}

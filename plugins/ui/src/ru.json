@@ -1,0 +1,10 @@
+{
+  "command.menu.accept": "Меню: выбрать",
+  "command.menu.next": "Меню: вниз",
+  "command.menu.prev": "Меню: вверх",
+  "command.pick.accept": "Список: выбрать",
+  "command.pick.expand": "Список: раскрыть действия",
+  "command.pick.next": "Список: вниз",
+  "command.pick.prev": "Список: вверх",
+  "command.popup.close": "Закрыть верхний попап"
+}

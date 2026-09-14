@@ -12,11 +12,9 @@
   "ide": {
     "client": "src/client.tsx",
     "server": "src/server.ts",
-    "strings": "src/en.json",
-    "commands": {
-      "terminal.create": "Новый терминал",
-      "panel.terminal": "Панель терминала",
-      "terminal.shell": "Чем запускать терминал"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     }
   },
   "dependencies": {

@@ -11,10 +11,9 @@
   },
   "ide": {
     "client": "src/client.tsx",
-    "strings": "src/en.json",
-    "commands": {
-      "file.save": "Сохранить файл",
-      "file.reload": "Перечитать файл с диска"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     }
   },
   "dependencies": {

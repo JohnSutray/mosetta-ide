@@ -6,6 +6,8 @@ import type { PluginInfo } from '@mosetta/ide-protocol';
 import {
   activate as activateHook,
   attach,
+  command as commandHook,
+  commandsOf,
   hooksOf,
   registriesOf,
   sectionsOf,
@@ -36,7 +38,7 @@ export interface PluginDeps {
   commands: Pick<Commands, 'registerPlugin'>;
   notes: Pick<Notifications, 'say' | 'complain' | 'notify' | 'settle'>;
   memory: Pick<Memory, 'signal'>;
-  i18n: Pick<I18n, 'add'>;
+  i18n: Pick<I18n, 'add' | 'defaults'>;
 }
 
 interface Built {
@@ -52,6 +54,7 @@ export class Plugins {
   ) {}
 
   readonly list = signal<PluginInfo[]>([]);
+  readonly commands = signal<Array<{ id: string }>>([]);
   readonly surfaces = signal<Array<() => unknown>>([]);
 
   private readonly instances = new Map<unknown, unknown>();
@@ -68,6 +71,7 @@ export class Plugins {
           remote,
           stub,
           activate: activateHook,
+          command: commandHook,
           registry: registryHook,
           configSection,
           plugin: pluginHook,
@@ -113,14 +117,25 @@ export class Plugins {
 
     for (const one of built) {
       for (const spec of registriesOf(one.ctor)) registry.declare(spec.key, one.name, spec.schema);
-      const title = passportOf(one.ctor)?.title;
+      const passport = passportOf(one.ctor);
+      const title = passport?.title;
       if (!title) this.deps.notes.complain(`${one.name}: у плагина нет названия — @plugin({ title }) (ADR-0213)`);
+      if (passport?.strings) this.deps.i18n.defaults(passport.strings);
       for (const spec of sectionsOf(one.ctor)) {
         registry.add('settings', { ...spec, owner: one.name, title: title ?? one.name }, one.name);
         registry.declare(settingsKey(spec.section), one.name, spec.schema);
         registry.add(settingsKey(spec.section), spec.defaults, one.name);
       }
     }
+    const declared: Array<{ id: string }> = [];
+    for (const one of built) {
+      for (const cmd of commandsOf(one.instance)) {
+        this.deps.commands.registerPlugin(cmd.id, cmd.run as () => void);
+        declared.push({ id: cmd.id });
+      }
+    }
+    this.commands.value = declared;
+
     for (const one of built) {
       try {
         await hooksOf(one.instance).start?.();

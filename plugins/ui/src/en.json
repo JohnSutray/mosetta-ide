@@ -1,3 +1,11 @@
 {
-  "plugin.ui": "Widgets"
+  "plugin.ui": "Widgets",
+  "command.pick.next": "List: down",
+  "command.pick.prev": "List: up",
+  "command.pick.accept": "List: choose",
+  "command.pick.expand": "List: show actions",
+  "command.menu.next": "Menu: down",
+  "command.menu.prev": "Menu: up",
+  "command.menu.accept": "Menu: choose",
+  "command.popup.close": "Close the top popup"
 }

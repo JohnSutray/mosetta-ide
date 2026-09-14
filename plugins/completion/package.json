@@ -12,16 +12,9 @@
   "ide": {
     "client": "src/client.tsx",
     "server": "src/server.ts",
-    "strings": "src/en.json",
-    "commands": {
-      "completion.show": "Дополнение: показать список",
-      "completion.next": "Дополнение: вниз",
-      "completion.prev": "Дополнение: вверх",
-      "completion.pageDown": "Дополнение: страница вниз",
-      "completion.pageUp": "Дополнение: страница вверх",
-      "completion.accept": "Дополнение: вставить",
-      "completion.replace": "Дополнение: заменить слово целиком",
-      "completion.close": "Дополнение: закрыть"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     }
   },
   "dependencies": {

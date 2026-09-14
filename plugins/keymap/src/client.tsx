@@ -1,12 +1,4 @@
-import {
-  activate,
-  configSection,
-  inLayerOrder,
-  plugin,
-  registry,
-  settingsKey,
-  USER_LAYER,
-} from '@mosetta/ide-api/client';
+import { USER_LAYER, activate, command, configSection, inLayerOrder, plugin, registry, settingsKey } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
 import { FACTORY_KEYMAP, KEYMAP_SCHEMA } from './keymap.js';
@@ -125,11 +117,11 @@ export default class KeymapPlugin {
     return keyHost.primaryHeld(event);
   }
 
+  @command('key.reserved') protected reserved(): void {}
+  @command('field.native') protected fieldNative(): void {}
+
   @activate() protected start(): void {
     this.ide.css(STYLE);
-    this.ide.command('key.reserved', () => {});
-    this.ide.command('field.native', () => {});
-
     const mechanics = this.ide.registry<InputMechanicsEntry>('keys.mechanics').all;
     effect(() => {
       const keys = new Set<string>();

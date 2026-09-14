@@ -18,7 +18,7 @@ import {
   undo,
 } from '@codemirror/commands';
 import { computed, effect, signal, type ReadonlySignal, type Signal } from '@preact/signals';
-import { activate, configSection, plugin, registry, type HunkBox, type Ide } from '@mosetta/ide-api/client';
+import { activate, command, configSection, plugin, registry, type HunkBox, type Ide } from '@mosetta/ide-api/client';
 import LspPlugin from '@mosetta/ide-plugin-lsp';
 import CodePlugin, { EDITOR_DEFAULTS, EDITOR_SCHEMA } from '@mosetta/ide-plugin-code';
 import type { Hunk } from '@mosetta/ide-plugin-code';
@@ -80,11 +80,7 @@ export default class Editor {
     const registered = this.ide.registry<EditorExtension>('editor.extension').all;
     this.extras = computed(() => registered.value.map((one) => one.extension as Extension));
 
-    const open = this.ide.remember('panel.open', true);
-    this.open = open;
-    this.ide.command('panel.editor', () => {
-      open.value = !open.value;
-    });
+    const open = this.opened();
 
     this.ide.registry('panel').add({
       id: 'editor',
@@ -113,35 +109,44 @@ export default class Editor {
       if (path && path !== this.shown) open.value = true;
       this.shown = path;
     });
-
-    this.commands();
   }
 
-  private commands(): void {
-    const inEditor = (run: (view: EditorView) => boolean) => () => {
-      if (this.view) run(this.view);
-    };
-    this.ide.command('edit.undo', inEditor(undo));
-    this.ide.command('edit.redo', inEditor(redo));
-    this.ide.command('edit.deleteLine', inEditor(deleteLine));
-    this.ide.command('edit.duplicateLine', inEditor(copyLineDown));
-    this.ide.command('edit.toggleComment', inEditor(toggleComment));
-    this.ide.command('edit.moveLineUp', inEditor(moveLineUp));
-    this.ide.command('edit.moveLineDown', inEditor(moveLineDown));
-    this.ide.command('edit.addCursorAbove', inEditor(addCursorAbove));
-    this.ide.command('edit.addCursorBelow', inEditor(addCursorBelow));
-    this.ide.command('edit.wordLeft', inEditor(cursorGroupLeft));
-    this.ide.command('edit.wordRight', inEditor(cursorGroupRight));
-    this.ide.command('edit.selectWordLeft', inEditor(selectGroupLeft));
-    this.ide.command('edit.selectWordRight', inEditor(selectGroupRight));
-    this.ide.command('edit.indent', inEditor(indentMore));
-    this.ide.command('edit.unindent', inEditor(indentLess));
+  private opened(): { value: boolean } {
+    this.open ??= this.ide.remember('panel.open', true);
+    return this.open;
+  }
 
-    this.ide.command('symbol.goto', () => {
-      const view = this.view;
-      if (!view) return;
-      this.ask(view, view.state.selection.main.head);
-    });
+  @command('panel.editor')
+  protected togglePanel(): void {
+    const open = this.opened();
+    open.value = !open.value;
+  }
+
+  private inEditor(run: (view: EditorView) => boolean): void {
+    if (this.view) run(this.view);
+  }
+
+  @command('edit.undo') protected undo(): void { this.inEditor(undo); }
+  @command('edit.redo') protected redo(): void { this.inEditor(redo); }
+  @command('edit.deleteLine') protected deleteLine(): void { this.inEditor(deleteLine); }
+  @command('edit.duplicateLine') protected duplicateLine(): void { this.inEditor(copyLineDown); }
+  @command('edit.toggleComment') protected toggleComment(): void { this.inEditor(toggleComment); }
+  @command('edit.moveLineUp') protected moveLineUp(): void { this.inEditor(moveLineUp); }
+  @command('edit.moveLineDown') protected moveLineDown(): void { this.inEditor(moveLineDown); }
+  @command('edit.addCursorAbove') protected addCursorAbove(): void { this.inEditor(addCursorAbove); }
+  @command('edit.addCursorBelow') protected addCursorBelow(): void { this.inEditor(addCursorBelow); }
+  @command('edit.wordLeft') protected wordLeft(): void { this.inEditor(cursorGroupLeft); }
+  @command('edit.wordRight') protected wordRight(): void { this.inEditor(cursorGroupRight); }
+  @command('edit.selectWordLeft') protected selectWordLeft(): void { this.inEditor(selectGroupLeft); }
+  @command('edit.selectWordRight') protected selectWordRight(): void { this.inEditor(selectGroupRight); }
+  @command('edit.indent') protected indent(): void { this.inEditor(indentMore); }
+  @command('edit.unindent') protected unindent(): void { this.inEditor(indentLess); }
+
+  @command('symbol.goto')
+  protected gotoSymbol(): void {
+    const view = this.view;
+    if (!view) return;
+    this.ask(view, view.state.selection.main.head);
   }
 
   private ask(view: EditorView, at: number): void {

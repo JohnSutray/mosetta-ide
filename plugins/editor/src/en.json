@@ -15,5 +15,22 @@
   "settings.editor.tabSize": "Tab size",
   "settings.editor.lineNumbers": "Line numbers",
   "settings.editor.caretWidth": "Caret width, px",
-  "settings.editor.ligatures": "Font ligatures"
+  "settings.editor.ligatures": "Font ligatures",
+  "command.edit.undo": "Undo",
+  "command.edit.redo": "Redo",
+  "command.edit.deleteLine": "Delete line",
+  "command.edit.duplicateLine": "Duplicate line",
+  "command.edit.toggleComment": "Toggle comment",
+  "command.edit.moveLineUp": "Move line up",
+  "command.edit.moveLineDown": "Move line down",
+  "command.edit.addCursorAbove": "Add caret above",
+  "command.edit.addCursorBelow": "Add caret below",
+  "command.edit.wordLeft": "Word left",
+  "command.edit.wordRight": "Word right",
+  "command.edit.selectWordLeft": "Select word left",
+  "command.edit.selectWordRight": "Select word right",
+  "command.symbol.goto": "Go to declaration or usages",
+  "command.edit.indent": "Indent",
+  "command.edit.unindent": "Unindent",
+  "command.panel.editor": "Editor panel"
 }

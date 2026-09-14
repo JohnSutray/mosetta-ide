@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { COMMAND_IDS } from '@mosetta/ide-protocol';
 import en from '../src/i18n/en.json';
 
 describe('словарь ядра', () => {
-  it('у каждой команды ядра есть английское имя', () => {
-    const dictionary = en as Record<string, string>;
-    const missing = COMMAND_IDS.filter((id) => dictionary[`command.${id}`] === undefined);
-    expect(missing, `нет command.* в en.json: ${missing.join(', ')}`).toEqual([]);
+  it('не содержит ключей команд: команды принадлежат плагинам', () => {
+    const ours = Object.keys(en as Record<string, string>).filter((key) => key.startsWith('command.'));
+    expect(ours, `надписи команд в ядре: ${ours.join(', ')}`).toEqual([]);
   });
 
   it('не содержит пустых строк', () => {

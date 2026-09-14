@@ -1,0 +1,9 @@
+{
+  "command.projects.accept": "Проекты: открыть",
+  "command.projects.close": "Проекты: вернуться к дереву",
+  "command.projects.complete": "Проекты: дописать путь",
+  "command.projects.next": "Проекты: вниз по подсказкам",
+  "command.projects.prev": "Проекты: вверх по подсказкам",
+  "command.projects.show": "Открывашка проектов",
+  "command.projects.suggest": "Проекты: показать папки текущей папки"
+}

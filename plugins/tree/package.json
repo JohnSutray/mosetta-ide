@@ -12,26 +12,9 @@
   "ide": {
     "client": "src/client.tsx",
     "server": "src/server.ts",
-    "strings": "src/en.json",
-    "commands": {
-      "panel.tree": "Панель: дерево проекта",
-      "prompt.confirm": "Модалка: подтвердить",
-      "tree.next": "Дерево: вниз",
-      "tree.prev": "Дерево: вверх",
-      "tree.expand": "Дерево: раскрыть или войти",
-      "tree.collapse": "Дерево: свернуть или выйти",
-      "tree.newFile": "Дерево: новый файл",
-      "tree.newFolder": "Дерево: новая папка",
-      "tree.open": "Дерево: открыть и уйти в редактор",
-      "tree.rename": "Дерево: переименовать",
-      "tree.delete": "Дерево: удалить",
-      "tree.copy": "Дерево: копировать",
-      "tree.cut": "Дерево: вырезать",
-      "tree.paste": "Дерево: вставить",
-      "tree.copyPath": "Дерево: скопировать путь",
-      "tree.reveal": "Дерево: показать в файловом менеджере",
-      "tree.follow": "Дерево: следовать за кареткой",
-      "tree.findClear": "Дерево: сбросить набранное"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     }
   },
   "dependencies": {

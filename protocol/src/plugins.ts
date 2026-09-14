@@ -5,7 +5,7 @@ export interface PluginManifest {
   client?: string;
   server?: string;
   commands?: Record<string, string>;
-  strings?: string;
+  strings?: string | Record<string, string>;
 }
 
 export type PluginState = 'ok' | 'building' | 'failed';
@@ -18,6 +18,6 @@ export interface PluginInfo {
   hasServer: boolean;
   commands: Record<string, string>;
   needs: string[];
-  strings: Record<string, string>;
+  strings: Record<string, Record<string, string>>;
   error?: string;
 }

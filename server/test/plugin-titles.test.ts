@@ -5,13 +5,25 @@ import { fileURLToPath } from 'node:url';
 
 const plugins = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '../../plugins');
 
+function defaultStrings(dir: string, manifest: { strings?: string | Record<string, string> }): Record<string, string> {
+  const spec = manifest.strings;
+  const file = typeof spec === 'string' ? spec : spec?.['en'];
+  if (!file) return {};
+  const at = path.join(plugins, dir, file);
+  if (!fs.existsSync(at)) return {};
+  return JSON.parse(fs.readFileSync(at, 'utf8')) as Record<string, string>;
+}
+
 describe('паспорта плагинов', () => {
   it('у каждого базового плагина есть @plugin({ title }) и надпись в его словаре', () => {
     const missing: string[] = [];
     for (const dir of fs.readdirSync(plugins)) {
       const file = path.join(plugins, dir, 'package.json');
       if (!fs.existsSync(file)) continue;
-      const pkg = JSON.parse(fs.readFileSync(file, 'utf8')) as { name: string; ide?: { client?: string; strings?: string } };
+      const pkg = JSON.parse(fs.readFileSync(file, 'utf8')) as {
+        name: string;
+        ide?: { client?: string; strings?: string | Record<string, string> };
+      };
       if (!pkg.ide?.client) continue;
       const source = fs.readFileSync(path.join(plugins, dir, pkg.ide.client), 'utf8');
       const title = /@plugin\(\{\s*title:\s*'([^']+)'\s*\}\)/.exec(source)?.[1];
@@ -19,9 +31,7 @@ describe('паспорта плагинов', () => {
         missing.push(`${pkg.name}: нет @plugin({ title })`);
         continue;
       }
-      const strings = pkg.ide.strings
-        ? (JSON.parse(fs.readFileSync(path.join(plugins, dir, pkg.ide.strings), 'utf8')) as Record<string, string>)
-        : {};
+      const strings = defaultStrings(dir, pkg.ide);
       if (!strings[title]) missing.push(`${pkg.name}: ключа «${title}» нет в словаре`);
     }
     expect(missing).toEqual([]);

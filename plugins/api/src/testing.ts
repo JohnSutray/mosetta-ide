@@ -9,7 +9,7 @@ import type {
   SettingScope,
   SettingValue,
 } from '@mosetta/ide-protocol';
-import { attach, hooksOf, passportOf, registriesOf, sectionsOf } from './client.js';
+import { attach, commandsOf, hooksOf, passportOf, registriesOf, sectionsOf } from './client.js';
 import { sectionOf } from './section.js';
 import type {
   IdeServices,
@@ -28,6 +28,7 @@ import type {
 
 export {
   activate,
+  command,
   configSection,
   IdeProvider,
   plugin,
@@ -258,7 +259,7 @@ export class FakeSurface implements IdeServices {
   };
 
   readonly runCommand = (id: string): boolean => this.host.run(id);
-  readonly knownCommands: Signal<Array<{ id: string; about: string }>> = signal([]);
+  readonly knownCommands: Signal<Array<{ id: string }>> = signal([]);
 
   readonly setSetting = async (
     section: string,
@@ -478,6 +479,11 @@ export class FakeHost {
   }
 
   async start(): Promise<void> {
+    for (const one of this.built) {
+      for (const cmd of commandsOf(one.instance)) {
+        this.ide(one.name).commands.set(cmd.id, cmd.run as () => void);
+      }
+    }
     for (const one of this.built) await hooksOf(one.instance).start?.();
   }
 

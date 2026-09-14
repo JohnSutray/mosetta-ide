@@ -1,0 +1,12 @@
+{
+  "command.merge.confirm": "Слияние: подтвердить файл",
+  "command.merge.next": "Слияние: следующий спор",
+  "command.merge.nextFile": "Слияние: следующий файл",
+  "command.merge.prev": "Слияние: предыдущий спор",
+  "command.merge.prevFile": "Слияние: предыдущий файл",
+  "command.merge.show": "Разрешить конфликты",
+  "command.merge.skipLeft": "Слияние: пропустить левое",
+  "command.merge.skipRight": "Слияние: пропустить правое",
+  "command.merge.takeLeft": "Слияние: взять левое",
+  "command.merge.takeRight": "Слияние: взять правое"
+}

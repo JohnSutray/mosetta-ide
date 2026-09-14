@@ -1,0 +1,10 @@
+{
+  "command.completion.accept": "Дополнение: вставить",
+  "command.completion.close": "Дополнение: закрыть",
+  "command.completion.next": "Дополнение: вниз",
+  "command.completion.pageDown": "Дополнение: страница вниз",
+  "command.completion.pageUp": "Дополнение: страница вверх",
+  "command.completion.prev": "Дополнение: вверх",
+  "command.completion.replace": "Дополнение: заменить слово целиком",
+  "command.completion.show": "Дополнение: показать список"
+}

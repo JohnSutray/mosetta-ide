@@ -8,7 +8,7 @@ const deps = (): PluginDeps => ({
   commands: { registerPlugin: () => {} },
   notes: { say: () => {}, complain: () => {}, notify: () => 0, settle: () => 0 },
   memory: new Memory(),
-  i18n: { add: () => {} },
+  i18n: { add: () => {}, defaults: () => {} },
 });
 
 class FakeSocket implements RpcLike {

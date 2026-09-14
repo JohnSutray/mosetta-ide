@@ -1,0 +1,110 @@
+import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { RUSSIAN_DEBT } from './russian.debt.js';
+
+const root = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
+const CYRILLIC = /[Ѐ-ӿ]/;
+
+const AREAS = ['client/src', 'plugins', 'protocol/src', 'server/src', 'desktop/src'];
+
+const DATA_NOT_LABELS = ['plugins/search/src/layout.ts'];
+
+function* sources(dir: string): Generator<string> {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const at = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name === 'test') continue;
+      yield* sources(at);
+      continue;
+    }
+    if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) yield at;
+  }
+}
+
+function literals(text: string): string[] {
+  const out: string[] = [];
+  let at = 0;
+  while (at < text.length) {
+    const ch = text[at];
+    if (ch === '/' && text[at + 1] === '/') {
+      at = text.indexOf('\n', at);
+      if (at < 0) break;
+      continue;
+    }
+    if (ch === '/' && text[at + 1] === '*') {
+      const end = text.indexOf('*/', at + 2);
+      at = end < 0 ? text.length : end + 2;
+      continue;
+    }
+    if (ch === '`') {
+      let i = at + 1;
+      while (i < text.length && text[i] !== '`') i += text[i] === '\\' ? 2 : 1;
+      at = i + 1;
+      continue;
+    }
+    if (ch === "'" || ch === '"') {
+      let i = at + 1;
+      let value = '';
+      while (i < text.length && text[i] !== ch && text[i] !== '\n') {
+        if (text[i] === '\\') {
+          value += text[i + 1] ?? '';
+          i += 2;
+          continue;
+        }
+        value += text[i];
+        i += 1;
+      }
+      out.push(value);
+      at = i + 1;
+      continue;
+    }
+    at += 1;
+  }
+  return out;
+}
+
+describe('язык репозитория', () => {
+  it('в строковых литералах кода нет кириллицы: надписи — данные', () => {
+    const guilty: string[] = [];
+    for (const area of AREAS) {
+      const dir = path.join(root, area);
+      if (!fs.existsSync(dir)) continue;
+      for (const file of sources(dir)) {
+        const where = path.relative(root, file);
+        if (DATA_NOT_LABELS.includes(where)) continue;
+        for (const value of literals(fs.readFileSync(file, 'utf8'))) {
+          if (CYRILLIC.test(value)) guilty.push(where);
+        }
+      }
+    }
+    const left = [...new Set(guilty)].sort();
+    if (process.env['RUSSIAN_DUMP']) console.log(JSON.stringify(left, null, 2));
+    expect(left).toEqual([...RUSSIAN_DEBT]);
+  });
+
+  it('в словарях по умолчанию нет кириллицы: en.json — английский', () => {
+    const guilty: string[] = [];
+    const files = [path.join(root, 'client/src/i18n/en.json')];
+    const plugins = path.join(root, 'plugins');
+    for (const dir of fs.readdirSync(plugins)) {
+      const manifest = path.join(plugins, dir, 'package.json');
+      if (!fs.existsSync(manifest)) continue;
+      const pkg = JSON.parse(fs.readFileSync(manifest, 'utf8')) as {
+        ide?: { strings?: string | Record<string, string> };
+      };
+      const spec = pkg.ide?.strings;
+      const file = typeof spec === 'string' ? spec : spec?.['en'];
+      if (file) files.push(path.join(plugins, dir, file));
+    }
+    for (const file of files) {
+      if (!fs.existsSync(file)) continue;
+      const strings = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, string>;
+      for (const [key, value] of Object.entries(strings)) {
+        if (CYRILLIC.test(value)) guilty.push(`${path.relative(root, file)}: ${key}`);
+      }
+    }
+    expect(guilty).toEqual([]);
+  });
+});

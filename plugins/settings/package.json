@@ -11,9 +11,9 @@
   },
   "ide": {
     "client": "src/client.tsx",
-    "strings": "src/en.json",
-    "commands": {
-      "settings.show": "Редактор настроек"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     }
   },
   "dependencies": {

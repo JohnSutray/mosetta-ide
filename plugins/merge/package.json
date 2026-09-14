@@ -12,18 +12,9 @@
   "ide": {
     "client": "src/client.tsx",
     "server": "src/server.ts",
-    "strings": "src/en.json",
-    "commands": {
-      "merge.show": "Разрешить конфликты",
-      "merge.nextFile": "Слияние: следующий файл",
-      "merge.prevFile": "Слияние: предыдущий файл",
-      "merge.next": "Слияние: следующий спор",
-      "merge.prev": "Слияние: предыдущий спор",
-      "merge.takeLeft": "Слияние: взять левое",
-      "merge.takeRight": "Слияние: взять правое",
-      "merge.skipLeft": "Слияние: пропустить левое",
-      "merge.skipRight": "Слияние: пропустить правое",
-      "merge.confirm": "Слияние: подтвердить файл"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     }
   },
   "dependencies": {

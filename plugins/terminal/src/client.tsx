@@ -1,6 +1,6 @@
 /// <reference path="./raw.d.ts" />
 import { batch, signal } from '@preact/signals';
-import { activate, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { activate, command, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import UiPlugin, { ChoicePopup } from '@mosetta/ide-plugin-ui';
 import { TerminalIcon } from './icon.js';
 import ThemePlugin from '@mosetta/ide-plugin-theme';
@@ -25,18 +25,22 @@ export default class TerminalPlugin {
 
   constructor(private readonly ide: Ide) {}
 
+  @command('terminal.create') protected createOne(): void { void this.create(); }
+
+  @command('terminal.shell')
+  protected pickShell(): void {
+    this.shellPicker.value = !this.shellPicker.value;
+    if (this.shellPicker.value) void this.refreshShells();
+  }
+
+  @command('panel.terminal')
+  protected togglePanel(): void {
+    this.shown.value = !this.shown.value;
+  }
+
   @activate() protected start(): void {
     this.ide.css(xtermCss + STYLE);
     this.listen();
-
-    this.ide.command('terminal.create', () => void this.create());
-    this.ide.command('terminal.shell', () => {
-      this.shellPicker.value = !this.shellPicker.value;
-      if (this.shellPicker.value) void this.refreshShells();
-    });
-    this.ide.command('panel.terminal', () => {
-      this.shown.value = !this.shown.value;
-    });
 
     this.ide.registry('toolbar.button').add({
       id: 'terminal.create',

@@ -24,6 +24,16 @@ export const FS_SCHEMA = {
   },
 } as const;
 
+export interface UiSettings {
+  locale: string;
+}
+
+export const UI_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: { locale: { type: 'string' } },
+} as const;
+
 export interface PluginSettings {
   enabled: string[];
 }
@@ -38,6 +48,7 @@ export type SettingValue =
 export interface Settings {
   plugins: PluginSettings;
   fs: FsSettings;
+  ui: UiSettings;
   [section: string]: unknown;
 }
 

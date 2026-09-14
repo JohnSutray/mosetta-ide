@@ -1,4 +1,4 @@
-import { activate, plugin, registry } from '@mosetta/ide-api/client';
+import { activate, command, plugin, registry } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { Tip } from './tip.js';
 import { STYLE } from './style.js';
@@ -34,21 +34,18 @@ export default class UiPlugin {
     );
   }
 
+  @command('pick.next') protected pickNext(): void { this.windows.activePick.value?.next(); }
+  @command('pick.prev') protected pickPrev(): void { this.windows.activePick.value?.prev(); }
+  @command('pick.accept') protected pickAccept(): void { this.windows.activePick.value?.accept(); }
+  @command('pick.expand') protected pickExpand(): void { this.windows.activePick.value?.expand?.(); }
+  @command('menu.next') protected menuNext(): void { this.windows.activeMenu.value?.next(); }
+  @command('menu.prev') protected menuPrev(): void { this.windows.activeMenu.value?.prev(); }
+  @command('menu.accept') protected menuAccept(): void { this.windows.activeMenu.value?.accept(); }
+  @command('popup.close') protected popupClose(): void { this.windows.popups.closeTop(); }
+
   @activate() protected start(): void {
     this.ide.css(STYLE);
     this.ide.registry<() => unknown>('chrome.top').add(() => <Tip tips={this.windows.tips} />);
     this.ide.registry<Tips>('ui.tips').add(this.windows.tips);
-
-    const windows = this.windows;
-    this.ide.command('pick.next', () => windows.activePick.value?.next());
-    this.ide.command('pick.prev', () => windows.activePick.value?.prev());
-    this.ide.command('pick.accept', () => windows.activePick.value?.accept());
-    this.ide.command('pick.expand', () => windows.activePick.value?.expand?.());
-    this.ide.command('menu.next', () => windows.activeMenu.value?.next());
-    this.ide.command('menu.prev', () => windows.activeMenu.value?.prev());
-    this.ide.command('menu.accept', () => windows.activeMenu.value?.accept());
-    this.ide.command('popup.close', () => {
-      windows.popups.closeTop();
-    });
   }
 }

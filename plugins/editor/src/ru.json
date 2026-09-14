@@ -1,0 +1,19 @@
+{
+  "command.edit.addCursorAbove": "Курсор выше",
+  "command.edit.addCursorBelow": "Курсор ниже",
+  "command.edit.deleteLine": "Удалить строку",
+  "command.edit.duplicateLine": "Продублировать строку",
+  "command.edit.indent": "Отступ вправо",
+  "command.edit.moveLineDown": "Опустить строку",
+  "command.edit.moveLineUp": "Поднять строку",
+  "command.edit.redo": "Повторить",
+  "command.edit.selectWordLeft": "Выделить слово слева",
+  "command.edit.selectWordRight": "Выделить слово справа",
+  "command.edit.toggleComment": "Закомментировать",
+  "command.edit.undo": "Отменить",
+  "command.edit.unindent": "Отступ влево",
+  "command.edit.wordLeft": "Каретка на слово влево",
+  "command.edit.wordRight": "Каретка на слово вправо",
+  "command.panel.editor": "Панель редактора",
+  "command.symbol.goto": "К объявлению или к использованиям"
+}

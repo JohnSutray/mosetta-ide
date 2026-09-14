@@ -1,0 +1,20 @@
+{
+  "command.panel.tree": "Панель: дерево проекта",
+  "command.prompt.confirm": "Модалка: подтвердить",
+  "command.tree.collapse": "Дерево: свернуть или выйти",
+  "command.tree.copy": "Дерево: копировать",
+  "command.tree.copyPath": "Дерево: скопировать путь",
+  "command.tree.cut": "Дерево: вырезать",
+  "command.tree.delete": "Дерево: удалить",
+  "command.tree.expand": "Дерево: раскрыть или войти",
+  "command.tree.findClear": "Дерево: сбросить набранное",
+  "command.tree.follow": "Дерево: следовать за кареткой",
+  "command.tree.newFile": "Дерево: новый файл",
+  "command.tree.newFolder": "Дерево: новая папка",
+  "command.tree.next": "Дерево: вниз",
+  "command.tree.open": "Дерево: открыть и уйти в редактор",
+  "command.tree.paste": "Дерево: вставить",
+  "command.tree.prev": "Дерево: вверх",
+  "command.tree.rename": "Дерево: переименовать",
+  "command.tree.reveal": "Дерево: показать в файловом менеджере"
+}

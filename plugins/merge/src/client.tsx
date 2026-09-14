@@ -1,4 +1,4 @@
-import { activate, plugin, remote, stub } from '@mosetta/ide-api/client';
+import { activate, command, plugin, remote, stub } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { computed } from '@preact/signals';
 import { MergeIcon } from './icons.js';
@@ -53,31 +53,29 @@ export default class MergePlugin implements MergeRemote {
     return stub();
   }
 
+  @command('merge.show') protected show(): void { this.merge.toggle(); }
+  @command('merge.nextFile') protected nextFile(): void { this.merge.stepFile(1); }
+  @command('merge.prevFile') protected prevFile(): void { this.merge.stepFile(-1); }
+  @command('merge.next') protected next(): void { this.merge.stepConflict(1); }
+  @command('merge.prev') protected prev(): void { this.merge.stepConflict(-1); }
+  @command('merge.takeLeft') protected takeLeft(): void { this.merge.decideHere('left', 'take'); }
+  @command('merge.takeRight') protected takeRight(): void { this.merge.decideHere('right', 'take'); }
+  @command('merge.skipLeft') protected skipLeft(): void { this.merge.decideHere('left', 'skip'); }
+  @command('merge.skipRight') protected skipRight(): void { this.merge.decideHere('right', 'skip'); }
+  @command('merge.confirm') protected confirm(): void { void this.merge.resolve(); }
+
   @activate() protected start(): void {
     this.ide.css(STYLE);
-    const { merge } = this;
-
-    this.ide.command('merge.show', () => merge.toggle());
-    this.ide.command('merge.nextFile', () => merge.stepFile(1));
-    this.ide.command('merge.prevFile', () => merge.stepFile(-1));
-    this.ide.command('merge.next', () => merge.stepConflict(1));
-    this.ide.command('merge.prev', () => merge.stepConflict(-1));
-    this.ide.command('merge.takeLeft', () => merge.decideHere('left', 'take'));
-    this.ide.command('merge.takeRight', () => merge.decideHere('right', 'take'));
-    this.ide.command('merge.skipLeft', () => merge.decideHere('left', 'skip'));
-    this.ide.command('merge.skipRight', () => merge.decideHere('right', 'skip'));
-    this.ide.command('merge.confirm', () => void merge.resolve());
-
     this.ide.registry('toolbar.button').add({
       id: 'merge',
       title: 'toolbar.merge',
       command: 'merge.show',
       icon: (filled: boolean) => <MergeIcon filled={filled} />,
-      active: merge.open,
-      visible: computed(() => merge.pending.value > 0),
-      badge: merge.pending,
+      active: this.merge.open,
+      visible: computed(() => this.merge.pending.value > 0),
+      badge: this.merge.pending,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <MergeScreen windows={this.ide.getPlugin(UiPlugin).windows} merge={merge} code={this.ide.getPlugin(CodePlugin)} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <MergeScreen windows={this.ide.getPlugin(UiPlugin).windows} merge={this.merge} code={this.ide.getPlugin(CodePlugin)} />);
   }
 }

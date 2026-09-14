@@ -87,7 +87,7 @@ export interface HunkBox {
 export interface IdeServices {
   readonly t: (key: string, params?: Record<string, string | number>) => string;
   readonly runCommand: (id: string) => boolean;
-  readonly knownCommands: { readonly value: ReadonlyArray<{ id: string; about: string }> };
+  readonly knownCommands: { readonly value: ReadonlyArray<{ id: string }> };
   readonly settings: { readonly value: Settings | null };
   readonly settingsOf: <T extends object>(section: string, defaults: T) => { readonly value: T };
   readonly project: { readonly value: WorkspaceInfo | null };
@@ -237,6 +237,7 @@ export interface SettingsEntry extends SettingsSection {
 
 export interface PluginSpec {
   title: string;
+  strings?: Record<string, string>;
 }
 
 export function plugin(spec: PluginSpec) {
@@ -258,6 +259,25 @@ export function activate() {
   };
 }
 
+export function command(id: string) {
+  return function (method: () => unknown, ctx: ClassMethodDecoratorContext): void {
+    void ctx;
+    ctx.addInitializer(function (this: unknown) {
+      const target = this as object;
+      const list = declaredCommands.get(target) ?? [];
+      list.push({ id, run: method.bind(target) as () => unknown });
+      declaredCommands.set(target, list);
+    });
+  };
+}
+
+export interface DeclaredCommand {
+  id: string;
+  run: () => unknown;
+}
+
+const declaredCommands = new WeakMap<object, DeclaredCommand[]>();
+
 export function remote(name?: string) {
   return function <This extends object, Args extends unknown[], R>(
     method: (this: This, ...args: Args) => R,
@@ -272,6 +292,10 @@ export function remote(name?: string) {
 
 export function stub(): never {
   throw new Error('метод не подменён: забыт декоратор @remote?');
+}
+
+export function commandsOf(instance: object): DeclaredCommand[] {
+  return declaredCommands.get(instance) ?? [];
 }
 
 export function registriesOf(ctor: object): RegistrySpec[] {

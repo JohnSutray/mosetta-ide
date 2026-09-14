@@ -8,9 +8,9 @@
   },
   "ide": {
     "client": "src/client.ts",
-    "strings": "src/en.json",
-    "commands": {
-      "scripts.rerun": "Перезапустить последний скрипт"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     },
     "needs": [
       "@mosetta/ide-plugin-npm-scripts"

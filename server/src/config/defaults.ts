@@ -2,6 +2,7 @@ import type { Settings } from '@mosetta/ide-protocol';
 
 export class Defaults {
   readonly settings: Settings = {
+    ui: { locale: 'en' },
     plugins: {
       enabled: [
         '@mosetta/ide-plugin-theme',

@@ -1,4 +1,4 @@
-import { activate, plugin } from '@mosetta/ide-api/client';
+import { activate, command, plugin } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { KeysIcon } from './icons.js';
 import { KeysPopup } from './popup.js';
@@ -13,9 +13,10 @@ export default class KeysPlugin {
 
   constructor(private readonly ide: Ide) {}
 
+  @command('keys.show') protected show(): void { this.window.toggle(); }
+
   @activate() protected start(): void {
     this.ide.css(STYLE);
-    this.ide.command('keys.show', () => this.window.toggle());
 
     this.ide.registry('toolbar.button').add({
       id: 'keys',

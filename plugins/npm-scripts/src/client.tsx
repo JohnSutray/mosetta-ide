@@ -1,5 +1,5 @@
 import { effect, signal } from '@preact/signals';
-import { activate, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { activate, command, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import UiPlugin, { ChoicePopup, PickPopup } from '@mosetta/ide-plugin-ui';
 import type { PackageManagerInfo } from './managers.js';
 import type { Opener } from '@mosetta/ide-plugin-search';
@@ -28,17 +28,20 @@ export default class NpmScripts {
 
   constructor(private readonly ide: Ide) {}
 
+  @command('scripts.open')
+  protected openScripts(): void {
+    this.open.value = !this.open.value;
+    if (this.open.value) void this.refresh();
+  }
+
+  @command('scripts.packageManager')
+  protected pickManager(): void {
+    this.managerPicker.value = !this.managerPicker.value;
+    if (this.managerPicker.value) void this.refreshManagers();
+  }
+
   @activate() protected start(): void {
     this.ide.css(STYLE);
-    this.ide.command('scripts.open', () => {
-      this.open.value = !this.open.value;
-      if (this.open.value) void this.refresh();
-    });
-
-    this.ide.command('scripts.packageManager', () => {
-      this.managerPicker.value = !this.managerPicker.value;
-      if (this.managerPicker.value) void this.refreshManagers();
-    });
     effect(() => {
       if (this.ide.project.value) void this.refreshManagers();
       else this.managers.value = [];

@@ -1,4 +1,4 @@
-import { activate, configSection, IdeProvider, plugin, registry, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { IdeProvider, activate, command, configSection, plugin, registry, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import CodePlugin from '@mosetta/ide-plugin-code';
 import LspPlugin from '@mosetta/ide-plugin-lsp';
 import { computed, effect, signal } from '@preact/signals';
@@ -51,13 +51,13 @@ export default class CompletionPlugin {
         .catch(() => undefined);
     });
     const sources = this.ide.registry<Source>('completion.source');
-    const session = new CompletionSession(
+    const session = (this.session = new CompletionSession(
       new Ranker(new Fuzzy(this.ide.getPlugin(SearchPlugin).matcher, this.ide.getPlugin(SearchPlugin).textIndex), history),
       () => sources.all.value.filter((source) => this.enabled(source.id, settings.value)),
       () => Date.now(),
       (what, detail) =>
         this.ide.sayOnce('completion', what === 'empty' ? this.ide.t('completion.empty') : `${this.ide.t('completion.failed')} ${detail}`),
-    );
+    ));
 
     const own: Source[] = [
       new LspCompletions(
@@ -75,7 +75,7 @@ export default class CompletionPlugin {
       sources.add({ id: source.id, weight: source.weight, items: (ask) => source.items(ask) });
     }
 
-    const bridge: CompletionBridge = new CompletionBridge(
+    const bridge: CompletionBridge = (this.bridge = new CompletionBridge(
       session,
       history,
       () => this.docs.openDoc.value?.path ?? null,
@@ -97,18 +97,21 @@ export default class CompletionPlugin {
         );
         return () => render(null, dom);
       },
-    );
+    ));
     this.ide.registry('editor.extension').add({ id: 'completion', extension: bridge.extension() });
-
-    this.ide.command('completion.show', () => bridge.showHere());
-    this.ide.command('completion.next', () => session.move(1));
-    this.ide.command('completion.prev', () => session.move(-1));
-    this.ide.command('completion.pageDown', () => session.page(1));
-    this.ide.command('completion.pageUp', () => session.page(-1));
-    this.ide.command('completion.accept', () => bridge.accept('insert'));
-    this.ide.command('completion.replace', () => bridge.accept('replace'));
-    this.ide.command('completion.close', () => session.close());
   }
+
+  private session: CompletionSession | null = null;
+  private bridge: CompletionBridge | null = null;
+
+  @command('completion.show') protected show(): void { this.bridge?.showHere(); }
+  @command('completion.next') protected next(): void { this.session?.move(1); }
+  @command('completion.prev') protected prev(): void { this.session?.move(-1); }
+  @command('completion.pageDown') protected pageDown(): void { this.session?.page(1); }
+  @command('completion.pageUp') protected pageUp(): void { this.session?.page(-1); }
+  @command('completion.accept') protected accept(): void { this.bridge?.accept('insert'); }
+  @command('completion.replace') protected replaceWord(): void { this.bridge?.accept('replace'); }
+  @command('completion.close') protected close(): void { this.session?.close(); }
 
   @remote('choices') protected askChoices(): Promise<Record<string, number>> {
     return stub();

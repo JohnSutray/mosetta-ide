@@ -1,4 +1,4 @@
-import { activate, plugin, remote, stub } from '@mosetta/ide-api/client';
+import { activate, command, plugin, remote, stub } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { ProjectsIcon } from './icons.js';
 import { ProjectsPopup } from './popup.js';
@@ -39,29 +39,29 @@ export default class ProjectsPlugin implements ProjectsRemote {
     return stub();
   }
 
+  @command('projects.show') protected show(): void { this.projects.toggle(); }
+  @command('projects.next') protected next(): void { this.projects.moveSuggestion(1); }
+  @command('projects.prev') protected prev(): void { this.projects.moveSuggestion(-1); }
+  @command('projects.suggest') protected suggest(): void { this.projects.openSuggest(); }
+  @command('projects.complete') protected complete(): void { this.projects.complete(); }
+  @command('projects.accept') protected accept(): void { this.projects.accept(); }
+
+  @command('projects.close')
+  protected close(): void {
+    if (this.projects.suggestOpen.peek()) this.projects.closeSuggest();
+    else this.projects.hide();
+  }
+
   @activate() protected start(): void {
     this.ide.css(STYLE);
-    const { projects } = this;
-
-    this.ide.command('projects.show', () => projects.toggle());
-    this.ide.command('projects.next', () => projects.moveSuggestion(1));
-    this.ide.command('projects.prev', () => projects.moveSuggestion(-1));
-    this.ide.command('projects.suggest', () => projects.openSuggest());
-    this.ide.command('projects.complete', () => projects.complete());
-    this.ide.command('projects.accept', () => projects.accept());
-    this.ide.command('projects.close', () => {
-      if (projects.suggestOpen.peek()) projects.closeSuggest();
-      else projects.hide();
-    });
-
     this.ide.registry('toolbar.button').add({
       id: 'projects',
       title: 'toolbar.projects',
       command: 'projects.show',
       icon: (filled: boolean) => <ProjectsIcon filled={filled} />,
-      active: projects.visible,
+      active: this.projects.visible,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <ProjectsPopup windows={this.ide.getPlugin(UiPlugin).windows} projects={projects} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <ProjectsPopup windows={this.ide.getPlugin(UiPlugin).windows} projects={this.projects} />);
   }
 }

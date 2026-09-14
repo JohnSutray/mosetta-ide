@@ -12,11 +12,9 @@
   "ide": {
     "client": "src/client.tsx",
     "server": "src/server.ts",
-    "strings": "src/en.json",
-    "commands": {
-      "git.branches": "Ветки git",
-      "git.push": "Push текущей ветки",
-      "git.fetch": "Забрать обновления удалёнки"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     }
   },
   "dependencies": {

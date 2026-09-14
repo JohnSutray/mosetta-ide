@@ -1,4 +1,4 @@
-import { activate, plugin } from '@mosetta/ide-api/client';
+import { activate, command, plugin } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { effect } from '@preact/signals';
 import { Doc } from './doc.js';
@@ -20,10 +20,10 @@ export default class DocPlugin {
     });
   }
 
-  @activate() protected start(): void {
-    this.ide.command('file.save', () => void this.doc.save());
-    this.ide.command('file.reload', () => void this.doc.reload());
+  @command('file.save') protected save(): void { void this.doc.save(); }
+  @command('file.reload') protected reload(): void { void this.doc.reload(); }
 
+  @activate() protected start(): void {
     effect(() => {
       this.ide.workspaces.current.value;
       this.doc.reset();

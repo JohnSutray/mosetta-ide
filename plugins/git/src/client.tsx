@@ -1,5 +1,5 @@
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
-import { activate, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { activate, command, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import Editor from '@mosetta/ide-plugin-editor';
 import { BranchesWindow, Git, PushWindow, type GitRemote, type TreeTint } from './state.js';
 import { GitMarks } from './marks.js';
@@ -40,16 +40,23 @@ export default class GitPlugin implements GitRemote {
     this.marks = new GitMarks(this, () => ide.getPlugin(DocPlugin));
   }
 
+  @command('git.branches')
+  protected toggleBranches(): void {
+    if (this.branchesWindow.open.value) this.branchesWindow.close();
+    else this.branchesWindow.show();
+  }
+
+  @command('git.push')
+  protected push(): void {
+    if (this.pushWindow.open.value) this.pushWindow.close();
+    else void this.pushWindow.show();
+  }
+
+  @command('git.fetch')
+  protected fetchRemote(): void { void this.branchesWindow.do('fetch'); }
+
   @activate() protected start(): void {
     this.ide.css(STYLE);
-
-    this.ide.command('git.branches', () =>
-      this.branchesWindow.open.value ? this.branchesWindow.close() : this.branchesWindow.show(),
-    );
-    this.ide.command('git.push', () =>
-      this.pushWindow.open.value ? this.pushWindow.close() : void this.pushWindow.show(),
-    );
-    this.ide.command('git.fetch', () => void this.branchesWindow.do('fetch'));
 
     this.ide.registry('toolbar.button').add({
       id: 'git.branches',

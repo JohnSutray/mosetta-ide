@@ -23,7 +23,10 @@
       "Resizer",
       "RootIcon"
     ],
-    "strings": "src/en.json"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
+    }
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",

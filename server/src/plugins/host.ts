@@ -216,11 +216,13 @@ export class PluginHost {
     const manifest: PluginManifest = { name: pkg.name, version: pkg.version, ...pkg.ide };
     const methods = new Map<string, CommandHandler>();
 
-    let strings: Record<string, string> = {};
-    if (manifest.strings) {
-      const at = path.join(dir, manifest.strings);
+    const strings: Record<string, Record<string, string>> = {};
+    const dictionaries =
+      typeof manifest.strings === 'string' ? { en: manifest.strings } : (manifest.strings ?? {});
+    for (const [locale, file] of Object.entries(dictionaries)) {
+      const at = path.join(dir, file);
       try {
-        strings = JSON.parse(await fs.readFile(at, 'utf8')) as Record<string, string>;
+        strings[locale] = JSON.parse(await fs.readFile(at, 'utf8')) as Record<string, string>;
       } catch (err) {
         this.log.warn(`плагин ${name}: не прочитал ${at}: ${String(err)}`);
       }
