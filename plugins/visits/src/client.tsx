@@ -1,10 +1,11 @@
-import { activate, plugin, remote, stub } from '@mosetta/ide-api/client';
+import { activate, command, plugin, remote, stub } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { effect } from '@preact/signals';
 import Editor from '@mosetta/ide-plugin-editor';
 import { Visits, type VisitsRemote } from './state.js';
 import type { Visit } from './types.js';
 import DocPlugin from '@mosetta/ide-plugin-doc';
+import type { Recent } from '@mosetta/ide-plugin-search';
 
 @plugin({ title: 'plugin.visits' })
 export default class VisitsPlugin implements VisitsRemote {
@@ -34,10 +35,11 @@ export default class VisitsPlugin implements VisitsRemote {
     return stub();
   }
 
+  @command('nav.back') protected back(): void { this.visits.back(); }
+  @command('nav.forward') protected forward(): void { this.visits.forward(); }
+
   @activate() protected start(): void {
     const { visits } = this;
-    this.ide.command('nav.back', () => visits.back());
-    this.ide.command('nav.forward', () => visits.forward());
 
     this.ide.getPlugin(Editor).onCaret((path, line, character) => visits.visit(path, line, character));
 
@@ -53,6 +55,11 @@ export default class VisitsPlugin implements VisitsRemote {
     effect(() => {
       if (this.ide.workspaces.current.value) void visits.load();
       else visits.forget();
+    });
+
+    this.ide.registry<Recent>('search.recent').add({
+      kind: 'recent',
+      places: (limit) => visits.recentFiles(limit),
     });
 
     visits.installMouseNav(this.ide.mount);

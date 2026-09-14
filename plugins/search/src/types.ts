@@ -9,6 +9,7 @@ export interface IndexHit {
   path: string;
   line?: number;
   detail?: string;
+  detailKey?: string;
   id?: string;
   score: number;
   matches: number[];
@@ -20,6 +21,12 @@ export interface SearchStats {
   symbols: number;
   vocabulary: number;
   pending: number;
+  unparsed: number;
+}
+
+export interface SearchAnswer {
+  hits: IndexHit[];
+  total: number;
 }
 
 export interface Found {
@@ -46,4 +53,16 @@ export const OPENER_SCHEMA = {
   required: ['kind', 'open'],
   additionalProperties: false,
   properties: { kind: { type: 'string' }, open: {} },
+} as const;
+
+export interface Recent {
+  kind: IndexKind;
+  places(limit: number): Array<{ path: string; line?: number; detail?: string }>;
+}
+
+export const RECENT_SCHEMA = {
+  type: 'object',
+  required: ['kind', 'places'],
+  additionalProperties: false,
+  properties: { kind: { type: 'string' }, places: {} },
 } as const;

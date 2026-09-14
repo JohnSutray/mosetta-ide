@@ -2,9 +2,9 @@ import { activate, command, type CallContext, type Ide, type Project } from '@mo
 import { FindProviders } from './finds.js';
 import { SearchIndex } from './index.js';
 import { INDEX_DEFAULTS } from './settings.js';
-import type { FindProvider, IndexHit, IndexKind, SearchStats } from './types.js';
+import type { FindProvider, IndexKind, SearchAnswer, SearchStats } from './types.js';
 
-export type { FindProvider, Found, IndexHit, IndexKind, SearchStats } from './types.js';
+export type { FindProvider, Found, IndexHit, IndexKind, SearchAnswer, SearchStats } from './types.js';
 
 export default class SearchServer {
   readonly finds = new FindProviders();
@@ -32,7 +32,7 @@ export default class SearchServer {
     );
   }
 
-  @command() protected search(params: unknown, call: CallContext): IndexHit[] {
+  @command() protected search(params: unknown, call: CallContext): SearchAnswer {
     const asked = params as { query?: unknown; limit?: unknown; kinds?: unknown } | null;
     if (!asked || typeof asked.query !== 'string') throw new Error('нужен query: string');
     const limit = typeof asked.limit === 'number' ? asked.limit : undefined;

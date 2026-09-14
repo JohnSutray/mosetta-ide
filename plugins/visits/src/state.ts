@@ -76,6 +76,20 @@ export class Visits {
     const next = [...kept, { path, line, character }];
     return { list: next, at: next.length - 1 };  }
 
+  recentFiles(limit: number): Array<{ path: string; line: number }> {
+    const out: Array<{ path: string; line: number }> = [];
+    if (limit <= 0) return out;
+    const seen = new Set<string>();
+    const list = this.list.value;
+    for (let i = list.length - 1; i >= 0 && out.length < limit; i -= 1) {
+      const visit = list[i];
+      if (!visit || seen.has(visit.path)) continue;
+      seen.add(visit.path);
+      out.push({ path: visit.path, line: visit.line });
+    }
+    return out;
+  }
+
   back(): void {
     if (!this.canGoBack()) return;
     void this.jump(this.at.value - 1);

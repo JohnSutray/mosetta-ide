@@ -1,10 +1,11 @@
 import type { RegistryHandle } from '@mosetta/ide-api/client';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
-import type { IndexHit, IndexKind, Opener } from './types.js';
+import type { IndexHit, IndexKind, Opener, Recent, SearchAnswer, SearchStats } from './types.js';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export interface SearchRemote {
-  find(query: string, limit?: number, kinds?: IndexKind[]): Promise<IndexHit[]>;
+  find(query: string, limit?: number, kinds?: IndexKind[]): Promise<SearchAnswer>;
+  stats(): Promise<SearchStats>;
 }
 
 export class Search {
@@ -12,11 +13,15 @@ export class Search {
     private readonly remote: SearchRemote,
     private readonly openers: RegistryHandle<Opener>,
     private readonly docs: () => Pick<DocPlugin, 'goTo' | 'peekFile'>,
+    private readonly recents: RegistryHandle<Recent>,
+    private readonly recentLimit: () => number,
   ) {}
 
   readonly open = signal(false);
   readonly query = signal('');
   readonly hits = signal<IndexHit[]>([]);
+  readonly total = signal(0);
+  readonly coverage = signal<SearchStats | null>(null);
   readonly selected = signal(0);
   readonly preview = signal<{ path: string; text: string; line: number } | null>(null);
 
@@ -54,6 +59,10 @@ export class Search {
       this.selected.value = 0;
     });
     void this.run(this.query.value);
+    void this.remote
+      .stats()
+      .then((stats) => (this.coverage.value = stats))
+      .catch(() => (this.coverage.value = null));
   }
 
   close(): void {
@@ -103,23 +112,52 @@ export class Search {
     const token = ++this.token;
     if (value.trim() === '') {
       batch(() => {
-        this.hits.value = [];
+        const recent = this.recent();
+        this.hits.value = recent;
+        this.total.value = recent.length;
         this.selected.value = 0;
         this.preview.value = null;
       });
+      this.schedulePreview();
       return;
     }
     try {
-      const hits = await this.remote.find(value, this.limit);
+      const answer = await this.remote.find(value, this.limit);
       if (token !== this.token) return;
       batch(() => {
-        this.hits.value = this.groupByKind(hits);
+        this.hits.value = this.groupByKind(answer.hits);
+        this.total.value = answer.total;
         this.selected.value = 0;
       });
       this.schedulePreview();
     } catch {
-      if (token === this.token) this.hits.value = [];
+      if (token === this.token) {
+        batch(() => {
+          this.hits.value = [];
+          this.total.value = 0;
+        });
+      }
     }
+  }
+
+  private recent(): IndexHit[] {
+    const limit = this.recentLimit();
+    if (limit <= 0) return [];
+    const hits: IndexHit[] = [];
+    for (const source of this.recents.all.value) {
+      for (const place of source.places(limit)) {
+        hits.push({
+          kind: source.kind,
+          label: place.path,
+          path: place.path,
+          line: place.line,
+          detail: place.detail,
+          score: 0,
+          matches: [],
+        });
+      }
+    }
+    return this.groupByKind(hits).slice(0, limit);
   }
 
   private groupByKind(hits: IndexHit[]): IndexHit[] {

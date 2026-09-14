@@ -876,6 +876,9 @@ importers:
       '@mosetta/ide-plugin-editor':
         specifier: workspace:*
         version: link:../editor
+      '@mosetta/ide-plugin-search':
+        specifier: workspace:*
+        version: link:../search
     devDependencies:
       '@preact/signals':
         specifier: ^1.3.1

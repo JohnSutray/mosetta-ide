@@ -67,3 +67,43 @@ describe('список посещений', () => {
     expect(list.at(-1)!.path).toBe(`f${LIMIT * 2 - 1}.ts`);
   });
 });
+
+describe('недавние файлы', () => {
+  const of = (list: Visit[]) => {
+    const own = new Visits({ list: async () => [], save: async () => ({ saved: 0 }) }, () => ({ goTo: async () => undefined }));
+    own.list.value = list;
+    return own;
+  };
+
+  it('свежие первыми, каждый файл один раз', () => {
+    const own = of([
+      { path: 'a.ts', line: 1 },
+      { path: 'b.ts', line: 2 },
+      { path: 'a.ts', line: 90 },
+      { path: 'c.ts', line: 3 },
+    ]);
+    expect(own.recentFiles(10)).toEqual([
+      { path: 'c.ts', line: 3 },
+      { path: 'a.ts', line: 90 },
+      { path: 'b.ts', line: 2 },
+    ]);
+  });
+
+  it('строка берётся ПОСЛЕДНЯЯ: возвращаются туда, откуда ушли', () => {
+    const own = of([
+      { path: 'a.ts', line: 1 },
+      { path: 'a.ts', line: 200 },
+    ]);
+    expect(own.recentFiles(10)).toEqual([{ path: 'a.ts', line: 200 }]);
+  });
+
+  it('больше просимого не даём, а ноль выключает список вовсе', () => {
+    const own = of([
+      { path: 'a.ts', line: 1 },
+      { path: 'b.ts', line: 2 },
+      { path: 'c.ts', line: 3 },
+    ]);
+    expect(own.recentFiles(2).map((one) => one.path)).toEqual(['c.ts', 'b.ts']);
+    expect(own.recentFiles(0)).toEqual([]);
+  });
+});

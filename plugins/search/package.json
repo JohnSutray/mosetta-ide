@@ -13,13 +13,9 @@
   "ide": {
     "client": "src/client.tsx",
     "server": "src/server.ts",
-    "strings": "src/en.json",
-    "commands": {
-      "search.everywhere": "Найти всё",
-      "search.next": "Поиск: вниз",
-      "search.prev": "Поиск: вверх",
-      "search.accept": "Поиск: открыть",
-      "search.close": "Поиск: закрыть"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     }
   },
   "dependencies": {

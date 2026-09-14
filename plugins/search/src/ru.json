@@ -1,0 +1,18 @@
+{
+  "command.search.accept": "Поиск: открыть",
+  "command.search.close": "Поиск: закрыть",
+  "command.search.everywhere": "Найти всё",
+  "command.search.next": "Поиск: вниз",
+  "command.search.prev": "Поиск: вверх",
+  "search.partial": "Символов нет у {count} файлов — они не в памяти",
+  "search.some": "{shown} из {total}",
+  "search.symbol.class": "класс",
+  "search.symbol.enum": "енум",
+  "search.symbol.enum-member": "значение енума",
+  "search.symbol.function": "функция",
+  "search.symbol.interface": "интерфейс",
+  "search.symbol.method": "метод",
+  "search.symbol.property": "поле",
+  "search.symbol.type": "тип",
+  "search.symbol.variable": "переменная"
+}

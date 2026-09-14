@@ -15,9 +15,19 @@ interface Stats {
   symbols: number;
   vocabulary: number;
   pending: number;
+  unparsed: number;
 }
-function search(c: TestClient, params: { query: string; limit?: number; kinds?: string[] }): Promise<Hit[]> {
-  return c.call('plugins.call', { name: '@mosetta/ide-plugin-search', method: 'search', params }) as Promise<Hit[]>;
+async function search(c: TestClient, params: { query: string; limit?: number; kinds?: string[] }): Promise<Hit[]> {
+  return (await answerOf(c, params)).hits;
+}
+function answerOf(
+  c: TestClient,
+  params: { query: string; limit?: number; kinds?: string[] },
+): Promise<{ hits: Hit[]; total: number }> {
+  return c.call('plugins.call', { name: '@mosetta/ide-plugin-search', method: 'search', params }) as Promise<{
+    hits: Hit[];
+    total: number;
+  }>;
 }
 function indexStats(c: TestClient): Promise<Stats> {
   return c.call('plugins.call', { name: '@mosetta/ide-plugin-search', method: 'stats', params: null }) as Promise<Stats>;
@@ -79,6 +89,16 @@ describe('поиск всего', () => {
     expect(stats.provided).toBe(3);
     expect(stats.symbols).toBeGreaterThan(8);
     expect(stats.vocabulary).toBeGreaterThan(5);
+    expect(stats.unparsed).toBe(0);
+  });
+
+  it('потолок режет список, но не число найденного', async () => {
+    const all = await answerOf(c, { query: 'ts::', limit: 200 });
+    expect(all.hits.length).toBe(all.total);
+
+    const few = await answerOf(c, { query: 'ts::', limit: 2 });
+    expect(few.hits).toHaveLength(2);
+    expect(few.total).toBe(all.total);
   });
 
   it('находит npm-скрипт монорепы по имени пакета и скрипта', async () => {

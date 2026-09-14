@@ -12,16 +12,16 @@
   "ide": {
     "client": "src/client.tsx",
     "server": "src/server.ts",
-    "strings": "src/en.json",
-    "commands": {
-      "nav.back": "Назад по местам каретки",
-      "nav.forward": "Вперёд по местам каретки"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
     }
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",
     "@mosetta/ide-plugin-doc": "workspace:*",
-    "@mosetta/ide-plugin-editor": "workspace:*"
+    "@mosetta/ide-plugin-editor": "workspace:*",
+    "@mosetta/ide-plugin-search": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

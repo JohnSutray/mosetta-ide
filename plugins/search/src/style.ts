@@ -27,6 +27,28 @@ export const STYLE = `
 .se-input::placeholder { color: var(--muted); }
 .se-count { color: var(--muted); flex: none; }
 
+.se-coverage {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 12px 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.se-raise {
+  flex: none;
+  padding: 1px 7px;
+  border: none;
+  border-radius: 4px;
+  background: var(--control-bg);
+  color: var(--fg);
+  font: inherit;
+  font-family: var(--mono, monospace);
+  cursor: pointer;
+}
+.se-raise:hover { background: #45494a; }
+.se-raise-key { flex: none; font-family: var(--mono, monospace); }
+
 .se-body { display: flex; flex: 1; min-height: 0; }
 
 .se-list {

@@ -1,5 +1,6 @@
 {
   "command.nav.back": "Back",
   "command.nav.forward": "Forward",
-  "plugin.visits": "Caret history"
+  "plugin.visits": "Caret history",
+  "search.kind.recent": "Recent files"
 }

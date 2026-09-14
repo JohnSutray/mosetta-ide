@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import type CodePlugin from '@mosetta/ide-plugin-code';
 import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
 import type { IndexHit } from './types.js';
+import { INDEX_DEFAULTS } from './settings.js';
 import { Popup } from '@mosetta/ide-plugin-ui';
 import type { Search } from './state.js';
 
@@ -26,9 +27,13 @@ export function SearchEverywhere({ windows, search, code }: { windows: Windows; 
   }, [search.selected.value, search.hits.value]);
 
   const editor = ide.settingsOf('editor', EDITOR_DEFAULTS).value;
+  const index = ide.settingsOf('index', INDEX_DEFAULTS).value;
   if (!search.open.value) return null;
 
   const preview = search.preview.value;
+  const shown = search.hits.value.length;
+  const total = search.total.value;
+  const missing = index.enabled ? (search.coverage.value?.unparsed ?? 0) : 0;
 
   return (
     <Popup windows={windows}
@@ -49,8 +54,23 @@ export function SearchEverywhere({ windows, search, code }: { windows: Windows; 
             placeholder={t('search.placeholder')}
             onInput={(e) => search.setQuery((e.target as HTMLInputElement).value)}
           />
-          <span class="se-count">{search.hits.value.length}</span>
+          <span class="se-count">
+            {total > shown ? t('search.some', { shown, total }) : shown}
+          </span>
         </div>
+
+        {missing > 0 && (
+          <div class="se-coverage">
+            <span>{t('search.partial', { count: missing })}</span>
+            {ide.knownCommands.value.some((one) => one.id === 'settings.show') ? (
+              <button class="se-raise" onClick={() => ide.runCommand('settings.show')}>
+                fs.preloadBudgetMb
+              </button>
+            ) : (
+              <span class="se-raise-key">fs.preloadBudgetMb</span>
+            )}
+          </div>
+        )}
 
         <div class="se-body">
           <div class="se-list" ref={list}>
@@ -103,6 +123,7 @@ function Row({
   onPick: () => void;
   onOpen: () => void;
 }) {
+  const t = useT();
   return (
     <div
       class={`se-row ${current ? 'is-current' : ''}`}
@@ -110,7 +131,13 @@ function Row({
       onClick={onOpen}
     >
       <span class="se-label">{highlight(hit.label, hit.matches)}</span>
-      {hit.detail && <span class="se-detail">{hit.detail}</span>}
+      {(hit.detail || hit.detailKey) && (
+        <span class="se-detail">
+          {hit.detailKey ? t(hit.detailKey) : ''}
+          {hit.detailKey && hit.detail ? ' · ' : ''}
+          {hit.detail}
+        </span>
+      )}
     </div>
   );
 }

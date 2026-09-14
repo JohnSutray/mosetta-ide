@@ -1,11 +1,13 @@
 import type { IndexSettings } from './settings.js';
+
+type IndexPart = Pick<IndexSettings, 'enabled' | 'maxResults'>;
 import type { Logger, ProjectMemory } from '@mosetta/ide-api/server';
 import { matcher } from './matcher.js';
 import { layout } from './layout.js';
 import { Vocabulary, textIndex, type Indexed } from './text.js';
 import type { FindProviders } from './finds.js';
 import { tsSymbols, type SymbolKind } from './ts-symbols.js';
-import { OWN_KINDS, type IndexHit, type IndexKind, type SearchStats } from './types.js';
+import { OWN_KINDS, type IndexHit, type IndexKind, type SearchAnswer, type SearchStats } from './types.js';
 
 function extensionOf(key: string): string {
   const name = key.slice(key.lastIndexOf('/') + 1);
@@ -19,23 +21,16 @@ interface Entry {
   path: string;
   line?: number;
   detail?: string;
+  detailKey?: string;
   id?: string;
   indexed: Indexed;
 }
 
 const KIND_PREFIX = /^([\w-]+)::(.*)$/s;
 
-const SYMBOL_DETAIL: Record<SymbolKind, string> = {
-  function: 'функция',
-  class: 'класс',
-  method: 'метод',
-  property: 'поле',
-  interface: 'интерфейс',
-  type: 'тип',
-  enum: 'енум',
-  'enum-member': 'значение енума',
-  variable: 'переменная',
-};
+function symbolKey(kind: SymbolKind): string {
+  return `search.symbol.${kind}`;
+}
 
 export class SearchIndex {
   private files: Entry[] = [];
@@ -51,7 +46,7 @@ export class SearchIndex {
 
   constructor(
     private readonly ram: ProjectMemory,
-    private readonly settingsOf: () => IndexSettings,
+    private readonly settingsOf: () => IndexPart,
     private readonly log: Logger,
     private readonly providers: FindProviders,
   ) {
@@ -82,7 +77,7 @@ export class SearchIndex {
     });
   }
 
-  private get settings(): IndexSettings {
+  private get settings(): IndexPart {
     return this.settingsOf();
   }
 
@@ -234,7 +229,8 @@ export class SearchIndex {
               label,
               path,
               line: symbol.line,
-              detail: `${SYMBOL_DETAIL[symbol.kind]} · ${path}`,
+              detailKey: symbolKey(symbol.kind),
+              detail: path,
               indexed: textIndex.of(label, this.vocabulary),
             };
           }),
@@ -249,11 +245,11 @@ export class SearchIndex {
     }
   }
 
-  search(query: string, limit = this.settings.maxResults, kinds?: IndexKind[]): IndexHit[] {
+  search(query: string, limit = this.settings.maxResults, kinds?: IndexKind[]): SearchAnswer {
     if (this.staleTree) this.rebuild();
 
     const raw = query.trim();
-    if (raw === '') return [];
+    if (raw === '') return { hits: [], total: 0 };
 
     const prefixed = KIND_PREFIX.exec(raw);
     const kindFilter = new Set(kinds ?? []);
@@ -289,7 +285,7 @@ export class SearchIndex {
         a.label.length - b.label.length ||
         a.label.localeCompare(b.label, 'ru'),
     );
-    return hits.slice(0, limit);
+    return { hits: hits.slice(0, limit), total: hits.length };
   }
 
   private knows(kind: string): boolean {
@@ -309,6 +305,16 @@ export class SearchIndex {
     return total;
   }
 
+  private get unparsedCount(): number {
+    let total = 0;
+    for (const file of this.ram.files()) {
+      if (!tsSymbols.canParse(extensionOf(file.path))) continue;
+      if (this.symbols.has(file.path) || this.pending.has(file.path)) continue;
+      total += 1;
+    }
+    return total;
+  }
+
   stats(): SearchStats {
     if (this.staleTree) this.rebuild();
     return {
@@ -317,6 +323,7 @@ export class SearchIndex {
       symbols: this.symbolCount,
       vocabulary: this.vocabulary.size,
       pending: this.pending.size,
+      unparsed: this.unparsedCount,
     };
   }
 }
@@ -328,6 +335,7 @@ function toHit(entry: Entry, score: number, matches: number[]): IndexHit {
     path: entry.path,
     ...(entry.line !== undefined ? { line: entry.line } : {}),
     ...(entry.detail ? { detail: entry.detail } : {}),
+    ...(entry.detailKey ? { detailKey: entry.detailKey } : {}),
     ...(entry.id ? { id: entry.id } : {}),
     score,
     matches,

@@ -17,13 +17,14 @@ const recipes = {
 
 class FakeMemory implements ProjectMemory {
   private readonly listeners = new Set<(event: MemoryEvent) => void>();
-  constructor(readonly docs: Map<string, string>) {}
+  constructor(readonly docs: Map<string, string>, private readonly ghosts: readonly string[] = []) {}
   on(listener: (event: MemoryEvent) => void): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
   *files(): Iterable<{ path: string }> {
     for (const path of this.docs.keys()) yield { path };
+    for (const path of this.ghosts) yield { path };
   }
   docSync(path: string): MemoryDoc | null {
     const text = this.docs.get(path);
@@ -49,8 +50,8 @@ class FakeMemory implements ProjectMemory {
 
 const silent = { debug() {}, info() {}, warn() {}, error() {} };
 
-function raise(docs: Record<string, string>) {
-  const memory = new FakeMemory(new Map(Object.entries(docs)));
+function raise(docs: Record<string, string>, ghosts: readonly string[] = []) {
+  const memory = new FakeMemory(new Map(Object.entries(docs)), ghosts);
   const finds = new FindProviders();
   finds.add(recipes);
   const index = new SearchIndex(memory, () => ({ enabled: true, maxResults: 50 }), silent, finds);
@@ -61,12 +62,12 @@ function raise(docs: Record<string, string>) {
 describe('поставщики находок', () => {
   it('находки выдуманного сорта ищутся наравне со своими', () => {
     const { index } = raise({ 'dinner.toml': 'borscht\npelmeni\n', 'src/main.ts': 'const a = 1;\n' });
-    expect(index.search('recipe::').map((hit) => hit.label).sort()).toEqual(['recipe::borscht', 'recipe::pelmeni']);
+    expect(index.search('recipe::').hits.map((hit) => hit.label).sort()).toEqual(['recipe::borscht', 'recipe::pelmeni']);
   });
 
   it('сорт становится фильтром, а поиск без него видит всё', () => {
     const { index } = raise({ 'dinner.toml': 'borscht\npelmeni\n' });
-    const all = index.search('pelmeni');
+    const all = index.search('pelmeni').hits;
     expect(all[0]?.kind).toBe('recipe');
     expect(all[0]?.path).toBe('dinner.toml');
     expect(all[0]?.line).toBe(1);
@@ -75,16 +76,16 @@ describe('поставщики находок', () => {
 
   it('незнакомый сорт — это обычная строка, а не пустой фильтр', () => {
     const { index } = raise({ 'dinner.toml': 'borscht\n' });
-    expect(index.search('soup::borscht')).toEqual([]);
+    expect(index.search('soup::borscht').hits).toEqual([]);
   });
 
   it('сохранённая правка меняет находки, а правка на лету — нет', () => {
     const { memory, index } = raise({ 'dinner.toml': 'borscht\n' });
     memory.docs.set('dinner.toml', 'okroshka\n');
     memory.fire({ type: 'doc.changed', path: 'dinner.toml' });
-    expect(index.search('recipe::').map((hit) => hit.label)).toEqual(['recipe::borscht']);
+    expect(index.search('recipe::').hits.map((hit) => hit.label)).toEqual(['recipe::borscht']);
     memory.fire({ type: 'doc.saved', path: 'dinner.toml' });
-    expect(index.search('recipe::').map((hit) => hit.label)).toEqual(['recipe::okroshka']);
+    expect(index.search('recipe::').hits.map((hit) => hit.label)).toEqual(['recipe::okroshka']);
   });
 
   it('файл, доехавший в память, попадает к поставщику сам', () => {
@@ -92,14 +93,42 @@ describe('поставщики находок', () => {
     expect(index.stats().provided).toBe(0);
     memory.docs.set('lunch.toml', 'soup\n');
     memory.fire({ type: 'doc.resident', path: 'lunch.toml' });
-    expect(index.search('recipe::').map((hit) => hit.label)).toEqual(['recipe::soup']);
+    expect(index.search('recipe::').hits.map((hit) => hit.label)).toEqual(['recipe::soup']);
     expect(index.stats().provided).toBe(1);
   });
 
   it('файлы ищутся по слипшимся именам', () => {
     const { index } = raise({ 'src/util/helper.ts': '', 'src/main.ts': '' });
-    expect(index.search('helper')[0]?.path).toBe('src/util/helper.ts');
-    expect(index.search('srmn').map((h) => h.path)).toContain('src/main.ts');
+    expect(index.search('helper').hits[0]?.path).toBe('src/util/helper.ts');
+    expect(index.search('srmn').hits.map((h) => h.path)).toContain('src/main.ts');
+  });
+});
+
+describe('индекс говорит, чего он не показал', () => {
+  it('потолок режет список, но не число найденного', () => {
+    const { index } = raise({ 'a1.ts': '', 'a2.ts': '', 'a3.ts': '' });
+    const answer = index.search('a', 2);
+    expect(answer.hits).toHaveLength(2);
+    expect(answer.total).toBe(3);
+  });
+
+  it('пустой запрос ничего не находит и не делает вид, что нашёл', () => {
+    const { index } = raise({ 'a1.ts': '' });
+    expect(index.search('  ')).toEqual({ hits: [], total: 0 });
+  });
+
+  it('файл вне памяти объявлен непокрытым, а разобранный — нет', async () => {
+    const { index } = raise({ 'src/main.ts': 'export function hello() {}\n' }, ['src/cold.ts']);
+    await index.indexSymbols();
+    const stats = index.stats();
+    expect(stats.symbols).toBe(1);
+    expect(stats.unparsed).toBe(1);
+  });
+
+  it('файл без символов — это не непокрытый файл', async () => {
+    const { index } = raise({ 'src/empty.ts': '\n' });
+    await index.indexSymbols();
+    expect(index.stats().unparsed).toBe(0);
   });
 });
 
