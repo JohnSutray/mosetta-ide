@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Versions } from './versions.mjs';
 
 const NAME = 'Mosetta IDE';
 const ID = 'com.mosetta.ide';
@@ -244,8 +245,13 @@ class Cli {
     this.step('building on this machine');
     execFileSync(process.execPath, [path.join(this.layout.packageIn(target), 'scripts', 'build.mjs')], { stdio: 'inherit' });
 
+    const versions = new Versions(this.layout.apps);
+    const previous = versions.currentName(this.layout.current);
     fs.rmSync(this.layout.current, { recursive: true, force: true });
     fs.symlinkSync(target, this.layout.current, process.platform === 'win32' ? 'junction' : 'dir');
+    for (const gone of versions.prune([this.layout.version, previous])) {
+      this.step(`removed old ${gone.name} (${Versions.megabytes(gone.bytes)}); keeping ${previous ?? 'nothing'} for rollback`);
+    }
 
     this.step('creating the shortcut');
     this.launcher.create();

@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Mosetta IDE — оболочка Электрона: окна, трей и демон (ADR-0211)",
   "scripts": {
-    "start": "node scripts/start.mjs"
+    "start": "node scripts/start.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@mosetta/ide-client": "workspace:*",
@@ -16,7 +17,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.9"
   },
   "bin": {
     "mosetta-ide": "bin/mosetta-ide.mjs"
