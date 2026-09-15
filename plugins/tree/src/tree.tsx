@@ -112,17 +112,27 @@ export function Tree(props: TreeProps) {
   );
 }
 
-function Level({ entries, depth, ...props }: { entries: DirEntry[]; depth: number } & TreeProps) {
+function Level({
+  entries,
+  depth,
+  excluded,
+  ...props
+}: { entries: DirEntry[]; depth: number; excluded?: boolean } & TreeProps) {
   return (
     <>
       {entries.map((entry) => (
-        <Row key={entry.path} entry={entry} depth={depth} {...props} />
+        <Row key={entry.path} entry={entry} depth={depth} excluded={excluded} {...props} />
       ))}
     </>
   );
 }
 
-function Row({ entry, depth, ...props }: { entry: DirEntry; depth: number } & TreeProps) {
+function Row({
+  entry,
+  depth,
+  excluded,
+  ...props
+}: { entry: DirEntry; depth: number; excluded?: boolean } & TreeProps) {
   const t = useT();
   const { files, selection, ops, menu, tints } = props;
   const isDir = entry.kind === 'dir';
@@ -130,12 +140,13 @@ function Row({ entry, depth, ...props }: { entry: DirEntry; depth: number } & Tr
   const isCurrent = props.docs.openDoc.value?.path === entry.path;
   const kids = isOpen ? files.children.value.get(entry.path) : undefined;
   const broken = props.broken.value.has(entry.path);
-  const tint = entry.noScan ? undefined : tints.of(entry.path);
+  const outside = entry.noScan || excluded === true;
+  const tint = outside ? undefined : tints.of(entry.path);
 
   return (
     <>
       <div
-        class={`tree-row ${isCurrent ? 'is-current' : ''} ${entry.noScan ? 'is-excluded' : ''} ${
+        class={`tree-row ${isCurrent ? 'is-current' : ''} ${outside ? 'is-excluded' : ''} ${
           selection.picked.value.has(entry.path) ? 'is-picked' : ''
         } ${selection.focus.value === entry.path ? 'is-focused' : ''}`}
         style={{ paddingLeft: `${6 + depth * 14}px` }}
@@ -195,14 +206,14 @@ function Row({ entry, depth, ...props }: { entry: DirEntry; depth: number } & Tr
           <Chevron />
         </span>
         <span class="tree-icon">
-          {isDir ? <DirIcon excluded={entry.noScan} /> : <FileIcon name={entry.name} />}
+          {isDir ? <DirIcon excluded={outside} /> : <FileIcon name={entry.name} />}
         </span>
         <span class={`tree-name ${broken ? 'is-broken' : ''} ${tint ? `git-${tint}` : ''}`}>
           {found(entry.name, props.typeahead.match(entry.name))}
         </span>
         {entry.noScan && <span class="tree-note">{t('tree.noScan')}</span>}
       </div>
-      {kids ? <Level entries={kids} depth={depth + 1} {...props} /> : null}
+      {kids ? <Level entries={kids} depth={depth + 1} excluded={outside} {...props} /> : null}
     </>
   );
 }
