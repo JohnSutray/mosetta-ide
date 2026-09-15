@@ -160,7 +160,7 @@ export class SearchIndex {
     if (unseen.length > 0) {
       this.log.warn(
         `поставщики находок ждут ${unseen.length} файлов, которые память не считает ` +
-          `текстовыми (${unseen.slice(0, 3).join(', ')}): добавь расширение в fs.textExtensions`,
+          `текстовыми (${unseen.slice(0, 3).join(', ')}): они двоичные`,
       );
     }
     this.provided = provided;

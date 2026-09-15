@@ -25,6 +25,13 @@ export interface OsFileText {
   text: string;
   revision: string;
   truncated: boolean;
+  binary: boolean;
+}
+
+const SNIFF = 8192;
+
+function looksBinary(buffer: Buffer): boolean {
+  return buffer.indexOf(0) !== -1;
 }
 
 export class OsFs {
@@ -113,21 +120,47 @@ export class OsFs {
 
     const limit = this.settings.maxFileMb * 1024 * 1024;
     const truncated = stat.size > limit;
-    let text: string;
+    let bytes: Buffer;
     if (truncated) {
       const handle = await fs.open(absolute, 'r');
       try {
         const buffer = Buffer.allocUnsafe(limit);
         const { bytesRead } = await handle.read(buffer, 0, limit, 0);
-        text = buffer.subarray(0, bytesRead).toString('utf8');
+        bytes = buffer.subarray(0, bytesRead);
       } finally {
         await handle.close();
       }
     } else {
-      text = await fs.readFile(absolute, 'utf8');
+      bytes = await fs.readFile(absolute);
     }
 
-    return { path: fileKey, text, revision: revisionOf(stat), truncated };
+    const binary = looksBinary(bytes.subarray(0, SNIFF));
+    return {
+      path: fileKey,
+      text: binary ? '' : bytes.toString('utf8'),
+      revision: revisionOf(stat),
+      truncated,
+      binary,
+    };
+  }
+
+  async sniff(key: string): Promise<boolean> {
+    const absolute = paths.toAbsolute(this.root, paths.toKey(key));
+    let handle;
+    try {
+      handle = await fs.open(absolute, 'r');
+    } catch {
+      return false;
+    }
+    try {
+      const buffer = Buffer.allocUnsafe(SNIFF);
+      const { bytesRead } = await handle.read(buffer, 0, SNIFF, 0);
+      return !looksBinary(buffer.subarray(0, bytesRead));
+    } catch {
+      return false;
+    } finally {
+      await handle.close();
+    }
   }
 
   async write(

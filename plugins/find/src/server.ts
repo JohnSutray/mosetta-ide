@@ -72,7 +72,7 @@ export default class FindServer {
 
   private *candidates(memory: ProjectMemory, wanted: (path: string) => boolean): Iterable<string> {
     for (const file of memory.files()) {
-      if (!memory.isTextual(file.path) || !wanted(file.path)) continue;
+      if (!wanted(file.path)) continue;
       yield file.path;
     }
   }

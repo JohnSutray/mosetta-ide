@@ -5,7 +5,6 @@ export interface FsSettings {
   noScan: string[];
   maxFileMb: number;
   preloadBudgetMb: number;
-  textExtensions: string[];
   watch: boolean;
   watchDebounceMs: number;
 }
@@ -18,7 +17,6 @@ export const FS_SCHEMA = {
     noScan: { type: 'array', items: { type: 'string' } },
     maxFileMb: { type: 'number' },
     preloadBudgetMb: { type: 'number' },
-    textExtensions: { type: 'array', items: { type: 'string' } },
     watch: { type: 'boolean' },
     watchDebounceMs: { type: 'number' },
   },

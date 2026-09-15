@@ -186,3 +186,52 @@ describe('флаг «изменён» говорит правду', () => {
     expect(back.version).toBe(2);
   });
 });
+
+describe('двоичное узнаётся по содержимому', () => {
+  let server: RunningServer;
+  let root: string;
+  let c: TestClient;
+
+  async function grep(query: string): Promise<Array<{ path: string }>> {
+    const answer = (await c.call('plugins.call', {
+      name: '@mosetta/ide-plugin-find',
+      method: 'grep',
+      params: { query, regex: false, caseSensitive: false, words: false, masks: [] },
+    })) as { hits: Array<{ path: string }> };
+    return answer.hits;
+  }
+
+  beforeEach(async () => {
+    server = await withServer();
+    root = await makeProject('binary', {
+      '.gitignore': 'node_modules/\nиголка\n',
+      Dockerfile: 'FROM node\n# иголка\n',
+      'script.py': 'print("иголка")\n',
+      'notes.md': 'иголка в тексте\n',
+    });
+    await fs.writeFile(path.join(root, 'picture.png'), Buffer.from([0x89, 0x50, 0x00, 0x69, 0x67]));
+    c = await connect(server);
+    await c.call('workspace.open', { root });
+  });
+
+  afterEach(async () => {
+    await c.close();
+    await server.close();
+    await removeProject(root);
+  });
+
+  it('файлы без знакомого расширения ищутся наравне со всеми', async () => {
+    const found = (await grep('иголка')).map((h) => h.path).sort();
+    expect(found).toEqual(['.gitignore', 'Dockerfile', 'notes.md', 'script.py']);
+  });
+
+  it('двоичный в выдачу не попадает и мусором не притворяется', async () => {
+    const found = (await grep('ig')).map((h) => h.path);
+    expect(found).not.toContain('picture.png');
+  });
+
+  it('дерево показывает всё, включая двоичное', async () => {
+    const entries = (await c.call('tree.list', { path: '' })) as Array<{ path: string }>;
+    expect(entries.map((e) => e.path)).toContain('picture.png');
+  });
+});

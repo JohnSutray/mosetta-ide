@@ -37,12 +37,7 @@ export class Defaults {
       hidden: ['.DS_Store'],
       noScan: ['node_modules', '.git', 'dist', 'build', 'coverage'],
       maxFileMb: 8,
-      preloadBudgetMb: 64,
-      textExtensions: [
-        'ts', 'tsx', 'mts', 'cts', 'js', 'jsx', 'mjs', 'cjs',
-        'json', 'jsonc', 'css', 'scss', 'html', 'htm', 'vue', 'svelte',
-        'md', 'markdown', 'txt', 'yml', 'yaml', 'toml', 'el', 'sh', 'ps1',
-      ],
+      preloadBudgetMb: 512,
       watch: true,
       watchDebounceMs: 60,
     },

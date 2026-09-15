@@ -44,6 +44,7 @@ export class RamFs {
   private builtMs = 0;
   private fileCount = 0;
   private preloading: Promise<void> | null = null;
+  private readonly binaries = new Set<string>();
   private disposed = false;
   private readonly offOs: () => void;
 
@@ -133,7 +134,7 @@ export class RamFs {
   }
 
   isTextual(path: string): boolean {
-    return this.settings.textExtensions.includes(paths.extensionOf(path));
+    return !this.binaries.has(path);
   }
 
   preload(): Promise<void> {
@@ -145,18 +146,22 @@ export class RamFs {
 
   private async runPreload(): Promise<void> {
     const budget = this.settings.preloadBudgetMb * 1024 * 1024;
-    const textual = new Set(this.settings.textExtensions);
     const limit = this.settings.maxFileMb * 1024 * 1024;
     let loaded = 0;
 
     const candidates = [...this.files()]
-      .filter((e) => textual.has(paths.extensionOf(e.path)) && e.size <= limit)
+      .filter((e) => e.size <= limit)
       .sort((a, b) => a.size - b.size);
 
     for (const entry of candidates) {
       if (this.disposed) return;
       if (this.bytesResident + entry.size > budget) break;
       if (this.docs.has(entry.path)) continue;
+      if (this.binaries.has(entry.path)) continue;
+      if (!(await this.os.sniff(entry.path))) {
+        this.binaries.add(entry.path);
+        continue;
+      }
       try {
         await this.residentize(entry.path);
         loaded += 1;
@@ -182,6 +187,11 @@ export class RamFs {
     const file = await this.os.read(key);
     const raced = this.docs.get(key);
     if (raced) return raced;
+    if (file.binary) {
+      this.binaries.add(file.path);
+      throw new RpcError(RpcErrorCode.WrongKind, `Файл не текстовый: ${key}`);
+    }
+    this.binaries.delete(file.path);
     const doc: Doc = {
       path: file.path,
       text: file.text,
@@ -330,6 +340,10 @@ export class RamFs {
 
   async reloadDoc(key: string): Promise<Doc> {
     const file = await this.os.read(key);
+    if (file.binary) {
+      this.binaries.add(file.path);
+      throw new RpcError(RpcErrorCode.WrongKind, `Файл не текстовый: ${key}`);
+    }
     const doc = this.docs.get(key);
     if (!doc) return this.residentize(key);
     this.bytesResident += file.text.length - doc.text.length;
