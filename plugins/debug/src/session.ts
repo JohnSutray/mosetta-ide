@@ -6,6 +6,7 @@ export interface SessionOwner {
   toAdapter(key: string): string;
   child(parent: DapSession, request: 'launch' | 'attach', configuration: Record<string, unknown>): void;
   runInTerminal: ((ask: TerminalAsk) => Promise<{ shellProcessId?: number; processId?: number }>) | null;
+  skipped(session: DapSession): void;
   changed(session: DapSession): void;
   stopped(session: DapSession, stop: Stop): void;
   output(session: DapSession, category: string, text: string): void;
@@ -161,9 +162,7 @@ export class DapSession {
           reason: String(body['reason'] ?? 'pause'),
           ...(typeof body['description'] === 'string' ? { description: body['description'] } : {}),
         };
-        this.stop = stop;
-        this.setState('paused');
-        this.owner.stopped(this, stop);
+        void this.arrived(stop);
         return;
       }
       case 'continued':
@@ -180,6 +179,35 @@ export class DapSession {
       case 'breakpoint':
         this.breakpointChanged(body['breakpoint'] as DapBreakpoint | undefined);
         return;
+    }
+  }
+
+  private async arrived(stop: Stop): Promise<void> {
+    if (stop.reason === 'breakpoint' && (await this.inFakeFrame(stop.thread))) {
+      this.owner.skipped(this);
+      await this.wire.request('continue', { threadId: stop.thread }).catch(() => undefined);
+      return;
+    }
+    this.stop = stop;
+    this.setState('paused');
+    this.owner.stopped(this, stop);
+  }
+
+  private async inFakeFrame(thread: number): Promise<boolean> {
+    try {
+      const { stackFrames } = await this.wire.request<{
+        stackFrames: Array<{ id: number; presentationHint?: string; source?: { origin?: string } }>;
+      }>('stackTrace', { threadId: thread, levels: 1 });
+      const top = stackFrames[0];
+      if (!top || top.presentationHint !== 'deemphasize' || !/skipFiles/i.test(top.source?.origin ?? '')) return false;
+      const answer = await this.wire.request<{ result: string }>('evaluate', {
+        expression: 'new Error().stack',
+        frameId: top.id,
+        context: 'repl',
+      });
+      return /about:\/\/React\//.test(String(answer.result).split('\n').slice(0, 3).join('\n'));
+    } catch {
+      return false;
     }
   }
 

@@ -20,6 +20,8 @@ import type {
   Variable,
 } from './types.js';
 
+const SKIP_FILES = ['<node_internals>/**', 'about://React/**'];
+
 export type DebugProject = Pick<Project, 'root' | 'resolve' | 'emit' | 'hold' | 'start'>;
 
 export interface TerminalAskOut {
@@ -160,6 +162,7 @@ export class DebugHost implements ProjectResource, RunOwner {
       userDataDir: true,
       ...(browser.trim() ? { runtimeExecutable: browser.trim() } : {}),
       ...(browserArgs.length > 0 ? { runtimeArgs: browserArgs } : {}),
+      skipFiles: SKIP_FILES,
       __workspaceFolder: this.project.root,
     };
   }
@@ -343,6 +346,7 @@ export class DebugHost implements ProjectResource, RunOwner {
       env: { ...(ask.env ?? {}), ELECTRON_RUN_AS_NODE: null },
       console: this.hasTerminal() ? 'integratedTerminal' : 'internalConsole',
       outputCapture: 'std',
+      skipFiles: SKIP_FILES,
       __workspaceFolder: root,
     };
   }

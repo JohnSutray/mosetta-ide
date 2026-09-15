@@ -345,6 +345,7 @@ describe('провод DAP', () => {
       output: () => undefined,
       verified: () => undefined,
       runInTerminal: null,
+      skipped: () => undefined,
     };
     const session = new DapSession('1.0', 'race', null, wire, owner);
     try {
@@ -446,5 +447,21 @@ describe('браузер под отладчиком', { timeout: 60_000 }, () =
     expect(run.url).toBe('about:blank');
     expect(run.sessions[0]?.kind).toBe('browser');
     await bench.host.stop(run.id);
+  });
+});
+
+describe('поддельные кадры React', { timeout: 30_000 }, () => {
+  it('точка в настоящем файле не срабатывает в подделках `about://React/…`', async () => {
+    bench = new Bench();
+    await bench.host.setBreakpoints('replayed.js', [2]);
+    const run = await bench.host.launch({ program: 'replay.js' });
+    const hit = await bench.until('real stop', () => bench.stops()[0]);
+    const frames = await bench.host.stack(run.id, hit.session, hit.stop.thread);
+    expect(frames[0]).toMatchObject({ name: 'global.replayed', line: 2, source: { kind: 'project', path: 'replayed.js' } });
+    await bench.host.step(run.id, hit.session, hit.stop.thread, 'continue');
+    await bench.until('run end', () => bench.ended(run.id));
+    expect(bench.stops()).toHaveLength(1);
+    expect(bench.output()).toContain('real 42');
+    expect(bench.output().match(/about:\/\/React/g)).toHaveLength(1);
   });
 });

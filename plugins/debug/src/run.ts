@@ -114,6 +114,15 @@ export class DebugRun implements SessionOwner {
     });
   }
 
+  private skippedFakes = 0;
+
+  skipped(session: DapSession): void {
+    this.skippedFakes += 1;
+    if (this.skippedFakes === 1) {
+      this.owner.output(this, session, 'console', 'breakpoint hits inside React replayed stacks (about://React) are skipped\n');
+    }
+  }
+
   changed(session: DapSession): void {
     const roots = [...this.sessions.values()].filter((one) => one.parent === null);
     if (roots.length > 0 && roots.every((one) => one.state === 'ended')) {
