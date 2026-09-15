@@ -19,6 +19,7 @@ export class Defaults {
         '@mosetta/ide-plugin-keys',
         '@mosetta/ide-plugin-visits',
         '@mosetta/ide-plugin-terminal',
+        '@mosetta/ide-plugin-debug',
         '@mosetta/ide-plugin-git',
         '@mosetta/ide-plugin-npm-scripts',
         '@mosetta/ide-plugin-rerun',

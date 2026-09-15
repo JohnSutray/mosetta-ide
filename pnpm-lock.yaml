@@ -237,6 +237,19 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@24.13.4)
 
+  plugins/debug:
+    dependencies:
+      '@mosetta/ide-api':
+        specifier: workspace:*
+        version: link:../api
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.20.1
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
+
   plugins/doc:
     dependencies:
       '@mosetta/ide-api':
@@ -984,6 +997,9 @@ importers:
       '@mosetta/ide-plugin-daemon':
         specifier: workspace:*
         version: link:../plugins/daemon
+      '@mosetta/ide-plugin-debug':
+        specifier: workspace:*
+        version: link:../plugins/debug
       '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../plugins/doc

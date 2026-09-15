@@ -1,0 +1,22 @@
+{
+  "name": "@mosetta/ide-plugin-debug",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "exports": {
+    "./server": "./src/server.ts"
+  },
+  "ide": {
+    "server": "src/server.ts"
+  },
+  "dependencies": {
+    "@mosetta/ide-api": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "vitest": "^2.1.9"
+  }
+}

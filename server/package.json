@@ -15,6 +15,7 @@
     "@mosetta/ide-api": "workspace:*",
     "@mosetta/ide-plugin-code": "workspace:*",
     "@mosetta/ide-plugin-daemon": "workspace:*",
+    "@mosetta/ide-plugin-debug": "workspace:*",
     "@mosetta/ide-plugin-image": "workspace:*",
     "@mosetta/ide-plugin-markdown": "workspace:*",
     "@mosetta/ide-plugin-completion": "workspace:*",
