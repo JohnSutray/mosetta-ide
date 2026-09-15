@@ -1,6 +1,6 @@
 import type { RegistryHandle } from '@mosetta/ide-api/client';
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
-import type { IndexHit, IndexKind, Opener, Recent, SearchAnswer, SearchStats } from './types.js';
+import type { FileViewLike, IndexHit, IndexKind, Opener, Recent, SearchAnswer, SearchStats } from './types.js';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export interface SearchRemote {
@@ -15,6 +15,7 @@ export class Search {
     private readonly docs: () => Pick<DocPlugin, 'goTo' | 'peekFile'>,
     private readonly recents: RegistryHandle<Recent>,
     private readonly recentLimit: () => number,
+    private readonly views: RegistryHandle<FileViewLike>,
   ) {}
 
   readonly open = signal(false);
@@ -175,6 +176,11 @@ export class Search {
     const hit = this.current.value;
     if (!hit) {
       this.preview.value = null;
+      return;
+    }
+    const shown = this.views.all.value.find((one) => one.opens(hit.path));
+    if (shown?.text === false) {
+      this.preview.value = { path: hit.path, text: '', line: hit.line ?? 0 };
       return;
     }
     this.timer = setTimeout(() => {

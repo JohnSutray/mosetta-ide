@@ -44,5 +44,5 @@ export interface FileView {
   id: string;
   opens: (path: string) => boolean;
   text?: boolean;
-  view: (file: { path: string }, editor: () => unknown) => unknown;
+  view: (file: { path: string; text: string }, editor: () => unknown) => unknown;
 }

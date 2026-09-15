@@ -6,7 +6,7 @@ import { SearchEverywhere } from './popup.js';
 import { Search, type SearchRemote } from './state.js';
 import { INDEX_DEFAULTS , INDEX_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
-import { OPENER_SCHEMA, RECENT_SCHEMA, type IndexKind, type Opener, type Recent, type SearchAnswer, type SearchStats } from './types.js';
+import { OPENER_SCHEMA, RECENT_SCHEMA, type FileViewLike, type IndexKind, type Opener, type Recent, type SearchAnswer, type SearchStats } from './types.js';
 import { layout } from './layout.js';
 import { matcher } from './matcher.js';
 import { textIndex } from './text.js';
@@ -36,6 +36,7 @@ export default class SearchPlugin implements SearchRemote {
       () => ide.getPlugin(DocPlugin),
       ide.registry<Recent>('search.recent'),
       () => ide.settingsOf('index', INDEX_DEFAULTS).value.recentFiles,
+      ide.registry<FileViewLike>('file.view'),
     );
   }
 
@@ -75,6 +76,6 @@ export default class SearchPlugin implements SearchRemote {
       active: this.search.open,
     });
 
-    this.ide.registry<() => unknown>('chrome.top').add(() => <SearchEverywhere windows={this.ide.getPlugin(UiPlugin).windows} search={this.search} code={this.ide.getPlugin(CodePlugin)} />);
+    this.ide.registry<() => unknown>('chrome.top').add(() => <SearchEverywhere windows={this.ide.getPlugin(UiPlugin).windows} search={this.search} code={this.ide.getPlugin(CodePlugin)} views={this.ide.registry<FileViewLike>('file.view').all.value} />);
   }
 }

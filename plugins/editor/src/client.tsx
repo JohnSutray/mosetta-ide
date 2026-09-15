@@ -190,12 +190,12 @@ export default class Editor {
     const viewed = this.docs.viewedFile.value;
     if (viewed) {
       const show = this.viewFor(viewed);
-      return show ? (show.view({ path: viewed }, () => null) as never) : this.empty();
+      return show ? (show.view({ path: viewed, text: '' }, () => null) as never) : this.empty();
     }
     const file = this.docs.openDoc.value;
     if (!file) return this.empty();
     const show = this.viewFor(file.path);
-    if (show) return show.view({ path: file.path }, () => this.text(file)) as never;
+    if (show) return show.view({ path: file.path, text: this.docs.liveText.value }, () => this.text(file)) as never;
     return this.text(file);
   }
 

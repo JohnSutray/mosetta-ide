@@ -66,3 +66,10 @@ export const RECENT_SCHEMA = {
   additionalProperties: false,
   properties: { kind: { type: 'string' }, places: {} },
 } as const;
+
+export interface FileViewLike {
+  id: string;
+  opens(path: string): boolean;
+  text?: boolean;
+  view(file: { path: string; text: string }, editor: () => unknown): unknown;
+}

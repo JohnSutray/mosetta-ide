@@ -1,6 +1,5 @@
 import { activate, plugin, type Ide } from '@mosetta/ide-api/client';
 import { signal, type Signal } from '@preact/signals';
-import DocPlugin from '@mosetta/ide-plugin-doc';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 import { ImageKinds } from './kinds.js';
 import { ImageStore } from './state.js';
@@ -26,7 +25,7 @@ export default class ImagePlugin {
       id: 'image',
       opens: (path: string) => this.kinds.isRaster(path),
       text: false,
-      view: (file: { path: string }) => (
+      view: (file: { path: string; text: string }) => (
         <RasterView
           key={file.path}
           path={file.path}
@@ -43,11 +42,11 @@ export default class ImagePlugin {
       id: 'svg',
       opens: (path: string) => this.kinds.isSvg(path),
       text: true,
-      view: (file: { path: string }, editor: () => unknown) => (
+      view: (file: { path: string; text: string }, editor: () => unknown) => (
         <SvgView
           key={file.path}
           path={file.path}
-          text={this.ide.getPlugin(DocPlugin).liveText.value}
+          text={file.text}
           windows={this.ide.getPlugin(UiPlugin).windows}
           ground={this.ground()}
           mode={this.mode()}

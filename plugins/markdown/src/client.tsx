@@ -1,7 +1,6 @@
 import { activate, command, plugin, type Ide } from '@mosetta/ide-api/client';
 import type { Signal } from '@preact/signals';
 import CodePlugin from '@mosetta/ide-plugin-code';
-import DocPlugin from '@mosetta/ide-plugin-doc';
 import UiPlugin, { ModeSwitch } from '@mosetta/ide-plugin-ui';
 import { Markdown } from './markdown.js';
 import { MarkdownImages } from './images.js';
@@ -28,7 +27,7 @@ export default class MarkdownPlugin {
       id: 'markdown',
       opens: (path: string) => /\.(md|markdown)$/i.test(path),
       text: true,
-      view: (file: { path: string }, editor: () => unknown) => this.view(file.path, editor),
+      view: (file: { path: string; text: string }, editor: () => unknown) => this.view(file.path, file.text, editor),
     });
   }
 
@@ -38,10 +37,9 @@ export default class MarkdownPlugin {
     mode.value = mode.value === 'text' ? 'both' : mode.value === 'both' ? 'view' : 'text';
   }
 
-  private view(path: string, editor: () => unknown) {
+  private view(path: string, text: string, editor: () => unknown) {
     const mode = this.mode();
     const windows = this.ide.getPlugin(UiPlugin).windows;
-    const text = this.ide.getPlugin(DocPlugin).liveText.value;
 
     return (
       <div class="md-host">

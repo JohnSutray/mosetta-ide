@@ -1,8 +1,8 @@
 {
   "plugin.markdown": "Разметка",
-  "command.markdown.mode": "Разметка: следующий режим показа",
+  "command.markdown.mode": "Разметка: следующий режим превью",
   "markdown.mode.text": "Только текст",
-  "markdown.mode.both": "Текст и показ",
-  "markdown.mode.view": "Только показ",
+  "markdown.mode.both": "Текст и превью",
+  "markdown.mode.view": "Только превью",
   "markdown.words": "слов: {count}"
 }

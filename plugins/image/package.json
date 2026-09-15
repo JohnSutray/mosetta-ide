@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",
-    "@mosetta/ide-plugin-doc": "workspace:*",
     "@mosetta/ide-plugin-editor": "workspace:*",
     "@mosetta/ide-plugin-ui": "workspace:*"
   },

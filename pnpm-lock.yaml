@@ -396,9 +396,6 @@ importers:
       '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
-      '@mosetta/ide-plugin-doc':
-        specifier: workspace:*
-        version: link:../doc
       '@mosetta/ide-plugin-editor':
         specifier: workspace:*
         version: link:../editor
@@ -527,9 +524,6 @@ importers:
       '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../code
-      '@mosetta/ide-plugin-doc':
-        specifier: workspace:*
-        version: link:../doc
       '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui

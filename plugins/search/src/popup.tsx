@@ -3,12 +3,23 @@ import { useIde, useT } from '@mosetta/ide-api/client';
 import { useEffect, useRef } from 'preact/hooks';
 import type CodePlugin from '@mosetta/ide-plugin-code';
 import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
-import type { IndexHit } from './types.js';
+import type { EditorSettings } from '@mosetta/ide-plugin-code';
+import type { FileViewLike, IndexHit } from './types.js';
 import { INDEX_DEFAULTS } from './settings.js';
 import { Popup } from '@mosetta/ide-plugin-ui';
 import type { Search } from './state.js';
 
-export function SearchEverywhere({ windows, search, code }: { windows: Windows; search: Search; code: CodePlugin }) {
+export function SearchEverywhere({
+  windows,
+  search,
+  code,
+  views,
+}: {
+  windows: Windows;
+  search: Search;
+  code: CodePlugin;
+  views: FileViewLike[];
+}) {
   const ide = useIde();
   const t = useT();
   const input = useRef<HTMLInputElement>(null);
@@ -96,13 +107,7 @@ export function SearchEverywhere({ windows, search, code }: { windows: Windows; 
 
           <div class="se-preview">
             {preview ? (
-              <code.View
-                key={preview.path}
-                path={preview.path}
-                text={preview.text}
-                line={preview.line}
-                settings={editor}
-              />
+              <Preview preview={preview} views={views} code={code} settings={editor} />
             ) : (
               <div class="se-empty">{t('search.preview')}</div>
             )}
@@ -110,6 +115,31 @@ export function SearchEverywhere({ windows, search, code }: { windows: Windows; 
         </div>
     </Popup>
   );
+}
+
+function Preview({
+  preview,
+  views,
+  code,
+  settings,
+}: {
+  preview: { path: string; text: string; line: number };
+  views: FileViewLike[];
+  code: CodePlugin;
+  settings: EditorSettings;
+}) {
+  const text = () => (
+    <code.View
+      key={preview.path}
+      path={preview.path}
+      text={preview.text}
+      line={preview.line}
+      settings={settings}
+    />
+  );
+  const shown = views.find((one) => one.opens(preview.path));
+  if (!shown) return text() as never;
+  return shown.view({ path: preview.path, text: preview.text }, text) as never;
 }
 
 function Row({
