@@ -1,5 +1,9 @@
 {
-  "toolbar.connection": "Connection to the editor server",
   "plugin.toolbar": "Toolbar",
-  "settings.toolbar.order": "Button order, by command"
+  "settings.toolbar.daemonMemory": "Show how much memory the daemon holds",
+  "settings.toolbar.order": "Button order, by command",
+  "toolbar.connection": "Connection to the editor server",
+  "toolbar.daemon.about": "The IDE daemon holds {rss} MB. Click to open the switch for this indicator",
+  "toolbar.daemon.aboutTree": "The IDE daemon holds {rss} MB; with language servers and terminals — {tree} MB. Click to open the switch for this indicator",
+  "toolbar.daemon.size": "{rss} MB"
 }

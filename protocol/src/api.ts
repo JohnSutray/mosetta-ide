@@ -14,7 +14,15 @@ import type {
 } from './data.js';
 
 export interface Api {
-  'server.ping': { params: null; result: { uptimeMs: number; pid: number } };
+  'server.ping': {
+    params: null;
+    result: {
+      uptimeMs: number;
+      pid: number;
+      rssMb: number;
+      treeMb: number | null;
+    };
+  };
 
   'config.get': { params: null; result: ConfigBundle };
 

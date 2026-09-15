@@ -187,6 +187,7 @@ export class FakeSurface implements IdeServices {
 
   tip: Tip | null = null;
   readonly connected: Signal<boolean> = signal(true);
+  readonly daemon: Signal<{ rssMb: number; treeMb: number | null } | null> = signal(null);
   readonly notes = new FakeNotes();
 
   readonly project: Signal<WorkspaceInfo | null> = signal(null);
@@ -368,6 +369,7 @@ export class FakeIde implements Ide {
   get project() { return this.host.surface.project; }
   get workspaces() { return this.host.surface.workspaces; }
   get connected() { return this.host.surface.connected; }
+  get daemon() { return this.host.surface.daemon; }
   get notes() { return this.host.surface.notes; }
   get tree() { return this.host.surface.tree; }
   get fs() { return this.host.surface.fs; }

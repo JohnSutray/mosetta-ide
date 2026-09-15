@@ -103,7 +103,7 @@ export class Boot {
         return;
       }
       wss.handleUpgrade(req, socket, head, (ws) => {
-        const session = new Session(ws, registry, config, startedAt, plugins);
+        const session = new Session(ws, registry, config, startedAt, plugins, env.memory);
         log.debug(`подключилась вкладка ${session.id}`);
       });
     });

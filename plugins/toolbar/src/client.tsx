@@ -2,6 +2,7 @@ import { activate, configSection, plugin, registry, type Ide } from '@mosetta/id
 import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarWidget } from './schema.js';
 import { TOOLBAR_DEFAULTS , TOOLBAR_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
+import { DaemonIcon } from './icons.js';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
@@ -16,12 +17,46 @@ export default class Toolbar {
     this.ide.css(STYLE);
     this.ide.registry<() => unknown>('chrome.top').add(() => this.view());
     this.ide.registry<ToolbarWidget>('toolbar.widget').add({
+      id: 'daemon',
+      side: 'right',
+      view: () => this.daemonLabel(),
+    });
+
+    this.ide.registry<ToolbarWidget>('toolbar.widget').add({
       id: 'connection',
       side: 'right',
       view: () => (
         <span class={`dot ${this.ide.connected.value ? 'is-on' : 'is-off'}`} title={this.ide.t('toolbar.connection')} />
       ),
     });
+  }
+
+  private daemonLabel() {
+    if (!this.ide.settingsOf('toolbar', TOOLBAR_DEFAULTS).value.daemonMemory) return null;
+    const said = this.ide.daemon.value;
+    if (!said) return null;
+    const tips = this.ide.getPlugin(UiPlugin).windows.tips;
+    const about = this.ide.t(
+      said.treeMb === null ? 'toolbar.daemon.about' : 'toolbar.daemon.aboutTree',
+      { rss: said.rssMb, tree: said.treeMb ?? 0 },
+    );
+
+    return (
+      <button
+        type="button"
+        class="toolbar-daemon"
+        onClick={() => this.revealSetting()}
+        onMouseEnter={(event: MouseEvent) => tips.show(event.currentTarget as Element, about)}
+        onMouseLeave={() => tips.hide()}
+      >
+        <DaemonIcon />
+        <span>{this.ide.t('toolbar.daemon.size', { rss: said.rssMb })}</span>
+      </button>
+    );
+  }
+
+  private revealSetting(): void {
+    this.ide.registry<{ reveal(query: string): void }>('settings.reveal').all.value[0]?.reveal('daemonMemory');
   }
 
   private view() {

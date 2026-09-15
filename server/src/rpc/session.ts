@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { ProcessMemory } from '../env/memory.js';
 import type { WebSocket } from 'ws';
 import {
   RpcErrorCode,
@@ -30,6 +31,7 @@ export class Session implements SessionContext {
     private readonly config: ConfigStore,
     private readonly startedAt: number,
     private readonly plugins: PluginHost,
+    private readonly memory: Pick<ProcessMemory, 'treeMb'> = new ProcessMemory(),
   ) {
     socket.on('message', (data) => void this.onMessage(String(data)));
     socket.on('close', () => this.dispose());
@@ -129,6 +131,7 @@ export class Session implements SessionContext {
       registry: this.registry,
       config: this.config,
       plugins: this.plugins,
+      memory: this.memory,
       startedAt: this.startedAt,
     };
 

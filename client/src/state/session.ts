@@ -9,6 +9,7 @@ export type RpcLike = Pick<RpcClient, 'call' | 'on'>;
 
 export class Session {
   readonly connected: RpcClient['connected'];
+  readonly daemon: RpcClient['daemon'];
   readonly workspaces = signal<WorkspaceInfo[]>([]);
   readonly current = signal<WorkspaceInfo | null>(null);
   readonly attached = signal<WorkspaceInfo | null>(null);
@@ -28,6 +29,7 @@ export class Session {
     private readonly i18n: Pick<I18n, 't'>,
   ) {
     this.connected = rpc.connected;
+    this.daemon = rpc.daemon;
     this.listen();
   }
 

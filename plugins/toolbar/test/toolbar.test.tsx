@@ -157,3 +157,60 @@ describe('тулбар', () => {
     expect(host.complaints.join('')).toContain('side');
   });
 });
+
+describe('плашка демона', () => {
+  let host: FakeHost;
+
+  beforeEach(async () => {
+    host = new FakeHost();
+    host.add(UiPlugin, '@mosetta/ide-plugin-ui');
+    host.add(KeymapPlugin, '@mosetta/ide-plugin-keymap');
+    host.add(Toolbar, NAME);
+    await host.start();
+  });
+
+  function widget(): { id: string; side: string; view: () => unknown } | undefined {
+    return host.registry
+      .all<{ id: string; side: string; view: () => unknown }>('toolbar.widget')
+      .find((one) => one.id === 'daemon');
+  }
+
+  function said(): string[] {
+    return nodes(widget()!.view())
+      .flatMap((node) => [node.props['children']].flat())
+      .map((one) => String(one));
+  }
+
+  it('пульса ещё не было — молчит', () => {
+    expect(widget()!.view()).toBeNull();
+  });
+
+  it('показывает СВОЙ размер, а дерево уносит в подсказку', () => {
+    host.surface.daemon.value = { rssMb: 412, treeMb: 2458 };
+    expect(said()).toContain('toolbar.daemon.size(rss=412)');
+  });
+
+  it('система не мерится — подсказка не выдумывает дерево', () => {
+    host.surface.daemon.value = { rssMb: 412, treeMb: null };
+    const tip = nodes(widget()!.view()).map((n) => n.props['onMouseEnter']).find(Boolean);
+    expect(typeof tip).toBe('function');
+    expect(said()).toContain('toolbar.daemon.size(rss=412)');
+  });
+
+  it('настройка выключает плашку целиком', () => {
+    host.surface.daemon.value = { rssMb: 412, treeMb: 2458 };
+    expect(widget()!.view()).not.toBeNull();
+    host.ide(NAME).settings.value = { toolbar: { daemonMemory: false } } as never;
+    expect(widget()!.view()).toBeNull();
+  });
+
+  it('щелчок ведёт к своему выключателю', () => {
+    const asked: string[] = [];
+    host.registry.add('settings.reveal', { id: 'settings', reveal: (q: string) => asked.push(q) }, '@mosetta/ide-plugin-settings');
+    host.surface.daemon.value = { rssMb: 412, treeMb: 2458 };
+
+    const tree = widget()!.view() as { props: { onClick: () => void } };
+    tree.props.onClick();
+    expect(asked).toEqual(['daemonMemory']);
+  });
+});

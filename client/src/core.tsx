@@ -121,6 +121,7 @@ export class Core {
         },
       },
       connected: this.session.connected,
+      daemon: this.session.daemon,
       notes: {
         all: this.notifications.notes,
         notify: (text, kind) => this.notifications.notify(text, kind),

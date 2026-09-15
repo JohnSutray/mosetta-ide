@@ -7,9 +7,11 @@ import { treeMethods } from './tree.js';
 import { workspaceMethods } from './workspace.js';
 
 export const handlers: HandlerTable = {
-  'server.ping': (_params, ctx) => ({
+  'server.ping': async (_params, ctx) => ({
     uptimeMs: Date.now() - ctx.startedAt,
     pid: process.pid,
+    rssMb: Math.round(process.memoryUsage().rss / 1024 / 1024),
+    treeMb: await ctx.memory.treeMb(process.pid),
   }),
 
   'config.get': (p, c) => configMethods.get(p, c),

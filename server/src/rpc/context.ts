@@ -1,4 +1,5 @@
 import type { ApiMethod, EventName, EventPayload, Params, Result } from '@mosetta/ide-protocol';
+import type { ProcessMemory } from '../env/memory.js';
 import type { PluginHost } from '../plugins/host.js';
 import type { ConfigStore } from '../config/store.js';
 import type { WorkspaceRegistry } from '../workspace/registry.js';
@@ -18,6 +19,7 @@ export interface RpcContext {
   registry: WorkspaceRegistry;
   config: ConfigStore;
   plugins: PluginHost;
+  memory: Pick<ProcessMemory, 'treeMb'>;
   startedAt: number;
 }
 

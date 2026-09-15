@@ -28,6 +28,7 @@ type Pending = { resolve: (v: unknown) => void; reject: (e: unknown) => void };
 
 export class RpcClient {
   readonly connected: Signal<boolean> = signal(false);
+  readonly daemon: Signal<{ rssMb: number; treeMb: number | null } | null> = signal(null);
 
   private socket: WebSocket | null = null;
   private nextId = 1;
@@ -140,10 +141,18 @@ export class RpcClient {
 
   private startPulse(socket: WebSocket): void {
     this.stopPulse();
-    this.heartbeat = setInterval(() => {
+    this.beat(socket);
+    this.heartbeat = setInterval(() => this.beat(socket), this.pulseMs);
+  }
+
+  private beat(socket: WebSocket): void {
+    {
       if (this.socket !== socket || socket.readyState !== WebSocket.OPEN) return;
       const answered = this.call('server.ping', null).then(
-        () => true,
+        (said) => {
+          this.daemon.value = { rssMb: said.rssMb, treeMb: said.treeMb };
+          return true;
+        },
         () => true,
       );
       const late = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), this.pulseTimeoutMs));
@@ -151,7 +160,7 @@ export class RpcClient {
         if (alive || this.socket !== socket) return;
         socket.close();
       });
-    }, this.pulseMs);
+    }
   }
 
   private stopPulse(): void {

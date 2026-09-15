@@ -1,0 +1,6 @@
+{
+  "settings.toolbar.daemonMemory": "Показывать, сколько памяти держит демон",
+  "toolbar.daemon.about": "Демон IDE держит {rss} МБ. Щелчок откроет выключатель этой плашки",
+  "toolbar.daemon.aboutTree": "Демон IDE держит {rss} МБ; вместе с языковыми серверами и терминалами — {tree} МБ. Щелчок откроет выключатель этой плашки",
+  "toolbar.daemon.size": "{rss} МБ"
+}

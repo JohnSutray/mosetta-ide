@@ -64,4 +64,20 @@ export const STYLE = `
 .tool:hover { background: var(--control-bg-hover); color: var(--fg); }
 .tool.is-active { background: var(--treesel); color: #dbe6ef; }
 .tool.is-active:hover { background: #36699e; }
+
+.toolbar-daemon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: var(--control-bg);
+  color: var(--muted);
+  font: 12px var(--ui-font);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.toolbar-daemon:hover { background: var(--control-bg-hover); border-color: var(--divider); }
+.toolbar-daemon svg { flex: none; display: block; }
 `;
