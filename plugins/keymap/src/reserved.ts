@@ -101,6 +101,7 @@ const TABLE: ReservedKey[] = [
     soft: true,
   },
   { key: 'meta+d', scopes: CHROME_MAC, who: 'Chrome', what: 'bookmark the page', soft: true },
+  { key: 'meta+shift+d', scopes: CHROME_MAC, who: 'Chrome', what: 'bookmark all tabs', soft: true },
   { key: 'meta+o', scopes: CHROME_MAC, who: 'Chrome', what: 'open a file', soft: true },
   { key: 'meta+y', scopes: CHROME_MAC, who: 'Chrome', what: 'history', soft: true },
   { key: 'meta+minus', scopes: CHROME_MAC, who: 'Chrome', what: 'zoom out', soft: true },

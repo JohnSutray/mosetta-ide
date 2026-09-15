@@ -1,10 +1,12 @@
 import type { AdapterProcess } from './adapter.js';
-import { DapSession, type SessionOwner } from './session.js';
+import { DapSession, type SessionOwner, type TerminalAsk } from './session.js';
 import type { RunInfo, Stop } from './types.js';
 
 export interface RunOwner {
   breakpoints(): ReadonlyMap<string, readonly number[]>;
   toAdapter(key: string): string;
+  terminal(run: DebugRun, ask: TerminalAsk): Promise<{ shellProcessId?: number; processId?: number }>;
+  hasTerminal(): boolean;
   changed(run: DebugRun): void;
   stopped(run: DebugRun, session: DapSession, stop: Stop): void;
   output(run: DebugRun, session: DapSession, category: string, text: string): void;
@@ -94,6 +96,10 @@ export class DebugRun implements SessionOwner {
 
   toAdapter(key: string): string {
     return this.owner.toAdapter(key);
+  }
+
+  get runInTerminal(): SessionOwner['runInTerminal'] {
+    return this.owner.hasTerminal() ? (ask) => this.owner.terminal(this, ask) : null;
   }
 
   child(parent: DapSession, request: 'launch' | 'attach', configuration: Record<string, unknown>): void {

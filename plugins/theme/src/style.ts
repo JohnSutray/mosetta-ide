@@ -19,6 +19,8 @@ export const STYLE = `
   --git-added: #629755;
   --git-conflict: #e0655f;
   --noscan: #a3924a;
+  --debug-breakpoint: #db5c5c;
+  --debug-line: #2d6099;
   --font: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
   --ui-font: 'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif;
 }

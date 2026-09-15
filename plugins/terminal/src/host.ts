@@ -17,6 +17,7 @@ export interface OpenOptions {
   cwd: string;
   cols?: number;
   rows?: number;
+  env?: Record<string, string>;
 }
 
 const SCROLLBACK_BYTES = 256 * 1024;
@@ -84,7 +85,7 @@ export class TerminalHost {
         cols,
         rows,
         cwd: options.cwd,
-        env: this.env(),
+        env: { ...this.env(), ...(options.env ?? {}) },
       });
     } catch (err) {
       throw new Error(
@@ -143,6 +144,30 @@ export class TerminalHost {
     this.watchBusy();
     this.announce();
     return info;
+  }
+
+  runIn(options: OpenOptions & { command: string; sameShell?: string }): TerminalInfo {
+    const existing = this.terminals.get(options.name);
+    if (existing?.pty && existing.info.alive) {
+      if (this.busyNow(existing)) {
+        this.log.info(`терминал ${options.name} занят — перезапускаю ради новой команды`);
+        this.close(options.name);
+        return this.open(options);
+      }
+      existing.pty.write(`${options.sameShell ?? options.command}\r`);
+      return existing.info;
+    }
+    return this.open(options);
+  }
+
+  private busyNow(terminal: Terminal): boolean {
+    if (NO_FOREGROUND || !terminal.pty) return terminal.info.busy;
+    try {
+      const front = baseName(terminal.pty.process);
+      return front !== '' && front !== terminal.shell;
+    } catch {
+      return terminal.info.busy;
+    }
   }
 
   private watchBusy(): void {

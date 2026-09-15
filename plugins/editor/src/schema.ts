@@ -28,6 +28,28 @@ export interface EditorExtension {
   extension: unknown;
 }
 
+export const HOVER_SCHEMA = {
+  type: 'object',
+  required: ['id', 'hover'],
+  properties: {
+    id: { type: 'string' },
+    hover: {},
+  },
+  additionalProperties: false,
+} as const;
+
+export interface HoverSpot {
+  path: string;
+  line: number;
+  character: number;
+  text: string;
+}
+
+export interface HoverSource {
+  id: string;
+  hover: (spot: HoverSpot) => Promise<{ code: string } | null>;
+}
+
 export const VIEW_SCHEMA = {
   type: 'object',
   required: ['id', 'opens', 'view'],

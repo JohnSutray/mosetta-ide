@@ -21,6 +21,7 @@ import { type HunkBox } from '@mosetta/ide-api/client';
 import { diagnosticsExtension, setDiagnostics } from './diagnostics.js';
 import { setHeadText, type GitMarks } from './git-marks.js';
 import { lspHover } from './hover.js';
+import type { HoverSource } from './schema.js';
 
 class TooltipLayer {
   private readonly id = 'cm-tooltip-layer';
@@ -54,6 +55,7 @@ interface Props {
   onCaret: (line: number, character: number) => void;
   onModClick: (pos: number) => void;
   onHover: (path: string, line: number, character: number) => Promise<HoverInfo | null>;
+  hoverSources: () => readonly HoverSource[];
   onMount: (view: EditorView | null) => void;
   extra: Extension[];
   code: CodePlugin;
@@ -76,6 +78,7 @@ export function CodeEditor({
   onCaret,
   onModClick,
   onHover,
+  hoverSources,
   onMount,
   extra,
   code,
@@ -85,8 +88,8 @@ export function CodeEditor({
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
-  const handlers = useRef({ onEdit, onHover, onHunk, onCaret, onModClick });
-  handlers.current = { onEdit, onHover, onHunk, onCaret, onModClick };
+  const handlers = useRef({ onEdit, onHover, hoverSources, onHunk, onCaret, onModClick });
+  handlers.current = { onEdit, onHover, hoverSources, onHunk, onCaret, onModClick };
   const pathRef = useRef(file.path);
   pathRef.current = file.path;
   const language = useRef(new Compartment());
@@ -133,6 +136,7 @@ export function CodeEditor({
         () => pathRef.current,
         (path, line, character) => handlers.current.onHover(path, line, character),
         code,
+        () => handlers.current.hoverSources(),
       ),
       EditorView.theme({
         '&': { fontSize: `${settings.fontSize}px` },

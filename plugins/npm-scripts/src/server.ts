@@ -18,6 +18,7 @@ const KIND = 'npm';
 export interface RunPlan {
   name: string;
   command: string;
+  argv: string[];
   cwd: string;
 }
 
@@ -72,9 +73,11 @@ export default class NpmScriptsServer {
     if (!hit) throw new Error(`нет скрипта ${asked.id}`);
     const script = toScript(hit);
 
+    const manager = this.manager(call.project);
     return {
       name: script.id,
-      command: `${this.manager(call.project)} run ${script.script}`,
+      command: `${manager} run ${script.script}`,
+      argv: [manager, 'run', script.script],
       cwd: parentOf(script.path),
     };
   }

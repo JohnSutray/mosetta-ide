@@ -170,6 +170,18 @@ export const FACTORY_KEYMAP: Keymap = {
     { "command": "settings.show", "key": "meta+comma", "where": ["browser:mac", "electron:mac"] },
     { "command": "settings.show", "key": "control+comma", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
 
+    { "command": "debug.stepInto", "key": "f7" },
+    { "command": "debug.stepOver", "key": "f8" },
+    { "command": "debug.stepOut", "key": "shift+f8" },
+    { "command": "debug.continue", "key": "f9" },
+    { "command": "debug.file", "key": "shift+f9" },
+    { "command": "debug.toggleBreakpoint", "key": "meta+f8", "where": ["browser:mac", "electron:mac"] },
+    { "command": "debug.toggleBreakpoint", "key": "control+f8", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "debug.stop", "key": "meta+f2", "where": ["browser:mac", "electron:mac"] },
+    { "command": "debug.stop", "key": "control+f2", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "panel.debug", "key": "meta+shift+d", "where": ["browser:mac", "electron:mac"] },
+    { "command": "panel.debug", "key": "control+shift+d", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+
     { "command": "git.branches", "key": "meta+backquote", "where": ["electron:mac"] },
     { "command": "git.branches", "key": "control+backquote", "where": ["browser:mac", "electron:mac"] },
     { "command": "git.branches", "key": "control+backquote", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },

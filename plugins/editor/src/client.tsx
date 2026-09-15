@@ -25,7 +25,18 @@ import type { EditorSettings } from '@mosetta/ide-plugin-code';
 import type { DocState } from '@mosetta/ide-protocol';
 import type { Hunk } from '@mosetta/ide-plugin-code';
 import { GitMarks } from './git-marks.js';
-import { EMPTY_SCHEMA, EXTENSION_SCHEMA, VIEW_SCHEMA, type EditorExtension, type EmptyView, type FileView } from './schema.js';
+import {
+  EMPTY_SCHEMA,
+  EXTENSION_SCHEMA,
+  HOVER_SCHEMA,
+  VIEW_SCHEMA,
+  type EditorExtension,
+  type EmptyView,
+  type FileView,
+  type HoverSource,
+} from './schema.js';
+
+export type { HoverSource, HoverSpot } from './schema.js';
 import { STYLE } from './style.js';
 import { EditorIcon } from './icon.js';
 import { CodeEditor } from './view.js';
@@ -43,6 +54,7 @@ export interface SymbolSpot {
 @registry({ key: 'editor.empty', schema: EMPTY_SCHEMA })
 @registry({ key: 'file.view', schema: VIEW_SCHEMA })
 @registry({ key: 'editor.extension', schema: EXTENSION_SCHEMA })
+@registry({ key: 'editor.hover', schema: HOVER_SCHEMA })
 @configSection({ section: 'editor', defaults: EDITOR_DEFAULTS, schema: EDITOR_SCHEMA })
 @plugin({ title: 'plugin.editor' })
 export default class Editor {
@@ -224,6 +236,7 @@ export default class Editor {
             if (this.view) this.ask(this.view, pos);
           }}
           onHover={(path, line, character) => this.lsp.hover(path, line, character)}
+          hoverSources={() => this.ide.registry<HoverSource>('editor.hover').all.value}
           onMount={(view) => (this.view = view)}
           code={this.code}
           takeFocus={() => this.docs.takeFocusOnMount()}

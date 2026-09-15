@@ -5,6 +5,7 @@ export interface SessionOwner {
   breakpoints(): ReadonlyMap<string, readonly number[]>;
   toAdapter(key: string): string;
   child(parent: DapSession, request: 'launch' | 'attach', configuration: Record<string, unknown>): void;
+  runInTerminal: ((ask: TerminalAsk) => Promise<{ shellProcessId?: number; processId?: number }>) | null;
   changed(session: DapSession): void;
   stopped(session: DapSession, stop: Stop): void;
   output(session: DapSession, category: string, text: string): void;
@@ -12,6 +13,14 @@ export interface SessionOwner {
 }
 
 const HANDSHAKE_MS = 30_000;
+
+export interface TerminalAsk {
+  kind?: 'integrated' | 'external';
+  title?: string;
+  cwd: string;
+  args: string[];
+  env?: Record<string, string | null>;
+}
 
 interface Placed extends Breakpoint {
   id?: number;
@@ -76,7 +85,7 @@ export class DapSession {
       columnsStartAt1: true,
       supportsVariableType: true,
       supportsStartDebuggingRequest: true,
-      supportsRunInTerminalRequest: false,
+      supportsRunInTerminalRequest: this.owner.runInTerminal !== null,
     });
     const launched = this.wire.request(request, configuration);
     await Promise.race([initialized, launched]);
@@ -180,13 +189,20 @@ export class DapSession {
   }
 
   private reverse(request: Reverse): void {
-    if (request.command !== 'startDebugging') {
-      this.wire.refuse(request, `${request.command} is not supported`);
+    if (request.command === 'startDebugging') {
+      const args = (request.arguments ?? {}) as { request?: string; configuration?: Record<string, unknown> };
+      this.wire.respond(request);
+      this.owner.child(this, args.request === 'attach' ? 'attach' : 'launch', args.configuration ?? {});
       return;
     }
-    const args = (request.arguments ?? {}) as { request?: string; configuration?: Record<string, unknown> };
-    this.wire.respond(request);
-    this.owner.child(this, args.request === 'attach' ? 'attach' : 'launch', args.configuration ?? {});
+    if (request.command === 'runInTerminal' && this.owner.runInTerminal) {
+      this.owner
+        .runInTerminal(request.arguments as TerminalAsk)
+        .then((body) => this.wire.respond(request, body))
+        .catch((err: unknown) => this.wire.refuse(request, err instanceof Error ? err.message : String(err)));
+      return;
+    }
+    this.wire.refuse(request, `${request.command} is not supported`);
   }
 
   private end(): void {

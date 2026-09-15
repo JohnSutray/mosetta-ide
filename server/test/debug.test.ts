@@ -51,12 +51,18 @@ describe('отладчик (плагин)', () => {
     }>;
     expect(frames[0]).toMatchObject({ line: 2, source: { kind: 'project', path: 'src/main.js' } });
 
+    await waitFor(() => events('terminal').length > 0, 'terminal named', 20_000);
+    const name = (events('terminal')[0]!.payload as { name: string }).name;
+    expect(name).toBe('debug::src/main.js');
     await debug('step', { run: run.id, session: hit.session, thread: hit.stop.thread, action: 'continue' });
-    await waitFor(
-      () => events('output').some((one) => String((one.payload as { text: string }).text).includes('раз два')),
-      'program output',
-      20_000,
-    );
+    const printed = () =>
+      (c.events('plugins.event') as PluginEvent[])
+        .filter((one) => one.name === '@mosetta/ide-plugin-terminal' && one.event === 'data')
+        .map((one) => (one.payload as { name: string; data: string }))
+        .filter((one) => one.name === name)
+        .map((one) => one.data)
+        .join('');
+    await waitFor(() => printed().includes('раз два'), 'program output in the terminal', 20_000);
     await waitFor(
       () => (events('runs').at(-1)?.payload as Array<{ state: string }> | undefined)?.[0]?.state === 'ended',
       'run end',

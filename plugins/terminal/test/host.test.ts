@@ -219,6 +219,22 @@ describe('терминалы', () => {
     expect(host.list()).toHaveLength(1);
   }, 25_000);
 
+  it('runIn выполняет команду: в живом промпте — строкой, в занятом — заново (ADR-0235)', async () => {
+    const root = await tempDir();
+    const project = new FakeProject(root);
+    const own = process.platform !== 'win32' && process.env['SHELL'] ? process.env['SHELL'] : shell().file;
+    const host = new TerminalHost(project, silent, () => ({ ...shell(), file: own }));
+    hosts.push(host);
+    const echo = process.platform === 'win32' ? 'Write-Output' : 'echo';
+    host.runIn({ name: 'debug::x', cwd: root, command: `${echo} first-run` });
+    await waitForOutput(project, 'debug::x', 'first-run');
+    const before = host.list().find((one) => one.name === 'debug::x')!.pid;
+    host.runIn({ name: 'debug::x', cwd: root, command: `${echo} second-run` });
+    await waitForOutput(project, 'debug::x', 'second-run');
+    expect(host.list().find((one) => one.name === 'debug::x')!.pid).toBe(before);
+    expect(host.list().filter((one) => one.name === 'debug::x')).toHaveLength(1);
+  });
+
   it('закрытие проекта гасит все терминалы', async () => {
     const root = await tempDir();
     const { host } = make(root);

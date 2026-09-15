@@ -35,8 +35,10 @@ export const STYLE = `
   margin-bottom: 6px;
 }
 .cm-hover-problem:last-child { margin-bottom: 0; }
-.cm-hover-problem + .cm-hover-code {
+.cm-hover-problem + .cm-hover-code,
+.cm-hover-code + .cm-hover-code {
   border-top: 1px solid var(--divider);
+  margin-top: 6px;
   padding-top: 6px;
 }
 

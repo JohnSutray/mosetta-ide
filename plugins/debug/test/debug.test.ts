@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { Logger, ProcessHandle, RunAsk } from '@mosetta/ide-api/server';
 import { JsDebugAdapter } from '../src/adapter.js';
-import { DebugHost, type DebugProject } from '../src/host.js';
+import { DebugHost, type DebugProject, type TerminalRunner } from '../src/host.js';
 import type { FileBreakpoints, Output, RunInfo, Stop } from '../src/types.js';
 import { DapSession, type SessionOwner } from '../src/session.js';
 import { DapWire, type Stream } from '../src/wire.js';
@@ -26,12 +26,12 @@ class Bench {
   readonly held = new Set<string>();
   readonly host: DebugHost;
 
-  constructor() {
+  constructor(terminal: TerminalRunner = null, root = fixtures) {
     const project: DebugProject = {
-      root: fixtures,
+      root,
       resolve: (relative) => {
-        const absolute = path.resolve(fixtures, relative);
-        if (path.relative(fixtures, absolute).startsWith('..')) throw new Error(`escapes root: ${relative}`);
+        const absolute = path.resolve(root, relative);
+        if (path.relative(root, absolute).startsWith('..')) throw new Error(`escapes root: ${relative}`);
         return absolute;
       },
       emit: (event, payload) => this.emitted.push({ event, payload }),
@@ -41,7 +41,7 @@ class Bench {
       },
       start: (ask) => this.start(ask),
     };
-    this.host = new DebugHost(project, new JsDebugAdapter(pkg, os.tmpdir()), quiet);
+    this.host = new DebugHost(project, new JsDebugAdapter(pkg, os.tmpdir()), quiet, terminal);
   }
 
   private start(ask: RunAsk): ProcessHandle {
@@ -305,6 +305,7 @@ describe('провод DAP', () => {
       stopped: () => undefined,
       output: () => undefined,
       verified: () => undefined,
+      runInTerminal: null,
     };
     const session = new DapSession('1.0', 'race', null, wire, owner);
     try {
@@ -330,5 +331,47 @@ describe('провод DAP', () => {
         resolve();
       }),
     );
+  });
+});
+
+describe('настоящий терминал и файлы за корнем', { timeout: 30_000 }, () => {
+  it.skipIf(process.platform === 'win32')('с терминалом программа выполняется В НЁМ: вывод в консоли, остановка — у нас', async () => {
+    const consoles: Array<{ command: string; sameShell: string; env: Record<string, string>; out: string }> = [];
+    bench = new Bench((ask) => {
+      const entry = { command: ask.command, sameShell: ask.sameShell, env: ask.env, out: '' };
+      consoles.push(entry);
+      const shell = spawn('sh', ['-c', ask.command], { cwd: ask.cwd, env: { ...process.env, ...ask.env }, stdio: ['ignore', 'pipe', 'pipe'] });
+      shell.stdout.on('data', (chunk) => (entry.out += String(chunk)));
+      shell.stderr.on('data', (chunk) => (entry.out += String(chunk)));
+      bench.children.push(shell);
+      return { pid: shell.pid ?? 0 };
+    });
+    await bench.host.setBreakpoints('plain.js', [4]);
+    const run = await bench.host.launch({ program: 'plain.js' });
+    const hit = await bench.until('stop', () => bench.stops()[0]);
+    expect(bench.of<{ name: string }>('terminal')[0]?.name).toBe(`debug::${run.name}`);
+    expect(consoles[0]?.command).not.toMatch(/^env /);
+    expect(consoles[0]?.env['NODE_OPTIONS']).toContain('bootloader');
+    expect(consoles[0]?.sameShell).toMatch(/^env .*NODE_OPTIONS=/);
+    await bench.host.step(run.id, hit.session, hit.stop.thread, 'continue');
+    await bench.until('run end', () => bench.ended(run.id));
+    await bench.until('console output', () => consoles[0]?.out.includes('sum 6 нота'));
+    expect(bench.output()).not.toContain('sum 6 нота');
+  });
+
+  it('кадр за корнем: файл читается, но только тот, что назвал адаптер', async () => {
+    bench = new Bench(null, path.join(fixtures, 'foreign'));
+    const run = await bench.host.launch({ program: 'main.js' });
+    const hit = await bench.until('stop on debugger statement', () => bench.stops()[0]);
+    const frames = await bench.host.stack(run.id, hit.session, hit.stop.thread);
+    const far = frames[0]!;
+    expect(far.source?.kind).toBe('file');
+    if (far.source?.kind !== 'file') throw new Error('expected a file outside the root');
+    expect(far.source.absolute).toBe(path.join(fixtures, 'far.js'));
+    const text = await bench.host.readForeign(far.source.absolute);
+    expect(text.text).toContain('outside the root');
+    await expect(bench.host.readForeign(path.join(fixtures, 'plain.js'))).rejects.toThrow(/not a debugger source/);
+    await bench.host.step(run.id, hit.session, hit.stop.thread, 'continue');
+    await bench.until('run end', () => bench.ended(run.id));
   });
 });

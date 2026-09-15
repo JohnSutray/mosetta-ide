@@ -1,4 +1,4 @@
-import { command, type CallContext, type Ide } from '@mosetta/ide-api/server';
+import { activate, command, type CallContext, type Ide, type Project } from '@mosetta/ide-api/server';
 import { TerminalHost } from './host.js';
 import { TERMINAL_DEFAULTS } from './settings.js';
 import { Shells } from './shells.js';
@@ -7,8 +7,21 @@ import type { Attached, OpenAsk, ShellChoice, ShellInfo, TerminalInfo } from './
 export default class TerminalServer {
   private readonly shells: Shells;
 
+  private readonly projects = new Map<string, Project>();
+
   constructor(private readonly ide: Ide) {
     this.shells = new Shells((name) => ide.which(name));
+  }
+
+  @activate() protected start(): void {
+    this.ide.onProject((project) => {
+      this.projects.set(project.root, project);
+      project.use('roster', () => ({
+        dispose: () => {
+          if (this.projects.get(project.root) === project) this.projects.delete(project.root);
+        },
+      }));
+    });
   }
 
   private shell(): ShellChoice {
@@ -23,6 +36,16 @@ export default class TerminalServer {
       'host',
       () => new TerminalHost(call.project, this.ide.log, () => this.shell()),
     );
+  }
+
+  runIn(
+    root: string,
+    options: { name: string; command: string; cwd: string; env?: Record<string, string>; sameShell?: string },
+  ): TerminalInfo {
+    const project = this.projects.get(root);
+    if (!project) throw new Error(`no project open at ${root}`);
+    const host = project.use('host', () => new TerminalHost(project, this.ide.log, () => this.shell()));
+    return host.runIn({ ...options, kind: 'script' });
   }
 
   @command('shells') protected detectShells(): ShellInfo[] {

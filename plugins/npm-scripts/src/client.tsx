@@ -1,5 +1,5 @@
 import { effect, signal } from '@preact/signals';
-import { activate, command, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { activate, command, configSection, plugin, registry, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import UiPlugin, { ChoicePopup, PickPopup } from '@mosetta/ide-plugin-ui';
 import type { PackageManagerInfo } from './managers.js';
 import type { Opener } from '@mosetta/ide-plugin-search';
@@ -17,6 +17,23 @@ export interface ScriptInfo {
   path: string;
 }
 
+export type { RunPlan } from './server.js';
+
+export interface ScriptAction {
+  id: string;
+  title: string;
+  icon: () => unknown;
+  run: (scriptId: string) => void;
+}
+
+export const ACTION_SCHEMA = {
+  type: 'object',
+  required: ['id', 'title', 'icon', 'run'],
+  additionalProperties: false,
+  properties: { id: { type: 'string' }, title: { type: 'string' }, icon: {}, run: {} },
+} as const;
+
+@registry({ key: 'scripts.action', schema: ACTION_SCHEMA })
 @configSection({ section: 'tools', defaults: TOOLS_DEFAULTS, schema: TOOLS_SCHEMA })
 @plugin({ title: 'plugin.npm-scripts' })
 export default class NpmScripts {
@@ -145,6 +162,10 @@ export default class NpmScripts {
     });
   }
 
+  plan(id: string): Promise<RunPlan> {
+    return this.ask({ id });
+  }
+
   scripts(): ScriptInfo[] {
     return this.known.value;
   }
@@ -183,12 +204,33 @@ export default class NpmScripts {
         }}
         row={(script: ScriptInfo, matches: number[]) => {
           const from = scriptId.packageOf(script.id).length + scriptId.sep.length;
+          const actions = this.ide.registry<ScriptAction>('scripts.action').all.value;
           return (
             <>
               <span class="pick-name">
                 {this.ide.getPlugin(UiPlugin).matches.highlight(scriptId.scriptOf(script.id), this.ide.getPlugin(UiPlugin).matches.shiftMatches(matches, from, script.id.length - from))}
               </span>
               <span class="pick-detail">{script.command}</span>
+              {actions.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  class="script-action"
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onMouseEnter={(event) =>
+                    this.ide.getPlugin(UiPlugin).windows.tips.show(event.currentTarget as Element, this.ide.t(action.title))
+                  }
+                  onMouseLeave={() => this.ide.getPlugin(UiPlugin).windows.tips.hide()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    this.ide.getPlugin(UiPlugin).windows.tips.hide();
+                    this.open.value = false;
+                    action.run(script.id);
+                  }}
+                >
+                  {action.icon() as never}
+                </button>
+              ))}
             </>
           );
         }}

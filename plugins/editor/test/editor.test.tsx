@@ -45,7 +45,7 @@ describe('редактор', () => {
   it('объявляет свои ключи до всякой активации', () => {
     const early = new FakeHost();
     early.add(Editor, NAME);
-    expect([...early.registry.declared()].sort()).toEqual(['editor.empty', 'editor.extension', 'file.view']);
+    expect([...early.registry.declared()].sort()).toEqual(['editor.empty', 'editor.extension', 'editor.hover', 'file.view']);
   });
 
   it('занимает середину и не имеет ширины', () => {

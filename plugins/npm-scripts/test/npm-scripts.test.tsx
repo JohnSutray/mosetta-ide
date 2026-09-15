@@ -122,6 +122,16 @@ describe('скрипты', () => {
     expect(popup()).toBeNull();
   });
 
+  it('план запуска отдаётся соседу без запуска, а второе действие — записью в ключ (ADR-0235)', async () => {
+    host.ide(NAME).answers.set('run', () => ({ name: 'core::dev', command: 'pnpm run dev', argv: ['pnpm', 'run', 'dev'], cwd: 'packages/core' }));
+    const plan = await npm.plan('core::dev');
+    expect(plan.argv).toEqual(['pnpm', 'run', 'dev']);
+    expect(host.ide('@mosetta/ide-plugin-terminal').calls.some((call) => call.method === 'open')).toBe(false);
+    expect(host.registry.declared()).toContain('scripts.action');
+    host.registry.add('scripts.action', { id: 'x' }, '@mosetta/ide-plugin-x');
+    expect(host.complaints.some((one) => one.includes('scripts.action'))).toBe(true);
+  });
+
   it('состояние — поля экземпляра, а не модульные сигналы', () => {
     const second = new FakeHost();
     second.add(UiPlugin, '@mosetta/ide-plugin-ui');

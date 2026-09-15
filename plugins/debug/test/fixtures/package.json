@@ -1,1 +1,1 @@
-{ "private": true, "type": "commonjs" }
+{ "private": true, "type": "commonjs", "scripts": { "go": "node plain.js" } }

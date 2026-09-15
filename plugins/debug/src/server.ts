@@ -1,7 +1,8 @@
 import os from 'node:os';
-import { command, type CallContext, type Ide } from '@mosetta/ide-api/server';
+import { command, type CallContext, type Ide, type Project } from '@mosetta/ide-api/server';
+import TerminalServer from '@mosetta/ide-plugin-terminal/server';
 import { JsDebugAdapter } from './adapter.js';
-import { DebugHost } from './host.js';
+import { DebugHost, type TerminalRunner } from './host.js';
 import type { FileBreakpoints, Frame, LaunchAsk, RunInfo, Scope, Step, Variable } from './types.js';
 
 export type { FileBreakpoints, Frame, LaunchAsk, RunInfo, Scope, SessionInfo, SourceRef, Step, Variable } from './types.js';
@@ -16,7 +17,21 @@ export default class DebugServer {
   }
 
   private host(call: CallContext): DebugHost {
-    return call.project.use('host', () => new DebugHost(call.project, this.adapter, this.ide.log));
+    return call.project.use(
+      'host',
+      () => new DebugHost(call.project, this.adapter, this.ide.log, this.terminalRunner(call.project)),
+    );
+  }
+
+  private terminalRunner(project: Project): TerminalRunner {
+    if (process.platform === 'win32') return null;
+    let terminal: TerminalServer;
+    try {
+      terminal = this.ide.getPlugin(TerminalServer);
+    } catch {
+      return null;
+    }
+    return (ask) => ({ pid: terminal.runIn(project.root, ask).pid });
   }
 
   @command() protected breakpoints(_params: unknown, call: CallContext): FileBreakpoints[] {
@@ -78,6 +93,10 @@ export default class DebugServer {
 
   @command() protected source(params: unknown, call: CallContext): Promise<{ text: string; mime?: string }> {
     return this.host(call).source(field(params, 'run'), field(params, 'session'), number(params, 'reference'));
+  }
+
+  @command() protected readForeign(params: unknown, call: CallContext): Promise<{ text: string }> {
+    return this.host(call).readForeign(field(params, 'absolute'));
   }
 }
 

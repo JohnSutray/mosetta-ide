@@ -1,8 +1,10 @@
 import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import type { Logger, Project, ProjectResource } from '@mosetta/ide-api/server';
 import type { JsDebugAdapter } from './adapter.js';
 import { DebugRun, type RunOwner } from './run.js';
-import type { DapSession } from './session.js';
+import type { DapSession, TerminalAsk } from './session.js';
+import { shellLine } from './shell-line.js';
 import { Sources, type DapFrame, type DapSource } from './sources.js';
 import type {
   Breakpoint,
@@ -18,17 +20,30 @@ import type {
 
 export type DebugProject = Pick<Project, 'root' | 'resolve' | 'emit' | 'hold' | 'start'>;
 
+export interface TerminalAskOut {
+  name: string;
+  cwd: string;
+  command: string;
+  env: Record<string, string>;
+  sameShell: string;
+}
+
+export type TerminalRunner = ((ask: TerminalAskOut) => { pid: number }) | null;
+
 export class DebugHost implements ProjectResource, RunOwner {
   private readonly lines = new Map<string, number[]>();
   private readonly runs = new Map<string, DebugRun>();
   private readonly holds = new Map<string, () => void>();
   private readonly sources: Sources;
+  private readonly foreign = new Set<string>();
   private next = 1;
 
   constructor(
     private readonly project: DebugProject,
     private readonly adapter: JsDebugAdapter,
     private readonly log: Logger,
+    private readonly terminalRunner: TerminalRunner = null,
+    private readonly readDisk: (absolute: string) => Promise<string> = (absolute) => readFile(absolute, 'utf8'),
   ) {
     this.sources = new Sources(project.root, (relative) => project.resolve(relative));
   }
@@ -102,7 +117,16 @@ export class DebugHost implements ProjectResource, RunOwner {
     const answer = await this.run(runId)
       .session(sessionId)
       .request<{ stackFrames: DapFrame[] }>('stackTrace', { threadId: thread });
-    return answer.stackFrames.map((frame) => this.sources.frame(frame));
+    const frames = answer.stackFrames.map((frame) => this.sources.frame(frame));
+    for (const frame of frames) {
+      if (frame.source?.kind === 'file') this.foreign.add(frame.source.absolute);
+    }
+    return frames;
+  }
+
+  async readForeign(absolute: string): Promise<{ text: string }> {
+    if (!this.foreign.has(absolute)) throw new Error(`not a debugger source: ${absolute}`);
+    return { text: await this.readDisk(absolute) };
   }
 
   async scopes(runId: string, sessionId: string, frame: number): Promise<Scope[]> {
@@ -178,6 +202,31 @@ export class DebugHost implements ProjectResource, RunOwner {
     return this.sources.toAdapter(key);
   }
 
+  hasTerminal(): boolean {
+    return this.terminalRunner !== null;
+  }
+
+  async terminal(run: DebugRun, ask: TerminalAsk): Promise<{ shellProcessId?: number; processId?: number }> {
+    if (!this.terminalRunner) throw new Error('no terminal in this build');
+    let pid: number;
+    const env: Record<string, string> = {};
+    for (const [key, value] of Object.entries(ask.env ?? {})) if (typeof value === 'string') env[key] = value;
+    try {
+      pid = this.terminalRunner({
+        name: `debug::${run.name}`,
+        cwd: ask.cwd || this.project.root,
+        command: shellLine.compose(ask.args),
+        env,
+        sameShell: shellLine.compose(ask.args, env),
+      }).pid;
+    } catch (err) {
+      this.log.warn(`debug: terminal refused ${run.name}: ${String(err)}`);
+      throw err;
+    }
+    this.project.emit('terminal', { run: run.id, name: `debug::${run.name}` });
+    return { shellProcessId: pid };
+  }
+
   changed(run: DebugRun): void {
     if (run.state === 'ended') {
       this.holds.get(run.id)?.();
@@ -223,7 +272,7 @@ export class DebugHost implements ProjectResource, RunOwner {
       ...(ask.args ? { args: ask.args } : {}),
       cwd: ask.cwd ? this.project.resolve(ask.cwd) : root,
       env: { ...(ask.env ?? {}), ELECTRON_RUN_AS_NODE: null },
-      console: 'internalConsole',
+      console: this.hasTerminal() ? 'integratedTerminal' : 'internalConsole',
       outputCapture: 'std',
       __workspaceFolder: root,
     };

@@ -3,11 +3,13 @@ import type { EditorState } from '@codemirror/state';
 import type { HoverInfo, Severity } from '@mosetta/ide-plugin-lsp';
 import type CodePlugin from '@mosetta/ide-plugin-code';
 import { diagnostics } from './diagnostics.js';
+import type { HoverSource, HoverSpot } from './schema.js';
 
 export function lspHover(
   pathOf: () => string | null,
   ask: (path: string, line: number, character: number) => Promise<HoverInfo | null>,
   code: CodePlugin,
+  sources: () => readonly HoverSource[] = () => [],
 ) {
   return hoverTooltip(async (view, pos): Promise<Tooltip | null> => {
     const path = pathOf();
@@ -16,8 +18,13 @@ export function lspHover(
     const problems = diagnostics.at(view.state as EditorState, pos);
 
     const line = view.state.doc.lineAt(pos);
-    const info = await ask(path, line.number - 1, pos - line.from).catch(() => null);
-    if (!info && problems.length === 0) return null;
+    const spot: HoverSpot = { path, line: line.number - 1, character: pos - line.from, text: line.text };
+    const [info, ...extra] = await Promise.all([
+      ask(path, spot.line, spot.character).catch(() => null),
+      ...sources().map((source) => source.hover(spot).catch(() => null)),
+    ]);
+    const parts = extra.filter((one): one is { code: string } => one !== null);
+    if (!info && problems.length === 0 && parts.length === 0) return null;
 
     return {
       pos,
@@ -34,18 +41,19 @@ export function lspHover(
           dom.append(box);
         }
 
-        if (info) {
-          const signature = document.createElement('div');
-          signature.className = 'cm-hover-code';
-          for (const chunk of code.painter.paint(stripFences(info.markdown), path)) {
-            signature.append(painted(chunk.text, chunk.color));
-          }
-          dom.append(signature);
-        }
+        for (const part of parts) dom.append(codeBlock(part.code, path, code));
+        if (info) dom.append(codeBlock(stripFences(info.markdown), path, code));
         return { dom };
       },
     };
   }, { hoverTime: 250 });
+}
+
+function codeBlock(text: string, path: string, code: CodePlugin): HTMLElement {
+  const block = document.createElement('div');
+  block.className = 'cm-hover-code';
+  for (const chunk of code.painter.paint(text, path)) block.append(painted(chunk.text, chunk.color));
+  return block;
 }
 
 function tint(severity: Severity): string {

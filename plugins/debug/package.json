@@ -7,16 +7,43 @@
     "test": "vitest run"
   },
   "exports": {
+    ".": "./src/client.tsx",
     "./server": "./src/server.ts"
   },
   "ide": {
-    "server": "src/server.ts"
+    "client": "src/client.tsx",
+    "server": "src/server.ts",
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
+    }
   },
   "dependencies": {
-    "@mosetta/ide-api": "workspace:*"
+    "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-plugin-code": "workspace:*",
+    "@mosetta/ide-plugin-doc": "workspace:*",
+    "@mosetta/ide-plugin-keymap": "workspace:*",
+    "@mosetta/ide-plugin-npm-scripts": "workspace:*",
+    "@mosetta/ide-plugin-terminal": "workspace:*",
+    "@mosetta/ide-plugin-ui": "workspace:*"
   },
   "devDependencies": {
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.35.3",
+    "@mosetta/ide-protocol": "workspace:*",
+    "@mosetta/ide-plugin-editor": "workspace:*",
+    "@mosetta/ide-plugin-lsp": "workspace:*",
+    "@mosetta/ide-plugin-theme": "workspace:*",
+    "@preact/signals": "^1.3.1",
     "@types/node": "^22.10.5",
+    "preact": "^10.25.3",
     "vitest": "^2.1.9"
+  },
+  "peerDependencies": {
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.35.3",
+    "@mosetta/ide-protocol": "workspace:*",
+    "@preact/signals": "^1.3.1",
+    "preact": "^10.25.3"
   }
 }
