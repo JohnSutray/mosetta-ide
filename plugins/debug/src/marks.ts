@@ -1,27 +1,49 @@
 import { RangeSet, StateEffect, StateField, type EditorState, type Extension, type Transaction } from '@codemirror/state';
 import { Decoration, EditorView, GutterMarker, ViewPlugin, gutter, type DecorationSet } from '@codemirror/view';
-import type { Breakpoint } from './types.js';
+import type { Breakpoint, BreakpointAsk } from './types.js';
 
 export const setBreakpoints = StateEffect.define<Breakpoint[]>();
 export const setExecution = StateEffect.define<number | null>();
 
+type Kind = 'plain' | 'conditional' | 'log';
+
+function kindOf(one: Breakpoint): Kind {
+  if (one.logMessage) return 'log';
+  if (one.condition || one.hitCondition) return 'conditional';
+  return 'plain';
+}
+
 class Mark extends GutterMarker {
-  constructor(readonly verified: boolean) {
+  constructor(
+    readonly verified: boolean,
+    readonly kind: Kind,
+    readonly ask: Breakpoint,
+  ) {
     super();
   }
 
   override eq(other: Mark): boolean {
-    return other.verified === this.verified;
+    return (
+      other.verified === this.verified &&
+      other.kind === this.kind &&
+      other.ask.condition === this.ask.condition &&
+      other.ask.hitCondition === this.ask.hitCondition &&
+      other.ask.logMessage === this.ask.logMessage
+    );
   }
 
   override toDOM(): Node {
     const el = document.createElement('div');
-    el.className = `cm-breakpoint ${this.verified ? 'is-verified' : 'is-pending'}`;
+    el.className = `cm-breakpoint ${this.verified ? 'is-verified' : 'is-pending'} is-${this.kind}`;
+    const tip = [this.ask.condition, this.ask.hitCondition && `hits ${this.ask.hitCondition}`, this.ask.logMessage]
+      .filter(Boolean)
+      .join(' · ');
+    if (tip) el.title = tip;
     return el;
   }
 }
 
-const MARKS = { verified: new Mark(true), pending: new Mark(false) };
+const SPACER = new Mark(false, 'plain', { line: 0, verified: false });
 
 const breakpointsField = StateField.define<RangeSet<Mark>>({
   create() {
@@ -34,7 +56,7 @@ const breakpointsField = StateField.define<RangeSet<Mark>>({
       const ranges = [];
       for (const one of effect.value) {
         if (one.line < 1 || one.line > tr.state.doc.lines) continue;
-        ranges.push((one.verified ? MARKS.verified : MARKS.pending).range(tr.state.doc.line(one.line).from));
+        ranges.push(new Mark(one.verified, kindOf(one), one).range(tr.state.doc.line(one.line).from));
       }
       ranges.sort((a, b) => a.from - b.from);
       next = RangeSet.of(ranges, true);
@@ -84,20 +106,34 @@ const executionField = StateField.define<number | null>({
 export interface MarksListener {
   attached(view: EditorView | null): void;
   toggled(view: EditorView, line: number): void;
-  moved(view: EditorView, lines: number[]): void;
+  menu(view: EditorView, line: number, at: { x: number; y: number }): void;
+  moved(view: EditorView, asks: BreakpointAsk[]): void;
 }
 
 export class DebugMarks {
   constructor(private readonly listener: MarksListener) {}
 
   lines(state: EditorState): number[] {
-    const out = new Set<number>();
+    return this.asks(state).map((one) => one.line);
+  }
+
+  asks(state: EditorState): BreakpointAsk[] {
+    const out = new Map<number, BreakpointAsk>();
     const iter = state.field(breakpointsField).iter();
     while (iter.value) {
-      out.add(state.doc.lineAt(iter.from).number);
+      const line = state.doc.lineAt(iter.from).number;
+      if (!out.has(line)) {
+        const { condition, hitCondition, logMessage } = iter.value.ask;
+        out.set(line, {
+          line,
+          ...(condition ? { condition } : {}),
+          ...(hitCondition ? { hitCondition } : {}),
+          ...(logMessage ? { logMessage } : {}),
+        });
+      }
       iter.next();
     }
-    return [...out].sort((a, b) => a - b);
+    return [...out.values()].sort((a, b) => a.line - b.line);
   }
 
   extension(): Extension {
@@ -109,11 +145,21 @@ export class DebugMarks {
       gutter({
         class: 'cm-debug-gutter',
         markers: (view) => view.state.field(breakpointsField),
-        initialSpacer: () => MARKS.pending,
+        initialSpacer: () => SPACER,
         domEventHandlers: {
           mousedown: (view, block, event) => {
-            if ((event as MouseEvent).button !== 0) return false;
-            listener.toggled(view, view.state.doc.lineAt(block.from).number);
+            const mouse = event as MouseEvent;
+            const line = view.state.doc.lineAt(block.from).number;
+            if (mouse.button === 2) {
+              listener.menu(view, line, { x: mouse.clientX, y: mouse.clientY });
+              return true;
+            }
+            if (mouse.button !== 0) return false;
+            listener.toggled(view, line);
+            return true;
+          },
+          contextmenu: (_view, _block, event) => {
+            event.preventDefault();
             return true;
           },
         },
@@ -130,7 +176,7 @@ export class DebugMarks {
             }
             if (same(before, now)) return;
             before = now;
-            listener.moved(update.view, now);
+            listener.moved(update.view, marks.asks(update.state));
           },
           destroy() {
             listener.attached(null);

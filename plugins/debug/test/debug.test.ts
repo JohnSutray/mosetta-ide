@@ -150,7 +150,7 @@ describe('адаптер привезён', () => {
 describe('отладка против настоящего адаптера', { timeout: 30_000 }, () => {
   it('точка в JS: стек, переменные с раскрытием, вычисление, шаг, текст внутренностей Node', async () => {
     bench = new Bench();
-    await bench.host.setBreakpoints('plain.js', [4]);
+    await bench.host.setBreakpoints('plain.js', [{ line: 4 }]);
     const run = await bench.host.launch({ program: 'plain.js' });
 
     const hit = await bench.until('stop on breakpoint', () => bench.stops()[0]);
@@ -188,7 +188,7 @@ describe('отладка против настоящего адаптера', { 
 
   it('точка подтверждается позже ответа — и событие это говорит', async () => {
     bench = new Bench();
-    const before = await bench.host.setBreakpoints('plain.js', [4]);
+    const before = await bench.host.setBreakpoints('plain.js', [{ line: 4 }]);
     expect(before.breakpoints).toEqual([{ line: 4, verified: false }]);
     const run = await bench.host.launch({ program: 'plain.js' });
     await bench.until('verified', () =>
@@ -201,7 +201,7 @@ describe('отладка против настоящего адаптера', { 
 
   it('TS без сборки: Node отбрасывает типы, строки совпадают', async () => {
     bench = new Bench();
-    await bench.host.setBreakpoints('strip.ts', [6]);
+    await bench.host.setBreakpoints('strip.ts', [{ line: 6 }]);
     const run = await bench.host.launch({ program: 'strip.ts' });
     const hit = await bench.until('stop', () => bench.stops()[0]);
     const frames = await bench.host.stack(run.id, hit.session, hit.stop.thread);
@@ -212,7 +212,7 @@ describe('отладка против настоящего адаптера', { 
 
   it('TS через карты исходников: точка в .ts, запускается .js (`__workspaceFolder`)', async () => {
     bench = new Bench();
-    await bench.host.setBreakpoints('mapped/src/app.ts', [7]);
+    await bench.host.setBreakpoints('mapped/src/app.ts', [{ line: 7 }]);
     const run = await bench.host.launch({ program: 'mapped/out/app.js' });
     const hit = await bench.until('stop in mapped source', () => bench.stops()[0] ?? (bench.ended(run.id) && 'ended'));
     if (hit === 'ended') throw new Error('program ran past the mapped breakpoint: source maps were not resolved');
@@ -224,7 +224,7 @@ describe('отладка против настоящего адаптера', { 
 
   it('дочерний процесс — дочерний сеанс: точка срабатывает в нём', async () => {
     bench = new Bench();
-    await bench.host.setBreakpoints('child.js', [2]);
+    await bench.host.setBreakpoints('child.js', [{ line: 2 }]);
     const run = await bench.host.launch({ program: 'parent.js' });
     const hit = await bench.until('stop in child', () => bench.stops()[0]);
     const tree = bench.lastRuns().find((one) => one.id === run.id)!;
@@ -242,7 +242,7 @@ describe('отладка против настоящего адаптера', { 
     bench = new Bench();
     const run = await bench.host.launch({ program: 'ticker.js' });
     await bench.until('ticking', () => bench.output().includes('tick 2'));
-    await bench.host.setBreakpoints('ticker.js', [4]);
+    await bench.host.setBreakpoints('ticker.js', [{ line: 4 }]);
     const hit = await bench.until('stop on late breakpoint', () => bench.stops()[0]);
     expect(hit.stop.reason).toBe('breakpoint');
     await bench.host.stop(run.id);
@@ -330,6 +330,8 @@ describe('провод DAP', () => {
         const reply = (seq: number, command: string) => frame({ type: 'response', request_seq: seq, success: true, command, body: {} });
         if (message.command === 'initialize') {
           input.write(Buffer.concat([reply(message.seq, 'initialize'), frame({ type: 'event', event: 'initialized' })]));
+        } else if (message.command === 'setExceptionBreakpoints') {
+          input.write(reply(message.seq, message.command));
         } else if (message.command === 'configurationDone') {
           const launch = [...answered].find((seq) => seq !== message.seq && seq > 1);
           input.write(Buffer.concat([reply(message.seq, 'configurationDone'), reply(launch ?? 2, 'launch')]));
@@ -346,6 +348,7 @@ describe('провод DAP', () => {
       verified: () => undefined,
       runInTerminal: null,
       skipped: () => undefined,
+      exceptions: () => 'none',
     };
     const session = new DapSession('1.0', 'race', null, wire, owner);
     try {
@@ -378,7 +381,7 @@ describe('настоящий терминал и файлы за корнем', 
   it.skipIf(process.platform === 'win32')('с терминалом программа выполняется В НЁМ: вывод в консоли, остановка — у нас', async () => {
     const consoles: Array<{ command: string; sameShell: string; env: Record<string, string>; out: string }> = [];
     bench = new Bench(shellRunner(consoles));
-    await bench.host.setBreakpoints('plain.js', [4]);
+    await bench.host.setBreakpoints('plain.js', [{ line: 4 }]);
     const run = await bench.host.launch({ program: 'plain.js' });
     const hit = await bench.until('stop', () => bench.stops()[0]);
     expect(bench.of<{ name: string }>('terminal')[0]?.name).toBe(`debug::${run.name}`);
@@ -422,7 +425,7 @@ describe('браузер под отладчиком', { timeout: 60_000 }, () =
     async () => {
       const consoles: Array<{ command: string; sameShell: string; env: Record<string, string>; out: string }> = [];
       bench = new Bench(shellRunner(consoles), fixtures, { browserArgs: ['--headless=new'] });
-      await bench.host.setBreakpoints('web/app.js', [3]);
+      await bench.host.setBreakpoints('web/app.js', [{ line: 3 }]);
       const run = await bench.host.launch({ program: 'web/server.js' });
       const opened = await bench.until('browser session', () => bench.of<{ run: string; url: string }>('browser')[0], 40_000);
       expect(opened.url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/web\/$/);
@@ -453,7 +456,7 @@ describe('браузер под отладчиком', { timeout: 60_000 }, () =
 describe('поддельные кадры React', { timeout: 30_000 }, () => {
   it('точка в настоящем файле не срабатывает в подделках `about://React/…`', async () => {
     bench = new Bench();
-    await bench.host.setBreakpoints('replayed.js', [2]);
+    await bench.host.setBreakpoints('replayed.js', [{ line: 2 }]);
     const run = await bench.host.launch({ program: 'replay.js' });
     const hit = await bench.until('real stop', () => bench.stops()[0]);
     const frames = await bench.host.stack(run.id, hit.session, hit.stop.thread);
@@ -463,5 +466,53 @@ describe('поддельные кадры React', { timeout: 30_000 }, () => {
     expect(bench.stops()).toHaveLength(1);
     expect(bench.output()).toContain('real 42');
     expect(bench.output().match(/about:\/\/React/g)).toHaveLength(1);
+  });
+});
+
+describe('условия, logpoint и исключения', { timeout: 30_000 }, () => {
+  it('условная точка стоит один раз — когда условие истинно', async () => {
+    bench = new Bench();
+    await bench.host.setBreakpoints('loop.js', [{ line: 2, condition: 'n === 3' }]);
+    const run = await bench.host.launch({ program: 'loop.js' });
+    const hit = await bench.until('conditional stop', () => bench.stops()[0]);
+    const frames = await bench.host.stack(run.id, hit.session, hit.stop.thread);
+    const value = await bench.host.evaluate(run.id, hit.session, 'n', frames[0]!.id, 'hover');
+    expect(value.value).toBe('3');
+    await bench.host.step(run.id, hit.session, hit.stop.thread, 'continue');
+    await bench.until('run end', () => bench.ended(run.id));
+    expect(bench.stops()).toHaveLength(1);
+  });
+
+  it('счётчик срабатываний: `>=4` — стоит на четвёртом и пятом', async () => {
+    bench = new Bench();
+    await bench.host.setBreakpoints('loop.js', [{ line: 2, hitCondition: '>=4' }]);
+    const run = await bench.host.launch({ program: 'loop.js' });
+    for (let at = 0; at < 2; at += 1) {
+      const hit = await bench.until(`stop ${at}`, () => bench.stops()[at]);
+      await bench.host.step(run.id, hit.session, hit.stop.thread, 'continue');
+    }
+    await bench.until('run end', () => bench.ended(run.id));
+    expect(bench.stops()).toHaveLength(2);
+  });
+
+  it('logpoint печатает вместо остановки, подставляя выражения', async () => {
+    bench = new Bench();
+    await bench.host.setBreakpoints('loop.js', [{ line: 3, logMessage: 'square of {n} is {square}' }]);
+    const run = await bench.host.launch({ program: 'loop.js' });
+    await bench.until('run end', () => bench.ended(run.id));
+    expect(bench.stops()).toHaveLength(0);
+    expect(bench.output()).toContain('square of 3 is 9');
+  });
+
+  it('стоп на необработанном исключении — до того, как программа умерла', async () => {
+    bench = new Bench();
+    await bench.host.setExceptions('uncaught');
+    expect(bench.of<string>('exceptions')).toEqual(['uncaught']);
+    const run = await bench.host.launch({ program: 'crash.js' });
+    const hit = await bench.until('exception stop', () => bench.stops()[0]);
+    expect(hit.stop.reason).toBe('exception');
+    expect(hit.stop.description).toMatch(/boom on start/);
+    await bench.host.step(run.id, hit.session, hit.stop.thread, 'continue');
+    await bench.until('run end', () => bench.ended(run.id));
   });
 });

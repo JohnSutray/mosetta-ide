@@ -1,8 +1,9 @@
-import type { Breakpoint, SessionInfo, Stop } from './types.js';
+import type { Breakpoint, BreakpointAsk, ExceptionMode, SessionInfo, Stop } from './types.js';
 import type { DapWire, Reverse } from './wire.js';
 
 export interface SessionOwner {
-  breakpoints(): ReadonlyMap<string, readonly number[]>;
+  breakpoints(): ReadonlyMap<string, readonly BreakpointAsk[]>;
+  exceptions(): ExceptionMode;
   toAdapter(key: string): string;
   child(parent: DapSession, request: 'launch' | 'attach', configuration: Record<string, unknown>): void;
   runInTerminal: ((ask: TerminalAsk) => Promise<{ shellProcessId?: number; processId?: number }>) | null;
@@ -96,22 +97,35 @@ export class DapSession {
     const launched = this.wire.request(request, configuration);
     await Promise.race([initialized, launched]);
     await Promise.all([...this.owner.breakpoints().keys()].map((key) => this.sync(key)));
+    await this.syncExceptions();
     await this.wire.request('configurationDone');
     await launched;
   }
 
   async sync(key: string): Promise<void> {
     if (!this.wire.alive) return;
-    const lines = this.owner.breakpoints().get(key) ?? [];
+    const asks = this.owner.breakpoints().get(key) ?? [];
     const answer = await this.wire.request<{ breakpoints: DapBreakpoint[] }>('setBreakpoints', {
       source: { path: this.owner.toAdapter(key) },
-      breakpoints: lines.map((line) => ({ line })),
+      breakpoints: asks.map((ask) => ({
+        line: ask.line,
+        ...(ask.condition ? { condition: ask.condition } : {}),
+        ...(ask.hitCondition ? { hitCondition: ask.hitCondition } : {}),
+        ...(ask.logMessage ? { logMessage: ask.logMessage } : {}),
+      })),
     });
     this.placed.set(
       key,
-      lines.map((line, at) => this.toPlaced(line, answer.breakpoints[at])),
+      asks.map((ask, at) => this.toPlaced(ask, answer.breakpoints[at])),
     );
     this.owner.verified(this, key);
+  }
+
+  async syncExceptions(): Promise<void> {
+    if (!this.wire.alive) return;
+    const mode = this.owner.exceptions();
+    const filters = mode === 'all' ? ['all', 'uncaught'] : mode === 'uncaught' ? ['uncaught'] : [];
+    await this.wire.request('setExceptionBreakpoints', { filters });
   }
 
   placedIn(key: string): readonly Breakpoint[] {
@@ -143,13 +157,13 @@ export class DapSession {
     this.wire.dispose();
   }
 
-  private toPlaced(line: number, answer: DapBreakpoint | undefined): Placed {
-    if (!answer) return { line, verified: false };
+  private toPlaced(ask: BreakpointAsk, answer: DapBreakpoint | undefined): Placed {
+    if (!answer) return { ...ask, verified: false };
     return {
-      line,
+      ...ask,
       verified: answer.verified,
       ...(answer.id !== undefined ? { id: answer.id } : {}),
-      ...(answer.line !== undefined && answer.line !== line ? { actual: answer.line } : {}),
+      ...(answer.line !== undefined && answer.line !== ask.line ? { actual: answer.line } : {}),
       ...(answer.message ? { message: answer.message } : {}),
     };
   }
@@ -157,10 +171,11 @@ export class DapSession {
   private event(event: string, body: Record<string, unknown>): void {
     switch (event) {
       case 'stopped': {
+        const description = [body['description'], body['text']].filter((one) => typeof one === 'string' && one).join(': ');
         const stop: Stop = {
           thread: Number(body['threadId'] ?? 0),
           reason: String(body['reason'] ?? 'pause'),
-          ...(typeof body['description'] === 'string' ? { description: body['description'] } : {}),
+          ...(description ? { description } : {}),
         };
         void this.arrived(stop);
         return;
@@ -183,6 +198,7 @@ export class DapSession {
   }
 
   private async arrived(stop: Stop): Promise<void> {
+    if (stop.reason === 'exception') stop = { ...stop, description: await this.exceptionText(stop) };
     if (stop.reason === 'breakpoint' && (await this.inFakeFrame(stop.thread))) {
       this.owner.skipped(this);
       await this.wire.request('continue', { threadId: stop.thread }).catch(() => undefined);
@@ -191,6 +207,18 @@ export class DapSession {
     this.stop = stop;
     this.setState('paused');
     this.owner.stopped(this, stop);
+  }
+
+  private async exceptionText(stop: Stop): Promise<string | undefined> {
+    try {
+      const info = await this.wire.request<{ exceptionId?: string; description?: string }>('exceptionInfo', {
+        threadId: stop.thread,
+      });
+      const said = (info.description ?? info.exceptionId ?? '').split('\n')[0]?.trim();
+      return said ? said : stop.description;
+    } catch {
+      return stop.description;
+    }
   }
 
   private async inFakeFrame(thread: number): Promise<boolean> {
@@ -216,7 +244,7 @@ export class DapSession {
     for (const [key, list] of this.placed) {
       const at = list.findIndex((one) => one.id === answer.id);
       if (at === -1) continue;
-      list[at] = this.toPlaced(list[at]!.line, answer);
+      list[at] = this.toPlaced(list[at]!, answer);
       this.owner.verified(this, key);
       return;
     }

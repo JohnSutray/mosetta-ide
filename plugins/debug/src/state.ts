@@ -1,5 +1,5 @@
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
-import type { Breakpoint, FileBreakpoints, Frame, Output, RunInfo, Scope, SourceRef, Variable } from './types.js';
+import type { Breakpoint, BreakpointAsk, ExceptionMode, FileBreakpoints, Frame, Output, RunInfo, Scope, SourceRef, Variable } from './types.js';
 
 export interface Paused {
   run: string;
@@ -32,6 +32,18 @@ export interface VarNode {
   expensive?: boolean;
 }
 
+export interface Watch {
+  expression: string;
+  value: string | null;
+  error?: string;
+}
+
+export interface BreakpointEdit {
+  path: string;
+  ask: BreakpointAsk;
+  at: { x: number; y: number };
+}
+
 const OUTPUT_LINES = 500;
 
 const NOISE = /^Could not read source map for /;
@@ -45,6 +57,10 @@ export class DebugState {
   readonly scopes = signal<VarNode[]>([]);
   readonly output = signal<OutputLine[]>([]);
   readonly hiddenNoise = signal(0);
+  readonly watches = signal<Watch[]>([]);
+  readonly exceptions = signal<ExceptionMode>('none');
+  readonly menu = signal<{ path: string; line: number; at: { x: number; y: number } } | null>(null);
+  readonly edit = signal<BreakpointEdit | null>(null);
   readonly foreign = new Map<string, Foreign>();
 
   readonly live: ReadonlySignal<RunInfo[]> = computed(() => this.runs.value.filter((run) => run.state !== 'ended'));
@@ -130,6 +146,29 @@ export class DebugState {
     return (this.breakpoints.value.get(path) ?? []).map((one) => one.line);
   }
 
+  askAt(path: string, line: number): BreakpointAsk | null {
+    const found = (this.breakpoints.value.get(path) ?? []).find((one) => one.line === line);
+    if (!found) return null;
+    const { condition, hitCondition, logMessage } = found;
+    return {
+      line,
+      ...(condition ? { condition } : {}),
+      ...(hitCondition ? { hitCondition } : {}),
+      ...(logMessage ? { logMessage } : {}),
+    };
+  }
+
+  draft(patch: Partial<BreakpointAsk>): void {
+    const edit = this.edit.value;
+    if (edit) this.edit.value = { ...edit, ask: { ...edit.ask, ...patch } };
+  }
+
+  setWatchValue(expression: string, value: string | null, error?: string): void {
+    this.watches.value = this.watches.value.map((one) =>
+      one.expression === expression ? { expression, value, ...(error ? { error } : {}) } : one,
+    );
+  }
+
   addOutput(one: Output): void {
     if (one.category === 'telemetry') return;
     if (NOISE.test(one.text)) {
@@ -150,6 +189,10 @@ export class DebugState {
       this.scopes.value = [];
       this.output.value = [];
       this.hiddenNoise.value = 0;
+      this.watches.value = [];
+      this.exceptions.value = 'none';
+      this.menu.value = null;
+      this.edit.value = null;
     });
     this.foreign.clear();
   }

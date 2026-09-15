@@ -179,6 +179,7 @@ export const FACTORY_KEYMAP: Keymap = {
     { "command": "debug.toggleBreakpoint", "key": "control+f8", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "debug.stop", "key": "meta+f2", "where": ["browser:mac", "electron:mac"] },
     { "command": "debug.stop", "key": "control+f2", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
+    { "command": "debug.edit.apply", "key": "enter", "when": "debug-edit" },
     { "command": "panel.debug", "key": "meta+shift+d", "where": ["browser:mac", "electron:mac"] },
     { "command": "panel.debug", "key": "control+shift+d", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
 

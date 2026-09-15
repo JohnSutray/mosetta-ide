@@ -36,7 +36,7 @@ describe('отладчик (плагин)', () => {
   });
 
   it('точка срабатывает, стек называет файл проекта, программа доходит до конца', async () => {
-    const placed = (await debug('setBreakpoints', { path: 'src/main.js', lines: [2] })) as {
+    const placed = (await debug('setBreakpoints', { path: 'src/main.js', breakpoints: [{ line: 2 }] })) as {
       breakpoints: Array<{ line: number }>;
     };
     expect(placed.breakpoints.map((one) => one.line)).toEqual([2]);

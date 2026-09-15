@@ -1,7 +1,7 @@
 import { useT } from '@mosetta/ide-api/client';
 import type { JSX } from 'preact';
 import type { DebugState, VarNode } from './state.js';
-import type { Frame, RunInfo } from './types.js';
+import type { ExceptionMode, Frame, RunInfo } from './types.js';
 import { Arrow, ContinueIcon, PauseIcon, StepIntoIcon, StepOutIcon, StepOverIcon, StopIcon } from './icons.js';
 
 export interface PanelApi {
@@ -15,6 +15,18 @@ export interface PanelApi {
   outputInTerminal: boolean;
   canDebugFile: () => boolean;
   openUrl: (url: string) => void;
+  setExceptions: (mode: ExceptionMode) => void;
+  addWatch: (expression: string) => void;
+  removeWatch: (expression: string) => void;
+  evaluate: (expression: string) => void;
+}
+
+const EXCEPTION_MODES: ExceptionMode[] = ['none', 'uncaught', 'all'];
+
+function submitOnEnter(event: KeyboardEvent): void {
+  if (event.key !== 'Enter' || event.isComposing) return;
+  event.preventDefault();
+  (event.currentTarget as HTMLInputElement).form?.requestSubmit();
 }
 
 const STEPS: Array<{ command: string; icon: () => JSX.Element; kind?: string; whenPaused: boolean }> = [
@@ -56,6 +68,19 @@ export function DebugPanel({ api }: { api: PanelApi }) {
         {STEPS.map((step) => button(step.command, step.icon, step.whenPaused ? paused !== null : live.length > 0 && !paused, step.kind))}
         <span class="debug-bar-gap" />
         {button('debug.stop', StopIcon, live.length > 0, 'is-stop')}
+        <span class="debug-bar-gap" />
+        <select
+          class="debug-exc"
+          value={state.exceptions.value}
+          title={t('debug.exceptions.about')}
+          onChange={(event) => api.setExceptions((event.currentTarget as HTMLSelectElement).value as ExceptionMode)}
+        >
+          {EXCEPTION_MODES.map((mode) => (
+            <option key={mode} value={mode}>
+              {t(`debug.exceptions.${mode}`)}
+            </option>
+          ))}
+        </select>
         {current && <RunLabel run={current} paused={paused !== null} />}
       </div>
       <div class="debug-body">
@@ -64,8 +89,10 @@ export function DebugPanel({ api }: { api: PanelApi }) {
         {paused && api.dirtyHere() && <div class="debug-note">{t('debug.dirty')}</div>}
         {paused && <Frames api={api} />}
         {paused && <Variables api={api} />}
+        <Watches api={api} />
         {runs.length > 0 && <Output api={api} />}
       </div>
+      <Console api={api} />
     </div>
   );
 }
@@ -98,7 +125,7 @@ function UrlField({ api }: { api: PanelApi }) {
         if (input) send(input);
       }}
     >
-      <input class="field debug-url-field" placeholder={t('debug.url.placeholder')} />
+      <input class="field debug-url-field" placeholder={t('debug.url.placeholder')} onKeyDown={submitOnEnter} />
       <button type="submit" class="debug-btn debug-url-go">
         {t('debug.url.open')}
       </button>
@@ -214,6 +241,67 @@ function VarRow({ node, depth, scope, api }: { node: VarNode; depth: number; sco
       )}
       {node.open && node.children?.map((child) => <VarRow key={`${node.ref}:${child.name}`} node={child} depth={depth + 1} api={api} />)}
     </>
+  );
+}
+
+function Watches({ api }: { api: PanelApi }) {
+  const t = useT();
+  const watches = api.state.watches.value;
+  const paused = api.state.paused.value !== null;
+  return (
+    <div class="debug-section">
+      <div class="debug-head">
+        <span>{t('debug.watches')}</span>
+      </div>
+      <ul class="debug-vars">
+        {watches.map((watch) => (
+          <li key={watch.expression} class="debug-var debug-watch" title={watch.error ?? ''}>
+            <span class="debug-var-name">{watch.expression}</span>
+            <span class="debug-var-eq">=</span>
+            <span class={`debug-var-value ${watch.error ? 'is-error' : ''}`}>
+              {watch.error ? t('debug.watches.error') : paused ? (watch.value ?? '…') : t('debug.watches.idle')}
+            </span>
+            <button type="button" class="debug-watch-remove" title={t('debug.watches.remove')} onClick={() => api.removeWatch(watch.expression)}>
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+      <form
+        class="debug-url"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const input = (event.currentTarget as HTMLFormElement).querySelector('input');
+          if (!input) return;
+          api.addWatch(input.value);
+          input.value = '';
+        }}
+      >
+        <input class="field debug-url-field" placeholder={t('debug.watches.add')} onKeyDown={submitOnEnter} />
+        <button type="submit" class="debug-btn debug-url-go">
+          +
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function Console({ api }: { api: PanelApi }) {
+  const t = useT();
+  return (
+    <form
+      class="debug-console"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const input = (event.currentTarget as HTMLFormElement).querySelector('input');
+        if (!input) return;
+        api.evaluate(input.value);
+        input.value = '';
+      }}
+    >
+      <span class="debug-console-prompt">›</span>
+      <input class="field debug-console-field" placeholder={t('debug.console.placeholder')} onKeyDown={submitOnEnter} />
+    </form>
   );
 }
 

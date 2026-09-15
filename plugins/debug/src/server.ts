@@ -4,9 +4,9 @@ import TerminalServer from '@mosetta/ide-plugin-terminal/server';
 import { JsDebugAdapter } from './adapter.js';
 import { DebugHost, type TerminalRunner } from './host.js';
 import { DEBUG_DEFAULTS } from './settings.js';
-import type { FileBreakpoints, Frame, LaunchAsk, RunInfo, Scope, Step, Variable } from './types.js';
+import type { BreakpointAsk, ExceptionMode, FileBreakpoints, Frame, LaunchAsk, RunInfo, Scope, Step, Variable } from './types.js';
 
-export type { FileBreakpoints, Frame, LaunchAsk, RunInfo, Scope, SessionInfo, SourceRef, Step, Variable } from './types.js';
+export type { BreakpointAsk, ExceptionMode, FileBreakpoints, Frame, LaunchAsk, RunInfo, Scope, SessionInfo, SourceRef, Step, Variable } from './types.js';
 
 const STEPS: readonly Step[] = ['continue', 'next', 'stepIn', 'stepOut', 'pause'];
 
@@ -51,12 +51,20 @@ export default class DebugServer {
   }
 
   @command() protected setBreakpoints(params: unknown, call: CallContext): Promise<FileBreakpoints> {
-    const asked = params as { path?: unknown; lines?: unknown } | null;
+    const asked = params as { path?: unknown; breakpoints?: unknown } | null;
     if (typeof asked?.path !== 'string') throw new Error('path: string is required');
-    if (!Array.isArray(asked.lines) || asked.lines.some((line) => typeof line !== 'number')) {
-      throw new Error('lines: number[] is required');
-    }
-    return this.host(call).setBreakpoints(asked.path, asked.lines as number[]);
+    if (!Array.isArray(asked.breakpoints)) throw new Error('breakpoints: array is required');
+    return this.host(call).setBreakpoints(asked.path, asked.breakpoints.map(breakpointAsk));
+  }
+
+  @command() protected exceptions(_params: unknown, call: CallContext): ExceptionMode {
+    return this.host(call).exceptions();
+  }
+
+  @command() protected setExceptions(params: unknown, call: CallContext): Promise<ExceptionMode> {
+    const mode = field(params, 'mode');
+    if (mode !== 'none' && mode !== 'uncaught' && mode !== 'all') throw new Error('mode must be none, uncaught or all');
+    return this.host(call).setExceptions(mode);
   }
 
   @command() protected launch(params: unknown, call: CallContext): Promise<RunInfo> {
@@ -162,5 +170,18 @@ function launchAsk(params: unknown): LaunchAsk {
   if (runtimeArgs) ask.runtimeArgs = runtimeArgs;
   if (args) ask.args = args;
   if (env) ask.env = env as Record<string, string>;
+  return ask;
+}
+
+function breakpointAsk(value: unknown): BreakpointAsk {
+  const one = value as Record<string, unknown> | null;
+  if (typeof one?.['line'] !== 'number') throw new Error('breakpoint.line: number is required');
+  const ask: BreakpointAsk = { line: one['line'] };
+  for (const key of ['condition', 'hitCondition', 'logMessage'] as const) {
+    const text = one[key];
+    if (text === undefined) continue;
+    if (typeof text !== 'string') throw new Error(`breakpoint.${key}: string expected`);
+    ask[key] = text;
+  }
   return ask;
 }

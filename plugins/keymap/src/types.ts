@@ -16,6 +16,7 @@ export type KeyContext =
   | 'merge'
   | 'settings'
   | 'find'
+  | 'debug-edit'
   | 'find-multiline'
   | 'find-replace'
   | 'find-files'

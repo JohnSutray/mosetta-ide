@@ -3,11 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { DebugMarks, setBreakpoints, setExecution } from '../src/marks.js';
 
 function stand() {
-  const heard: number[][] = [];
+  const heard: Array<Array<{ line: number }>> = [];
   const marks = new DebugMarks({
     attached: () => undefined,
     toggled: () => undefined,
-    moved: (_view, lines) => heard.push(lines),
+    menu: () => undefined,
+    moved: (_view, asks) => heard.push(asks),
   });
   const state = EditorState.create({ doc: 'a\nb\nc\nd\n', extensions: marks.extension() });
   return { marks, state, heard };
@@ -46,5 +47,16 @@ describe('точки в редакторе', () => {
     const moved = on.update({ changes: { from: 0, insert: 'x\n' } }).state;
     const off = moved.update({ effects: setExecution.of(null) }).state;
     expect(off.doc.lines).toBe(6);
+  });
+});
+
+describe('условия едут с точкой', () => {
+  it('просьба хранится в метке и возвращается с новым номером строки', () => {
+    const { marks, state } = stand();
+    const placed = state.update({
+      effects: setBreakpoints.of([{ line: 2, verified: true, condition: 'n === 3', logMessage: 'hi {n}' }]),
+    }).state;
+    const edited = placed.update({ changes: { from: 0, insert: 'new\n' } }).state;
+    expect(marks.asks(edited)).toEqual([{ line: 3, condition: 'n === 3', logMessage: 'hi {n}' }]);
   });
 });

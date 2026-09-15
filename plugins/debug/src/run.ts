@@ -1,9 +1,10 @@
 import type { AdapterProcess } from './adapter.js';
 import { DapSession, type SessionOwner, type TerminalAsk } from './session.js';
-import type { RunInfo, Stop } from './types.js';
+import type { BreakpointAsk, ExceptionMode, RunInfo, Stop } from './types.js';
 
 export interface RunOwner {
-  breakpoints(): ReadonlyMap<string, readonly number[]>;
+  breakpoints(): ReadonlyMap<string, readonly BreakpointAsk[]>;
+  exceptions(): ExceptionMode;
   toAdapter(key: string): string;
   terminal(run: DebugRun, ask: TerminalAsk): Promise<{ shellProcessId?: number; processId?: number }>;
   hasTerminal(): boolean;
@@ -96,8 +97,12 @@ export class DebugRun implements SessionOwner {
     };
   }
 
-  breakpoints(): ReadonlyMap<string, readonly number[]> {
+  breakpoints(): ReadonlyMap<string, readonly BreakpointAsk[]> {
     return this.owner.breakpoints();
+  }
+
+  exceptions(): ExceptionMode {
+    return this.owner.exceptions();
   }
 
   toAdapter(key: string): string {

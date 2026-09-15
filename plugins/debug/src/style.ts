@@ -11,6 +11,15 @@ export const STYLE = `
   background: var(--debug-breakpoint);
 }
 .cm-breakpoint.is-pending { background: transparent; }
+.cm-breakpoint.is-conditional::after {
+  content: '?';
+  display: block;
+  font: bold 8px/9px var(--ui-font);
+  text-align: center;
+  color: var(--panel-bg);
+}
+.cm-breakpoint.is-pending.is-conditional::after { color: var(--debug-breakpoint); }
+.cm-breakpoint.is-log { border-radius: 1px; transform: rotate(45deg) scale(0.85); }
 
 .debug { display: flex; flex-direction: column; height: 100%; min-height: 0; font: 12px/1.4 var(--ui-font); }
 .debug-bar {
@@ -52,7 +61,44 @@ export const STYLE = `
 .debug-run.is-paused b { color: var(--accent); }
 .debug-run.is-error { color: var(--error); }
 
+.debug-exc {
+  height: 22px;
+  padding: 0 4px;
+  border: none;
+  border-radius: 4px;
+  background: var(--control-bg);
+  color: var(--fg);
+  font: 11px var(--ui-font);
+}
 .debug-body { flex: 1; min-height: 0; overflow: auto; }
+.debug-watch-remove {
+  margin-left: auto;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: var(--control-bg);
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1;
+}
+.debug-watch-remove:hover { color: var(--fg); background: var(--control-bg-hover); }
+.debug-var-value.is-error { color: var(--warning); font-style: italic; }
+.debug-console { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-top: 1px solid var(--divider); flex: none; }
+.debug-console-prompt { color: var(--muted); font: 13px var(--font); }
+.debug-console-field { flex: 1; min-width: 0; font: 12px var(--font); padding: 2px 6px; }
+.debug-output .is-repl { color: var(--accent); }
+
+.debug-edit { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; }
+.debug-edit-title { color: var(--muted); font: 11px var(--ui-font); }
+.debug-edit-row { display: grid; grid-template-columns: 90px 1fr; align-items: center; gap: 8px; font: 12px var(--ui-font); }
+.debug-edit-row input { font: 12px var(--font); padding: 3px 6px; min-width: 0; }
+.debug-edit-actions { display: flex; gap: 6px; margin-top: 4px; }
+.debug-edit-btn { width: auto; padding: 0 10px; font: 12px var(--ui-font); }
+.debug-edit-btn.is-quiet { background: transparent; color: var(--muted); }
+.debug-edit-btn.is-quiet:hover { background: var(--control-bg); color: var(--fg); }
 .debug-url { display: flex; gap: 4px; padding: 5px 8px; border-bottom: 1px solid var(--divider); }
 .debug-url-field { flex: 1; min-width: 0; font: 12px var(--ui-font); padding: 2px 6px; }
 .debug-url-go { width: auto; padding: 0 8px; font: 12px var(--ui-font); }

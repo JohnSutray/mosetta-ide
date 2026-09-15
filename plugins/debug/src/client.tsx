@@ -6,7 +6,8 @@ import DocPlugin from '@mosetta/ide-plugin-doc';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import NpmScripts from '@mosetta/ide-plugin-npm-scripts';
 import TerminalPlugin from '@mosetta/ide-plugin-terminal';
-import UiPlugin from '@mosetta/ide-plugin-ui';
+import UiPlugin, { Menu } from '@mosetta/ide-plugin-ui';
+import { BreakpointEditor } from './editor.js';
 import { ForeignView, FOREIGN_PREFIX } from './foreign.js';
 import { BugIcon } from './icons.js';
 import { DebugMarks, setBreakpoints, setExecution } from './marks.js';
@@ -15,6 +16,8 @@ import { DEBUG_DEFAULTS, DEBUG_SCHEMA } from './settings.js';
 import { DebugState, type Foreign, type VarNode } from './state.js';
 import { STYLE } from './style.js';
 import type {
+  BreakpointAsk,
+  ExceptionMode,
   FileBreakpoints,
   Frame,
   LaunchAsk,
@@ -26,8 +29,8 @@ import type {
   Variable,
 } from './types.js';
 
-export type { Breakpoint, FileBreakpoints, Frame, RunInfo, SessionInfo, SourceRef, Variable } from './types.js';
-export type { Paused, VarNode } from './state.js';
+export type { Breakpoint, BreakpointAsk, ExceptionMode, FileBreakpoints, Frame, RunInfo, SessionInfo, SourceRef, Variable } from './types.js';
+export type { BreakpointEdit, Paused, VarNode, Watch } from './state.js';
 
 interface HoverSpot {
   path: string;
@@ -58,7 +61,11 @@ export default class DebugPlugin {
     this.marks = new DebugMarks({
       attached: (view) => this.attached(view),
       toggled: (view, line) => void this.toggleAt(view, line),
-      moved: (view, lines) => this.moved(view, lines),
+      moved: (view, asks) => this.moved(view, asks),
+      menu: (_view, line, at) => {
+        const path = this.docs.openDoc.peek()?.path;
+        if (path) this.state.menu.value = { path, line, at };
+      },
     });
   }
 
@@ -101,6 +108,11 @@ export default class DebugPlugin {
     const view = this.view;
     if (!view) return;
     void this.toggleAt(view, view.state.doc.lineAt(view.state.selection.main.head).number);
+  }
+
+  @command('debug.edit.apply')
+  protected applyEdit(): void {
+    void this.applyDraft();
   }
 
   @activate() protected start(): void {
@@ -158,7 +170,17 @@ export default class DebugPlugin {
       hover: (spot: HoverSpot) => this.hover(spot),
     });
 
+    this.ide.registry<() => unknown>('chrome.top').add(() => this.overlays());
+
     this.listen();
+
+    effect(() => {
+      const paused = this.state.paused.value;
+      const frame = this.state.frame.value;
+      const expressions = this.state.watches.peek().map((one) => one.expression);
+      if (!paused || !frame) return;
+      for (const expression of expressions) void this.evaluateWatch(paused.run, paused.session, frame.id, expression);
+    });
 
     effect(() => {
       this.ide.workspaces.current.value;
@@ -182,7 +204,9 @@ export default class DebugPlugin {
   }
 
   @remote('breakpoints') protected askBreakpoints(): Promise<FileBreakpoints[]> { return stub(); }
-  @remote('setBreakpoints') protected askSetBreakpoints(_p: { path: string; lines: number[] }): Promise<FileBreakpoints> { return stub(); }
+  @remote('setBreakpoints') protected askSetBreakpoints(_p: { path: string; breakpoints: BreakpointAsk[] }): Promise<FileBreakpoints> { return stub(); }
+  @remote('exceptions') protected askExceptions(): Promise<ExceptionMode> { return stub(); }
+  @remote('setExceptions') protected askSetExceptions(_p: { mode: ExceptionMode }): Promise<ExceptionMode> { return stub(); }
   @remote('launch') protected askLaunch(_p: LaunchAsk): Promise<RunInfo> { return stub(); }
   @remote('runs') protected askRuns(): Promise<RunInfo[]> { return stub(); }
   @remote('openBrowser') protected askOpenBrowser(_p: { run: string; url: string }): Promise<RunInfo> { return stub(); }
@@ -243,13 +267,22 @@ export default class DebugPlugin {
 
   private async attach(root: string): Promise<void> {
     try {
-      const [runs, files] = await Promise.all([this.askRuns(), this.askBreakpoints()]);
+      const [runs, files, exceptions] = await Promise.all([
+        this.askRuns(),
+        this.askBreakpoints(),
+        this.askExceptions().catch((): ExceptionMode => 'none'),
+      ]);
       this.state.setRuns(runs);
       this.state.setAllBreakpoints(files);
-      const memory = this.ide.remember<Record<string, number[]>>(`breakpoints:${root}`, {}, 'both');
+      const rememberedMode = this.exceptionMemory(root).value;
+      this.state.exceptions.value =
+        exceptions === 'none' && rememberedMode !== 'none' ? await this.askSetExceptions({ mode: rememberedMode }) : exceptions;
+      this.state.watches.value = this.watchMemory(root).value.map((expression) => ({ expression, value: null }));
+      const memory = this.breakpointMemory(root);
       if (files.length === 0) {
-        for (const [path, lines] of Object.entries(memory.value)) {
-          if (lines.length > 0) this.state.setBreakpoints(await this.askSetBreakpoints({ path, lines }));
+        for (const [path, remembered] of Object.entries(memory.value)) {
+          const breakpoints = (remembered as Array<BreakpointAsk | number>).map((one) => (typeof one === 'number' ? { line: one } : one));
+          if (breakpoints.length > 0) this.state.setBreakpoints(await this.askSetBreakpoints({ path, breakpoints }));
         }
       }
       const paused = runs.flatMap((run) => run.sessions.filter((one) => one.state === 'paused' && one.stopped).map((one) => ({ run, session: one })));
@@ -281,6 +314,9 @@ export default class DebugPlugin {
       const { url } = payload as { run: string; url: string };
       this.ide.say(this.ide.t('debug.browser.opened', { url }));
     });
+    this.ide.on('exceptions', (payload) => {
+      this.state.exceptions.value = payload as ExceptionMode;
+    });
     this.ide.on('terminal', (payload) => {
       const { name } = payload as { run: string; name: string };
       this.inTerminal.value = true;
@@ -291,13 +327,145 @@ export default class DebugPlugin {
     });
   }
 
+  private breakpointMemory(root: string): Signal<Record<string, BreakpointAsk[]>> {
+    return this.ide.remember<Record<string, BreakpointAsk[]>>(`breakpoints:${root}`, {}, 'both');
+  }
+
+  private exceptionMemory(root: string): Signal<ExceptionMode> {
+    return this.ide.remember<ExceptionMode>(`exceptions:${root}`, 'none', 'both');
+  }
+
+  private watchMemory(root: string): Signal<string[]> {
+    return this.ide.remember<string[]>(`watches:${root}`, [], 'both');
+  }
+
   private remember(): void {
     const root = this.ide.workspaces.current.value?.root;
     if (!root) return;
-    const memory = this.ide.remember<Record<string, number[]>>(`breakpoints:${root}`, {}, 'both');
-    const next: Record<string, number[]> = {};
-    for (const [path, list] of this.state.breakpoints.value) next[path] = list.map((one) => one.line);
-    memory.value = next;
+    const next: Record<string, BreakpointAsk[]> = {};
+    for (const [path, list] of this.state.breakpoints.value) next[path] = list.map((one) => this.state.askAt(path, one.line)!);
+    this.breakpointMemory(root).value = next;
+  }
+
+  private async write(path: string, breakpoints: BreakpointAsk[]): Promise<void> {
+    try {
+      this.state.setBreakpoints(await this.askSetBreakpoints({ path, breakpoints }));
+      this.remember();
+    } catch (err) {
+      this.fail(err);
+    }
+  }
+
+  openEdit(path: string, line: number, at: { x: number; y: number }): void {
+    this.state.menu.value = null;
+    this.state.edit.value = { path, ask: this.state.askAt(path, line) ?? { line }, at };
+  }
+
+  async applyDraft(): Promise<void> {
+    const edit = this.state.edit.value;
+    if (!edit) return;
+    this.state.edit.value = null;
+    const rest = (this.state.breakpoints.value.get(edit.path) ?? [])
+      .filter((one) => one.line !== edit.ask.line)
+      .map((one) => this.state.askAt(edit.path, one.line)!);
+    await this.write(edit.path, [...rest, edit.ask].sort((a, b) => a.line - b.line));
+  }
+
+  async removeAt(path: string, line: number): Promise<void> {
+    this.state.menu.value = null;
+    this.state.edit.value = null;
+    const rest = (this.state.breakpoints.value.get(path) ?? [])
+      .filter((one) => one.line !== line)
+      .map((one) => this.state.askAt(path, one.line)!);
+    await this.write(path, rest);
+  }
+
+  async setExceptions(mode: ExceptionMode): Promise<void> {
+    try {
+      this.state.exceptions.value = await this.askSetExceptions({ mode });
+      const root = this.ide.workspaces.current.value?.root;
+      if (root) this.exceptionMemory(root).value = this.state.exceptions.value;
+    } catch (err) {
+      this.fail(err);
+    }
+  }
+
+  addWatch(expression: string): void {
+    const clean = expression.trim();
+    if (clean === '' || this.state.watches.value.some((one) => one.expression === clean)) return;
+    this.state.watches.value = [...this.state.watches.value, { expression: clean, value: null }];
+    this.rememberWatches();
+    const paused = this.state.paused.value;
+    const frame = this.state.frame.value;
+    if (paused && frame) void this.evaluateWatch(paused.run, paused.session, frame.id, clean);
+  }
+
+  removeWatch(expression: string): void {
+    this.state.watches.value = this.state.watches.value.filter((one) => one.expression !== expression);
+    this.rememberWatches();
+  }
+
+  private rememberWatches(): void {
+    const root = this.ide.workspaces.current.value?.root;
+    if (root) this.watchMemory(root).value = this.state.watches.value.map((one) => one.expression);
+  }
+
+  private async evaluateWatch(run: string, session: string, frame: number, expression: string): Promise<void> {
+    try {
+      const got = await this.askEvaluate({ run, session, expression, frame, context: 'watch' });
+      this.state.setWatchValue(expression, got.value);
+    } catch (err) {
+      this.state.setWatchValue(expression, null, err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async evaluateLine(expression: string): Promise<void> {
+    const clean = expression.trim();
+    const paused = this.state.paused.value;
+    if (clean === '') return;
+    if (!paused) {
+      this.ide.say(this.ide.t('debug.console.notPaused'));
+      return;
+    }
+    this.state.addOutput({ run: paused.run, session: paused.session, category: 'repl', text: `> ${clean}\n` });
+    try {
+      const got = await this.askEvaluate({ run: paused.run, session: paused.session, expression: clean, frame: this.state.frame.value?.id, context: 'repl' });
+      this.state.addOutput({ run: paused.run, session: paused.session, category: 'stdout', text: `${got.value}\n` });
+    } catch (err) {
+      this.state.addOutput({ run: paused.run, session: paused.session, category: 'stderr', text: `${err instanceof Error ? err.message : String(err)}\n` });
+    }
+  }
+
+  private overlays() {
+    const windows = this.ide.getPlugin(UiPlugin).windows;
+    const menu = this.state.menu.value;
+    const edit = this.state.edit.value;
+    if (menu) {
+      const has = this.state.askAt(menu.path, menu.line) !== null;
+      return (
+        <Menu
+          windows={windows}
+          x={menu.at.x}
+          y={menu.at.y}
+          items={[
+            { label: has ? 'debug.menu.remove' : 'debug.menu.add', run: () => void (has ? this.removeAt(menu.path, menu.line) : this.write(menu.path, [...(this.state.breakpoints.value.get(menu.path) ?? []).map((one) => this.state.askAt(menu.path, one.line)!), { line: menu.line }])) },
+            { label: 'debug.menu.condition', run: () => this.openEdit(menu.path, menu.line, menu.at) },
+          ]}
+          onClose={() => (this.state.menu.value = null)}
+        />
+      );
+    }
+    if (!edit) return null;
+    return (
+      <BreakpointEditor
+        windows={windows}
+        edit={edit}
+        onDraft={(patch) => this.state.draft(patch)}
+        onApply={() => void this.applyDraft()}
+        onRemove={() => void this.removeAt(edit.path, edit.ask.line)}
+        onClose={() => (this.state.edit.value = null)}
+      />
+    );
   }
 
   private async step(action: Step): Promise<void> {
@@ -395,23 +563,20 @@ export default class DebugPlugin {
   private async toggleAt(view: EditorView, line: number): Promise<void> {
     const path = this.docs.openDoc.peek()?.path;
     if (!path) return;
-    const lines = this.marks.lines(view.state);
-    const next = lines.includes(line) ? lines.filter((one) => one !== line) : [...lines, line].sort((a, b) => a - b);
-    try {
-      this.state.setBreakpoints(await this.askSetBreakpoints({ path, lines: next }));
-      this.remember();
-    } catch (err) {
-      this.fail(err);
-    }
+    const asks = this.marks.asks(view.state);
+    const next = asks.some((one) => one.line === line)
+      ? asks.filter((one) => one.line !== line)
+      : [...asks, { line }].sort((a, b) => a.line - b.line);
+    await this.write(path, next);
   }
 
-  private moved(_view: EditorView, lines: number[]): void {
+  private moved(_view: EditorView, asks: BreakpointAsk[]): void {
     const path = this.docs.openDoc.peek()?.path;
     if (!path) return;
     if (this.moveTimer) clearTimeout(this.moveTimer);
     this.moveTimer = setTimeout(() => {
       this.moveTimer = null;
-      void this.askSetBreakpoints({ path, lines })
+      void this.askSetBreakpoints({ path, breakpoints: asks })
         .then((file) => this.state.setBreakpoints(file))
         .catch((err) => this.fail(err));
     }, MOVE_DEBOUNCE_MS);
@@ -447,6 +612,10 @@ export default class DebugPlugin {
       outputInTerminal: this.inTerminal.value,
       canDebugFile: () => DEBUGGABLE.test(this.docs.openDoc.value?.path ?? ''),
       openUrl: (url) => void this.openUrl(url),
+      setExceptions: (mode) => void this.setExceptions(mode),
+      addWatch: (expression) => this.addWatch(expression),
+      removeWatch: (expression) => this.removeWatch(expression),
+      evaluate: (expression) => void this.evaluateLine(expression),
     };
   }
 }

@@ -34,9 +34,11 @@ describe('отладчик на вкладке', () => {
     ide.answers.set('stack', () => [frame({ kind: 'project', path: 'plain.js' })]);
     ide.answers.set('scopes', () => [{ name: 'Local', ref: 7, expensive: false }]);
     ide.answers.set('variables', () => [{ name: 'sum', value: '0', ref: 0 }]);
+    ide.answers.set('exceptions', () => 'none');
+    ide.answers.set('setExceptions', (params) => (params as { mode: string }).mode);
     ide.answers.set('setBreakpoints', (params) => {
-      const asked = params as { path: string; lines: number[] };
-      return { path: asked.path, breakpoints: asked.lines.map((line) => ({ line, verified: false })) };
+      const asked = params as { path: string; breakpoints: Array<{ line: number }> };
+      return { path: asked.path, breakpoints: asked.breakpoints.map((one) => ({ ...one, verified: false })) };
     });
     await host.start();
   });
@@ -101,7 +103,7 @@ describe('отладчик на вкладке', () => {
   it('прикрепились к проекту — спрашивает запуски и точки; пустому серверу возвращает свои', async () => {
     const ide = host.ide(NAME);
     host.surface.workspaceCurrent.value = { id: 'w', root: '/p', name: 'p' } as never;
-    ide.remembered.set('breakpoints:/p', signal({ 'plain.js': [4] }));
+    ide.remembered.set('breakpoints:/p', signal({ 'plain.js': [{ line: 4 }] }));
     host.surface.project.value = { id: 'w', root: '/p', name: 'p' } as never;
     await until(() => ide.calls.some((call) => call.method === 'setBreakpoints'));
     expect(ide.calls.map((call) => call.method)).toEqual(expect.arrayContaining(['runs', 'breakpoints', 'setBreakpoints']));
@@ -113,6 +115,60 @@ describe('отладчик на вкладке', () => {
     host.ide(NAME).emit('output', { run: '1', session: '1.0', category: 'stdout', text: 'hello\n' });
     expect(debug.state.output.value.map((one) => one.text)).toEqual(['hello\n']);
     expect(debug.state.hiddenNoise.value).toBe(1);
+  });
+});
+
+describe('условия, наблюдения, исключения', () => {
+  let host: FakeHost;
+  let debug: DebugPlugin;
+
+  beforeEach(async () => {
+    host = new FakeHost();
+    (globalThis as Record<string, unknown>)['document'] ??= {};
+    host.add(DocPlugin, '@mosetta/ide-plugin-doc');
+    debug = host.add(DebugPlugin, NAME);
+    const ide = host.ide(NAME);
+    ide.answers.set('setExceptions', (params) => (params as { mode: string }).mode);
+    ide.answers.set('setBreakpoints', (params) => {
+      const asked = params as { path: string; breakpoints: Array<{ line: number }> };
+      return { path: asked.path, breakpoints: asked.breakpoints.map((one) => ({ ...one, verified: false })) };
+    });
+    ide.answers.set('evaluate', (params) => ({ name: 'x', value: `<${(params as { expression: string }).expression}>`, ref: 0 }));
+    await host.start();
+  });
+
+  it('окно условия открывается с тем, что стоит, и пишет точку целиком', async () => {
+    host.ide(NAME).emit('breakpoints', { path: 'a.js', breakpoints: [{ line: 2, verified: true }, { line: 5, verified: true, condition: 'x > 1' }] });
+    debug.openEdit('a.js', 5, { x: 0, y: 0 });
+    expect(debug.state.edit.value?.ask).toEqual({ line: 5, condition: 'x > 1' });
+    debug.state.draft({ logMessage: 'x is {x}' });
+    expect(host.run('debug.edit.apply')).toBe(true);
+    await until(() => debug.state.edit.value === null && debug.state.askAt('a.js', 5)?.logMessage === 'x is {x}');
+    const sent = host.ide(NAME).calls.filter((call) => call.method === 'setBreakpoints').at(-1)!.params as { breakpoints: unknown[] };
+    expect(sent.breakpoints).toEqual([{ line: 2 }, { line: 5, condition: 'x > 1', logMessage: 'x is {x}' }]);
+  });
+
+  it('наблюдение вычисляется на остановке и помнится по проекту', async () => {
+    host.surface.workspaceCurrent.value = { id: 'w', root: '/p', name: 'p' } as never;
+    debug.addWatch('items.length');
+    expect(host.ide(NAME).remembered.get('watches:/p')?.value).toEqual(['items.length']);
+    host.ide(NAME).answers.set('stack', () => [frame({ kind: 'project', path: 'a.js' })]);
+    host.ide(NAME).answers.set('scopes', () => []);
+    host.surface.docs.texts.set('a.js', '');
+    host.ide(NAME).emit('runs', [RUN]);
+    host.ide(NAME).emit('stopped', { run: '1', session: '1.0', stop: { thread: 0, reason: 'breakpoint' } });
+    await until(() => debug.state.watches.value[0]?.value === '<items.length>');
+    debug.removeWatch('items.length');
+    expect(debug.state.watches.value).toEqual([]);
+  });
+
+  it('режим исключений уезжает на сервер, помнится по проекту и приходит событием', async () => {
+    host.surface.workspaceCurrent.value = { id: 'w', root: '/p', name: 'p' } as never;
+    await debug.setExceptions('uncaught');
+    expect(debug.state.exceptions.value).toBe('uncaught');
+    expect(host.ide(NAME).remembered.get('exceptions:/p')?.value).toBe('uncaught');
+    host.ide(NAME).emit('exceptions', 'all');
+    expect(debug.state.exceptions.value).toBe('all');
   });
 });
 

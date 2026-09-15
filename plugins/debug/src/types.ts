@@ -26,12 +26,20 @@ export interface Scope {
   expensive: boolean;
 }
 
-export interface Breakpoint {
+export interface BreakpointAsk {
   line: number;
+  condition?: string;
+  hitCondition?: string;
+  logMessage?: string;
+}
+
+export interface Breakpoint extends BreakpointAsk {
   verified: boolean;
   actual?: number;
   message?: string;
 }
+
+export type ExceptionMode = 'none' | 'uncaught' | 'all';
 
 export interface FileBreakpoints {
   path: string;

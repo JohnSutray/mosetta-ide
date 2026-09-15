@@ -10,6 +10,8 @@ import { shellLine } from './shell-line.js';
 import { Sources, type DapFrame, type DapSource } from './sources.js';
 import type {
   Breakpoint,
+  BreakpointAsk,
+  ExceptionMode,
   FileBreakpoints,
   Frame,
   LaunchAsk,
@@ -40,7 +42,8 @@ export interface TerminalRun {
 export type TerminalRunner = ((ask: TerminalAskOut) => TerminalRun) | null;
 
 export class DebugHost implements ProjectResource, RunOwner {
-  private readonly lines = new Map<string, number[]>();
+  private readonly lines = new Map<string, BreakpointAsk[]>();
+  private exceptionMode: ExceptionMode = 'none';
   private readonly runs = new Map<string, DebugRun>();
   private readonly holds = new Map<string, () => void>();
   private readonly sources: Sources;
@@ -59,9 +62,15 @@ export class DebugHost implements ProjectResource, RunOwner {
     this.sources = new Sources(project.root, (relative) => project.resolve(relative));
   }
 
-  async setBreakpoints(path: string, lines: number[]): Promise<FileBreakpoints> {
+  async setBreakpoints(path: string, asks: BreakpointAsk[]): Promise<FileBreakpoints> {
     this.project.resolve(path);
-    const clean = [...new Set(lines.filter((line) => Number.isInteger(line) && line > 0))].sort((a, b) => a - b);
+    const seen = new Set<number>();
+    const clean: BreakpointAsk[] = [];
+    for (const ask of [...asks].sort((a, b) => a.line - b.line)) {
+      if (!Number.isInteger(ask.line) || ask.line < 1 || seen.has(ask.line)) continue;
+      seen.add(ask.line);
+      clean.push(trimAsk(ask));
+    }
     if (clean.length === 0) this.lines.delete(path);
     else this.lines.set(path, clean);
     await Promise.all(
@@ -76,14 +85,29 @@ export class DebugHost implements ProjectResource, RunOwner {
 
   breakpointsOf(path: string): FileBreakpoints {
     const sessions = this.liveSessions();
-    const breakpoints = (this.lines.get(path) ?? []).map((line): Breakpoint => {
-      const answers = sessions.flatMap((session) => session.placedIn(path).filter((one) => one.line === line));
+    const breakpoints = (this.lines.get(path) ?? []).map((ask): Breakpoint => {
+      const answers = sessions.flatMap((session) => session.placedIn(path).filter((one) => one.line === ask.line));
       const verified = answers.find((one) => one.verified);
-      if (verified) return { ...verified };
+      if (verified) return { ...verified, ...ask };
       const told = answers.find((one) => one.message);
-      return { line, verified: false, ...(told?.message ? { message: told.message } : {}) };
+      return { ...ask, verified: false, ...(told?.message ? { message: told.message } : {}) };
     });
     return { path, breakpoints };
+  }
+
+  exceptions(): ExceptionMode {
+    return this.exceptionMode;
+  }
+
+  async setExceptions(mode: ExceptionMode): Promise<ExceptionMode> {
+    this.exceptionMode = mode;
+    await Promise.all(
+      this.liveSessions().map((session) =>
+        session.syncExceptions().catch((err) => this.log.warn(`debug: exception mode not sent to ${session.name}: ${String(err)}`)),
+      ),
+    );
+    this.project.emit('exceptions', mode);
+    return mode;
   }
 
   allBreakpoints(): FileBreakpoints[] {
@@ -263,7 +287,7 @@ export class DebugHost implements ProjectResource, RunOwner {
     this.holds.clear();
   }
 
-  breakpoints(): ReadonlyMap<string, readonly number[]> {
+  breakpoints(): ReadonlyMap<string, readonly BreakpointAsk[]> {
     return this.lines;
   }
 
@@ -350,4 +374,12 @@ export class DebugHost implements ProjectResource, RunOwner {
       __workspaceFolder: root,
     };
   }
+}
+
+function trimAsk(ask: BreakpointAsk): BreakpointAsk {
+  const out: BreakpointAsk = { line: ask.line };
+  if (ask.condition?.trim()) out.condition = ask.condition.trim();
+  if (ask.hitCondition?.trim()) out.hitCondition = ask.hitCondition.trim();
+  if (ask.logMessage?.trim()) out.logMessage = ask.logMessage.trim();
+  return out;
 }
