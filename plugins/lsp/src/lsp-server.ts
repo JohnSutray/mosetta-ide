@@ -30,6 +30,8 @@ const TYPED = ['ts', 'tsx', 'mts', 'cts'];
 
 const BLIND_LIMIT = 2000;
 
+const MEMORY_BEAT_MS = 15_000;
+
 const STOP_WORDS: Record<SweepStop, string> = {
   done: 'прошёл целиком',
   budget: 'остановлен бюджетом памяти',
@@ -52,6 +54,7 @@ export class LspServer {
   private readonly openDocs = new Set<string>();
   private readonly waiting = new Map<string, () => void>();
   private sweep: LspSweep | null = null;
+  private watching: ReturnType<typeof setInterval> | null = null;
   private readonly listeners = new Set<(event: LspEvent) => void>();
   private readonly extensions: Set<string>;
   private nextId = 1;
@@ -148,7 +151,27 @@ export class LspServer {
     }
   }
 
+  private watchMemory(): void {
+    this.stopWatching();
+    if (!this.sweep) return;
+    this.watching = setInterval(() => {
+      if (this.state !== 'ready' || !this.sweep) return this.stopWatching();
+      void this.memoryMb().then((mb) => {
+        if (!this.sweep || this.state !== 'ready' || mb === this.sweep.mb) return;
+        this.sweep = { ...this.sweep, mb };
+        this.emitStatus();
+      });
+    }, MEMORY_BEAT_MS);
+    this.watching.unref?.();
+  }
+
+  private stopWatching(): void {
+    if (this.watching) clearInterval(this.watching);
+    this.watching = null;
+  }
+
   dispose(): void {
+    this.stopWatching();
     this.setState('off');
     this.offRam?.();
     this.offRam = null;
@@ -253,6 +276,7 @@ export class LspServer {
   private finish(stopped: SweepStop, broken: number, started: number): void {
     if (this.sweep) this.sweep = { ...this.sweep, stopped };
     this.emitStatus();
+    this.watchMemory();
     if (started > 0) {
       this.log.info(
         `${this.name}: обход ${STOP_WORDS[stopped]} — ${this.sweep?.checked ?? 0} файлов из ` +

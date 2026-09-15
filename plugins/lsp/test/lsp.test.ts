@@ -115,6 +115,18 @@ describe('индикатор обхода', () => {
     expect(widget()!.view()).toBeNull();
   });
 
+  it('за бюджетом сейчас — жёлтая, даже если обход прошёл целиком', () => {
+    say({ checked: 20, total: 20, mb: 3500, baseMb: 700, budgetMb: 3072, stopped: 'done' });
+    const tree = widget()!.view() as { props: { children: Array<{ props: { class: string } }> } };
+    expect(tree.props.children[0]!.props.class).toContain('is-capped');
+  });
+
+  it('в бюджете — обычная, без предупреждения', () => {
+    say({ checked: 20, total: 20, mb: 1900, baseMb: 700, budgetMb: 3072, stopped: 'done' });
+    const tree = widget()!.view() as { props: { children: Array<{ props: { class: string } }> } };
+    expect(tree.props.children[0]!.props.class).not.toContain('is-capped');
+  });
+
   it('щелчок ведёт к настройке бюджета, а не просто открывает настройки', () => {
     const asked: string[] = [];
     host.registry.add('settings.reveal', { id: 'settings', reveal: (q: string) => asked.push(q) }, '@mosetta/ide-plugin-settings');

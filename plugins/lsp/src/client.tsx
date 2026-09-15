@@ -139,7 +139,8 @@ export default class LspPlugin {
       ...shown.map((status) => {
           const sweep = status.sweep!;
           const working = sweep.stopped === null;
-          const capped = sweep.stopped === 'budget' || sweep.stopped === 'baseline';
+          const over = sweep.mb !== null && sweep.mb > sweep.budgetMb;
+          const capped = over || sweep.stopped === 'budget' || sweep.stopped === 'baseline';
           const about = this.ide.t('lsp.sweep.about', {
             server: status.server,
             checked: sweep.checked,
