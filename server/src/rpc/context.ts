@@ -19,7 +19,7 @@ export interface RpcContext {
   registry: WorkspaceRegistry;
   config: ConfigStore;
   plugins: PluginHost;
-  memory: Pick<ProcessMemory, 'treeMb'>;
+  memory: Pick<ProcessMemory, 'treeMb' | 'kidsMb'>;
   startedAt: number;
 }
 

@@ -103,7 +103,7 @@ export interface IdeServices {
   readonly workspaces: WorkspacesAccess;
 
   readonly connected: { readonly value: boolean };
-  readonly daemon: { readonly value: { rssMb: number; treeMb: number | null } | null };
+  readonly daemon: { readonly value: { rssMb: number; kidsMb: number | null } | null };
   readonly notes: NotesAccess;
   readonly projectPath: { readonly value: string | null };
   readonly resetSetting: (section: string, key: string) => Promise<void>;

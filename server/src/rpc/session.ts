@@ -31,7 +31,7 @@ export class Session implements SessionContext {
     private readonly config: ConfigStore,
     private readonly startedAt: number,
     private readonly plugins: PluginHost,
-    private readonly memory: Pick<ProcessMemory, 'treeMb'> = new ProcessMemory(),
+    private readonly memory: Pick<ProcessMemory, 'treeMb' | 'kidsMb'> = new ProcessMemory(),
   ) {
     socket.on('message', (data) => void this.onMessage(String(data)));
     socket.on('close', () => this.dispose());

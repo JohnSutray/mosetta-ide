@@ -29,6 +29,14 @@ export class ProcessMemory {
     return Math.round(this.subtreeKb(rows, pid) / 1024);
   }
 
+  async kidsMb(pid: number | undefined): Promise<number | null> {
+    if (pid === undefined || !this.measurable) return null;
+    const rows = await this.snapshot();
+    if (!rows) return null;
+    const own = rows.find((row) => row.pid === pid)?.kb ?? 0;
+    return Math.round(Math.max(0, this.subtreeKb(rows, pid) - own) / 1024);
+  }
+
   private async snapshot(): Promise<ProcessRow[] | null> {
     const runner = this.runner();
     if (!runner) return null;

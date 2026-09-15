@@ -28,7 +28,7 @@ type Pending = { resolve: (v: unknown) => void; reject: (e: unknown) => void };
 
 export class RpcClient {
   readonly connected: Signal<boolean> = signal(false);
-  readonly daemon: Signal<{ rssMb: number; treeMb: number | null } | null> = signal(null);
+  readonly daemon: Signal<{ rssMb: number; kidsMb: number | null } | null> = signal(null);
 
   private socket: WebSocket | null = null;
   private nextId = 1;
@@ -150,7 +150,7 @@ export class RpcClient {
       if (this.socket !== socket || socket.readyState !== WebSocket.OPEN) return;
       const answered = this.call('server.ping', null).then(
         (said) => {
-          this.daemon.value = { rssMb: said.rssMb, treeMb: said.treeMb };
+          this.daemon.value = { rssMb: said.rssMb, kidsMb: said.kidsMb };
           return true;
         },
         () => true,

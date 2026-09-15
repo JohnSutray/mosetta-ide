@@ -3,7 +3,7 @@
   "settings.toolbar.daemonMemory": "Show how much memory the daemon holds",
   "settings.toolbar.order": "Button order, by command",
   "toolbar.connection": "Connection to the editor server",
-  "toolbar.daemon.about": "The IDE daemon holds {rss} MB. Click to open the switch for this indicator",
-  "toolbar.daemon.aboutTree": "The IDE daemon holds {rss} MB; with everything it started — {tree} MB. Click to open the switch for this indicator",
+  "toolbar.daemon.about": "The IDE daemon holds {rss} MB. Subprocess memory cannot be measured on this system. Click to open the switch for this indicator",
+  "toolbar.daemon.aboutKids": "The IDE daemon holds {rss} MB; what it started — language servers, terminals, git — holds {kids} MB. {all} MB in total. Click to open the switch for this indicator",
   "toolbar.daemon.size": "{rss} MB"
 }

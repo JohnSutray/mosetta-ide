@@ -20,7 +20,7 @@ export interface Api {
       uptimeMs: number;
       pid: number;
       rssMb: number;
-      treeMb: number | null;
+      kidsMb: number | null;
     };
   };
 

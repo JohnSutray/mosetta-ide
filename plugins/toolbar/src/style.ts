@@ -80,4 +80,6 @@ export const STYLE = `
 }
 .toolbar-daemon:hover { background: var(--control-bg-hover); border-color: var(--divider); }
 .toolbar-daemon svg { flex: none; display: block; }
+.toolbar-daemon-kids { opacity: 0.8; }
+.toolbar-daemon-kids::before { content: '·'; margin-right: 6px; opacity: 0.6; }
 `;

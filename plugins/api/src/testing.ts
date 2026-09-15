@@ -187,7 +187,7 @@ export class FakeSurface implements IdeServices {
 
   tip: Tip | null = null;
   readonly connected: Signal<boolean> = signal(true);
-  readonly daemon: Signal<{ rssMb: number; treeMb: number | null } | null> = signal(null);
+  readonly daemon: Signal<{ rssMb: number; kidsMb: number | null } | null> = signal(null);
   readonly notes = new FakeNotes();
 
   readonly project: Signal<WorkspaceInfo | null> = signal(null);

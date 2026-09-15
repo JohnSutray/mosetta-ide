@@ -37,8 +37,8 @@ export default class Toolbar {
     if (!said) return null;
     const tips = this.ide.getPlugin(UiPlugin).windows.tips;
     const about = this.ide.t(
-      said.treeMb === null ? 'toolbar.daemon.about' : 'toolbar.daemon.aboutTree',
-      { rss: said.rssMb, tree: said.treeMb ?? 0 },
+      said.kidsMb === null ? 'toolbar.daemon.about' : 'toolbar.daemon.aboutKids',
+      { rss: said.rssMb, kids: said.kidsMb ?? 0, all: said.rssMb + (said.kidsMb ?? 0) },
     );
 
     return (
@@ -50,7 +50,14 @@ export default class Toolbar {
         onMouseLeave={() => tips.hide()}
       >
         <DaemonIcon />
-        <span>{this.ide.t('toolbar.daemon.size', { rss: said.rssMb })}</span>
+        <span class="toolbar-daemon-own">
+          {said.kidsMb === null ? this.ide.t('toolbar.daemon.size', { rss: said.rssMb }) : String(said.rssMb)}
+        </span>
+        {said.kidsMb !== null && (
+          <span class="toolbar-daemon-kids">
+            {this.ide.t('toolbar.daemon.size', { rss: said.kidsMb })}
+          </span>
+        )}
       </button>
     );
   }

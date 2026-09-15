@@ -185,20 +185,22 @@ describe('плашка демона', () => {
     expect(widget()!.view()).toBeNull();
   });
 
-  it('показывает СВОЙ размер, а дерево уносит в подсказку', () => {
-    host.surface.daemon.value = { rssMb: 412, treeMb: 2458 };
-    expect(said()).toContain('toolbar.daemon.size(rss=412)');
+  it('показывает два числа: себя и своих потомков', () => {
+    host.surface.daemon.value = { rssMb: 412, kidsMb: 2048 };
+    const texts = said();
+    expect(texts).toContain('412');
+    expect(texts).toContain('toolbar.daemon.size(rss=2048)');
   });
 
-  it('система не мерится — подсказка не выдумывает дерево', () => {
-    host.surface.daemon.value = { rssMb: 412, treeMb: null };
-    const tip = nodes(widget()!.view()).map((n) => n.props['onMouseEnter']).find(Boolean);
-    expect(typeof tip).toBe('function');
-    expect(said()).toContain('toolbar.daemon.size(rss=412)');
+  it('система не мерится — одно число и единица при нём', () => {
+    host.surface.daemon.value = { rssMb: 412, kidsMb: null };
+    const texts = said();
+    expect(texts).toContain('toolbar.daemon.size(rss=412)');
+    expect(texts.some((one) => one.includes('rss=0'))).toBe(false);
   });
 
   it('настройка выключает плашку целиком', () => {
-    host.surface.daemon.value = { rssMb: 412, treeMb: 2458 };
+    host.surface.daemon.value = { rssMb: 412, kidsMb: 2048 };
     expect(widget()!.view()).not.toBeNull();
     host.ide(NAME).settings.value = { toolbar: { daemonMemory: false } } as never;
     expect(widget()!.view()).toBeNull();
@@ -207,7 +209,7 @@ describe('плашка демона', () => {
   it('щелчок ведёт к своему выключателю', () => {
     const asked: string[] = [];
     host.registry.add('settings.reveal', { id: 'settings', reveal: (q: string) => asked.push(q) }, '@mosetta/ide-plugin-settings');
-    host.surface.daemon.value = { rssMb: 412, treeMb: 2458 };
+    host.surface.daemon.value = { rssMb: 412, kidsMb: 2048 };
 
     const tree = widget()!.view() as { props: { onClick: () => void } };
     tree.props.onClick();

@@ -11,7 +11,7 @@ export const handlers: HandlerTable = {
     uptimeMs: Date.now() - ctx.startedAt,
     pid: process.pid,
     rssMb: Math.round(process.memoryUsage().rss / 1024 / 1024),
-    treeMb: await ctx.memory.treeMb(process.pid),
+    kidsMb: await ctx.memory.kidsMb(process.pid),
   }),
 
   'config.get': (p, c) => configMethods.get(p, c),
