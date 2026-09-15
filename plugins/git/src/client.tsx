@@ -75,7 +75,7 @@ export default class GitPlugin implements GitRemote {
     this.ide.registry('toolbar.widget').add({
       id: 'branch',
       side: 'right',
-      view: () => this.branchLabel(),
+      chip: () => this.branchChip(),
     });
 
     this.ide.registry('tree.tint').add({ id: 'git', tint: this.git.tint });
@@ -140,26 +140,27 @@ export default class GitPlugin implements GitRemote {
     return this.askRun({ action, ...(branch ? { branch } : {}), ...(name ? { name } : {}) });
   }
 
-  private branchLabel() {
+  private branchChip() {
     if (!this.ide.project.value) return null;
     const state = this.git.state.value;
-    return (
-      <button
-        class="branch-label"
-        onMouseEnter={(event) =>
-          this.ide.getPlugin(UiPlugin).windows.tips.show(event.currentTarget as Element, this.ide.t('toolbar.branches'), this.ide.getPlugin(KeymapPlugin).keysFor('git.branches'))
-        }
-        onMouseLeave={() => this.ide.getPlugin(UiPlugin).windows.tips.hide()}
-        onClick={() => {
-          this.ide.getPlugin(UiPlugin).windows.tips.hide();
-          this.ide.runCommand('git.branches');
-        }}
-      >
-        {state.repo ? (state.branch ?? this.ide.t('toolbar.noBranch')) : this.ide.t('toolbar.noRepo')}
-        {state.ahead > 0 && <span class="branch-ahead">↑{state.ahead}</span>}
-        {state.behind > 0 && <span class="branch-behind">↓{state.behind}</span>}
-      </button>
-    );
+    const name = state.repo ? (state.branch ?? this.ide.t('toolbar.noBranch')) : this.ide.t('toolbar.noRepo');
+    return {
+      icon: <BranchIcon />,
+      tip: this.ide.t(state.repo ? 'git.branch.about' : 'git.branch.aboutNoRepo', {
+        branch: name,
+        ahead: state.ahead,
+        behind: state.behind,
+      }),
+      keys: this.ide.getPlugin(KeymapPlugin).keysFor('git.branches'),
+      text: (
+        <>
+          {name}
+          {state.ahead > 0 && <span class="branch-ahead">↑{state.ahead}</span>}
+          {state.behind > 0 && <span class="branch-behind">↓{state.behind}</span>}
+        </>
+      ),
+      onClick: () => this.ide.runCommand('git.branches'),
+    };
   }
 }
 

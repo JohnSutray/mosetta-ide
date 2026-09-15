@@ -24,6 +24,7 @@ export class Defaults {
         '@mosetta/ide-plugin-rerun',
         '@mosetta/ide-plugin-problems',
         '@mosetta/ide-plugin-toolbar',
+        '@mosetta/ide-plugin-daemon',
         '@mosetta/ide-plugin-layout',
         '@mosetta/ide-plugin-code',
         '@mosetta/ide-plugin-editor',

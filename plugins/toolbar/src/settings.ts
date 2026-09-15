@@ -1,6 +1,5 @@
 export interface ToolbarSettings {
   order: string[];
-  daemonMemory: boolean;
 }
 
 export const TOOLBAR_DEFAULTS: ToolbarSettings = {
@@ -15,7 +14,6 @@ export const TOOLBAR_DEFAULTS: ToolbarSettings = {
     'keys.show',
     'tree.follow',
   ],
-  daemonMemory: true,
 };
 
 export const TOOLBAR_SCHEMA = {
@@ -23,6 +21,5 @@ export const TOOLBAR_SCHEMA = {
   additionalProperties: false,
   properties: {
     order: { type: 'array', items: { type: 'string' } },
-    daemonMemory: { type: 'boolean' },
   },
 } as const;

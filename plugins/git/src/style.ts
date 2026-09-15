@@ -283,39 +283,6 @@ export const STYLE = `
 
 .push-spacer { flex: 1; }
 
-.branch-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  max-width: 28ch;
-  padding: 2px 8px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background: var(--control-bg);
-  color: var(--fg);
-  font: 12px var(--ui-font);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.branch-label:hover { background: var(--control-bg-hover); border-color: var(--divider); }
-
-.tool-label {
-  flex: none;
-  max-width: 16ch;
-  padding: 2px 8px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background: var(--control-bg);
-  color: var(--muted);
-  font: 12px var(--ui-font);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-.tool-label:hover { background: var(--control-bg-hover); border-color: var(--divider); color: var(--fg); }
-
 .branch-track {
   flex: none;
   display: flex;

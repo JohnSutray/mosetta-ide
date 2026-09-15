@@ -112,11 +112,6 @@ export interface CompletionDetails {
   edits: TextEdit[];
 }
 
-export interface TipsLike {
-  show(target: Element, title: string, keys?: string[]): void;
-  hide(): void;
-}
-
 export interface RevealLike {
   reveal(query: string): void;
 }

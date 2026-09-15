@@ -1,0 +1,34 @@
+{
+  "name": "@mosetta/ide-plugin-daemon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "exports": {
+    ".": "./src/client.tsx"
+  },
+  "ide": {
+    "client": "src/client.tsx",
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
+    }
+  },
+  "dependencies": {
+    "@mosetta/ide-api": "workspace:*"
+  },
+  "peerDependencies": {
+    "preact": "^10.25.3",
+    "@preact/signals": "^1.3.1"
+  },
+  "devDependencies": {
+    "@preact/signals": "^1.3.1",
+    "preact": "^10.25.3",
+    "vitest": "^2.1.9",
+    "@mosetta/ide-plugin-toolbar": "workspace:*",
+    "@mosetta/ide-plugin-ui": "workspace:*",
+    "@mosetta/ide-plugin-keymap": "workspace:*"
+  }
+}

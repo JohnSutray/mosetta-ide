@@ -58,5 +58,7 @@
   "git.renamed": "renamed to {branch}",
   "git.deleted": "deleted {branch}",
   "plugin.git": "Git",
-  "settings.git.autoFetchMinutes": "Fetch in the background every N minutes (0 — never)"
+  "settings.git.autoFetchMinutes": "Fetch in the background every N minutes (0 — never)",
+  "git.branch.about": "Current git branch: {branch}. {ahead} commits not pushed, {behind} not pulled. Click to switch or create a branch",
+  "git.branch.aboutNoRepo": "This project is not a git repository — nothing to show a branch for. Click to look anyway"
 }

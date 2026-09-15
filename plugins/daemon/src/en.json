@@ -1,0 +1,7 @@
+{
+  "plugin.daemon": "Daemon memory",
+  "settings.daemon.memory": "Show how much memory the daemon holds",
+  "daemon.size": "{rss} MB",
+  "daemon.about": "The IDE daemon holds {rss} MB. Subprocess memory cannot be measured on this system. Click to open the switch for this indicator",
+  "daemon.aboutKids": "The IDE daemon holds {rss} MB; what it started — language servers, terminals, git — holds {kids} MB. {all} MB in total. Click to open the switch for this indicator"
+}

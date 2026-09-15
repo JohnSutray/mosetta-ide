@@ -65,21 +65,50 @@ export const STYLE = `
 .tool.is-active { background: var(--treesel); color: #dbe6ef; }
 .tool.is-active:hover { background: #36699e; }
 
-.toolbar-daemon {
+.toolbar-chip {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 8px;
+  max-width: 28ch;
+  box-sizing: border-box;
+  height: 22px;
+  padding: 0 8px;
   border: 1px solid transparent;
   border-radius: 4px;
   background: var(--control-bg);
   color: var(--muted);
   font: 12px var(--ui-font);
   white-space: nowrap;
+  overflow: hidden;
   cursor: pointer;
+  transition: background-color 90ms linear, color 90ms linear;
 }
-.toolbar-daemon:hover { background: var(--control-bg-hover); border-color: var(--divider); }
-.toolbar-daemon svg { flex: none; display: block; }
-.toolbar-daemon-kids { opacity: 0.8; }
-.toolbar-daemon-kids::before { content: '·'; margin-right: 6px; opacity: 0.6; }
+.toolbar-chip:hover { background: var(--control-bg-hover); border-color: var(--divider); color: var(--fg); }
+.toolbar-chip-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+}
+.toolbar-chip-icon svg { display: block; width: 14px; height: 14px; }
+.toolbar-chip-text { overflow: hidden; text-overflow: ellipsis; }
+
+.toolbar-chip.is-still { cursor: default; }
+
+.toolbar-chip.is-warn { color: #be9117; }
+.toolbar-chip.is-bad { color: var(--error, #ff6b68); }
+
+.toolbar-chip.is-busy { animation: toolbar-chip-pulse 1.4s ease-in-out infinite; }
+@keyframes toolbar-chip-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toolbar-chip.is-busy { animation: none; opacity: 0.75; }
+}
+
+.toolbar-chip-more { opacity: 0.8; }
+.toolbar-chip-more::before { content: '\\00B7'; margin-right: 6px; opacity: 0.6; }
 `;

@@ -1,4 +1,5 @@
 {
   "command.scripts.open": "Скрипты package.json",
-  "command.scripts.packageManager": "Чем запускать скрипты"
+  "command.scripts.packageManager": "Чем запускать скрипты",
+  "scripts.manager.about": "Скрипты пакетов запускаются через {manager}. Щелчок — выбрать другой менеджер пакетов"
 }

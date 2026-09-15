@@ -1,8 +1,7 @@
 import { activate, configSection, plugin, registry, type Ide } from '@mosetta/ide-api/client';
-import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarWidget } from './schema.js';
+import { BUTTON_SCHEMA, WIDGET_SCHEMA, type ToolbarButton, type ToolbarChip, type ToolbarWidget } from './schema.js';
 import { TOOLBAR_DEFAULTS , TOOLBAR_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
-import { DaemonIcon } from './icons.js';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
@@ -17,53 +16,18 @@ export default class Toolbar {
     this.ide.css(STYLE);
     this.ide.registry<() => unknown>('chrome.top').add(() => this.view());
     this.ide.registry<ToolbarWidget>('toolbar.widget').add({
-      id: 'daemon',
-      side: 'right',
-      view: () => this.daemonLabel(),
-    });
-
-    this.ide.registry<ToolbarWidget>('toolbar.widget').add({
       id: 'connection',
       side: 'right',
-      view: () => (
-        <span class={`dot ${this.ide.connected.value ? 'is-on' : 'is-off'}`} title={this.ide.t('toolbar.connection')} />
-      ),
+      chip: () => {
+        const live = this.ide.connected.value;
+        return {
+          icon: <span class={`dot ${live ? 'is-on' : 'is-off'}`} />,
+          text: this.ide.t(live ? 'toolbar.online' : 'toolbar.offline'),
+          tip: this.ide.t(live ? 'toolbar.connection.on' : 'toolbar.connection.off'),
+          ...(live ? {} : { tone: 'bad' as const }),
+        };
+      },
     });
-  }
-
-  private daemonLabel() {
-    if (!this.ide.settingsOf('toolbar', TOOLBAR_DEFAULTS).value.daemonMemory) return null;
-    const said = this.ide.daemon.value;
-    if (!said) return null;
-    const tips = this.ide.getPlugin(UiPlugin).windows.tips;
-    const about = this.ide.t(
-      said.kidsMb === null ? 'toolbar.daemon.about' : 'toolbar.daemon.aboutKids',
-      { rss: said.rssMb, kids: said.kidsMb ?? 0, all: said.rssMb + (said.kidsMb ?? 0) },
-    );
-
-    return (
-      <button
-        type="button"
-        class="toolbar-daemon"
-        onClick={() => this.revealSetting()}
-        onMouseEnter={(event: MouseEvent) => tips.show(event.currentTarget as Element, about)}
-        onMouseLeave={() => tips.hide()}
-      >
-        <DaemonIcon />
-        <span class="toolbar-daemon-own">
-          {said.kidsMb === null ? this.ide.t('toolbar.daemon.size', { rss: said.rssMb }) : String(said.rssMb)}
-        </span>
-        {said.kidsMb !== null && (
-          <span class="toolbar-daemon-kids">
-            {this.ide.t('toolbar.daemon.size', { rss: said.kidsMb })}
-          </span>
-        )}
-      </button>
-    );
-  }
-
-  private revealSetting(): void {
-    this.ide.registry<{ reveal(query: string): void }>('settings.reveal').all.value[0]?.reveal('daemonMemory');
   }
 
   private view() {
@@ -74,10 +38,64 @@ export default class Toolbar {
       <div class="toolbar">
         <div class="toolbar-left">
           <div class="toolbar-icons">{this.buttons().map((one) => this.button(one))}</div>
-          {side('left').map((one) => one.view())}
+          {side('left').map((one) => this.widget(one))}
         </div>
-        <div class="toolbar-right">{side('right').map((one) => one.view())}</div>
+        <div class="toolbar-right">{side('right').map((one) => this.widget(one))}</div>
       </div>
+    );
+  }
+
+  private widget(one: ToolbarWidget) {
+    if (!one.chip) return one.view ? one.view() : null;
+    const said = one.chip();
+    if (Array.isArray(said)) return said.map((spec, at) => this.chip(spec.id ?? `${one.id}:${at}`, spec));
+    return this.chip(one.id, said);
+  }
+
+  private chip(id: string, spec: ToolbarChip | null) {
+    if (!spec) return null;
+    const tips = this.ide.getPlugin(UiPlugin).windows.tips;
+    const classes = [
+      'toolbar-chip',
+      `is-${spec.tone ?? 'plain'}`,
+      spec.busy ? 'is-busy' : '',
+      spec.onClick ? '' : 'is-still',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    const hover = {
+      onMouseEnter: (event: MouseEvent) => tips.show(event.currentTarget as Element, spec.tip, spec.keys ?? []),
+      onMouseLeave: () => tips.hide(),
+    };
+    const inside = (
+      <>
+        <span class="toolbar-chip-icon">{spec.icon as never}</span>
+        <span class="toolbar-chip-text">{spec.text as never}</span>
+        {spec.more !== undefined && <span class="toolbar-chip-more">{spec.more as never}</span>}
+      </>
+    );
+
+    if (!spec.onClick) {
+      return (
+        <span key={id} class={`${classes}`} {...hover}>
+          {inside}
+        </span>
+      );
+    }
+    const press = spec.onClick;
+    return (
+      <button
+        key={id}
+        type="button"
+        class={classes}
+        {...hover}
+        onClick={() => {
+          tips.hide();
+          press();
+        }}
+      >
+        {inside}
+      </button>
     );
   }
 

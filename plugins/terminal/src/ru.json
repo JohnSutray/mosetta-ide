@@ -1,5 +1,6 @@
 {
   "command.panel.terminal": "Панель терминала",
   "command.terminal.create": "Новый терминал",
-  "command.terminal.shell": "Чем запускать терминал"
+  "command.terminal.shell": "Чем запускать терминал",
+  "terminal.shell.about": "Терминалы в этом проекте запускают {shell}. Щелчок — выбрать другую оболочку, выбор запомнится в настройках"
 }

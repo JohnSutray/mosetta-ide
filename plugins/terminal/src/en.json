@@ -17,10 +17,10 @@
   "terminal.shell.inUse": "in use",
   "terminal.shell.apply": "use",
   "terminal.shell.empty": "Nothing found — type a path below",
-  "terminal.shell.hint": "Terminal shell",
   "command.terminal.shell": "Terminal shell",
   "plugin.terminal": "Terminal",
   "settings.terminal.shell": "Shell (empty — the system one)",
   "settings.terminal.args": "Shell arguments",
-  "settings.terminal.fontFamily": "Font family (empty — as the editor)"
+  "settings.terminal.fontFamily": "Font family (empty — as the editor)",
+  "terminal.shell.about": "Terminals in this project run {shell}. Click to pick another shell — the choice is remembered in settings"
 }

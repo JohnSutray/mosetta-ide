@@ -8,3 +8,22 @@ export function NpmIcon(filled: boolean): JSX.Element {
     </svg>
   );
 }
+
+export function PackageIcon(): JSX.Element {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M8 2.2 13.8 5v6L8 13.8 2.2 11V5z" />
+      <path d="M2.2 5 8 7.8 13.8 5" />
+      <path d="M8 7.8v6" />
+    </svg>
+  );
+}

@@ -3,9 +3,8 @@ import type { Ide } from '@mosetta/ide-api/client';
 import { computed, effect, type ReadonlySignal } from '@preact/signals';
 import { LSP_DEFAULTS , LSP_SCHEMA} from './settings.js';
 import { Lsp } from './state.js';
-import { STYLE } from './style.js';
 import { ServerBadge } from './icons.js';
-import type { RevealLike, TipsLike } from './types.js';
+import type { RevealLike } from './types.js';
 
 export { LSP_DEFAULTS, type LspServerSettings, type LspSettings } from './settings.js';
 import type {
@@ -57,11 +56,10 @@ export default class LspPlugin {
   constructor(private readonly ide: Ide) {}
 
   @activate() protected start(): void {
-    this.ide.css(STYLE);
     this.ide.registry('toolbar.widget').add({
       id: 'lsp-sweep',
       side: 'right',
-      view: () => this.sweepLabel(),
+      chip: () => this.sweepChips(),
     });
 
     this.ide.on('diagnostics', (payload) => {
@@ -98,10 +96,6 @@ export default class LspPlugin {
     });
   }
 
-  private get tips(): TipsLike | null {
-    return this.ide.registry<TipsLike>('ui.tips').all.value[0] ?? null;
-  }
-
   private revealBudget(): void {
     this.ide.registry<RevealLike>('settings.reveal').all.value[0]?.reveal('memoryBudgetMb');
   }
@@ -110,68 +104,43 @@ export default class LspPlugin {
     this.ide.registry<RevealLike>('settings.reveal').all.value[0]?.reveal('servers');
   }
 
-  private sweepLabel() {
+  private sweepChips() {
     if (!this.ide.settingsOf('lsp', LSP_DEFAULTS).value.sweepIndicator) return null;
     const shown = this.statuses.value.filter((one) => one.sweep);
     const broken = this.statuses.value.filter((one) => one.state === 'failed');
     if (shown.length === 0 && broken.length === 0) return null;
-    const tips = this.tips;
 
-    const plates = [
-      ...broken.map((status) => {
-        const why = this.ide.t('lsp.down.about', { server: status.server, why: status.detail ?? '' });
-        return (
-          <button
-            key={`down:${status.server}`}
-            type="button"
-            class="lsp-sweep-one is-down"
-            onClick={() => this.revealServers()}
-            onMouseEnter={
-              tips ? (event: MouseEvent) => tips.show(event.currentTarget as Element, why) : undefined
-            }
-            onMouseLeave={tips ? () => tips.hide() : undefined}
-          >
-            <ServerBadge server={status.server} />
-            <span class="lsp-sweep-files">{this.ide.t('lsp.down.files')}</span>
-          </button>
-        );
-      }),
+    return [
+      ...broken.map((status) => ({
+        id: `down:${status.server}`,
+        icon: <ServerBadge server={status.server} />,
+        text: this.ide.t('lsp.down.files'),
+        tip: this.ide.t('lsp.down.about', { server: status.server, why: status.detail ?? '' }),
+        tone: 'bad' as const,
+        onClick: () => this.revealServers(),
+      })),
       ...shown.map((status) => {
-          const sweep = status.sweep!;
-          const working = sweep.stopped === null;
-          const over = sweep.mb !== null && sweep.mb > sweep.budgetMb;
-          const capped = over || sweep.stopped === 'budget' || sweep.stopped === 'baseline';
-          const about = this.ide.t('lsp.sweep.about', {
+        const sweep = status.sweep!;
+        const over = sweep.mb !== null && sweep.mb > sweep.budgetMb;
+        const capped = over || sweep.stopped === 'budget' || sweep.stopped === 'baseline';
+        return {
+          id: status.server,
+          icon: <ServerBadge server={status.server} />,
+          text: this.ide.t('lsp.sweep.files', { checked: sweep.checked, total: sweep.total }),
+          ...(sweep.mb === null
+            ? {}
+            : { more: this.ide.t('lsp.sweep.memory', { mb: sweep.mb, budget: sweep.budgetMb }) }),
+          tip: this.ide.t('lsp.sweep.about', {
             server: status.server,
             checked: sweep.checked,
             total: sweep.total,
-          });
-          return (
-            <button
-              key={status.server}
-              type="button"
-              class={`lsp-sweep-one ${working ? 'is-working' : ''} ${capped ? 'is-capped' : ''}`}
-              onClick={() => this.revealBudget()}
-              onMouseEnter={
-                tips ? (event: MouseEvent) => tips.show(event.currentTarget as Element, about) : undefined
-              }
-              onMouseLeave={tips ? () => tips.hide() : undefined}
-            >
-              <ServerBadge server={status.server} />
-              <span class="lsp-sweep-files">
-                {this.ide.t('lsp.sweep.files', { checked: sweep.checked, total: sweep.total })}
-              </span>
-              {sweep.mb !== null && (
-                <span class="lsp-sweep-mb">
-                  {this.ide.t('lsp.sweep.memory', { mb: sweep.mb, budget: sweep.budgetMb })}
-                </span>
-              )}
-            </button>
-          );
+          }),
+          ...(capped ? { tone: 'warn' as const } : {}),
+          busy: sweep.stopped === null,
+          onClick: () => this.revealBudget(),
+        };
       }),
     ];
-
-    return <span class="lsp-sweep">{plates}</span>;
   }
 
   hover(path: string, line: number, character: number): Promise<HoverInfo | null> {

@@ -3,7 +3,7 @@ import { activate, command, configSection, plugin, remote, stub, type Ide } from
 import UiPlugin, { ChoicePopup, PickPopup } from '@mosetta/ide-plugin-ui';
 import type { PackageManagerInfo } from './managers.js';
 import type { Opener } from '@mosetta/ide-plugin-search';
-import { NpmIcon } from './icon.js';
+import { NpmIcon, PackageIcon } from './icon.js';
 import { TOOLS_DEFAULTS , TOOLS_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
 import { scriptId } from './script-id.js';
@@ -49,18 +49,15 @@ export default class NpmScripts {
     this.ide.registry('toolbar.widget').add({
       id: 'scripts.manager',
       side: 'right',
-      view: () => {
+      chip: () => {
         const current = this.managers.value.find((one) => one.current)?.name ?? '';
         if (current === '') return null;
-        return (
-          <button
-            class="scripts-manager-label"
-            title={this.ide.t('scripts.manager.hint')}
-            onClick={() => this.ide.runCommand('scripts.packageManager')}
-          >
-            {current}
-          </button>
-        );
+        return {
+          icon: <PackageIcon />,
+          text: current,
+          tip: this.ide.t('scripts.manager.about', { manager: current }),
+          onClick: () => this.ide.runCommand('scripts.packageManager'),
+        };
       },
     });
     this.ide.registry<() => unknown>('chrome.top').add(() =>

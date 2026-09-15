@@ -51,18 +51,15 @@ export default class TerminalPlugin {
     this.ide.registry('toolbar.widget').add({
       id: 'terminal.shell',
       side: 'right',
-      view: () => {
+      chip: () => {
         const current = this.shells.value.find((one) => one.current)?.name ?? '';
         if (current === '') return null;
-        return (
-          <button
-            class="terminal-shell-label"
-            title={this.ide.t('terminal.shell.hint')}
-            onClick={() => this.ide.runCommand('terminal.shell')}
-          >
-            {current}
-          </button>
-        );
+        return {
+          icon: <TerminalIcon />,
+          text: current,
+          tip: this.ide.t('terminal.shell.about', { shell: current }),
+          onClick: () => this.ide.runCommand('terminal.shell'),
+        };
       },
     });
     this.ide.registry<() => unknown>('chrome.top').add(() =>

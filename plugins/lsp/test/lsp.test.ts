@@ -82,10 +82,23 @@ describe('языковой сервер у плагина', () => {
 });
 
 describe('индикатор обхода', () => {
-  function widget(): { id: string; side: string; view: () => unknown } | undefined {
+  interface Chip {
+    text: unknown;
+    more?: unknown;
+    tip: string;
+    tone?: string;
+    busy?: boolean;
+    onClick?: () => void;
+  }
+
+  function widget(): { id: string; side: string; chip: () => Chip[] | null } | undefined {
     return host.registry
-      .all<{ id: string; side: string; view: () => unknown }>('toolbar.widget')
+      .all<{ id: string; side: string; chip: () => Chip[] | null }>('toolbar.widget')
       .find((one) => one.id === 'lsp-sweep');
+  }
+
+  function first(): Chip {
+    return widget()!.chip()![0]!;
   }
 
   function say(sweep: Record<string, unknown> | null): void {
@@ -105,26 +118,30 @@ describe('индикатор обхода', () => {
 
   it('обхода не было — молчит', () => {
     say(null);
-    expect(widget()!.view()).toBeNull();
+    expect(widget()!.chip()).toBeNull();
   });
 
   it('настройка выключает его целиком', () => {
     say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: null });
-    expect(widget()!.view()).not.toBeNull();
+    expect(widget()!.chip()).not.toBeNull();
     host.ide(NAME).settings.value = { lsp: { sweepIndicator: false } } as never;
-    expect(widget()!.view()).toBeNull();
+    expect(widget()!.chip()).toBeNull();
+  });
+
+  it('у плашки есть подсказка: числа сами по себе ничего не значат', () => {
+    say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: null });
+    expect(first().tip).toContain('lsp.sweep.about');
+    expect(first().busy).toBe(true);
   });
 
   it('за бюджетом сейчас — жёлтая, даже если обход прошёл целиком', () => {
     say({ checked: 20, total: 20, mb: 3500, baseMb: 700, budgetMb: 3072, stopped: 'done' });
-    const tree = widget()!.view() as { props: { children: Array<{ props: { class: string } }> } };
-    expect(tree.props.children[0]!.props.class).toContain('is-capped');
+    expect(first().tone).toBe('warn');
   });
 
   it('в бюджете — обычная, без предупреждения', () => {
     say({ checked: 20, total: 20, mb: 1900, baseMb: 700, budgetMb: 3072, stopped: 'done' });
-    const tree = widget()!.view() as { props: { children: Array<{ props: { class: string } }> } };
-    expect(tree.props.children[0]!.props.class).not.toContain('is-capped');
+    expect(first().tone).toBeUndefined();
   });
 
   it('щелчок ведёт к настройке бюджета, а не просто открывает настройки', () => {
@@ -132,8 +149,7 @@ describe('индикатор обхода', () => {
     host.registry.add('settings.reveal', { id: 'settings', reveal: (q: string) => asked.push(q) }, '@mosetta/ide-plugin-settings');
     say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: 'budget' });
 
-    const tree = widget()!.view() as { props: { children: Array<{ props: { onClick: () => void } }> } };
-    tree.props.children[0]!.props.onClick();
+    first().onClick!();
     expect(asked).toEqual(['memoryBudgetMb']);
   });
 
@@ -143,32 +159,31 @@ describe('индикатор обхода', () => {
 
   it('сервер упал — плашка есть, хотя обхода не было', () => {
     down('typescript-language-server: spawn typescript-language-server ENOENT');
-    expect(widget()!.view()).not.toBeNull();
+    expect(widget()!.chip()).not.toBeNull();
+    expect(first().tone).toBe('bad');
   });
 
   it('щелчок по ней ведёт к строке с командой, а не к бюджету', () => {
     const asked: string[] = [];
     host.registry.add('settings.reveal', { id: 'settings', reveal: (q: string) => asked.push(q) }, '@mosetta/ide-plugin-settings');
     down('spawn ENOENT');
-    const tree = widget()!.view() as { props: { children: Array<{ props: { onClick: () => void } }> } };
-    tree.props.children[0]!.props.onClick();
+    first().onClick!();
     expect(asked).toEqual(['servers']);
   });
 
   it('сервер здоров и обхода не было — по-прежнему молчит', () => {
     plugin.lsp.statuses.value = [{ server: 'typescript', state: 'ready', openDocs: 0 }];
-    expect(widget()!.view()).toBeNull();
+    expect(widget()!.chip()).toBeNull();
   });
 
   it('настройка гасит и плашку про падение', () => {
     down('spawn ENOENT');
     host.ide(NAME).settings.value = { lsp: { sweepIndicator: false } } as never;
-    expect(widget()!.view()).toBeNull();
+    expect(widget()!.chip()).toBeNull();
   });
 
   it('без плагина настроек щелчок ничего не ломает', () => {
     say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: 'budget' });
-    const tree = widget()!.view() as { props: { children: Array<{ props: { onClick: () => void } }> } };
-    expect(() => tree.props.children[0]!.props.onClick()).not.toThrow();
+    expect(() => first().onClick!()).not.toThrow();
   });
 });
