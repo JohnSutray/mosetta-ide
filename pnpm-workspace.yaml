@@ -3,6 +3,7 @@ packages:
   - server
   - client
   - desktop
+  - e2e
   - plugins/*
 
 allowBuilds:

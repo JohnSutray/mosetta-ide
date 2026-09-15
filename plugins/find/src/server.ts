@@ -23,7 +23,7 @@ export interface ReplaceResult {
 export default class FindServer {
   private readonly engine = new Grep();
 
-  constructor(private readonly ide: Ide) {}
+  constructor(_ide: Ide) {}
 
   @command() protected async grep(params: unknown, call: CallContext): Promise<GrepResult> {
     const ask = params as GrepAsk;

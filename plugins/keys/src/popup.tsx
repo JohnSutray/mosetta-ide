@@ -71,7 +71,12 @@ export function KeysSheet({ keys, windows, window: win, t }: KeysProps & { t: Id
         <div class="keys-note is-loud">{t('keys.captured')}</div>
       </div>
 
-      <div class="keys-echo">
+      <div
+        class="keys-echo"
+        data-echo-key={echo?.key}
+        data-echo-command={echo ? (echo.command ?? '') : undefined}
+        data-echo-seq={echo?.seq}
+      >
         <span class="keys-echo-label">{t('keys.echo')}</span>
         {echo ? (
           <>
