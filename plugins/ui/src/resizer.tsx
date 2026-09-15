@@ -7,12 +7,16 @@ export function Resizer({ windows,
   axis = 'x',
   limits,
   defaultWidth,
+  width,
+  onGrab,
 }: { windows: Windows;
   id: string;
   side: 'left' | 'right';
   axis?: 'x' | 'y';
   limits: () => { min: number; max: number };
   defaultWidth: number;
+  width?: () => number;
+  onGrab?: () => void;
 }) {
   const drag = useRef<{ startX: number; startWidth: number } | null>(null);
 
@@ -23,9 +27,10 @@ export function Resizer({ windows,
       class={`resizer ${axis === 'y' ? 'is-y' : ''}`}
       onPointerDown={(event) => {
         event.preventDefault();
+        onGrab?.();
         drag.current = {
           startX: axis === 'y' ? event.clientY : event.clientX,
-          startWidth: windows.geometry.widthOf(id, defaultWidth),
+          startWidth: width?.() ?? windows.geometry.widthOf(id, defaultWidth),
         };
         (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
       }}

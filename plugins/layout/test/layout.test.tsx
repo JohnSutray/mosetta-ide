@@ -113,6 +113,31 @@ describe('раскладка', () => {
     expect(limits.max).toBeGreaterThan(150);
   });
 
+  it('три правые колонки не съедают середину: показ ужат, память цела', () => {
+    host.registry.add('panel', wish('editor', 'main'), 'core');
+    host.registry.add('panel', wish('terminal', 'right', { defaultWidth: 460, minWidth: 240 }), 'core');
+    host.registry.add('panel', wish('debug', 'right', { defaultWidth: 340, minWidth: 240 }), 'core');
+    host.registry.add('panel', wish('problems', 'right', { defaultWidth: 360, minWidth: 200 }), 'core');
+    const widths = () => of(main(), 'section')
+      .filter((node) => !String(node.props['class']).includes('is-main'))
+      .map((node) => parseInt((node.props['style'] as { width: string }).width, 10));
+    const shown = widths();
+    expect(shown.reduce((a, b) => a + b, 0)).toBe(1280 - 320 - 3);
+    expect(shown[0]).toBeLessThan(460);
+    expect(host.plugin(UiPlugin).windows.geometry.widthOf('terminal', 460)).toBe(460);
+    const grip = nodes(main()).find((node) => node.type === Resizer && node.props['id'] === 'terminal')!;
+    const limits = (grip.props['limits'] as () => { min: number; max: number })();
+    expect(limits.max).toBe(1280 - 320 - 3 - 240 - 200);
+    expect((grip.props['width'] as () => number)()).toBe(shown[0]);
+    const debugGrip = nodes(main()).find((node) => node.type === Resizer && node.props['id'] === 'debug')!;
+    (debugGrip.props['onGrab'] as () => void)();
+    host.plugin(UiPlugin).windows.geometry.setWidth('debug', 330, { min: 240, max: 4000 });
+    const after = widths();
+    expect(after[1]).toBe(330);
+    expect(after[0]).toBeLessThan(shown[0]!);
+    expect(after.reduce((a, b) => a + b, 0)).toBe(1280 - 320 - 3);
+  });
+
   it('заголовок постоянный — ключ словаря, непостоянный — своя строка', () => {
     host.registry.add('panel', wish('tree', 'left'), 'core');
     host.registry.add(

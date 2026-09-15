@@ -1,6 +1,8 @@
 import { Fragment } from 'preact';
+import { signal } from '@preact/signals';
 import { activate, plugin, registry, type Ide } from '@mosetta/ide-api/client';
 import UiPlugin, { Resizer } from '@mosetta/ide-plugin-ui';
+import { ColumnFit, type ColumnAsk } from './fit.js';
 import { PANEL_SCHEMA, type PanelWish } from './schema.js';
 import { STYLE } from './style.js';
 
@@ -10,6 +12,7 @@ export default class Layout {
   private readonly keepFree = 320;
   private readonly fallbackWidth = 260;
   private readonly fallbackMin = 150;
+  private readonly fit = new ColumnFit(this.keepFree);
 
   constructor(private readonly ide: Ide) {}
 
@@ -23,13 +26,15 @@ export default class Layout {
       .registry<PanelWish>('panel')
       .all.value.filter((panel) => panel.open.value);
     const side = (which: PanelWish['side']) => open.filter((panel) => panel.side === which);
+    const asks = this.asks(open);
+    const shown = this.fit.fit(this.total(), asks, this.kept.value);
 
     return (
       <div class="columns">
         {side('left').map((panel) => (
           <Fragment key={panel.id}>
-            {this.column(panel)}
-            {this.grip(panel, 'left')}
+            {this.column(panel, shown[panel.id])}
+            {this.grip(panel, 'left', asks, shown[panel.id]!)}
           </Fragment>
         ))}
 
@@ -38,21 +43,21 @@ export default class Layout {
 
         {side('right').map((panel) => (
           <Fragment key={panel.id}>
-            {this.grip(panel, 'right')}
-            {this.column(panel)}
+            {this.grip(panel, 'right', asks, shown[panel.id]!)}
+            {this.column(panel, shown[panel.id])}
           </Fragment>
         ))}
       </div>
     );
   }
 
-  private column(panel: PanelWish) {
+  private column(panel: PanelWish, width?: number) {
     const main = panel.side === 'main';
     return (
       <section
         key={panel.id}
         class={`panel column-${panel.id} ${main ? 'is-main' : ''}`}
-        style={main ? undefined : { width: `${this.width(panel)}px`, flex: 'none' }}
+        style={main ? undefined : { width: `${width ?? this.width(panel)}px`, flex: 'none' }}
       >
         <header class="panel-head">
           <span class="panel-title">{panel.heading?.() ?? this.ide.t(panel.title)}</span>
@@ -70,21 +75,36 @@ export default class Layout {
     );
   }
 
-  private grip(panel: PanelWish, side: 'left' | 'right') {
+  private grip(panel: PanelWish, side: 'left' | 'right', asks: ColumnAsk[], shown: number) {
     return (
       <Resizer windows={this.ide.getPlugin(UiPlugin).windows}
         id={panel.id}
         side={side}
         defaultWidth={panel.defaultWidth ?? this.fallbackWidth}
+        width={() => shown}
+        onGrab={() => { this.kept.value = panel.id; }}
         limits={() => ({
-          min: panel.minWidth ?? this.fallbackMin,
-          max: Math.max(
-            panel.minWidth ?? this.fallbackMin,
-            this.ide.mount.size.value.w - this.keepFree,
-          ),
+          min: this.min(panel),
+          max: Math.max(this.min(panel), this.fit.maxFor(this.total(), panel.id, asks)),
         })}
       />
     );
+  }
+
+  private readonly kept = signal<string | undefined>(undefined);
+
+  private asks(open: PanelWish[]): ColumnAsk[] {
+    return open
+      .filter((panel) => panel.side !== 'main')
+      .map((panel) => ({ id: panel.id, width: this.width(panel), min: this.min(panel) }));
+  }
+
+  private total(): number {
+    return this.ide.mount.size.value.w;
+  }
+
+  private min(panel: PanelWish): number {
+    return panel.minWidth ?? this.fallbackMin;
   }
 
   private width(panel: PanelWish): number {
