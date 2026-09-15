@@ -208,6 +208,7 @@ export class FakeSurface implements IdeServices {
     for (const handler of this.treeWatchers) handler({ path });
   }
   readonly fsCalls: Array<{ op: string; args: unknown[] }> = [];
+  readonly fileBytes = new Map<string, string>();
   readonly fs: FsAccess = {
     create: async (path, kind) => {
       this.fsCalls.push({ op: 'create', args: [path, kind] });
@@ -230,6 +231,10 @@ export class FakeSurface implements IdeServices {
     writeBytes: async (path, base64) => {
       this.fsCalls.push({ op: 'writeBytes', args: [path, base64] });
       return { path, name: path.split('/').pop() ?? path, kind: 'file' } as DirEntry;
+    },
+    bytes: async (path: string, limit?: number) => {
+      this.fsCalls.push({ op: 'bytes', args: [path, String(limit ?? '')] });
+      return { path, base64: this.fileBytes.get(path) ?? '', bytes: 0, truncated: false };
     },
     absolute: async (path) => `/абсолютно/${path}`,
   };

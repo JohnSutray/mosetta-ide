@@ -53,6 +53,10 @@ export interface Api {
   'fs.copy': { params: { from: string; to: string }; result: DirEntry };
   'fs.remove': { params: { path: string }; result: null };
   'fs.writeBytes': { params: { path: string; base64: string }; result: DirEntry };
+  'fs.bytes': {
+    params: { path: string; limit?: number };
+    result: { path: string; base64: string; bytes: number; truncated: boolean };
+  };
   'fs.absolute': { params: { path: string }; result: { path: string } };
 
   'tree.list': { params: { path: string }; result: DirEntry[] };

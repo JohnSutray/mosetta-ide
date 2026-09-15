@@ -71,4 +71,23 @@ describe('операции с деревом', () => {
     const bytes = await fs.readFile(path.join(root, 'src/image_1.png'));
     expect(bytes.subarray(1, 4).toString()).toBe('PNG');
   });
+
+  it('отдаёт байты файла — и говорит, если отдал не весь', async () => {
+    const png =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    await c.call('fs.writeBytes', { path: 'shot.png', base64: png });
+
+    const whole = await c.call('fs.bytes', { path: 'shot.png' });
+    expect(whole.base64).toBe(png);
+    expect(whole.truncated).toBe(false);
+    expect(whole.bytes).toBe(Buffer.from(png, 'base64').length);
+
+    const part = await c.call('fs.bytes', { path: 'shot.png', limit: 8 });
+    expect(part.truncated).toBe(true);
+    expect(Buffer.from(part.base64, 'base64')).toHaveLength(8);
+    expect(part.bytes).toBe(whole.bytes);
+
+    const missing = await c.expectError('fs.bytes', { path: 'нет-такого.png' });
+    expect(missing.code).toBeTruthy();
+  });
 });

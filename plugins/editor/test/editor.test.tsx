@@ -42,10 +42,10 @@ describe('редактор', () => {
     }>('panel')[0]!;
   const open = () => head().open;
 
-  it('объявляет, чем можно занять пустое место, до всякой активации', () => {
+  it('объявляет свои ключи до всякой активации', () => {
     const early = new FakeHost();
     early.add(Editor, NAME);
-    expect([...early.registry.declared()].sort()).toEqual(['editor.empty', 'editor.extension']);
+    expect([...early.registry.declared()].sort()).toEqual(['editor.empty', 'editor.extension', 'file.view']);
   });
 
   it('занимает середину и не имеет ширины', () => {
@@ -138,6 +138,34 @@ describe('редактор', () => {
       '@mosetta/ide-plugin-sheep',
     );
     expect(nodes(body()).some((one) => one.props['data-id'] === 'sheep')).toBe(true);
+  });
+
+  it('за файл взялся свой показ — рисует он, а не CodeMirror', () => {
+    host.registry.add(
+      'file.view',
+      {
+        id: 'markdown',
+        opens: (path: string) => path.endsWith('.md'),
+        view: (file: { path: string }) => <i data-id="md" data-path={file.path} />,
+      },
+      '@mosetta/ide-plugin-markdown',
+    );
+    host.plugin(DocPlugin).doc.open.value = doc('README.md');
+    expect(nodes(head().view()).some((one) => one.props['data-id'] === 'md')).toBe(true);
+
+    host.plugin(DocPlugin).doc.open.value = doc('a.ts');
+    expect(nodes(head().view()).some((one) => one.props['data-id'] === 'md')).toBe(false);
+  });
+
+  it('файл, открытый не документом, рисует тот, кто за него взялся', () => {
+    host.registry.add(
+      'file.view',
+      { id: 'image', opens: (path: string) => path.endsWith('.png'), text: false, view: () => <i data-id="png" /> },
+      '@mosetta/ide-plugin-image',
+    );
+    host.plugin(DocPlugin).doc.viewed.value = 'logo.png';
+    expect(nodes(head().view()).some((one) => one.props['data-id'] === 'png')).toBe(true);
+    expect(head().heading!()).toBe('logo.png');
   });
 
   it('правки текста приносит он, а не ядро', () => {

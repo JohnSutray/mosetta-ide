@@ -33,6 +33,7 @@ export const handlers: HandlerTable = {
   'fs.copy': (p, c) => fsMethods.copy(p, c),
   'fs.remove': (p, c) => fsMethods.remove(p, c),
   'fs.writeBytes': (p, c) => fsMethods.writeBytes(p, c),
+  'fs.bytes': (p, c) => fsMethods.bytes(p, c),
   'fs.absolute': (p, c) => fsMethods.absolute(p, c),
 
   'tree.list': (p, c) => treeMethods.list(p, c),

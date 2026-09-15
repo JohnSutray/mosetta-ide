@@ -39,6 +39,7 @@ export interface FsAccess {
   remove(path: string): Promise<void>;
   write(path: string, text: string): Promise<void>;
   writeBytes(path: string, base64: string): Promise<DirEntry>;
+  bytes(path: string, limit?: number): Promise<{ path: string; base64: string; bytes: number; truncated: boolean }>;
   absolute(path: string): Promise<string>;
 }
 

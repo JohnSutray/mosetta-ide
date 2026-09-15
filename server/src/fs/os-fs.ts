@@ -269,6 +269,27 @@ export class OsFs {
     return this.describe(fileKey);
   }
 
+  async bytes(key: string, limit: number): Promise<{ path: string; base64: string; bytes: number; truncated: boolean }> {
+    const fileKey = paths.toKey(key);
+    const absolute = paths.toAbsolute(this.root, fileKey);
+    const stat = await fs.stat(absolute).catch(() => null);
+    if (!stat || stat.isDirectory()) throw RpcError.notFound(fileKey);
+    const truncated = stat.size > limit;
+    const handle = await fs.open(absolute, 'r');
+    try {
+      const buffer = Buffer.alloc(Math.min(stat.size, limit));
+      const read = await handle.read(buffer, 0, buffer.length, 0);
+      return {
+        path: fileKey,
+        base64: buffer.subarray(0, read.bytesRead).toString('base64'),
+        bytes: stat.size,
+        truncated,
+      };
+    } finally {
+      await handle.close();
+    }
+  }
+
   private async describe(key: string): Promise<DirEntry> {
     const absolute = paths.toAbsolute(this.root, key);
     const stat = await fs.stat(absolute);

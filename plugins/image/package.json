@@ -1,5 +1,5 @@
 {
-  "name": "@mosetta/ide-plugin-ui",
+  "name": "@mosetta/ide-plugin-image",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,19 +11,6 @@
   },
   "ide": {
     "client": "src/client.tsx",
-    "shares": [
-      "Chevron",
-      "ChoicePopup",
-      "DirIcon",
-      "FileIcon",
-      "Icon",
-      "Menu",
-      "ModeSwitch",
-      "PickPopup",
-      "Popup",
-      "Resizer",
-      "RootIcon"
-    ],
     "strings": {
       "en": "src/en.json",
       "ru": "src/ru.json"
@@ -31,8 +18,9 @@
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",
-    "@mosetta/ide-plugin-keymap": "workspace:*",
-    "@mosetta/ide-protocol": "workspace:*"
+    "@mosetta/ide-plugin-doc": "workspace:*",
+    "@mosetta/ide-plugin-editor": "workspace:*",
+    "@mosetta/ide-plugin-ui": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",
@@ -41,7 +29,6 @@
   "devDependencies": {
     "@preact/signals": "^1.3.1",
     "preact": "^10.25.3",
-    "vitest": "^2.1.9",
-    "@types/node": "^22.10.5"
+    "vitest": "^2.1.9"
   }
 }

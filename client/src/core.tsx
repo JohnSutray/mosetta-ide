@@ -160,6 +160,7 @@ export class Core {
           await this.rpc.call('fs.write', { path, text });
         },
         writeBytes: (path, base64) => this.rpc.call('fs.writeBytes', { path, base64 }),
+        bytes: (path, limit) => this.rpc.call('fs.bytes', limit === undefined ? { path } : { path, limit }),
         absolute: async (path) => (await this.rpc.call('fs.absolute', { path })).path,
       },
       docs: {

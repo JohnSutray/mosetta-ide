@@ -21,9 +21,11 @@ import { computed, effect, signal, type ReadonlySignal, type Signal } from '@pre
 import { activate, command, configSection, plugin, registry, type HunkBox, type Ide } from '@mosetta/ide-api/client';
 import LspPlugin from '@mosetta/ide-plugin-lsp';
 import CodePlugin, { EDITOR_DEFAULTS, EDITOR_SCHEMA } from '@mosetta/ide-plugin-code';
+import type { EditorSettings } from '@mosetta/ide-plugin-code';
+import type { DocState } from '@mosetta/ide-protocol';
 import type { Hunk } from '@mosetta/ide-plugin-code';
 import { GitMarks } from './git-marks.js';
-import { EMPTY_SCHEMA, EXTENSION_SCHEMA, type EditorExtension, type EmptyView } from './schema.js';
+import { EMPTY_SCHEMA, EXTENSION_SCHEMA, VIEW_SCHEMA, type EditorExtension, type EmptyView, type FileView } from './schema.js';
 import { STYLE } from './style.js';
 import { EditorIcon } from './icon.js';
 import { CodeEditor } from './view.js';
@@ -39,6 +41,7 @@ export interface SymbolSpot {
 }
 
 @registry({ key: 'editor.empty', schema: EMPTY_SCHEMA })
+@registry({ key: 'file.view', schema: VIEW_SCHEMA })
 @registry({ key: 'editor.extension', schema: EXTENSION_SCHEMA })
 @configSection({ section: 'editor', defaults: EDITOR_DEFAULTS, schema: EDITOR_SCHEMA })
 @plugin({ title: 'plugin.editor' })
@@ -88,10 +91,10 @@ export default class Editor {
       side: 'main',
       open,
       view: () => this.body(),
-      heading: () => this.docs.openDoc.value?.path ?? null,
+      heading: () => this.docs.openDoc.value?.path ?? this.docs.viewedFile.value,
       badges: () => this.badges(),
       close: () => {
-        if (this.docs.openDoc.value) void this.docs.closeFile();
+        if (this.docs.openDoc.value || this.docs.viewedFile.value) void this.docs.closeFile();
         else open.value = false;
       },
     });
@@ -105,7 +108,7 @@ export default class Editor {
     });
 
     effect(() => {
-      const path = this.docs.openDoc.value?.path ?? null;
+      const path = this.docs.openDoc.value?.path ?? this.docs.viewedFile.value;
       if (path && path !== this.shown) open.value = true;
       this.shown = path;
     });
@@ -179,11 +182,29 @@ export default class Editor {
     );
   }
 
+  private viewFor(path: string): FileView | null {
+    return this.ide.registry<FileView>('file.view').all.value.find((one) => one.opens(path)) ?? null;
+  }
+
   private body() {
+    const viewed = this.docs.viewedFile.value;
+    if (viewed) {
+      const show = this.viewFor(viewed);
+      return show ? (show.view({ path: viewed }, () => null) as never) : this.empty();
+    }
     const file = this.docs.openDoc.value;
     if (!file) return this.empty();
+    const show = this.viewFor(file.path);
+    if (show) return show.view({ path: file.path }, () => this.text(file)) as never;
+    return this.text(file);
+  }
+
+  private text(file: DocState) {
     if (!this.ide.settings.value) return null;
-    const config = this.ide.settingsOf('editor', EDITOR_DEFAULTS).value;
+    return this.codeEditor(file, this.ide.settingsOf('editor', EDITOR_DEFAULTS).value);
+  }
+
+  private codeEditor(file: DocState, config: EditorSettings) {
     return (
       <div class="editor-host">
         <DivergedBadge path={file.path} ide={this.ide} />

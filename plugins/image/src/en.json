@@ -1,0 +1,19 @@
+{
+  "plugin.image": "Image viewer",
+  "image.size": "{w} × {h}",
+  "image.declared": "declared {w} × {h}",
+  "image.shapes": "{count} shapes",
+  "image.noBox": "no viewBox — this one will not scale",
+  "image.loading": "reading the file…",
+  "image.failed": "could not read the image: {why}",
+  "image.truncated": "too large — showing the beginning only",
+  "image.ground.checker": "Checkerboard: shows what is transparent",
+  "image.ground.dark": "Dark or light background — click again to switch",
+  "image.fit.on": "Fitted to the panel. Click to see it pixel for pixel",
+  "image.fit.off": "Pixel for pixel. Click to fit it into the panel",
+  "image.mode.text": "Text only",
+  "image.mode.both": "Text and picture",
+  "image.mode.view": "Picture only",
+  "image.stale": "the text does not parse right now — showing the last good render",
+  "image.broken": "this SVG does not parse"
+}

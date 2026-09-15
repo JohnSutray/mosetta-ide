@@ -27,3 +27,22 @@ export interface EditorExtension {
   id: string;
   extension: unknown;
 }
+
+export const VIEW_SCHEMA = {
+  type: 'object',
+  required: ['id', 'opens', 'view'],
+  properties: {
+    id: { type: 'string' },
+    opens: {},
+    text: {},
+    view: {},
+  },
+  additionalProperties: false,
+} as const;
+
+export interface FileView {
+  id: string;
+  opens: (path: string) => boolean;
+  text?: boolean;
+  view: (file: { path: string }, editor: () => unknown) => unknown;
+}

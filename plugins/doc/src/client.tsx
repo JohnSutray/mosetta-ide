@@ -30,7 +30,7 @@ export default class DocPlugin {
     });
     effect(() => {
       const ws = this.ide.project.value;
-      if (ws) void this.doc.attached(ws.root);
+      if (ws) void this.attach(ws.root);
     });
     effect(() => {
       const ws = this.ide.workspaces.current.value;
@@ -40,9 +40,30 @@ export default class DocPlugin {
     });
   }
 
+  private async attach(root: string): Promise<void> {
+    const path = this.doc.remembers(root);
+    if (path && this.shownWithoutText(path)) {
+      await this.doc.view(path, root);
+      return;
+    }
+    await this.doc.attached(root);
+  }
+
+  private shownWithoutText(path: string): boolean {
+    const shown = this.ide
+      .registry<{ opens: (path: string) => boolean; text?: boolean }>('file.view')
+      .all.value.find((one) => one.opens(path));
+    return shown?.text === false;
+  }
+
   async openFile(path: string, options?: { focus?: boolean }): Promise<void> {
+    const root = this.ide.workspaces.current.value?.root ?? null;
+    if (this.shownWithoutText(path)) {
+      await this.doc.view(path, root);
+      return;
+    }
     if (options?.focus === false) this.focus.openWithoutFocus();
-    await this.doc.openAt(path, this.ide.workspaces.current.value?.root ?? null);
+    await this.doc.openAt(path, root);
     if (options?.focus) this.focus.focus();
   }
 
@@ -62,6 +83,12 @@ export default class DocPlugin {
 
   get openDoc() {
     return this.doc.open;
+  }
+  get viewedFile() {
+    return this.doc.viewed;
+  }
+  get liveText() {
+    return this.doc.text;
   }
   get dirty() {
     return this.doc.dirty;

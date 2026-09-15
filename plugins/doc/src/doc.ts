@@ -22,6 +22,8 @@ export class Doc {
   readonly open = signal<DocState | null>(null);
   readonly dirty = signal(false);
 
+  readonly viewed = signal<string | null>(null);
+
   readonly history = signal<string[]>([]);
 
   readonly externalEpoch = signal(0);
@@ -35,6 +37,15 @@ export class Doc {
   readonly sync: DocSync;
 
   readonly path: ReadonlySignal<string | null> = computed(() => this.open.value?.path ?? null);
+
+  private readonly typed = signal<{ path: string; text: string; at: number } | null>(null);
+
+  readonly text: ReadonlySignal<string> = computed(() => {
+    const doc = this.open.value;
+    if (!doc) return '';
+    const local = this.typed.value;
+    return local && local.path === doc.path && doc.version <= local.at ? local.text : doc.text;
+  });
 
   private readonly expected = new Set<string>();
 
@@ -58,6 +69,15 @@ export class Doc {
     this.pendingReveal.value = { path, line, character, epoch };
   }
 
+  async view(path: string, root: string | null): Promise<void> {
+    await this.close(root);
+    batch(() => {
+      this.viewed.value = path;
+      this.history.value = [path, ...this.history.value.filter((item) => item !== path)].slice(0, 20);
+    });
+    if (root) this.services.remembered(root).value = path;
+  }
+
   async openAt(path: string, root: string | null): Promise<void> {
     try {
       const previous = this.open.value;
@@ -72,6 +92,7 @@ export class Doc {
         this.history.value = [path, ...this.history.value.filter((item) => item !== path)].slice(0, 20);
         this.open.value = doc;
         this.dirty.value = doc.dirty;
+        this.viewed.value = null;
       });
       if (root) this.services.remembered(root).value = path;
     } catch (err) {
@@ -81,7 +102,12 @@ export class Doc {
 
   async close(root: string | null): Promise<void> {
     const file = this.open.value;
-    if (!file) return;
+    if (!file) {
+      if (this.viewed.value === null) return;
+      this.viewed.value = null;
+      if (root) this.services.remembered(root).value = null;
+      return;
+    }
     try {
       await this.sync.flush();
     } finally {
@@ -96,6 +122,8 @@ export class Doc {
   }
 
   edit(text: string): void {
+    const open = this.open.peek();
+    if (open) this.typed.value = { path: open.path, text, at: open.version };
     this.dirty.value = true;
     this.sync.edit(text);
   }
@@ -178,8 +206,12 @@ export class Doc {
     this.diverged.value = next;
   }
 
+  remembers(root: string): string | null {
+    return this.open.peek()?.path ?? this.viewed.peek() ?? this.services.remembered(root).peek();
+  }
+
   async attached(root: string): Promise<void> {
-    const path = this.open.peek()?.path ?? this.services.remembered(root).peek();
+    const path = this.remembers(root);
     if (!path) return;
     const alive = await this.wire.state(path).catch(() => null);
     if (alive) await this.openAt(path, root);
@@ -190,6 +222,7 @@ export class Doc {
     this.sync.detach();
     batch(() => {
       this.open.value = null;
+      this.viewed.value = null;
       this.dirty.value = false;
       this.history.value = [];
       this.diverged.value = new Map();

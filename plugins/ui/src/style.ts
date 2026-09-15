@@ -258,4 +258,30 @@ export const STYLE = `
 }
 .chevron.is-open { transform: rotate(90deg); }
 .chevron.is-hidden { visibility: hidden; }
+
+.mode-switch {
+  display: inline-flex;
+  flex: none;
+  border: 1px solid var(--divider);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--control-bg);
+}
+.mode-switch-one {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color 90ms linear, color 90ms linear;
+}
+.mode-switch-one + .mode-switch-one { border-left: 1px solid var(--divider); }
+.mode-switch-one:hover { background: var(--control-bg-hover); color: var(--fg); }
+.mode-switch-one.is-on { background: var(--treesel); color: #dbe6ef; }
+.mode-switch-one svg { display: block; }
 `;

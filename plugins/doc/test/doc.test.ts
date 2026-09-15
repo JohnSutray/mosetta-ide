@@ -138,3 +138,54 @@ describe('документ', () => {
     expect(plugin.openEpoch.value).toBe(epoch + 1);
   });
 });
+
+describe('файл, открытый не документом', () => {
+  function shows(prefix: string, text: boolean): void {
+    host.registry.add(
+      'file.view',
+      { id: prefix, opens: (path: string) => path.endsWith(prefix), text, view: () => null },
+      '@mosetta/ide-plugin-image',
+    );
+  }
+
+  it('показ без текста: документ не открываем вовсе', async () => {
+    shows('.png', false);
+    await plugin.openFile('logo.png');
+    expect(plugin.viewedFile.value).toBe('logo.png');
+    expect(plugin.openDoc.value).toBeNull();
+    expect(host.surface.docs.opened).not.toContain('logo.png');
+  });
+
+  it('показ, которому текст нужен, открывает документ как обычно', async () => {
+    shows('.ts', true);
+    await plugin.openFile('a.ts');
+    expect(plugin.openDoc.value?.path).toBe('a.ts');
+    expect(plugin.viewedFile.value).toBeNull();
+  });
+
+  it('документ и показ гасят друг друга: место одно', async () => {
+    shows('.png', false);
+    await plugin.openFile('a.ts');
+    await plugin.openFile('logo.png');
+    expect(plugin.openDoc.value).toBeNull();
+    expect(plugin.viewedFile.value).toBe('logo.png');
+
+    await plugin.openFile('a.ts');
+    expect(plugin.viewedFile.value).toBeNull();
+    expect(plugin.openDoc.value?.path).toBe('a.ts');
+  });
+
+  it('закрыть можно и то, что документом не было', async () => {
+    shows('.png', false);
+    await plugin.openFile('logo.png');
+    await plugin.closeFile();
+    expect(plugin.viewedFile.value).toBeNull();
+  });
+
+  it('живой текст — это правка, а не то, что успел подтвердить сервер', async () => {
+    await plugin.openFile('a.ts');
+    expect(plugin.liveText.value).toBe('раз');
+    plugin.editDoc('раз-два');
+    expect(plugin.liveText.value).toBe('раз-два');
+  });
+});
