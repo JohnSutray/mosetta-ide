@@ -40,6 +40,8 @@ export const STYLE = `
   color: var(--muted);
   font-size: 11px;
 }
+.problems-partial.is-down { color: var(--warning, #be9117); }
+
 .problems-raise {
   margin-left: auto;
   flex: none;

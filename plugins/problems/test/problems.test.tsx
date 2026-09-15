@@ -140,6 +140,61 @@ describe('панель ошибок', () => {
     expect(said().some((one) => one.startsWith('problems.partial'))).toBe(false);
   });
 
+  function setState(state: 'off' | 'starting' | 'ready' | 'failed', detail?: string): void {
+    host.plugin(LspPlugin).lsp.statuses.value = [
+      { server: 'ts', state, openDocs: 0, ...(detail ? { detail } : {}) },
+    ];
+  }
+
+  it('сервер упал — говорит это вместо «ошибок нет»', () => {
+    setState('failed', 'typescript-language-server: spawn typescript-language-server ENOENT');
+    const texts = said();
+    expect(texts).toContain(
+      'problems.down(server=ts,why=typescript-language-server: spawn typescript-language-server ENOENT)',
+    );
+    expect(texts).not.toContain('problems.empty');
+  });
+
+  it('причина названа, а не спрятана в журнал', () => {
+    setState('failed', 'процесс завершился (127)');
+    expect(said()).toContain('problems.down(server=ts,why=процесс завершился (127))');
+  });
+
+  it('кнопка ведёт к строке с командой сервера', () => {
+    const asked: string[] = [];
+    host.registry.add('settings.reveal', { id: 'settings', reveal: (q: string) => asked.push(q) }, '@mosetta/ide-plugin-settings');
+    setState('failed', 'spawn ENOENT');
+    const button = nodes(view()).find((one) => one.props['class'] === 'problems-raise');
+    (button!.props['onClick'] as () => void)();
+    expect(asked).toEqual(['servers']);
+  });
+
+  it('сервер поднимается — «ошибок нет» ещё рано', () => {
+    setState('starting');
+    const texts = said();
+    expect(texts).toContain('problems.starting(server=ts)');
+    expect(texts).not.toContain('problems.empty');
+  });
+
+  it('сервер выключен настройкой — молчит', () => {
+    setState('off');
+    const texts = said();
+    expect(texts.some((one) => one.startsWith('problems.down'))).toBe(false);
+    expect(texts).toContain('problems.empty');
+  });
+
+  it('сервер жив и ошибок правда нет — «ошибок нет»', () => {
+    setState('ready');
+    expect(said()).toContain('problems.empty');
+  });
+
+  it('сервер упал, но что-то найдено — список показан, и жалоба над ним', () => {
+    setState('failed', 'spawn ENOENT');
+    setProblems([{ path: 'a.ts', diagnostics: [problem(1, 'сломано')] }]);
+    expect(said()).toContain('problems.down(server=ts,why=spawn ENOENT)');
+    expect(of(view(), 'li')).toHaveLength(1);
+  });
+
   it('показывает файлы целиком, а не только открытый', () => {
     setProblems([
       { path: 'a.ts', diagnostics: [problem(0, 'раз')] },

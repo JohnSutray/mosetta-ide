@@ -19,7 +19,7 @@ export const STYLE = `
   --git-added: #629755;
   --git-conflict: #e0655f;
   --noscan: #a3924a;
-  --font: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  --font: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
   --ui-font: 'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 

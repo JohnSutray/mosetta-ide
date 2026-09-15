@@ -106,15 +106,37 @@ export default class LspPlugin {
     this.ide.registry<RevealLike>('settings.reveal').all.value[0]?.reveal('memoryBudgetMb');
   }
 
+  private revealServers(): void {
+    this.ide.registry<RevealLike>('settings.reveal').all.value[0]?.reveal('servers');
+  }
+
   private sweepLabel() {
     if (!this.ide.settingsOf('lsp', LSP_DEFAULTS).value.sweepIndicator) return null;
     const shown = this.statuses.value.filter((one) => one.sweep);
-    if (shown.length === 0) return null;
+    const broken = this.statuses.value.filter((one) => one.state === 'failed');
+    if (shown.length === 0 && broken.length === 0) return null;
     const tips = this.tips;
 
-    return (
-      <span class="lsp-sweep">
-        {shown.map((status) => {
+    const plates = [
+      ...broken.map((status) => {
+        const why = this.ide.t('lsp.down.about', { server: status.server, why: status.detail ?? '' });
+        return (
+          <button
+            key={`down:${status.server}`}
+            type="button"
+            class="lsp-sweep-one is-down"
+            onClick={() => this.revealServers()}
+            onMouseEnter={
+              tips ? (event: MouseEvent) => tips.show(event.currentTarget as Element, why) : undefined
+            }
+            onMouseLeave={tips ? () => tips.hide() : undefined}
+          >
+            <ServerBadge server={status.server} />
+            <span class="lsp-sweep-files">{this.ide.t('lsp.down.files')}</span>
+          </button>
+        );
+      }),
+      ...shown.map((status) => {
           const sweep = status.sweep!;
           const working = sweep.stopped === null;
           const capped = sweep.stopped === 'budget' || sweep.stopped === 'baseline';
@@ -145,9 +167,10 @@ export default class LspPlugin {
               )}
             </button>
           );
-        })}
-      </span>
-    );
+      }),
+    ];
+
+    return <span class="lsp-sweep">{plates}</span>;
   }
 
   hover(path: string, line: number, character: number): Promise<HoverInfo | null> {

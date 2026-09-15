@@ -82,11 +82,14 @@ export class LspServer {
 
   private async boot(): Promise<void> {
     this.setState('starting');
+    const plan = this.toolchain.launchFor(this.name, this.settings, this.root, this.log);
+    if (!plan) throw new Error(`${this.settings.command || this.name}: нечем запустить`);
     const handle = this.launch({
-      command: this.settings.command,
-      args: this.settings.args,
+      command: plan.command,
+      args: plan.args,
       cwd: this.root,
       reason: `${this.name} для ${path.basename(this.root)}`,
+      ...(plan.env ? { env: plan.env } : {}),
       wants: ['user-shell'],
     });
     this.process = handle;
@@ -94,11 +97,11 @@ export class LspServer {
     this.child = child;
 
     child.on('error', (err) => {
-      this.setState('failed', `${this.settings.command}: ${err.message}`);
+      this.died(`${this.settings.command || this.name}: ${err.message}`);
     });
     child.on('exit', (code, signal) => {
       if (this.state === 'off') return;
-      this.setState('failed', `процесс завершился (${code ?? signal})`);
+      this.died(`процесс завершился (${code ?? signal})`);
     });
     child.stderr.on('data', (chunk) => {
       const text = Buffer.from(chunk).toString('utf8').trim();
@@ -516,7 +519,15 @@ export class LspServer {
     return rel.split(path.sep).join('/');
   }
 
+  private died(reason: string): void {
+    this.setState('failed', reason);
+    const waiting = [...this.pending.values()];
+    this.pending.clear();
+    for (const slot of waiting) slot.reject(new Error(reason));
+  }
+
   private setState(state: LspState, detail?: string): void {
+    if (this.state === state && this.detail === detail) return;
     this.state = state;
     this.detail = detail;
     if (detail) this.log.warn(`${this.name}: ${detail}`);

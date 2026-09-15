@@ -1,10 +1,29 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
 const CONFIG = fileURLToPath(new URL('./fixtures/lsp-config', import.meta.url));
 const LSP = '@mosetta/ide-plugin-lsp';
+
+function toolchainMissing(): string | null {
+  try {
+    execFileSync('typescript-language-server', ['--version'], { stdio: 'ignore', timeout: 10_000 });
+    return null;
+  } catch {
+    return 'typescript-language-server не установлен на этой машине';
+  }
+}
+
+const MISSING = toolchainMissing();
+if (MISSING) {
+  console.warn(
+    `[lsp] ${MISSING} — шесть тестов пропущены.\n` +
+      '[lsp] вернуть: pnpm add -g typescript-language-server\n' +
+      '[lsp] сама плашка «сервера нет» проверяется без него: plugins/lsp/test/dead-server.test.ts',
+  );
+}
 
 interface Diagnostic {
   severity: string;
@@ -20,7 +39,7 @@ interface PluginEvent {
   payload: unknown;
 }
 
-describe('языковой сервер (плагин)', () => {
+describe.skipIf(MISSING)('языковой сервер (плагин)', () => {
   let server: RunningServer;
   let root: string;
   let c: TestClient;

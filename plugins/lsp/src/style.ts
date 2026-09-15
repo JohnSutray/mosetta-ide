@@ -28,6 +28,8 @@ export const STYLE = `
 
 .lsp-sweep-one.is-capped { color: #be9117; }
 
+.lsp-sweep-one.is-down { color: var(--error, #ff6b68); }
+
 .lsp-sweep-mb { opacity: 0.8; }
 .lsp-sweep-mb::before { content: '·'; margin-right: 6px; opacity: 0.6; }
 `;

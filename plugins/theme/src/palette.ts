@@ -64,4 +64,4 @@ export const DARCULA: Palette = {
   selectionMatch: '#33475B',
 };
 
-export const CODE_FONT = "'JetBrains Mono', 'SF Mono', Menlo, monospace";
+export const CODE_FONT = "'JetBrains Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace";

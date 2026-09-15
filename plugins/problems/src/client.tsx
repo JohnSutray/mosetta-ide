@@ -99,14 +99,44 @@ export default class Problems {
     done: 'problems.partial.budget',
   } as const;
 
+  private static readonly SERVERS_KEY = 'servers';
+  private static readonly SERVERS = 'lsp.servers';
+
+  private down() {
+    const statuses = this.ide.getPlugin(LspPlugin).statuses.value;
+    const mute = statuses.filter((one) => one.state === 'failed' || one.state === 'starting');
+    if (mute.length === 0) return null;
+    const opener = this.opener;
+
+    return mute.map((status) => (
+      <div class="problems-partial is-down" key={`down:${status.server}`}>
+        <span>
+          {status.state === 'starting'
+            ? this.ide.t('problems.starting', { server: status.server })
+            : this.ide.t('problems.down', { server: status.server, why: status.detail ?? '' })}
+        </span>
+        {status.state === 'failed' &&
+          (opener ? (
+            <button class="problems-raise" onClick={() => opener.reveal(Problems.SERVERS_KEY)}>
+              {Problems.SERVERS}
+            </button>
+          ) : (
+            <span class="problems-raise-key">{Problems.SERVERS}</span>
+          ))}
+      </div>
+    ));
+  }
+
   private view() {
     const files = this.ide.getPlugin(LspPlugin).problems.value;
     const partial = this.partial();
+    const down = this.down();
     if (files.length === 0) {
       return (
         <div class="problems-list">
+          {down}
           {partial}
-          <div class="placeholder">{this.ide.t('problems.empty')}</div>
+          {!down && <div class="placeholder">{this.ide.t('problems.empty')}</div>}
         </div>
       );
     }
@@ -123,6 +153,7 @@ export default class Problems {
 
     return (
       <div class="problems-list">
+        {down}
         {partial}
         {shown.map((file) => (
           <div class="problems-file" key={file.path}>

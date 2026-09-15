@@ -41,13 +41,8 @@ export class Jsonc {
           i += 2;
           continue;
         }
-        if (ch === ',') {
-          let j = i + 1;
-          while (j < input.length && /\s/.test(input[j]!)) j += 1;
-          if (input[j] === '}' || input[j] === ']') {
-            i += 1;
-            continue;
-          }
+        if (ch === '}' || ch === ']') {
+          out = out.replace(/,\s*$/, '');
         }
         out += ch;
         i += 1;

@@ -2,11 +2,13 @@
   "command.panel.problems": "Problems panel",
   "panel.problems": "Problems",
   "plugin.problems": "Problems",
+  "problems.down": "{server} is not checking — {why}",
   "problems.empty": "No problems",
   "problems.more": "…and {count} more",
   "problems.partial.baseline": "The project alone takes {mb} MB — the {budget} MB budget was not enough for a single file",
   "problems.partial.blind": "Checked {checked} of {total} files — memory cannot be measured on this system",
   "problems.partial.budget": "Checked {checked} of {total} files — the {budget} MB budget ran out at {mb} MB",
+  "problems.starting": "{server} is starting…",
   "problems.sweeping": "Checking {checked} of {total} files…",
   "toolbar.problems": "TypeScript problems"
 }

@@ -125,6 +125,35 @@ describe('индикатор обхода', () => {
     expect(asked).toEqual(['memoryBudgetMb']);
   });
 
+  function down(detail: string): void {
+    plugin.lsp.statuses.value = [{ server: 'typescript', state: 'failed', detail, openDocs: 0 }];
+  }
+
+  it('сервер упал — плашка есть, хотя обхода не было', () => {
+    down('typescript-language-server: spawn typescript-language-server ENOENT');
+    expect(widget()!.view()).not.toBeNull();
+  });
+
+  it('щелчок по ней ведёт к строке с командой, а не к бюджету', () => {
+    const asked: string[] = [];
+    host.registry.add('settings.reveal', { id: 'settings', reveal: (q: string) => asked.push(q) }, '@mosetta/ide-plugin-settings');
+    down('spawn ENOENT');
+    const tree = widget()!.view() as { props: { children: Array<{ props: { onClick: () => void } }> } };
+    tree.props.children[0]!.props.onClick();
+    expect(asked).toEqual(['servers']);
+  });
+
+  it('сервер здоров и обхода не было — по-прежнему молчит', () => {
+    plugin.lsp.statuses.value = [{ server: 'typescript', state: 'ready', openDocs: 0 }];
+    expect(widget()!.view()).toBeNull();
+  });
+
+  it('настройка гасит и плашку про падение', () => {
+    down('spawn ENOENT');
+    host.ide(NAME).settings.value = { lsp: { sweepIndicator: false } } as never;
+    expect(widget()!.view()).toBeNull();
+  });
+
   it('без плагина настроек щелчок ничего не ломает', () => {
     say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: 'budget' });
     const tree = widget()!.view() as { props: { children: Array<{ props: { onClick: () => void } }> } };

@@ -20,7 +20,14 @@ export const LSP_DEFAULTS: LspSettings = {
   checkProject: true,
   memoryBudgetMb: 3072,
   sweepIndicator: true,
-  servers: {},
+  servers: {
+    typescript: {
+      enabled: true,
+      command: '',
+      args: ['--stdio'],
+      extensions: ['ts', 'tsx', 'mts', 'cts', 'js', 'jsx', 'mjs', 'cjs'],
+    },
+  },
 };
 
 export const LSP_SCHEMA = {

@@ -4,7 +4,7 @@ export const STYLE = `
 .find-bar { display: flex; flex-direction: column; gap: 3px; padding: 3px 6px; font: 12px var(--ui-font); color: var(--fg); }
 .find-row { display: flex; align-items: center; gap: 4px; }
 .find-field { flex: 1; min-width: 0; height: 22px; padding: 0 6px; box-sizing: border-box; font: 12px var(--ui-font); resize: none; }
-textarea.find-field { height: auto; padding: 3px 6px; font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; line-height: 1.3; }
+textarea.find-field { height: auto; padding: 3px 6px; font-family: var(--font); line-height: 1.3; }
 .find-tool {
   flex: none;
   height: 22px;
@@ -60,7 +60,7 @@ textarea.find-field { height: auto; padding: 3px 6px; font-family: 'JetBrains Mo
   color: var(--fg);
   font: 12px var(--ui-font);
 }
-.fif-chip-name { display: flex; align-items: center; padding: 0 7px; border: 0; background: transparent; color: inherit; white-space: nowrap; font: 12px 'JetBrains Mono', Menlo, monospace; cursor: default; }
+.fif-chip-name { display: flex; align-items: center; padding: 0 7px; border: 0; background: transparent; color: inherit; white-space: nowrap; font: 12px var(--font); cursor: default; }
 .fif-chip-name:hover { background: #454a4b; }
 .fif-chip.is-off { color: var(--muted); border-style: dashed; }
 .fif-chip.is-off .fif-chip-name { text-decoration: line-through; }
@@ -86,7 +86,7 @@ textarea.find-field { height: auto; padding: 3px 6px; font-family: 'JetBrains Mo
   border: 1px dashed var(--divider);
   border-radius: 4px;
   color: var(--fg);
-  font: 12px 'JetBrains Mono', Menlo, monospace;
+  font: 12px var(--font);
   cursor: text;
 }
 .fif-mask:focus { border-style: solid; border-color: var(--treesel); }
@@ -109,7 +109,7 @@ textarea.find-field { height: auto; padding: 3px 6px; font-family: 'JetBrains Mo
 .fif-row-hit { display: flex; align-items: baseline; gap: 8px; padding: 2px 10px 2px 18px; white-space: nowrap; overflow: hidden; }
 .fif-row-hit.is-current { background: var(--treesel); }
 .fif-line { flex: none; min-width: 3ch; text-align: right; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
-.fif-text { overflow: hidden; text-overflow: ellipsis; font-family: 'JetBrains Mono', Menlo, monospace; font-size: 12px; }
+.fif-text { overflow: hidden; text-overflow: ellipsis; font-family: var(--font); font-size: 12px; }
 .fif-match { background: #32593d; border-radius: 2px; font-weight: inherit; }
 .fif-preview { flex: 1; min-width: 0; overflow: auto; background: var(--bg); }
 .fif-empty { padding: 12px; color: var(--muted); }

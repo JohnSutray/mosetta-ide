@@ -22,6 +22,31 @@ describe('JSONC', () => {
     expect(parsed).toEqual({ a: 1, b: ['x', 'y'] });
   });
 
+  it('висячая запятая и комментарий работают ВМЕСТЕ', () => {
+    const parsed = jsonc.parse<{ fs: { noScan: string[] } }>(
+      `{
+         "fs": { "noScan": ["node_modules"] },
+         // дальше ничего нет, и вот почему
+       }`,
+      'test',
+    );
+    expect(parsed.fs.noScan).toEqual(['node_modules']);
+  });
+
+  it('то же в массиве и через блочный комментарий', () => {
+    const parsed = jsonc.parse<{ a: number[] }>(
+      `{ "a": [1, 2,  ] }`,
+      'test',
+    );
+    expect(parsed.a).toEqual([1, 2]);
+  });
+
+  it('запятая внутри строки остаётся на месте', () => {
+    const parsed = jsonc.parse<{ a: string; b: string[] }>('{ "a": "раз, два", "b": ["x,"] }', 'test');
+    expect(parsed.a).toBe('раз, два');
+    expect(parsed.b).toEqual(['x,']);
+  });
+
   it('не режет слэши внутри строк', () => {
     const parsed = jsonc.parse<{ url: string; win: string }>(
       '{ "url": "https://example.com//x", "win": "C:\\\\a\\\\b" }',
@@ -33,12 +58,25 @@ describe('JSONC', () => {
 });
 
 describe('боевой конфиг в app/config', () => {
-  it('settings.json разбирается и накрывает дефолты', async () => {
+  it('settings.json разбирается и виден источником', async () => {
     const store = await ConfigStore.load(SHIPPED);
-    expect(store.settings.fs.noScan).toContain('node_modules');
-    expect(store.settings.fs.maxFileMb).toBe(8);
-    expect((store.settings.editor as { fontSize: number }).fontSize).toBe(13);
     expect(store.current.sources).toHaveLength(1);
+    expect(store.current.sources[0]).toContain('settings.json');
+    expect(store.settings.fs.maxFileMb).toBe(8);
+    store.dispose();
+  });
+
+  it('раздел плагина едет как есть — ядро его формы не знает (ADR-0186)', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-'));
+    await fs.writeFile(
+      path.join(dir, 'settings.json'),
+      '{ "editor": { "fontSize": 21, "чегоЯдроНеЗнает": ["и знать не должно"] } }',
+      'utf8',
+    );
+    const store = await ConfigStore.load(dir);
+    const editor = store.settings.editor as { fontSize: number; чегоЯдроНеЗнает: string[] };
+    expect(editor.fontSize).toBe(21);
+    expect(editor.чегоЯдроНеЗнает).toEqual(['и знать не должно']);
     store.dispose();
   });
 });

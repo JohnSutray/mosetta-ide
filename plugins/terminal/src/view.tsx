@@ -11,7 +11,7 @@ import type { Attached } from './types.js';
 function fontOf(settingsOf: IdeServices['settingsOf']): string {
   const own = settingsOf('terminal', TERMINAL_DEFAULTS).value.fontFamily.trim();
   const family = own || settingsOf('editor', EDITOR_DEFAULTS).value.fontFamily;
-  return `'${family}', 'SF Mono', Menlo, monospace`;
+  return `'${family}', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace`;
 }
 
 export interface Screen {

@@ -1,4 +1,6 @@
 {
+  "lsp.down.about": "{server} is not running: {why}. Nothing is being checked. Click to open the server command setting",
+  "lsp.down.files": "not running",
   "lsp.sweep.about": "{server}: {checked} of {total} files checked. The second number is the memory its process tree holds. Click to open the budget setting",
   "lsp.sweep.files": "{checked}/{total}",
   "lsp.sweep.memory": "{mb}/{budget} MB",

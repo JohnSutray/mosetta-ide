@@ -1,7 +1,9 @@
 {
   "command.panel.problems": "Панель: ошибки",
+  "problems.down": "{server} ничего не проверяет — {why}",
   "problems.partial.baseline": "Проект сам занимает {mb} МБ — бюджета {budget} МБ не хватило ни на один файл",
   "problems.partial.blind": "Проверено {checked} файлов из {total} — память этой системы мы измерять не умеем",
   "problems.partial.budget": "Проверено {checked} файлов из {total} — бюджет {budget} МБ исчерпан на {mb} МБ",
+  "problems.starting": "{server} поднимается…",
   "problems.sweeping": "Проверяю {checked} файлов из {total}…"
 }
