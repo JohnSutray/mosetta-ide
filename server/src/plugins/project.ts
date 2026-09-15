@@ -1,4 +1,5 @@
 import type { MemoryDoc, MemoryEvent, ProcessHandle, Project, ProjectMemory, ProjectResource, RunAsk } from '@mosetta/ide-api/server';
+import { sectionOf } from '@mosetta/ide-api/section';
 import type { Processes } from '../env/processes.js';
 import type { Workspace } from '../workspace/workspace.js';
 
@@ -67,6 +68,10 @@ export class PluginProject implements Project {
 
   resolve(relative: string): string {
     return this.ws.resolve(relative);
+  }
+
+  settings<T extends object>(section: string, defaults: T): T {
+    return sectionOf(this.ws.settings, section, defaults);
   }
 
   spawned(

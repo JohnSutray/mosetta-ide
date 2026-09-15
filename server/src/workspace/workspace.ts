@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import type { EventName, EventPayload, WorkspaceInfo } from '@mosetta/ide-protocol';
+import type { EventName, EventPayload, Settings, WorkspaceInfo } from '@mosetta/ide-protocol';
 import { journal, type Logger } from '../log.js';
 import type { ConfigStore } from '../config/store.js';
 import { ProjectConfig } from '../config/project.js';
@@ -52,10 +52,20 @@ export class Workspace {
     return this.use('project-config', (ws) => new ProjectConfig(ws, this.config));
   }
 
+  get settings(): Settings {
+    return this.peek<ProjectConfig>('project-config')?.bundle.settings ?? this.config.settings;
+  }
+
   async boot(): Promise<void> {
     await this.services.boot();
     await this.projectConfig.load();
+    const apply = () => this.services.applySettings(this.projectConfig.bundle.settings.fs);
+    apply();
+    this.offs.push(this.config.onChange(apply), this.projectConfig.onChange(apply));
+    void this.services.preload();
   }
+
+  private readonly offs: Array<() => void> = [];
 
   relative(absolute: string): string {
     return paths.toRelative(this.root, absolute);
@@ -109,6 +119,7 @@ export class Workspace {
     this.disposed = true;
     this.sessions.clear();
     this.holds.clear();
+    for (const off of this.offs.splice(0)) off();
     for (const [key, resource] of [...this.resources].reverse()) {
       try {
         await resource.dispose();

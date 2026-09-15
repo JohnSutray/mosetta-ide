@@ -27,7 +27,7 @@ export default class DebugServer {
           this.ide.log,
           this.terminalRunner(call.project),
           undefined,
-          () => this.ide.settings('debug', DEBUG_DEFAULTS),
+          () => call.project.settings('debug', DEBUG_DEFAULTS),
         ),
     );
   }

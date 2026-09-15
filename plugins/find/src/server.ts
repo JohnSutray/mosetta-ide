@@ -28,7 +28,7 @@ export default class FindServer {
   @command() protected async grep(params: unknown, call: CallContext): Promise<GrepResult> {
     const ask = params as GrepAsk;
     const re = this.engine.pattern(ask);
-    const limit = ask.limit ?? this.ide.settings('find', FIND_DEFAULTS).maxHits;
+    const limit = ask.limit ?? call.project.settings('find', FIND_DEFAULTS).maxHits;
     const hits: FileHit[] = [];
     let files = 0;
     let truncated = false;

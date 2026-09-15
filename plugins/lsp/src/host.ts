@@ -17,7 +17,7 @@ export class LspHost implements ProjectResource {
   }
 
   start(): void {
-    const lsp = this.ide.settings('lsp', LSP_DEFAULTS);
+    const lsp = this.project.settings('lsp', LSP_DEFAULTS);
     for (const [name, settings] of Object.entries(lsp.servers)) {
       if (!settings.enabled) continue;
       const preferences = this.toolchain.preferencesFor(lsp, name);
@@ -46,9 +46,9 @@ export class LspHost implements ProjectResource {
   }
 
   private async checkProject(server: LspServer): Promise<void> {
-    const { checkProject, memoryBudgetMb } = this.ide.settings('lsp', LSP_DEFAULTS);
+    const { checkProject, memoryBudgetMb } = this.project.settings('lsp', LSP_DEFAULTS);
     if (!checkProject) return;
-    const skipped = new Set(this.ide.settings('fs', { noScan: [] as string[] }).noScan);
+    const skipped = new Set(this.project.settings('fs', { noScan: [] as string[] }).noScan);
     const skip = (key: string): boolean => key.split('/').some((part) => skipped.has(part));
     try {
       await server.checkProject(skip, memoryBudgetMb);

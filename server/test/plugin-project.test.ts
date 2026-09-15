@@ -42,6 +42,38 @@ describe('проект, отданный плагину', () => {
     await removeProject(root);
   });
 
+  it('настройки проекта — с его слоем поверх машинного (ADR-0214, правка 16.09)', async () => {
+    await ws.dispose();
+    await removeProject(root);
+    root = await makeProject('plugin-project-settings', {
+      'один.txt': 'раз',
+      '.mosetta/settings.json': '{ "lsp": { "checkProject": false, "memoryBudgetMb": 7 } }\n',
+    });
+    ws = new Workspace(root, await ConfigStore.load(TEST_CONFIG_DIR), env.processes);
+    await ws.boot();
+    const project = new PluginProject(ws, '@mosetta/ide-plugin-игрушка', env.processes);
+    const defaults = { checkProject: true, memoryBudgetMb: 3000 };
+    expect(project.settings('lsp', defaults)).toMatchObject({ checkProject: false, memoryBudgetMb: 7 });
+    expect(project.settings('нет-такого', { a: 1 }), 'нет раздела — умолчания').toEqual({ a: 1 });
+  });
+
+  it('предзагрузка ждёт проектный слой: бюджет проекта не проигрывает гонку', async () => {
+    await ws.dispose();
+    await removeProject(root);
+    const files: Record<string, string> = {
+      '.mosetta/settings.json': '{ "fs": { "preloadBudgetMb": 0.000001 } }\n',
+    };
+    for (let i = 0; i < 30; i += 1) files[`src/f${i}.ts`] = `export const v${i} = ${i};\n`;
+    root = await makeProject('plugin-project-preload', files);
+    ws = new Workspace(root, await ConfigStore.load(TEST_CONFIG_DIR), env.processes);
+    await ws.boot();
+    await ws.services.preload();
+    const resident = [...ws.services.ram.files()]
+      .filter((file) => ws.services.ram.docSync(file.path) && file.path.startsWith('src/'))
+      .map((file) => file.path);
+    expect(resident).toEqual([]);
+  });
+
   it('корень и имя — те же, что у проекта', () => {
     const project = new PluginProject(ws, '@mosetta/ide-plugin-игрушка', env.processes);
     expect(project.root).toBe(root);

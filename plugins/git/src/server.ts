@@ -16,7 +16,7 @@ export default class GitServer {
   @activate() protected start(): void {
     this.ide.onProject((project) => {
       const index = this.indexOf(project);
-      index.startAutoFetch(() => this.ide.settings('git', GIT_DEFAULTS).autoFetchMinutes);
+      index.startAutoFetch(() => project.settings('git', GIT_DEFAULTS).autoFetchMinutes);
       const off = project.memory.on((event) => {
         if (['doc.saved', 'doc.removed', 'doc.moved', 'tree.changed', 'doc.external'].includes(event.type)) {
           index.touch();

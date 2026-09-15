@@ -32,6 +32,10 @@ class FakeProject implements Project {
     throw new Error('долгоживущих процессов в этом тесте нет: pty рождается сам');
   }
 
+  settings<T extends object>(_section: string, defaults: T): T {
+    return defaults;
+  }
+
   readonly memory: ProjectMemory = {
     on: () => () => undefined,
     files: () => [],

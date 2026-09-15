@@ -45,6 +45,9 @@ class FakeProject implements Project {
   resolve(relative: string): string {
     return path.join(this.root, relative);
   }
+  settings<T extends object>(_section: string, defaults: T): T {
+    return defaults;
+  }
   spawned(): () => void {
     return () => undefined;
   }

@@ -74,6 +74,8 @@ export interface Project {
 
   hold(reason: string): () => void;
 
+  settings<T extends object>(section: string, defaults: T): T;
+
   resolve(relative: string): string;
 
   spawned(

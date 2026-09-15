@@ -1,3 +1,4 @@
+import type { FsSettings } from '@mosetta/ide-protocol';
 import type { ConfigStore } from '../config/store.js';
 import { OsFs } from '../fs/os-fs.js';
 import { OsWatcher } from '../fs/watcher.js';
@@ -61,14 +62,12 @@ export class Services {
         }
       }),
     );
+  }
 
-    this.offs.push(
-      config.onChange((bundle) => {
-        this.os.applySettings(bundle.settings.fs);
-        this.ram.applySettings(bundle.settings.fs);
-        this.watcher.applySettings(bundle.settings.fs);
-      }),
-    );
+  applySettings(settings: FsSettings): void {
+    this.os.applySettings(settings);
+    this.ram.applySettings(settings);
+    this.watcher.applySettings(settings);
   }
 
   async boot(): Promise<void> {
@@ -83,8 +82,10 @@ export class Services {
     await this.primeManifests();
 
     if (watching) this.watcher.release();
+  }
 
-    void this.ram.preload();
+  preload(): Promise<void> {
+    return this.ram.preload();
   }
 
   private async primeManifests(): Promise<void> {

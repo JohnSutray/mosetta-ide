@@ -40,7 +40,7 @@ export default class NpmScriptsServer {
   }
 
   private manager(project: Project): string {
-    return this.managers.chosen(this.suggested(project), this.ide.settings('tools', TOOLS_DEFAULTS).packageManager);
+    return this.managers.chosen(this.suggested(project), project.settings('tools', TOOLS_DEFAULTS).packageManager);
   }
 
   @activate() protected start(): void {
@@ -54,7 +54,7 @@ export default class NpmScriptsServer {
   @command('managers') protected listManagers(_params: unknown, call: CallContext): PackageManagerInfo[] {
     return this.managers.detect(
       this.suggested(call.project),
-      this.ide.settings('tools', TOOLS_DEFAULTS).packageManager,
+      call.project.settings('tools', TOOLS_DEFAULTS).packageManager,
       call.project.root,
     );
   }

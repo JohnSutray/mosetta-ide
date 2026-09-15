@@ -18,7 +18,7 @@ export default class SearchServer {
   @activate() protected start(): void {
     this.ide.onProject((project) => {
       const index = this.indexOf(project);
-      if (!this.ide.settings('index', INDEX_DEFAULTS).enabled) return;
+      if (!project.settings('index', INDEX_DEFAULTS).enabled) return;
       index.rebuild();
       void index.indexSymbols();
     });
@@ -28,7 +28,7 @@ export default class SearchServer {
     return project.use(
       'index',
       () =>
-        new SearchIndex(project.memory, () => this.ide.settings('index', INDEX_DEFAULTS), this.ide.log, this.finds),
+        new SearchIndex(project.memory, () => project.settings('index', INDEX_DEFAULTS), this.ide.log, this.finds),
     );
   }
 

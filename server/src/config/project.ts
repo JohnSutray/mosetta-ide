@@ -49,7 +49,15 @@ export class ProjectConfig implements WorkspaceResource {
 
   announce(): void {
     this.ws.broadcast('config.changed', this.bundle);
+    for (const listener of this.listeners) listener(this.bundle);
   }
+
+  onChange(listener: (bundle: ConfigBundle) => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private readonly listeners = new Set<(bundle: ConfigBundle) => void>();
 
   async set(section: string, key: string, value: SettingValue): Promise<{ rewritten: boolean }> {
     const text = (await this.readText()) ?? '';
