@@ -1,0 +1,8 @@
+{
+  "plugin.markdown": "Markdown",
+  "command.markdown.mode": "Markdown: next view mode",
+  "markdown.mode.text": "Text only",
+  "markdown.mode.both": "Text and preview",
+  "markdown.mode.view": "Preview only",
+  "markdown.words": "{count} words"
+}

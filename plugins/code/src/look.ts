@@ -83,7 +83,15 @@ export class CodeLook {
       { tag: [t.tagName], color: p.keyword },
       { tag: [t.attributeName], color: p.class },
       { tag: t.link, color: p.number, textDecoration: 'underline' },
-      { tag: t.heading, color: p.fg, fontWeight: 'bold' },
+      { tag: t.heading, color: p.class, fontWeight: 'bold' },
+      { tag: t.strong, color: p.fg, fontWeight: 'bold' },
+      { tag: t.emphasis, color: p.fg, fontStyle: 'italic' },
+      { tag: t.strikethrough, color: p.comment, textDecoration: 'line-through' },
+      { tag: t.monospace, color: p.string },
+      { tag: t.quote, color: p.comment, fontStyle: 'italic' },
+      { tag: t.url, color: p.number, textDecoration: 'underline' },
+      { tag: [t.processingInstruction, t.contentSeparator], color: p.keyword },
+      { tag: t.list, color: p.keyword },
       { tag: t.invalid, color: p.errorFg },
     ];
   }

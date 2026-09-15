@@ -519,6 +519,31 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@22.20.1)
 
+  plugins/markdown:
+    dependencies:
+      '@mosetta/ide-api':
+        specifier: workspace:*
+        version: link:../api
+      '@mosetta/ide-plugin-code':
+        specifier: workspace:*
+        version: link:../code
+      '@mosetta/ide-plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
+      '@mosetta/ide-plugin-ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      '@preact/signals':
+        specifier: ^1.3.1
+        version: 1.3.4(preact@10.29.8)
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@24.13.4)
+
   plugins/merge:
     dependencies:
       '@mosetta/ide-api':
@@ -992,6 +1017,9 @@ importers:
       '@mosetta/ide-plugin-lsp':
         specifier: workspace:*
         version: link:../plugins/lsp
+      '@mosetta/ide-plugin-markdown':
+        specifier: workspace:*
+        version: link:../plugins/markdown
       '@mosetta/ide-plugin-merge':
         specifier: workspace:*
         version: link:../plugins/merge

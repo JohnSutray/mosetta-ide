@@ -26,6 +26,7 @@ export class Defaults {
         '@mosetta/ide-plugin-toolbar',
         '@mosetta/ide-plugin-daemon',
         '@mosetta/ide-plugin-image',
+        '@mosetta/ide-plugin-markdown',
         '@mosetta/ide-plugin-layout',
         '@mosetta/ide-plugin-code',
         '@mosetta/ide-plugin-editor',
