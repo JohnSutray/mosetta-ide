@@ -14,6 +14,7 @@ export interface PanelApi {
   dirtyHere: () => boolean;
   outputInTerminal: boolean;
   canDebugFile: () => boolean;
+  openUrl: (url: string) => void;
 }
 
 const STEPS: Array<{ command: string; icon: () => JSX.Element; kind?: string; whenPaused: boolean }> = [
@@ -59,6 +60,7 @@ export function DebugPanel({ api }: { api: PanelApi }) {
       </div>
       <div class="debug-body">
         {runs.length === 0 && <Empty api={api} />}
+        <UrlField api={api} />
         {paused && api.dirtyHere() && <div class="debug-note">{t('debug.dirty')}</div>}
         {paused && <Frames api={api} />}
         {paused && <Variables api={api} />}
@@ -71,11 +73,36 @@ export function DebugPanel({ api }: { api: PanelApi }) {
 function RunLabel({ run, paused }: { run: RunInfo; paused: boolean }) {
   const t = useT();
   const state = paused && run.state !== 'ended' ? 'paused' : run.state;
+  const inBrowser = run.sessions.some((one) => one.kind === 'browser' && one.state !== 'ended');
   return (
-    <span class={`debug-run is-${state} ${run.error ? 'is-error' : ''}`} title={run.error ?? run.name}>
+    <span class={`debug-run is-${state} ${run.error ? 'is-error' : ''}`} title={run.url ?? run.error ?? run.name}>
       <b>{run.name}</b> · {t(`debug.state.${state}`)}
+      {inBrowser ? ` · ${t('debug.inBrowser')}` : ''}
       {run.error ? ` · ${run.error}` : ''}
     </span>
+  );
+}
+
+function UrlField({ api }: { api: PanelApi }) {
+  const t = useT();
+  const send = (input: HTMLInputElement): void => {
+    api.openUrl(input.value);
+    input.value = '';
+  };
+  return (
+    <form
+      class="debug-url"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const input = (event.currentTarget as HTMLFormElement).querySelector('input');
+        if (input) send(input);
+      }}
+    >
+      <input class="field debug-url-field" placeholder={t('debug.url.placeholder')} />
+      <button type="submit" class="debug-btn debug-url-go">
+        {t('debug.url.open')}
+      </button>
+    </form>
   );
 }
 

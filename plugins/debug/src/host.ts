@@ -2,8 +2,10 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import type { Logger, Project, ProjectResource } from '@mosetta/ide-api/server';
 import type { JsDebugAdapter } from './adapter.js';
+import { ServerReady } from './ready.js';
 import { DebugRun, type RunOwner } from './run.js';
 import type { DapSession, TerminalAsk } from './session.js';
+import { DEBUG_DEFAULTS, type DebugSettings } from './settings.js';
 import { shellLine } from './shell-line.js';
 import { Sources, type DapFrame, type DapSource } from './sources.js';
 import type {
@@ -28,7 +30,12 @@ export interface TerminalAskOut {
   sameShell: string;
 }
 
-export type TerminalRunner = ((ask: TerminalAskOut) => { pid: number }) | null;
+export interface TerminalRun {
+  pid: number;
+  watch: (listener: (data: string) => void) => () => void;
+}
+
+export type TerminalRunner = ((ask: TerminalAskOut) => TerminalRun) | null;
 
 export class DebugHost implements ProjectResource, RunOwner {
   private readonly lines = new Map<string, number[]>();
@@ -36,6 +43,7 @@ export class DebugHost implements ProjectResource, RunOwner {
   private readonly holds = new Map<string, () => void>();
   private readonly sources: Sources;
   private readonly foreign = new Set<string>();
+  private readonly ready = new Map<string, { watcher: ServerReady; off: () => void }>();
   private next = 1;
 
   constructor(
@@ -44,6 +52,7 @@ export class DebugHost implements ProjectResource, RunOwner {
     private readonly log: Logger,
     private readonly terminalRunner: TerminalRunner = null,
     private readonly readDisk: (absolute: string) => Promise<string> = (absolute) => readFile(absolute, 'utf8'),
+    private readonly settings: () => DebugSettings = () => DEBUG_DEFAULTS,
   ) {
     this.sources = new Sources(project.root, (relative) => project.resolve(relative));
   }
@@ -80,11 +89,11 @@ export class DebugHost implements ProjectResource, RunOwner {
   }
 
   async launch(ask: LaunchAsk): Promise<RunInfo> {
-    if (!ask.program && !ask.runtime) throw new Error('launch needs program or runtime');
+    if (!ask.program && !ask.runtime && !ask.url) throw new Error('launch needs program, runtime or url');
     if (ask.program && !existsSync(this.project.resolve(ask.program))) {
       throw new Error(`program not found: ${ask.program}`);
     }
-    const name = ask.name ?? ask.program ?? ask.runtime ?? 'debug';
+    const name = ask.name ?? ask.program ?? ask.url ?? ask.runtime ?? 'debug';
     for (const run of this.runs.values()) {
       if (run.name === name && run.state === 'ended') this.runs.delete(run.id);
     }
@@ -95,8 +104,64 @@ export class DebugHost implements ProjectResource, RunOwner {
     this.runs.set(id, run);
     this.holds.set(id, this.project.hold(`debug ${name}`));
     this.log.info(`debug: ${name} started`);
-    await run.begin(this.configuration(name, ask));
+    if (ask.url) {
+      run.url = ask.url;
+      await run.begin(this.browserConfiguration(name, ask.url));
+    } else {
+      await run.begin(this.configuration(name, ask));
+      if (this.settings().openBrowser && !this.hasTerminal()) this.awaitServer(run, null);
+    }
     return run.info();
+  }
+
+  async openBrowser(runId: string, url: string): Promise<RunInfo> {
+    const run = this.run(runId);
+    if (run.state === 'ended') throw new Error(`run ${runId} has ended`);
+    run.url = url;
+    this.log.info(`debug: ${run.name} → browser at ${url}`);
+    await run.openRoot(this.browserConfiguration(`${run.name} · browser`, url));
+    this.project.emit('browser', { run: run.id, url });
+    return run.info();
+  }
+
+  private awaitServer(run: DebugRun, watch: TerminalRun['watch'] | null): void {
+    if (!this.settings().openBrowser || this.ready.has(run.id)) return;
+    const watcher = new ServerReady(ServerReady.compile(this.settings().serverReady, DEBUG_DEFAULTS.serverReady));
+    const listener = (data: string): void => {
+      const url = watcher.feed(data);
+      if (!url) return;
+      this.forgetReady(run.id);
+      this.openBrowser(run.id, url).catch((err) => {
+        this.log.warn(`debug: browser did not open for ${run.name}: ${String(err)}`);
+        this.project.emit('output', { run: run.id, session: '', category: 'stderr', text: `browser: ${String(err)}\n` });
+      });
+    };
+    const off = watch ? watch(listener) : () => undefined;
+    this.ready.set(run.id, { watcher, off });
+    if (!watch) this.readyFromOutput.set(run.id, listener);
+  }
+
+  private readonly readyFromOutput = new Map<string, (data: string) => void>();
+
+  private forgetReady(runId: string): void {
+    this.ready.get(runId)?.off();
+    this.ready.delete(runId);
+    this.readyFromOutput.delete(runId);
+  }
+
+  private browserConfiguration(name: string, url: string): Record<string, unknown> {
+    const { browser, browserArgs, webRoot } = this.settings();
+    return {
+      type: 'pwa-chrome',
+      request: 'launch',
+      name,
+      url,
+      webRoot: webRoot.trim() ? this.project.resolve(webRoot.trim()) : this.project.root,
+      userDataDir: true,
+      ...(browser.trim() ? { runtimeExecutable: browser.trim() } : {}),
+      ...(browserArgs.length > 0 ? { runtimeArgs: browserArgs } : {}),
+      __workspaceFolder: this.project.root,
+    };
   }
 
   list(): RunInfo[] {
@@ -188,6 +253,7 @@ export class DebugHost implements ProjectResource, RunOwner {
   }
 
   dispose(): void {
+    for (const id of [...this.ready.keys()]) this.forgetReady(id);
     for (const run of this.runs.values()) void run.stop();
     this.runs.clear();
     for (const release of this.holds.values()) release();
@@ -208,29 +274,31 @@ export class DebugHost implements ProjectResource, RunOwner {
 
   async terminal(run: DebugRun, ask: TerminalAsk): Promise<{ shellProcessId?: number; processId?: number }> {
     if (!this.terminalRunner) throw new Error('no terminal in this build');
-    let pid: number;
+    let opened: TerminalRun;
     const env: Record<string, string> = {};
     for (const [key, value] of Object.entries(ask.env ?? {})) if (typeof value === 'string') env[key] = value;
     try {
-      pid = this.terminalRunner({
+      opened = this.terminalRunner({
         name: `debug::${run.name}`,
         cwd: ask.cwd || this.project.root,
         command: shellLine.compose(ask.args),
         env,
         sameShell: shellLine.compose(ask.args, env),
-      }).pid;
+      });
     } catch (err) {
       this.log.warn(`debug: terminal refused ${run.name}: ${String(err)}`);
       throw err;
     }
     this.project.emit('terminal', { run: run.id, name: `debug::${run.name}` });
-    return { shellProcessId: pid };
+    this.awaitServer(run, opened.watch);
+    return { shellProcessId: opened.pid };
   }
 
   changed(run: DebugRun): void {
     if (run.state === 'ended') {
       this.holds.get(run.id)?.();
       this.holds.delete(run.id);
+      this.forgetReady(run.id);
     }
     this.project.emit('runs', this.list());
   }
@@ -241,6 +309,7 @@ export class DebugHost implements ProjectResource, RunOwner {
 
   output(run: DebugRun, session: DapSession, category: string, text: string): void {
     this.project.emit('output', { run: run.id, session: session.id, category, text });
+    if (category === 'stdout' || category === 'stderr' || category === 'console') this.readyFromOutput.get(run.id)?.(text);
   }
 
   verified(_run: DebugRun, key: string): void {

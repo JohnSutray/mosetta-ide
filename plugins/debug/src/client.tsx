@@ -1,4 +1,4 @@
-import { activate, command, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import { activate, command, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
 import { effect, signal, type Signal } from '@preact/signals';
 import type { EditorView } from '@codemirror/view';
 import CodePlugin, { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
@@ -11,6 +11,7 @@ import { ForeignView, FOREIGN_PREFIX } from './foreign.js';
 import { BugIcon } from './icons.js';
 import { DebugMarks, setBreakpoints, setExecution } from './marks.js';
 import { DebugPanel, type PanelApi } from './panel.js';
+import { DEBUG_DEFAULTS, DEBUG_SCHEMA } from './settings.js';
 import { DebugState, type Foreign, type VarNode } from './state.js';
 import { STYLE } from './style.js';
 import type {
@@ -39,6 +40,7 @@ const DEBUGGABLE = /\.(?:m?js|cjs|m?ts|cts)$/i;
 
 const MOVE_DEBOUNCE_MS = 300;
 
+@configSection({ section: 'debug', defaults: DEBUG_DEFAULTS, schema: DEBUG_SCHEMA })
 @plugin({ title: 'plugin.debug' })
 export default class DebugPlugin {
   readonly state = new DebugState();
@@ -183,6 +185,7 @@ export default class DebugPlugin {
   @remote('setBreakpoints') protected askSetBreakpoints(_p: { path: string; lines: number[] }): Promise<FileBreakpoints> { return stub(); }
   @remote('launch') protected askLaunch(_p: LaunchAsk): Promise<RunInfo> { return stub(); }
   @remote('runs') protected askRuns(): Promise<RunInfo[]> { return stub(); }
+  @remote('openBrowser') protected askOpenBrowser(_p: { run: string; url: string }): Promise<RunInfo> { return stub(); }
   @remote('stop') protected askStop(_p: { run: string }): Promise<null> { return stub(); }
   @remote('step') protected askStep(_p: { run: string; session: string; thread: number; action: Step }): Promise<null> { return stub(); }
   @remote('stack') protected askStack(_p: { run: string; session: string; thread: number }): Promise<Frame[]> { return stub(); }
@@ -197,6 +200,22 @@ export default class DebugPlugin {
     try {
       const run = await this.askLaunch(ask);
       this.ide.say(this.ide.t('debug.launched', { name: run.name }));
+    } catch (err) {
+      this.fail(err);
+    }
+  }
+
+  async openUrl(url: string): Promise<void> {
+    const clean = url.trim();
+    if (clean === '') return;
+    const live = this.state.live.value.find((run) => !run.url && run.sessions.every((one) => one.kind === 'node'));
+    try {
+      if (live) {
+        const info = await this.askOpenBrowser({ run: live.id, url: clean });
+        this.ide.say(this.ide.t('debug.browser.opened', { url: info.url ?? clean }));
+        return;
+      }
+      await this.launch({ name: clean, url: clean });
     } catch (err) {
       this.fail(err);
     }
@@ -257,6 +276,10 @@ export default class DebugPlugin {
     this.ide.on('breakpoints', (payload) => {
       this.state.setBreakpoints(payload as FileBreakpoints);
       this.remember();
+    });
+    this.ide.on('browser', (payload) => {
+      const { url } = payload as { run: string; url: string };
+      this.ide.say(this.ide.t('debug.browser.opened', { url }));
     });
     this.ide.on('terminal', (payload) => {
       const { name } = payload as { run: string; name: string };
@@ -423,6 +446,7 @@ export default class DebugPlugin {
       },
       outputInTerminal: this.inTerminal.value,
       canDebugFile: () => DEBUGGABLE.test(this.docs.openDoc.value?.path ?? ''),
+      openUrl: (url) => void this.openUrl(url),
     };
   }
 }

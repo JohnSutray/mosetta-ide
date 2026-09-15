@@ -37,6 +37,7 @@ interface Terminal {
 
 export class TerminalHost {
   private readonly terminals = new Map<string, Terminal>();
+  private readonly watchers = new Map<string, Set<(data: string) => void>>();
   private busyTimer: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
 
@@ -123,6 +124,7 @@ export class TerminalHost {
     pty.onData((data) => {
       terminal.buffer = trim(terminal.buffer + data);
       this.emit('data', { name: options.name, data });
+      for (const watcher of this.watchers.get(options.name) ?? []) watcher(data);
     });
 
     pty.onExit(({ exitCode }) => {
@@ -158,6 +160,16 @@ export class TerminalHost {
       return existing.info;
     }
     return this.open(options);
+  }
+
+  watch(name: string, listener: (data: string) => void): () => void {
+    const set = this.watchers.get(name) ?? new Set();
+    set.add(listener);
+    this.watchers.set(name, set);
+    return () => {
+      set.delete(listener);
+      if (set.size === 0) this.watchers.delete(name);
+    };
   }
 
   private busyNow(terminal: Terminal): boolean {

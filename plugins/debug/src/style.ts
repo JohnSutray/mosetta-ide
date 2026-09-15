@@ -53,6 +53,9 @@ export const STYLE = `
 .debug-run.is-error { color: var(--error); }
 
 .debug-body { flex: 1; min-height: 0; overflow: auto; }
+.debug-url { display: flex; gap: 4px; padding: 5px 8px; border-bottom: 1px solid var(--divider); }
+.debug-url-field { flex: 1; min-width: 0; font: 12px var(--ui-font); padding: 2px 6px; }
+.debug-url-go { width: auto; padding: 0 8px; font: 12px var(--ui-font); }
 .debug-section { border-bottom: 1px solid var(--divider); }
 .debug-head {
   position: sticky;

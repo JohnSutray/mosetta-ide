@@ -35,5 +35,14 @@
   "debug.foreign.gone": "This debugger source is no longer available: the session that produced it has ended",
   "debug.foreign.loading": "loading…",
   "debug.launched": "debugging {name}",
-  "debug.failed": "debug: {why}"
+  "debug.failed": "debug: {why}",
+  "debug.inBrowser": "browser",
+  "debug.browser.opened": "debugging the page at {url}",
+  "debug.url.placeholder": "http://localhost:… — open under the debugger",
+  "debug.url.open": "open",
+  "settings.debug.openBrowser": "When a debugged program prints a local address, open it in the browser under the debugger",
+  "settings.debug.serverReady": "How the address is recognised in the output (regular expression, the first group is the address)",
+  "settings.debug.browser": "Which browser (empty — installed Chrome; canary, dev, edge, or a path)",
+  "settings.debug.browserArgs": "Arguments for the browser",
+  "settings.debug.webRoot": "Folder the dev server serves from, relative to the project (empty — the project root)"
 }

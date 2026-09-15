@@ -8,6 +8,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { Logger, ProcessHandle, RunAsk } from '@mosetta/ide-api/server';
 import { JsDebugAdapter } from '../src/adapter.js';
 import { DebugHost, type DebugProject, type TerminalRunner } from '../src/host.js';
+import { ServerReady } from '../src/ready.js';
+import { DEBUG_DEFAULTS, type DebugSettings } from '../src/settings.js';
 import type { FileBreakpoints, Output, RunInfo, Stop } from '../src/types.js';
 import { DapSession, type SessionOwner } from '../src/session.js';
 import { DapWire, type Stream } from '../src/wire.js';
@@ -26,7 +28,7 @@ class Bench {
   readonly held = new Set<string>();
   readonly host: DebugHost;
 
-  constructor(terminal: TerminalRunner = null, root = fixtures) {
+  constructor(terminal: TerminalRunner = null, root = fixtures, settings: Partial<DebugSettings> = {}) {
     const project: DebugProject = {
       root,
       resolve: (relative) => {
@@ -41,7 +43,10 @@ class Bench {
       },
       start: (ask) => this.start(ask),
     };
-    this.host = new DebugHost(project, new JsDebugAdapter(pkg, os.tmpdir()), quiet, terminal);
+    this.host = new DebugHost(project, new JsDebugAdapter(pkg, os.tmpdir()), quiet, terminal, undefined, () => ({
+      ...DEBUG_DEFAULTS,
+      ...settings,
+    }));
   }
 
   private start(ask: RunAsk): ProcessHandle {
@@ -95,6 +100,40 @@ class Bench {
 let bench: Bench;
 
 afterEach(() => bench?.dispose());
+
+function shellRunner(consoles: Array<{ command: string; sameShell: string; env: Record<string, string>; out: string }>): TerminalRunner {
+  return (ask) => {
+    const entry = { command: ask.command, sameShell: ask.sameShell, env: ask.env, out: '' };
+    consoles.push(entry);
+    const listeners = new Set<(data: string) => void>();
+    const shell = spawn('sh', ['-c', ask.command], { cwd: ask.cwd, env: { ...process.env, ...ask.env }, stdio: ['ignore', 'pipe', 'pipe'] });
+    const heard = (chunk: Buffer): void => {
+      entry.out += String(chunk);
+      for (const listener of listeners) listener(String(chunk));
+    };
+    shell.stdout.on('data', heard);
+    shell.stderr.on('data', heard);
+    bench.children.push(shell);
+    return {
+      pid: shell.pid ?? 0,
+      watch: (listener) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+    };
+  };
+}
+
+function chromeMissing(): string | null {
+  const candidates =
+    process.platform === 'darwin'
+      ? ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
+      : ['/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser'];
+  return candidates.some((one) => existsSync(one)) ? null : 'Chrome is not installed on this machine';
+}
+
+const NO_CHROME = chromeMissing();
+if (NO_CHROME) console.warn(`[debug] ${NO_CHROME} — the browser test is skipped`);
 
 describe('адаптер привезён', () => {
   it('лежит в пакете той версии, что записана в паспорте', () => {
@@ -337,15 +376,7 @@ describe('провод DAP', () => {
 describe('настоящий терминал и файлы за корнем', { timeout: 30_000 }, () => {
   it.skipIf(process.platform === 'win32')('с терминалом программа выполняется В НЁМ: вывод в консоли, остановка — у нас', async () => {
     const consoles: Array<{ command: string; sameShell: string; env: Record<string, string>; out: string }> = [];
-    bench = new Bench((ask) => {
-      const entry = { command: ask.command, sameShell: ask.sameShell, env: ask.env, out: '' };
-      consoles.push(entry);
-      const shell = spawn('sh', ['-c', ask.command], { cwd: ask.cwd, env: { ...process.env, ...ask.env }, stdio: ['ignore', 'pipe', 'pipe'] });
-      shell.stdout.on('data', (chunk) => (entry.out += String(chunk)));
-      shell.stderr.on('data', (chunk) => (entry.out += String(chunk)));
-      bench.children.push(shell);
-      return { pid: shell.pid ?? 0 };
-    });
+    bench = new Bench(shellRunner(consoles));
     await bench.host.setBreakpoints('plain.js', [4]);
     const run = await bench.host.launch({ program: 'plain.js' });
     const hit = await bench.until('stop', () => bench.stops()[0]);
@@ -373,5 +404,47 @@ describe('настоящий терминал и файлы за корнем', 
     await expect(bench.host.readForeign(path.join(fixtures, 'plain.js'))).rejects.toThrow(/not a debugger source/);
     await bench.host.step(run.id, hit.session, hit.stop.thread, 'continue');
     await bench.until('run end', () => bench.ended(run.id));
+  });
+});
+
+describe('браузер под отладчиком', { timeout: 60_000 }, () => {
+  it('адрес в выводе распознаётся по законченной строке, без цветов и один раз', () => {
+    const ready = new ServerReady(new RegExp(DEBUG_DEFAULTS.serverReady));
+    expect(ready.feed('\x1b[32mready\x1b[0m listening on http://127.0.0.1:51')).toBeNull();
+    expect(ready.feed('234/ (open it)\n')).toBe('http://127.0.0.1:51234/');
+    expect(ready.feed('again http://localhost:3000/\n')).toBeNull();
+    expect(new ServerReady(new RegExp(DEBUG_DEFAULTS.serverReady)).feed('  - Local:        http://localhost:3000\n')).toBe('http://localhost:3000');
+  });
+
+  it.skipIf(NO_CHROME || process.platform === 'win32')(
+    'сервер напечатал адрес — открылся браузер, и точка в скрипте страницы сработала',
+    async () => {
+      const consoles: Array<{ command: string; sameShell: string; env: Record<string, string>; out: string }> = [];
+      bench = new Bench(shellRunner(consoles), fixtures, { browserArgs: ['--headless=new'] });
+      await bench.host.setBreakpoints('web/app.js', [3]);
+      const run = await bench.host.launch({ program: 'web/server.js' });
+      const opened = await bench.until('browser session', () => bench.of<{ run: string; url: string }>('browser')[0], 40_000);
+      expect(opened.url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/web\/$/);
+      const hit = await bench.until('stop in the page script', () => bench.stops()[0], 40_000);
+      const tree = bench.lastRuns().find((one) => one.id === run.id)!;
+      expect(tree.url).toBe(opened.url);
+      expect(tree.sessions.find((one) => one.id === hit.session)?.kind).toBe('browser');
+      const frames = await bench.host.stack(run.id, hit.session, hit.stop.thread);
+      expect(frames[0]).toMatchObject({ name: 'Window.greet', line: 3, source: { kind: 'project', path: 'web/app.js' } });
+      const scopes = await bench.host.scopes(run.id, hit.session, frames[0]!.id);
+      const locals = await bench.host.variables(run.id, hit.session, scopes[0]!.ref);
+      expect(locals.find((one) => one.name === 'who')?.value).toBe("'browser'");
+      await bench.host.step(run.id, hit.session, hit.stop.thread, 'continue');
+      await bench.host.stop(run.id);
+      expect(bench.ended(run.id)).toBe(true);
+    },
+  );
+
+  it.skipIf(NO_CHROME)('страницу можно открыть и без сервера — по адресу', async () => {
+    bench = new Bench(null, fixtures, { browserArgs: ['--headless=new'] });
+    const run = await bench.host.launch({ url: 'about:blank' });
+    expect(run.url).toBe('about:blank');
+    expect(run.sessions[0]?.kind).toBe('browser');
+    await bench.host.stop(run.id);
   });
 });

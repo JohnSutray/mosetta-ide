@@ -48,6 +48,7 @@ export interface SessionInfo {
   id: string;
   name: string;
   parent: string | null;
+  kind: 'node' | 'browser';
   state: 'starting' | 'running' | 'paused' | 'ended';
   stopped?: Stop;
 }
@@ -57,12 +58,14 @@ export interface RunInfo {
   name: string;
   state: 'starting' | 'running' | 'ended';
   sessions: SessionInfo[];
+  url?: string;
   error?: string;
 }
 
 export interface LaunchAsk {
   name?: string;
   program?: string;
+  url?: string;
   runtime?: string;
   runtimeArgs?: string[];
   args?: string[];

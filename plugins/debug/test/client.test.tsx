@@ -15,7 +15,7 @@ const RUN: RunInfo = {
   id: '1',
   name: 'plain.js',
   state: 'running',
-  sessions: [{ id: '1.0', name: 'plain.js', parent: null, state: 'running' }],
+  sessions: [{ id: '1.0', name: 'plain.js', parent: null, kind: 'node', state: 'running' }],
 };
 
 describe('отладчик на вкладке', () => {

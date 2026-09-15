@@ -40,6 +40,8 @@ export class DapSession {
   private readonly placed = new Map<string, Placed[]>();
   private readonly offs: Array<() => void> = [];
 
+  kind: 'node' | 'browser' = 'node';
+
   constructor(
     readonly id: string,
     readonly name: string,
@@ -53,6 +55,9 @@ export class DapSession {
   }
 
   async begin(request: 'launch' | 'attach', configuration: Record<string, unknown>): Promise<void> {
+    if (String(configuration['type'] ?? '').includes('chrome') || String(configuration['type'] ?? '').includes('msedge')) {
+      this.kind = 'browser';
+    }
     let timer: ReturnType<typeof setTimeout> | undefined;
     const deadline = new Promise<never>((_, reject) => {
       timer = setTimeout(
@@ -126,6 +131,7 @@ export class DapSession {
       id: this.id,
       name: this.name,
       parent: this.parent,
+      kind: this.kind,
       state: this.state,
       ...(this.stop ? { stopped: this.stop } : {}),
     };

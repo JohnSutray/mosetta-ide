@@ -48,6 +48,13 @@ export default class TerminalServer {
     return host.runIn({ ...options, kind: 'script' });
   }
 
+  watch(root: string, name: string, listener: (data: string) => void): () => void {
+    const project = this.projects.get(root);
+    if (!project) throw new Error(`no project open at ${root}`);
+    const host = project.use('host', () => new TerminalHost(project, this.ide.log, () => this.shell()));
+    return host.watch(name, listener);
+  }
+
   @command('shells') protected detectShells(): ShellInfo[] {
     return this.shells.detect(this.shell().file);
   }

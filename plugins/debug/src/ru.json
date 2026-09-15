@@ -35,5 +35,14 @@
   "debug.foreign.gone": "Этого источника больше нет: сеанс, который его показал, завершён",
   "debug.foreign.loading": "загрузка…",
   "debug.launched": "отладка: {name}",
-  "debug.failed": "отладка: {why}"
+  "debug.failed": "отладка: {why}",
+  "debug.inBrowser": "браузер",
+  "debug.browser.opened": "отладка страницы {url}",
+  "debug.url.placeholder": "http://localhost:… — открыть под отладчиком",
+  "debug.url.open": "открыть",
+  "settings.debug.openBrowser": "Когда отлаживаемая программа печатает локальный адрес, открывать его в браузере под отладчиком",
+  "settings.debug.serverReady": "Как узнаётся адрес в выводе (регулярное выражение, первая скобка — адрес)",
+  "settings.debug.browser": "Какой браузер (пусто — установленный Chrome; canary, dev, edge или путь)",
+  "settings.debug.browserArgs": "Аргументы браузеру",
+  "settings.debug.webRoot": "Откуда сервер отдаёт файлы, относительно проекта (пусто — корень проекта)"
 }

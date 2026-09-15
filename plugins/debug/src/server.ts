@@ -3,6 +3,7 @@ import { command, type CallContext, type Ide, type Project } from '@mosetta/ide-
 import TerminalServer from '@mosetta/ide-plugin-terminal/server';
 import { JsDebugAdapter } from './adapter.js';
 import { DebugHost, type TerminalRunner } from './host.js';
+import { DEBUG_DEFAULTS } from './settings.js';
 import type { FileBreakpoints, Frame, LaunchAsk, RunInfo, Scope, Step, Variable } from './types.js';
 
 export type { FileBreakpoints, Frame, LaunchAsk, RunInfo, Scope, SessionInfo, SourceRef, Step, Variable } from './types.js';
@@ -19,7 +20,15 @@ export default class DebugServer {
   private host(call: CallContext): DebugHost {
     return call.project.use(
       'host',
-      () => new DebugHost(call.project, this.adapter, this.ide.log, this.terminalRunner(call.project)),
+      () =>
+        new DebugHost(
+          call.project,
+          this.adapter,
+          this.ide.log,
+          this.terminalRunner(call.project),
+          undefined,
+          () => this.ide.settings('debug', DEBUG_DEFAULTS),
+        ),
     );
   }
 
@@ -31,7 +40,10 @@ export default class DebugServer {
     } catch {
       return null;
     }
-    return (ask) => ({ pid: terminal.runIn(project.root, ask).pid });
+    return (ask) => ({
+      pid: terminal.runIn(project.root, ask).pid,
+      watch: (listener) => terminal.watch(project.root, ask.name, listener),
+    });
   }
 
   @command() protected breakpoints(_params: unknown, call: CallContext): FileBreakpoints[] {
@@ -49,6 +61,10 @@ export default class DebugServer {
 
   @command() protected launch(params: unknown, call: CallContext): Promise<RunInfo> {
     return this.host(call).launch(launchAsk(params));
+  }
+
+  @command() protected openBrowser(params: unknown, call: CallContext): Promise<RunInfo> {
+    return this.host(call).openBrowser(field(params, 'run'), field(params, 'url'));
   }
 
   @command() protected runs(_params: unknown, call: CallContext): RunInfo[] {
@@ -133,12 +149,14 @@ function launchAsk(params: unknown): LaunchAsk {
   const ask: LaunchAsk = {};
   const name = text('name');
   const program = text('program');
+  const url = text('url');
   const runtime = text('runtime');
   const cwd = text('cwd');
   const runtimeArgs = strings(asked['runtimeArgs'], 'runtimeArgs');
   const args = strings(asked['args'], 'args');
   if (name) ask.name = name;
   if (program) ask.program = program;
+  if (url) ask.url = url;
   if (runtime) ask.runtime = runtime;
   if (cwd) ask.cwd = cwd;
   if (runtimeArgs) ask.runtimeArgs = runtimeArgs;

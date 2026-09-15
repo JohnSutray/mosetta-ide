@@ -18,6 +18,7 @@ const DISCONNECT_MS = 2000;
 export class DebugRun implements SessionOwner {
   state: RunInfo['state'] = 'starting';
   error: string | undefined;
+  url: string | undefined;
   private readonly sessions = new Map<string, DapSession>();
   private next = 0;
 
@@ -44,6 +45,10 @@ export class DebugRun implements SessionOwner {
       await this.stop();
       throw err;
     }
+  }
+
+  async openRoot(configuration: Record<string, unknown>): Promise<void> {
+    await this.open(null, 'launch', configuration);
   }
 
   session(id: string): DapSession {
@@ -86,6 +91,7 @@ export class DebugRun implements SessionOwner {
       name: this.name,
       state: this.state,
       sessions: [...this.sessions.values()].map((session) => session.info()),
+      ...(this.url ? { url: this.url } : {}),
       ...(this.error ? { error: this.error } : {}),
     };
   }
@@ -109,8 +115,8 @@ export class DebugRun implements SessionOwner {
   }
 
   changed(session: DapSession): void {
-    const root = session.id === this.rootId();
-    if (root && session.state === 'ended') {
+    const roots = [...this.sessions.values()].filter((one) => one.parent === null);
+    if (roots.length > 0 && roots.every((one) => one.state === 'ended')) {
       this.end(this.error);
       return;
     }
@@ -147,10 +153,6 @@ export class DebugRun implements SessionOwner {
     let depth = 0;
     for (let at = session.parent; at !== null; at = this.sessions.get(at)?.parent ?? null) depth += 1;
     return depth;
-  }
-
-  private rootId(): string {
-    return `${this.id}.0`;
   }
 
   private end(error: string | undefined): void {
