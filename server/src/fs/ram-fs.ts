@@ -29,6 +29,10 @@ export type RamEvent =
   | { type: 'doc.moved'; path: string; from: string }
   | { type: 'tree.changed'; path: string };
 
+function same(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((one) => b.includes(one));
+}
+
 interface DirNode {
   entries: DirEntry[];
   scanned: boolean;
@@ -64,7 +68,20 @@ export class RamFs {
   }
 
   applySettings(settings: FsSettings): void {
+    const before = this.settings;
     this.settings = settings;
+    if (same(before.noScan, settings.noScan) && same(before.hidden, settings.hidden)) return;
+    void this.reprime().catch((err) => this.log.warn(`перестройка дерева: ${String(err)}`));
+  }
+
+  private async reprime(): Promise<void> {
+    const known = [...this.dirs.keys()];
+    this.dirs.clear();
+    this.fileCount = 0;
+    await this.prime();
+    for (const key of new Set([...known, ...this.dirs.keys()])) {
+      this.emit({ type: 'tree.changed', path: key });
+    }
   }
 
   on(listener: (event: RamEvent) => void): () => void {

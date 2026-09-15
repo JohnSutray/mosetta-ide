@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { RunningServer } from '../src/server.js';
-import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
+import os from 'node:os';
+import { connect, makeProject, removeProject, waitFor, withServer, type TestClient } from './helpers.js';
 
 interface Hit {
   kind: string;
@@ -233,5 +234,53 @@ describe('двоичное узнаётся по содержимому', () => 
   it('дерево показывает всё, включая двоичное', async () => {
     const entries = (await c.call('tree.list', { path: '' })) as Array<{ path: string }>;
     expect(entries.map((e) => e.path)).toContain('picture.png');
+  });
+});
+
+describe('папка уходит из обхода по настройке', () => {
+  let server: RunningServer;
+  let configDir: string;
+  let root: string;
+  let c: TestClient;
+
+  async function entriesOf(dir: string): Promise<Array<{ name: string; noScan?: boolean }>> {
+    return (await c.call('tree.list', { path: dir })) as Array<{ name: string; noScan?: boolean }>;
+  }
+
+  beforeEach(async () => {
+    configDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-noscan-'));
+    await fs.writeFile(path.join(configDir, 'settings.json'), '{\n  "fs": { "noScan": [] }\n}\n', 'utf8');
+    server = await withServer(60_000, configDir);
+    root = await makeProject('noscan', {
+      'desktop/.build/main.cjs': 'module.exports = 1;\n',
+      'src/a.ts': 'const a = 1;\n',
+    });
+    c = await connect(server);
+    await c.call('workspace.open', { root });
+  });
+
+  afterEach(async () => {
+    await c.close();
+    await server.close();
+    await removeProject(root);
+    await fs.rm(configDir, { recursive: true, force: true });
+  });
+
+  it('сначала папка обычная и её содержимое в памяти', async () => {
+    const before = await entriesOf('desktop');
+    expect(before.find((e) => e.name === '.build')?.noScan ?? false).toBe(false);
+    const stats = await c.call('tree.stats', null);
+    expect(stats.files).toBe(2);
+  });
+
+  it('добавили в noScan — папка помечена, а внутренности из памяти ушли', async () => {
+    await c.call('config.set', { section: 'fs', key: 'noScan', value: ['.build'] });
+    await waitFor(
+      async () => (await c.call('tree.stats', null)).files === 1,
+      'дерево пересобралось без содержимого .build',
+    );
+
+    const after = await entriesOf('desktop');
+    expect(after.find((e) => e.name === '.build')?.noScan, 'папка помечена').toBe(true);
   });
 });
