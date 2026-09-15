@@ -19,6 +19,7 @@ export interface GrepResult {
   files: number;
   total: number;
   truncated: boolean;
+  skipped: number;
 }
 
 export class Grep {
@@ -34,8 +35,16 @@ export class Grep {
   }
 
   masks(list: string[]): (path: string) => boolean {
+    return this.match(list, true);
+  }
+
+  excludes(list: string[]): (path: string) => boolean {
+    return this.match(list, false);
+  }
+
+  private match(list: string[], empty: boolean): (path: string) => boolean {
     const clean = list.map((one) => one.trim()).filter(Boolean);
-    if (clean.length === 0) return () => true;
+    if (clean.length === 0) return () => empty;
     const tests = clean.map((mask) => {
       const source = mask
         .replace(/[.+^${}()|[\]\\]/g, '\\$&')

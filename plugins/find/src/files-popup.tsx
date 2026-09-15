@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'preact/hooks';
+import type { RefObject } from 'preact';
 import type { ComponentChildren } from 'preact';
 import { useIde, useT } from '@mosetta/ide-api/client';
 import type CodePlugin from '@mosetta/ide-plugin-code';
 import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
 import { Popup } from '@mosetta/ide-plugin-ui';
 import type { Windows } from '@mosetta/ide-plugin-ui';
-import type { FindFiles } from './files.js';
+import type { MaskChips } from './chips.js';
+import type { FilesField, FindFiles } from './files.js';
 import type { HitLine, HitParts } from './hit-line.js';
 import { ReplaceIcon } from './icons.js';
 
@@ -58,14 +60,22 @@ export function FindFilesPopup({
   const query = useRef<HTMLInputElement>(null);
   const replace = useRef<HTMLInputElement>(null);
   const mask = useRef<HTMLInputElement>(null);
+  const exclude = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const focus = files.focus.value;
 
   useEffect(() => {
     if (!files.open.value) return;
-    const target = focus.field === 'replace' ? replace : focus.field === 'mask' ? mask : query;
+    const target =
+      focus.field === 'replace'
+        ? replace
+        : focus.field === 'mask'
+          ? mask
+          : focus.field === 'exclude'
+            ? exclude
+            : query;
     target.current?.focus();
-    if (focus.field !== 'mask') target.current?.select();
+    if (focus.field !== 'mask' && focus.field !== 'exclude') target.current?.select();
   }, [files.open.value, focus]);
 
   useEffect(() => {
@@ -142,30 +152,28 @@ export function FindFilesPopup({
             </Tool>
           </div>
         )}
-        <div class="fif-row fif-masks" data-keys="find-files-mask">
-          {files.masks.value.map((one) => (
-            <span class={`fif-chip ${files.isOff(one) ? 'is-off' : ''}`} key={one}>
-              <button type="button" class="fif-chip-name" onMouseDown={(event) => event.preventDefault()} onClick={() => files.toggleMask(one)}>
-                {one}
-              </button>
-              <button type="button" class="fif-chip-close" onMouseDown={(event) => event.preventDefault()} onClick={() => files.removeMask(one)}>
-                ×
-              </button>
-            </span>
-          ))}
-          <input
-            ref={mask}
-            class="fif-mask"
-            style={{ width: `${width(files.maskDraft.value, 7)}ch` }}
-            value={files.maskDraft.value}
-            spellcheck={false}
-            placeholder={t('findFiles.mask')}
-            onMouseEnter={(event) => windows.tips.show(event.currentTarget as Element, t('findFiles.maskTip'), keysFor('findFiles.addMask'))}
-            onMouseLeave={() => windows.tips.hide()}
-            onFocus={() => files.focusOn('mask')}
-            onInput={(event) => (files.maskDraft.value = event.currentTarget.value)}
-          />
-        </div>
+        <ChipRow
+          field="mask"
+          chips={files.masks}
+          input={mask}
+          files={files}
+          keysFor={keysFor}
+          windows={windows}
+          placeholder={t('findFiles.mask')}
+          tip={t('findFiles.maskTip')}
+        />
+        <ChipRow
+          field="exclude"
+          chips={files.excludes}
+          input={exclude}
+          files={files}
+          keysFor={keysFor}
+          windows={windows}
+          placeholder={t('findFiles.exclude')}
+          tip={t('findFiles.excludeTip')}
+          struck
+          note={files.skipped.value > 0 ? t('findFiles.skipped', { count: files.skipped.value }) : ''}
+        />
       </div>
 
       <div class="fif-body">
@@ -235,6 +243,58 @@ function Row({
           </span>
         ))}
       </span>
+    </div>
+  );
+}
+
+function ChipRow({
+  field,
+  chips,
+  files,
+  input,
+  keysFor,
+  windows,
+  placeholder,
+  tip,
+  struck,
+  note,
+}: {
+  field: FilesField;
+  chips: MaskChips;
+  files: FindFiles;
+  input: RefObject<HTMLInputElement>;
+  keysFor: (command: string) => string[];
+  windows: Windows;
+  placeholder: string;
+  tip: string;
+  struck?: boolean;
+  note?: string;
+}) {
+  return (
+    <div class={`fif-row fif-masks ${struck ? 'is-excluding' : ''}`} data-keys="find-files-mask">
+      {chips.all.value.map((one) => (
+        <span class={`fif-chip ${chips.isOff(one) ? 'is-off' : 'is-on'}`} key={one}>
+          <button type="button" class="fif-chip-name" onMouseDown={(event) => event.preventDefault()} onClick={() => chips.toggle(one)}>
+            {one}
+          </button>
+          <button type="button" class="fif-chip-close" onMouseDown={(event) => event.preventDefault()} onClick={() => chips.remove(one)}>
+            ×
+          </button>
+        </span>
+      ))}
+      <input
+        ref={input}
+        class="fif-mask"
+        style={{ width: `${width(chips.draft.value, 7)}ch` }}
+        value={chips.draft.value}
+        spellcheck={false}
+        placeholder={placeholder}
+        onMouseEnter={(event) => windows.tips.show(event.currentTarget as Element, tip, keysFor('findFiles.addMask'))}
+        onMouseLeave={() => windows.tips.hide()}
+        onFocus={() => files.focusOn(field)}
+        onInput={(event) => (chips.draft.value = event.currentTarget.value)}
+      />
+      {note ? <span class="fif-skipped">{note}</span> : null}
     </div>
   );
 }

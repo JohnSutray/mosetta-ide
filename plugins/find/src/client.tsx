@@ -7,6 +7,7 @@ import { render } from 'preact';
 import { FindState } from './find.js';
 import { FindBar } from './find-bar.js';
 import { FindFiles, type FilesAsk, type FindFilesRemote } from './files.js';
+import type { ChipsWire } from './chips.js';
 import { FindFilesPopup } from './files-popup.js';
 import type { GrepResult } from './grep.js';
 import { HitLine } from './hit-line.js';
@@ -29,12 +30,20 @@ export default class FindPlugin implements FindFilesRemote {
   constructor(private readonly ide: Ide) {
     this.files = new FindFiles(
       this,
-      computed(() => this.ide.settingsOf('find', FIND_DEFAULTS).value.masks),
-      computed(() => this.ide.settingsOf('find', FIND_DEFAULTS).value.masksOff),
-      (list) => this.ide.setSetting('find', 'masks', list),
-      (list) => this.ide.setSetting('find', 'masksOff', list),
-      (message) => ide.complain(message),() => ide.getPlugin(DocPlugin)
+      this.chips('masks', 'masksOff'),
+      this.chips('excludes', 'excludesOff'),
+      (message) => ide.complain(message),
+      () => ide.getPlugin(DocPlugin),
     );
+  }
+
+  private chips(all: 'masks' | 'excludes', off: 'masksOff' | 'excludesOff'): ChipsWire {
+    return {
+      all: computed(() => this.ide.settingsOf('find', FIND_DEFAULTS).value[all]),
+      off: computed(() => this.ide.settingsOf('find', FIND_DEFAULTS).value[off]),
+      saveAll: (list) => this.ide.setSetting('find', all, list),
+      saveOff: (list) => this.ide.setSetting('find', off, list),
+    };
   }
 
   grep(ask: FilesAsk): Promise<GrepResult> {

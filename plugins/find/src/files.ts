@@ -1,9 +1,10 @@
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
 import type { FileHit, GrepResult } from './grep.js';
+import { MaskChips, type ChipsWire } from './chips.js';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export type FilesMode = 'find' | 'replace';
-export type FilesField = 'query' | 'replace' | 'mask';
+export type FilesField = 'query' | 'replace' | 'mask' | 'exclude';
 
 export interface FilesAsk {
   query: string;
@@ -11,6 +12,7 @@ export interface FilesAsk {
   caseSensitive: boolean;
   words: boolean;
   masks: string[];
+  excludes: string[];
 }
 
 export interface FindFilesRemote {
@@ -28,9 +30,9 @@ export class FindFiles {
   readonly caseSensitive = signal(false);
   readonly words = signal(false);
   readonly regex = signal(false);
-  readonly maskDraft = signal('');
   readonly hits = signal<FileHit[]>([]);
   readonly files = signal(0);
+  readonly skipped = signal(0);
   readonly truncated = signal(false);
   readonly busy = signal(false);
   readonly selected = signal(0);
@@ -44,31 +46,18 @@ export class FindFiles {
   private previewTimer: ReturnType<typeof setTimeout> | null = null;
   private token = 0;
 
+  readonly masks: MaskChips;
+  readonly excludes: MaskChips;
+
   constructor(
     private readonly remote: FindFilesRemote,
-    readonly masks: ReadonlySignal<string[]>,
-    readonly masksOff: ReadonlySignal<string[]>,
-    private readonly saveMasks: (list: string[]) => Promise<void>,
-    private readonly saveMasksOff: (list: string[]) => Promise<void>,
+    masks: ChipsWire,
+    excludes: ChipsWire,
     private readonly complain: (message: string) => void,
     private readonly docs: () => Pick<DocPlugin, 'goTo' | 'peekFile'>,
-  ) {}
-
-  readonly activeMasks: ReadonlySignal<string[]> = computed(() => {
-    const off = new Set(this.masksOff.value);
-    return this.masks.value.filter((one) => !off.has(one));
-  });
-
-  isOff(mask: string): boolean {
-    return this.masksOff.value.includes(mask);
-  }
-
-  toggleMask(mask: string): void {
-    const off = this.masksOff.value;
-    const next = off.includes(mask) ? off.filter((one) => one !== mask) : [...off, mask];
-    void this.saveMasksOff(next)
-      .then(() => this.run())
-      .catch((err) => this.complain(describe(err)));
+  ) {
+    this.masks = new MaskChips(masks, complain, () => this.run());
+    this.excludes = new MaskChips(excludes, complain, () => this.run());
   }
 
   readonly rows: ReadonlySignal<FilesRow[]> = computed(() => {
@@ -138,20 +127,11 @@ export class FindFiles {
   }
 
   addMask(): void {
-    const mask = this.maskDraft.value.trim();
-    this.maskDraft.value = '';
-    if (mask === '' || this.masks.value.includes(mask)) return;
-    void this.saveMasks([...this.masks.value, mask])
-      .then(() => this.run())
-      .catch((err) => this.complain(describe(err)));
+    this.row().add();
   }
 
-  removeMask(mask: string): void {
-    const off = this.masksOff.value;
-    void this.saveMasks(this.masks.value.filter((one) => one !== mask))
-      .then(() => (off.includes(mask) ? this.saveMasksOff(off.filter((one) => one !== mask)) : undefined))
-      .then(() => this.run())
-      .catch((err) => this.complain(describe(err)));
+  private row(): MaskChips {
+    return this.focus.value.field === 'exclude' ? this.excludes : this.masks;
   }
 
   move(delta: number): void {
@@ -175,7 +155,7 @@ export class FindFiles {
 
   nextField(): void {
     const order: FilesField[] =
-      this.mode.value === 'replace' ? ['query', 'replace', 'mask'] : ['query', 'mask'];
+      this.mode.value === 'replace' ? ['query', 'replace', 'mask', 'exclude'] : ['query', 'mask', 'exclude'];
     const at = order.indexOf(this.focus.value.field);
     this.focusOn(order[(at + 1) % order.length]!);
   }
@@ -199,7 +179,8 @@ export class FindFiles {
       regex: this.regex.value,
       caseSensitive: this.caseSensitive.value,
       words: this.words.value,
-      masks: this.activeMasks.value,
+      masks: this.masks.active.value,
+      excludes: this.excludes.active.value,
     };
   }
 
@@ -236,6 +217,7 @@ export class FindFiles {
       batch(() => {
         this.hits.value = [];
         this.files.value = 0;
+        this.skipped.value = 0;
         this.truncated.value = false;
         this.selected.value = 0;
         this.preview.value = null;
@@ -250,6 +232,7 @@ export class FindFiles {
         batch(() => {
           this.hits.value = result.hits;
           this.files.value = result.files;
+          this.skipped.value = result.skipped;
           this.truncated.value = result.truncated;
           this.selected.value = 0;
           this.busy.value = false;

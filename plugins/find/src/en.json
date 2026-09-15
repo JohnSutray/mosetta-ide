@@ -53,5 +53,10 @@
   "plugin.find": "Find",
   "settings.find.masks": "File masks",
   "settings.find.masksOff": "Switched-off file masks",
-  "settings.find.maxHits": "Most matches shown"
+  "settings.find.maxHits": "Most matches shown",
+  "findFiles.exclude": "+ skip",
+  "findFiles.excludeTip": "file to keep out of the results, e.g. *.min.js",
+  "findFiles.skipped": "{count} files kept out",
+  "settings.find.excludes": "Files kept out of the results",
+  "settings.find.excludesOff": "Switched-off exclusions"
 }

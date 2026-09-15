@@ -57,13 +57,15 @@ textarea.find-field { height: auto; padding: 3px 6px; font-family: var(--font); 
   border-radius: 4px;
   overflow: hidden;
   background: #35393a;
-  color: var(--fg);
+  color: var(--muted);
   font: 12px var(--ui-font);
 }
 .fif-chip-name { display: flex; align-items: center; padding: 0 7px; border: 0; background: transparent; color: inherit; white-space: nowrap; font: 12px var(--font); cursor: default; }
 .fif-chip-name:hover { background: #454a4b; }
-.fif-chip.is-off { color: var(--muted); border-style: dashed; }
-.fif-chip.is-off .fif-chip-name { text-decoration: line-through; }
+.fif-chip.is-on { background: var(--treesel); border-color: var(--treesel); color: #dbe6ef; }
+.fif-chip.is-on .fif-chip-name:hover { background: #36699e; }
+.fif-chip.is-off { background: #35393a; color: var(--muted); }
+.fif-masks.is-excluding .fif-chip-name { text-decoration: line-through; }
 .fif-chip-close {
   display: flex;
   align-items: center;
@@ -71,12 +73,14 @@ textarea.find-field { height: auto; padding: 3px 6px; font-family: var(--font); 
   border: 0;
   border-left: 1px solid var(--divider);
   background: transparent;
-  color: var(--muted);
+  color: inherit;
+  opacity: 0.75;
   font-size: 13px;
   line-height: 1;
   cursor: default;
 }
-.fif-chip-close:hover { background: #6b3a39; color: #ffd7d6; }
+.fif-chip-close:hover { background: #6b3a39; color: #ffd7d6; opacity: 1; }
+.fif-skipped { margin-left: 2px; color: var(--muted); font: 11px var(--ui-font); }
 .fif-mask {
   flex: none;
   box-sizing: content-box;

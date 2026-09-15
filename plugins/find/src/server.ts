@@ -6,6 +6,7 @@ export type { FileHit, GrepOptions, GrepResult } from './grep.js';
 
 export interface GrepAsk extends GrepOptions {
   masks: string[];
+  excludes?: string[];
   limit?: number;
 }
 
@@ -31,9 +32,11 @@ export default class FindServer {
     const hits: FileHit[] = [];
     let files = 0;
     let truncated = false;
-    if (!re) return { hits, files, total: 0, truncated };
+    const skip = { count: 0 };
+    if (!re) return { hits, files, total: 0, truncated, skipped: 0 };
     const wanted = this.engine.masks(ask.masks ?? []);
-    for (const path of this.candidates(call.project.memory, wanted)) {
+    const unwanted = this.engine.excludes(ask.excludes ?? []);
+    for (const path of this.candidates(call.project.memory, wanted, unwanted, skip)) {
       const text = await this.textOf(call.project.memory, path);
       if (text === null) continue;
       const found = this.engine.scan(path, text, re, limit - hits.length + 1);
@@ -46,7 +49,7 @@ export default class FindServer {
       }
       hits.push(...found);
     }
-    return { hits, files, total: hits.length, truncated };
+    return { hits, files, total: hits.length, truncated, skipped: skip.count };
   }
 
   @command() protected async replace(params: unknown, call: CallContext): Promise<ReplaceResult> {
@@ -54,10 +57,11 @@ export default class FindServer {
     const re = this.engine.pattern(ask);
     if (!re) return { files: 0, replaced: 0 };
     const wanted = this.engine.masks(ask.masks ?? []);
+    const unwanted = this.engine.excludes(ask.excludes ?? []);
     const only = ask.paths ? new Set(ask.paths) : null;
     let files = 0;
     let replaced = 0;
-    for (const path of this.candidates(call.project.memory, wanted)) {
+    for (const path of this.candidates(call.project.memory, wanted, unwanted, { count: 0 })) {
       if (only && !only.has(path)) continue;
       const text = await this.textOf(call.project.memory, path);
       if (text === null) continue;
@@ -70,9 +74,18 @@ export default class FindServer {
     return { files, replaced };
   }
 
-  private *candidates(memory: ProjectMemory, wanted: (path: string) => boolean): Iterable<string> {
+  private *candidates(
+    memory: ProjectMemory,
+    wanted: (path: string) => boolean,
+    unwanted: (path: string) => boolean,
+    skip: { count: number },
+  ): Iterable<string> {
     for (const file of memory.files()) {
       if (!wanted(file.path)) continue;
+      if (unwanted(file.path)) {
+        skip.count += 1;
+        continue;
+      }
       yield file.path;
     }
   }

@@ -65,66 +65,99 @@ describe('замена', () => {
   });
 });
 
-describe('чипы масок', () => {
-  it('Enter добавляет, крестик снимает, повтор и пустота молчат — и всё через настройку', async () => {
-    const masks = signal<string[]>(['*.ts']);
-    const saved: string[][] = [];
-    const remote = {
-      grep: async () => ({ hits: [], files: 0, total: 0, truncated: false }),
-      replace: async () => ({ files: 0, replaced: 0 }),
-    };
+describe('чипы масок и исключений', () => {
+  function row(initial: string[] = []) {
+    const all = signal<string[]>(initial);
     const off = signal<string[]>([]);
-    const files = new FindFiles(
-      remote,
-      masks,
+    const saved: string[][] = [];
+    return {
+      all,
       off,
-      async (list) => {
-        saved.push(list);
-        masks.value = list;
+      saved,
+      wire: {
+        all,
+        off,
+        saveAll: async (list: string[]) => {
+          saved.push(list);
+          all.value = list;
+        },
+        saveOff: async (list: string[]) => {
+          off.value = list;
+        },
       },
-      async (list) => {
-        off.value = list;
-      },
-      () => undefined,
-      () => ({ goTo: async () => undefined, peekFile: async (path: string) => ({ path, text: '' }) }),
-    );
-    files.maskDraft.value = ' *.tsx ';
+    };
+  }
+
+  const remote = {
+    grep: async () => ({ hits: [], files: 0, total: 0, truncated: false, skipped: 0 }),
+    replace: async () => ({ files: 0, replaced: 0 }),
+  };
+  const docs = () => ({ goTo: async () => undefined, peekFile: async (path: string) => ({ path, text: '' }) });
+
+  it('Enter добавляет, крестик снимает, повтор и пустота молчат — и всё через настройку', async () => {
+    const masks = row(['*.ts']);
+    const files = new FindFiles(remote, masks.wire, row().wire, () => undefined, docs);
+
+    files.masks.draft.value = ' *.tsx ';
     files.addMask();
     await Promise.resolve();
-    expect(masks.value).toEqual(['*.ts', '*.tsx']);
-    files.maskDraft.value = '*.ts';
+    expect(masks.all.value).toEqual(['*.ts', '*.tsx']);
+    files.masks.draft.value = '*.ts';
     files.addMask();
-    files.maskDraft.value = '';
+    files.masks.draft.value = '';
     files.addMask();
     await Promise.resolve();
-    expect(saved).toHaveLength(1);
-    files.removeMask('*.ts');
+    expect(masks.saved).toHaveLength(1);
+    files.masks.remove('*.ts');
     await Promise.resolve();
-    expect(masks.value).toEqual(['*.tsx']);
+    expect(masks.all.value).toEqual(['*.tsx']);
     expect(files.ask().masks).toEqual(['*.tsx']);
-    files.toggleMask('*.tsx');
+    files.masks.toggle('*.tsx');
     await Promise.resolve();
-    expect(files.isOff('*.tsx')).toBe(true);
+    expect(files.masks.isOff('*.tsx')).toBe(true);
     expect(files.ask().masks).toEqual([]);
-    files.toggleMask('*.tsx');
+    files.masks.toggle('*.tsx');
     await Promise.resolve();
     expect(files.ask().masks).toEqual(['*.tsx']);
   });
 
+  it('Enter правит ТОТ ряд, где стоит каретка (ADR-0232)', async () => {
+    const masks = row();
+    const excludes = row();
+    const files = new FindFiles(remote, masks.wire, excludes.wire, () => undefined, docs);
+
+    files.focusOn('mask');
+    files.masks.draft.value = '*.ts';
+    files.addMask();
+    await Promise.resolve();
+    expect(masks.all.value).toEqual(['*.ts']);
+
+    files.focusOn('exclude');
+    files.excludes.draft.value = '*.min.js';
+    files.addMask();
+    await Promise.resolve();
+    expect(excludes.all.value).toEqual(['*.min.js']);
+    expect(masks.all.value).toEqual(['*.ts']);
+    expect(files.ask().excludes).toEqual(['*.min.js']);
+  });
+
+  it('выключенное исключение перестаёт исключать', async () => {
+    const excludes = row(['*.min.js']);
+    const files = new FindFiles(remote, row().wire, excludes.wire, () => undefined, docs);
+    expect(files.ask().excludes).toEqual(['*.min.js']);
+    files.excludes.toggle('*.min.js');
+    await Promise.resolve();
+    expect(files.ask().excludes).toEqual([]);
+  });
+
   it('Tab ходит по полям, в режиме замены — через поле замены', () => {
-    const files = new FindFiles(
-      { grep: async () => ({ hits: [], files: 0, total: 0, truncated: false }), replace: async () => ({ files: 0, replaced: 0 }) },
-      signal<string[]>([]),
-      signal<string[]>([]),
-      async () => undefined,
-      async () => undefined,
-      () => undefined,
-      () => ({ goTo: async () => undefined, peekFile: async (path: string) => ({ path, text: '' }) }),
-    );
+    const files = new FindFiles(remote, row().wire, row().wire, () => undefined, docs);
     files.show('find');
     expect(files.focus.value.field).toBe('query');
     files.nextField();
     expect(files.focus.value.field).toBe('mask');
+    files.nextField();
+    expect(files.focus.value.field).toBe('exclude');
     files.nextField();
     expect(files.focus.value.field).toBe('query');
     files.show('replace');

@@ -22,5 +22,10 @@
   "command.findFiles.replaceFile": "Замена по проекту: заменить в этом файле",
   "command.findFiles.toggleCase": "Поиск по проекту: учитывать регистр",
   "command.findFiles.toggleRegex": "Поиск по проекту: регулярное выражение",
-  "command.findFiles.toggleWords": "Поиск по проекту: целые слова"
+  "command.findFiles.toggleWords": "Поиск по проекту: целые слова",
+  "findFiles.exclude": "+ мимо",
+  "findFiles.excludeTip": "файлы, которых в выдаче быть не должно, например *.min.js",
+  "findFiles.skipped": "не пустили файлов: {count}",
+  "settings.find.excludes": "Файлы, которых в выдаче не будет",
+  "settings.find.excludesOff": "Выключенные исключения"
 }
