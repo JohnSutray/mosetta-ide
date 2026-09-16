@@ -50,11 +50,21 @@ class FakeMemory implements ProjectMemory {
 
 const silent = { debug() {}, info() {}, warn() {}, error() {} };
 
-function raise(docs: Record<string, string>, ghosts: readonly string[] = []) {
+function raise(
+  docs: Record<string, string>,
+  ghosts: readonly string[] = [],
+  extra: { symbolsMaxKb?: number; excluded?: (path: string) => boolean } = {},
+) {
   const memory = new FakeMemory(new Map(Object.entries(docs)), ghosts);
   const finds = new FindProviders();
   finds.add(recipes);
-  const index = new SearchIndex(memory, () => ({ enabled: true, maxResults: 50 }), silent, finds);
+  const index = new SearchIndex(
+    memory,
+    () => ({ enabled: true, maxResults: 50, symbolsMaxKb: extra.symbolsMaxKb ?? 512 }),
+    silent,
+    finds,
+    extra.excluded ?? (() => false),
+  );
   index.rebuild();
   return { memory, index };
 }
@@ -145,5 +155,35 @@ describe('реестр поставщиков', () => {
     expect(finds.wants('dinner.toml')).toBe(true);
     expect(finds.wants('src/main.ts')).toBe(false);
     expect(finds.kinds()).toEqual(['recipe']);
+  });
+});
+
+describe('чего индекс не разбирает', () => {
+  const big = `export const x = 1;\n${'// '.repeat(40_000)}\n`;
+
+  it('папка вне обхода не разбирается вовсе', async () => {
+    const { index } = raise(
+      { 'src/main.ts': 'export function alive() {}\n', 'dist/bundle.ts': 'export function hidden() {}\n' },
+      [],
+      { excluded: (path) => path.startsWith('dist/') },
+    );
+    await index.indexSymbols();
+    expect(index.search('ts::alive').hits).toHaveLength(1);
+    expect(index.search('ts::hidden').hits, 'из исключённой папки символов нет').toHaveLength(0);
+    expect(index.stats().unparsed).toBe(0);
+  });
+
+  it('файл больше потолка пропускается, и это видно в покрытии', async () => {
+    const { index } = raise({ 'src/main.ts': 'export function alive() {}\n', 'src/bundle.ts': big }, [], { symbolsMaxKb: 1 });
+    await index.indexSymbols();
+    expect(index.search('ts::alive').hits).toHaveLength(1);
+    expect(index.search('ts::x').hits, 'большой файл не разобран').toHaveLength(0);
+    expect(index.stats().unparsed).toBeGreaterThan(0);
+  });
+
+  it('потолок поднимается настройкой', async () => {
+    const { index } = raise({ 'src/bundle.ts': big }, [], { symbolsMaxKb: 4096 });
+    await index.indexSymbols();
+    expect(index.search('ts::x').hits).toHaveLength(1);
   });
 });

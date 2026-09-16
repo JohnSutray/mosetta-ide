@@ -28,7 +28,16 @@ export default class SearchServer {
     return project.use(
       'index',
       () =>
-        new SearchIndex(project.memory, () => project.settings('index', INDEX_DEFAULTS), this.ide.log, this.finds),
+        new SearchIndex(
+          project.memory,
+          () => project.settings('index', INDEX_DEFAULTS),
+          this.ide.log,
+          this.finds,
+          (path) => {
+            const skipped = new Set(project.settings('fs', { noScan: [] as string[] }).noScan);
+            return path.split('/').some((part) => skipped.has(part));
+          },
+        ),
     );
   }
 

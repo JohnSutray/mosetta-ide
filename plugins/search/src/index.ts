@@ -1,6 +1,6 @@
 import type { IndexSettings } from './settings.js';
 
-type IndexPart = Pick<IndexSettings, 'enabled' | 'maxResults'>;
+type IndexPart = Pick<IndexSettings, 'enabled' | 'maxResults' | 'symbolsMaxKb'>;
 import type { Logger, ProjectMemory } from '@mosetta/ide-api/server';
 import { matcher } from './matcher.js';
 import { layout } from './layout.js';
@@ -49,6 +49,7 @@ export class SearchIndex {
     private readonly settingsOf: () => IndexPart,
     private readonly log: Logger,
     private readonly providers: FindProviders,
+    private readonly excluded: (path: string) => boolean = () => false,
   ) {
     this.off = ram.on((event) => {
       switch (event.type) {
@@ -183,15 +184,22 @@ export class SearchIndex {
   private enqueue(path: string): void {
     if (!this.settings.enabled) return;
     if (this.providers.wants(path)) this.staleTree = true;
-    if (!tsSymbols.canParse(extensionOf(path))) return;
+    if (!this.parseable(path)) return;
     this.pending.add(path);
     this.schedule();
+  }
+
+  private parseable(path: string): boolean {
+    if (!tsSymbols.canParse(extensionOf(path))) return false;
+    if (this.excluded(path)) return false;
+    const size = this.ram.docSync(path)?.text.length;
+    return size === undefined || size <= this.settings.symbolsMaxKb * 1024;
   }
 
   indexSymbols(): Promise<void> {
     if (!this.settings.enabled) return Promise.resolve();
     for (const file of this.ram.files()) {
-      if (tsSymbols.canParse(extensionOf(file.path)) && this.ram.docSync(file.path)) {
+      if (this.parseable(file.path) && this.ram.docSync(file.path)) {
         this.pending.add(file.path);
       }
     }
@@ -309,6 +317,7 @@ export class SearchIndex {
     let total = 0;
     for (const file of this.ram.files()) {
       if (!tsSymbols.canParse(extensionOf(file.path))) continue;
+      if (this.excluded(file.path)) continue;
       if (this.symbols.has(file.path) || this.pending.has(file.path)) continue;
       total += 1;
     }
