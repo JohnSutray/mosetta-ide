@@ -4,6 +4,7 @@ import TerminalServer from '@mosetta/ide-plugin-terminal/server';
 import { JsDebugAdapter } from './adapter.js';
 import { DebugHost, type TerminalRunner } from './host.js';
 import { DEBUG_DEFAULTS } from './settings.js';
+import { shellLine } from './shell-line.js';
 import type { BreakpointAsk, ExceptionMode, FileBreakpoints, Frame, LaunchAsk, RunInfo, Scope, Step, Variable } from './types.js';
 
 export type { BreakpointAsk, ExceptionMode, FileBreakpoints, Frame, LaunchAsk, RunInfo, Scope, SessionInfo, SourceRef, Step, Variable } from './types.js';
@@ -82,6 +83,21 @@ export default class DebugServer {
   @command() protected async stop(params: unknown, call: CallContext): Promise<null> {
     await this.host(call).stop(field(params, 'run'));
     return null;
+  }
+
+  @command() protected forget(params: unknown, call: CallContext): RunInfo[] {
+    return this.host(call).forget(field(params, 'run'));
+  }
+
+  @command() protected runFile(params: unknown, call: CallContext): { name: string } {
+    const path = field(params, 'path');
+    call.project.resolve(path);
+    const runner = this.terminalRunner(call.project);
+    if (!runner) throw new Error('no terminal in this build');
+    const name = `run::${path}`;
+    const command_ = shellLine.compose(['node', path]);
+    runner({ name, cwd: call.project.root, command: command_, env: {}, sameShell: command_ });
+    return { name };
   }
 
   @command() protected async step(params: unknown, call: CallContext): Promise<null> {

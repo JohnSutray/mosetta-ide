@@ -321,6 +321,15 @@ export class DebugHost implements ProjectResource, RunOwner {
     return { shellProcessId: opened.pid };
   }
 
+  forget(id: string): RunInfo[] {
+    const run = this.runs.get(id);
+    if (run && run.state === 'ended') {
+      this.runs.delete(id);
+      this.project.emit('runs', this.list());
+    }
+    return this.list();
+  }
+
   changed(run: DebugRun): void {
     if (run.state === 'ended') {
       this.holds.get(run.id)?.();

@@ -10,6 +10,7 @@ import { TreeMenuState } from './menu.js';
 import { Prompt as PromptState, TreeOps, TreeSelection } from './state.js';
 import { TREE_DEFAULTS , TREE_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
+import { TREE_ACTION_SCHEMA, type TreeAction } from './actions.js';
 import { TINT_SCHEMA, TreeTints, type TintSource } from './tints.js';
 import { Prompt } from './prompt.js';
 import { Tree } from './tree.js';
@@ -20,6 +21,7 @@ import SearchPlugin from '@mosetta/ide-plugin-search';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
 @registry({ key: 'tree.tint', schema: TINT_SCHEMA })
+@registry({ key: 'tree.action', schema: TREE_ACTION_SCHEMA })
 @configSection({ section: 'tree', defaults: TREE_DEFAULTS, schema: TREE_SCHEMA })
 @plugin({ title: 'plugin.tree' })
 export default class TreePlugin {
@@ -154,7 +156,13 @@ export default class TreePlugin {
     this.ide.registry<() => unknown>('chrome.top').add(() => (
       <>
         <Prompt windows={this.ide.getPlugin(UiPlugin).windows} prompt={this.prompt} selection={this.selection} />
-        <TreeMenu windows={this.ide.getPlugin(UiPlugin).windows} menu={this.menu} selection={this.selection} ops={this.ops} />
+        <TreeMenu
+          windows={this.ide.getPlugin(UiPlugin).windows}
+          menu={this.menu}
+          selection={this.selection}
+          ops={this.ops}
+          actions={this.ide.registry<TreeAction>('tree.action').all.value}
+        />
       </>
     ));
 

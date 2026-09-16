@@ -175,6 +175,7 @@ export const FACTORY_KEYMAP: Keymap = {
     { "command": "debug.stepOut", "key": "shift+f8" },
     { "command": "debug.continue", "key": "f9" },
     { "command": "debug.file", "key": "shift+f9" },
+    { "command": "debug.runFile", "key": "shift+f10" },
     { "command": "debug.toggleBreakpoint", "key": "meta+f8", "where": ["browser:mac", "electron:mac"] },
     { "command": "debug.toggleBreakpoint", "key": "control+f8", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "debug.stop", "key": "meta+f2", "where": ["browser:mac", "electron:mac"] },

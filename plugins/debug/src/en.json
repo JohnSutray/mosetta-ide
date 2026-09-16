@@ -13,8 +13,8 @@
   "command.debug.toggleBreakpoint": "Toggle breakpoint",
   "debug.script.action": "Debug this script",
   "debug.empty.title": "Nothing is being debugged",
-  "debug.empty.how": "Click the bug next to a script, or open a .js/.ts file and press {keys}",
-  "debug.empty.noKeys": "Click the bug next to a script in the scripts window, or open a .js/.ts file and run “Debug the open file”",
+  "debug.empty.how": "Use the buttons in the panel header for the open file, click the bug next to a script, or press {keys}",
+  "debug.empty.noKeys": "Use the buttons in the panel header for the open file, or click the bug next to a script in the scripts window",
   "debug.notFile": "Open a JavaScript or TypeScript file to debug it",
   "debug.state.starting": "starting",
   "debug.state.running": "running",
@@ -67,5 +67,11 @@
   "debug.watches.error": "cannot evaluate",
   "debug.watches.idle": "—",
   "debug.console.placeholder": "evaluate in the paused frame…",
-  "debug.console.notPaused": "The program is not paused — nothing to evaluate in"
+  "debug.console.notPaused": "The program is not paused — nothing to evaluate in",
+  "command.debug.runFile": "Run the open file",
+  "debug.title.run": "Run {name} without the debugger",
+  "debug.title.debug": "Debug {name}",
+  "debug.forget": "Forget this run",
+  "debug.tree.run": "Run without the debugger",
+  "debug.tree.debug": "Debug"
 }

@@ -1,5 +1,6 @@
 import type { Windows } from '@mosetta/ide-plugin-ui';
 import { Menu, type MenuItem } from '@mosetta/ide-plugin-ui';
+import type { TreeAction } from './actions.js';
 import type { TreeMenuState } from './menu.js';
 import type { TreeOps, TreeSelection } from './state.js';
 
@@ -7,10 +8,12 @@ export function TreeMenu({ windows,
   menu,
   selection,
   ops,
+  actions = [],
 }: { windows: Windows;
   menu: TreeMenuState;
   selection: TreeSelection;
   ops: TreeOps;
+  actions?: readonly TreeAction[];
 }) {
   const open = menu.open.value;
   if (!open) return null;
@@ -33,6 +36,10 @@ export function TreeMenu({ windows,
           { label: 'tree.copyPath', run: () => void ops.copyAbsolutePath(path) },
           { label: 'tree.reveal', run: () => void ops.revealInOs(path) },
         ]),
+    ...(many ? [] : actions.filter((one) => one.opens(path, isDir)).map((one) => ({
+      label: one.title,
+      run: () => one.run(path),
+    }))),
     { label: 'tree.delete', danger: true, run: () => ops.remove(path, isDir) },
   ];
 

@@ -9,7 +9,7 @@ import TerminalPlugin from '@mosetta/ide-plugin-terminal';
 import UiPlugin, { Menu } from '@mosetta/ide-plugin-ui';
 import { BreakpointEditor } from './editor.js';
 import { ForeignView, FOREIGN_PREFIX } from './foreign.js';
-import { BugIcon } from './icons.js';
+import { BugIcon, ContinueIcon } from './icons.js';
 import { DebugMarks, setBreakpoints, setExecution } from './marks.js';
 import { DebugPanel, type PanelApi } from './panel.js';
 import { DEBUG_DEFAULTS, DEBUG_SCHEMA } from './settings.js';
@@ -85,6 +85,16 @@ export default class DebugPlugin {
     void this.launch({ name: path, program: path });
   }
 
+  @command('debug.runFile')
+  protected runOpenFile(): void {
+    const path = this.docs.openDoc.value?.path;
+    if (!path || !DEBUGGABLE.test(path)) {
+      this.ide.say(this.ide.t('debug.notFile'));
+      return;
+    }
+    void this.runInTerminal(path);
+  }
+
   @command('debug.continue') protected goOn(): void { void this.step('continue'); }
   @command('debug.stepOver') protected stepOver(): void { void this.step('next'); }
   @command('debug.stepInto') protected stepInto(): void { void this.step('stepIn'); }
@@ -121,6 +131,16 @@ export default class DebugPlugin {
 
     this.ide.registry('editor.extension').add({ id: 'debug', extension: this.marks.extension() });
 
+    for (const action of [
+      { id: 'debug.run', title: 'debug.tree.run', run: (path: string) => void this.runInTerminal(path) },
+      { id: 'debug.debug', title: 'debug.tree.debug', run: (path: string) => void this.launch({ name: path, program: path }) },
+    ]) {
+      this.ide.registry('tree.action').add({
+        ...action,
+        opens: (path: string, isDir: boolean) => !isDir && DEBUGGABLE.test(path),
+      });
+    }
+
     this.ide.registry('panel').add({
       id: 'debug',
       title: 'panel.debug',
@@ -128,6 +148,7 @@ export default class DebugPlugin {
       open,
       defaultWidth: 340,
       minWidth: 240,
+      badges: () => this.titleActions(),
       view: () => <DebugPanel api={this.panelApi()} />,
       close: () => {
         open.value = false;
@@ -209,6 +230,8 @@ export default class DebugPlugin {
   @remote('setExceptions') protected askSetExceptions(_p: { mode: ExceptionMode }): Promise<ExceptionMode> { return stub(); }
   @remote('launch') protected askLaunch(_p: LaunchAsk): Promise<RunInfo> { return stub(); }
   @remote('runs') protected askRuns(): Promise<RunInfo[]> { return stub(); }
+  @remote('forget') protected askForget(_p: { run: string }): Promise<RunInfo[]> { return stub(); }
+  @remote('runFile') protected askRunFile(_p: { path: string }): Promise<{ name: string }> { return stub(); }
   @remote('openBrowser') protected askOpenBrowser(_p: { run: string; url: string }): Promise<RunInfo> { return stub(); }
   @remote('stop') protected askStop(_p: { run: string }): Promise<null> { return stub(); }
   @remote('step') protected askStep(_p: { run: string; session: string; thread: number; action: Step }): Promise<null> { return stub(); }
@@ -218,6 +241,58 @@ export default class DebugPlugin {
   @remote('evaluate') protected askEvaluate(_p: { run: string; session: string; expression: string; frame?: number; context: 'hover' | 'watch' | 'repl' }): Promise<Variable> { return stub(); }
   @remote('source') protected askSource(_p: { run: string; session: string; reference: number }): Promise<{ text: string }> { return stub(); }
   @remote('readForeign') protected askForeign(_p: { absolute: string }): Promise<{ text: string }> { return stub(); }
+
+  private titleActions() {
+    const path = this.docs.openDoc.value?.path ?? '';
+    const can = DEBUGGABLE.test(path);
+    const ui = this.ide.getPlugin(UiPlugin);
+    const act = (id: string, icon: () => unknown, title: string) => (
+      <button
+        key={id}
+        type="button"
+        class="debug-title-btn"
+        disabled={!can}
+        onMouseEnter={(event) =>
+          ui.windows.tips.show(
+            event.currentTarget as Element,
+            can ? this.ide.t(title, { name: path }) : this.ide.t('debug.notFile'),
+            this.ide.getPlugin(KeymapPlugin).keysFor(id),
+          )
+        }
+        onMouseLeave={() => ui.windows.tips.hide()}
+        onClick={() => {
+          ui.windows.tips.hide();
+          this.ide.runCommand(id);
+        }}
+      >
+        {icon() as never}
+      </button>
+    );
+    return (
+      <>
+        {act('debug.runFile', ContinueIcon, 'debug.title.run')}
+        {act('debug.file', () => BugIcon(true), 'debug.title.debug')}
+      </>
+    );
+  }
+
+  private async runInTerminal(path: string): Promise<void> {
+    try {
+      const { name } = await this.askRunFile({ path });
+      const terminal = this.ide.getPlugin(TerminalPlugin);
+      void terminal.show(() => terminal.open({ name }));
+    } catch (err) {
+      this.fail(err);
+    }
+  }
+
+  private async forgetRun(id: string): Promise<void> {
+    try {
+      this.state.setRuns(await this.askForget({ run: id }));
+    } catch (err) {
+      this.fail(err);
+    }
+  }
 
   async launch(ask: LaunchAsk): Promise<void> {
     this.opened().value = true;
@@ -610,7 +685,7 @@ export default class DebugPlugin {
         return this.docs.dirty.value && frame?.source?.kind === 'project' && frame.source.path === this.docs.openDoc.value?.path;
       },
       outputInTerminal: this.inTerminal.value,
-      canDebugFile: () => DEBUGGABLE.test(this.docs.openDoc.value?.path ?? ''),
+      forget: (id) => void this.forgetRun(id),
       openUrl: (url) => void this.openUrl(url),
       setExceptions: (mode) => void this.setExceptions(mode),
       addWatch: (expression) => this.addWatch(expression),

@@ -13,7 +13,7 @@ export interface PanelApi {
   expand: (node: VarNode) => void;
   dirtyHere: () => boolean;
   outputInTerminal: boolean;
-  canDebugFile: () => boolean;
+  forget: (run: string) => void;
   openUrl: (url: string) => void;
   setExceptions: (mode: ExceptionMode) => void;
   addWatch: (expression: string) => void;
@@ -81,10 +81,10 @@ export function DebugPanel({ api }: { api: PanelApi }) {
             </option>
           ))}
         </select>
-        {current && <RunLabel run={current} paused={paused !== null} />}
+        {current && <RunLabel run={current} paused={paused !== null} onForget={() => api.forget(current.id)} />}
       </div>
       <div class="debug-body">
-        {runs.length === 0 && <Empty api={api} />}
+        {live.length === 0 && <Empty api={api} />}
         <UrlField api={api} />
         {paused && api.dirtyHere() && <div class="debug-note">{t('debug.dirty')}</div>}
         {paused && <Frames api={api} />}
@@ -97,7 +97,7 @@ export function DebugPanel({ api }: { api: PanelApi }) {
   );
 }
 
-function RunLabel({ run, paused }: { run: RunInfo; paused: boolean }) {
+function RunLabel({ run, paused, onForget }: { run: RunInfo; paused: boolean; onForget: () => void }) {
   const t = useT();
   const state = paused && run.state !== 'ended' ? 'paused' : run.state;
   const inBrowser = run.sessions.some((one) => one.kind === 'browser' && one.state !== 'ended');
@@ -106,6 +106,11 @@ function RunLabel({ run, paused }: { run: RunInfo; paused: boolean }) {
       <b>{run.name}</b> · {t(`debug.state.${state}`)}
       {inBrowser ? ` · ${t('debug.inBrowser')}` : ''}
       {run.error ? ` · ${run.error}` : ''}
+      {run.state === 'ended' && (
+        <span class="debug-run-forget" title={t('debug.forget')} onClick={onForget}>
+          ×
+        </span>
+      )}
     </span>
   );
 }
@@ -140,11 +145,6 @@ function Empty({ api }: { api: PanelApi }) {
     <div class="placeholder debug-empty">
       <p>{t('debug.empty.title')}</p>
       <p>{keys.length > 0 ? t('debug.empty.how', { keys: keys.join(', ') }) : t('debug.empty.noKeys')}</p>
-      {api.canDebugFile() && (
-        <button type="button" class="debug-btn" style={{ width: 'auto', padding: '0 8px' }} onClick={() => api.run('debug.file')}>
-          {t('command.debug.file')}
-        </button>
-      )}
     </div>
   );
 }
