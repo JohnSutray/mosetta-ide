@@ -34,8 +34,13 @@ export default class SymbolsServer {
     return this.cacheOf(call.project).find(ask.query, limit, kinds);
   }
 
-  @command() protected stats(_params: unknown, call: CallContext): { symbols: number; uncovered: number } {
+  @command() protected stats(_params: unknown, call: CallContext): {
+    symbols: number;
+    uncovered: number;
+    tooBig: number;
+  } {
     const cache = this.cacheOf(call.project);
-    return { symbols: cache.size, uncovered: cache.uncovered };
+    const { absent, tooBig } = cache.uncovered;
+    return { symbols: cache.size, uncovered: absent, tooBig };
   }
 }

@@ -1,6 +1,6 @@
 import type { RegistryHandle } from '@mosetta/ide-api/client';
 import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
-import type { FileViewLike, IndexHit, IndexKind, KindIcon, Opener, SearchAnswer, SearchSource, SearchStats } from './types.js';
+import type { FileViewLike, IndexHit, IndexKind, KindIcon, Opener, SearchAnswer, SearchSource, SearchStats, TagSpec } from './types.js';
 import { terms } from './query.js';
 import { Recall } from './recall.js';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
@@ -100,12 +100,15 @@ export class Search {
 
   readonly kinds: ReadonlySignal<string[]> = computed(() => this.seen.value);
 
-  readonly notes: ReadonlySignal<Array<{ key: string; params?: Record<string, string | number>; setting?: string }>> = computed(() =>
-    this.sources.all.value
-      .filter((one) => !this.hidden.value.includes(one.kind))
+  readonly notes: ReadonlySignal<Array<{ key: string; params?: Record<string, string | number>; setting?: string }>> = computed(() => {
+    const { tags, term } = terms.parse(this.query.value);
+    if (term === '' && tags.length === 0) return [];
+    const answered = new Set(this.hits.value.map((hit) => hit.kind));
+    return this.sources.all.value
+      .filter((one) => !this.hidden.value.includes(one.kind) && !answered.has(one.kind))
       .map((one) => one.note?.() ?? null)
-      .filter((one): one is { key: string; params?: Record<string, string | number>; setting?: string } => one !== null),
-  );
+      .filter((one): one is { key: string; params?: Record<string, string | number>; setting?: string } => one !== null);
+  });
 
   isOff(kind: string): boolean {
     return this.hidden.value.includes(kind);
@@ -198,7 +201,8 @@ export class Search {
 
   private async run(value: string): Promise<void> {
     const token = ++this.token;
-    const { tags, term } = terms.parse(value);
+    const { tags: typed, term } = terms.parse(value);
+    const tags = this.expand(typed);
     if (term === '') {
       batch(() => {
         this.hits.value = [];
@@ -262,15 +266,33 @@ export class Search {
 
   private answers(source: SearchSource, tags: string[]): boolean {
     if (tags.length === 0) return true;
-    const own = [source.kind, ...(source.tags?.() ?? [])].map((one) => one.toLowerCase());
+    const own = [source.kind, ...(source.tags?.() ?? []).map(nameOf)].map((one) => one.toLowerCase());
     return tags.every((tag) => own.includes(tag));
+  }
+
+  private readonly shorts: ReadonlySignal<Map<string, string>> = computed(() => {
+    const map = new Map<string, string>();
+    for (const source of this.sources.all.value) {
+      for (const spec of source.tags?.() ?? []) {
+        if (typeof spec === 'string') continue;
+        map.set(spec.short.toLowerCase(), spec.name.toLowerCase());
+      }
+    }
+    return map;
+  });
+
+  private expand(tags: string[]): string[] {
+    return tags.map((tag) => this.shorts.value.get(tag) ?? tag);
   }
 
   readonly known: ReadonlySignal<string[]> = computed(() => {
     const all = new Set<string>(this.seen.value.map((one) => one.toLowerCase()));
     for (const source of this.sources.all.value) {
       all.add(source.kind.toLowerCase());
-      for (const tag of source.tags?.() ?? []) all.add(tag.toLowerCase());
+      for (const spec of source.tags?.() ?? []) {
+        all.add(nameOf(spec).toLowerCase());
+        if (typeof spec !== 'string') all.add(spec.short.toLowerCase());
+      }
     }
     return [...all];
   });
@@ -335,4 +357,8 @@ export class Search {
         .catch(() => (this.preview.value = null));
     }, this.previewDelay);
   }
+}
+
+function nameOf(spec: TagSpec): string {
+  return typeof spec === 'string' ? spec : spec.name;
 }

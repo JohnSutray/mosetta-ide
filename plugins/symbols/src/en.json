@@ -15,5 +15,6 @@
   "search.symbol.property": "Property",
   "search.symbol.type": "Type",
   "search.symbol.variable": "Variable",
-  "symbols.partial": "No symbols for {count} files — they are not in memory"
+  "symbols.partial": "No symbols for {count} files — they are not in memory",
+  "symbols.tooBig": "No symbols for {count} files — larger than the parse cap"
 }

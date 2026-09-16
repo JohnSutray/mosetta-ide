@@ -4,7 +4,7 @@ import { signal } from '@preact/signals';
 import type { Ide } from '@mosetta/ide-api/client';
 import Editor from '@mosetta/ide-plugin-editor';
 import LspPlugin from '@mosetta/ide-plugin-lsp';
-import { SYMBOL_KINDS, SymbolIcon } from './icons.js';
+import { SYMBOL_KINDS, SYMBOL_TAGS, SymbolIcon } from './icons.js';
 import { SymbolsPopup } from './popup.js';
 import { Symbols } from './state.js';
 import { STYLE } from './style.js';
@@ -22,8 +22,10 @@ export default class SymbolsPlugin {
 
   private readonly uncovered = signal(0);
 
+  private readonly tooBig = signal(0);
+
   @remote('find') protected askSymbols(_p: { query: string; limit: number; kinds?: string[] }): Promise<SymbolHit[]> { return stub(); }
-  @remote('stats') protected askStats(): Promise<{ symbols: number; uncovered: number }> { return stub(); }
+  @remote('stats') protected askStats(): Promise<{ symbols: number; uncovered: number; tooBig: number }> { return stub(); }
 
   @activate() protected start(): void {
     this.ide.css(STYLE);
@@ -31,12 +33,25 @@ export default class SymbolsPlugin {
     this.ide.registry('search.source').add({
       id: 'ts-symbols',
       kind: 'ts',
-      note: () => (this.uncovered.value > 0 ? { key: 'symbols.partial', params: { count: this.uncovered.value } } : null),
-      tags: () => SYMBOL_KINDS,
+      note: () => {
+        if (this.uncovered.value > 0) {
+          return { key: 'symbols.partial', params: { count: this.uncovered.value }, setting: 'fs.preloadBudgetMb' };
+        }
+        if (this.tooBig.value > 0) {
+          return { key: 'symbols.tooBig', params: { count: this.tooBig.value }, setting: 'index.symbolsMaxKb' };
+        }
+        return null;
+      },
+      tags: () => SYMBOL_TAGS,
       find: async ({ term, tags, limit }: { term: string; tags: string[]; limit: number }) => {
         const kinds = tags.filter((tag) => SYMBOL_KINDS.includes(tag));
         if (term.trim() === '' && tags.length === 0) return [];
-        void this.askStats().then((stats) => (this.uncovered.value = stats.uncovered)).catch(() => undefined);
+        void this.askStats()
+          .then((stats) => {
+            this.uncovered.value = stats.uncovered;
+            this.tooBig.value = stats.tooBig;
+          })
+          .catch(() => undefined);
         const search = this.ide.getPlugin(SearchPlugin);
         const folded = search.textIndex.fold(term);
         const found = await this.askSymbols({

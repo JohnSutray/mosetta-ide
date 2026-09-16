@@ -55,6 +55,8 @@ export const OPENER_SCHEMA = {
   properties: { kind: { type: 'string' }, open: {} },
 } as const;
 
+export type TagSpec = string | { name: string; short: string };
+
 export interface SearchAsk {
   term: string;
   tags: string[];
@@ -65,7 +67,7 @@ export interface SearchSource {
   id: string;
   kind: IndexKind;
   find(ask: SearchAsk): Promise<IndexHit[]> | IndexHit[];
-  tags?(): string[];
+  tags?(): TagSpec[];
   note?(): { key: string; params?: Record<string, string | number>; setting?: string } | null;
 }
 

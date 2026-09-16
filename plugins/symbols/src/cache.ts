@@ -59,15 +59,18 @@ export class SymbolCache implements ProjectResource {
     return total;
   }
 
-  get uncovered(): number {
-    let total = 0;
+  get uncovered(): { absent: number; tooBig: number } {
+    let absent = 0;
+    let tooBig = 0;
     for (const file of this.memory.files()) {
       if (!PARSEABLE.test(file.path)) continue;
       if (this.excluded(file.path)) continue;
       if (this.byFile.has(file.path) || this.pending.has(file.path)) continue;
-      total += 1;
+      const size = this.memory.docSync(file.path)?.text.length;
+      if (size !== undefined && size > this.maxBytes()) tooBig += 1;
+      else absent += 1;
     }
-    return total;
+    return { absent, tooBig };
   }
 
   find(query: string, limit: number, kinds?: readonly string[]): SymbolHit[] {

@@ -429,6 +429,58 @@ describe('общак', () => {
     expect(search.hits.value.map((one) => one.label)).toEqual(['ThemePlugin']);
   });
 
+  it('короткое имя тега разворачивается до того, как спросят источник', async () => {
+    const { host, search } = await raise();
+    const asks: string[][] = [];
+    host.registry.add(
+      'search.source',
+      {
+        id: 'sym',
+        kind: 'ts',
+        tags: () => [{ name: 'class', short: 'c' }, { name: 'function', short: 'fn' }],
+        find: (ask: { term: string; tags: string[] }) => {
+          asks.push(ask.tags);
+          return ask.term === '' ? [{ ...hit('ts', 'Alpha'), tags: ['class'], score: 0 }] : [];
+        },
+      },
+      '@mosetta/ide-plugin-symbols',
+    );
+
+    search.show();
+    search.setQuery('c ');
+    await later();
+
+    expect(asks.at(-1)).toEqual(['class']);
+    expect(search.hits.value.map((one) => one.label)).toEqual(['Alpha']);
+    expect(search.strayTags.value).toEqual([]);
+  });
+
+  it('записка источника видна, только когда спросили, а он не ответил', async () => {
+    const { host, search } = await raise();
+    host.registry.add(
+      'search.source',
+      {
+        id: 'sym',
+        kind: 'ts',
+        find: ({ term }: { term: string }) => (term === 'есть' ? [{ ...hit('ts', 'Нашлось'), score: 3 }] : []),
+        note: () => ({ key: 'symbols.partial', params: { count: 3 } }),
+      },
+      '@mosetta/ide-plugin-symbols',
+    );
+
+    search.show();
+    await later();
+    expect(search.notes.value, 'молчим, пока не спросили').toEqual([]);
+
+    search.setQuery('есть');
+    await later();
+    expect(search.notes.value, 'нашёл — про дырки не спрашивают').toEqual([]);
+
+    search.setQuery('нету');
+    await later();
+    expect(search.notes.value).toEqual([{ key: 'symbols.partial', params: { count: 3 } }]);
+  });
+
   it('поломка источника не роняет выдачу', async () => {
     const { host, search, hits } = await raise();
     hits.push(hit('file', 'файл', 'файл.ts'));
@@ -451,6 +503,8 @@ describe('общак', () => {
       '@mosetta/ide-plugin-symbols',
     );
     search.show();
+    search.setQuery('что-нибудь');
+    await later();
     expect(search.notes.value).toEqual([{ key: 'symbols.partial', params: { count: 7 } }]);
   });
 });
