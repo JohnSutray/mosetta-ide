@@ -1,0 +1,16 @@
+{
+  "plugin.changes": "Изменения",
+  "panel.changes": "Изменения",
+  "toolbar.changes": "Изменения: коммит и полка",
+  "command.panel.changes": "Панель изменений",
+  "command.changes.commit": "Закоммитить отмеченное",
+  "changes.picked": "{picked} из {total} файлов",
+  "changes.clean": "ничего не изменилось",
+  "changes.message": "сообщение коммита",
+  "changes.commit": "коммит",
+  "changes.shelve": "на полку",
+  "changes.amend": "поправить последний",
+  "changes.shelf": "полка ({count})",
+  "changes.shelfEmpty": "на полке пусто",
+  "changes.unshelve": "снять"
+}

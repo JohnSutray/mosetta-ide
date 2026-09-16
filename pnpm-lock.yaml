@@ -138,6 +138,37 @@ importers:
         specifier: ^10.25.3
         version: 10.29.8
 
+  plugins/changes:
+    dependencies:
+      '@mosetta/ide-api':
+        specifier: workspace:*
+        version: link:../api
+      '@mosetta/ide-plugin-doc':
+        specifier: workspace:*
+        version: link:../doc
+      '@mosetta/ide-plugin-git':
+        specifier: workspace:*
+        version: link:../git
+      '@mosetta/ide-plugin-keymap':
+        specifier: workspace:*
+        version: link:../keymap
+      '@mosetta/ide-plugin-ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      '@preact/signals':
+        specifier: ^1.3.1
+        version: 1.3.4(preact@10.29.8)
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.20.1
+      preact:
+        specifier: ^10.25.3
+        version: 10.29.8
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)
+
   plugins/code:
     dependencies:
       '@mosetta/ide-api':
@@ -1066,6 +1097,9 @@ importers:
       '@mosetta/ide-client':
         specifier: workspace:*
         version: link:../client
+      '@mosetta/ide-plugin-changes':
+        specifier: workspace:*
+        version: link:../plugins/changes
       '@mosetta/ide-plugin-code':
         specifier: workspace:*
         version: link:../plugins/code

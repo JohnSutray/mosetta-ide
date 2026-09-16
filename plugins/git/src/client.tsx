@@ -111,6 +111,10 @@ export default class GitPlugin implements GitRemote {
     return this.git.state;
   }
 
+  refresh(): Promise<void> {
+    return this.git.refresh();
+  }
+
   @remote('state') state(): Promise<GitState> {
     return stub();
   }
@@ -164,5 +168,5 @@ export default class GitPlugin implements GitRemote {
   }
 }
 
-export type { GitFileState, TreeTint };
+export type { GitFileState, GitState, TreeTint };
 void computed;

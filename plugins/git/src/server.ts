@@ -6,7 +6,7 @@ import { GitStatus } from './status.js';
 import type { GitAction, GitState } from './types.js';
 
 export default class GitServer {
-  private readonly cli: GitCli;
+  readonly cli: GitCli;
   private readonly status = new GitStatus();
 
   constructor(private readonly ide: Ide) {

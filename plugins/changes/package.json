@@ -1,5 +1,5 @@
 {
-  "name": "@mosetta/ide-plugin-git",
+  "name": "@mosetta/ide-plugin-changes",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -20,11 +20,10 @@
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",
+    "@mosetta/ide-plugin-git": "workspace:*",
     "@mosetta/ide-plugin-doc": "workspace:*",
-    "@mosetta/ide-plugin-editor": "workspace:*",
     "@mosetta/ide-plugin-keymap": "workspace:*",
-    "@mosetta/ide-plugin-ui": "workspace:*",
-    "@mosetta/ide-plugin-code": "workspace:*"
+    "@mosetta/ide-plugin-ui": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

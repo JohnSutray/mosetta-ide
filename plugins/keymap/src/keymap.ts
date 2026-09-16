@@ -14,6 +14,8 @@ export const FACTORY_KEYMAP: Keymap = {
     { "command": "git.branches", "key": "double:alt", "where": ["browser:mac", "electron:mac"] },
     { "command": "popup.close", "key": "escape" },
     { "command": "prompt.confirm", "key": "enter", "when": "prompt" },
+    { "command": "changes.commit", "key": "meta+enter", "when": "changes", "where": ["browser:mac", "electron:mac"] },
+    { "command": "changes.commit", "key": "control+enter", "when": "changes", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "search.next", "key": "arrowdown", "when": "search" },
     { "command": "search.prev", "key": "arrowup", "when": "search" },
     { "command": "search.accept", "key": "enter", "when": "search" },
@@ -167,6 +169,8 @@ export const FACTORY_KEYMAP: Keymap = {
     { "command": "keys.show", "key": "meta+9", "where": ["browser:mac", "electron:mac"] },
     { "command": "keys.show", "key": "control+alt+9", "where": ["browser:win", "browser:linux"] },
     { "command": "keys.show", "key": "control+9", "where": ["electron:win", "electron:linux"] },
+    { "command": "panel.changes", "key": "meta+k", "where": ["browser:mac", "electron:mac"] },
+    { "command": "panel.changes", "key": "control+k", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
     { "command": "settings.show", "key": "meta+comma", "where": ["browser:mac", "electron:mac"] },
     { "command": "settings.show", "key": "control+comma", "where": ["browser:win", "browser:linux", "electron:win", "electron:linux"] },
 

@@ -1,0 +1,16 @@
+{
+  "plugin.changes": "Changes",
+  "panel.changes": "Changes",
+  "toolbar.changes": "Changes: commit and shelf",
+  "command.panel.changes": "Changes panel",
+  "command.changes.commit": "Commit picked files",
+  "changes.picked": "{picked} of {total} files",
+  "changes.clean": "nothing changed",
+  "changes.message": "commit message",
+  "changes.commit": "commit",
+  "changes.shelve": "shelve",
+  "changes.amend": "amend",
+  "changes.shelf": "shelf ({count})",
+  "changes.shelfEmpty": "nothing shelved",
+  "changes.unshelve": "unshelve"
+}

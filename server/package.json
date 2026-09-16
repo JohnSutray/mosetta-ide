@@ -22,6 +22,7 @@
     "@mosetta/ide-plugin-doc": "workspace:*",
     "@mosetta/ide-plugin-editor": "workspace:*",
     "@mosetta/ide-plugin-find": "workspace:*",
+    "@mosetta/ide-plugin-changes": "workspace:*",
     "@mosetta/ide-plugin-git": "workspace:*",
     "@mosetta/ide-plugin-keymap": "workspace:*",
     "@mosetta/ide-plugin-keys": "workspace:*",
