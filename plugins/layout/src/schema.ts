@@ -29,3 +29,28 @@ export interface PanelWish {
   defaultWidth?: number;
   minWidth?: number;
 }
+
+export const PANEL_ACTION_SCHEMA = {
+  type: 'object',
+  required: ['id', 'panel', 'title', 'icon', 'run'],
+  properties: {
+    id: { type: 'string' },
+    panel: { type: 'string' },
+    title: { type: 'string' },
+    icon: {},
+    keys: {},
+    run: {},
+    enabled: {},
+  },
+  additionalProperties: false,
+} as const;
+
+export interface PanelAction {
+  id: string;
+  panel: string;
+  title: string;
+  icon: () => unknown;
+  keys?: () => string[];
+  run: () => void;
+  enabled?: () => boolean;
+}

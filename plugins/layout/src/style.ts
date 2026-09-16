@@ -47,5 +47,24 @@ export const STYLE = `
 }
 .panel-close:hover { background: #6b3a39; color: #ffd7d6; }
 
+.panel-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 16px;
+  padding: 0;
+  flex: none;
+  border: none;
+  border-radius: 4px;
+  background: var(--control-bg);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color 90ms linear, color 90ms linear;
+}
+.panel-action:hover:not(:disabled) { background: var(--control-bg-hover); color: var(--fg); }
+.panel-action:disabled { opacity: 0.45; cursor: default; }
+.panel-action svg { width: 12px; height: 12px; }
+
 .panel-body { position: relative; flex: 1; min-height: 0; overflow: auto; }
 `;

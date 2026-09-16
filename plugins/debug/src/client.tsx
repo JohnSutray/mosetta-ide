@@ -131,6 +131,8 @@ export default class DebugPlugin {
 
     this.ide.registry('editor.extension').add({ id: 'debug', extension: this.marks.extension() });
 
+    this.declareTitleActions();
+
     for (const action of [
       { id: 'debug.run', title: 'debug.tree.run', run: (path: string) => void this.runInTerminal(path) },
       { id: 'debug.debug', title: 'debug.tree.debug', run: (path: string) => void this.launch({ name: path, program: path }) },
@@ -148,7 +150,6 @@ export default class DebugPlugin {
       open,
       defaultWidth: 340,
       minWidth: 240,
-      badges: () => this.titleActions(),
       view: () => <DebugPanel api={this.panelApi()} />,
       close: () => {
         open.value = false;
@@ -242,38 +243,21 @@ export default class DebugPlugin {
   @remote('source') protected askSource(_p: { run: string; session: string; reference: number }): Promise<{ text: string }> { return stub(); }
   @remote('readForeign') protected askForeign(_p: { absolute: string }): Promise<{ text: string }> { return stub(); }
 
-  private titleActions() {
-    const path = this.docs.openDoc.value?.path ?? '';
-    const can = DEBUGGABLE.test(path);
-    const ui = this.ide.getPlugin(UiPlugin);
-    const act = (id: string, icon: () => unknown, title: string) => (
-      <button
-        key={id}
-        type="button"
-        class="debug-title-btn"
-        disabled={!can}
-        onMouseEnter={(event) =>
-          ui.windows.tips.show(
-            event.currentTarget as Element,
-            can ? this.ide.t(title, { name: path }) : this.ide.t('debug.notFile'),
-            this.ide.getPlugin(KeymapPlugin).keysFor(id),
-          )
-        }
-        onMouseLeave={() => ui.windows.tips.hide()}
-        onClick={() => {
-          ui.windows.tips.hide();
-          this.ide.runCommand(id);
-        }}
-      >
-        {icon() as never}
-      </button>
-    );
-    return (
-      <>
-        {act('debug.runFile', ContinueIcon, 'debug.title.run')}
-        {act('debug.file', () => BugIcon(true), 'debug.title.debug')}
-      </>
-    );
+  private declareTitleActions(): void {
+    const path = () => this.docs.openDoc.value?.path ?? this.docs.viewedFile.value ?? '';
+    const can = () => DEBUGGABLE.test(path());
+    const add = (id: string, icon: () => unknown, title: string) =>
+      this.ide.registry('panel.action').add({
+        id,
+        panel: 'editor',
+        title,
+        icon,
+        keys: () => this.ide.getPlugin(KeymapPlugin).keysFor(id),
+        enabled: can,
+        run: () => this.ide.runCommand(id),
+      });
+    add('debug.runFile', ContinueIcon, 'debug.title.run');
+    add('debug.file', () => BugIcon(true), 'debug.title.debug');
   }
 
   private async runInTerminal(path: string): Promise<void> {

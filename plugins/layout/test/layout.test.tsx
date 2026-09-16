@@ -45,7 +45,7 @@ describe('раскладка', () => {
   it('объявляет форму колонки до того, как кто-то начал писать', () => {
     const early = new FakeHost();
     early.add(Layout, NAME);
-    expect(early.registry.declared()).toEqual(['panel']);
+    expect(early.registry.declared()).toEqual(['panel', 'panel.action']);
   });
 
   it('занимает середину рамы и приносит свои стили', () => {
@@ -136,6 +136,45 @@ describe('раскладка', () => {
     expect(after[1]).toBe(330);
     expect(after[0]).toBeLessThan(shown[0]!);
     expect(after.reduce((a, b) => a + b, 0)).toBe(1280 - 320 - 3);
+  });
+
+  it('сосед ставит действие в заголовок чужой панели', () => {
+    host.registry.add('panel', wish('editor', 'main'), 'core');
+    let ran = 0;
+    host.registry.add(
+      'panel.action',
+      {
+        id: 'debug.runFile',
+        panel: 'editor',
+        title: 'debug.title.run',
+        icon: () => <i data-id="play" />,
+        run: () => ran++,
+      },
+      '@mosetta/ide-plugin-debug',
+    );
+    host.registry.add('panel', wish('tree', 'left'), 'core');
+    const buttons = of(main(), 'button').filter((node) => String(node.props['class']).includes('panel-action'));
+    expect(buttons).toHaveLength(1);
+    (buttons[0]!.props['onClick'] as () => void)();
+    expect(ran).toBe(1);
+  });
+
+  it('действие без права работать погашено, а не спрятано', () => {
+    host.registry.add('panel', wish('editor', 'main'), 'core');
+    host.registry.add(
+      'panel.action',
+      {
+        id: 'debug.file',
+        panel: 'editor',
+        title: 'debug.title.debug',
+        icon: () => <i />,
+        enabled: () => false,
+        run: () => undefined,
+      },
+      '@mosetta/ide-plugin-debug',
+    );
+    const button = of(main(), 'button').find((node) => String(node.props['class']).includes('panel-action'))!;
+    expect(button.props['disabled']).toBe(true);
   });
 
   it('заголовок постоянный — ключ словаря, непостоянный — своя строка', () => {

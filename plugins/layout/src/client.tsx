@@ -3,10 +3,11 @@ import { signal } from '@preact/signals';
 import { activate, plugin, registry, type Ide } from '@mosetta/ide-api/client';
 import UiPlugin, { Resizer } from '@mosetta/ide-plugin-ui';
 import { ColumnFit, type ColumnAsk } from './fit.js';
-import { PANEL_SCHEMA, type PanelWish } from './schema.js';
+import { PANEL_ACTION_SCHEMA, PANEL_SCHEMA, type PanelAction, type PanelWish } from './schema.js';
 import { STYLE } from './style.js';
 
 @registry({ key: 'panel', schema: PANEL_SCHEMA })
+@registry({ key: 'panel.action', schema: PANEL_ACTION_SCHEMA })
 @plugin({ title: 'plugin.layout' })
 export default class Layout {
   private readonly keepFree = 320;
@@ -63,6 +64,7 @@ export default class Layout {
           <span class="panel-title">{panel.heading?.() ?? this.ide.t(panel.title)}</span>
           <span class="panel-actions">
             {panel.badges?.() as never}
+            {this.actionsOf(panel.id)}
             {panel.close && (
               <span class="panel-close" title={this.ide.t('panel.close')} onClick={panel.close}>
                 ×
@@ -73,6 +75,34 @@ export default class Layout {
         <div class="panel-body">{panel.view() as never}</div>
       </section>
     );
+  }
+
+  private actionsOf(panel: string) {
+    const tips = this.ide.getPlugin(UiPlugin).windows.tips;
+    return this.ide
+      .registry<PanelAction>('panel.action')
+      .all.value.filter((action) => action.panel === panel)
+      .map((action) => {
+        const enabled = action.enabled?.() ?? true;
+        return (
+          <button
+            key={action.id}
+            type="button"
+            class="panel-action"
+            disabled={!enabled}
+            onMouseEnter={(event) =>
+              tips.show(event.currentTarget as Element, this.ide.t(action.title), action.keys?.() ?? [])
+            }
+            onMouseLeave={() => tips.hide()}
+            onClick={() => {
+              tips.hide();
+              action.run();
+            }}
+          >
+            {action.icon() as never}
+          </button>
+        );
+      });
   }
 
   private grip(panel: PanelWish, side: 'left' | 'right', asks: ColumnAsk[], shown: number) {

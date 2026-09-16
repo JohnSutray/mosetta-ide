@@ -62,23 +62,6 @@ export const STYLE = `
 }
 .debug-run b { color: var(--fg); font-weight: 500; }
 
-.debug-title-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 18px;
-  padding: 0;
-  border: none;
-  border-radius: 4px;
-  background: var(--control-bg);
-  color: var(--muted);
-  cursor: pointer;
-}
-.debug-title-btn:hover:not(:disabled) { background: var(--control-bg-hover); color: var(--fg); }
-.debug-title-btn:disabled { opacity: 0.45; cursor: default; }
-.debug-title-btn svg { width: 12px; height: 12px; }
-
 .debug-run-forget {
   display: inline-flex;
   align-items: center;
