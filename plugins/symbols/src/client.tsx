@@ -22,7 +22,7 @@ export default class SymbolsPlugin {
 
   private readonly uncovered = signal(0);
 
-  @remote('find') protected askSymbols(_p: { query: string; limit: number }): Promise<SymbolHit[]> { return stub(); }
+  @remote('find') protected askSymbols(_p: { query: string; limit: number; kinds?: string[] }): Promise<SymbolHit[]> { return stub(); }
   @remote('stats') protected askStats(): Promise<{ symbols: number; uncovered: number }> { return stub(); }
 
   @activate() protected start(): void {
@@ -33,14 +33,32 @@ export default class SymbolsPlugin {
       kind: 'ts',
       note: () => (this.uncovered.value > 0 ? { key: 'symbols.partial', params: { count: this.uncovered.value } } : null),
       tags: () => SYMBOL_KINDS,
-      find: async (query: string, limit: number) => {
-        if (query.trim() === '') return [];
+      find: async ({ term, tags, limit }: { term: string; tags: string[]; limit: number }) => {
+        const kinds = tags.filter((tag) => SYMBOL_KINDS.includes(tag));
+        if (term.trim() === '' && tags.length === 0) return [];
         void this.askStats().then((stats) => (this.uncovered.value = stats.uncovered)).catch(() => undefined);
         const search = this.ide.getPlugin(SearchPlugin);
-        const found = await this.askSymbols({ query, limit: Math.max(limit * 4, 200) });
+        const folded = search.textIndex.fold(term);
+        const found = await this.askSymbols({
+          query: term,
+          limit: term === '' ? limit : Math.max(limit * 4, 200),
+          ...(kinds.length > 0 ? { kinds } : {}),
+        });
+        if (term === '') {
+          return found.map((hit) => ({
+            kind: 'ts',
+            label: hit.label,
+            path: hit.path,
+            line: hit.line,
+            detail: hit.path,
+            tags: [hit.kind],
+            score: 0,
+            matches: [],
+          })) as never;
+        }
         return found
           .map((hit) => {
-            const scored = search.matcher.match(search.textIndex.of(hit.label), query);
+            const scored = search.matcher.match(search.textIndex.of(hit.label), folded);
             return scored
               ? {
                   kind: 'ts',

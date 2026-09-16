@@ -2,6 +2,7 @@ import type { RegistryHandle } from '@mosetta/ide-api/client';
 import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
 import type { FileViewLike, IndexHit, IndexKind, KindIcon, Opener, SearchAnswer, SearchSource, SearchStats } from './types.js';
 import { terms } from './query.js';
+import { Recall } from './recall.js';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export interface SearchRemote {
@@ -40,6 +41,10 @@ export class Search {
   private readonly sourceDelay = 140;
 
   private shown = this.limit;
+
+  readonly recall = new Recall();
+
+  private asking = '';
 
   private sourceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -176,6 +181,7 @@ export class Search {
   accept(): void {
     const hit = this.current.value;
     if (!hit) return;
+    this.recall.picked(hit);
     this.close();
 
     const opener = this.openers.all.value.find((one) => one.kind === hit.kind);
@@ -187,6 +193,9 @@ export class Search {
     void this.docs().goTo(hit.path, hit.line ?? 0);
   }
 
+  private readonly better = (a: IndexHit, b: IndexHit): number =>
+    b.score - a.score || this.recall.countOf(b) - this.recall.countOf(a);
+
   private async run(value: string): Promise<void> {
     const token = ++this.token;
     const { tags, term } = terms.parse(value);
@@ -197,20 +206,23 @@ export class Search {
         this.selected.value = 0;
         this.preview.value = null;
       });
-      const limit = this.recentLimit();
+      const limit = tags.length > 0 ? this.limit : this.recentLimit();
       this.shown = limit;
+      this.asking = '';
       if (limit > 0) this.askSources(term, tags, token, limit, 0);
       return;
     }
     this.shown = this.limit;
+    this.asking = term;
     this.askSources(term, tags, token, this.limit, this.sourceDelay);
     try {
       const answer = await this.remote.find(term, this.limit);
       if (token !== this.token) return;
       this.note(answer.hits.map((hit) => hit.kind));
       const kept = answer.hits.filter((hit) => !this.isOff(hit.kind) && terms.keeps(hit, tags));
+      this.recall.saw(kept);
       batch(() => {
-        this.hits.value = this.groupByKind(kept);
+        this.hits.value = this.groupByKind([...kept].sort(this.better));
         this.total.value = tags.length === 0 ? answer.total : kept.length;
         this.selected.value = 0;
       });
@@ -236,7 +248,7 @@ export class Search {
       this.sourceTimer = null;
       for (const source of asked) {
         void Promise.resolve()
-          .then(() => source.find(value, limit))
+          .then(() => source.find({ term: value, tags, limit }))
           .then((hits) => {
             if (token !== this.token || hits.length === 0) return;
             this.absorb(hits.filter((hit) => terms.keeps(hit, tags)));
@@ -275,8 +287,9 @@ export class Search {
     const fresh = extra.filter((hit) => !this.isOff(hit.kind) && !seen.has(key(hit)));
     if (fresh.length === 0) return;
     this.note(fresh.map((hit) => hit.kind));
+    if (this.asking !== '') this.recall.saw(fresh);
     const merged = this.groupByKind(
-      [...this.hits.value, ...fresh].sort((a, b) => b.score - a.score).slice(0, this.shown),
+      [...this.hits.value, ...fresh].sort(this.better).slice(0, this.shown),
     );
     const at = chosen ? merged.findIndex((hit) => key(hit) === key(chosen)) : -1;
     batch(() => {

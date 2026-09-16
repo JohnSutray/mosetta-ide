@@ -11,8 +11,8 @@ interface SymbolHit {
 
 const NAME = '@mosetta/ide-plugin-symbols';
 
-function find(c: TestClient, query: string, limit = 200): Promise<SymbolHit[]> {
-  return c.call('plugins.call', { name: NAME, method: 'find', params: { query, limit } }) as Promise<SymbolHit[]>;
+function find(c: TestClient, query: string, limit = 200, kinds?: string[]): Promise<SymbolHit[]> {
+  return c.call('plugins.call', { name: NAME, method: 'find', params: { query, limit, kinds } }) as Promise<SymbolHit[]>;
 }
 function stats(c: TestClient): Promise<{ symbols: number; uncovered: number }> {
   return c.call('plugins.call', { name: NAME, method: 'stats', params: null }) as Promise<{
@@ -81,8 +81,18 @@ describe('символы проекта', () => {
     expect(await find(c, 'hiddenByNoScan')).toEqual([]);
   });
 
-  it('пустой запрос ничего не находит и не делает вид, что нашёл', async () => {
-    expect(await find(c, '   ')).toEqual([]);
+  it('пустой запрос — это «покажи, что есть»', async () => {
+    const some = await find(c, '   ', 5);
+    expect(some).toHaveLength(5);
+  });
+
+  it('сорта отбирает кеш, а не тот, кто спросил', async () => {
+    const classes = await find(c, '', 20, ['class']);
+    expect(classes.length).toBeGreaterThan(0);
+    expect(classes.every((one) => one.kind === 'class'), 'только классы').toBe(true);
+    const named = await find(c, 'Desktop', 20, ['class']);
+    expect(named.every((one) => one.kind === 'class')).toBe(true);
+    expect(named.map((one) => one.label)).toContain('Desktop');
   });
 
   it('новый символ появляется после правки файла', async () => {

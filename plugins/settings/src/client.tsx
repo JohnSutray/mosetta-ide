@@ -49,14 +49,22 @@ export default class SettingsPlugin {
       id: 'settings',
       kind: 'setting',
       tags: () => entries.value.map((entry) => entry.section),
-      find: (query: string, limit: number) => {
+      find: ({ term, tags, limit }: { term: string; tags: string[]; limit: number }) => {
         const search = this.ide.getPlugin(SearchPlugin);
         const out: Array<Record<string, unknown>> = [];
+        const listing = term.trim() === '';
+        const folded = search.textIndex.fold(term);
+        if (listing && tags.length === 0) return [] as never;
         for (const entry of entries.value) {
           for (const key of Object.keys(entry.defaults)) {
             const label = `${entry.section}.${key}`;
-            const scored = search.matcher.match(search.textIndex.of(label), query);
-            if (scored) out.push({ kind: 'setting', label, path: label, detail: this.ide.t(entry.title), tags: [entry.section], score: scored.score, matches: scored.positions });
+            const row = { kind: 'setting', label, path: label, detail: this.ide.t(entry.title), tags: [entry.section] };
+            if (listing) {
+              out.push({ ...row, score: 0, matches: [] });
+              continue;
+            }
+            const scored = search.matcher.match(search.textIndex.of(label), folded);
+            if (scored) out.push({ ...row, score: scored.score, matches: scored.positions });
           }
         }
         return out.sort((a, b) => (b['score'] as number) - (a['score'] as number)).slice(0, limit) as never;

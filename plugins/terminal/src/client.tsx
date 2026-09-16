@@ -90,11 +90,25 @@ export default class TerminalPlugin {
     this.ide.registry('search.source').add({
       id: 'terminals',
       kind: 'terminal',
-      find: (query: string, limit: number) => {
+      find: ({ term, tags, limit }: { term: string; tags: string[]; limit: number }) => {
         const search = this.ide.getPlugin(SearchPlugin);
+        if (term.trim() === '') {
+          if (tags.length === 0) return [] as never;
+          return this.list.value
+            .slice(0, limit)
+            .map((one) => ({
+              kind: 'terminal',
+              label: one.title,
+              path: one.name,
+              detail: one.command ?? '',
+              score: 0,
+              matches: [],
+            })) as never;
+        }
+        const folded = search.textIndex.fold(term);
         return this.list.value
           .map((one) => {
-            const scored = search.matcher.match(search.textIndex.of(one.title), query);
+            const scored = search.matcher.match(search.textIndex.of(one.title), folded);
             return scored
               ? {
                   kind: 'terminal',

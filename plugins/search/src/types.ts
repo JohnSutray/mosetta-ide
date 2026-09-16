@@ -55,10 +55,16 @@ export const OPENER_SCHEMA = {
   properties: { kind: { type: 'string' }, open: {} },
 } as const;
 
+export interface SearchAsk {
+  term: string;
+  tags: string[];
+  limit: number;
+}
+
 export interface SearchSource {
   id: string;
   kind: IndexKind;
-  find(query: string, limit: number): Promise<IndexHit[]> | IndexHit[];
+  find(ask: SearchAsk): Promise<IndexHit[]> | IndexHit[];
   tags?(): string[];
   note?(): { key: string; params?: Record<string, string | number>; setting?: string } | null;
 }

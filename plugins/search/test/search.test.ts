@@ -93,8 +93,8 @@ describe('найти всё', () => {
       {
         id: 'recent-files',
         kind: 'recent',
-        find: (query: string) =>
-          query === '' ? [{ ...hit('recent', 'src/a.ts', 'src/a.ts', 4), score: 0 }, { ...hit('recent', 'src/b.ts', 'src/b.ts'), score: 0 }] : [],
+        find: ({ term }: { term: string }) =>
+          term === '' ? [{ ...hit('recent', 'src/a.ts', 'src/a.ts', 4), score: 0 }, { ...hit('recent', 'src/b.ts', 'src/b.ts'), score: 0 }] : [],
       },
       '@mosetta/ide-plugin-visits',
     );
@@ -121,7 +121,7 @@ describe('найти всё', () => {
       {
         id: 'recent-files',
         kind: 'recent',
-        find: (_query: string, limit: number) => {
+        find: ({ limit }: { limit: number }) => {
           asked.push(limit);
           return Array.from({ length: 40 }, (_, i) => ({ ...hit('recent', `f${i}.ts`), score: 0 }));
         },
@@ -217,7 +217,7 @@ describe('общак', () => {
       {
         id: 'recent-files',
         kind: 'recent',
-        find: (query: string) => (query === '' ? [{ ...hit('recent', 'src/a.ts'), score: 0 }] : []),
+        find: ({ term }: { term: string }) => (term === '' ? [{ ...hit('recent', 'src/a.ts'), score: 0 }] : []),
       },
       '@mosetta/ide-plugin-visits',
     );
@@ -323,6 +323,110 @@ describe('общак', () => {
     search.setQuery('fnction fit');
     await later();
     expect(search.strayTags.value).toEqual(['fnction']);
+  });
+
+  it('тег с пустым термом просит у источника список, а не молчание', async () => {
+    const { host, search } = await raise();
+    const asks: Array<{ term: string; tags: string[]; limit: number }> = [];
+    host.registry.add(
+      'search.source',
+      {
+        id: 'sym',
+        kind: 'ts',
+        tags: () => ['class'],
+        find: (ask: { term: string; tags: string[]; limit: number }) => {
+          asks.push(ask);
+          return ask.term === ''
+            ? [hit('ts', 'Alpha'), hit('ts', 'Beta')].map((one) => ({ ...one, tags: ['class'], score: 0 }))
+            : [];
+        },
+      },
+      '@mosetta/ide-plugin-symbols',
+    );
+
+    search.show();
+    search.setQuery('ts class ');
+    await later();
+
+    expect(asks.at(-1)).toMatchObject({ term: '', tags: ['ts', 'class'] });
+    expect(search.hits.value.map((one) => one.label)).toEqual(['Alpha', 'Beta']);
+    expect(asks.at(-1)?.limit).toBe(60);
+  });
+
+  it('на голом теге впереди то, что чаще попадалось раньше', async () => {
+    const { host, search } = await raise();
+    const all = [hit('ts', 'Alpha'), hit('ts', 'Beta'), hit('ts', 'Gamma')];
+    host.registry.add(
+      'search.source',
+      {
+        id: 'sym',
+        kind: 'ts',
+        tags: () => ['class'],
+        find: ({ term }: { term: string }) =>
+          term === ''
+            ? all.map((one) => ({ ...one, tags: ['class'], score: 0 }))
+            : [{ ...hit('ts', 'Gamma'), tags: ['class'], score: 5 }],
+      },
+      '@mosetta/ide-plugin-symbols',
+    );
+
+    search.show();
+    search.setQuery('gam');
+    await later();
+    search.accept();
+
+    search.show();
+    search.setQuery('ts class ');
+    await later();
+    expect(search.hits.value.map((one) => one.label)).toEqual(['Gamma', 'Alpha', 'Beta']);
+  });
+
+  it('список, выданный на голый тег, не подтверждает сам себя', async () => {
+    const { host, search } = await raise();
+    host.registry.add(
+      'search.source',
+      {
+        id: 'sym',
+        kind: 'ts',
+        tags: () => ['class'],
+        find: ({ term }: { term: string }) =>
+          term === '' ? [{ ...hit('ts', 'Alpha'), tags: ['class'], score: 0 }] : [],
+      },
+      '@mosetta/ide-plugin-symbols',
+    );
+    search.show();
+    search.setQuery('ts class ');
+    await later();
+    expect(search.recall.countOf({ ...hit('ts', 'Alpha'), tags: ['class'] })).toBe(0);
+  });
+
+  it('источник, сложивший запрос, находит и с заглавных букв', async () => {
+    const { host, plugin, search } = await raise();
+    host.registry.add(
+      'search.source',
+      {
+        id: 'sym',
+        kind: 'ts',
+        find: ({ term, limit }: { term: string; limit: number }) => {
+          const folded = plugin.textIndex.fold(term);
+          return [{ label: 'ThemePlugin', path: 'plugins/theme/src/client.tsx' }]
+            .map((one) => {
+              const scored = plugin.matcher.match(plugin.textIndex.of(one.label), folded);
+              return scored
+                ? { kind: 'ts', label: one.label, path: one.path, score: scored.score, matches: scored.positions }
+                : null;
+            })
+            .filter((one): one is NonNullable<typeof one> => one !== null)
+            .slice(0, limit);
+        },
+      },
+      '@mosetta/ide-plugin-symbols',
+    );
+
+    search.show();
+    search.setQuery('ThemePlugin');
+    await later();
+    expect(search.hits.value.map((one) => one.label)).toEqual(['ThemePlugin']);
   });
 
   it('поломка источника не роняет выдачу', async () => {

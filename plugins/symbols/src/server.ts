@@ -27,10 +27,11 @@ export default class SymbolsServer {
   }
 
   @command() protected find(params: unknown, call: CallContext): SymbolHit[] {
-    const ask = params as { query?: unknown; limit?: unknown } | null;
+    const ask = params as { query?: unknown; limit?: unknown; kinds?: unknown } | null;
     if (typeof ask?.query !== 'string') throw new Error('query: string is required');
     const limit = typeof ask.limit === 'number' ? ask.limit : 200;
-    return this.cacheOf(call.project).find(ask.query, limit);
+    const kinds = Array.isArray(ask.kinds) ? (ask.kinds as string[]) : undefined;
+    return this.cacheOf(call.project).find(ask.query, limit, kinds);
   }
 
   @command() protected stats(_params: unknown, call: CallContext): { symbols: number; uncovered: number } {

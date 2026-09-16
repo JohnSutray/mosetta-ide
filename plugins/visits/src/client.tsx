@@ -59,8 +59,8 @@ export default class VisitsPlugin implements VisitsRemote {
     this.ide.registry('search.source').add({
       id: 'recent-files',
       kind: 'recent',
-      find: (query: string, limit: number) =>
-        query.trim() === ''
+      find: ({ term, limit }: { term: string; limit: number }) =>
+        term.trim() === ''
           ? (visits.recentFiles(limit).map((place) => ({
               kind: 'recent',
               label: place.path,

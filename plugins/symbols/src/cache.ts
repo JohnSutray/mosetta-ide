@@ -70,13 +70,15 @@ export class SymbolCache implements ProjectResource {
     return total;
   }
 
-  find(query: string, limit: number): SymbolHit[] {
+  find(query: string, limit: number, kinds?: readonly string[]): SymbolHit[] {
     const needle = query.trim().toLowerCase();
-    if (needle === '') return [];
+    const wanted = kinds && kinds.length > 0 ? new Set(kinds) : null;
     const out: SymbolHit[] = [];
     for (const hits of this.byFile.values()) {
       for (const hit of hits) {
-        if (subsequence(needle, hit.label.toLowerCase())) out.push(hit);
+        if (wanted && !wanted.has(hit.kind)) continue;
+        if (needle !== '' && !subsequence(needle, hit.label.toLowerCase())) continue;
+        out.push(hit);
         if (out.length >= limit) return out;
       }
     }
