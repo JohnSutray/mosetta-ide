@@ -35,5 +35,9 @@ export const STYLE = `
   cursor: pointer;
 }
 .script-action:hover { background: var(--control-bg-hover); color: var(--fg); }
+
+.script-action { visibility: hidden; }
+.pick-row:hover .script-action,
+.pick-row.is-current .script-action { visibility: visible; }
 .pick-row.is-current .script-action { color: #dbe6ef; }
 `;
