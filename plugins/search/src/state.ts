@@ -1,6 +1,7 @@
 import type { RegistryHandle } from '@mosetta/ide-api/client';
 import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
-import type { FileViewLike, IndexHit, IndexKind, KindIcon, Opener, Recent, SearchAnswer, SearchSource, SearchStats } from './types.js';
+import type { FileViewLike, IndexHit, IndexKind, KindIcon, Opener, SearchAnswer, SearchSource, SearchStats } from './types.js';
+import { terms } from './query.js';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export interface SearchRemote {
@@ -17,7 +18,6 @@ export class Search {
     private readonly remote: SearchRemote,
     private readonly openers: RegistryHandle<Opener>,
     private readonly docs: () => Pick<DocPlugin, 'goTo' | 'peekFile'>,
-    private readonly recents: RegistryHandle<Recent>,
     private readonly recentLimit: () => number,
     private readonly views: RegistryHandle<FileViewLike>,
     private readonly sources: RegistryHandle<SearchSource>,
@@ -38,6 +38,8 @@ export class Search {
   private readonly limit = 60;
   private readonly previewDelay = 90;
   private readonly sourceDelay = 140;
+
+  private shown = this.limit;
 
   private sourceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -187,27 +189,29 @@ export class Search {
 
   private async run(value: string): Promise<void> {
     const token = ++this.token;
-    if (value.trim() === '') {
+    const { tags, term } = terms.parse(value);
+    if (term === '') {
       batch(() => {
-        const recent = this.recent();
-        this.hits.value = recent;
-        this.total.value = recent.length;
+        this.hits.value = [];
+        this.total.value = 0;
         this.selected.value = 0;
         this.preview.value = null;
       });
-      this.settle();
-      this.schedulePreview();
-      this.askSources(value, token);
+      const limit = this.recentLimit();
+      this.shown = limit;
+      if (limit > 0) this.askSources(term, tags, token, limit, 0);
       return;
     }
-    this.askSources(value, token);
+    this.shown = this.limit;
+    this.askSources(term, tags, token, this.limit, this.sourceDelay);
     try {
-      const answer = await this.remote.find(value, this.limit);
+      const answer = await this.remote.find(term, this.limit);
       if (token !== this.token) return;
       this.note(answer.hits.map((hit) => hit.kind));
+      const kept = answer.hits.filter((hit) => !this.isOff(hit.kind) && terms.keeps(hit, tags));
       batch(() => {
-        this.hits.value = this.groupByKind(answer.hits.filter((hit) => !this.isOff(hit.kind)));
-        this.total.value = answer.total;
+        this.hits.value = this.groupByKind(kept);
+        this.total.value = tags.length === 0 ? answer.total : kept.length;
         this.selected.value = 0;
       });
       this.settle();
@@ -222,25 +226,47 @@ export class Search {
     }
   }
 
-  private askSources(value: string, token: number): void {
+  private askSources(value: string, tags: string[], token: number, limit: number, delay: number): void {
     if (this.sourceTimer) clearTimeout(this.sourceTimer);
     const sources = this.sources.all.value;
     this.note(sources.map((one) => one.kind));
-    const asked = sources.filter((one) => !this.isOff(one.kind));
+    const asked = sources.filter((one) => !this.isOff(one.kind) && this.answers(one, tags));
     if (asked.length === 0) return;
-    this.sourceTimer = setTimeout(() => {
+    const ask = () => {
       this.sourceTimer = null;
       for (const source of asked) {
         void Promise.resolve()
-          .then(() => source.find(value, this.limit))
+          .then(() => source.find(value, limit))
           .then((hits) => {
             if (token !== this.token || hits.length === 0) return;
-            this.absorb(hits);
+            this.absorb(hits.filter((hit) => terms.keeps(hit, tags)));
           })
           .catch(() => undefined);
       }
-    }, this.sourceDelay);
+    };
+    if (delay <= 0) ask();
+    else this.sourceTimer = setTimeout(ask, delay);
   }
+
+  private answers(source: SearchSource, tags: string[]): boolean {
+    if (tags.length === 0) return true;
+    const own = [source.kind, ...(source.tags?.() ?? [])].map((one) => one.toLowerCase());
+    return tags.every((tag) => own.includes(tag));
+  }
+
+  readonly known: ReadonlySignal<string[]> = computed(() => {
+    const all = new Set<string>(this.seen.value.map((one) => one.toLowerCase()));
+    for (const source of this.sources.all.value) {
+      all.add(source.kind.toLowerCase());
+      for (const tag of source.tags?.() ?? []) all.add(tag.toLowerCase());
+    }
+    return [...all];
+  });
+
+  readonly strayTags: ReadonlySignal<string[]> = computed(() => {
+    const { tags } = terms.parse(this.query.value);
+    return tags.filter((tag) => !this.known.value.includes(tag));
+  });
 
   private absorb(extra: IndexHit[]): void {
     const chosen = this.current.value;
@@ -250,7 +276,7 @@ export class Search {
     if (fresh.length === 0) return;
     this.note(fresh.map((hit) => hit.kind));
     const merged = this.groupByKind(
-      [...this.hits.value, ...fresh].sort((a, b) => b.score - a.score).slice(0, this.limit),
+      [...this.hits.value, ...fresh].sort((a, b) => b.score - a.score).slice(0, this.shown),
     );
     const at = chosen ? merged.findIndex((hit) => key(hit) === key(chosen)) : -1;
     batch(() => {
@@ -260,28 +286,7 @@ export class Search {
       else if (this.selected.value >= merged.length) this.selected.value = Math.max(0, merged.length - 1);
     });
     this.settle();
-  }
-
-  private recent(): IndexHit[] {
-    const limit = this.recentLimit();
-    this.note(this.recents.all.value.map((one) => one.kind));
-    if (limit <= 0) return [];
-    const hits: IndexHit[] = [];
-    for (const source of this.recents.all.value) {
-      if (this.isOff(source.kind)) continue;
-      for (const place of source.places(limit)) {
-        hits.push({
-          kind: source.kind,
-          label: place.path,
-          path: place.path,
-          line: place.line,
-          detail: place.detail,
-          score: 0,
-          matches: [],
-        });
-      }
-    }
-    return this.groupByKind(hits).slice(0, limit);
+    if (!chosen) this.schedulePreview();
   }
 
   private groupByKind(hits: IndexHit[]): IndexHit[] {

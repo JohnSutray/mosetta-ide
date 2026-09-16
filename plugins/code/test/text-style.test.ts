@@ -7,14 +7,14 @@ const darcula = new CodeLook({ palette: DARCULA, codeFont: CODE_FONT, dark: true
 describe('шрифт редактора', () => {
   it('выключены — гасим И лигатуры, И контекстные альтернативы', () => {
     const style = darcula.textStyle({ fontFamily: 'JetBrains Mono', ligatures: false });
-    expect(style.fontVariantLigatures).toBe('none');
+    expect(style.fontVariantLigatures).toBe('none !important');
     expect(style.fontFeatureSettings).toContain("'calt' 0");
   });
 
   it('включены — пишем включение явно', () => {
     const style = darcula.textStyle({ fontFamily: 'JetBrains Mono', ligatures: true });
-    expect(style.fontVariantLigatures).toBe('normal');
-    expect(style.fontFeatureSettings).toBe('normal');
+    expect(style.fontVariantLigatures).toBe('normal !important');
+    expect(style.fontFeatureSettings).toBe('normal !important');
   });
 
   it('имя шрифта в кавычках — в нём бывают пробелы', () => {

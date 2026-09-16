@@ -14,6 +14,8 @@ const MARKS: Record<string, { mark: string; color: string }> = {
 
 const UNKNOWN = { mark: '?', color: '#6e7376' };
 
+export const SYMBOL_KINDS = Object.keys(MARKS);
+
 export function SymbolIcon({ kind }: { kind: string }): JSX.Element {
   const { mark, color } = MARKS[kind] ?? UNKNOWN;
   return (

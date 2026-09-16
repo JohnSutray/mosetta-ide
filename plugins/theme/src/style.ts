@@ -36,9 +36,9 @@ export const STYLE = `
 ::-webkit-scrollbar-thumb:hover { background: #6e7476; background-clip: content-box; }
 ::-webkit-scrollbar-corner { background: transparent; }
 
-body, input, textarea, select, button {
-  font-variant-ligatures: none;
-  font-feature-settings: 'calt' 0, 'liga' 0, 'dlig' 0;
+*, *::before, *::after {
+  font-variant-ligatures: none !important;
+  font-feature-settings: 'calt' 0, 'liga' 0, 'dlig' 0 !important;
 }
 
 .field {

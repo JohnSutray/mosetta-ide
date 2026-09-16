@@ -9,7 +9,7 @@ export interface IndexHit {
   path: string;
   line?: number;
   detail?: string;
-  detailKey?: string;
+  tags?: string[];
   id?: string;
   score: number;
   matches: number[];
@@ -55,15 +55,11 @@ export const OPENER_SCHEMA = {
   properties: { kind: { type: 'string' }, open: {} },
 } as const;
 
-export interface Recent {
-  kind: IndexKind;
-  places(limit: number): Array<{ path: string; line?: number; detail?: string }>;
-}
-
 export interface SearchSource {
   id: string;
   kind: IndexKind;
   find(query: string, limit: number): Promise<IndexHit[]> | IndexHit[];
+  tags?(): string[];
   note?(): { key: string; params?: Record<string, string | number>; setting?: string } | null;
 }
 
@@ -71,7 +67,7 @@ export const SOURCE_SCHEMA = {
   type: 'object',
   required: ['id', 'kind', 'find'],
   additionalProperties: false,
-  properties: { id: { type: 'string' }, kind: { type: 'string' }, find: {}, note: {} },
+  properties: { id: { type: 'string' }, kind: { type: 'string' }, find: {}, note: {}, tags: {} },
 } as const;
 
 export interface KindIcon {
@@ -84,13 +80,6 @@ export const ICON_SCHEMA = {
   required: ['kind', 'icon'],
   additionalProperties: false,
   properties: { kind: { type: 'string' }, icon: {} },
-} as const;
-
-export const RECENT_SCHEMA = {
-  type: 'object',
-  required: ['kind', 'places'],
-  additionalProperties: false,
-  properties: { kind: { type: 'string' }, places: {} },
 } as const;
 
 export interface FileViewLike {

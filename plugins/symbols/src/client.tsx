@@ -4,7 +4,7 @@ import { signal } from '@preact/signals';
 import type { Ide } from '@mosetta/ide-api/client';
 import Editor from '@mosetta/ide-plugin-editor';
 import LspPlugin from '@mosetta/ide-plugin-lsp';
-import { SymbolIcon } from './icons.js';
+import { SYMBOL_KINDS, SymbolIcon } from './icons.js';
 import { SymbolsPopup } from './popup.js';
 import { Symbols } from './state.js';
 import { STYLE } from './style.js';
@@ -32,22 +32,23 @@ export default class SymbolsPlugin {
       id: 'ts-symbols',
       kind: 'ts',
       note: () => (this.uncovered.value > 0 ? { key: 'symbols.partial', params: { count: this.uncovered.value } } : null),
+      tags: () => SYMBOL_KINDS,
       find: async (query: string, limit: number) => {
+        if (query.trim() === '') return [];
         void this.askStats().then((stats) => (this.uncovered.value = stats.uncovered)).catch(() => undefined);
         const search = this.ide.getPlugin(SearchPlugin);
         const found = await this.askSymbols({ query, limit: Math.max(limit * 4, 200) });
         return found
           .map((hit) => {
-            const label = `ts::${hit.label}`;
-            const scored = search.matcher.match(search.textIndex.of(label), query);
+            const scored = search.matcher.match(search.textIndex.of(hit.label), query);
             return scored
               ? {
                   kind: 'ts',
-                  label,
+                  label: hit.label,
                   path: hit.path,
                   line: hit.line,
                   detail: hit.path,
-                  detailKey: `search.symbol.${hit.kind}`,
+                  tags: [hit.kind],
                   score: scored.score,
                   matches: scored.positions,
                 }
@@ -60,8 +61,8 @@ export default class SymbolsPlugin {
     });
     this.ide.registry('search.icon').add({
       kind: 'ts',
-      icon: (hit: { detailKey?: string }) => (
-        <SymbolIcon kind={(hit.detailKey ?? '').replace('search.symbol.', '')} />
+      icon: (hit: { tags?: string[] }) => (
+        <SymbolIcon kind={(hit.tags ?? []).find((one) => SYMBOL_KINDS.includes(one)) ?? ''} />
       ),
     });
 

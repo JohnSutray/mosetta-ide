@@ -5,5 +5,6 @@
   "command.search.next": "Поиск: вниз",
   "command.search.prev": "Поиск: вверх",
   "search.partial": "Символов нет у {count} файлов — они не в памяти",
-  "search.some": "{shown} из {total}"
+  "search.some": "{shown} из {total}",
+  "search.strayTag": "такого тега никто не приносит: {tags}"
 }

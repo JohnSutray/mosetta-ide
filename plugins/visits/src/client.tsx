@@ -5,7 +5,6 @@ import Editor from '@mosetta/ide-plugin-editor';
 import { Visits, type VisitsRemote } from './state.js';
 import type { Visit } from './types.js';
 import DocPlugin from '@mosetta/ide-plugin-doc';
-import type { Recent } from '@mosetta/ide-plugin-search';
 
 @plugin({ title: 'plugin.visits' })
 export default class VisitsPlugin implements VisitsRemote {
@@ -57,9 +56,20 @@ export default class VisitsPlugin implements VisitsRemote {
       else visits.forget();
     });
 
-    this.ide.registry<Recent>('search.recent').add({
+    this.ide.registry('search.source').add({
+      id: 'recent-files',
       kind: 'recent',
-      places: (limit) => visits.recentFiles(limit),
+      find: (query: string, limit: number) =>
+        query.trim() === ''
+          ? (visits.recentFiles(limit).map((place) => ({
+              kind: 'recent',
+              label: place.path,
+              path: place.path,
+              ...(place.line !== undefined ? { line: place.line } : {}),
+              score: 0,
+              matches: [],
+            })) as never)
+          : [],
     });
 
     visits.installMouseNav(this.ide.mount);

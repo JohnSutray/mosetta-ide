@@ -5,7 +5,7 @@ import type CodePlugin from '@mosetta/ide-plugin-code';
 import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
 import type { EditorSettings } from '@mosetta/ide-plugin-code';
 import type { FileViewLike, IndexHit } from './types.js';
-import { Chevron, Chip, ChipRow, FileIcon, Popup } from '@mosetta/ide-plugin-ui';
+import { Chevron, Chip, ChipRow, FileIcon, Popup, Tag } from '@mosetta/ide-plugin-ui';
 import type { Search } from './state.js';
 
 export function SearchEverywhere({
@@ -79,6 +79,12 @@ export function SearchEverywhere({
               </Chip>
             ))}
           </ChipRow>
+        )}
+
+        {search.strayTags.value.length > 0 && (
+          <div class="se-coverage">
+            <span>{t('search.strayTag', { tags: search.strayTags.value.join(', ') })}</span>
+          </div>
         )}
 
         {search.notes.value.map((note) => (
@@ -178,7 +184,6 @@ function Row({
   onPick: () => void;
   onOpen: () => void;
 }) {
-  const t = useT();
   return (
     <div
       class={`se-row ${current ? 'is-current' : ''}`}
@@ -187,13 +192,10 @@ function Row({
     >
       <span class="se-row-icon">{(icon as never) ?? fileIcon(hit)}</span>
       <span class="se-label">{highlight(hit.label, hit.matches)}</span>
-      {(hit.detail || hit.detailKey) && (
-        <span class="se-detail">
-          {hit.detailKey ? t(hit.detailKey) : ''}
-          {hit.detailKey && hit.detail ? ' · ' : ''}
-          {hit.detail}
-        </span>
-      )}
+      {(hit.tags ?? []).map((tag) => (
+        <Tag key={tag} name={tag} />
+      ))}
+      {hit.detail && <span class="se-detail">{hit.detail}</span>}
     </div>
   );
 }

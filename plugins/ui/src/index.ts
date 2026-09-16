@@ -4,7 +4,7 @@ export { PickPopup, grouped, matches, type PickItem, type PickProps } from './pi
 export { ChoicePopup, type ChoiceRow, type ChoiceProps } from './choice-popup.js';
 export { Menu, type MenuItem } from './menu.js';
 export { ModeSwitch, type ModeOption } from './mode-switch.js';
-export { Chip, ChipRow } from './chip.js';
+export { Chip, ChipRow, Tag } from './chip.js';
 export { Resizer } from './resizer.js';
 export { Tip } from './tip.js';
 export { fuzzy, Fuzzy, type FuzzyHit } from './fuzzy.js';

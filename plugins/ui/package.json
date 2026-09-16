@@ -24,7 +24,8 @@
       "PickPopup",
       "Popup",
       "Resizer",
-      "RootIcon"
+      "RootIcon",
+      "Tag"
     ],
     "strings": {
       "en": "src/en.json",

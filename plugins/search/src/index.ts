@@ -14,7 +14,6 @@ interface Entry {
   path: string;
   line?: number;
   detail?: string;
-  detailKey?: string;
   id?: string;
   indexed: Indexed;
 }
@@ -227,7 +226,6 @@ function toHit(entry: Entry, score: number, matches: number[]): IndexHit {
     path: entry.path,
     ...(entry.line !== undefined ? { line: entry.line } : {}),
     ...(entry.detail ? { detail: entry.detail } : {}),
-    ...(entry.detailKey ? { detailKey: entry.detailKey } : {}),
     ...(entry.id ? { id: entry.id } : {}),
     score,
     matches,

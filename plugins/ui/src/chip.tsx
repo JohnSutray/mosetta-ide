@@ -53,3 +53,24 @@ export function ChipRow({
     </div>
   );
 }
+
+export function Tag({ name }: { name: string }): JSX.Element {
+  const hue = hueOf(name);
+  return (
+    <span
+      class="ui-tag"
+      style={{ color: `hsl(${hue} 52% 70%)`, background: `hsl(${hue} 52% 70% / 0.15)` }}
+    >
+      {name}
+    </span>
+  );
+}
+
+function hueOf(name: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < name.length; i += 1) {
+    hash ^= name.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return Math.abs(hash) % 360;
+}

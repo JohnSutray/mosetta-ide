@@ -25,8 +25,8 @@ export class CodeLook {
   }
 
   textStyle(settings: { fontFamily: string; ligatures: boolean }) {
-    const off = { fontVariantLigatures: 'none', fontFeatureSettings: "'calt' 0, 'liga' 0, 'dlig' 0" };
-    const on = { fontVariantLigatures: 'normal', fontFeatureSettings: 'normal' };
+    const off = { fontVariantLigatures: 'none !important', fontFeatureSettings: "'calt' 0, 'liga' 0, 'dlig' 0 !important" };
+    const on = { fontVariantLigatures: 'normal !important', fontFeatureSettings: 'normal !important' };
     return {
       fontFamily: `'${settings.fontFamily}', monospace`,
       ...(settings.ligatures ? on : off),

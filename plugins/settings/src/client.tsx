@@ -48,6 +48,7 @@ export default class SettingsPlugin {
     this.ide.registry('search.source').add({
       id: 'settings',
       kind: 'setting',
+      tags: () => entries.value.map((entry) => entry.section),
       find: (query: string, limit: number) => {
         const search = this.ide.getPlugin(SearchPlugin);
         const out: Array<Record<string, unknown>> = [];
@@ -55,7 +56,7 @@ export default class SettingsPlugin {
           for (const key of Object.keys(entry.defaults)) {
             const label = `${entry.section}.${key}`;
             const scored = search.matcher.match(search.textIndex.of(label), query);
-            if (scored) out.push({ kind: 'setting', label, path: label, detail: this.ide.t(entry.title), score: scored.score, matches: scored.positions });
+            if (scored) out.push({ kind: 'setting', label, path: label, detail: this.ide.t(entry.title), tags: [entry.section], score: scored.score, matches: scored.positions });
           }
         }
         return out.sort((a, b) => (b['score'] as number) - (a['score'] as number)).slice(0, limit) as never;

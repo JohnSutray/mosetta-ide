@@ -335,4 +335,15 @@ export const STYLE = `
   cursor: default;
 }
 .ui-chip-close:hover { background: #6b3a39; color: #ffd7d6; opacity: 1; }
+
+.ui-tag {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  padding: 0 5px;
+  border-radius: 3px;
+  font: 10px/15px var(--ui-font);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
 `;
