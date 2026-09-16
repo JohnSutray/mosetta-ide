@@ -74,6 +74,18 @@ export const SOURCE_SCHEMA = {
   properties: { id: { type: 'string' }, kind: { type: 'string' }, find: {}, note: {} },
 } as const;
 
+export interface KindIcon {
+  kind: IndexKind;
+  icon(hit: IndexHit): unknown;
+}
+
+export const ICON_SCHEMA = {
+  type: 'object',
+  required: ['kind', 'icon'],
+  additionalProperties: false,
+  properties: { kind: { type: 'string' }, icon: {} },
+} as const;
+
 export const RECENT_SCHEMA = {
   type: 'object',
   required: ['kind', 'places'],

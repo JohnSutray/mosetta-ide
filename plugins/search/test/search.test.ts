@@ -203,6 +203,59 @@ describe('общак', () => {
     expect(search.kinds.value).toContain('ts');
   });
 
+  it('недавние заводят свой чип и выключаются им же', async () => {
+    const { host, search } = await raise();
+    host.registry.add(
+      'search.recent',
+      { kind: 'recent', places: () => [{ path: 'src/a.ts' }] },
+      '@mosetta/ide-plugin-visits',
+    );
+    search.show();
+    await later();
+    expect(search.kinds.value).toContain('recent');
+
+    search.toggleKind('recent');
+    await later();
+    expect(search.hits.value).toEqual([]);
+    expect(search.kinds.value, 'чип остаётся, иначе его нечем вернуть').toContain('recent');
+  });
+
+  it('свёрнутая секция прячет строки, но не себя и не свой счёт', async () => {
+    const { search, hits } = await raise();
+    hits.push(hit('ts', 'один'), hit('ts', 'два'), hit('file', 'три'));
+    search.show();
+    search.setQuery('о');
+    await later();
+
+    search.toggleSection('ts');
+    const rows = search.rows.value.map((row) => ('header' in row ? `# ${row.header} ${row.count}` : row.hit.label));
+    expect(rows).toEqual(['# search.kind.ts 2', '# search.kind.file 1', 'три']);
+    expect(search.isFolded('ts')).toBe(true);
+    expect(search.current.value?.label).toBe('три');
+
+    search.move(1);
+    expect(search.current.value?.label).toBe('три');
+
+    search.toggleSection('ts');
+    expect(search.rows.value.filter((row) => !('header' in row))).toHaveLength(3);
+  });
+
+  it('значок сорта рисует тот, кто сорт принёс', async () => {
+    const { host, search, hits } = await raise();
+    host.registry.add(
+      'search.icon',
+      { kind: 'npm', icon: () => 'значок скрипта' },
+      '@mosetta/ide-plugin-npm-scripts',
+    );
+    hits.push(hit('npm', 'dev', 'package.json'), hit('file', 'foo', 'src/foo.ts'));
+    search.show();
+    search.setQuery('о');
+    await later();
+
+    expect(search.iconFor(hits[0]!)).toBe('значок скрипта');
+    expect(search.iconFor(hits[1]!)).toBeNull();
+  });
+
   it('поломка источника не роняет выдачу', async () => {
     const { host, search, hits } = await raise();
     hits.push(hit('file', 'файл', 'файл.ts'));

@@ -6,14 +6,14 @@ import { SearchEverywhere } from './popup.js';
 import { Search, type SearchRemote } from './state.js';
 import { INDEX_DEFAULTS , INDEX_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
-import { OPENER_SCHEMA, RECENT_SCHEMA, SOURCE_SCHEMA, type FileViewLike, type IndexKind, type Opener, type Recent, type SearchAnswer, type SearchSource, type SearchStats } from './types.js';
+import { ICON_SCHEMA, OPENER_SCHEMA, RECENT_SCHEMA, SOURCE_SCHEMA, type FileViewLike, type IndexKind, type KindIcon, type Opener, type Recent, type SearchAnswer, type SearchSource, type SearchStats } from './types.js';
 import { layout } from './layout.js';
 import { matcher } from './matcher.js';
 import { textIndex } from './text.js';
 import DocPlugin from '@mosetta/ide-plugin-doc';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
-export type { Found, IndexHit, IndexKind, Opener, Recent, SearchAnswer, SearchStats } from './types.js';
+export type { Found, IndexHit, IndexKind, KindIcon, Opener, Recent, SearchAnswer, SearchStats } from './types.js';
 export { layout, Layout } from './layout.js';
 export { matcher, Matcher, type Match } from './matcher.js';
 export { textIndex, TextIndex, type Indexed } from './text.js';
@@ -21,6 +21,7 @@ export { textIndex, TextIndex, type Indexed } from './text.js';
 @registry({ key: 'search.opener', schema: OPENER_SCHEMA })
 @registry({ key: 'search.recent', schema: RECENT_SCHEMA })
 @registry({ key: 'search.source', schema: SOURCE_SCHEMA })
+@registry({ key: 'search.icon', schema: ICON_SCHEMA })
 @configSection({ section: 'index', defaults: INDEX_DEFAULTS, schema: INDEX_SCHEMA })
 @plugin({ title: 'plugin.search' })
 export default class SearchPlugin implements SearchRemote {
@@ -41,6 +42,8 @@ export default class SearchPlugin implements SearchRemote {
       ide.registry<SearchSource>('search.source'),
       ide.remember<string[]>('search.kinds', [], 'both'),
       ide.remember<string[]>('search.kindsOff', [], 'both'),
+      ide.remember<string[]>('search.folded', [], 'both'),
+      ide.registry<KindIcon>('search.icon'),
     );
   }
 

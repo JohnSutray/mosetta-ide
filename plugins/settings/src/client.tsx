@@ -62,6 +62,11 @@ export default class SettingsPlugin {
       },
     });
 
+    this.ide.registry('search.icon').add({
+      kind: 'setting',
+      icon: () => <SettingsIcon />,
+    });
+
     this.ide.registry('search.opener').add({
       kind: 'setting',
       open: (hit: { label: string }) => {

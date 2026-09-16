@@ -4,6 +4,7 @@ import { signal } from '@preact/signals';
 import type { Ide } from '@mosetta/ide-api/client';
 import Editor from '@mosetta/ide-plugin-editor';
 import LspPlugin from '@mosetta/ide-plugin-lsp';
+import { SymbolIcon } from './icons.js';
 import { SymbolsPopup } from './popup.js';
 import { Symbols } from './state.js';
 import { STYLE } from './style.js';
@@ -57,6 +58,13 @@ export default class SymbolsPlugin {
           .slice(0, limit);
       },
     });
+    this.ide.registry('search.icon').add({
+      kind: 'ts',
+      icon: (hit: { detailKey?: string }) => (
+        <SymbolIcon kind={(hit.detailKey ?? '').replace('search.symbol.', '')} />
+      ),
+    });
+
     this.ide.getPlugin(Editor).onSymbolAsk((spot) => void this.symbols.ask(spot));
     this.ide.registry<() => unknown>('chrome.top').add(() => <SymbolsPopup windows={this.ide.getPlugin(UiPlugin).windows} symbols={this.symbols} code={this.ide.getPlugin(CodePlugin)} />);
   }

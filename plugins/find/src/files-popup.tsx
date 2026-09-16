@@ -4,7 +4,7 @@ import type { ComponentChildren } from 'preact';
 import { useIde, useT } from '@mosetta/ide-api/client';
 import type CodePlugin from '@mosetta/ide-plugin-code';
 import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
-import { Popup } from '@mosetta/ide-plugin-ui';
+import { Chip, ChipRow as Chips, Popup } from '@mosetta/ide-plugin-ui';
 import type { Windows } from '@mosetta/ide-plugin-ui';
 import type { MaskChips } from './chips.js';
 import type { FilesField, FindFiles } from './files.js';
@@ -271,16 +271,16 @@ function ChipRow({
   note?: string;
 }) {
   return (
-    <div class={`fif-row fif-masks ${struck ? 'is-excluding' : ''}`} data-keys="find-files-mask">
+    <Chips struck={struck} class="fif-row fif-masks" keys="find-files-mask">
       {chips.all.value.map((one) => (
-        <span class={`fif-chip ${chips.isOff(one) ? 'is-off' : 'is-on'}`} key={one}>
-          <button type="button" class="fif-chip-name" onMouseDown={(event) => event.preventDefault()} onClick={() => chips.toggle(one)}>
-            {one}
-          </button>
-          <button type="button" class="fif-chip-close" onMouseDown={(event) => event.preventDefault()} onClick={() => chips.remove(one)}>
-            ×
-          </button>
-        </span>
+        <Chip
+          key={one}
+          on={!chips.isOff(one)}
+          onToggle={() => chips.toggle(one)}
+          onRemove={() => chips.remove(one)}
+        >
+          {one}
+        </Chip>
       ))}
       <input
         ref={input}
@@ -295,6 +295,6 @@ function ChipRow({
         onInput={(event) => (chips.draft.value = event.currentTarget.value)}
       />
       {note ? <span class="fif-skipped">{note}</span> : null}
-    </div>
+    </Chips>
   );
 }

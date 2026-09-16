@@ -112,6 +112,11 @@ export default class NpmScripts {
       active: this.open,
     });
 
+    this.ide.registry('search.icon').add({
+      kind: 'npm',
+      icon: () => NpmIcon(true),
+    });
+
     this.ide.registry<Opener>('search.opener').add({
       kind: 'npm',
       open: (found) => {

@@ -284,4 +284,55 @@ export const STYLE = `
 .mode-switch-one:hover { background: var(--control-bg-hover); color: var(--fg); }
 .mode-switch-one.is-on { background: var(--treesel); color: #dbe6ef; }
 .mode-switch-one svg { display: block; }
+
+.ui-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ui-chip {
+  display: inline-flex;
+  align-items: stretch;
+  height: 20px;
+  border: 1px solid var(--divider);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #35393a;
+  color: var(--muted);
+  font: 12px var(--ui-font);
+}
+.ui-chip-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 7px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  white-space: nowrap;
+  font: 12px var(--font);
+  cursor: default;
+}
+.ui-chip-name:hover { background: #454a4b; }
+.ui-chip-icon { display: flex; align-items: center; }
+.ui-chip-icon svg { display: block; width: 14px; height: 14px; }
+.ui-chip.is-on { background: var(--treesel); border-color: var(--treesel); color: #dbe6ef; }
+.ui-chip.is-on .ui-chip-name:hover { background: #36699e; }
+.ui-chip.is-off { background: #35393a; color: var(--muted); }
+.ui-chips.is-excluding .ui-chip-name { text-decoration: line-through; }
+.ui-chip-close {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  border: 0;
+  border-left: 1px solid var(--divider);
+  background: transparent;
+  color: inherit;
+  opacity: 0.75;
+  font-size: 13px;
+  line-height: 1;
+  cursor: default;
+}
+.ui-chip-close:hover { background: #6b3a39; color: #ffd7d6; opacity: 1; }
 `;

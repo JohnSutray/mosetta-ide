@@ -5,7 +5,7 @@ import type CodePlugin from '@mosetta/ide-plugin-code';
 import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
 import type { EditorSettings } from '@mosetta/ide-plugin-code';
 import type { FileViewLike, IndexHit } from './types.js';
-import { Popup } from '@mosetta/ide-plugin-ui';
+import { Chevron, Chip, ChipRow, FileIcon, Popup } from '@mosetta/ide-plugin-ui';
 import type { Search } from './state.js';
 
 export function SearchEverywhere({
@@ -68,19 +68,17 @@ export function SearchEverywhere({
         </div>
 
         {search.kinds.value.length > 1 && (
-          <div class="se-kinds">
+          <ChipRow class="se-kinds">
             {search.kinds.value.map((kind) => (
-              <button
+              <Chip
                 key={kind}
-                type="button"
-                class={`se-kind ${search.isOff(kind) ? 'is-off' : 'is-on'}`}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => search.toggleKind(kind)}
+                on={!search.isOff(kind)}
+                onToggle={() => search.toggleKind(kind)}
               >
                 {t(search.kindTitle(kind))}
-              </button>
+              </Chip>
             ))}
-          </div>
+          </ChipRow>
         )}
 
         {search.notes.value.map((note) => (
@@ -101,13 +99,24 @@ export function SearchEverywhere({
           <div class="se-list" ref={list}>
             {search.rows.value.map((row, i) =>
               'header' in row ? (
-                <div class="se-section" key={`h${i}`}>
-                  {t(row.header)}
-                </div>
+                <button
+                  type="button"
+                  class={`se-section ${row.folded ? 'is-folded' : ''}`}
+                  key={`h${i}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => search.toggleSection(row.kind)}
+                >
+                  <span class="se-chevron">
+                    <Chevron />
+                  </span>
+                  <span class="se-section-name">{t(row.header)}</span>
+                  <span class="se-section-count">{row.count}</span>
+                </button>
               ) : (
                 <Row
                   key={row.hit.label + row.at}
                   hit={row.hit}
+                  icon={search.iconFor(row.hit)}
                   current={row.at === search.selected.value}
                   onPick={() => search.selectAt(row.at)}
                   onOpen={() => search.accept()}
@@ -158,11 +167,13 @@ function Preview({
 
 function Row({
   hit,
+  icon,
   current,
   onPick,
   onOpen,
 }: {
   hit: IndexHit;
+  icon: unknown;
   current: boolean;
   onPick: () => void;
   onOpen: () => void;
@@ -174,6 +185,7 @@ function Row({
       onMouseMove={current ? undefined : onPick}
       onClick={onOpen}
     >
+      <span class="se-row-icon">{(icon as never) ?? fileIcon(hit)}</span>
       <span class="se-label">{highlight(hit.label, hit.matches)}</span>
       {(hit.detail || hit.detailKey) && (
         <span class="se-detail">
@@ -184,6 +196,12 @@ function Row({
       )}
     </div>
   );
+}
+
+function fileIcon(hit: IndexHit) {
+  const name = hit.path.split('/').pop() ?? '';
+  if (name === '' || !name.includes('.')) return null;
+  return <FileIcon name={name} />;
 }
 
 function highlight(label: string, matches: number[]) {

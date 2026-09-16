@@ -112,6 +112,11 @@ export default class TerminalPlugin {
       },
     });
 
+    this.ide.registry('search.icon').add({
+      kind: 'terminal',
+      icon: () => <TerminalIcon />,
+    });
+
     this.ide.registry('search.opener').add({
       kind: 'terminal',
       open: (hit: { path: string }) => void this.show(() => this.open({ name: hit.path })),

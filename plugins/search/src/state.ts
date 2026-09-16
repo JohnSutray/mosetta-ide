@@ -1,12 +1,16 @@
 import type { RegistryHandle } from '@mosetta/ide-api/client';
 import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
-import type { FileViewLike, IndexHit, IndexKind, Opener, Recent, SearchAnswer, SearchSource, SearchStats } from './types.js';
+import type { FileViewLike, IndexHit, IndexKind, KindIcon, Opener, Recent, SearchAnswer, SearchSource, SearchStats } from './types.js';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export interface SearchRemote {
   find(query: string, limit?: number, kinds?: IndexKind[]): Promise<SearchAnswer>;
   stats(): Promise<SearchStats>;
 }
+
+export type SearchRow =
+  | { header: string; kind: IndexKind; count: number; folded: boolean }
+  | { hit: IndexHit; at: number };
 
 export class Search {
   constructor(
@@ -19,6 +23,8 @@ export class Search {
     private readonly sources: RegistryHandle<SearchSource>,
     private readonly seen: Signal<string[]>,
     private readonly hidden: Signal<string[]>,
+    private readonly folded: Signal<string[]>,
+    private readonly icons: RegistryHandle<KindIcon>,
   ) {}
 
   readonly open = signal(false);
@@ -38,19 +44,25 @@ export class Search {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private token = 0;
 
-  readonly rows: ReadonlySignal<Array<{ header: string } | { hit: IndexHit; at: number }>> =
-    computed(() => {
-      const rows: Array<{ header: string } | { hit: IndexHit; at: number }> = [];
-      let previous: IndexKind | null = null;
-      this.hits.value.forEach((hit, at) => {
-        if (hit.kind !== previous) {
-          rows.push({ header: this.kindTitle(hit.kind) });
-          previous = hit.kind;
-        }
-        rows.push({ hit, at });
-      });
-      return rows;
+  readonly rows: ReadonlySignal<Array<SearchRow>> = computed(() => {
+    const rows: SearchRow[] = [];
+    const counts = new Map<IndexKind, number>();
+    for (const hit of this.hits.value) counts.set(hit.kind, (counts.get(hit.kind) ?? 0) + 1);
+    let previous: IndexKind | null = null;
+    this.hits.value.forEach((hit, at) => {
+      if (hit.kind !== previous) {
+        rows.push({
+          header: this.kindTitle(hit.kind),
+          kind: hit.kind,
+          count: counts.get(hit.kind) ?? 0,
+          folded: this.isFolded(hit.kind),
+        });
+        previous = hit.kind;
+      }
+      if (!this.isFolded(hit.kind)) rows.push({ hit, at });
     });
+    return rows;
+  });
 
   readonly current: ReadonlySignal<IndexHit | null> = computed(
     () => this.hits.value[this.selected.value] ?? null,
@@ -98,6 +110,31 @@ export class Search {
     void this.run(this.query.value);
   }
 
+  isFolded(kind: string): boolean {
+    return this.folded.value.includes(kind);
+  }
+
+  toggleSection(kind: string): void {
+    const folded = this.folded.value;
+    this.folded.value = folded.includes(kind) ? folded.filter((one) => one !== kind) : [...folded, kind];
+    this.settle();
+  }
+
+  iconFor(hit: IndexHit): unknown {
+    const own = this.icons.all.value.find((one) => one.kind === hit.kind);
+    if (own) return own.icon(hit);
+    return null;
+  }
+
+  private settle(): void {
+    const hits = this.hits.value;
+    const at = this.selected.value;
+    if (hits[at] && !this.isFolded(hits[at].kind)) return;
+    const next = hits.findIndex((hit) => !this.isFolded(hit.kind));
+    this.selected.value = next < 0 ? 0 : next;
+    this.schedulePreview();
+  }
+
   private note(kinds: Iterable<string>): void {
     const next = new Set(this.seen.value);
     const before = next.size;
@@ -116,10 +153,17 @@ export class Search {
   }
 
   move(delta: number): void {
-    const total = this.hits.value.length;
+    const hits = this.hits.value;
+    const total = hits.length;
     if (total === 0) return;
-    this.selected.value = (this.selected.value + delta + total) % total;
-    this.schedulePreview();
+    let at = this.selected.value;
+    for (let step = 0; step < total; step += 1) {
+      at = (at + delta + total) % total;
+      if (this.isFolded(hits[at]!.kind)) continue;
+      this.selected.value = at;
+      this.schedulePreview();
+      return;
+    }
   }
 
   selectAt(at: number): void {
@@ -151,6 +195,7 @@ export class Search {
         this.selected.value = 0;
         this.preview.value = null;
       });
+      this.settle();
       this.schedulePreview();
       this.askSources(value, token);
       return;
@@ -165,6 +210,7 @@ export class Search {
         this.total.value = answer.total;
         this.selected.value = 0;
       });
+      this.settle();
       this.schedulePreview();
     } catch {
       if (token === this.token) {
@@ -213,13 +259,16 @@ export class Search {
       if (at >= 0) this.selected.value = at;
       else if (this.selected.value >= merged.length) this.selected.value = Math.max(0, merged.length - 1);
     });
+    this.settle();
   }
 
   private recent(): IndexHit[] {
     const limit = this.recentLimit();
+    this.note(this.recents.all.value.map((one) => one.kind));
     if (limit <= 0) return [];
     const hits: IndexHit[] = [];
     for (const source of this.recents.all.value) {
+      if (this.isOff(source.kind)) continue;
       for (const place of source.places(limit)) {
         hits.push({
           kind: source.kind,

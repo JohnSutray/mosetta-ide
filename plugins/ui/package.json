@@ -13,6 +13,8 @@
     "client": "src/client.tsx",
     "shares": [
       "Chevron",
+      "Chip",
+      "ChipRow",
       "ChoicePopup",
       "DirIcon",
       "FileIcon",
