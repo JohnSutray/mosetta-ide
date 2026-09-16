@@ -22,5 +22,6 @@
   "settings.terminal.shell": "Shell (empty — the system one)",
   "settings.terminal.args": "Shell arguments",
   "settings.terminal.fontFamily": "Font family (empty — as the editor)",
-  "terminal.shell.about": "Terminals in this project run {shell}. Click to pick another shell — the choice is remembered in settings"
+  "terminal.shell.about": "Terminals in this project run {shell}. Click to pick another shell — the choice is remembered in settings",
+  "search.kind.terminal": "Terminals"
 }

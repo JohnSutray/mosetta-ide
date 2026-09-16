@@ -60,6 +60,20 @@ export interface Recent {
   places(limit: number): Array<{ path: string; line?: number; detail?: string }>;
 }
 
+export interface SearchSource {
+  id: string;
+  kind: IndexKind;
+  find(query: string, limit: number): Promise<IndexHit[]> | IndexHit[];
+  note?(): { key: string; params?: Record<string, string | number>; setting?: string } | null;
+}
+
+export const SOURCE_SCHEMA = {
+  type: 'object',
+  required: ['id', 'kind', 'find'],
+  additionalProperties: false,
+  properties: { id: { type: 'string' }, kind: { type: 'string' }, find: {}, note: {} },
+} as const;
+
 export const RECENT_SCHEMA = {
   type: 'object',
   required: ['kind', 'places'],

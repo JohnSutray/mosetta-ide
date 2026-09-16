@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { RunningServer } from '../src/server.js';
-import { connect, makeProject, removeProject, type TestClient, waitFor, withServer } from './helpers.js';
+import { connect, makeProject, removeProject, type TestClient, withServer } from './helpers.js';
 
 interface Hit {
   kind: string;
@@ -74,7 +74,6 @@ describe('поиск всего', () => {
     });
     c = await connect(server);
     await c.call('workspace.open', { root });
-    await waitForSymbols(c);
   }, 30_000);
 
   afterAll(async () => {
@@ -83,20 +82,19 @@ describe('поиск всего', () => {
     await removeProject(root);
   });
 
-  it('видит все три сорта', async () => {
+  it('видит свои сорта: файлы и находки поставщиков', async () => {
     const stats = await indexStats(c);
     expect(stats.files).toBeGreaterThan(0);
     expect(stats.provided).toBe(3);
-    expect(stats.symbols).toBeGreaterThan(8);
     expect(stats.vocabulary).toBeGreaterThan(5);
-    expect(stats.unparsed).toBe(0);
+    expect(stats.symbols).toBe(0);
   });
 
   it('потолок режет список, но не число найденного', async () => {
-    const all = await answerOf(c, { query: 'ts::', limit: 200 });
+    const all = await answerOf(c, { query: 'ts', limit: 200 });
     expect(all.hits.length).toBe(all.total);
 
-    const few = await answerOf(c, { query: 'ts::', limit: 2 });
+    const few = await answerOf(c, { query: 'ts', limit: 2 });
     expect(few.hits).toHaveLength(2);
     expect(few.total).toBe(all.total);
   });
@@ -119,81 +117,8 @@ describe('поиск всего', () => {
       'npm::root::build',
     ]);
   });
-
-  it('разбирает функции, классы, методы, енумы, типы и стрелки', async () => {
-    const all = await search(c, { query: 'ts::', limit: 200 });
-    const found = labels(all);
-    expect(found).toContain('ts::DesktopCreditCardForm()');
-    expect(found).toContain('ts::MY_VARIABLE');
-    expect(found).toContain('ts::Desktop');
-    expect(found).toContain('ts::Desktop.creditCardForm()');
-    expect(found).toContain('ts::Desktop.title');
-    expect(found).toContain('ts::EMyRoleEnum.role');
-    expect(found).toContain('ts::Shape.area()');
-    expect(found).toContain('ts::Alias');
-    expect(found).toContain('ts::arrowThing()');
-  });
-
-  it('dccf ловит и символ, и файл, и метод', async () => {
-    const found = labels(await search(c, { query: 'dccf' }));
-    expect(found).toContain('ts::DesktopCreditCardForm()');
-    expect(found).toContain('packages/core/src/desktop/creditCardForm.ts');
-    expect(found).toContain('ts::Desktop.creditCardForm()');
-  });
-
-  it('русская раскладка находит то же, что английская', async () => {
-    const wrong = labels(await search(c, { query: 'всса' }));
-    expect(wrong).toContain('ts::DesktopCreditCardForm()');
-
-    const narrowed = await search(c, { query: 'ts::всса' });
-    expect(narrowed.every((h) => h.kind === 'ts')).toBe(true);
-    expect(labels(narrowed)[0]).toBe('ts::DesktopCreditCardForm()');
-  });
-
-  it('ts::dccf сужает до символов', async () => {
-    const hits = await search(c, { query: 'ts::dccf' });
-    expect(hits.every((h) => h.kind === 'ts')).toBe(true);
-    expect(labels(hits)[0]).toBe('ts::DesktopCreditCardForm()');
-  });
-
-  it('символ знает, где он лежит', async () => {
-    const hit = (await search(c, { query: 'ts::EMyRoleEnum.role' }))[0]!;
-    expect(hit.path).toBe('packages/core/src/desktop/creditCardForm.ts');
-    expect(hit.line).toBe(12);
-  });
-
-  it('подсветка указывает на настоящие буквы', async () => {
-    const hit = (await search(c, { query: 'dccf', kinds: ['ts'] }))[0]!;
-    expect(hit.matches.map((i) => hit.label[i])).toEqual(['D', 'C', 'C', 'F']);
-  });
-
-  it('новый символ появляется после правки файла', async () => {
-    const path = 'packages/core/src/deviceValueRenderer.ts';
-    const doc = await c.call('doc.open', { path });
-    await c.call('doc.edit', {
-      path,
-      text: `${doc.text}\nexport function свежаяФункция() {}\n`,
-      baseVersion: doc.version,
-    });
-    await c.call('doc.save', { path });
-    await waitForSymbols(c);
-
-    const found = labels(await search(c, { query: 'свежая' }));
-    expect(found).toContain('ts::свежаяФункция()');
-  });
 });
 
 function labels(hits: Hit[]): string[] {
   return hits.map((h) => h.label);
-}
-
-function waitForSymbols(client: TestClient): Promise<void> {
-  return waitFor(
-    async () => {
-      const stats = await indexStats(client);
-      return stats.pending === 0 && stats.symbols > 0;
-    },
-    'символы разобрались',
-    20_000,
-  );
 }

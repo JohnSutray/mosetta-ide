@@ -19,7 +19,8 @@
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",
     "@mosetta/ide-protocol": "workspace:*",
-    "@mosetta/ide-plugin-ui": "workspace:*"
+    "@mosetta/ide-plugin-ui": "workspace:*",
+    "@mosetta/ide-plugin-search": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

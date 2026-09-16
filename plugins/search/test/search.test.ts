@@ -140,3 +140,91 @@ describe('найти всё', () => {
     expect(search.selected.value).toBe(1);
   });
 });
+
+describe('общак', () => {
+  const later = (ms = 220) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  it('находки источника встают в выдачу рядом со своими', async () => {
+    const { host, search, hits } = await raise();
+    hits.push(hit('file', 'файл', 'файл.ts'));
+    host.registry.add(
+      'search.source',
+      { id: 'sym', kind: 'ts', find: () => [{ ...hit('ts', 'ts::Символ'), score: 9 }] },
+      '@mosetta/ide-plugin-symbols',
+    );
+    search.show();
+    search.setQuery('с');
+    await later();
+    expect(search.hits.value.map((one) => one.label)).toContain('ts::Символ');
+  });
+
+  it('опоздавший ответ не переставляет выбранное', async () => {
+    const { host, search, hits } = await raise();
+    hits.push(hit('file', 'файл', 'файл.ts'));
+    host.registry.add(
+      'search.source',
+      { id: 'sym', kind: 'ts', find: () => [{ ...hit('ts', 'ts::Первее'), score: 99 }] },
+      '@mosetta/ide-plugin-symbols',
+    );
+    search.show();
+    search.setQuery('ф');
+    await new Promise((r) => setTimeout(r, 0));
+    const chosen = search.current.value?.label;
+    await later();
+    expect(search.current.value?.label, 'под кареткой то же, что было').toBe(chosen);
+  });
+
+  it('чип заводится по объявленному сорту и выключает источник', async () => {
+    const { host, search, hits } = await raise();
+    hits.push(hit('file', 'файл', 'файл.ts'));
+    let asked = 0;
+    host.registry.add(
+      'search.source',
+      {
+        id: 'sym',
+        kind: 'ts',
+        find: () => {
+          asked += 1;
+          return [{ ...hit('ts', 'ts::Символ'), score: 9 }];
+        },
+      },
+      '@mosetta/ide-plugin-symbols',
+    );
+    search.show();
+    search.setQuery('с');
+    await later();
+    expect(search.kinds.value, 'чип есть').toContain('ts');
+    expect(asked).toBe(1);
+
+    search.toggleKind('ts');
+    await later();
+    expect(asked, 'выключенный не спрошен').toBe(1);
+    expect(search.hits.value.some((one) => one.kind === 'ts')).toBe(false);
+    expect(search.kinds.value).toContain('ts');
+  });
+
+  it('поломка источника не роняет выдачу', async () => {
+    const { host, search, hits } = await raise();
+    hits.push(hit('file', 'файл', 'файл.ts'));
+    host.registry.add(
+      'search.source',
+      { id: 'битый', kind: 'x', find: () => Promise.reject(new Error('упал')) },
+      '@mosetta/ide-plugin-кто-то',
+    );
+    search.show();
+    search.setQuery('ф');
+    await later();
+    expect(search.hits.value.map((one) => one.label)).toEqual(['файл']);
+  });
+
+  it('источник говорит о своём покрытии сам', async () => {
+    const { host, search } = await raise();
+    host.registry.add(
+      'search.source',
+      { id: 'sym', kind: 'ts', find: () => [], note: () => ({ key: 'symbols.partial', params: { count: 7 } }) },
+      '@mosetta/ide-plugin-symbols',
+    );
+    search.show();
+    expect(search.notes.value).toEqual([{ key: 'symbols.partial', params: { count: 7 } }]);
+  });
+});

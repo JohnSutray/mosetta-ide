@@ -49,6 +49,26 @@ export const STYLE = `
 .se-raise:hover { background: #45494a; }
 .se-raise-key { flex: none; font-family: var(--mono, monospace); }
 
+.se-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 10px 6px;
+}
+.se-kind {
+  padding: 1px 8px;
+  border: none;
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 16px;
+  cursor: pointer;
+  background: var(--control-bg);
+  color: var(--muted);
+}
+.se-kind.is-on { background: var(--treesel); color: #dbe6ef; }
+.se-kind.is-off { opacity: 0.65; }
+.se-kind:hover { filter: brightness(1.15); }
+
 .se-body { display: flex; flex: 1; min-height: 0; }
 
 .se-list {

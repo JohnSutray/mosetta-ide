@@ -20,7 +20,6 @@ export default class SearchServer {
       const index = this.indexOf(project);
       if (!project.settings('index', INDEX_DEFAULTS).enabled) return;
       index.rebuild();
-      void index.indexSymbols();
     });
   }
 
@@ -28,16 +27,7 @@ export default class SearchServer {
     return project.use(
       'index',
       () =>
-        new SearchIndex(
-          project.memory,
-          () => project.settings('index', INDEX_DEFAULTS),
-          this.ide.log,
-          this.finds,
-          (path) => {
-            const skipped = new Set(project.settings('fs', { noScan: [] as string[] }).noScan);
-            return path.split('/').some((part) => skipped.has(part));
-          },
-        ),
+        new SearchIndex(project.memory, () => project.settings('index', INDEX_DEFAULTS), this.ide.log, this.finds),
     );
   }
 

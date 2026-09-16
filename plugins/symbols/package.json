@@ -7,11 +7,16 @@
     "test": "vitest run"
   },
   "exports": {
-    ".": "./src/client.tsx"
+    ".": "./src/client.tsx",
+    "./server": "./src/server.ts"
   },
   "ide": {
     "client": "src/client.tsx",
-    "strings": "src/en.json"
+    "strings": {
+      "en": "src/en.json",
+      "ru": "src/ru.json"
+    },
+    "server": "src/server.ts"
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",
@@ -20,7 +25,9 @@
     "@mosetta/ide-plugin-lsp": "workspace:*",
     "@mosetta/ide-protocol": "workspace:*",
     "@mosetta/ide-plugin-ui": "workspace:*",
-    "@mosetta/ide-plugin-code": "workspace:*"
+    "@mosetta/ide-plugin-code": "workspace:*",
+    "typescript": "^5.7.2",
+    "@mosetta/ide-plugin-search": "workspace:*"
   },
   "peerDependencies": {
     "preact": "^10.25.3",

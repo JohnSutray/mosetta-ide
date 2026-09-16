@@ -4,5 +4,16 @@
   "symbols.imports": "imports ({count})",
   "symbols.more": "{count} more — narrow the search",
   "symbols.imports.hint": "Hide lines that only import the symbol",
-  "plugin.symbols": "Symbols"
+  "plugin.symbols": "Symbols",
+  "search.kind.ts": "Symbols",
+  "search.symbol.class": "Class",
+  "search.symbol.enum": "Enum",
+  "search.symbol.enum-member": "Enum member",
+  "search.symbol.function": "Function",
+  "search.symbol.interface": "Interface",
+  "search.symbol.method": "Method",
+  "search.symbol.property": "Property",
+  "search.symbol.type": "Type",
+  "search.symbol.variable": "Variable",
+  "symbols.partial": "No symbols for {count} files — they are not in memory"
 }

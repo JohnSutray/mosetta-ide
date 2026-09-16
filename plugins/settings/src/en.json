@@ -22,5 +22,6 @@
   "settings.addPlaceholder": "add…",
   "settings.remove": "Remove",
   "settings.clear": "Clear the filter",
-  "settings.countOne": "1 setting"
+  "settings.countOne": "1 setting",
+  "search.kind.setting": "Settings"
 }

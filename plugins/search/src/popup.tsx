@@ -5,7 +5,6 @@ import type CodePlugin from '@mosetta/ide-plugin-code';
 import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
 import type { EditorSettings } from '@mosetta/ide-plugin-code';
 import type { FileViewLike, IndexHit } from './types.js';
-import { INDEX_DEFAULTS } from './settings.js';
 import { Popup } from '@mosetta/ide-plugin-ui';
 import type { Search } from './state.js';
 
@@ -38,13 +37,11 @@ export function SearchEverywhere({
   }, [search.selected.value, search.hits.value]);
 
   const editor = ide.settingsOf('editor', EDITOR_DEFAULTS).value;
-  const index = ide.settingsOf('index', INDEX_DEFAULTS).value;
   if (!search.open.value) return null;
 
   const preview = search.preview.value;
   const shown = search.hits.value.length;
   const total = search.total.value;
-  const missing = index.enabled ? (search.coverage.value?.unparsed ?? 0) : 0;
 
   return (
     <Popup windows={windows}
@@ -70,18 +67,35 @@ export function SearchEverywhere({
           </span>
         </div>
 
-        {missing > 0 && (
-          <div class="se-coverage">
-            <span>{t('search.partial', { count: missing })}</span>
-            {ide.knownCommands.value.some((one) => one.id === 'settings.show') ? (
-              <button class="se-raise" onClick={() => ide.runCommand('settings.show')}>
-                fs.preloadBudgetMb
+        {search.kinds.value.length > 1 && (
+          <div class="se-kinds">
+            {search.kinds.value.map((kind) => (
+              <button
+                key={kind}
+                type="button"
+                class={`se-kind ${search.isOff(kind) ? 'is-off' : 'is-on'}`}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => search.toggleKind(kind)}
+              >
+                {t(search.kindTitle(kind))}
               </button>
-            ) : (
-              <span class="se-raise-key">fs.preloadBudgetMb</span>
-            )}
+            ))}
           </div>
         )}
+
+        {search.notes.value.map((note) => (
+          <div class="se-coverage" key={note.key}>
+            <span>{t(note.key, note.params)}</span>
+            {note.setting !== undefined &&
+              (ide.knownCommands.value.some((one) => one.id === 'settings.show') ? (
+                <button class="se-raise" onClick={() => ide.runCommand('settings.show')}>
+                  {note.setting}
+                </button>
+              ) : (
+                <span class="se-raise-key">{note.setting}</span>
+              ))}
+          </div>
+        ))}
 
         <div class="se-body">
           <div class="se-list" ref={list}>

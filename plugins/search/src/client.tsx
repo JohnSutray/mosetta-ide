@@ -6,7 +6,7 @@ import { SearchEverywhere } from './popup.js';
 import { Search, type SearchRemote } from './state.js';
 import { INDEX_DEFAULTS , INDEX_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
-import { OPENER_SCHEMA, RECENT_SCHEMA, type FileViewLike, type IndexKind, type Opener, type Recent, type SearchAnswer, type SearchStats } from './types.js';
+import { OPENER_SCHEMA, RECENT_SCHEMA, SOURCE_SCHEMA, type FileViewLike, type IndexKind, type Opener, type Recent, type SearchAnswer, type SearchSource, type SearchStats } from './types.js';
 import { layout } from './layout.js';
 import { matcher } from './matcher.js';
 import { textIndex } from './text.js';
@@ -20,6 +20,7 @@ export { textIndex, TextIndex, type Indexed } from './text.js';
 
 @registry({ key: 'search.opener', schema: OPENER_SCHEMA })
 @registry({ key: 'search.recent', schema: RECENT_SCHEMA })
+@registry({ key: 'search.source', schema: SOURCE_SCHEMA })
 @configSection({ section: 'index', defaults: INDEX_DEFAULTS, schema: INDEX_SCHEMA })
 @plugin({ title: 'plugin.search' })
 export default class SearchPlugin implements SearchRemote {
@@ -37,6 +38,9 @@ export default class SearchPlugin implements SearchRemote {
       ide.registry<Recent>('search.recent'),
       () => ide.settingsOf('index', INDEX_DEFAULTS).value.recentFiles,
       ide.registry<FileViewLike>('file.view'),
+      ide.registry<SearchSource>('search.source'),
+      ide.remember<string[]>('search.kinds', [], 'both'),
+      ide.remember<string[]>('search.kindsOff', [], 'both'),
     );
   }
 

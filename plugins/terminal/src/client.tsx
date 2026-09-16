@@ -1,6 +1,7 @@
 /// <reference path="./raw.d.ts" />
 import { batch, signal } from '@preact/signals';
 import { activate, command, configSection, plugin, remote, stub, type Ide } from '@mosetta/ide-api/client';
+import SearchPlugin from '@mosetta/ide-plugin-search';
 import UiPlugin, { ChoicePopup } from '@mosetta/ide-plugin-ui';
 import { TerminalIcon } from './icon.js';
 import ThemePlugin from '@mosetta/ide-plugin-theme';
@@ -85,6 +86,36 @@ export default class TerminalPlugin {
       ) : null,
     );
     void this.refreshShells();
+
+    this.ide.registry('search.source').add({
+      id: 'terminals',
+      kind: 'terminal',
+      find: (query: string, limit: number) => {
+        const search = this.ide.getPlugin(SearchPlugin);
+        return this.list.value
+          .map((one) => {
+            const scored = search.matcher.match(search.textIndex.of(one.title), query);
+            return scored
+              ? {
+                  kind: 'terminal',
+                  label: one.title,
+                  path: one.name,
+                  detail: one.command ?? '',
+                  score: scored.score,
+                  matches: scored.positions,
+                }
+              : null;
+          })
+          .filter((one): one is NonNullable<typeof one> => one !== null)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, limit) as never;
+      },
+    });
+
+    this.ide.registry('search.opener').add({
+      kind: 'terminal',
+      open: (hit: { path: string }) => void this.show(() => this.open({ name: hit.path })),
+    });
 
     this.ide.registry('toolbar.widget').add({
       id: 'terminals',

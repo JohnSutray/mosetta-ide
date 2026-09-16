@@ -1,6 +1,6 @@
 import type { RegistryHandle } from '@mosetta/ide-api/client';
-import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
-import type { FileViewLike, IndexHit, IndexKind, Opener, Recent, SearchAnswer, SearchStats } from './types.js';
+import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
+import type { FileViewLike, IndexHit, IndexKind, Opener, Recent, SearchAnswer, SearchSource, SearchStats } from './types.js';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export interface SearchRemote {
@@ -16,6 +16,9 @@ export class Search {
     private readonly recents: RegistryHandle<Recent>,
     private readonly recentLimit: () => number,
     private readonly views: RegistryHandle<FileViewLike>,
+    private readonly sources: RegistryHandle<SearchSource>,
+    private readonly seen: Signal<string[]>,
+    private readonly hidden: Signal<string[]>,
   ) {}
 
   readonly open = signal(false);
@@ -28,6 +31,9 @@ export class Search {
 
   private readonly limit = 60;
   private readonly previewDelay = 90;
+  private readonly sourceDelay = 140;
+
+  private sourceTimer: ReturnType<typeof setTimeout> | null = null;
 
   private timer: ReturnType<typeof setTimeout> | null = null;
   private token = 0;
@@ -71,6 +77,32 @@ export class Search {
       this.open.value = false;
       this.preview.value = null;
     });
+  }
+
+  readonly kinds: ReadonlySignal<string[]> = computed(() => this.seen.value);
+
+  readonly notes: ReadonlySignal<Array<{ key: string; params?: Record<string, string | number>; setting?: string }>> = computed(() =>
+    this.sources.all.value
+      .filter((one) => !this.hidden.value.includes(one.kind))
+      .map((one) => one.note?.() ?? null)
+      .filter((one): one is { key: string; params?: Record<string, string | number>; setting?: string } => one !== null),
+  );
+
+  isOff(kind: string): boolean {
+    return this.hidden.value.includes(kind);
+  }
+
+  toggleKind(kind: string): void {
+    const off = this.hidden.value;
+    this.hidden.value = off.includes(kind) ? off.filter((one) => one !== kind) : [...off, kind];
+    void this.run(this.query.value);
+  }
+
+  private note(kinds: Iterable<string>): void {
+    const next = new Set(this.seen.value);
+    const before = next.size;
+    for (const kind of kinds) next.add(kind);
+    if (next.size !== before) this.seen.value = [...next].sort();
   }
 
   toggle(): void {
@@ -120,13 +152,16 @@ export class Search {
         this.preview.value = null;
       });
       this.schedulePreview();
+      this.askSources(value, token);
       return;
     }
+    this.askSources(value, token);
     try {
       const answer = await this.remote.find(value, this.limit);
       if (token !== this.token) return;
+      this.note(answer.hits.map((hit) => hit.kind));
       batch(() => {
-        this.hits.value = this.groupByKind(answer.hits);
+        this.hits.value = this.groupByKind(answer.hits.filter((hit) => !this.isOff(hit.kind)));
         this.total.value = answer.total;
         this.selected.value = 0;
       });
@@ -139,6 +174,45 @@ export class Search {
         });
       }
     }
+  }
+
+  private askSources(value: string, token: number): void {
+    if (this.sourceTimer) clearTimeout(this.sourceTimer);
+    const sources = this.sources.all.value;
+    this.note(sources.map((one) => one.kind));
+    const asked = sources.filter((one) => !this.isOff(one.kind));
+    if (asked.length === 0) return;
+    this.sourceTimer = setTimeout(() => {
+      this.sourceTimer = null;
+      for (const source of asked) {
+        void Promise.resolve()
+          .then(() => source.find(value, this.limit))
+          .then((hits) => {
+            if (token !== this.token || hits.length === 0) return;
+            this.absorb(hits);
+          })
+          .catch(() => undefined);
+      }
+    }, this.sourceDelay);
+  }
+
+  private absorb(extra: IndexHit[]): void {
+    const chosen = this.current.value;
+    const key = (hit: IndexHit): string => `${hit.kind}\u0000${hit.path}\u0000${hit.label}\u0000${hit.line ?? ''}`;
+    const seen = new Set(this.hits.value.map(key));
+    const fresh = extra.filter((hit) => !this.isOff(hit.kind) && !seen.has(key(hit)));
+    if (fresh.length === 0) return;
+    this.note(fresh.map((hit) => hit.kind));
+    const merged = this.groupByKind(
+      [...this.hits.value, ...fresh].sort((a, b) => b.score - a.score).slice(0, this.limit),
+    );
+    const at = chosen ? merged.findIndex((hit) => key(hit) === key(chosen)) : -1;
+    batch(() => {
+      this.hits.value = merged;
+      this.total.value += fresh.length;
+      if (at >= 0) this.selected.value = at;
+      else if (this.selected.value >= merged.length) this.selected.value = Math.max(0, merged.length - 1);
+    });
   }
 
   private recent(): IndexHit[] {

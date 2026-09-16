@@ -1,19 +1,12 @@
 import type { IndexSettings } from './settings.js';
 
-type IndexPart = Pick<IndexSettings, 'enabled' | 'maxResults' | 'symbolsMaxKb'>;
+type IndexPart = Pick<IndexSettings, 'enabled' | 'maxResults'>;
 import type { Logger, ProjectMemory } from '@mosetta/ide-api/server';
 import { matcher } from './matcher.js';
 import { layout } from './layout.js';
 import { Vocabulary, textIndex, type Indexed } from './text.js';
 import type { FindProviders } from './finds.js';
-import { tsSymbols, type SymbolKind } from './ts-symbols.js';
 import { OWN_KINDS, type IndexHit, type IndexKind, type SearchAnswer, type SearchStats } from './types.js';
-
-function extensionOf(key: string): string {
-  const name = key.slice(key.lastIndexOf('/') + 1);
-  const at = name.lastIndexOf('.');
-  return at <= 0 ? '' : name.slice(at + 1).toLowerCase();
-}
 
 interface Entry {
   kind: IndexKind;
@@ -28,20 +21,12 @@ interface Entry {
 
 const KIND_PREFIX = /^([\w-]+)::(.*)$/s;
 
-function symbolKey(kind: SymbolKind): string {
-  return `search.symbol.${kind}`;
-}
-
 export class SearchIndex {
   private files: Entry[] = [];
   private provided: Entry[] = [];
-  private readonly symbols = new Map<string, Entry[]>();
   private vocabulary = new Vocabulary();
 
   private staleTree = true;
-  private readonly pending = new Set<string>();
-  private working: Promise<void> | null = null;
-  private disposed = false;
   private readonly off: () => void;
 
   constructor(
@@ -49,7 +34,6 @@ export class SearchIndex {
     private readonly settingsOf: () => IndexPart,
     private readonly log: Logger,
     private readonly providers: FindProviders,
-    private readonly excluded: (path: string) => boolean = () => false,
   ) {
     this.off = ram.on((event) => {
       switch (event.type) {
@@ -59,18 +43,13 @@ export class SearchIndex {
         case 'doc.resident':
         case 'doc.saved':
         case 'doc.external':
-          this.enqueue(event.path);
+          if (this.providers.wants(event.path)) this.staleTree = true;
           break;
         case 'doc.removed':
-          this.symbols.delete(event.path);
-          this.pending.delete(event.path);
           this.staleTree = true;
           break;
         case 'doc.moved':
-          this.symbols.delete(event.from);
-          this.pending.delete(event.from);
           this.staleTree = true;
-          this.enqueue(event.path);
           break;
         default:
           break;
@@ -83,12 +62,9 @@ export class SearchIndex {
   }
 
   dispose(): void {
-    this.disposed = true;
     this.off();
     this.files = [];
     this.provided = [];
-    this.symbols.clear();
-    this.pending.clear();
   }
 
   rebuild(): void {
@@ -102,9 +78,6 @@ export class SearchIndex {
 
     this.vocabulary = new Vocabulary();
     for (const path of paths) this.vocabulary.learn(path);
-    for (const entries of this.symbols.values()) {
-      for (const entry of entries) this.vocabulary.learn(entry.label);
-    }
 
     for (const path of paths) {
       files.push({
@@ -121,7 +94,7 @@ export class SearchIndex {
 
     this.log.debug(
       `индекс: ${this.files.length} файлов, ${this.provided.length} находок поставщиков, ` +
-        `${this.symbolCount} символов, словарь ${this.vocabulary.size} слов ` +
+        `словарь ${this.vocabulary.size} слов ` +
         `(${Date.now() - started} мс)`,
     );
   }
@@ -181,78 +154,6 @@ export class SearchIndex {
     return found ? toHit(found, 0, []) : undefined;
   }
 
-  private enqueue(path: string): void {
-    if (!this.settings.enabled) return;
-    if (this.providers.wants(path)) this.staleTree = true;
-    if (!this.parseable(path)) return;
-    this.pending.add(path);
-    this.schedule();
-  }
-
-  private parseable(path: string): boolean {
-    if (!tsSymbols.canParse(extensionOf(path))) return false;
-    if (this.excluded(path)) return false;
-    const size = this.ram.docSync(path)?.text.length;
-    return size === undefined || size <= this.settings.symbolsMaxKb * 1024;
-  }
-
-  indexSymbols(): Promise<void> {
-    if (!this.settings.enabled) return Promise.resolve();
-    for (const file of this.ram.files()) {
-      if (this.parseable(file.path) && this.ram.docSync(file.path)) {
-        this.pending.add(file.path);
-      }
-    }
-    return this.schedule();
-  }
-
-  private schedule(): Promise<void> {
-    this.working ??= this.drain().finally(() => {
-      this.working = null;
-    });
-    return this.working;
-  }
-
-  private async drain(): Promise<void> {
-    if (this.pending.size === 0) return;
-    const api = await tsSymbols.load();
-    let done = 0;
-
-    while (this.pending.size > 0 && !this.disposed) {
-      const path = this.pending.values().next().value as string;
-      this.pending.delete(path);
-      const doc = this.ram.docSync(path);
-      if (!doc) {
-        this.symbols.delete(path);
-        continue;
-      }
-      try {
-        const found = tsSymbols.parse(api, path, doc.text, extensionOf(path));
-        this.symbols.set(
-          path,
-          found.map((symbol) => {
-            const label = `ts::${symbol.name}`;
-            return {
-              kind: 'ts' as const,
-              label,
-              path,
-              line: symbol.line,
-              detailKey: symbolKey(symbol.kind),
-              detail: path,
-              indexed: textIndex.of(label, this.vocabulary),
-            };
-          }),
-        );
-      } catch (err) {
-        this.symbols.delete(path);
-        this.log.debug(`символы ${path}: ${String(err)}`);
-      }
-
-      done += 1;
-      if (done % 40 === 0) await new Promise((resolve) => setImmediate(resolve));
-    }
-  }
-
   search(query: string, limit = this.settings.maxResults, kinds?: IndexKind[]): SearchAnswer {
     if (this.staleTree) this.rebuild();
 
@@ -303,25 +204,7 @@ export class SearchIndex {
 
   private *everything(): Generator<Entry> {
     yield* this.provided;
-    for (const entries of this.symbols.values()) yield* entries;
     yield* this.files;
-  }
-
-  private get symbolCount(): number {
-    let total = 0;
-    for (const entries of this.symbols.values()) total += entries.length;
-    return total;
-  }
-
-  private get unparsedCount(): number {
-    let total = 0;
-    for (const file of this.ram.files()) {
-      if (!tsSymbols.canParse(extensionOf(file.path))) continue;
-      if (this.excluded(file.path)) continue;
-      if (this.symbols.has(file.path) || this.pending.has(file.path)) continue;
-      total += 1;
-    }
-    return total;
   }
 
   stats(): SearchStats {
@@ -329,10 +212,10 @@ export class SearchIndex {
     return {
       files: this.files.length,
       provided: this.provided.length,
-      symbols: this.symbolCount,
+      symbols: 0,
       vocabulary: this.vocabulary.size,
-      pending: this.pending.size,
-      unparsed: this.unparsedCount,
+      pending: 0,
+      unparsed: 0,
     };
   }
 }

@@ -1,0 +1,18 @@
+{
+  "symbols.definition": "Объявления {word}",
+  "symbols.usages": "Использования {word}",
+  "symbols.imports": "импорты ({count})",
+  "symbols.more": "ещё {count} — уточните запрос",
+  "symbols.imports.hint": "Скрыть строки, которые только импортируют символ",
+  "plugin.symbols": "Символы",
+  "search.symbol.class": "класс",
+  "search.symbol.enum": "енум",
+  "search.symbol.enum-member": "значение енума",
+  "search.symbol.function": "функция",
+  "search.symbol.interface": "интерфейс",
+  "search.symbol.method": "метод",
+  "search.symbol.property": "поле",
+  "search.symbol.type": "тип",
+  "search.symbol.variable": "переменная",
+  "symbols.partial": "Символов нет у {count} файлов — они не в памяти"
+}
