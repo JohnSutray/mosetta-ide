@@ -6,12 +6,13 @@ import DocPlugin from '@mosetta/ide-plugin-doc';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import NpmScripts from '@mosetta/ide-plugin-npm-scripts';
 import TerminalPlugin from '@mosetta/ide-plugin-terminal';
-import UiPlugin, { Menu } from '@mosetta/ide-plugin-ui';
+import UiPlugin, { AskPopup, Asking, Menu } from '@mosetta/ide-plugin-ui';
 import { BreakpointEditor } from './editor.js';
 import { ForeignView, FOREIGN_PREFIX } from './foreign.js';
 import { BugIcon, ContinueIcon } from './icons.js';
 import { DebugMarks, setBreakpoints, setExecution } from './marks.js';
 import { DebugPanel, type PanelApi } from './panel.js';
+import { BeforeRun } from './unsaved.js';
 import { DEBUG_DEFAULTS, DEBUG_SCHEMA } from './settings.js';
 import { DebugState, type Foreign, type VarNode } from './state.js';
 import { STYLE } from './style.js';
@@ -51,6 +52,7 @@ export default class DebugPlugin {
   private view: EditorView | null = null;
   private open: Signal<boolean> | null = null;
   private moveTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly asking = new Asking();
   private readonly inTerminal = signal(false);
 
   private get docs(): DocPlugin {
@@ -260,7 +262,31 @@ export default class DebugPlugin {
     add('debug.file', () => BugIcon(true), 'debug.title.debug');
   }
 
+  private readonly before = new BeforeRun({
+    unsaved: () => this.docs.unsaved().catch(() => [] as string[]),
+    autosaves: () => this.docs.autosaves,
+    save: () => this.docs.saveUnsaved(),
+    complain: (message) => this.ide.complain(message),
+    t: (key, params) => this.ide.t(key, params),
+    ask: (question) =>
+      new Promise<boolean>((resolve) => {
+        let answered = false;
+        this.asking.show({
+          ...question,
+          field: false,
+          run: async () => {
+            answered = true;
+            resolve(true);
+          },
+          onCancel: () => {
+            if (!answered) resolve(false);
+          },
+        });
+      }),
+  });
+
   private async runInTerminal(path: string): Promise<void> {
+    if (!(await this.before.ready())) return;
     try {
       const { name } = await this.askRunFile({ path });
       const terminal = this.ide.getPlugin(TerminalPlugin);
@@ -279,6 +305,7 @@ export default class DebugPlugin {
   }
 
   async launch(ask: LaunchAsk): Promise<void> {
+    if (!(await this.before.ready())) return;
     this.opened().value = true;
     try {
       const run = await this.askLaunch(ask);
@@ -496,6 +523,15 @@ export default class DebugPlugin {
   }
 
   private overlays() {
+    return (
+      <>
+        {this.breakpointPopup()}
+        <AskPopup windows={this.ide.getPlugin(UiPlugin).windows} asking={this.asking} />
+      </>
+    );
+  }
+
+  private breakpointPopup() {
     const windows = this.ide.getPlugin(UiPlugin).windows;
     const menu = this.state.menu.value;
     const edit = this.state.edit.value;

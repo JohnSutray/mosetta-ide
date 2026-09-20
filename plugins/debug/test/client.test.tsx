@@ -110,6 +110,26 @@ describe('отладчик на вкладке', () => {
     expect(debug.state.linesOf('plain.js')).toEqual([4]);
   });
 
+  it('несохранённое держит запуск, пока не ответили', async () => {
+    const ide = host.ide(NAME);
+    host.surface.docs.unsavedPaths.add('src/a.ts');
+    void debug.launch({ name: 'plain.js', program: 'plain.js' });
+    await new Promise((done) => setTimeout(done, 20));
+    expect(ide.calls.some((call) => call.method === 'launch')).toBe(false);
+    expect(wish().open.value).toBe(false);
+  });
+
+  it('с автосохранением запуск не спрашивает: пишет файлы и идёт', async () => {
+    const ide = host.ide(NAME);
+    host.setSettings({ doc: { autosave: 'focusLost' } });
+    host.surface.docs.texts.set('src/a.ts', 'let x = 1\n');
+    host.surface.docs.unsavedPaths.add('src/a.ts');
+    ide.answers.set('launch', () => RUN);
+    await debug.launch({ name: 'plain.js', program: 'plain.js' });
+    expect(host.surface.docs.saved).toEqual(['src/a.ts']);
+    expect(ide.calls.some((call) => call.method === 'launch')).toBe(true);
+  });
+
   it('вывод: шум про карты исходников прячется, но считается', () => {
     host.ide(NAME).emit('output', { run: '1', session: '1.0', category: 'stderr', text: 'Could not read source map for file:///x\n' });
     host.ide(NAME).emit('output', { run: '1', session: '1.0', category: 'stdout', text: 'hello\n' });

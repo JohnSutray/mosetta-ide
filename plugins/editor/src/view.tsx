@@ -52,6 +52,7 @@ interface Props {
   settings: EditorSettings;
   diagnostics: Diagnostic[];
   onEdit: (text: string) => void;
+  onBlur: () => void;
   onCaret: (line: number, character: number) => void;
   onModClick: (pos: number) => void;
   onHover: (path: string, line: number, character: number) => Promise<HoverInfo | null>;
@@ -75,6 +76,7 @@ export function CodeEditor({
   settings,
   diagnostics,
   onEdit,
+  onBlur,
   onCaret,
   onModClick,
   onHover,
@@ -88,8 +90,8 @@ export function CodeEditor({
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
-  const handlers = useRef({ onEdit, onHover, hoverSources, onHunk, onCaret, onModClick });
-  handlers.current = { onEdit, onHover, hoverSources, onHunk, onCaret, onModClick };
+  const handlers = useRef({ onEdit, onBlur, onHover, hoverSources, onHunk, onCaret, onModClick });
+  handlers.current = { onEdit, onBlur, onHover, hoverSources, onHunk, onCaret, onModClick };
   const pathRef = useRef(file.path);
   pathRef.current = file.path;
   const language = useRef(new Compartment());
@@ -110,6 +112,7 @@ export function CodeEditor({
       highlightSelectionMatches(),
       keymap.of([...code.input.keymap]),
       EditorView.updateListener.of((update) => {
+        if (update.focusChanged && !update.view.hasFocus) handlers.current.onBlur();
         if (update.selectionSet || update.docChanged) {
           const at = update.state.selection.main.head;
           const line = update.state.doc.lineAt(at);

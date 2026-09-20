@@ -1,4 +1,7 @@
 {
   "command.file.reload": "Перечитать файл с диска",
-  "command.file.save": "Сохранить файл"
+  "command.file.save": "Сохранить файл",
+  "doc.autosave.blocked": "автосохранение: {path} изменился на диске — сперва разберите спор",
+  "settings.doc.autosave": "Сохранять файл самому",
+  "plugin.doc": "Документы"
 }

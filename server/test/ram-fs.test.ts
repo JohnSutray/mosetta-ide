@@ -100,6 +100,20 @@ describe('RAM FS', () => {
     expect(await fs.readFile(path.join(root, 'src/main.ts'), 'utf8')).toBe('const a = 2;\n');
   });
 
+  it('несохранённое перечисляется путями — и закрытое вкладкой тоже', async () => {
+    expect((await c.call('doc.unsaved', null)).paths).toEqual([]);
+
+    const doc = await c.call('doc.open', { path: 'src/main.ts' });
+    await c.call('doc.edit', { path: 'src/main.ts', text: 'const a = 2;\n', baseVersion: doc.version });
+    expect((await c.call('doc.unsaved', null)).paths).toEqual(['src/main.ts']);
+
+    await c.call('doc.close', { path: 'src/main.ts' });
+    expect((await c.call('doc.unsaved', null)).paths).toEqual(['src/main.ts']);
+
+    await c.call('doc.save', { path: 'src/main.ts' });
+    expect((await c.call('doc.unsaved', null)).paths).toEqual([]);
+  });
+
   it('правка на устаревшую версию отвергается', async () => {
     const doc = await c.call('doc.open', { path: 'src/main.ts' });
     await c.call('doc.edit', { path: 'src/main.ts', text: 'x\n', baseVersion: doc.version });

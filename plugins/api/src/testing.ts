@@ -55,6 +55,7 @@ export class FakeDocWire implements DocWire {
   readonly edits: Array<{ path: string; text: string }> = [];
   readonly saved: string[] = [];
   readonly reloaded: string[] = [];
+  readonly unsavedPaths = new Set<string>();
   saveFails: { code: number; message: string } | null = null;
   editFails: { code: number; message: string } | null = null;
   private version = 1;
@@ -80,12 +81,14 @@ export class FakeDocWire implements DocWire {
     if (this.editFails) throw Object.assign(new Error(this.editFails.message), { code: this.editFails.code });
     this.edits.push({ path, text });
     this.texts.set(path, text);
+    this.unsavedPaths.add(path);
     this.version += 1;
     return { path, version: this.version, dirty: true };
   }
   async save(path: string): Promise<DocState> {
     if (this.saveFails) throw Object.assign(new Error(this.saveFails.message), { code: this.saveFails.code });
     this.saved.push(path);
+    this.unsavedPaths.delete(path);
     return this.stateOf(path);
   }
   async reload(path: string): Promise<DocState> {
@@ -94,6 +97,9 @@ export class FakeDocWire implements DocWire {
   }
   async state(path: string): Promise<DocState> {
     return this.stateOf(path);
+  }
+  async unsaved(): Promise<string[]> {
+    return [...this.unsavedPaths].sort();
   }
   onChanged(handler: (event: DocVersion) => void): () => void {
     this.changed.add(handler);

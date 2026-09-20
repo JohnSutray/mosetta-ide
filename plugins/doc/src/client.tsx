@@ -1,11 +1,14 @@
-import { activate, command, plugin } from '@mosetta/ide-api/client';
+import { activate, command, configSection, plugin } from '@mosetta/ide-api/client';
 import type { Ide } from '@mosetta/ide-api/client';
 import { effect } from '@preact/signals';
 import { Doc } from './doc.js';
 import { EditorFocus } from './focus.js';
+import { DOC_DEFAULTS, DOC_FIELDS, DOC_SCHEMA, type Autosave } from './settings.js';
 
 export type { Reveal } from './doc.js';
+export { DOC_DEFAULTS, type Autosave, type DocSettings } from './settings.js';
 
+@configSection({ section: 'doc', defaults: DOC_DEFAULTS, schema: DOC_SCHEMA, fields: DOC_FIELDS })
 @plugin({ title: 'plugin.doc' })
 export default class DocPlugin {
   readonly doc: Doc;
@@ -15,6 +18,7 @@ export default class DocPlugin {
     this.doc = new Doc(this.ide.docs, {
       say: (message) => ide.say(message),
       complain: (message) => ide.complain(message),
+      sayOnce: (slot, message) => ide.sayOnce(slot, message),
       t: ide.t,
       remembered: (root) => ide.remember<string | null>(`file:${root}`, null, 'tab'),
     });
@@ -112,6 +116,39 @@ export default class DocPlugin {
   get wantsFocus() {
     return this.focus.wanted;
   }
+
+  private get autosave(): Autosave {
+    return this.ide.settingsOf('doc', DOC_DEFAULTS).value.autosave;
+  }
+
+  get autosaves(): boolean {
+    return this.autosave !== 'off';
+  }
+
+  editorLeft(): void {
+    if (this.autosave !== 'focusLost') return;
+    if (!this.doc.dirty.peek()) return;
+    void this.doc.save({ auto: true });
+  }
+
+  async unsaved(): Promise<string[]> {
+    await this.flushDocs();
+    return this.ide.docs.unsaved();
+  }
+
+  async saveUnsaved(): Promise<string[]> {
+    const failed: string[] = [];
+    for (const path of await this.unsaved()) {
+      if (this.doc.open.peek()?.path === path) {
+        await this.doc.save({ auto: true });
+        if (this.doc.dirty.peek()) failed.push(path);
+        continue;
+      }
+      await this.ide.docs.save(path).catch(() => failed.push(path));
+    }
+    return failed;
+  }
+
   flushDocs(): Promise<void> {
     return this.doc.sync.flush();
   }

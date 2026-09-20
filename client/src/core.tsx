@@ -172,6 +172,7 @@ export class Core {
         save: (path) => this.rpc.call('doc.save', { path }),
         reload: (path) => this.rpc.call('doc.reload', { path }),
         state: (path) => this.rpc.call('doc.state', { path }),
+        unsaved: async () => (await this.rpc.call('doc.unsaved', null)).paths,
         onChanged: (handler) => this.rpc.on('doc.changed', handler),
         onExternal: (handler) => this.rpc.on('doc.external', handler),
         onDiverged: (handler) => this.rpc.on('doc.diverged', handler),

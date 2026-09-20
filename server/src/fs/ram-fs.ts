@@ -544,6 +544,10 @@ export class RamFs {
     for (const listener of this.listeners) listener(event);
   }
 
+  unsavedDocs(): string[] {
+    return [...this.docs.values()].filter((doc) => doc.dirty).map((doc) => doc.path).sort();
+  }
+
   toDocState(doc: Doc): DocState {
     return {
       path: doc.path,

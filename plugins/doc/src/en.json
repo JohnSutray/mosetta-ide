@@ -4,5 +4,7 @@
   "file.reloaded": "{path} reloaded from disk",
   "file.external": "{path} changed on disk — reloaded",
   "file.gone": "{path} is gone from disk. Saving will recreate it.",
+  "doc.autosave.blocked": "autosave: {path} changed on disk — resolve that first",
+  "settings.doc.autosave": "Save the file by itself",
   "plugin.doc": "Documents"
 }

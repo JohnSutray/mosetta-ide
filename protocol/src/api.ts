@@ -68,6 +68,7 @@ export interface Api {
   'doc.reload': { params: { path: string }; result: DocState };
   'doc.state': { params: { path: string }; result: DocState };
   'doc.close': { params: { path: string }; result: null };
+  'doc.unsaved': { params: null; result: { paths: string[] } };
 
   'plugins.list': { params: null; result: PluginInfo[] };
   'plugins.code': { params: { name: string }; result: { code: string } };

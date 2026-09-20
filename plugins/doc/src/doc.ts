@@ -14,6 +14,7 @@ export interface Reveal {
 export interface DocServices {
   say(message: string): void;
   complain(message: string): void;
+  sayOnce(slot: string, message: string): void;
   t(key: string, params?: Record<string, string | number>): string;
   remembered(root: string): Signal<string | null>;
 }
@@ -169,13 +170,14 @@ export class Doc {
     for (const handler of this.mergeRequests) handler(path);
   }
 
-  async save(): Promise<void> {
+  async save(options?: { auto?: boolean }): Promise<void> {
     const file = this.open.value;
     if (!file) return;
     try {
       await this.sync.flush();
       const saved = await this.wire.save(file.path);
       this.forgetDiverged(file.path);
+      if (this.open.peek()?.path !== file.path) return;
       this.sync.attach(saved);
       batch(() => {
         this.open.value = saved;
@@ -183,10 +185,15 @@ export class Doc {
       });
     } catch (err) {
       if (codeOf(err) === RpcErrorCode.RevisionConflict) {
+        if (options?.auto) {
+          this.services.sayOnce('doc.autosave', this.services.t('doc.autosave.blocked', { path: file.path }));
+          return;
+        }
         this.requestMerge(file.path);
         return;
       }
-      this.services.complain(describe(err));
+      if (options?.auto) this.services.sayOnce('doc.autosave', describe(err));
+      else this.services.complain(describe(err));
     }
   }
 
@@ -196,6 +203,7 @@ export class Doc {
     try {
       const doc = await this.wire.reload(file.path);
       this.forgetDiverged(file.path);
+      if (this.open.peek()?.path !== file.path) return;
       this.sync.attach(doc);
       batch(() => {
         this.open.value = doc;

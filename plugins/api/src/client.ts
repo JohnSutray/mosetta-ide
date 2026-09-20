@@ -50,6 +50,7 @@ export interface DocWire {
   save(path: string): Promise<DocState>;
   reload(path: string): Promise<DocState>;
   state(path: string): Promise<DocState>;
+  unsaved(): Promise<string[]>;
   onChanged(handler: (event: DocVersion) => void): () => void;
   onExternal(handler: (event: { path: string; revision: string }) => void): () => void;
   onDiverged(handler: (event: { path: string; reason: 'changed' | 'removed' }) => void): () => void;

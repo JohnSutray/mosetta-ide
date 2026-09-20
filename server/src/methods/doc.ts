@@ -39,6 +39,10 @@ export class DocMethods {
     return ram.toDocState(await ram.peekDoc(pathOf(params)));
   };
 
+  readonly unsaved: Handler<'doc.unsaved'> = (_params, ctx) => {
+    return { paths: ctx.session.requireWorkspace().services.ram.unsavedDocs() };
+  };
+
   readonly close: Handler<'doc.close'> = (params, ctx) => {
     ctx.session.requireWorkspace().services.ram.closeDoc(pathOf(params));
     return null;

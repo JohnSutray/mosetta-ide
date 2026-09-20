@@ -231,6 +231,7 @@ export default class Editor {
           settings={config}
           diagnostics={this.lsp.fileDiagnostics.value}
           onEdit={(text) => this.docs.editDoc(text)}
+          onBlur={() => this.docs.editorLeft()}
           onCaret={(line, character) => this.caretHandler?.(file.path, line, character)}
           onModClick={(pos) => {
             if (this.view) this.ask(this.view, pos);

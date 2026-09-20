@@ -44,6 +44,7 @@ export const handlers: HandlerTable = {
   'doc.reload': (p, c) => docMethods.reload(p, c),
   'doc.state': (p, c) => docMethods.state(p, c),
   'doc.close': (p, c) => docMethods.close(p, c),
+  'doc.unsaved': (p, c) => docMethods.unsaved(p, c),
 
   'plugins.list': (p, c) => pluginMethods.list(p, c),
   'plugins.code': (p, c) => pluginMethods.code(p, c),
