@@ -6,6 +6,22 @@ import type { DiffMode } from './settings.js';
 
 type Painted = { old: Chunk[][]; now: Chunk[][] };
 
+/**
+ * A file's diff on top of the editor.
+ *
+ * Two views, as in WebStorm. IN TWO COLUMNS (the factory one) you see WHAT was replaced
+ * by what, and that is the only way to compare two editions of one line; AS A SINGLE
+ * RIBBON the edit is read top to bottom with the same movement of the eye as code.
+ * Which of them to show is decided by a SETTING (`changes.diffMode`), and the switch in
+ * the header writes into it: a human's way of reading an edit is one and does not
+ * change over the years, so its place is the file that travels with them from machine
+ * to machine.
+ *
+ * The diff's rows are CODE, and they look like code: the same highlighting as in the
+ * editor, the same colours. We paint BOTH sides whole and in one go — unlike a hit's
+ * row, which has no context at all: here there is context, and a block comment is
+ * obliged to stay a comment.
+ */
 export function DiffView({
   diff,
   paint,
@@ -15,6 +31,10 @@ export function DiffView({
   diff: Diff;
   paint: (text: string, path: string) => Chunk[];
   mode: DiffMode;
+  /**
+   * Revert ONE hunk. `null` means reverting is not allowed: what is put aside on the
+   * shelf is shown by the same widget, and there is no working tree behind it.
+   */
   onRevert: ((hunk: number) => void) | null;
 }) {
   const t = useT();
@@ -41,6 +61,14 @@ export function DiffView({
   );
 }
 
+/**
+ * The hunk's revert button.
+ *
+ * It stands by the FIRST row of the hunk and in the column it changes — on the right,
+ * where the working tree is. It is always visible rather than only under the cursor:
+ * this is the hunk's action rather than an identical button on every row, and the human
+ * has to find it with their eyes rather than by hovering.
+ */
 function RevertHunk({ hunk, onRevert }: { hunk: number; onRevert: (hunk: number) => void }) {
   const t = useT();
   return (
@@ -58,6 +86,7 @@ function RevertHunk({ hunk, onRevert }: { hunk: number; onRevert: (hunk: number)
   );
 }
 
+/** The "put it back" arrow: an anticlockwise arc with an arrowhead on the end. */
 function RevertIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -67,6 +96,7 @@ function RevertIcon() {
   );
 }
 
+/** As a single ribbon: the sign on the left, the numbers on both sides. */
 function Unified({
   diff,
   painted,
@@ -101,6 +131,14 @@ function Unified({
   );
 }
 
+/**
+ * Two columns: what was on the left, what became on the right.
+ *
+ * The scrolling is shared, as with merging's three columns: two editions of one file
+ * are obliged to travel together, or the pair stops being a pair. Vertically we
+ * synchronise by hand — sideways, on the other hand, each side travels on its own, and
+ * their long lines are of different lengths.
+ */
 function Split({
   diff,
   painted,
@@ -160,6 +198,10 @@ function Split({
   );
 }
 
+/**
+ * A folded middle. It NAMES how many rows it has hidden, and unfolds on a click — in
+ * both columns this is one and the same fold.
+ */
 function Fold({ diff, id, lines: count }: { diff: Diff; id: number; lines: number }) {
   const t = useT();
   return (
@@ -189,6 +231,13 @@ function sign(kind: DiffRow['kind']): string {
   return kind === 'ins' ? '+' : kind === 'del' ? '−' : '';
 }
 
+/**
+ * The text broken into rows with colours.
+ *
+ * The parsing belongs to somebody else (`CodePainter`), and only one thing here is
+ * ours: the line breaks arrive as pieces of their own, and the text is cut into rows
+ * along them.
+ */
 function lines(text: string, path: string | null, paint: (text: string, path: string) => Chunk[]): Chunk[][] {
   if (text === '' || !path) return [];
   const out: Chunk[][] = [[]];

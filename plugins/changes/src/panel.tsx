@@ -7,13 +7,36 @@ import type { ShelfItem } from './server.js';
 import type { Changelist } from './changelist.js';
 import { DEFAULT_LIST, type ChangeGroup, type ChangeRow, type Changes } from './state.js';
 
+/**
+ * What is put into a drag.
+ *
+ * The name is OUR OWN rather than shared with the tree: on a drag like this the tree
+ * MOVES files on disk, and a file accidentally dragged out of the list of changes into
+ * the tree would travel for real. Different actions — different names.
+ */
 const DRAG_TYPE = 'application/x-ide-change-paths';
 
+/**
+ * The geometry key for the height of the commit block. The store calls this a width —
+ * the size along the axis being dragged; for a horizontal strip that axis is the
+ * vertical one.
+ */
 const COMMIT_ID = 'changes.commit';
+/** How much room the commit message takes by default: three lines and the buttons. */
 const COMMIT_HEIGHT = 96;
+/** Below this a field stops being a field: one line of text and the buttons. */
 const COMMIT_MIN = 64;
+/** The list has no right to squeeze down to nothing: it is the main thing here. */
 const LIST_KEEP = 120;
 
+/**
+ * The changes panel: what has changed, what we are committing, what is on the shelf.
+ *
+ * It reads top to bottom in exactly the order the human works in: the list of files
+ * with tick boxes → the message → the buttons → the shelf. The shelf is at the bottom
+ * because it is turned to less often, but it is obliged to be visible: a shelf that has
+ * been forgotten is work that has been lost.
+ */
 export function ChangesPanel({
   changes,
   windows,
@@ -28,15 +51,25 @@ export function ChangesPanel({
   shown,
 }: {
   changes: Changes;
+  /** The geometry belongs to the widgets plugin; it arrives here as a prop. */
   windows: UiPlugin['windows'];
+  /** A double click: open the file in the editor for real. */
   onOpen: (path: string) => void;
+  /** A single one: show the diff on top of the editor. */
   onDiff: (row: ChangeRow) => void;
+  /** A click on a file inside an opened shelf entry: show what is put aside. */
   onShelfDiff: (item: ShelfItem, path: string) => void;
+  /** The right button on a row or on a list's heading. */
   onMenu: (at: { x: number; y: number }, list: Changelist | null) => void;
+  /** The right button on a shelf entry. */
   onShelfMenu: (at: { x: number; y: number }, item: ShelfItem) => void;
+  /** "To the shelf": the name is asked for by a modal rather than by us. */
   onShelve: () => void;
+  /** Re-read git's state by hand. */
   onRefresh: () => void;
+  /** Search by letters is a common widget, the same as in the tree. */
   typeahead: Typeahead;
+  /** Whose diff is on show right now: the row is obliged to show that. */
   shown: string | null;
 }) {
   const t = useT();
@@ -263,6 +296,7 @@ export function ChangesPanel({
   );
 }
 
+/** A shelf entry's tick box: the third state is drawn by the DOM alone. */
 function ShelfBox({ id, changes }: { id: string; changes: Changes }) {
   const box = useRef<HTMLInputElement>(null);
   const state = changes.shelfChecked(id);
@@ -277,6 +311,13 @@ function ShelfBox({ id, changes }: { id: string; changes: Changes }) {
   );
 }
 
+/**
+ * A changelist: the chevron, the tick box, the name and the count.
+ *
+ * A folded one NAMES how many rows are in it: without the number a folded list is
+ * indistinguishable from an empty one. The tick box has three states — "all", "some",
+ * "none" — and shows the STATE of the contents rather than its own.
+ */
 function Group({
   group,
   changes,
@@ -424,6 +465,10 @@ function Row({
   );
 }
 
+/**
+ * The name with the match highlighted: by a backing rather than by boldness — bold
+ * changes the width of the row on every letter typed.
+ */
 function found(name: string, hit: [number, number] | null) {
   if (!hit) return name;
   return (
@@ -435,6 +480,10 @@ function found(name: string, hit: [number, number] | null) {
   );
 }
 
+/**
+ * When it was put aside. Today's by the hour, the rest by the date: "21:04" about the
+ * day before yesterday's patch answers no question at all.
+ */
 function when(iso: string): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';

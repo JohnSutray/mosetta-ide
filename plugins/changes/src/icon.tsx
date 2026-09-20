@@ -1,5 +1,12 @@
 import type { JSX } from 'preact';
 
+/**
+ * The changes panel's icon: a tick on a sheet.
+ *
+ * Not an "arrow up" and not a "cloud": those are about sending, while the panel is
+ * about CHOOSING — which of what has been done will become a commit. The tick says
+ * that, and the sheet under it says that what is chosen are files.
+ */
 export function ChangesIcon({ filled = false }: { filled?: boolean }): JSX.Element {
   return (
     <svg
@@ -22,6 +29,10 @@ export function ChangesIcon({ filled = false }: { filled?: boolean }): JSX.Eleme
   );
 }
 
+/**
+ * As a single ribbon: the rows go solid, and the sign on the left says what has become
+ * of them.
+ */
 export function UnifiedIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
@@ -31,6 +42,7 @@ export function UnifiedIcon(): JSX.Element {
   );
 }
 
+/** Two columns: what was on the left, what became on the right — as in WebStorm. */
 export function SplitIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
@@ -41,6 +53,10 @@ export function SplitIcon(): JSX.Element {
   );
 }
 
+/**
+ * Re-read: an arrow round a circle with a gap in it. The gap is what makes it "once
+ * more": a ring without one reads as loading rather than as an action.
+ */
 export function RefreshIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">

@@ -1,3 +1,11 @@
+/**
+ * The changes panel's styling is its own, the plugin's.
+ *
+ * The colour of a file's name here means the same as in the tree and is taken from the
+ * same theme variables: blue "changed", green "new", red "conflict". A second
+ * dictionary of colours would mean that one and the same file looks different in the
+ * tree and in the panel.
+ */
 export const STYLE = `
 .chg {
   display: flex;

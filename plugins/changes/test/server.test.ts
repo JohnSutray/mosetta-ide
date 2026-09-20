@@ -24,11 +24,21 @@ import type { ShelfItem } from '../src/shelf.js';
 
 const run = promisify(execFile);
 
+/**
+ * The commit and the shelf against REAL git.
+ *
+ * A fake would be checking our belief in its habits rather than the habits themselves:
+ * that `git commit -- <paths>` takes the working tree past the index, and that an
+ * untracked file's patch is only taken after `add -N`, are git's promises, and they are
+ * worth exactly what checking them is worth.
+ */
+
 class FakeProject implements Project {
   private readonly resources = new Map<string, ProjectResource>();
+  /** Where the argument's result went: the memory layer is faked while the disk is real. */
   readonly settled: Array<{ path: string; text: string | null }> = [];
   constructor(readonly root: string) {}
-  readonly name = 'проект';
+  readonly name = 'project';
   use<T extends ProjectResource>(key: string, create: () => T): T {
     const have = this.resources.get(key);
     if (have) return have as T;
@@ -50,7 +60,7 @@ class FakeProject implements Project {
     return () => undefined;
   }
   start(): never {
-    throw new Error('долгоживущих процессов в этом тесте нет');
+    throw new Error('there are no long-lived processes in this test');
   }
   readonly memory: ProjectMemory = {
     on: () => () => undefined,
@@ -89,12 +99,16 @@ function running(spec: RunAsk): Promise<RunResult> {
 
 const silent = { debug() {}, info() {}, warn() {}, error() {} };
 
-describe('изменения: коммит и полка', () => {
+describe('changes: the commit and the shelf', () => {
   let root: string;
   let state: string;
   let project: FakeProject;
   let call: (method: string, params?: unknown) => Promise<unknown>;
   let events: MemoryEvent[];
+  /**
+   * What was brought to the merge screen: there is one supplier, and it is what we
+   * check.
+   */
   let supplied: MergeSupply[];
   let mergeStub: { open: (root: string, supply: MergeSupply) => void };
 
@@ -114,9 +128,9 @@ describe('изменения: коммит и полка', () => {
     await fs.writeFile(path.join(root, 'src/util.ts'), 'export const two = 2;\n');
     await git('init', '-b', 'main');
     await git('config', 'user.email', 'test@example.com');
-    await git('config', 'user.name', 'Тест');
+    await git('config', 'user.name', 'Test');
     await git('add', '.');
-    await git('commit', '-m', 'первый');
+    await git('commit', '-m', 'the first');
 
     project = new FakeProject(root);
     const ide: Ide = {
@@ -140,7 +154,7 @@ describe('изменения: коммит и полка', () => {
     const ctx: CallContext = { project, services: null };
     call = (method, params = null) => {
       const handler = methods.get(method);
-      if (!handler) throw new Error(`нет метода ${method}`);
+      if (!handler) throw new Error(`there is no method ${method}`);
       return Promise.resolve(handler(params, ctx));
     };
   });
@@ -158,16 +172,16 @@ describe('изменения: коммит и полка', () => {
   const unshelve = (p: object) =>
     call('unshelve', p) as Promise<{ error: string | null; restored?: string[] }>;
 
-  it('конфликтная полка заводит СПОР, а не отказ (ADR-0246)', async () => {
+  it('a conflicting shelf sets up an ARGUMENT rather than a refusal', async () => {
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 111;\n');
-    const put = await shelve({ name: 'моя правка', files: ['src/main.ts'] });
+    const put = await shelve({ name: 'my edit', files: ['src/main.ts'] });
     expect(put.error).toBe(null);
 
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 222;\n');
-    await git('commit', '-am', 'чужая правка');
+    await git('commit', '-am', 'somebody else\'s edit');
 
     const back = await unshelve({ id: put.item!.id });
-    expect(back.error, 'это не отказ: патч лёг, спорят строки').toBe(null);
+    expect(back.error, 'this is no refusal: the patch went on, it is the rows that argue').toBe(null);
     expect(supplied).toHaveLength(1);
 
     const supply = supplied[0]!;
@@ -176,14 +190,14 @@ describe('изменения: коммит и полка', () => {
     expect(supply.files[0]!.base).toContain('one = 1;');
     expect(supply.files[0]!.left.text).toContain('one = 222;');
     expect(supply.files[0]!.right.text).toContain('one = 111;');
-    expect(await shelves(), 'полку спор не трогает — как и удачное наложение').toHaveLength(1);
+    expect(await shelves(), 'an argument does not touch the shelf — nor does a successful application').toHaveLength(1);
   });
 
-  it('разобранный спор дописывает итог и снимает ступени, а полку не трогает', async () => {
+  it('a sorted-out argument writes the result down and takes off the stages, and leaves the shelf alone', async () => {
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 111;\n');
-    const put = await shelve({ name: 'моя правка', files: ['src/main.ts'] });
+    const put = await shelve({ name: 'my edit', files: ['src/main.ts'] });
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 222;\n');
-    await git('commit', '-am', 'чужая правка');
+    await git('commit', '-am', 'somebody else\'s edit');
     await unshelve({ id: put.item!.id });
 
     const supply = supplied[0]!;
@@ -191,56 +205,56 @@ describe('изменения: коммит и полка', () => {
     await supply.finish?.();
 
     expect(project.settled).toEqual([{ path: 'src/main.ts', text: 'export const one = 333;\n' }]);
-    expect(await shelves(), 'разобранный спор — то же снятие: полка цела').toHaveLength(1);
+    expect(await shelves(), 'a sorted-out argument is the same application: the shelf is intact').toHaveLength(1);
     expect(await git('status', '--porcelain')).not.toContain('U');
   });
 
-  it('отказ от спора возвращает дерево в то, чем оно было, и не трогает полку', async () => {
+  it('giving up on an argument puts the tree back into what it was, and leaves the shelf alone', async () => {
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 111;\n');
-    const put = await shelve({ name: 'моя правка', files: ['src/main.ts'] });
+    const put = await shelve({ name: 'my edit', files: ['src/main.ts'] });
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 222;\n');
-    await git('commit', '-am', 'чужая правка');
+    await git('commit', '-am', 'somebody else\'s edit');
     await unshelve({ id: put.item!.id });
 
     await supplied[0]!.cancel?.();
-    expect(project.settled.at(-1)?.text, 'вернулась НАША сторона, а не предок').toContain('one = 222;');
+    expect(project.settled.at(-1)?.text, 'OUR side came back rather than the ancestor').toContain('one = 222;');
     expect(await git('status', '--porcelain')).not.toContain('U');
-    expect(await shelves(), 'работа цела: запись осталась').toHaveLength(1);
+    expect(await shelves(), 'the work is intact: the entry has stayed').toHaveLength(1);
   });
 
-  it('коммитит ТОЛЬКО отмеченные файлы, не трогая индекс', async () => {
+  it('it commits ONLY the ticked files, without touching the index', async () => {
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 11;\n');
     await fs.writeFile(path.join(root, 'src/util.ts'), 'export const two = 22;\n');
 
-    expect(await commit({ message: 'только main', files: ['src/main.ts'] })).toEqual({ error: null });
+    expect(await commit({ message: 'main only', files: ['src/main.ts'] })).toEqual({ error: null });
 
-    expect(await git('log', '-1', '--pretty=%s')).toContain('только main');
+    expect(await git('log', '-1', '--pretty=%s')).toContain('main only');
     expect(await git('status', '--porcelain')).toContain('src/util.ts');
     expect(await git('show', '--stat', '--pretty=', 'HEAD')).not.toContain('util.ts');
   });
 
-  it('новый файл добавляется сам: git его без `add` не видит вовсе', async () => {
+  it('a new file adds itself: git does not see it at all without `add`', async () => {
     await fs.writeFile(path.join(root, 'src/fresh.ts'), 'export const three = 3;\n');
-    expect(await commit({ message: 'новый', files: ['src/fresh.ts'] })).toEqual({ error: null });
+    expect(await commit({ message: 'new', files: ['src/fresh.ts'] })).toEqual({ error: null });
     expect(await git('show', '--stat', '--pretty=', 'HEAD')).toContain('fresh.ts');
   });
 
-  it('без сообщения и без файлов не коммитит, и говорит почему', async () => {
+  it('with no message and no files it does not commit, and says why', async () => {
     expect((await commit({ message: '  ', files: ['src/main.ts'] })).error).toBe('commit message is required');
-    expect((await commit({ message: 'есть', files: [] })).error).toBe('no files selected');
+    expect((await commit({ message: 'present', files: [] })).error).toBe('no files selected');
   });
 
-  it('полка: патч уходит из дерева и возвращается на место', async () => {
+  it('the shelf: the patch leaves the tree and comes back into place', async () => {
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 99;\n');
 
-    const put = await shelve({ name: 'девяносто девять', files: ['src/main.ts'] });
+    const put = await shelve({ name: 'ninety-nine', files: ['src/main.ts'] });
     expect(put.error).toBeNull();
     expect(await fs.readFile(path.join(root, 'src/main.ts'), 'utf8')).toBe('export const one = 1;\n');
     expect(await git('status', '--porcelain')).toBe('');
 
     const list = await shelves();
     expect(list).toHaveLength(1);
-    expect(list[0]?.name).toBe('девяносто девять');
+    expect(list[0]?.name).toBe('ninety-nine');
     expect(list[0]?.files).toEqual(['src/main.ts']);
 
     expect(await unshelve({ id: list[0]!.id })).toEqual({ error: null });
@@ -249,65 +263,65 @@ describe('изменения: коммит и полка', () => {
     expect(await shelves()).toHaveLength(1);
   });
 
-  it('приложить можно сколько угодно раз: ни дерево, ни полка не портятся', async () => {
+  it('it can be applied as many times as you like: neither the tree nor the shelf is spoilt', async () => {
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 99;\n');
-    const put = await shelve({ name: 'девяносто девять', files: ['src/main.ts'] });
+    const put = await shelve({ name: 'ninety-nine', files: ['src/main.ts'] });
 
     for (const attempt of [1, 2, 3]) {
-      expect(await unshelve({ id: put.item!.id }), `заход ${attempt}`).toEqual({ error: null });
+      expect(await unshelve({ id: put.item!.id }), `attempt ${attempt}`).toEqual({ error: null });
       expect(await fs.readFile(path.join(root, 'src/main.ts'), 'utf8')).toBe('export const one = 99;\n');
       expect(await git('status', '--porcelain')).toBe(' M src/main.ts\n');
       expect(await shelves()).toHaveLength(1);
     }
   });
 
-  it('ложится на файл, который человек уже правил', async () => {
+  it('it lays onto a file the human has already edited', async () => {
     const main = path.join(root, 'src/main.ts');
     await fs.writeFile(main, 'one\ntwo\nthree\nfour\nfive\n');
-    await git('commit', '-am', 'многострочный');
+    await git('commit', '-am', 'multi-line');
 
     await fs.writeFile(main, 'one\ntwo\nTHREE\nfour\nfive\n');
-    const put = await shelve({ name: 'середина', files: ['src/main.ts'] });
+    const put = await shelve({ name: 'the middle', files: ['src/main.ts'] });
 
     await fs.writeFile(main, 'ONE\ntwo\nthree\nfour\nfive\n');
 
     expect(await unshelve({ id: put.item!.id })).toEqual({ error: null });
-    expect(await fs.readFile(main, 'utf8'), 'обе правки на месте').toBe('ONE\ntwo\nTHREE\nfour\nfive\n');
+    expect(await fs.readFile(main, 'utf8'), 'both edits are in place').toBe('ONE\ntwo\nTHREE\nfour\nfive\n');
     expect(await git('status', '--porcelain')).toBe(' M src/main.ts\n');
   });
 
-  it('чужая отметка в индексе переживает наложение', async () => {
+  it('somebody else\'s mark in the index survives the application', async () => {
     await fs.writeFile(path.join(root, 'src/util.ts'), 'export const two = 22;\n');
     await git('add', '--', 'src/util.ts');
 
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 99;\n');
-    const put = await shelve({ name: 'девяносто девять', files: ['src/main.ts'] });
+    const put = await shelve({ name: 'ninety-nine', files: ['src/main.ts'] });
     expect(await unshelve({ id: put.item!.id })).toEqual({ error: null });
 
     const status = await git('status', '--porcelain');
-    expect(status, 'отметка человека цела').toContain('M  src/util.ts');
-    expect(status, 'наше — в дереве, а не в индексе').toContain(' M src/main.ts');
+    expect(status, 'the human\'s mark is intact').toContain('M  src/util.ts');
+    expect(status, 'ours is in the tree rather than in the index').toContain(' M src/main.ts');
   });
 
-  it('файл ушёл ВПЕРЁД в историю — правка ложится на новую версию', async () => {
+  it('the file has moved ON in the history — the edit lays onto the new version', async () => {
     const main = path.join(root, 'src/main.ts');
     await fs.writeFile(main, 'a\nb\nc\nd\ne\n');
-    await git('commit', '-am', 'пять строк');
+    await git('commit', '-am', 'five lines');
 
-    await fs.writeFile(main, 'a\nb\nПОЛКА\nd\ne\n');
-    const put = await shelve({ name: 'середина', files: ['src/main.ts'] });
+    await fs.writeFile(main, 'a\nb\nSHELF\nd\ne\n');
+    const put = await shelve({ name: 'the middle', files: ['src/main.ts'] });
 
-    await fs.writeFile(main, 'НАЧАЛО\nb\nc\nd\ne\n');
-    await git('commit', '-am', 'ушли вперёд');
+    await fs.writeFile(main, 'START\nb\nc\nd\ne\n');
+    await git('commit', '-am', 'moved on');
 
     expect(await unshelve({ id: put.item!.id })).toEqual({ error: null });
-    expect(await fs.readFile(main, 'utf8')).toBe('НАЧАЛО\nb\nПОЛКА\nd\ne\n');
+    expect(await fs.readFile(main, 'utf8')).toBe('START\nb\nSHELF\nd\ne\n');
   });
 
-  it('файла в дереве нет — возвращаем его с полки', async () => {
+  it('the file is not in the tree — we bring it back off the shelf', async () => {
     const main = path.join(root, 'src/main.ts');
     await fs.writeFile(main, 'export const one = 99;\n');
-    const put = await shelve({ name: 'девяносто девять', files: ['src/main.ts'] });
+    const put = await shelve({ name: 'ninety-nine', files: ['src/main.ts'] });
 
     await fs.rm(main);
     const back = await unshelve({ id: put.item!.id });
@@ -315,37 +329,37 @@ describe('изменения: коммит и полка', () => {
     expect(await fs.readFile(main, 'utf8')).toBe('export const one = 99;\n');
   });
 
-  it('файла нет и в истории — всё равно возвращаем, и говорим об этом', async () => {
+  it('the file is not in the history either — we still bring it back, and say so', async () => {
     const main = path.join(root, 'src/main.ts');
     await fs.writeFile(main, 'export const one = 99;\n');
-    const put = await shelve({ name: 'девяносто девять', files: ['src/main.ts'] });
+    const put = await shelve({ name: 'ninety-nine', files: ['src/main.ts'] });
 
     await git('rm', '-q', '--', 'src/main.ts');
-    await git('commit', '-m', 'убрали совсем');
+    await git('commit', '-m', 'removed altogether');
 
     const back = await unshelve({ id: put.item!.id });
     expect(back.error).toBe(null);
-    expect(back.restored, 'воскрешение — не тихое дело').toEqual(['src/main.ts']);
+    expect(back.restored, 'a resurrection is no quiet business').toEqual(['src/main.ts']);
     expect(await fs.readFile(main, 'utf8')).toBe('export const one = 99;\n');
     expect(await git('status', '--porcelain')).toBe('?? src/main.ts\n');
   });
 
-  it('на неразобранный спор не накладываем, и говорим почему', async () => {
+  it('we do not lay onto an argument that has not been sorted out, and we say why', async () => {
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 111;\n');
-    const put = await shelve({ name: 'моя правка', files: ['src/main.ts'] });
+    const put = await shelve({ name: 'my edit', files: ['src/main.ts'] });
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 222;\n');
-    await git('commit', '-am', 'чужая правка');
+    await git('commit', '-am', 'somebody else\'s edit');
     await unshelve({ id: put.item!.id });
 
     const again = await unshelve({ id: put.item!.id });
     expect(again.error).toContain('sort out the conflict first');
-    expect(supplied, 'второго сеанса не завели').toHaveLength(1);
+    expect(supplied, 'no second session was set up').toHaveLength(1);
   });
 
-  it('снятие ЧАСТИ файлов оставляет патч целым', async () => {
+  it('applying SOME of the files leaves the patch whole', async () => {
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 99;\n');
     await fs.writeFile(path.join(root, 'src/util.ts'), 'export const two = 88;\n');
-    const put = await shelve({ name: 'оба', files: ['src/main.ts', 'src/util.ts'] });
+    const put = await shelve({ name: 'both', files: ['src/main.ts', 'src/util.ts'] });
 
     expect(await unshelve({ id: put.item!.id, files: ['src/main.ts'] })).toEqual({ error: null });
     expect(await fs.readFile(path.join(root, 'src/main.ts'), 'utf8')).toBe('export const one = 99;\n');
@@ -357,10 +371,10 @@ describe('изменения: коммит и полка', () => {
     expect((await shelves())[0]?.files).toEqual(['src/main.ts', 'src/util.ts']);
   });
 
-  it('полка помнит и НЕОТСЛЕЖИВАЕМЫЙ файл — с содержимым', async () => {
+  it('the shelf remembers an UNTRACKED file too — with its contents', async () => {
     await fs.writeFile(path.join(root, 'src/fresh.ts'), 'export const three = 3;\n');
 
-    const put = await shelve({ name: 'новый файл', files: ['src/fresh.ts'] });
+    const put = await shelve({ name: 'new file', files: ['src/fresh.ts'] });
     expect(put.error).toBeNull();
     await expect(fs.stat(path.join(root, 'src/fresh.ts'))).rejects.toThrow();
     expect(await git('status', '--porcelain')).toBe('');
@@ -370,13 +384,13 @@ describe('изменения: коммит и полка', () => {
     expect(await fs.readFile(path.join(root, 'src/fresh.ts'), 'utf8')).toBe('export const three = 3;\n');
   });
 
-  it('откладывать нечего — говорим об этом, а не заводим пустую запись', async () => {
-    const put = await shelve({ name: 'пусто', files: ['src/main.ts'] });
+  it('there is nothing to put aside — we say so rather than set up an empty entry', async () => {
+    const put = await shelve({ name: 'empty', files: ['src/main.ts'] });
     expect(put.error).toBe('nothing to shelve: no changes in these files');
     expect(await shelves()).toEqual([]);
   });
 
-  it('имя записи проверяется: `..` не выведет за папку полки', async () => {
-    await expect(call('drop', { id: '../../побег' })).rejects.toThrow(/bad shelf id/);
+  it('an entry\'s name is checked: a `..` does not lead out of the shelf\'s directory', async () => {
+    await expect(call('drop', { id: '../../escape' })).rejects.toThrow(/bad shelf id/);
   });
 });

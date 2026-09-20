@@ -18,6 +18,19 @@ import { computed, effect, signal } from '@preact/signals';
 
 export type { ShelfItem } from './server.js';
 
+/**
+ * The changes panel: the commit and the shelf.
+ *
+ * A plugin of its own rather than a piece of the git plugin. Git is an AXIS: branches,
+ * history, what has changed relative to it; the changes panel is the workbench where
+ * the human decides which of that will become a commit. Mixing them would give us a
+ * plugin that cannot be turned off: the IDE gets by without branches, and without a
+ * list of changes too, while together they would be one indivisible lump.
+ *
+ * What has changed we ask of a neighbour (`getPlugin(GitPlugin).snapshot`): the
+ * snapshot is computed in the background and handed over instantly, and there is no
+ * point setting up a second counter.
+ */
 @configSection({
   section: 'changes',
   defaults: CHANGES_DEFAULTS,
@@ -27,11 +40,26 @@ export type { ShelfItem } from './server.js';
 @plugin({ title: 'plugin.changes' })
 export default class ChangesPlugin implements ChangesRemote {
   readonly changes: Changes;
+  /**
+   * A file's diff. The neighbours arrive LAZILY: the order plugins come up in does not
+   * matter, and in a test there are stubs in their place.
+   */
   readonly diff: Diff;
+  /**
+   * Reading a patch off the shelf: the `git diff` format is knowledge about showing an
+   * edit.
+   */
   private readonly patches = new PatchReader();
+  /**
+   * The question modal is a common widget: the name of a shelf entry, the name of a
+   * list, "revert, really".
+   */
   private readonly asking = new Asking();
+  /** An open row menu: the place of the click and the items. */
   private readonly menu = signal<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  /** Search by letters — the same widget as in the tree. */
   private readonly find: Typeahead;
+  /** A deferred write of the draft: the timer lives with the plugin. */
   private saving: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private readonly ide: Ide) {
@@ -61,24 +89,46 @@ export default class ChangesPlugin implements ChangesRemote {
     );
   }
 
+  /**
+   * How a diff is looked at is a SETTING: we read it from the section, and the switch
+   * in the header writes into the same place. A second way to edit the file rather than
+   * a second source of truth.
+   */
   private mode(): DiffMode {
     return this.ide.settingsOf('changes', CHANGES_DEFAULTS).value.diffMode;
   }
 
+  /** Whether the panel is open — the core's memory. */
   private opened(): { value: boolean } {
     this.open ??= this.ide.remember('panel.open', false);
     return this.open;
   }
   private open: { value: boolean } | null = null;
 
+  /**
+   * A commit by key, without letting go of them: the human has finished the message and
+   * presses Cmd+Enter without moving their hand to the mouse. A plain Enter belongs to
+   * the field — the message is multi-line.
+   */
   @command('changes.commit') protected commitNow(): void {
     void this.changes.commit();
   }
 
+  /**
+   * Close the diff. Escape in its surface and the frame's cross call one and the same
+   * thing: a window has one way of closing.
+   */
   @command('changes.diffClose') protected closeDiff(): void {
     this.diff.close();
   }
 
+  /**
+   * F4: open the file FOR REAL.
+   *
+   * In an open diff — close the diff and open the file underneath it, as a double click
+   * does; in the list — open what is selected. One command for both places: they ask
+   * one question — "enough looking, let me edit".
+   */
   @command('changes.openFile') protected openPicked(): void {
     const path = this.diff.open.value ? this.diff.path.value : (this.changes.targets()[0] ?? null);
     if (path) this.openFile(path);
@@ -92,11 +142,18 @@ export default class ChangesPlugin implements ChangesRemote {
     if (this.find.term.value) this.find.move(-1);
     else this.changes.step(-1);
   }
+  /** Enter on a row shows the diff: the same as a single click. */
   @command('changes.showDiff') protected showPicked(): void {
     const path = this.changes.focus.value;
     const row = this.changes.rows.value.find((one) => one.path === path);
     if (row) void this.diff.show(row.path, row.state === 'deleted' ? 'deleted' : 'other', row.from);
   }
+  /**
+   * Escape in the panel takes off the TOP layer: first what has been typed into the
+   * search by letters, then the diff on show. Two different keys for two layers is not
+   * something a human would remember, while a single Escape taking off both at once
+   * would carry away, along with the typo, the very thing they are looking at.
+   */
   @command('changes.escape') protected escape(): void {
     if (this.find.term.value !== '') {
       this.find.clear();
@@ -111,11 +168,21 @@ export default class ChangesPlugin implements ChangesRemote {
     if (open.value) void this.changes.loadShelf();
   }
 
+  /**
+   * A double click opens the file FOR REAL, and the diff goes away with it: leaving it
+   * on top would mean opening the file under a lid.
+   */
   private openFile(path: string): void {
     this.diff.close();
     void this.ide.getPlugin(DocPlugin).goTo(path, 0);
   }
 
+  /**
+   * The view switch is in the overlay's header, as a common widget: the question "how
+   * do I look at this" is exactly the same for a diff as for markup and for an SVG, and
+   * three copies of one switch would drift apart the way the six toolbar plates once
+   * did.
+   */
   private modeSwitch() {
     return (
       <ModeSwitch
@@ -130,6 +197,18 @@ export default class ChangesPlugin implements ChangesRemote {
     );
   }
 
+  /**
+   * A menu about the thing that was pointed at.
+   *
+   * Two cases, and they differ. On a ROW — actions over the selected files. On a LIST's
+   * HEADING — over the files of THAT list rather than over the selection: the selection
+   * lives elsewhere, and "revert" in the menu of an empty changelist would revert
+   * somebody else's files.
+   *
+   * An item with nothing to do is not in the menu at all: a menu is a list of what is
+   * possible here and now, and a greyed-out row in it reads as a breakage rather than
+   * as "not today".
+   */
   private rowMenu(list: Changelist | null): MenuItem[] {
     const files = list ? this.filesOf(list) : this.changes.targets();
     const lists = this.changes.lists.value;
@@ -163,10 +242,12 @@ export default class ChangesPlugin implements ChangesRemote {
     return items;
   }
 
+  /** What lies in this list RIGHT NOW: the menu speaks about what is shown. */
   private filesOf(list: Changelist): string[] {
     return this.changes.groups.value.find((group) => group.list.id === list.id)?.rows.map((row) => row.path) ?? [];
   }
 
+  /** Which lists the selection lies in: they decide what to show in the menu. */
   private listsOf(files: string[]): string[] {
     const groups = this.changes.groups.value;
     const where = new Set<string>();
@@ -176,6 +257,7 @@ export default class ChangesPlugin implements ChangesRemote {
     return [...where];
   }
 
+  /** The menu of a shelf entry: apply, rename, throw away. */
   private shelfMenu(item: ShelfItem): MenuItem[] {
     return [
       { label: 'changes.menu.unshelve', run: () => void this.changes.unshelve(item.id) },
@@ -234,6 +316,11 @@ export default class ChangesPlugin implements ChangesRemote {
     });
   }
 
+  /**
+   * A revert asks for consent and does NOT select a button by default: Enter in a modal
+   * confirms, and a revert is a loss of work that neither the shelf nor an undo brings
+   * back.
+   */
   private askRollback(files: string[]): void {
     this.asking.show({
       title: this.ide.t('changes.ask.rollbackTitle'),
@@ -247,6 +334,13 @@ export default class ChangesPlugin implements ChangesRemote {
     });
   }
 
+  /**
+   * Show a file that has been put aside.
+   *
+   * We assemble two sides: "as in the commit" and "as it would be if we applied the
+   * patch". It did not fit — we say so out loud and name the reason: a patch taken off
+   * a different commit must not be shown "approximately".
+   */
   private async showShelved(item: ShelfItem, path: string): Promise<void> {
     const from = item.name === path ? this.ide.t('changes.diffFromShelfPlain') : this.ide.t('changes.diffFromShelf', { name: item.name });
     try {
@@ -266,6 +360,15 @@ export default class ChangesPlugin implements ChangesRemote {
     }
   }
 
+  /**
+   * Revert ONE hunk straight from the diff viewer.
+   *
+   * There are two doors, and the difference is an honest one: an open file is edited by
+   * the document plugin — the edit stays UNSAVED, as with a revert from the git strip,
+   * and it is visible in the editor at once; a closed file has nobody to write it but
+   * the memory layer, so it travels to disk. One door for both cases would mean that
+   * reverting a hunk quietly saves SOMEBODY ELSE's unsaved edits in the same file.
+   */
   private async revertHunk(hunk: number): Promise<void> {
     const path = this.diff.path.value;
     if (!path) return;
@@ -280,6 +383,10 @@ export default class ChangesPlugin implements ChangesRemote {
     await this.ide.getPlugin(GitPlugin).refresh();
   }
 
+  /**
+   * The diff's heading: the file's path, where the edit comes from, and how many lines
+   * arrived and left.
+   */
   private diffHeading(): string | null {
     const path = this.diff.path.value;
     if (!path) return null;

@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { LineDiff } from '@mosetta/ide-plugin-code';
 import { Diff } from '../src/diff.js';
 
+/**
+ * A file's diff.
+ *
+ * The parsing here is REAL — the same `LineDiff` that computes the strips beside the
+ * rows and the three-way merge: a fake would be checking our belief in its habits. Only
+ * the sources of text are substituted: "how it was" and "how it is now" are the
+ * neighbours' work rather than the panel's.
+ */
+
 const lineDiff = new LineDiff();
 
 function raise(before: string | null, now: string, options: { fail?: string } = {}) {
@@ -16,6 +25,7 @@ function raise(before: string | null, now: string, options: { fail?: string } = 
   );
 }
 
+/** The rows in one batch, as they are seen on the screen. */
 function shown(diff: Diff): string[] {
   return diff.blocks().flatMap((block) =>
     block.kind === 'fold' ? [`…${block.lines}`] : block.rows.map((row) => `${sign(row.kind)}${row.text}`),
@@ -26,8 +36,8 @@ function sign(kind: 'same' | 'del' | 'ins'): string {
   return kind === 'ins' ? '+' : kind === 'del' ? '-' : ' ';
 }
 
-describe('дифф файла', () => {
-  it('добавленная строка называет номер только справа', async () => {
+describe('a file\'s diff', () => {
+  it('an added row names its number on the right only', async () => {
     const diff = raise('a\nb\n', 'a\nnew\nb\n');
     await diff.show('src/a.ts');
 
@@ -37,26 +47,26 @@ describe('дифф файла', () => {
     expect(diff.count()).toEqual({ added: 1, removed: 0 });
   });
 
-  it('новый файл — это весь текст добавленным, а не правка пустой строки', async () => {
+  it('a new file is the whole text added rather than an edit to an empty line', async () => {
     const diff = raise(null, 'one\ntwo\n');
     await diff.show('src/new.ts');
     expect(shown(diff)).toEqual(['+one', '+two']);
   });
 
-  it('удалённый файл не спрашивает память: пустота там — ответ, а не отказ', async () => {
-    const diff = raise('gone\n', '', { fail: 'Документ не открыт' });
+  it('a deleted file does not ask the memory: emptiness there is an answer rather than a refusal', async () => {
+    const diff = raise('gone\n', '', { fail: 'the document is not open' });
     await diff.show('src/gone.ts', 'deleted');
-    expect(diff.error.value, 'ошибки быть не должно: файла и правда нет').toBe('');
+    expect(diff.error.value, 'there must be no error: the file really is gone').toBe('');
     expect(shown(diff)).toEqual(['-gone']);
   });
 
-  it('файл не в памяти — это ошибка вслух, а не пустой дифф', async () => {
-    const diff = raise('was\n', '', { fail: 'Документ не открыт: src/big.bin' });
+  it('a file not in memory is an error out loud rather than an empty diff', async () => {
+    const diff = raise('was\n', '', { fail: 'the document is not open: src/big.bin' });
     await diff.show('src/big.bin');
     expect(diff.error.value).toContain('src/big.bin');
   });
 
-  it('неизменная середина сворачивается и НАЗЫВАЕТ, сколько спрятала', async () => {
+  it('an unchanged middle folds and NAMES how much it has hidden', async () => {
     const before = ['head', ...filler(20), 'tail'].join('\n');
     const after = ['HEAD', ...filler(20), 'TAIL'].join('\n');
     const diff = raise(before, after);
@@ -77,7 +87,7 @@ describe('дифф файла', () => {
     ]);
   });
 
-  it('свёртка разворачивается щелчком и сворачивается обратно', async () => {
+  it('a fold opens on a click and folds back again', async () => {
     const diff = raise(['head', ...filler(20)].join('\n'), ['HEAD', ...filler(20)].join('\n'));
     await diff.show('src/long.ts');
     expect(shown(diff)).toContain('…17');
@@ -90,7 +100,7 @@ describe('дифф файла', () => {
     expect(shown(diff)).toContain('…17');
   });
 
-  it('опоздавший ответ не переставляет показанное', async () => {
+  it('a late answer does not rearrange what is on show', async () => {
     let answer = (_text: string) => {};
     const diff = new Diff(
       async () => ({ text: 'was\n' }),
@@ -109,10 +119,10 @@ describe('дифф файла', () => {
     await slow;
 
     expect(diff.path.value).toBe('src/fast.ts');
-    expect(diff.after.value, 'ответ про другой файл не имеет права дописаться').toBe('fast\n');
+    expect(diff.after.value, 'an answer about another file has no right to be added').toBe('fast\n');
   });
 
-  it('в две колонки правка встаёт парой: слева было, справа стало', async () => {
+  it('in two columns an edit stands as a pair: what was on the left, what became on the right', async () => {
     const diff = raise('one\ntwo\nthree\n', 'one\nTWO\nthree\n');
     await diff.show('src/a.ts');
 
@@ -124,7 +134,7 @@ describe('дифф файла', () => {
     ]);
   });
 
-  it('стороны разной длины: у короткой остаётся пустое место, а не сдвиг', async () => {
+  it('sides of different lengths: the shorter one is left with empty space rather than a shift', async () => {
     const diff = raise('gone\n', 'a\nb\nc\n');
     await diff.show('src/a.ts');
 
@@ -136,7 +146,7 @@ describe('дифф файла', () => {
     ]);
   });
 
-  it('свёртки у двух колонок те же самые: вид не меняет, что спрятано', async () => {
+  it('the folds of the two columns are the same: the view does not change what is hidden', async () => {
     const diff = raise(['head', ...filler(20), 'tail'].join('\n'), ['HEAD', ...filler(20), 'TAIL'].join('\n'));
     await diff.show('src/long.ts');
 
@@ -145,7 +155,7 @@ describe('дифф файла', () => {
     expect(folds(diff.sides())).toEqual(folds(diff.blocks()));
   });
 
-  it('закрытый дифф забывает файл: следующее открытие — не продолжение прошлого', async () => {
+  it('a closed diff forgets the file: the next opening is no continuation of the last', async () => {
     const diff = raise('a\n', 'b\n');
     await diff.show('src/a.ts');
     diff.close();
@@ -154,7 +164,7 @@ describe('дифф файла', () => {
   });
 });
 
-describe('показ идёт за снимком (правка 18.09)', () => {
+describe('the view follows the snapshot', () => {
   const diff = new Diff(
     async () => ({ text: '' }),
     async () => ({ text: '' }),
@@ -163,11 +173,11 @@ describe('показ идёт за снимком (правка 18.09)', () => {
   );
   const key = (state: string, path: string) => `${state}\u0000${path}`;
 
-  it('файл откатили — показывать нечего, оверлей закрывается', () => {
+  it('the file has been reverted — there is nothing to show, the overlay closes', () => {
     expect(diff.decide(key('modified', 'a.ts'), key('clean', 'a.ts'))).toEqual({ do: 'close' });
   });
 
-  it('файл изменился иначе — перечитываем стороны', () => {
+  it('the file has changed differently — we re-read the sides', () => {
     expect(diff.decide(key('modified', 'a.ts'), key('conflict', 'a.ts'))).toEqual({
       do: 'show',
       path: 'a.ts',
@@ -176,50 +186,51 @@ describe('показ идёт за снимком (правка 18.09)', () => {
     expect(diff.decide(key('modified', 'a.ts'), key('deleted', 'a.ts'))).toMatchObject({ state: 'deleted' });
   });
 
-  it('щелчок по соседней строке сам себе показ: второго чтения не заводим', () => {
+  it('a click on the next row is a view in itself: we do not set up a second reading', () => {
     expect(diff.decide(key('modified', 'a.ts'), key('modified', 'b.ts'))).toEqual({ do: 'skip' });
   });
 
-  it('открытие и закрытие — не смена состояния', () => {
+  it('opening and closing are not a change of state', () => {
     expect(diff.decide('', key('modified', 'a.ts'))).toEqual({ do: 'skip' });
     expect(diff.decide(key('modified', 'a.ts'), '')).toEqual({ do: 'skip' });
   });
 
-  it('снимок перечитали, а файл тот же — ничего не делаем', () => {
+  it('the snapshot has been re-read and the file is the same — we do nothing', () => {
     expect(diff.decide(key('modified', 'a.ts'), key('modified', 'a.ts'))).toEqual({ do: 'skip' });
   });
 });
 
+/** N identical rows: the middle the diff is obliged to fold. */
 function filler(n: number): string[] {
   return Array.from({ length: n }, (_, i) => `l${i + 1}`);
 }
 
-describe('откат одного куска (правка 18.09)', () => {
-  it('возвращает строки куска как в коммите, остальное не трогает', async () => {
-    const diff = raise('один\nдва\nтри\nчетыре\n', 'один\nДВА\nтри\nЧЕТЫРЕ\n');
+describe('reverting one hunk', () => {
+  it('it brings back the hunk\'s rows as in the commit and leaves the rest alone', async () => {
+    const diff = raise('one\ntwo\nthree\nfour\n', 'one\nTWO\nthree\nFOUR\n');
     await diff.show('a.ts');
-    expect(diff.revertedText(0)).toBe('один\nдва\nтри\nЧЕТЫРЕ\n');
-    expect(diff.revertedText(1)).toBe('один\nДВА\nтри\nчетыре\n');
+    expect(diff.revertedText(0)).toBe('one\ntwo\nthree\nFOUR\n');
+    expect(diff.revertedText(1)).toBe('one\nTWO\nthree\nfour\n');
   });
 
-  it('добавленные строки исчезают, убранные возвращаются', async () => {
-    const added = raise('один\nдва\n', 'один\nновая\nдва\n');
+  it('added rows disappear, removed ones come back', async () => {
+    const added = raise('one\ntwo\n', 'one\nfresh\ntwo\n');
     await added.show('a.ts');
-    expect(added.revertedText(0)).toBe('один\nдва\n');
+    expect(added.revertedText(0)).toBe('one\ntwo\n');
 
-    const removed = raise('один\nдва\nтри\n', 'один\nтри\n');
+    const removed = raise('one\ntwo\nthree\n', 'one\nthree\n');
     await removed.show('a.ts');
-    expect(removed.revertedText(0)).toBe('один\nдва\nтри\n');
+    expect(removed.revertedText(0)).toBe('one\ntwo\nthree\n');
   });
 
-  it('хвостовой перевод строки остаётся на месте', async () => {
-    const diff = raise('один\nдва\n', 'один\nДВА\n');
+  it('the trailing line break stays where it is', async () => {
+    const diff = raise('one\ntwo\n', 'one\nTWO\n');
     await diff.show('a.ts');
-    expect(diff.revertedText(0)).toBe('один\nдва\n');
+    expect(diff.revertedText(0)).toBe('one\ntwo\n');
   });
 
-  it('куска с таким номером нет — не выдумываем текст', async () => {
-    const diff = raise('один\n', 'один\n');
+  it('there is no hunk with that number — we do not invent the text', async () => {
+    const diff = raise('one\n', 'one\n');
     await diff.show('a.ts');
     expect(diff.revertedText(0)).toBe(null);
   });
