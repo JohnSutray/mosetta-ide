@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
-describe('воркспейсы', () => {
+/**
+ * The main architectural check: two projects in two tabs know nothing about each other,
+ * and switching project changes the whole picture with one command.
+ */
+describe('workspaces', () => {
   let server: RunningServer;
   let alpha: string;
   let beta: string;
@@ -27,7 +31,7 @@ describe('воркспейсы', () => {
     return c;
   }
 
-  it('две вкладки держат два проекта и не путают данные', async () => {
+  it('two tabs hold two projects and do not confuse their data', async () => {
     const one = await client();
     const two = await client();
 
@@ -45,7 +49,7 @@ describe('воркспейсы', () => {
     });
   });
 
-  it('один и тот же корень в двух вкладках — один воркспейс', async () => {
+  it('one and the same root in two tabs is one workspace', async () => {
     const one = await client();
     const two = await client();
 
@@ -57,7 +61,7 @@ describe('воркспейсы', () => {
     expect(b.sessions).toBe(2);
   });
 
-  it('смена проекта меняет то, откуда читаем, тем же кодом', async () => {
+  it('switching project changes where we read from, with the same code', async () => {
     const c = await client();
     await c.call('workspace.open', { root: alpha });
     expect((await c.call('fs.read', { path: 'src/main.ts' })).text).toBe('const a = 1;\n');
@@ -69,13 +73,13 @@ describe('воркспейсы', () => {
     expect((await c.call('workspace.current', null))?.id).toBe(betaInfo.id);
   });
 
-  it('без прикреплённого воркспейса проектные методы отказывают внятно', async () => {
+  it('without an attached workspace the project methods refuse comprehensibly', async () => {
     const c = await client();
     const err = await c.expectError('fs.list', { path: '' });
     expect(err.code).toBe(1001);
   });
 
-  it('воркспейс переживает закрытие вкладки, если его держат', async () => {
+  it('a workspace survives a tab closing if something holds it', async () => {
     const one = await client();
     const info = await one.call('workspace.open', { root: alpha });
 
@@ -92,7 +96,7 @@ describe('воркспейсы', () => {
     release();
   });
 
-  it('ресурсы проекта создаются один раз и умирают вместе с ним', async () => {
+  it('a project\'s resources are created once and die with it', async () => {
     const c = await client();
     const info = await c.call('workspace.open', { root: alpha });
     const ws = server.registry.get(info.id)!;
@@ -107,7 +111,7 @@ describe('воркспейсы', () => {
     expect(disposed).toBe(1);
   });
 
-  it('простаивающий воркспейс закрывается по таймауту', async () => {
+  it('an idle workspace closes on the timeout', async () => {
     const short = await withServer(30);
     const c = await connect(short);
     const info = await c.call('workspace.open', { root: alpha });
@@ -118,7 +122,7 @@ describe('воркспейсы', () => {
     await short.close();
   });
 
-  it('список проектов приезжает событием', async () => {
+  it('the list of projects arrives as an event', async () => {
     const one = await client();
     const two = await client();
 

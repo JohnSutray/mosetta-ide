@@ -54,7 +54,7 @@ export class PluginHost {
     private readonly shared: SharedModules,
     private readonly machine: Machine = {
       settings: () => {
-        throw new Error('настройки этому дому плагинов не дали');
+        throw new Error('this plugin host was given no settings');
       },
       environment: () => ({}),
       which: () => null,
@@ -74,7 +74,7 @@ export class PluginHost {
         try {
           handler(this.projectFor(ws, name));
         } catch (err) {
-          this.log.warn(`плагин ${name} не принял проект ${ws.name}: ${String(err)}`);
+          this.log.warn(`plugin ${name} did not accept the project ${ws.name}: ${String(err)}`);
         }
       }
     }
@@ -110,9 +110,9 @@ export class PluginHost {
 
   async call(name: string, method: string, params: unknown, ctx: CallContext): Promise<unknown> {
     const plugin = this.loaded.get(name);
-    if (!plugin) throw new Error(`нет плагина ${name}`);
+    if (!plugin) throw new Error(`no plugin ${name}`);
     const handler = plugin.methods.get(method);
-    if (!handler) throw new Error(`плагин ${name} не объявлял метод ${method}`);
+    if (!handler) throw new Error(`plugin ${name} did not declare the method ${method}`);
     return handler(params, ctx);
   }
 
@@ -123,7 +123,7 @@ export class PluginHost {
       try {
         await this.one(name, needs.get(name) ?? []);
       } catch (err) {
-        this.log.warn(`плагин ${name} не поднялся: ${String(err)}`);
+        this.log.warn(`plugin ${name} did not come up: ${String(err)}`);
         this.loaded.set(name, {
           info: {
             name,
@@ -160,7 +160,7 @@ export class PluginHost {
     const visit = (name: string): void => {
       if (done.has(name)) return;
       if (path_.includes(name)) {
-        this.log.warn(`круг в зависимостях плагинов: ${[...path_, name].join(' → ')}`);
+        this.log.warn(`a cycle in the plugin dependencies: ${[...path_, name].join(' → ')}`);
         return;
       }
       path_.push(name);
@@ -197,7 +197,7 @@ export class PluginHost {
     } catch {
       try {
         await fs.rename(was, dir);
-        this.log.info(`${name}: состояние перенесено со старого имени ${old}`);
+        this.log.info(`${name}: state moved over from the old name ${old}`);
       } catch {}
     }
     return dir;
@@ -211,7 +211,7 @@ export class PluginHost {
       version: string;
       ide?: Omit<PluginManifest, 'name' | 'version'>;
     };
-    if (!pkg.ide) throw new Error('в package.json нет раздела "ide"');
+    if (!pkg.ide) throw new Error('package.json has no "ide" section');
 
     const manifest: PluginManifest = { name: pkg.name, version: pkg.version, ...pkg.ide };
     const methods = new Map<string, CommandHandler>();
@@ -224,7 +224,7 @@ export class PluginHost {
       try {
         strings[locale] = JSON.parse(await fs.readFile(at, 'utf8')) as Record<string, string>;
       } catch (err) {
-        this.log.warn(`плагин ${name}: не прочитал ${at}: ${String(err)}`);
+        this.log.warn(`plugin ${name}: could not read ${at}: ${String(err)}`);
       }
     }
 
@@ -233,7 +233,7 @@ export class PluginHost {
       const built = await this.build.entry(path.join(dir, manifest.client), 'client');
       clientCode = built.code;
       this.shared.register(name, 'client', built.exports);
-      this.log.debug(`плагин ${name}: клиент собран за ${built.ms} мс`);
+      this.log.debug(`plugin ${name}: client built in ${built.ms} ms`);
     }
 
     if (manifest.server) {
@@ -249,7 +249,7 @@ export class PluginHost {
         default?: PluginClass;
       };
       const Ctor = mod.default;
-      if (typeof Ctor !== 'function') throw new Error('нет export default class');
+      if (typeof Ctor !== 'function') throw new Error('no export default class');
       this.serve(name, mod);
       this.serve(`${name}/server`, mod);
 
@@ -258,7 +258,7 @@ export class PluginHost {
         method: (method: string, handler: CommandHandler) => methods.set(method, handler),
         getPlugin: <T,>(ctor: PluginClass<T>): T => {
           const found = this.instances.get(ctor);
-          if (!found) throw new Error(`плагин не поднят: ${ctor.name}`);
+          if (!found) throw new Error(`plugin not up: ${ctor.name}`);
           return found as T;
         },
         onProject: (handler) => {
@@ -282,7 +282,7 @@ export class PluginHost {
       this.expose();
       for (const [method, handler] of declaredOf(instance)) methods.set(method, handler);
       await hooksOf(instance).start?.();
-      this.log.debug(`плагин ${name}: сервер собран за ${built.ms} мс`);
+      this.log.debug(`plugin ${name}: server built in ${built.ms} ms`);
     }
 
     this.loaded.set(name, {
@@ -301,7 +301,7 @@ export class PluginHost {
       clientCode,
       methods,
     });
-    this.log.info(`плагин ${name}@${manifest.version} готов`);
+    this.log.info(`plugin ${name}@${manifest.version} ready`);
   }
 }
 

@@ -184,7 +184,7 @@ export class OsFs {
       if (actual !== expectedRevision) {
         throw new RpcError(
           RpcErrorCode.RevisionConflict,
-          `Файл изменился на диске: ${fileKey}`,
+          `The file changed on disk: ${fileKey}`,
           { expected: expectedRevision, actual },
         );
       }
@@ -214,7 +214,7 @@ export class OsFs {
   async create(key: string, kind: 'file' | 'dir'): Promise<DirEntry> {
     const fileKey = paths.toKey(key);
     const absolute = paths.toAbsolute(this.root, fileKey);
-    if (await exists(absolute)) throw RpcError.invalidParams(`Уже есть: ${fileKey}`);
+    if (await exists(absolute)) throw RpcError.invalidParams(`Already there: ${fileKey}`);
 
     if (kind === 'dir') {
       await fs.mkdir(absolute, { recursive: true });
@@ -232,7 +232,7 @@ export class OsFs {
     const target = paths.toAbsolute(this.root, toKey_);
     if (!(await exists(source))) throw RpcError.notFound(fromKey);
     if (source !== target && (await exists(target))) {
-      throw RpcError.invalidParams(`Уже есть: ${toKey_}`);
+      throw RpcError.invalidParams(`Already there: ${toKey_}`);
     }
     await fs.mkdir(path.dirname(target), { recursive: true });
     await fs.rename(source, target);
@@ -246,7 +246,7 @@ export class OsFs {
     const source = paths.toAbsolute(this.root, fromKey);
     const target = paths.toAbsolute(this.root, toKey_);
     if (!(await exists(source))) throw RpcError.notFound(fromKey);
-    if (await exists(target)) throw RpcError.invalidParams(`Уже есть: ${toKey_}`);
+    if (await exists(target)) throw RpcError.invalidParams(`Already there: ${toKey_}`);
     await fs.mkdir(path.dirname(target), { recursive: true });
     await fs.cp(source, target, { recursive: true, errorOnExist: true, force: false });
     return this.describe(toKey_);
@@ -254,7 +254,7 @@ export class OsFs {
 
   async remove(key: string): Promise<void> {
     const fileKey = paths.toKey(key);
-    if (fileKey === '') throw RpcError.invalidParams('Нельзя удалить корень проекта');
+    if (fileKey === '') throw RpcError.invalidParams('The project root cannot be deleted');
     const absolute = paths.toAbsolute(this.root, fileKey);
     if (!(await exists(absolute))) throw RpcError.notFound(fileKey);
     await fs.rm(absolute, { recursive: true, force: true });
@@ -263,7 +263,7 @@ export class OsFs {
   async writeBytes(key: string, base64: string): Promise<DirEntry> {
     const fileKey = paths.toKey(key);
     const absolute = paths.toAbsolute(this.root, fileKey);
-    if (await exists(absolute)) throw RpcError.invalidParams(`Уже есть: ${fileKey}`);
+    if (await exists(absolute)) throw RpcError.invalidParams(`Already there: ${fileKey}`);
     await fs.mkdir(path.dirname(absolute), { recursive: true });
     await fs.writeFile(absolute, Buffer.from(base64, 'base64'));
     return this.describe(fileKey);
@@ -333,7 +333,7 @@ function translate(err: unknown, key: string, expected: 'file' | 'dir'): RpcErro
   if (code === 'ENOENT') return RpcError.notFound(key);
   if (code === 'ENOTDIR') return RpcError.wrongKind(key, expected);
   if (code === 'EACCES' || code === 'EPERM') {
-    return new RpcError(RpcErrorCode.NotFound, `Нет доступа: ${key}`);
+    return new RpcError(RpcErrorCode.NotFound, `No access: ${key}`);
   }
   return new RpcError(RpcErrorCode.Internal, String(err));
 }
@@ -359,11 +359,11 @@ export class Disk {
     try {
       real = await fs.realpath(expanded);
     } catch {
-      throw new RpcError(RpcErrorCode.BadRoot, `Путь не существует: ${expanded}`);
+      throw new RpcError(RpcErrorCode.BadRoot, `The path does not exist: ${expanded}`);
     }
     const stat = await fs.stat(real);
     if (!stat.isDirectory()) {
-      throw new RpcError(RpcErrorCode.BadRoot, `Не директория: ${real}`);
+      throw new RpcError(RpcErrorCode.BadRoot, `Not a directory: ${real}`);
     }
     return real;
   }

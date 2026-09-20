@@ -4,16 +4,21 @@ import { Processes } from '../src/env/processes.js';
 import { Exec } from '../src/env/exec.js';
 import { Which } from '../src/env/which.js';
 
+/**
+ * A launch plan without the human's PATH: the `env/` axis's connections arrive as
+ * arguments.
+ */
 const plan = () => new Exec(new Which({ path: null }));
 
+/** A decoy shell: it prints what it was told to and ignores `-c`. */
 function fakeShell(stdout: string, ok = true): Harvester {
-  return async () => ({ ok, stdout, stderr: ok ? '' : 'оболочка отказалась', timedOut: false });
+  return async () => ({ ok, stdout, stderr: ok ? '' : 'the shell refused', timedOut: false });
 }
 
 const MARK = '__IDE_ENV_9f3a__';
 
-describe('окружение человека', () => {
-  it('разбирает ответ настоящей оболочки', async () => {
+describe('the human\'s environment', () => {
+  it('parses a real shell\'s answer', async () => {
     if (process.platform === 'win32') return;
     const env = new ShellEnv();
     const processes = new Processes({ current: null }, plan());
@@ -24,58 +29,58 @@ describe('окружение человека', () => {
     expect(Object.keys(env.current ?? {}).length).toBeGreaterThan(3);
   });
 
-  it('отрезает баннер интерактивного rc по метке', async () => {
+  it('cuts an interactive rc\'s banner off at the marker', async () => {
     const env = new ShellEnv();
     await env.prime(
-      fakeShell(`Добро пожаловать!\nfortune: съешь ещё этих булок\n${MARK}PATH=/своё/bin\0HOME=/дом\0`),
+      fakeShell(`Welcome!\nfortune: have another one of these buns\n${MARK}PATH=/mine/bin\0HOME=/home\0`),
       { file: '/bin/zsh', args: ['-l', '-i'] },
-      '/дом',
+      '/home',
     );
-    expect(env.current).toEqual({ PATH: '/своё/bin', HOME: '/дом' });
-    expect(env.path).toBe('/своё/bin');
+    expect(env.current).toEqual({ PATH: '/mine/bin', HOME: '/home' });
+    expect(env.path).toBe('/mine/bin');
   });
 
-  it('значение с переводом строки доезжает целиком', async () => {
+  it('a value with a newline in it arrives whole', async () => {
     const env = new ShellEnv();
     await env.prime(
-      fakeShell(`${MARK}PATH=/bin\0GREETING=раз\nдва\0`),
+      fakeShell(`${MARK}PATH=/bin\0GREETING=one\ntwo\0`),
       { file: '/bin/zsh', args: [] },
-      '/дом',
+      '/home',
     );
-    expect(env.current?.GREETING).toBe('раз\nдва');
+    expect(env.current?.GREETING).toBe('one\ntwo');
   });
 
-  it('переменные самой пробы выбрасываются', async () => {
+  it('the probe\'s own variables are thrown away', async () => {
     const env = new ShellEnv();
     await env.prime(
-      fakeShell(`${MARK}PATH=/bin\0PWD=/дом\0OLDPWD=/\0SHLVL=1\0_=/usr/bin/env\0`),
+      fakeShell(`${MARK}PATH=/bin\0PWD=/home\0OLDPWD=/\0SHLVL=1\0_=/usr/bin/env\0`),
       { file: '/bin/zsh', args: [] },
-      '/дом',
+      '/home',
     );
     expect(env.current).toEqual({ PATH: '/bin' });
   });
 
-  it('оболочка без метки не считается ответившей', async () => {
+  it('a shell without the marker does not count as having answered', async () => {
     const env = new ShellEnv();
-    await env.prime(fakeShell('я не понял вашу команду'), { file: '/bin/nu', args: [] }, '/дом');
+    await env.prime(fakeShell('I did not understand your command'), { file: '/bin/nu', args: [] }, '/home');
     expect(env.current).toBe(null);
     expect(env.path).toBe(null);
   });
 
-  it('отказ оболочки не собирает пустое окружение', async () => {
+  it('a shell\'s refusal does not assemble an empty environment', async () => {
     const env = new ShellEnv();
-    await env.prime(fakeShell('', false), { file: '/bin/zsh', args: [] }, '/дом');
+    await env.prime(fakeShell('', false), { file: '/bin/zsh', args: [] }, '/home');
     expect(env.current).toBe(null);
   });
 
-  it('зависшая оболочка не держит и не собирает', async () => {
+  it('a shell that hangs neither holds us up nor assembles anything', async () => {
     const env = new ShellEnv();
     const hung: Harvester = async () => ({ ok: false, stdout: '', stderr: '', timedOut: true });
-    await env.prime(hung, { file: '/bin/zsh', args: [] }, '/дом');
+    await env.prime(hung, { file: '/bin/zsh', args: [] }, '/home');
     expect(env.current).toBe(null);
   });
 
-  it('два запроса подряд собирают один раз', async () => {
+  it('two requests in a row assemble it once', async () => {
     let asked = 0;
     const counting: Harvester = async (spec) => {
       asked += 1;
@@ -83,43 +88,43 @@ describe('окружение человека', () => {
     };
     const env = new ShellEnv();
     await Promise.all([
-      env.prime(counting, { file: '/bin/zsh', args: [] }, '/дом'),
-      env.prime(counting, { file: '/bin/zsh', args: [] }, '/дом'),
+      env.prime(counting, { file: '/bin/zsh', args: [] }, '/home'),
+      env.prime(counting, { file: '/bin/zsh', args: [] }, '/home'),
     ]);
     expect(asked).toBe(1);
   });
 
-  it('смена оболочки в настройках забывает собранное', async () => {
+  it('changing the shell in the settings forgets what was assembled', async () => {
     const env = new ShellEnv();
-    await env.prime(fakeShell(`${MARK}PATH=/старое\0`), { file: '/bin/zsh', args: [] }, '/дом');
-    expect(env.path).toBe('/старое');
+    await env.prime(fakeShell(`${MARK}PATH=/old\0`), { file: '/bin/zsh', args: [] }, '/home');
+    expect(env.path).toBe('/old');
 
     env.forget();
     expect(env.current).toBe(null);
 
-    await env.prime(fakeShell(`${MARK}PATH=/новое\0`), { file: '/bin/fish', args: [] }, '/дом');
-    expect(env.path).toBe('/новое');
+    await env.prime(fakeShell(`${MARK}PATH=/new\0`), { file: '/bin/fish', args: [] }, '/home');
+    expect(env.path).toBe('/new');
   });
 
-  it('проба идёт в ДОМ, а не там, где подняли сервер', async () => {
+  it('the probe goes HOME rather than where the server was started', async () => {
     let seen = '';
     const spy: Harvester = async (spec) => {
       seen = spec.cwd ?? '';
       return { ok: true, stdout: `${MARK}PATH=/bin\0`, stderr: '', timedOut: false };
     };
     const env = new ShellEnv();
-    await env.prime(spy, { file: '/bin/zsh', args: ['-l', '-i'] }, '/дом/человека');
-    expect(seen).toBe('/дом/человека');
+    await env.prime(spy, { file: '/bin/zsh', args: ['-l', '-i'] }, '/home/of-the-human');
+    expect(seen).toBe('/home/of-the-human');
   });
 
-  it('спрашиваем ВЫБРАННУЮ оболочку её же аргументами', async () => {
+  it('we ask the CHOSEN shell with its own arguments', async () => {
     let asked: { file: string; args: string[] } = { file: '', args: [] };
     const spy: Harvester = async (spec) => {
       asked = { file: spec.command, args: spec.args };
       return { ok: true, stdout: `${MARK}PATH=/bin\0`, stderr: '', timedOut: false };
     };
     const env = new ShellEnv();
-    await env.prime(spy, { file: '/opt/homebrew/bin/fish', args: ['-l', '-i'] }, '/дом');
+    await env.prime(spy, { file: '/opt/homebrew/bin/fish', args: ['-l', '-i'] }, '/home');
 
     expect(asked.file).toBe('/opt/homebrew/bin/fish');
     expect(asked.args.slice(0, 2)).toEqual(['-l', '-i']);
@@ -128,47 +133,47 @@ describe('окружение человека', () => {
   });
 });
 
-describe('окружение человека доезжает до запуска', () => {
+describe('the human\'s environment reaches a launch', () => {
   const node = process.execPath;
   const read = (name: string) => ['-e', `process.stdout.write(String(process.env.${name}))`];
 
-  it('намерение «user-shell» подмешивает собранное', async () => {
-    const processes = new Processes({ current: { НАШЕЛ: 'из оболочки' } }, plan());
+  it('the "user-shell" intention mixes in what was assembled', async () => {
+    const processes = new Processes({ current: { FOUND: 'from the shell' } }, plan());
     const ran = await processes.run({
       command: node,
-      args: read('НАШЕЛ'),
-      reason: 'тест',
+      args: read('FOUND'),
+      reason: 'a test',
       wants: ['user-shell'],
     });
-    expect(ran.stdout).toBe('из оболочки');
+    expect(ran.stdout).toBe('from the shell');
   });
 
-  it('без намерения окружение сервера остаётся нетронутым', async () => {
-    const processes = new Processes({ current: { НАШЕЛ: 'из оболочки' } }, plan());
-    const ran = await processes.run({ command: node, args: read('НАШЕЛ'), reason: 'тест' });
+  it('without the intention the server\'s environment is left untouched', async () => {
+    const processes = new Processes({ current: { FOUND: 'from the shell' } }, plan());
+    const ran = await processes.run({ command: node, args: read('FOUND'), reason: 'a test' });
     expect(ran.stdout).toBe('undefined');
   });
 
-  it('пока оболочка не ответила, работаем на окружении сервера', async () => {
+  it('until the shell has answered we run on the server\'s environment', async () => {
     const processes = new Processes({ current: null }, plan());
     const ran = await processes.run({
       command: node,
       args: read('PATH'),
-      reason: 'тест',
+      reason: 'a test',
       wants: ['user-shell'],
     });
     expect(ran.stdout).toBe(process.env.PATH);
   });
 
-  it('своё у инструмента сильнее окружения человека', async () => {
-    const processes = new Processes({ current: { НАШЕЛ: 'из оболочки' } }, plan());
+  it('a tool\'s own beats the human\'s environment', async () => {
+    const processes = new Processes({ current: { FOUND: 'from the shell' } }, plan());
     const ran = await processes.run({
       command: node,
-      args: read('НАШЕЛ'),
-      reason: 'тест',
+      args: read('FOUND'),
+      reason: 'a test',
       wants: ['user-shell'],
-      env: { НАШЕЛ: 'своё' },
+      env: { FOUND: 'mine' },
     });
-    expect(ran.stdout).toBe('своё');
+    expect(ran.stdout).toBe('mine');
   });
 });

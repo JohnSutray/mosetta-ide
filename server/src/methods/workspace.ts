@@ -5,7 +5,7 @@ import { RpcError } from '../errors.js';
 export class WorkspaceMethods {
   readonly open: Handler<'workspace.open'> = async (params, ctx) => {
     if (!params || typeof params.root !== 'string') {
-      throw RpcError.invalidParams('нужен root: string');
+      throw RpcError.invalidParams('root: string required');
     }
     const ws = await ctx.registry.open(params.root);
     ctx.session.attachTo(ws);
@@ -15,7 +15,7 @@ export class WorkspaceMethods {
 
   readonly attach: Handler<'workspace.attach'> = (params, ctx) => {
     if (!params || typeof params.id !== 'string') {
-      throw RpcError.invalidParams('нужен id: string');
+      throw RpcError.invalidParams('id: string required');
     }
     const ws = ctx.registry.require(params.id);
     ctx.session.attachTo(ws);
@@ -39,7 +39,7 @@ export class WorkspaceMethods {
 
   readonly close: Handler<'workspace.close'> = async (params, ctx) => {
     if (!params || typeof params.id !== 'string') {
-      throw RpcError.invalidParams('нужен id: string');
+      throw RpcError.invalidParams('id: string required');
     }
     const ws = ctx.registry.require(params.id);
     ws.broadcast('workspace.closed', { id: ws.id });
@@ -48,4 +48,5 @@ export class WorkspaceMethods {
   };
 }
 
+/** One per server: the handlers are stateless, everything arrives in the context. */
 export const workspaceMethods = new WorkspaceMethods();

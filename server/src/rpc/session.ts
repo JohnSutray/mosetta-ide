@@ -20,6 +20,14 @@ import type { RpcContext, SessionContext } from './context.js';
 
 const log = journal.logger('session');
 
+/**
+ * One connection = one browser tab = one open project.
+ *
+ * A session is everything the server knows about a client, and it does not know much:
+ * the socket, and the current workspace. There is no editor state here at all, which is
+ * why reloading a tab breaks nothing: it simply attaches again to the same warm
+ * workspace.
+ */
 export class Session implements SessionContext {
   readonly id = randomUUID().slice(0, 8);
   private current: Workspace | null = null;
@@ -31,11 +39,12 @@ export class Session implements SessionContext {
     private readonly config: ConfigStore,
     private readonly startedAt: number,
     private readonly plugins: PluginHost,
+    /** How to measure ourselves. As an instance: a test slips its own in. */
     private readonly memory: Pick<ProcessMemory, 'treeMb' | 'kidsMb'> = new ProcessMemory(),
   ) {
     socket.on('message', (data) => void this.onMessage(String(data)));
     socket.on('close', () => this.dispose());
-    socket.on('error', (err) => log.warn(`сокет ${this.id}: ${String(err)}`));
+    socket.on('error', (err) => log.warn(`socket ${this.id}: ${String(err)}`));
 
     this.unsubscribe.push(this.registry.onChange((list) => this.notify('workspace.list', list)));
     this.unsubscribe.push(journal.onLog((line) => this.notify('log', line)));
@@ -70,6 +79,11 @@ export class Session implements SessionContext {
     this.sendConfig();
   }
 
+  /**
+   * THIS tab's config: the personal layer plus the project's, if a project is open. One
+   * and the same setting is legitimately different in two tabs holding different
+   * projects — which is why the session broadcasts it rather than the store.
+   */
   private sendConfig(): void {
     this.notify('config.changed', this.current?.projectConfig.bundle ?? this.config.current);
   }
@@ -97,7 +111,7 @@ export class Session implements SessionContext {
     try {
       frame = JSON.parse(raw);
     } catch {
-      this.sendError(null, { code: RpcErrorCode.ParseError, message: 'Не JSON' });
+      this.sendError(null, { code: RpcErrorCode.ParseError, message: 'Not JSON' });
       return;
     }
 
@@ -110,7 +124,7 @@ export class Session implements SessionContext {
     if (typeof id !== 'number' || typeof method !== 'string') {
       this.sendError(typeof id === 'number' ? id : null, {
         code: RpcErrorCode.InvalidRequest,
-        message: 'Нужны числовой id и строковый method',
+        message: 'A numeric id and a string method are required',
       });
       return;
     }
@@ -121,7 +135,7 @@ export class Session implements SessionContext {
     if (!handler) {
       this.sendError(id, {
         code: RpcErrorCode.MethodNotFound,
-        message: `Нет метода ${method}`,
+        message: `No such method: ${method}`,
       });
       return;
     }

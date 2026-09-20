@@ -4,10 +4,32 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BORDER_DEBT } from './borders.debt.js';
 
+/**
+ * A package's border is an instance.
+ *
+ * One package's code reaches another's only through an instance: the core through
+ * `ide`, a plugin through `ide.getPlugin(X)` and onwards through its fields. An
+ * `import` from somebody else's package is free only for what is not behaviour:
+ *
+ * * types (`import type`, `type X` — erased at build time);
+ * * a plugin's default class — that is the key for `getPlugin`;
+ * * the contract's vocabulary — the annotations a plugin declares its own things with.
+ *
+ * Everything else — classes, components, enums, constants — goes BY PERMIT: the name is
+ * written into the source package's `ide.shares`. The core walks freely inside itself,
+ * and does not walk into plugins at all: it has to come up without them.
+ */
+
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
+/** The core: the wire, the session, the plugin operator and the contract. */
 const CORE = new Set(['@mosetta/ide-protocol', '@mosetta/ide-api', '@mosetta/ide-client', '@mosetta/ide-server']);
 
+/**
+ * The contract's vocabulary — declaring your own rather than calling somebody else's.
+ * The list is closed: a name from the contract that DOES something (`project`,
+ * `settings`, `t`) is a service, and its place is on `ide`.
+ */
 const LANGUAGE: Record<string, readonly string[]> = {
   '@mosetta/ide-api': [
     'activate',
@@ -67,6 +89,7 @@ function sources(dir: string): string[] {
   return out;
 }
 
+/** What is taken from the source package: `default`, a name, or `*`; types do not count. */
 function taken(spec: string): string[] {
   const text = spec.trim();
   if (text.startsWith('type ')) return [];
@@ -113,7 +136,7 @@ function scan(): string[] {
   return [...found].sort();
 }
 
-describe('граница пакета — экземпляр (ADR-0202)', () => {
+describe('a package\'s border is an instance', () => {
   const found = scan();
   const debt = new Set(BORDER_DEBT);
 
@@ -121,15 +144,15 @@ describe('граница пакета — экземпляр (ADR-0202)', () => 
     console.log(`BORDER_DUMP ${JSON.stringify(found, null, 2)}`);
   }
 
-  it('нового хода мимо экземпляра нет: через ide, getPlugin или талон в ide.shares', () => {
+  it('no new way round an instance: through ide, getPlugin or a permit in ide.shares', () => {
     expect(found.filter((one) => !debt.has(one))).toEqual([]);
   });
 
-  it('закрытый долг вычеркнут из borders.debt.ts — список только сокращается', () => {
+  it('a debt that was paid is struck off borders.debt.ts — the list only shrinks', () => {
     expect(BORDER_DEBT.filter((one) => !found.includes(one))).toEqual([]);
   });
 
-  it('разбор видит все формы импорта', () => {
+  it('the parsing sees every form of import', () => {
     expect(taken("{ a, type B, c as d }")).toEqual(['a', 'c']);
     expect(taken('Plugin, { x }')).toEqual(['default', 'x']);
     expect(taken('* as all')).toEqual(['*']);

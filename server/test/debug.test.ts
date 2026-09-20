@@ -2,6 +2,17 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, waitFor, withServer, type TestClient } from './helpers.js';
 
+/**
+ * The debugger through the plugin door — a DISTRIBUTION test.
+ *
+ * The adapter's own scenarios live in the debug plugin's tests. What is checked here is
+ * what a package test cannot see, and what breaks on an installation rather than in the
+ * code: that the server half is BUILT into the state directory (where `import.meta.url`
+ * lies), that the adapter was found relative to the plugin's package directory, that
+ * the process was born by the core's real ledger, and that events travel in the
+ * `plugins.event` envelope.
+ */
+
 const DEBUG = '@mosetta/ide-plugin-debug';
 
 interface PluginEvent {
@@ -10,7 +21,7 @@ interface PluginEvent {
   payload: unknown;
 }
 
-describe('отладчик (плагин)', () => {
+describe('the debugger (plugin)', () => {
   let server: RunningServer;
   let root: string;
   let c: TestClient;
@@ -22,7 +33,7 @@ describe('отладчик (плагин)', () => {
   beforeAll(async () => {
     root = await makeProject('debug', {
       'package.json': '{ "private": true, "type": "commonjs" }\n',
-      'src/main.js': 'const words = ["раз", "два"];\nconst joined = words.join(" ");\nconsole.log(joined);\n',
+      'src/main.js': 'const words = ["one", "two"];\nconst joined = words.join(" ");\nconsole.log(joined);\n',
     });
     server = await withServer();
     c = await connect(server);
@@ -35,7 +46,7 @@ describe('отладчик (плагин)', () => {
     await removeProject(root);
   });
 
-  it('точка срабатывает, стек называет файл проекта, программа доходит до конца', async () => {
+  it('a breakpoint fires, the stack names the project\'s file, and the program runs to the end', async () => {
     const placed = (await debug('setBreakpoints', { path: 'src/main.js', breakpoints: [{ line: 2 }] })) as {
       breakpoints: Array<{ line: number }>;
     };
@@ -62,7 +73,7 @@ describe('отладчик (плагин)', () => {
         .filter((one) => one.name === name)
         .map((one) => one.data)
         .join('');
-    await waitFor(() => printed().includes('раз два'), 'program output in the terminal', 20_000);
+    await waitFor(() => printed().includes('one two'), 'program output in the terminal', 20_000);
     await waitFor(
       () => (events('runs').at(-1)?.payload as Array<{ state: string }> | undefined)?.[0]?.state === 'ended',
       'run end',

@@ -1,5 +1,10 @@
 import { RpcErrorCode, type RpcErrorBody } from '@mosetta/ide-protocol';
 
+/**
+ * An error one is not ashamed to show a person: it carries a code from the protocol,
+ * and the router hands it to the client as it is. Everything else that arrives from the
+ * code turns into an Internal and goes into the log whole.
+ */
 export class RpcError extends Error {
   constructor(
     readonly code: RpcErrorCode,
@@ -19,29 +24,29 @@ export class RpcError extends Error {
   static noWorkspace() {
     return new RpcError(
       RpcErrorCode.NoWorkspace,
-      'Сессия не прикреплена к воркспейсу',
+      'The session is not attached to a workspace',
     );
   }
 
   static unknownWorkspace(id: string) {
-    return new RpcError(RpcErrorCode.UnknownWorkspace, `Воркспейс ${id} не открыт`);
+    return new RpcError(RpcErrorCode.UnknownWorkspace, `Workspace ${id} is not open`);
   }
 
   static pathEscape(p: string) {
     return new RpcError(
       RpcErrorCode.PathEscape,
-      `Путь выходит за корень воркспейса: ${p}`,
+      `The path escapes the workspace root: ${p}`,
     );
   }
 
   static notFound(p: string) {
-    return new RpcError(RpcErrorCode.NotFound, `Не найдено: ${p}`);
+    return new RpcError(RpcErrorCode.NotFound, `Not found: ${p}`);
   }
 
   static wrongKind(p: string, expected: 'file' | 'dir') {
     return new RpcError(
       RpcErrorCode.WrongKind,
-      expected === 'dir' ? `Не директория: ${p}` : `Не файл: ${p}`,
+      expected === 'dir' ? `Not a directory: ${p}` : `Not a file: ${p}`,
     );
   }
 

@@ -2,6 +2,15 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, type TestClient, waitFor, withServer } from './helpers.js';
 
+/**
+ * TypeScript symbols are a plugin of their own.
+ *
+ * A distribution test: we go through the plugin door, as with the index, and the
+ * parsing happens in a REAL child process — which is what the whole thing was for. The
+ * match score is assigned by the client's search matcher, so what is checked here is
+ * what the server does: what was parsed, what was not, and why.
+ */
+
 interface SymbolHit {
   label: string;
   path: string;
@@ -21,7 +30,7 @@ function stats(c: TestClient): Promise<{ symbols: number; uncovered: number }> {
   }>;
 }
 
-describe('символы проекта', () => {
+describe('the project\'s symbols', () => {
   let server: RunningServer;
   let root: string;
   let c: TestClient;
@@ -46,7 +55,7 @@ describe('символы проекта', () => {
     });
     c = await connect(server);
     await c.call('workspace.open', { root });
-    await waitFor(async () => (await stats(c)).symbols > 0, 'символы разобрались', 30_000);
+    await waitFor(async () => (await stats(c)).symbols > 0, 'the symbols were parsed', 30_000);
   }, 60_000);
 
   afterAll(async () => {
@@ -55,7 +64,7 @@ describe('символы проекта', () => {
     await removeProject(root);
   });
 
-  it('разбирает функции, классы, методы, свойства, енумы, типы и стрелки', async () => {
+  it('parses functions, classes, methods, properties, enums, types and arrows', async () => {
     const all = (await find(c, 'e')).concat(await find(c, 'a')).map((one) => `${one.kind}:${one.label}`);
     const has = (what: string) => expect(all, what).toContain(what);
     has('function:DesktopCreditCardForm');
@@ -71,40 +80,40 @@ describe('символы проекта', () => {
     has('variable:arrowThing');
   });
 
-  it('символ знает, где он лежит', async () => {
+  it('a symbol knows where it lies', async () => {
     const hit = (await find(c, 'DesktopCreditCardForm'))[0]!;
     expect(hit.path).toBe('src/desktop.ts');
     expect(hit.line).toBe(0);
   });
 
-  it('папка вне обхода не разбирается вовсе', async () => {
+  it('a directory outside the walk is not parsed at all', async () => {
     expect(await find(c, 'hiddenByNoScan')).toEqual([]);
   });
 
-  it('пустой запрос — это «покажи, что есть»', async () => {
+  it('an empty query means "show me what there is"', async () => {
     const some = await find(c, '   ', 5);
     expect(some).toHaveLength(5);
   });
 
-  it('сорта отбирает кеш, а не тот, кто спросил', async () => {
+  it('the kinds are filtered by the cache rather than by whoever asked', async () => {
     const classes = await find(c, '', 20, ['class']);
     expect(classes.length).toBeGreaterThan(0);
-    expect(classes.every((one) => one.kind === 'class'), 'только классы').toBe(true);
+    expect(classes.every((one) => one.kind === 'class'), 'classes only').toBe(true);
     const named = await find(c, 'Desktop', 20, ['class']);
     expect(named.every((one) => one.kind === 'class')).toBe(true);
     expect(named.map((one) => one.label)).toContain('Desktop');
   });
 
-  it('новый символ появляется после правки файла', async () => {
+  it('a new symbol appears after the file is edited', async () => {
     const path = 'src/desktop.ts';
     const doc = await c.call('doc.open', { path });
     await c.call('doc.edit', {
       path,
-      text: `${doc.text}\nexport function свежаяФункция() {}\n`,
+      text: `${doc.text}\nexport function freshFunction() {}\n`,
       baseVersion: doc.version,
     });
     await c.call('doc.save', { path });
-    await waitFor(async () => (await find(c, 'свежая')).length > 0, 'свежий символ разобран', 30_000);
-    expect((await find(c, 'свежая'))[0]?.label).toBe('свежаяФункция');
+    await waitFor(async () => (await find(c, 'fresh')).length > 0, 'the fresh symbol was parsed', 30_000);
+    expect((await find(c, 'fresh'))[0]?.label).toBe('freshFunction');
   }, 60_000);
 });

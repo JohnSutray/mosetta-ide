@@ -6,10 +6,21 @@ import WebSocket from 'ws';
 import { WS_PATH, type ApiMethod, type Params, type Result } from '@mosetta/ide-protocol';
 import { boot, type RunningServer } from '../src/server.js';
 
+/**
+ * The tests reach the server over a real socket and real JSON-RPC — exactly as a
+ * browser does. That is what the backend was split into its own process for: the whole
+ * contract is checked without a single line of UI.
+ */
+
 export interface TestClient {
   call<M extends ApiMethod>(method: M, params: Params<M>): Promise<Result<M>>;
   expectError<M extends ApiMethod>(method: M, params: Params<M>): Promise<{ code: number; message: string }>;
   events(name: string): unknown[];
+  /**
+   * Wait for an event. `match` is mandatory wherever several events of one name arrive:
+   * without it a test catches the first one that turns up and checks a state that does
+   * not exist yet.
+   */
   nextEvent(
     name: string,
     timeoutMs?: number,
@@ -18,6 +29,10 @@ export interface TestClient {
   close(): Promise<void>;
 }
 
+/**
+ * The tests have a config of their own: the production one brings a tsserver up for
+ * every workspace.
+ */
 export const TEST_CONFIG_DIR = fileURLToPath(new URL('./fixtures/config', import.meta.url));
 
 export async function withServer(
@@ -79,13 +94,13 @@ export async function connect(server: RunningServer): Promise<TestClient> {
       } catch (err) {
         return err as { code: number; message: string };
       }
-      throw new Error(`${method} должен был упасть, но вернул результат`);
+      throw new Error(`${method} should have failed but returned a result`);
     },
     events: (name) => received.get(name) ?? [],
     nextEvent(name, timeoutMs = 2000, match) {
       return new Promise((resolve, reject) => {
         const timer = setTimeout(
-          () => reject(new Error(`не дождались ${name}`)),
+          () => reject(new Error(`never saw ${name}`)),
           timeoutMs,
         );
         const list = waiters.get(name) ?? [];
@@ -111,11 +126,16 @@ export async function connect(server: RunningServer): Promise<TestClient> {
   };
 }
 
+/**
+ * Wait for a STATE rather than for time: "the config handed over a new value", "the
+ * index handed over a hit". The ceiling is single and generous; a flickering test is
+ * worse than a red one — it teaches people to re-run.
+ */
 export async function waitFor(check: () => boolean | Promise<boolean>, what: string, timeoutMs = 10_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
     if (await check()) return;
-    if (Date.now() > deadline) throw new Error(`не дождались: ${what}`);
+    if (Date.now() > deadline) throw new Error(`never saw: ${what}`);
     await new Promise((resolve) => setTimeout(resolve, 25));
   }
 }
@@ -130,6 +150,19 @@ export async function makeProject(name: string, files: Record<string, string>) {
   return fs.realpath(root);
 }
 
+/**
+ * Clean a fixture up after ourselves.
+ *
+ * The retries are not superstition but Windows. There, a directory cannot be deleted
+ * while a single descriptor is open on it, and the watcher releases its own NOT
+ * synchronously: `close()` has already returned, the test has already moved on to
+ * cleaning up, and the kernel is still holding on. The result was an `EBUSY` in
+ * `afterEach` — twenty-seven failures out of nowhere, while every check inside the
+ * tests passed.
+ *
+ * On a Mac none of this is visible at all: there deletion goes by name, and an open
+ * file lives out its days by itself.
+ */
 export async function removeProject(root: string) {
   await fs.rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
 }

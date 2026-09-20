@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, type TestClient, withServer } from './helpers.js';
 
+/** The index is a plugin: we go through the plugin door. */
 interface Hit {
   kind: string;
   label: string;
@@ -15,8 +16,14 @@ interface Stats {
   symbols: number;
   vocabulary: number;
   pending: number;
+  /** Files whose symbols the index never got to. */
   unparsed: number;
 }
+/**
+ * Hits. The index hands them over together with the number found UP TO the ceiling —
+ * unpacked here, because the tests care about the list; the truncation itself is
+ * checked separately.
+ */
 async function search(c: TestClient, params: { query: string; limit?: number; kinds?: string[] }): Promise<Hit[]> {
   return (await answerOf(c, params)).hits;
 }
@@ -33,7 +40,11 @@ function indexStats(c: TestClient): Promise<Stats> {
   return c.call('plugins.call', { name: '@mosetta/ide-plugin-search', method: 'stats', params: null }) as Promise<Stats>;
 }
 
-describe('поиск всего', () => {
+/**
+ * A double Shift searches three kinds at once: files, npm scripts and top-level
+ * TypeScript symbols.
+ */
+describe('search everywhere', () => {
   let server: RunningServer;
   let root: string;
   let c: TestClient;
@@ -82,14 +93,14 @@ describe('поиск всего', () => {
     await removeProject(root);
   });
 
-  it('видит свои сорта: файлы и находки поставщиков', async () => {
+  it('sees its own kinds: files, and the suppliers\' hits', async () => {
     const stats = await indexStats(c);
     expect(stats.files).toBeGreaterThan(0);
     expect(stats.provided).toBe(3);     expect(stats.vocabulary).toBeGreaterThan(5);
     expect(stats.symbols).toBe(0);
   });
 
-  it('потолок режет список, но не число найденного', async () => {
+  it('the ceiling cuts the list but not the number found', async () => {
     const all = await answerOf(c, { query: 'ts', limit: 200 });
     expect(all.hits.length).toBe(all.total);
 
@@ -98,17 +109,17 @@ describe('поиск всего', () => {
     expect(few.total).toBe(all.total);
   });
 
-  it('находит npm-скрипт монорепы по имени пакета и скрипта', async () => {
+  it('finds a monorepo\'s npm script by package and script name', async () => {
     const hits = await search(c, { query: '@distrojs/core::dev' });
     expect(labels(hits)[0]).toBe('npm::@distrojs/core::dev');
   });
 
-  it('::dev вытаскивает скрипт, а не переменную с теми же буквами', async () => {
+  it('::dev pulls out the script rather than a variable with the same letters', async () => {
     const hits = await search(c, { query: '::dev' });
     expect(labels(hits)[0]).toBe('npm::@distrojs/core::dev');
   });
 
-  it('npm:: без хвоста показывает все скрипты', async () => {
+  it('npm:: with no tail shows every script', async () => {
     const hits = await search(c, { query: 'npm::' });
     expect(labels(hits).sort()).toEqual([
       'npm::@distrojs/core::dev',

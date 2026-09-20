@@ -4,50 +4,50 @@ import { paths } from '../src/workspace/paths.js';
 
 const root = path.resolve('/tmp/project');
 
-describe('ключи и пути', () => {
-  it('корень — пустая строка', () => {
+describe('keys and paths', () => {
+  it('the root is the empty string', () => {
     expect(paths.toKey('')).toBe('');
     expect(paths.toAbsolute(root, '')).toBe(root);
   });
 
-  it('ключ всегда со слэшем, диск — в разделителях ОС', () => {
+  it('a key always uses a forward slash, a disk path the OS separators', () => {
     expect(paths.toKey('src\\app\\main.ts')).toBe('src/app/main.ts');
     expect(paths.toAbsolute(root, 'src/app/main.ts')).toBe(
       path.join(root, 'src', 'app', 'main.ts'),
     );
   });
 
-  it('обратно получается тот же ключ', () => {
+  it('the same key comes back', () => {
     const abs = paths.toAbsolute(root, 'src/app/main.ts');
     expect(paths.toRelative(root, abs)).toBe('src/app/main.ts');
   });
 
-  it('лишние сегменты схлопываются', () => {
+  it('redundant segments collapse', () => {
     expect(paths.toKey('./src//app/./main.ts')).toBe('src/app/main.ts');
   });
 
-  it('.. внутри проекта разрешён', () => {
+  it('a .. inside the project is allowed', () => {
     expect(paths.toKey('src/app/../main.ts')).toBe('src/main.ts');
   });
 
   it.each([
-    ['..', 'выход вверх'],
-    ['../secrets', 'выход вверх с хвостом'],
-    ['src/../../secrets', 'выход вверх через середину'],
-    ['/etc/passwd', 'абсолютный posix'],
-    ['C:/Windows/System32', 'абсолютный windows'],
+    ['..', 'escaping upwards'],
+    ['../secrets', 'escaping upwards with a tail'],
+    ['src/../../secrets', 'escaping upwards through the middle'],
+    ['/etc/passwd', 'an absolute posix path'],
+    ['C:/Windows/System32', 'an absolute windows path'],
     ['\\\\server\\share', 'UNC'],
-    ['src/\0/x', 'NUL-байт'],
-  ])('отвергает %s (%s)', (bad) => {
+    ['src/\0/x', 'a NUL byte'],
+  ])('rejects %s (%s)', (bad) => {
     expect(() => paths.toKey(bad)).toThrow();
   });
 
-  it('сосед с похожим именем не считается потомком', () => {
+  it('a neighbour with a similar name does not count as a descendant', () => {
     expect(paths.isInside(root, `${root}-secret`)).toBe(false);
     expect(paths.isInside(root, path.join(root, 'src'))).toBe(true);
   });
 
-  it('склейка и расширение', () => {
+  it('joining and extensions', () => {
     expect(paths.joinKey('', 'a.ts')).toBe('a.ts');
     expect(paths.joinKey('src', 'a.ts')).toBe('src/a.ts');
     expect(paths.extensionOf('src/a.d.ts')).toBe('ts');

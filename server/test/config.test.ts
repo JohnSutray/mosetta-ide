@@ -10,10 +10,10 @@ import { waitFor } from './helpers.js';
 const SHIPPED = fileURLToPath(new URL('../../config', import.meta.url));
 
 describe('JSONC', () => {
-  it('понимает комментарии и висячие запятые', () => {
+  it('understands comments and trailing commas', () => {
     const parsed = jsonc.parse<{ a: number; b: string[] }>(
       `{
-         // строчный
+         // a line comment
          "a": 1, 
          "b": ["x", "y",],
        }`,
@@ -22,18 +22,18 @@ describe('JSONC', () => {
     expect(parsed).toEqual({ a: 1, b: ['x', 'y'] });
   });
 
-  it('висячая запятая и комментарий работают ВМЕСТЕ', () => {
+  it('a trailing comma and a comment work TOGETHER', () => {
     const parsed = jsonc.parse<{ fs: { noScan: string[] } }>(
       `{
          "fs": { "noScan": ["node_modules"] },
-         // дальше ничего нет, и вот почему
+         // there is nothing after this, and here is why
        }`,
       'test',
     );
     expect(parsed.fs.noScan).toEqual(['node_modules']);
   });
 
-  it('то же в массиве и через блочный комментарий', () => {
+  it('the same inside an array and through a block comment', () => {
     const parsed = jsonc.parse<{ a: number[] }>(
       `{ "a": [1, 2,  ] }`,
       'test',
@@ -41,13 +41,13 @@ describe('JSONC', () => {
     expect(parsed.a).toEqual([1, 2]);
   });
 
-  it('запятая внутри строки остаётся на месте', () => {
-    const parsed = jsonc.parse<{ a: string; b: string[] }>('{ "a": "раз, два", "b": ["x,"] }', 'test');
-    expect(parsed.a).toBe('раз, два');
+  it('a comma inside a string stays where it is', () => {
+    const parsed = jsonc.parse<{ a: string; b: string[] }>('{ "a": "one, two", "b": ["x,"] }', 'test');
+    expect(parsed.a).toBe('one, two');
     expect(parsed.b).toEqual(['x,']);
   });
 
-  it('не режет слэши внутри строк', () => {
+  it('does not cut slashes inside strings', () => {
     const parsed = jsonc.parse<{ url: string; win: string }>(
       '{ "url": "https://example.com//x", "win": "C:\\\\a\\\\b" }',
       'test',
@@ -57,8 +57,8 @@ describe('JSONC', () => {
   });
 });
 
-describe('боевой конфиг в app/config', () => {
-  it('settings.json разбирается и виден источником', async () => {
+describe('the real config', () => {
+  it('settings.json parses and is visible as a source', async () => {
     const store = await ConfigStore.load(SHIPPED);
     expect(store.current.sources).toHaveLength(1);
     expect(store.current.sources[0]).toContain('settings.json');
@@ -66,23 +66,23 @@ describe('боевой конфиг в app/config', () => {
     store.dispose();
   });
 
-  it('раздел плагина едет как есть — ядро его формы не знает (ADR-0186)', async () => {
+  it('a plugin\'s section travels as it is — the core does not know its shape', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-'));
     await fs.writeFile(
       path.join(dir, 'settings.json'),
-      '{ "editor": { "fontSize": 21, "чегоЯдроНеЗнает": ["и знать не должно"] } }',
+      '{ "editor": { "fontSize": 21, "whatTheCoreDoesNotKnow": ["and has no business knowing"] } }',
       'utf8',
     );
     const store = await ConfigStore.load(dir);
-    const editor = store.settings.editor as { fontSize: number; чегоЯдроНеЗнает: string[] };
+    const editor = store.settings.editor as { fontSize: number; whatTheCoreDoesNotKnow: string[] };
     expect(editor.fontSize).toBe(21);
-    expect(editor.чегоЯдроНеЗнает).toEqual(['и знать не должно']);
+    expect(editor.whatTheCoreDoesNotKnow).toEqual(['and has no business knowing']);
     store.dispose();
   });
 });
 
-describe('слежение за конфигом', () => {
-  it('переживает атомарное сохранение (временный файл + переименование)', async () => {
+describe('watching the config', () => {
+  it('survives an atomic save (a temporary file plus a rename)', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-'));
     const target = path.join(dir, 'settings.json');
     await fs.writeFile(target, JSON.stringify({ editor: { fontSize: 13 } }), 'utf8');
@@ -96,7 +96,7 @@ describe('слежение за конфигом', () => {
       await fs.rename(temp, target);
       await waitFor(
         () => (store.settings.editor as { fontSize?: number } | undefined)?.fontSize === size,
-        `конфиг перечитан после сохранения ${size}`,
+        `the config was not re-read after the save ${size}`,
       );
     };
 
@@ -110,10 +110,10 @@ describe('слежение за конфигом', () => {
   }, 10_000);
 });
 
-describe('сломанный конфиг', () => {
-  it('не роняет сервер, а откатывается на дефолты', async () => {
+describe('a broken config', () => {
+  it('does not bring the server down but falls back to the defaults', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-'));
-    await fs.writeFile(path.join(dir, 'settings.json'), '{ это не json', 'utf8');
+    await fs.writeFile(path.join(dir, 'settings.json'), '{ not json', 'utf8');
     const store = await ConfigStore.load(dir);
     expect(store.settings.fs.maxFileMb).toBe(8);
     expect(store.settings.editor).toBeUndefined();
@@ -123,8 +123,8 @@ describe('сломанный конфиг', () => {
   });
 });
 
-describe('запись настройки', () => {
-  it('две записи разом не теряют друг друга (ADR-0194)', async () => {
+describe('writing a setting', () => {
+  it('two writes at once do not lose each other', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-race-'));
     await fs.writeFile(path.join(dir, 'settings.json'), '{\n  "find": { "masks": ["*.ts"] }\n}\n', 'utf8');
     const store = await ConfigStore.load(dir);
@@ -136,11 +136,11 @@ describe('запись настройки', () => {
     await fs.rm(dir, { recursive: true, force: true });
   });
 
-  it('доезжает до бандла и не сносит комментарии', async () => {
+  it('reaches the bundle and does not sweep the comments away', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-set-'));
     await fs.writeFile(
       path.join(dir, 'settings.json'),
-      '{\n  // шрифт руками\n  "editor": { "fontSize": 15 }\n}\n',
+      '{\n  // the font by hand\n  "editor": { "fontSize": 15 }\n}\n',
       'utf8',
     );
     const store = await ConfigStore.load(dir);
@@ -151,7 +151,7 @@ describe('запись настройки', () => {
     expect((store.settings.editor as { fontSize: number }).fontSize).toBe(15);
     expect((store.settings.terminal as { args?: string[] }).args).toBeUndefined();
     const raw = await fs.readFile(path.join(dir, 'settings.json'), 'utf8');
-    expect(raw).toContain('// шрифт руками');
+    expect(raw).toContain('// the font by hand');
 
     store.dispose();
     await fs.rm(dir, { recursive: true, force: true });

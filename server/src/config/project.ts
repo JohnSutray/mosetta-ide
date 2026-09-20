@@ -89,13 +89,13 @@ export class ProjectConfig implements WorkspaceResource {
     try {
       this.own = jsonc.parse<Record<string, Record<string, unknown>>>(text, PROJECT_SETTINGS) ?? {};
     } catch (err) {
-      log.error(`${PROJECT_SETTINGS} не разобран, проектные настройки не применяю: ${String(err)}`);
+      log.error(`${PROJECT_SETTINGS} did not parse, not applying the project settings: ${String(err)}`);
       return;
     }
     for (const section of NOT_FROM_PROJECT) {
       if (this.own[section] === undefined) continue;
       delete this.own[section];
-      log.warn(`${PROJECT_SETTINGS}: раздел ${section} проектным не бывает (ADR-0214) — пропускаю`);
+      log.warn(`${PROJECT_SETTINGS}: section ${section} is never project-scoped — skipping`);
     }
   }
 

@@ -79,7 +79,7 @@ export class ConfigStore {
     const patched = patch.setting(raw, section, key, value);
     await fsp.mkdir(this.dir, { recursive: true });
     await fsp.writeFile(file, patched.text, 'utf8');
-    if (patched.rewritten) log.warn('settings.json пересобран — комментарии в нём не сохранились');
+    if (patched.rewritten) log.warn('settings.json was rebuilt — its comments did not survive');
     await this.reload();
     return { rewritten: patched.rewritten };
   }
@@ -100,7 +100,7 @@ export class ConfigStore {
     const patched = patch.unset(raw, section, key);
     if (patched.text === raw) return;
     await fsp.writeFile(file, patched.text, 'utf8');
-    if (patched.rewritten) log.warn('settings.json пересобран — комментарии в нём не сохранились');
+    if (patched.rewritten) log.warn('settings.json was rebuilt — its comments did not survive');
     await this.reload();
   }
 
@@ -120,7 +120,7 @@ export class ConfigStore {
   async reload(): Promise<void> {
     const next = await this.read();
     this.bundle = next;
-    log.info('перечитан');
+    log.info('re-read');
     for (const listener of this.listeners) listener(next);
   }
 
@@ -144,7 +144,7 @@ export class ConfigStore {
     try {
       text = await fsp.readFile(target, 'utf8');
     } catch {
-      log.warn(`нет ${target} — беру дефолты`);
+      log.warn(`no ${target} — using the defaults`);
       return null;
     }
     try {
@@ -152,7 +152,7 @@ export class ConfigStore {
       sources.push(target);
       return parsed;
     } catch (err) {
-      log.error(`${name} не разобран, работаю на дефолтах: ${String(err)}`);
+      log.error(`${name} did not parse, running on the defaults: ${String(err)}`);
       return null;
     }
   }

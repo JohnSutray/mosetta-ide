@@ -4,6 +4,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CORE_PROVIDED, ContractNames, SharedModules } from '../src/plugins/shared.js';
 
+/**
+ * The plugin contract is guarded by a test rather than by an understanding.
+ *
+ * There are no lists of names in the build any more: packages' and plugins' exports are
+ * handed over by esbuild, and the contract's exports by parsing its source. Two places
+ * are obliged to agree, and both are here: the contract without `declare` names (the
+ * services are fields on `ide`), and the client's table of what the server makes stubs
+ * for (vite demands literal imports, and it is the one list with something to drift
+ * from).
+ */
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const api = path.resolve(here, '../../plugins/api/src');
 const names = new ContractNames();
@@ -12,49 +23,51 @@ function source(file: string): string {
   return fs.readFileSync(path.join(api, file), 'utf8');
 }
 
+/** The core services are members of the interface the application signs up to. */
 function surfaceMembers(text: string): string[] {
   const at = text.indexOf('export interface IdeServices');
   const body = text.slice(text.indexOf('{', at) + 1, text.indexOf('\n}', at));
   return [...body.matchAll(/^\s*(?:readonly\s+)?(\w+):/gm)].map((m) => m[1]!);
 }
 
+/** The keys of the client's table are literals, so we read the source. */
 function clientTable(): string[] {
   const text = fs.readFileSync(path.resolve(here, '../../client/src/state/shared-modules.ts'), 'utf8');
   const body = text.slice(text.indexOf('= {'));
   return [...body.matchAll(/^\s*(?:'([^']+)'|(\w+))(?:: \w+)?,$/gm)].map((m) => m[1] ?? m[2]!);
 }
 
-describe('контракт @mosetta/ide-api', () => {
-  it('имён без кода в контракте нет: службы — поля ide (ADR-0206)', () => {
+describe('the @mosetta/ide-api contract', () => {
+  it('there are no names without code in the contract: the services are fields on ide', () => {
     expect(names.injected(source('client.ts'))).toEqual([]);
     expect(surfaceMembers(source('client.ts'))).toContain('t');
   });
 
-  it('хостовое наружу не отдаётся', () => {
+  it('the host\'s half is not handed outwards', () => {
     for (const [entry, host] of [
       ['client.ts', 'host.ts'],
       ['server.ts', 'server-host.ts'],
     ] as const) {
       const offered = new Set(names.offered(source(entry)));
       const hostNames = [...source(host).matchAll(/^export (?:abstract class|function|const) (\w+)/gm)];
-      expect(hostNames.length, `${host} должен что-то отдавать хосту`).toBeGreaterThan(0);
+      expect(hostNames.length, `${host} has to hand the host something`).toBeGreaterThan(0);
       for (const m of hostNames) {
-        expect(offered, `${m[1]} — для хоста, плагину он приедет пустым`).not.toContain(m[1]);
+        expect(offered, `${m[1]} is for the host; a plugin would receive it empty`).not.toContain(m[1]);
       }
     }
   });
 
-  it('серверный контракт отдаёт то, чем плагин пользуется', () => {
+  it('the server contract hands over what a plugin uses', () => {
     expect(names.offered(source('server.ts')).sort()).toEqual(['activate', 'command']);
   });
 
-  it('взятое взаймы помечено, и список закрытый', () => {
+  it('what is borrowed is marked, and the list is closed', () => {
     const BORROWED: string[] = [];
     const marked = surfaceMembers(source('client.ts')).filter((name) => name.startsWith('unstable_'));
     expect(marked.sort()).toEqual(BORROWED.sort());
   });
 
-  it('на столе лежат ровно те имена контракта, что обещаны плагину (ADR-0215)', () => {
+  it('the table holds exactly the contract names promised to a plugin', () => {
     const text = fs.readFileSync(path.resolve(here, '../../client/src/state/plugins.ts'), 'utf8');
     const at = text.indexOf("'@mosetta/ide-api/client': {");
     const body = text.slice(text.indexOf('{', at) + 1, text.indexOf('\n        },', at));
@@ -62,12 +75,12 @@ describe('контракт @mosetta/ide-api', () => {
     expect(onTable.sort()).toEqual(names.offered(source('client.ts')).sort());
   });
 
-  it('клиент кладёт на стол ровно то, для чего сервер делает заглушки', () => {
+  it('the client puts on the table exactly what the server makes stubs for', () => {
     const server = CORE_PROVIDED.filter((one) => one !== '@mosetta/ide-api/client');
     expect([...clientTable()].sort()).toEqual([...server].sort());
   });
 
-  it('экспорты пакета спрашиваются у esbuild, а не переписываются руками', async () => {
+  it('a package\'s exports are asked of esbuild rather than written out by hand', async () => {
     const shared = new SharedModules(path.resolve(here, '..'), path.resolve(here, '../../client'));
     const hooks = await shared.exportsOf('preact/hooks', 'client');
     expect(hooks).toContain('useState');
@@ -75,14 +88,14 @@ describe('контракт @mosetta/ide-api', () => {
     expect(view).toContain('EditorView');
   });
 
-  it('заглушка читает со стола и падает именем, если стол пуст', async () => {
+  it('a stub reads from the table and fails by name when the table is empty', async () => {
     const shared = new SharedModules(path.resolve(here, '..'), path.resolve(here, '../../client'));
     shared.register('@mosetta/ide-plugin-x', 'client', ['default', 'thing']);
     const text = await shared.shim('@mosetta/ide-plugin-x', 'client');
     expect(text).toContain(`globalThis.__ideApi.modules["@mosetta/ide-plugin-x"]`);
     expect(text).toContain('export default m.default;');
     expect(text).toContain('export const thing = m["thing"];');
-    expect(text).toContain('не поднят');
+    expect(text).toContain('not up');
     const api = await shared.exportsOf('@mosetta/ide-api/client', 'client');
     expect(api).toContain('useT');
     expect(api).not.toContain('t');

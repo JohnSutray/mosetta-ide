@@ -65,8 +65,8 @@ function literals(text: string): string[] {
   return out;
 }
 
-describe('язык репозитория', () => {
-  it('в строковых литералах кода нет кириллицы: надписи — данные', () => {
+describe('the repository\'s language', () => {
+  it('no Cyrillic in the code\'s string literals: labels are data', () => {
     const guilty: string[] = [];
     for (const area of AREAS) {
       const dir = path.join(root, area);
@@ -84,7 +84,7 @@ describe('язык репозитория', () => {
     expect(left).toEqual([...RUSSIAN_DEBT]);
   });
 
-  it('в словарях по умолчанию нет кириллицы: en.json — английский', () => {
+  it('no Cyrillic in the default dictionaries: en.json is English', () => {
     const guilty: string[] = [];
     const files = [path.join(root, 'client/src/i18n/en.json')];
     const plugins = path.join(root, 'plugins');

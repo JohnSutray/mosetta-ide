@@ -43,12 +43,12 @@ describe('RAM FS', () => {
     await removeProject(root);
   });
 
-  it('дерево обошли жадно при открытии проекта', async () => {
+  it('the tree was walked greedily when the project opened', async () => {
     const stats = await c.call('tree.stats', null);
     expect(stats.files).toBe(3);
     expect(stats.dirs).toBe(3);   });
 
-  it('tree.list читает память, fs.list читает диск — и это видно', async () => {
+  it('tree.list reads memory, fs.list reads disk — and it shows', async () => {
     await fs.writeFile(path.join(root, 'src', 'sneaky.ts'), 'export const s = 1;\n', 'utf8');
 
     const fromDisk = await c.call('fs.list', { path: 'src' });
@@ -58,7 +58,7 @@ describe('RAM FS', () => {
     expect(fromMemory.map((e) => e.name)).not.toContain('sneaky.ts');
   });
 
-  it('node_modules показывается, но жадно не обходится', async () => {
+  it('node_modules is shown but not walked greedily', async () => {
     await fs.mkdir(path.join(root, 'node_modules', 'left-pad'), { recursive: true });
     await fs.writeFile(path.join(root, 'node_modules', 'left-pad', 'index.js'), 'x\n', 'utf8');
 
@@ -80,7 +80,7 @@ describe('RAM FS', () => {
     await fresh.close();
   });
 
-  it('правка живёт в памяти и на диск не течёт', async () => {
+  it('an edit lives in memory and does not leak to disk', async () => {
     const doc = await c.call('doc.open', { path: 'src/main.ts' });
     expect(doc.version).toBe(0);
     expect(doc.dirty).toBe(false);
@@ -99,7 +99,7 @@ describe('RAM FS', () => {
     expect(await fs.readFile(path.join(root, 'src/main.ts'), 'utf8')).toBe('const a = 2;\n');
   });
 
-  it('несохранённое перечисляется путями — и закрытое вкладкой тоже', async () => {
+  it('what is unsaved is listed as paths — including what the tab has closed', async () => {
     expect((await c.call('doc.unsaved', null)).paths).toEqual([]);
 
     const doc = await c.call('doc.open', { path: 'src/main.ts' });
@@ -113,7 +113,7 @@ describe('RAM FS', () => {
     expect((await c.call('doc.unsaved', null)).paths).toEqual([]);
   });
 
-  it('правка на устаревшую версию отвергается', async () => {
+  it('an edit against an outdated version is rejected', async () => {
     const doc = await c.call('doc.open', { path: 'src/main.ts' });
     await c.call('doc.edit', { path: 'src/main.ts', text: 'x\n', baseVersion: doc.version });
 
@@ -125,39 +125,39 @@ describe('RAM FS', () => {
     expect(err.code).toBe(1009);
   });
 
-  it('чужая запись подхватывается, пока в памяти чисто', async () => {
+  it('somebody else\'s write is picked up while memory is clean', async () => {
     await c.call('doc.open', { path: 'src/main.ts' });
     const waiting = c.nextEvent('doc.external');
 
-    await c.call('fs.write', { path: 'src/main.ts', text: 'внешний\n', expectedRevision: null });
+    await c.call('fs.write', { path: 'src/main.ts', text: 'external\n', expectedRevision: null });
 
     await waiting;
     const doc = await c.call('doc.open', { path: 'src/main.ts' });
-    expect(doc.text).toBe('внешний\n');
+    expect(doc.text).toBe('external\n');
     expect(doc.dirty).toBe(false);
   });
 
-  it('чужая запись поверх несохранённого — расхождение, а не тихая потеря', async () => {
+  it('somebody else\'s write over unsaved work is a divergence rather than a silent loss', async () => {
     const doc = await c.call('doc.open', { path: 'src/main.ts' });
-    await c.call('doc.edit', { path: 'src/main.ts', text: 'наше\n', baseVersion: doc.version });
+    await c.call('doc.edit', { path: 'src/main.ts', text: 'ours\n', baseVersion: doc.version });
 
     const waiting = c.nextEvent('doc.diverged');
-    await c.call('fs.write', { path: 'src/main.ts', text: 'чужое\n', expectedRevision: null });
+    await c.call('fs.write', { path: 'src/main.ts', text: 'theirs\n', expectedRevision: null });
     await waiting;
 
     const after = await c.call('doc.open', { path: 'src/main.ts' });
-    expect(after.text).toBe('наше\n');
+    expect(after.text).toBe('ours\n');
     expect(after.dirty).toBe(true);
 
     expect(after.diverged).toBe('changed');
 
     const reloaded = await c.call('doc.reload', { path: 'src/main.ts' });
-    expect(reloaded.text).toBe('чужое\n');
+    expect(reloaded.text).toBe('theirs\n');
     expect(reloaded.dirty).toBe(false);
-    expect(reloaded.diverged, 'спор кончился — и метка гаснет').toBeUndefined();
+    expect(reloaded.diverged, 'the argument ended — and the mark goes out').toBeUndefined();
   });
 
-  it('индекс ищет по памяти', async () => {
+  it('the index searches memory', async () => {
     const hits = await search(c, { query: 'helper' });
     expect(hits[0]?.path).toBe('src/util/helper.ts');
 
@@ -166,7 +166,7 @@ describe('RAM FS', () => {
   });
 });
 
-describe('флаг «изменён» говорит правду', () => {
+describe('the "changed" flag tells the truth', () => {
   let server: RunningServer;
   let root: string;
   let c: TestClient;
@@ -184,7 +184,7 @@ describe('флаг «изменён» говорит правду', () => {
     await removeProject(root);
   });
 
-  it('вернул текст как был — метка гаснет, хотя правки были', async () => {
+  it('the text was put back as it was — the mark goes out, although there were edits', async () => {
     const doc = await c.call('doc.open', { path: 'a.ts' });
 
     const changed = await c.call('doc.edit', {
@@ -203,7 +203,7 @@ describe('флаг «изменён» говорит правду', () => {
     expect(back.version).toBe(2);   });
 });
 
-describe('двоичное узнаётся по содержимому', () => {
+describe('a binary is recognised by its contents', () => {
   let server: RunningServer;
   let root: string;
   let c: TestClient;
@@ -220,10 +220,10 @@ describe('двоичное узнаётся по содержимому', () => 
   beforeEach(async () => {
     server = await withServer();
     root = await makeProject('binary', {
-      '.gitignore': 'node_modules/\nиголка\n',
-      Dockerfile: 'FROM node\n# иголка\n',
-      'script.py': 'print("иголка")\n',
-      'notes.md': 'иголка в тексте\n',
+      '.gitignore': 'node_modules/\nneedle\n',
+      Dockerfile: 'FROM node\n# needle\n',
+      'script.py': 'print("needle")\n',
+      'notes.md': 'a needle in the text\n',
     });
     await fs.writeFile(path.join(root, 'picture.png'), Buffer.from([0x89, 0x50, 0x00, 0x69, 0x67]));
     c = await connect(server);
@@ -236,23 +236,23 @@ describe('двоичное узнаётся по содержимому', () => 
     await removeProject(root);
   });
 
-  it('файлы без знакомого расширения ищутся наравне со всеми', async () => {
-    const found = (await grep('иголка')).map((h) => h.path).sort();
+  it('files without a familiar extension are searched like everything else', async () => {
+    const found = (await grep('needle')).map((h) => h.path).sort();
     expect(found).toEqual(['.gitignore', 'Dockerfile', 'notes.md', 'script.py']);
   });
 
-  it('двоичный в выдачу не попадает и мусором не притворяется', async () => {
+  it('a binary does not reach the results and does not pretend to be rubbish', async () => {
     const found = (await grep('ig')).map((h) => h.path);
     expect(found).not.toContain('picture.png');
   });
 
-  it('дерево показывает всё, включая двоичное', async () => {
+  it('the tree shows everything, binaries included', async () => {
     const entries = (await c.call('tree.list', { path: '' })) as Array<{ path: string }>;
     expect(entries.map((e) => e.path)).toContain('picture.png');
   });
 });
 
-describe('папка уходит из обхода по настройке', () => {
+describe('a directory leaves the walk by a setting', () => {
   let server: RunningServer;
   let configDir: string;
   let root: string;
@@ -281,21 +281,21 @@ describe('папка уходит из обхода по настройке', ()
     await fs.rm(configDir, { recursive: true, force: true });
   });
 
-  it('сначала папка обычная и её содержимое в памяти', async () => {
+  it('at first the directory is ordinary and its contents are in memory', async () => {
     const before = await entriesOf('desktop');
     expect(before.find((e) => e.name === '.build')?.noScan ?? false).toBe(false);
     const stats = await c.call('tree.stats', null);
     expect(stats.files).toBe(2);
   });
 
-  it('добавили в noScan — папка помечена, а внутренности из памяти ушли', async () => {
+  it('added to noScan — the directory is marked, and its insides have left memory', async () => {
     await c.call('config.set', { section: 'fs', key: 'noScan', value: ['.build'] });
     await waitFor(
       async () => (await c.call('tree.stats', null)).files === 1,
-      'дерево пересобралось без содержимого .build',
+      'the tree was rebuilt without .build\'s contents',
     );
 
     const after = await entriesOf('desktop');
-    expect(after.find((e) => e.name === '.build')?.noScan, 'папка помечена').toBe(true);
+    expect(after.find((e) => e.name === '.build')?.noScan, 'the directory is marked').toBe(true);
   });
 });

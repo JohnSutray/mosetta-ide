@@ -18,16 +18,16 @@ process.send?.({ type: 'listening', port: server.port });
 
 if (process.send) {
   process.on('disconnect', () => {
-    log.info('надзиратель ушёл: закрываюсь');
+    log.info('the supervisor left: shutting down');
     void server.close().then(() => process.exit(0));
   });
 }
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => {
-    log.info(`${signal}: закрываюсь`);
+    log.info(`${signal}: shutting down`);
     void server.close().then(() => process.exit(0));
   });
 }
 
-process.on('unhandledRejection', (err) => log.error(`необработанный reject: ${journal.describeError(err)}`));
+process.on('unhandledRejection', (err) => log.error(`unhandled rejection: ${journal.describeError(err)}`));

@@ -5,7 +5,14 @@ import path from 'node:path';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
-describe('проектные настройки (ADR-0214)', () => {
+/**
+ * Project settings live inside the repository itself: `.mosetta/settings.json`, a layer
+ * over the human's personal file.
+ *
+ * Checked over a real socket and with real files: the whole point here is WHAT ended up
+ * on disk, and in which file.
+ */
+describe('the project\'s settings', () => {
   let server: RunningServer;
   let configDir: string;
   let root: string;
@@ -25,13 +32,13 @@ describe('проектные настройки (ADR-0214)', () => {
     configDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-'));
     await fs.writeFile(
       userFile(),
-      '// личный\n{\n  "editor": { "fontSize": 13 },\n  "fs": { "maxFileMb": 9 }\n}\n',
+      '// personal\n{\n  "editor": { "fontSize": 13 },\n  "fs": { "maxFileMb": 9 }\n}\n',
       'utf8',
     );
     server = await withServer(60_000, configDir);
     root = await makeProject('project-config', {
       'src/a.ts': 'const a = 1;\n',
-      '.mosetta/settings.json': '// у проекта свой\n{\n  "editor": { "fontSize": 17 }\n}\n',
+      '.mosetta/settings.json': '// the project has its own\n{\n  "editor": { "fontSize": 17 }\n}\n',
     });
     c = await connect(server);
     await c.call('workspace.open', { root });
@@ -44,16 +51,16 @@ describe('проектные настройки (ADR-0214)', () => {
     await fs.rm(configDir, { recursive: true, force: true });
   });
 
-  it('проектный слой перебивает личный, а нетронутое остаётся личным', async () => {
+  it('the project layer beats the personal one, and what it left alone stays personal', async () => {
     const bundle = await c.call('config.get', null);
     expect((bundle.settings.editor as { fontSize: number }).fontSize).toBe(17);
-    expect(bundle.settings.fs.maxFileMb, 'этого у проекта нет — значение моё').toBe(9);
+    expect(bundle.settings.fs.maxFileMb, 'the project does not have this one — the value is mine').toBe(9);
     expect(bundle.project).toEqual({ editor: { fontSize: 17 } });
-    expect(bundle.user.editor, 'личное значение никуда не делось').toEqual({ fontSize: 13 });
+    expect(bundle.user.editor, 'the personal value has not gone anywhere').toEqual({ fontSize: 13 });
     expect(bundle.projectFile).toBe(projectFile());
   });
 
-  it('вкладка без проекта проектного слоя не видит', async () => {
+  it('a tab without a project sees no project layer', async () => {
     const other = await connect(server);
     const bundle = await other.call('config.get', null);
     expect((bundle.settings.editor as { fontSize: number }).fontSize).toBe(13);
@@ -62,30 +69,30 @@ describe('проектные настройки (ADR-0214)', () => {
     await other.close();
   });
 
-  it('запись в проект пишет файл репозитория и уносит ключ из личного', async () => {
+  it('a write into the project writes the repository\'s file and takes the key out of the personal one', async () => {
     await c.call('config.set', { section: 'fs', key: 'maxFileMb', value: 20, scope: 'project' });
 
     expect(await read(projectFile())).toContain('"maxFileMb": 20');
-    expect(await read(projectFile()), 'комментарий проекта цел').toContain('// у проекта свой');
-    expect(await read(userFile()), 'дом у значения один').not.toContain('maxFileMb');
-    expect(await read(userFile()), 'соседи в личном файле целы').toContain('"fontSize": 13');
+    expect(await read(projectFile()), 'the project\'s comment survives').toContain('// the project has its own');
+    expect(await read(userFile()), 'a value has one home').not.toContain('maxFileMb');
+    expect(await read(userFile()), 'the neighbours in the personal file survive').toContain('"fontSize": 13');
 
     const bundle = await c.call('config.get', null);
     expect(bundle.settings.fs.maxFileMb).toBe(20);
     expect(bundle.project.fs).toEqual({ maxFileMb: 20 });
   });
 
-  it('запись к себе уносит ключ из проектного файла', async () => {
+  it('a write to yourself takes the key out of the project file', async () => {
     await c.call('config.set', { section: 'editor', key: 'fontSize', value: 15 });
 
     expect(await read(userFile())).toContain('"fontSize": 15');
-    expect(await read(projectFile()), 'из проекта значение ушло').not.toContain('fontSize');
+    expect(await read(projectFile()), 'the value has left the project').not.toContain('fontSize');
     const bundle = await c.call('config.get', null);
     expect((bundle.settings.editor as { fontSize: number }).fontSize).toBe(15);
-    expect(bundle.project.editor ?? {}, 'проектного значения больше нет').toEqual({});
+    expect(bundle.project.editor ?? {}, 'the project value is gone').toEqual({});
   });
 
-  it('сброс убирает значение из ОБОИХ файлов', async () => {
+  it('a reset removes the value from BOTH files', async () => {
     await c.call('config.reset', { section: 'editor', key: 'fontSize' });
 
     expect(await read(userFile())).not.toContain('fontSize');
@@ -94,7 +101,7 @@ describe('проектные настройки (ADR-0214)', () => {
     expect((bundle.settings.editor as { fontSize?: number } | undefined)?.fontSize).toBeUndefined();
   });
 
-  it('раскладку проект не перебивает', async () => {
+  it('the project does not override the keymap', async () => {
     await fs.writeFile(
       projectFile(),
       '{ "keymap": { "version": 1, "bindings": [{ "command": "file.save", "key": "meta+k" }] } }\n',
@@ -103,8 +110,8 @@ describe('проектные настройки (ADR-0214)', () => {
     const other = await connect(server);
     await other.call('workspace.open', { root });
     const bundle = await other.call('config.get', null);
-    expect(bundle.project.keymap, 'раздел keymap из проектного файла не берётся').toBeUndefined();
-    expect(bundle.settings.keymap, 'и в эффективные настройки не попадает').toBeUndefined();
+    expect(bundle.project.keymap, 'the keymap section is not taken from the project file').toBeUndefined();
+    expect(bundle.settings.keymap, 'and it does not reach the effective settings').toBeUndefined();
     await other.close();
   });
 });

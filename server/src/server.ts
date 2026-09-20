@@ -19,11 +19,28 @@ const log = journal.logger('server');
 export interface ServerOptions {
   port?: number;
   host?: string;
+  /** How long a workspace lives without a single tab. */
   idleMs?: number;
+  /**
+   * Where to read the settings file from. By default, the `config` directory next to
+   * the packages; `IDE_CONFIG_DIR` overrides it.
+   */
   configDir?: string;
+  /** Where to keep the machine's state (the project history). */
   stateDir?: string;
+  /** Watch the config and re-read it on the fly. Not needed in tests. */
   watchConfig?: boolean;
+  /**
+   * Ask the human's shell for its environment.
+   *
+   * Not needed in tests: it is an extra 0.3 s per server brought up, and it is covered
+   * by its own tests, where the shell is substituted.
+   */
   shellEnv?: boolean;
+  /**
+   * Origins allowed to open a socket besides the local ones: the Electron shell's pages
+   * live on their own `mosetta://app` scheme.
+   */
   trustedOrigins?: string[];
 }
 
@@ -34,6 +51,7 @@ export interface RunningServer {
   close(): Promise<void>;
 }
 
+/** An empty Origin is not a browser (curl, tests, Electron). */
 function isLocalOrigin(origin: string | undefined, trusted: readonly string[] = []): boolean {
   if (!origin) return true;
   if (trusted.includes(origin)) return true;
@@ -45,15 +63,30 @@ function isLocalOrigin(origin: string | undefined, trusted: readonly string[] = 
   }
 }
 
+/**
+ * Bringing the backend up. A class rather than a function: the start has parameters
+ * that will one day become fields — the port, the state directory, the set of
+ * suppliers.
+ */
 export class Boot {
+  /**
+   * The default state directory: `~/.mosetta/ide/state`, next to an installed IDE's
+   * config. It used to be `~/.web-ide`; its contents (the project history, the plugins'
+   * state) move over whole, once.
+   */
   private async defaultStateDir(): Promise<string> {
     const next = path.join(os.homedir(), '.mosetta', 'ide', 'state');
     if (await disk.moveOnce(path.join(os.homedir(), '.web-ide'), next)) {
-      log.info(`состояние перенесено: ~/.web-ide → ${next}`);
+      log.info(`state moved over: ~/.web-ide → ${next}`);
     }
     return next;
   }
 
+  /**
+   * The backend listens on the loopback only. While this is a personal editor on one's
+   * own machine that is enough; opening it outwards without authentication is not on —
+   * `fs.write` in somebody else's hands is somebody else's hands in the filesystem.
+   */
   async start(options: ServerOptions = {}): Promise<RunningServer> {
     const host = options.host ?? '127.0.0.1';
     const port = options.port ?? DEFAULT_PORT;
@@ -98,13 +131,13 @@ export class Boot {
         return;
       }
       if (!isLocalOrigin(req.headers.origin, options.trustedOrigins)) {
-        log.warn(`отказ по Origin: ${req.headers.origin}`);
+        log.warn(`refused by Origin: ${req.headers.origin}`);
         socket.destroy();
         return;
       }
       wss.handleUpgrade(req, socket, head, (ws) => {
         const session = new Session(ws, registry, config, startedAt, plugins, env.memory);
-        log.debug(`подключилась вкладка ${session.id}`);
+        log.debug(`a tab connected: ${session.id}`);
       });
     });
 
@@ -117,7 +150,7 @@ export class Boot {
     });
 
     const actual = (http_.address() as { port: number }).port;
-    log.info(`слушает ws://${host}:${actual}${WS_PATH}`);
+    log.info(`listening on ws://${host}:${actual}${WS_PATH}`);
 
     return {
       port: actual,
@@ -134,4 +167,5 @@ export class Boot {
   }
 }
 
+/** One per process. */
 export const boot = new Boot();

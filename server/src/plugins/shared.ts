@@ -79,7 +79,7 @@ export class SharedModules {
     if (names.includes('default')) lines.push('export default m.default;');
     return [
       `const m = globalThis.__ideApi.modules[${JSON.stringify(spec)}];`,
-      `if (!m) throw new Error(${JSON.stringify(`${spec}: не поднят к моменту загрузки — пакет не отдан на стол или плагин выключен в settings.json`)});`,
+      `if (!m) throw new Error(${JSON.stringify(`${spec}: not up by load time — the package was not put on the shared table, or the plugin is off in settings.json`)});`,
       ...lines,
     ].join('\n');
   }
@@ -96,7 +96,7 @@ export class SharedModules {
       if (up === dir) break;
       dir = up;
     }
-    throw new Error(`не нашёл пакет ${name} рядом с ${this.resolveFrom}`);
+    throw new Error(`could not find the package ${name} next to ${this.resolveFrom}`);
   }
 
   private async packageDir(name: string): Promise<string> {

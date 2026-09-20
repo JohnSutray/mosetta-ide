@@ -4,7 +4,7 @@ import path from 'node:path';
 import type { RunningServer } from '../src/server.js';
 import { connect, makeProject, removeProject, withServer, type TestClient } from './helpers.js';
 
-describe('файлы воркспейса', () => {
+describe('a workspace\'s files', () => {
   let server: RunningServer;
   let root: string;
   let c: TestClient;
@@ -15,8 +15,8 @@ describe('файлы воркспейса', () => {
       'src/main.ts': 'const a = 1;\n',
       'src/util/helper.ts': 'export const h = 1;\n',
       'readme.md': '# hi\n',
-      'src/.main.ts.tmp-123-abc': 'мусор\n',
-      'src/main.ts~': 'мусор\n',
+      'src/.main.ts.tmp-123-abc': 'rubbish\n',
+      'src/main.ts~': 'rubbish\n',
     });
     c = await connect(server);
     await c.call('workspace.open', { root });
@@ -28,25 +28,25 @@ describe('файлы воркспейса', () => {
     await removeProject(root);
   });
 
-  it('временный файл, лежавший до открытия, в дерево не попадает', async () => {
+  it('a temporary file that was there before the open does not reach the tree', async () => {
     const tree = await c.call('tree.list', { path: 'src' });
     expect(tree.map((entry) => entry.name).sort()).toEqual(['main.ts', 'util']);
   });
 
-  it('дерево отдаёт папки сверху, пути относительные', async () => {
+  it('the tree hands over directories first, with relative paths', async () => {
     const entries = await c.call('fs.list', { path: '' });
     expect(entries.map((e) => e.name)).toEqual(['src', 'readme.md']);
     expect(entries[0]).toMatchObject({ kind: 'dir', path: 'src' });
     expect(entries[1]).toMatchObject({ kind: 'file', path: 'readme.md' });
   });
 
-  it('вложенные пути ходят со слэшем на любой ОС', async () => {
+  it('nested paths travel with a forward slash on any OS', async () => {
     const file = await c.call('fs.read', { path: 'src/util/helper.ts' });
     expect(file.path).toBe('src/util/helper.ts');
     expect(file.text).toBe('export const h = 1;\n');
   });
 
-  it('запись возвращает новую ревизию и правда меняет файл', async () => {
+  it('a write returns a new revision and really does change the file', async () => {
     const before = await c.call('fs.read', { path: 'src/main.ts' });
     const result = await c.call('fs.write', {
       path: 'src/main.ts',
@@ -57,26 +57,26 @@ describe('файлы воркспейса', () => {
     expect(await fs.readFile(path.join(root, 'src/main.ts'), 'utf8')).toBe('const a = 2;\n');
   });
 
-  it('чужая правка на диске не затирается молча', async () => {
+  it('somebody else\'s edit on disk is not overwritten silently', async () => {
     const before = await c.call('fs.read', { path: 'src/main.ts' });
     await new Promise((r) => setTimeout(r, 10));
-    await fs.writeFile(path.join(root, 'src/main.ts'), 'внешний форматтер\n', 'utf8');
+    await fs.writeFile(path.join(root, 'src/main.ts'), 'an external formatter\n', 'utf8');
 
     const err = await c.expectError('fs.write', {
       path: 'src/main.ts',
-      text: 'наша версия\n',
+      text: 'our version\n',
       expectedRevision: before.revision,
     });
     expect(err.code).toBe(1006);
-    expect(await fs.readFile(path.join(root, 'src/main.ts'), 'utf8')).toBe('внешний форматтер\n');
+    expect(await fs.readFile(path.join(root, 'src/main.ts'), 'utf8')).toBe('an external formatter\n');
   });
 
-  it('создаёт файл вместе с недостающими папками', async () => {
+  it('creates a file along with the missing directories', async () => {
     await c.call('fs.write', { path: 'a/b/c.ts', text: 'x\n', expectedRevision: null });
     expect(await fs.readFile(path.join(root, 'a/b/c.ts'), 'utf8')).toBe('x\n');
   });
 
-  it('за корень проекта не пускает ни на чтение, ни на запись', async () => {
+  it('lets nothing past the project root, neither for reading nor for writing', async () => {
     expect((await c.expectError('fs.read', { path: '../../etc/passwd' })).code).toBe(1002);
     expect((await c.expectError('fs.list', { path: '/etc' })).code).toBe(1002);
     expect(
@@ -84,8 +84,8 @@ describe('файлы воркспейса', () => {
     ).toBe(1002);
   });
 
-  it('несуществующее и не-того-типа различает', async () => {
-    expect((await c.expectError('fs.read', { path: 'нет.ts' })).code).toBe(1004);
+  it('tells a missing path from one of the wrong kind', async () => {
+    expect((await c.expectError('fs.read', { path: 'no-such.ts' })).code).toBe(1004);
     expect((await c.expectError('fs.read', { path: 'src' })).code).toBe(1005);
   });
 });

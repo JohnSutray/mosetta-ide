@@ -72,7 +72,7 @@ export class RamFs {
     const before = this.settings;
     this.settings = settings;
     if (same(before.noScan, settings.noScan) && same(before.hidden, settings.hidden)) return;
-    void this.reprime().catch((err) => this.log.warn(`перестройка дерева: ${String(err)}`));
+    void this.reprime().catch((err) => this.log.warn(`rebuilding the tree: ${String(err)}`));
   }
 
   private async reprime(): Promise<void> {
@@ -103,7 +103,7 @@ export class RamFs {
     await this.scan('');
     this.builtMs = Date.now() - started;
     this.log.info(
-      `дерево в памяти: ${this.fileCount} файлов, ${this.dirs.size} папок за ${this.builtMs} мс`,
+      `tree in memory: ${this.fileCount} files, ${this.dirs.size} directories in ${this.builtMs} ms`,
     );
   }
 
@@ -157,7 +157,7 @@ export class RamFs {
 
   preload(): Promise<void> {
     this.preloading ??= this.runPreload().catch((err) => {
-      this.log.warn(`предзагрузка прервана: ${String(err)}`);
+      this.log.warn(`preload interrupted: ${String(err)}`);
     });
     return this.preloading;
   }
@@ -186,7 +186,7 @@ export class RamFs {
       } catch {}
     }
     this.log.info(
-      `в памяти ${loaded} файлов, ${(this.bytesResident / 1024 / 1024).toFixed(1)} МБ`,
+      `in memory: ${loaded} files, ${(this.bytesResident / 1024 / 1024).toFixed(1)} MB`,
     );
   }
 
@@ -207,7 +207,7 @@ export class RamFs {
     if (raced) return raced;
     if (file.binary) {
       this.binaries.add(file.path);
-      throw new RpcError(RpcErrorCode.WrongKind, `Файл не текстовый: ${key}`);
+      throw new RpcError(RpcErrorCode.WrongKind, `Not a text file: ${key}`);
     }
     this.binaries.delete(file.path);
     const doc: Doc = {
@@ -243,12 +243,12 @@ export class RamFs {
   editDoc(key: string, text: string, baseVersion: number): Doc {
     const doc = this.requireDoc(key);
     if (doc.truncated) {
-      throw new RpcError(RpcErrorCode.WrongKind, `Файл только для чтения: ${key}`);
+      throw new RpcError(RpcErrorCode.WrongKind, `The file is read-only: ${key}`);
     }
     if (doc.version !== baseVersion) {
       throw new RpcError(
         RpcErrorCode.StaleVersion,
-        `Документ ушёл вперёд: ${key}`,
+        `The document moved ahead: ${key}`,
         { expected: doc.version, got: baseVersion },
       );
     }
@@ -364,7 +364,7 @@ export class RamFs {
     const file = await this.os.read(key);
     if (file.binary) {
       this.binaries.add(file.path);
-      throw new RpcError(RpcErrorCode.WrongKind, `Файл не текстовый: ${key}`);
+      throw new RpcError(RpcErrorCode.WrongKind, `Not a text file: ${key}`);
     }
     const doc = this.docs.get(key);
     if (!doc) return this.residentize(key);
@@ -390,7 +390,7 @@ export class RamFs {
   private requireDoc(key: string): Doc {
     const doc = this.docs.get(key);
     if (!doc) {
-      throw new RpcError(RpcErrorCode.DocNotOpen, `Документ не открыт: ${key}`);
+      throw new RpcError(RpcErrorCode.DocNotOpen, `The document is not open: ${key}`);
     }
     return doc;
   }

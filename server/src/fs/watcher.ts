@@ -49,14 +49,14 @@ export class OsWatcher {
         this.log,
       );
       this.tree.start();
-      this.log.debug(`слежу за файловой системой: ${this.tree.size} папок`);
+      this.log.debug(`watching the filesystem: ${this.tree.size} directories`);
       return;
     }
 
     try {
       this.watcher = fs.watch(this.root, { recursive: true, persistent: false });
     } catch (err) {
-      this.fail(`не удалось начать слежение: ${String(err)}`);
+      this.fail(`could not start watching: ${String(err)}`);
       return;
     }
 
@@ -65,7 +65,7 @@ export class OsWatcher {
       this.enqueue(typeof filename === 'string' ? filename : filename.toString('utf8'));
     });
     this.watcher.on('error', (err) => this.fail(String(err)));
-    this.log.debug('слежу за файловой системой');
+    this.log.debug('watching the filesystem');
   }
 
   release(): void {
@@ -129,7 +129,7 @@ export class OsWatcher {
   private fail(message: string): void {
     if (this.failed) return;
     this.failed = true;
-    this.log.warn(`слежение за файловой системой выключено — ${message}`);
+    this.log.warn(`filesystem watching is off — ${message}`);
     this.watcher?.close();
     this.watcher = null;
   }
