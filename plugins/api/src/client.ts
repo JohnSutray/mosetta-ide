@@ -72,6 +72,7 @@ export interface Note {
   text: string;
   at: number;
 }
+
 export interface NotesAccess {
   readonly all: { readonly value: Note[] };
   notify(text: string, kind?: NoteKind): number;
@@ -304,12 +305,15 @@ export function commandsOf(instance: object): DeclaredCommand[] {
 export function registriesOf(ctor: object): RegistrySpec[] {
   return declared.get(ctor) ?? [];
 }
+
 export function passportOf(ctor: object): PluginSpec | null {
   return passports.get(ctor) ?? null;
 }
+
 export function sectionsOf(ctor: object): SettingsSection[] {
   return sections.get(ctor) ?? [];
 }
+
 export const SETTINGS_SCHEMA = {
   type: 'object',
   required: ['section', 'defaults', 'owner', 'title'],
