@@ -19,25 +19,52 @@ import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import SearchPlugin from '@mosetta/ide-plugin-search';
 import UiPlugin, { AskPopup, Asking, Typeahead } from '@mosetta/ide-plugin-ui';
 
+/**
+ * The project tree is a plugin.
+ *
+ * The core is left with two wires: one to the memory layer (`tree`: a directory's
+ * contents and the "directory changed" event) and one to the OS layer (`fs`).
+ * Everything else is here: the tree's MEMORY (what was read, what is expanded), the
+ * selection, the arrows, the modal, the context menu, dragging, the clipboard, "follow
+ * the caret".
+ *
+ * The panel is set up by the same three steps as everyone's: the memory is the core's,
+ * the command is the core's, the shape is the layout's. The toolbar buttons are wishes.
+ * The colour of a name arrives from neighbours through the `tree.tint` key, and the key
+ * is declared by THE TREE: whoever reads knows the shape.
+ */
 @registry({ key: 'tree.tint', schema: TINT_SCHEMA })
 @registry({ key: 'tree.action', schema: TREE_ACTION_SCHEMA })
 @configSection({ section: 'tree', defaults: TREE_DEFAULTS, schema: TREE_SCHEMA })
 @plugin({ title: 'plugin.tree' })
 export default class TreePlugin {
+  /** Documents are a neighbour: what is open, where to jump, how to edit. */
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);
   }
 
   readonly files: FileTree;
+  /** The question modal is a shared widget: the changes panel asks it too. */
   readonly prompt = new Asking();
   readonly selection: TreeSelection;
   readonly ops: TreeOps;
   readonly follow: TreeFollow;
+  /**
+   * Type-ahead search is a shared widget: lists are searched both here and in the
+   * changes.
+   */
   readonly typeahead: Typeahead;
   readonly menu = new TreeMenuState(() => this.ide.mount.bounds());
   readonly tints: TreeTints;
+  /** Whether the panel is open — remembered across reloads. */
   readonly shown;
 
+  /**
+   * Paths holding a broken file inside: the file itself and every directory above it.
+   * Computed from the core's diagnostics here rather than there: "an error rises
+   * through the directories" is a rule about showing the tree rather than about the
+   * language layer.
+   */
   readonly broken = computed(() => {
     const out = new Set<string>();
     for (const file of this.ide.getPlugin(LspPlugin).problems.value) {
@@ -185,10 +212,15 @@ export default class TreePlugin {
     });
   }
 
+  /** Reveal in the OS file manager — the tree's server half. */
   @remote('reveal') protected askReveal(_params: { path: string }): Promise<void> {
     return stub();
   }
 
+  /**
+   * Call an action for the row the tree's focus is on. Nothing selected means we work
+   * with the root: "new file" with no selection means "create in the project".
+   */
   private onFocused(run: (path: string, isDir: boolean) => void): void {
     const path = this.selection.focus.value ?? '';
     const parent = path.slice(0, Math.max(0, path.lastIndexOf('/')));
@@ -196,6 +228,12 @@ export default class TreePlugin {
     run(path, path === '' ? true : entry?.kind === 'dir');
   }
 
+  /**
+   * The same, but for actions on a PARTICULAR file: delete, rename, open. Without a
+   * selection they do nothing — substituting the project root here is not on. "Delete"
+   * with no selection once offered to delete the whole project, and offered
+   * convincingly.
+   */
   private onPicked(run: (path: string, isDir: boolean) => void): void {
     const path = this.selection.focus.value;
     if (!path) return;

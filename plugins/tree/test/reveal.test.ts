@@ -3,6 +3,19 @@ import type { DirEntry } from '@mosetta/ide-api/client';
 import { FileTree } from '../src/file-tree.js';
 import { TreeSelection } from '../src/state.js';
 
+/**
+ * The tree taking aim at the open file, and the loop that is there.
+ *
+ * A click in the tree opens a file, an open file calls for a reveal, a reveal touches
+ * the selection again. The loop is closed on one path and dies out by itself — but only
+ * as long as revealing what is already revealed WRITES no signals. Let it write, and
+ * the tree starts redrawing for nothing, while the next feature such as "a click
+ * selects the file" will close the loop in earnest.
+ *
+ * The tree's memory is the real one, the plugin's, on a fake wire: the selection
+ * receives it through the constructor, and the test decides what lies in it and what
+ * the "server" answers.
+ */
 let files: FileTree;
 let tree: TreeSelection;
 let loads: string[];
@@ -31,8 +44,8 @@ beforeEach(() => {
   tree = new TreeSelection(files);
 });
 
-describe('наведение дерева', () => {
-  it('на уже наведённое НЕ пишет ни одного сигнала', async () => {
+describe('the tree\'s reveal', () => {
+  it('revealing what is already revealed writes NOT ONE signal', async () => {
     known();
     files.expanded.value = new Set(DIRS);
     tree.picked.value = new Set([FILE]);
@@ -48,7 +61,7 @@ describe('наведение дерева', () => {
     expect(files.children.value).toBe(before.children);
   });
 
-  it('раскрывает весь путь и подсвечивает файл', async () => {
+  it('expands the whole path and highlights the file', async () => {
     known();
     await tree.reveal(FILE);
     for (const dir of DIRS) expect(files.expanded.value.has(dir), dir).toBe(true);
@@ -56,7 +69,7 @@ describe('наведение дерева', () => {
     expect([...tree.picked.value]).toEqual([FILE]);
   });
 
-  it('раскрывает только недостающие папки', async () => {
+  it('expands only the missing directories', async () => {
     known();
     files.expanded.value = new Set(['client', 'docs']);
     await tree.reveal(FILE);
@@ -64,14 +77,14 @@ describe('наведение дерева', () => {
     expect(files.expanded.value.has('client/src/state')).toBe(true);
   });
 
-  it('файл в корне не требует раскрывать ничего', async () => {
+  it('a file in the root needs nothing expanded', async () => {
     files.children.value = new Map([['', []]]) as never;
     await tree.reveal('README.md');
     expect(tree.focus.value).toBe('README.md');
     expect(files.expanded.value.size).toBe(0);
   });
 
-  it('папки, которых память ещё не читала, дочитываются', async () => {
+  it('directories the memory has not read yet are read in', async () => {
     files.children.value = new Map([['', []]]) as never;
     await tree.reveal(FILE);
     expect(loads).toEqual(DIRS);

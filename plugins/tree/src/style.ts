@@ -1,3 +1,11 @@
+/**
+ * The tree's own styling.
+ *
+ * It moved out of the core's stylesheet word for word: the tree's rows, the chevron,
+ * the git status colours, the question modal and the context menu. The theme's
+ * variables (`--treesel`, `--muted`, `--git-*`, `--noscan`) come from the core — there
+ * is one Darcula for the whole IDE.
+ */
 export const STYLE = `
 .tree-find { position: sticky; top: 0; height: 0; z-index: 3; }
 .tree-find-box {

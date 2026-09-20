@@ -5,6 +5,12 @@ import { TreeSelection } from '../src/state.js';
 import { Typeahead } from '@mosetta/ide-plugin-ui';
 import { layout } from '@mosetta/ide-plugin-search';
 
+/**
+ * Type-ahead search in the tree. We search only among the shown rows: a collapsed
+ * directory does not hand over its contents. The jump follows IDEA's rules: the current
+ * row stays if it fits; a name's start matters more than its middle; forward, in a
+ * circle.
+ */
 function entry(path: string, kind: 'file' | 'dir' = 'file'): DirEntry {
   return { path, name: path.split('/').pop() ?? path, kind } as DirEntry;
 }
@@ -32,8 +38,8 @@ beforeEach(() => {
   );
 });
 
-describe('поиск по дереву буквами', () => {
-  it('на каждую букву прыгает к ближайшему по началу имени, текущую не бросает', () => {
+describe('type-ahead search in the tree', () => {
+  it('on every letter it jumps to the nearest by name start, without abandoning the current row', () => {
     find.type('c');
     expect(selection.focus.value).toBe('client');
     find.type('co');
@@ -44,27 +50,27 @@ describe('поиск по дереву буквами', () => {
     expect(selection.focus.value).toBe('config');
   });
 
-  it('середина имени тоже находится, но после начала', () => {
+  it('the middle of a name is found too, but after the start', () => {
     find.type('ack');
     expect(selection.focus.value).toBe('client/package.json');
     find.type('re');
     expect(selection.focus.value).toBe('README.md');
   });
 
-  it('ищет только среди показанного: свёрнутая папка молчит', () => {
+  it('it searches only among what is shown: a collapsed directory stays silent', () => {
     find.type('main');
     expect(selection.focus.value).toBe(null);
     expect(find.match('main.tsx')).toEqual([0, 4]);
   });
 
-  it('набранное в русской раскладке находит английское имя (ADR-0199)', () => {
+  it('what was typed on a Russian keyboard finds an English name', () => {
     find.type('сдшуте');
     expect(selection.focus.value).toBe('client');
     expect(find.found.value).toBe(true);
     expect(find.match('client')).toEqual([0, 6]);
   });
 
-  it('говорит, нашлось ли: по этому краснеет рамка (ADR-0199)', () => {
+  it('it says whether anything was found: the frame turns red from that', () => {
     find.type('co');
     expect(find.found.value).toBe(true);
     find.type('щщщ');
@@ -73,7 +79,7 @@ describe('поиск по дереву буквами', () => {
     expect(find.found.value).toBe(true);
   });
 
-  it('стрелки при набранном ходят по совпадениям по кругу', () => {
+  it('with something typed, the arrows walk the matches in a circle', () => {
     find.type('c');
     expect(selection.focus.value).toBe('client');
     find.move(1);
@@ -86,7 +92,7 @@ describe('поиск по дереву буквами', () => {
     expect(selection.focus.value).toBe('client/package.json');
   });
 
-  it('стёрли всё — выделение на месте, подсветки нет', () => {
+  it('everything was deleted — the selection is in place, the highlight is gone', () => {
     find.type('co');
     find.type('');
     expect(selection.focus.value).toBe('code');

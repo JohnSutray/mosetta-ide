@@ -5,6 +5,12 @@ import TreePlugin from '../src/client.js';
 import DocPlugin from '@mosetta/ide-plugin-doc';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * The tree's memory lives with the plugin. The core hands over the wire — a method and
+ * an event — and when to read, when to re-read and when to forget is decided by the
+ * plugin. Three things the core's session used to do now have to be done here, and that
+ * is exactly what the test guards.
+ */
 let surface: FakeSurface;
 let docs: DocPlugin;
 let plugin: TreePlugin;
@@ -13,8 +19,8 @@ function entry(path: string, kind: 'file' | 'dir' = 'file'): DirEntry {
   return { path, name: path.split('/').pop() ?? path, kind } as DirEntry;
 }
 
-const PROJECT = { id: 'p1', root: '/один', name: 'один' } as never;
-const OTHER = { id: 'p2', root: '/два', name: 'два' } as never;
+const PROJECT = { id: 'p1', root: '/one', name: 'one' } as never;
+const OTHER = { id: 'p2', root: '/two', name: 'two' } as never;
 
 async function settle(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -33,8 +39,8 @@ beforeEach(async () => {
   await host.start();
 });
 
-describe('память дерева у плагина', () => {
-  it('панель отдаёт клавиатуру дереву, а закрывается только когда она уже там (ADR-0197)', () => {
+describe('the tree\'s memory lives with the plugin', () => {
+  it('the panel gives the keyboard to the tree, and closes only once it is already there', () => {
     const fake = globalThis.document as unknown as { activeElement: unknown };
     fake.activeElement = null;
     expect(plugin.shown.value).toBe(true);
@@ -51,10 +57,10 @@ describe('память дерева у плагина', () => {
     fake.activeElement = null;
   });
 
-  it('папку открытого файла можно свернуть и выбрать: наведение не дёргается (ADR-0190)', async () => {
+  it('the open file\'s directory can be collapsed and selected: the reveal does not jerk', async () => {
     surface.workspaceCurrent.value = PROJECT;
     surface.project.value = PROJECT;
-    surface.docs.texts.set('src/a.ts', 'раз');
+    surface.docs.texts.set('src/a.ts', 'one');
     await settle();
     await docs.openFile('src/a.ts');
     await settle();
@@ -68,7 +74,7 @@ describe('память дерева у плагина', () => {
     expect([...plugin.selection.picked.value]).toEqual(['src']);
   });
 
-  it('корень читается, когда вкладка ПРИКРЕПИЛАСЬ к проекту', async () => {
+  it('the root is read once the tab has ATTACHED to a project', async () => {
     expect(surface.treeLoads).toEqual([]);
     surface.workspaceCurrent.value = PROJECT;
     surface.project.value = PROJECT;
@@ -77,19 +83,18 @@ describe('память дерева у плагина', () => {
     expect(plugin.files.children.value.get('')?.map((e) => e.path)).toEqual(['src', 'README.md']);
   });
 
-  it('«папка изменилась» перечитывает только прочитанное', async () => {
+  it('"the directory changed" re-reads only what was read', async () => {
     surface.workspaceCurrent.value = PROJECT;
     surface.project.value = PROJECT;
     await settle();
     surface.dirs.set('', [entry('README.md')]);
-    surface.changeTree('src');
-    surface.changeTree('');
+    surface.changeTree('src');     surface.changeTree('');
     await settle();
     expect(surface.treeLoads).toEqual(['', '']);
     expect(plugin.files.children.value.get('')?.map((e) => e.path)).toEqual(['README.md']);
   });
 
-  it('смена проекта обнуляет раскрытое, разрыв сокета — нет', async () => {
+  it('changing project resets what was expanded, a dropped socket does not', async () => {
     surface.workspaceCurrent.value = PROJECT;
     surface.project.value = PROJECT;
     await settle();

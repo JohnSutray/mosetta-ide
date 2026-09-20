@@ -1,5 +1,12 @@
 import type { JSX } from 'preact';
 
+/**
+ * The tree's own icons.
+ *
+ * The folder and the crosshair moved over from the widgets plugin along with the only
+ * buttons of their own. Monochrome, taking their colour from the button; filled when
+ * the panel is open or the setting is on.
+ */
 const common = {
   width: 16,
   height: 16,
@@ -19,6 +26,10 @@ export function TreeIcon({ filled = false }: { filled?: boolean }): JSX.Element 
   );
 }
 
+/**
+ * The crosshair: the tree "takes aim" at the open file. The same metaphor as in IDEA,
+ * and it reads without a caption — a circle with a cross means "show me where I am".
+ */
 export function FollowIcon({ filled = false }: { filled?: boolean }): JSX.Element {
   return (
     <svg {...common}>

@@ -4,6 +4,11 @@ import type { TreeAction } from './actions.js';
 import type { TreeMenuState } from './menu.js';
 import type { TreeOps, TreeSelection } from './state.js';
 
+/**
+ * The tree's context menu. The same form as the branches menu: a list of actions for
+ * the row that was clicked. The set depends on whether this is a file or a directory —
+ * offering "create inside" to a file is pointless.
+ */
 export function TreeMenu({ windows,
   menu,
   selection,
@@ -13,6 +18,7 @@ export function TreeMenu({ windows,
   menu: TreeMenuState;
   selection: TreeSelection;
   ops: TreeOps;
+  /** Foreign actions on this file: the `tree.action` key. */
   actions?: readonly TreeAction[];
 }) {
   const open = menu.open.value;
