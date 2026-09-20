@@ -4,6 +4,7 @@ import { Plugins, type PluginDeps } from '../src/state/plugins.js';
 import { Memory } from '../src/state/persist.js';
 import type { RpcLike } from '../src/state/session.js';
 
+/** What the plugins' home takes from the tab's root: empty ones, here. */
 const deps = (): PluginDeps => ({
   commands: { registerPlugin: () => {} },
   notes: { say: () => {}, complain: () => {}, notify: () => 0, settle: () => 0 },
@@ -11,11 +12,12 @@ const deps = (): PluginDeps => ({
   i18n: { add: () => {}, defaults: () => {} },
 });
 
+/** A decoy socket: it remembers subscriptions and can deliver an event. */
 class FakeSocket implements RpcLike {
   private readonly listeners = new Map<string, Set<(payload: never) => void>>();
 
   call = async (): Promise<never> => {
-    throw new Error('в этом тесте на сервер не ходят');
+    throw new Error('this test never goes to the server');
   };
 
   on<E extends EventName>(event: E, handler: (payload: EventPayload<E>) => void): () => void {
@@ -25,37 +27,39 @@ class FakeSocket implements RpcLike {
     return () => set.delete(handler as (payload: never) => void);
   }
 
+  /** Deliver what the server would have delivered. */
   send(name: string, event: string, payload: unknown): void {
     for (const handler of [...(this.listeners.get('plugins.event') ?? [])]) {
       (handler as (p: unknown) => void)({ name, event, payload });
     }
   }
 
+  /** How many subscriptions are up: this is how one sees whether anyone unsubscribed. */
   get subscriptions(): number {
     return [...this.listeners.values()].reduce((sum, set) => sum + set.size, 0);
   }
 }
 
-describe('события плагинов', () => {
-  it('плагин слышит своё', () => {
+describe('plugin events', () => {
+  it('a plugin hears its own', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
     new Plugins(socket, deps()).bound('@mosetta/ide-plugin-terminal').on('data', (p) => heard.push(p));
 
-    socket.send('@mosetta/ide-plugin-terminal', 'data', { name: 'root::dev', data: 'привет' });
-    expect(heard).toEqual([{ name: 'root::dev', data: 'привет' }]);
+    socket.send('@mosetta/ide-plugin-terminal', 'data', { name: 'root::dev', data: 'hello' });
+    expect(heard).toEqual([{ name: 'root::dev', data: 'hello' }]);
   });
 
-  it('чужого плагина не слышит', () => {
+  it('does not hear another plugin\'s', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
     new Plugins(socket, deps()).bound('@mosetta/ide-plugin-terminal').on('data', (p) => heard.push(p));
 
-    socket.send('@mosetta/ide-plugin-git', 'data', 'чужое');
+    socket.send('@mosetta/ide-plugin-git', 'data', 'somebody else\'s');
     expect(heard).toEqual([]);
   });
 
-  it('чужое событие своего плагина не слышит', () => {
+  it('does not hear another event of its own plugin', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
     new Plugins(socket, deps()).bound('@mosetta/ide-plugin-terminal').on('data', (p) => heard.push(p));
@@ -64,18 +68,18 @@ describe('события плагинов', () => {
     expect(heard).toEqual([]);
   });
 
-  it('два слушателя одного события слышат оба', () => {
+  it('two listeners of one event both hear it', () => {
     const socket = new FakeSocket();
     const ide = new Plugins(socket, deps()).bound('@mosetta/ide-plugin-terminal');
     const heard: string[] = [];
-    ide.on('data', () => heard.push('первый'));
-    ide.on('data', () => heard.push('второй'));
+    ide.on('data', () => heard.push('first'));
+    ide.on('data', () => heard.push('second'));
 
     socket.send('@mosetta/ide-plugin-terminal', 'data', null);
-    expect(heard).toEqual(['первый', 'второй']);
+    expect(heard).toEqual(['first', 'second']);
   });
 
-  it('отписка отписывает', () => {
+  it('unsubscribing unsubscribes', () => {
     const socket = new FakeSocket();
     const heard: unknown[] = [];
     const off = new Plugins(socket, deps())
@@ -86,18 +90,18 @@ describe('события плагинов', () => {
     off();
     expect(socket.subscriptions).toBe(0);
 
-    socket.send('@mosetta/ide-plugin-terminal', 'data', 'после отписки');
+    socket.send('@mosetta/ide-plugin-terminal', 'data', 'after unsubscribing');
     expect(heard).toEqual([]);
   });
 
-  it('две IDE в одной вкладке не делят подписки', () => {
+  it('two IDEs in one tab do not share subscriptions', () => {
     const first = new FakeSocket();
     const second = new FakeSocket();
     const heard: string[] = [];
-    new Plugins(first, deps()).bound('@mosetta/ide-plugin-terminal').on('data', () => heard.push('первая'));
-    new Plugins(second, deps()).bound('@mosetta/ide-plugin-terminal').on('data', () => heard.push('вторая'));
+    new Plugins(first, deps()).bound('@mosetta/ide-plugin-terminal').on('data', () => heard.push('first'));
+    new Plugins(second, deps()).bound('@mosetta/ide-plugin-terminal').on('data', () => heard.push('second'));
 
     first.send('@mosetta/ide-plugin-terminal', 'data', null);
-    expect(heard).toEqual(['первая']);
+    expect(heard).toEqual(['first']);
   });
 });

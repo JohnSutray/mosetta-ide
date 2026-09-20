@@ -1,15 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Startup } from '../src/state/startup.js';
 
-describe('заставка запуска', () => {
-  it('на быстрой машине держится минимум, а не мигает', () => {
+/**
+ * The tab's first half-second. The arithmetic is small, but easy to get wrong and hard
+ * to see wrong: it lives for a quarter of a second, once per reload.
+ */
+describe('the startup splash', () => {
+  it('on a fast machine it holds for the minimum rather than flickering', () => {
     const startup = new Startup();
     startup.begin(1000);
     expect(startup.holdFor(1050)).toBe(startup.minimum - 50);
     startup.stop();
   });
 
-  it('на медленной гасится сразу: своё она уже провисела', () => {
+  it('on a slow one it goes out at once: it has hung around long enough already', () => {
     const startup = new Startup();
     startup.begin(1000);
     expect(startup.holdFor(1000 + startup.minimum)).toBe(0);
@@ -17,7 +21,7 @@ describe('заставка запуска', () => {
     startup.stop();
   });
 
-  it('раскладка появилась — заставка уходит, объяснения не будет', () => {
+  it('the layout appeared — the splash leaves, and there will be no explanation', () => {
     vi.useFakeTimers();
     const startup = new Startup();
     startup.begin(0);
@@ -30,7 +34,7 @@ describe('заставка запуска', () => {
     vi.useRealTimers();
   });
 
-  it('раскладки так и нет — объясняем, а не держим заставку вечно', () => {
+  it('the layout still is not there — we explain rather than hold the splash forever', () => {
     vi.useFakeTimers();
     const startup = new Startup();
     startup.begin(0);
@@ -44,7 +48,7 @@ describe('заставка запуска', () => {
     vi.useRealTimers();
   });
 
-  it('вкладка ушла — таймеры с ней: чужое состояние не поедет', () => {
+  it('the tab left — the timers with it: somebody else\'s state will not travel', () => {
     vi.useFakeTimers();
     const startup = new Startup();
     startup.begin(0);

@@ -26,8 +26,18 @@ export class RpcFailure extends Error {
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: unknown) => void };
 
+/**
+ * One socket per tab, with JSON-RPC on top of it. Calls made before the connection is
+ * up pile up and leave once it opens — panels do not need to know that the connection
+ * is not ready yet.
+ */
 export class RpcClient {
   readonly connected: Signal<boolean> = signal(false);
+  /**
+   * What the server reported about itself on the last heartbeat: what it holds itself,
+   * and what it holds together with its children. `null` means not asked yet, or no
+   * answer; that is "we do not know" rather than zero.
+   */
   readonly daemon: Signal<{ rssMb: number; kidsMb: number | null } | null> = signal(null);
 
   private socket: WebSocket | null = null;
@@ -39,18 +49,37 @@ export class RpcClient {
   private closed = false;
   private reopenTimer: ReturnType<typeof setTimeout> | null = null;
   private watching = false;
+  /** The heartbeat: a half-dead socket goes quiet instead of sending `close`. */
   private heartbeat: ReturnType<typeof setInterval> | null = null;
   private readonly pulseMs = 15_000;
   private readonly pulseTimeoutMs = 10_000;
 
   constructor(private readonly url = defaultUrl()) {}
 
+  /**
+   * The connection is opened EXPLICITLY, from the entry point, rather than on module
+   * import. An import that reaches for the network cannot be covered by a test and
+   * cannot be safely pulled into somebody else's context — and the panel registry does
+   * need covering.
+   */
   connect(): void {
     if (this.socket) return;
     this.watchPage();
     this.open();
   }
 
+  /**
+   * Bring the connection up IMMEDIATELY if it is down.
+   *
+   * Normally a tab comes back by itself: the socket closed, `close` fired, a reopen was
+   * scheduled. But there is a case where `close` never arrives at all: the page was
+   * moved into the bfcache (back/forward navigation), the socket died there, and the
+   * timers are frozen. Chrome brings the page back with its previous JS state, and it
+   * looks like it works — except there is no server behind it any more.
+   *
+   * So the connection has an alarm clock on the outside: the page's lifecycle events.
+   * It will not fire twice — if the socket is alive, the method does nothing.
+   */
   revive(): void {
     if (this.closed || this.alive()) return;
     if (this.reopenTimer) {
@@ -61,12 +90,18 @@ export class RpcClient {
     this.open();
   }
 
+  /** There is a socket, and it is either open or opening. */
   private alive(): boolean {
     const socket = this.socket;
     if (!socket) return false;
     return socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING;
   }
 
+  /**
+   * When to wake up. All four events mean the same thing: the human is looking at the
+   * tab again (or the network came back), and it has to work at once rather than after
+   * a second of backoff, and certainly not only after F5.
+   */
   private watchPage(): void {
     if (this.watching || typeof window === 'undefined') return;
     this.watching = true;
@@ -132,19 +167,29 @@ export class RpcClient {
       this.stopPulse();
       this.connected.value = false;
       for (const [, slot] of this.pending) {
-        slot.reject(new RpcFailure({ code: RpcErrorCode.ConnectionLost, message: 'Соединение закрыто' }));
+        slot.reject(new RpcFailure({ code: RpcErrorCode.ConnectionLost, message: 'Connection closed' }));
       }
       this.pending.clear();
       if (!this.closed) this.scheduleReopen();
     });
   }
 
+  /**
+   * The heartbeat. A socket can count as open when there is nobody left at the other
+   * end: the network dropped, the laptop woke up — and `close` will not arrive. Every
+   * fifteen seconds we ask the server, and having waited in vain we close the socket
+   * ourselves; the usual reopen takes it from there.
+   */
   private startPulse(socket: WebSocket): void {
     this.stopPulse();
     this.beat(socket);
     this.heartbeat = setInterval(() => this.beat(socket), this.pulseMs);
   }
 
+  /**
+   * One beat of the heartbeat: whether the socket is alive, and what the server says
+   * about itself while we are at it.
+   */
   private beat(socket: WebSocket): void {
     {
       if (this.socket !== socket || socket.readyState !== WebSocket.OPEN) return;

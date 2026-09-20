@@ -1,6 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { RpcClient } from '../src/rpc/client.js';
 
+/**
+ * A tab coming back after a drop.
+ *
+ * Checking this by hand is impossible: the drop has to be arranged first, and the
+ * bfcache (back/forward navigation) only reproduces in a real browser with real
+ * history. The conditions, on the other hand, are simple and describable in words —
+ * which means they belong in a test.
+ */
+
 class FakeSocket {
   static readonly CONNECTING = 0;
   static readonly OPEN = 1;
@@ -27,16 +36,23 @@ class FakeSocket {
     this.die();
   }
 
+  /** The socket opened. */
   live(): void {
     this.readyState = FakeSocket.OPEN;
     this.fire('open');
   }
 
+  /** The socket died and SAID so — an ordinary drop. */
   die(): void {
     this.readyState = FakeSocket.CLOSED;
     this.fire('close');
   }
 
+  /**
+   * The socket died IN SILENCE — which is what coming back from the bfcache looks like:
+   * the page revived with its previous JS state, the connection behind it is gone, and
+   * nobody sent a `close`.
+   */
   vanish(): void {
     this.readyState = FakeSocket.CLOSED;
   }
@@ -81,15 +97,15 @@ function connect(): RpcClient {
   return rpc;
 }
 
-describe('вкладка возвращается после обрыва', () => {
-  it('живой сокет будить не надо', () => {
+describe('a tab comes back after a drop', () => {
+  it('a live socket needs no waking', () => {
     const rpc = connect();
     rpc.revive();
     expect(FakeSocket.born).toHaveLength(1);
     expect(rpc.connected.value).toBe(true);
   });
 
-  it('молча умерший сокет поднимается по возврату из bfcache', () => {
+  it('a socket that died in silence comes up on the way back from the bfcache', () => {
     const rpc = connect();
     FakeSocket.born.at(-1)!.vanish();
     expect(FakeSocket.born).toHaveLength(1);
@@ -100,13 +116,13 @@ describe('вкладка возвращается после обрыва', () =
     expect(rpc.connected.value).toBe(true);
   });
 
-  it('обычный переход по истории (без восстановления) вкладку не трогает', () => {
+  it('an ordinary step through history (without a restore) leaves the tab alone', () => {
     connect();
     for (const handler of page.window.get('pageshow') ?? []) handler({ persisted: false });
     expect(FakeSocket.born).toHaveLength(1);
   });
 
-  it('возврат к вкладке и появление сети тоже будят', () => {
+  it('coming back to the tab and the network returning wake it too', () => {
     for (const event of ['focus', 'online']) {
       FakeSocket.born.length = 0;
       const rpc = connect();
@@ -117,14 +133,14 @@ describe('вкладка возвращается после обрыва', () =
     }
   });
 
-  it('закрытая совсем вкладка не воскресает', () => {
+  it('a tab closed for good does not rise again', () => {
     const rpc = connect();
     rpc.dispose();
     rpc.revive();
     expect(FakeSocket.born).toHaveLength(1);
   });
 
-  it('обрыв роняет лампочку и отклоняет незавершённые вызовы', async () => {
+  it('a drop puts the light out and rejects the calls still in flight', async () => {
     const rpc = connect();
     const call = rpc.call('workspace.list', null);
     FakeSocket.born.at(-1)!.die();

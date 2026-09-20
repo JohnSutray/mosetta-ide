@@ -102,7 +102,7 @@ export class Plugins {
 
     for (const info of list) {
       if (info.state !== 'ok') {
-        this.deps.notes.complain(`${info.name}: ${info.error ?? 'не поднялся'}`);
+        this.deps.notes.complain(`${info.name}: ${info.error ?? 'did not come up'}`);
         continue;
       }
       this.deps.i18n.add(info.name, info.strings);
@@ -118,7 +118,7 @@ export class Plugins {
       for (const spec of registriesOf(one.ctor)) registry.declare(spec.key, one.name, spec.schema);
       const passport = passportOf(one.ctor);
       const title = passport?.title;
-      if (!title) this.deps.notes.complain(`${one.name}: у плагина нет названия — @plugin({ title }) (ADR-0213)`);
+      if (!title) this.deps.notes.complain(`${one.name}: the plugin has no title — @plugin({ title })`);
       if (passport?.strings) this.deps.i18n.defaults(passport.strings);
       for (const spec of sectionsOf(one.ctor)) {
         registry.add('settings', { ...spec, owner: one.name, title: title ?? one.name }, one.name);
@@ -149,7 +149,7 @@ export class Plugins {
   private store: Registry | null = null;
 
   private registryOf(): Registry {
-    if (!this.store) throw new Error('реестр не поднят: плагины загружены мимо plugins.load');
+    if (!this.store) throw new Error('the registry is not up: the plugins were loaded past plugins.load');
     return this.store;
   }
 
@@ -161,7 +161,7 @@ export class Plugins {
       this.serve(info.name, mod);
       const Ctor = mod.default;
       if (typeof Ctor !== 'function') {
-        throw new Error('нет export default class');
+        throw new Error('no export default class');
       }
 
       const ide = this.services(info.name);
@@ -176,7 +176,7 @@ export class Plugins {
   }
 
   services(name: string): Ide {
-    if (!this.shared) throw new Error('службы не поданы: плагины загружены мимо plugins.load');
+    if (!this.shared) throw new Error('the services were not supplied: the plugins were loaded past plugins.load');
     return { ...this.shared, ...this.bound(name) };
   }
 
@@ -218,7 +218,7 @@ export class Plugins {
         }),
       getPlugin: <T,>(ctor: PluginClass<T>): T => {
         const found = this.instances.get(ctor);
-        if (!found) throw new Error(`плагин не поднят: ${ctor.name}`);
+        if (!found) throw new Error(`plugin not up: ${ctor.name}`);
         return found as T;
       },
       surface: (view: () => unknown) => {
