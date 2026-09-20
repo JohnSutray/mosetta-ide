@@ -97,8 +97,7 @@ export class Plugins {
     try {
       list = await this.rpc.call('plugins.list', null);
     } catch {
-      return;
-    }
+      return;     }
     this.list.value = list;
 
     for (const info of list) {

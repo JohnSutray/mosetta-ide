@@ -1,5 +1,15 @@
 import { signal } from '@preact/signals';
 
+/**
+ * The core's voice.
+ *
+ * Notes pile up in a list; how to show them and how long to hold them is the
+ * notifications plugin's business. There is not a single timer here: work stays up
+ * until `settle` ends it, and everything else lives until whoever shows it takes it
+ * away. Without the plugin, notes are visible in the console — a silent error is the
+ * worst of all.
+ */
+
 export type NoteKind = 'info' | 'error' | 'work';
 
 export interface Note {
@@ -10,6 +20,7 @@ export interface Note {
 }
 
 export class Notifications {
+  /** More than a dozen on screen is no longer notification but a wall. */
   private readonly limit = 10;
 
   readonly notes = signal<Note[]>([]);
@@ -25,6 +36,11 @@ export class Notifications {
     return id;
   }
 
+  /**
+   * Replace the text of a note already on screen: "fetching…" becomes "fetched" rather
+   * than a second message under the first. The old one is gone and a new one is born,
+   * so the caller needs its number.
+   */
   settle(id: number, text: string, kind: NoteKind = 'info'): number {
     const at = this.notes.value.findIndex((note) => note.id === id);
     if (at === -1) return this.notify(text, kind);
@@ -42,10 +58,12 @@ export class Notifications {
     this.notes.value = [];
   }
 
+  /** Tell the human. */
   say(message: string): void {
     this.notify(message, 'info');
   }
 
+  /** Complain: the same place, but in red. */
   complain(message: string): void {
     this.notify(message, 'error');
   }

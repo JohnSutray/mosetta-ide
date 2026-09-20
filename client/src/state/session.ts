@@ -5,25 +5,55 @@ import type { Notifications } from './notifications.js';
 import type { Config } from './config.js';
 import type { I18n } from '../i18n/index.js';
 
+/**
+ * As much of the socket as the plugin loader needs.
+ *
+ * Under its own type, so that it arrives through the constructor and can be substituted
+ * in a test: unpacking the `plugins.event` envelope is the one place where the core
+ * decides whose event this is, and getting it wrong there means handing over somebody
+ * else's.
+ */
 export type RpcLike = Pick<RpcClient, 'call' | 'on'>;
 
 export class Session {
   readonly connected: RpcClient['connected'];
+  /** What the daemon says about itself on the heartbeat: its memory. */
   readonly daemon: RpcClient['daemon'];
   readonly workspaces = signal<WorkspaceInfo[]>([]);
   readonly current = signal<WorkspaceInfo | null>(null);
+  /**
+   * The project this socket is ATTACHED to.
+   *
+   * `current` is "which project the tab has": it is set before the server has confirmed
+   * the attachment, and it survives the connection dropping. A plugin that asks the
+   * server based on `current` gets "the session is not attached" during that window. So
+   * what goes outwards is this signal: it rises after the attachment and goes out with
+   * the socket.
+   */
   readonly attached = signal<WorkspaceInfo | null>(null);
   readonly logs = signal<LogLine[]>([]);
 
+  /**
+   * Who is to reset when the project changes. Everything project-scoped on the server
+   * is a workspace resource, and it is the same on the client: on a change, state is
+   * not "refreshed" but reset whole.
+   */
   private readonly parts: Array<{ reset(): void }> = [];
   private readonly extraResets: Array<() => void> = [];
 
+  /** We restore from the address exactly once: after that the tab belongs to the human. */
   private restored = false;
   private everConnected = false;
+  /**
+   * Who to tell that the config has arrived: the core lays its layers out into the
+   * sections' keys. A callback rather than an import: the session knows nothing about
+   * the registry and has no business knowing.
+   */
   private onConfig: (() => void) | null = null;
 
   constructor(
     private readonly rpc: RpcClient,
+    /** The tab's config: the server sends `config.changed`, we store it. */
     private readonly config: Config,
     private readonly notes: Pick<Notifications, 'say' | 'complain'>,
     private readonly i18n: Pick<I18n, 't'>,
@@ -33,14 +63,17 @@ export class Session {
     this.listen();
   }
 
+  /** Who will lay the arriving config out. Called once, while assembling. */
   onConfigChanged(handler: () => void): void {
     this.onConfig = handler;
   }
 
+  /** Who resets along with the project. Called once, while assembling. */
   owns(...parts: Array<{ reset(): void }>): void {
     this.parts.push(...parts);
   }
 
+  /** The same, but for a single line of state: a panel, a flag, a counter. */
   onReset(handler: () => void): void {
     this.extraResets.push(handler);
   }
@@ -76,10 +109,24 @@ export class Session {
     for (const extra of this.extraResets) extra();
   }
 
+  /**
+   * What we do right after attaching to a project.
+   *
+   * Assembled HERE rather than spread across three classes: the order matters, and it
+   * has to be visible in one piece.
+   */
   private async afterAttach(): Promise<void> {
     this.attached.value = this.current.value;
   }
 
+  /**
+   * The connection came up AFRESH.
+   *
+   * A socket can come back by itself; a session on the server cannot — it lives exactly
+   * as long as the connection does. A fresh server-side session is attached to no
+   * project, and without this step the result was the worst of pictures: the connection
+   * is there, the light is on, and yet no events arrive and the file will not save.
+   */
   private async resume(): Promise<void> {
     const ws = this.current.peek();
     if (!ws) return;
@@ -141,6 +188,17 @@ export class Session {
   }
 }
 
+/**
+ * The last project lives in the tab's ADDRESS.
+ *
+ * A page reload, the browser restoring a session, a bookmark pointing at a particular
+ * project — all of that works by itself, because an address outlives a tab. The history
+ * on the server answers a different question, "what have I opened at all"; here there
+ * is exactly one thing: "what is open IN THIS TAB".
+ *
+ * Which is also why this is not localStorage: two tabs holding different projects must
+ * not fight over one cell.
+ */
 const WS_PARAM = 'ws';
 
 function projectFromUrl(): string | null {

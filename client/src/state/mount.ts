@@ -2,9 +2,22 @@ import { signal } from '@preact/signals';
 import type { Bounds, Mount } from '@mosetta/ide-api/client';
 
 export interface MountOptions {
+  /**
+   * The IDE takes up the whole page: it listens to the browser window and writes the
+   * tab's title. An embedded one listens to its own root and leaves the title alone.
+   */
   page: boolean;
 }
 
+/**
+ * Where the IDE is mounted.
+ *
+ * The root gets `contain: layout`, so an overlay's `position: fixed` is measured from
+ * it rather than from the window. It is also focusable (`tabIndex=-1`): a click on
+ * empty space leaves focus inside the IDE rather than on the page body. Its size
+ * arrives as a signal (`ResizeObserver`) and as the CSS variables `--mount-w` and
+ * `--mount-h`, so that plugin styles measure from the root rather than from `vw`/`vh`.
+ */
 export class RootMount implements Mount {
   readonly size = signal({ w: 0, h: 0 });
 

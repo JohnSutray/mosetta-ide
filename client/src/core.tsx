@@ -26,15 +26,27 @@ import { RootMount, type MountOptions } from './state/mount.js';
 import { FS_SCHEMA, UI_SCHEMA, legacyNames } from '@mosetta/ide-protocol';
 import { App } from './ui/app.js';
 
+/**
+ * The tab's root: the owner of everything the client core has exactly one of.
+ *
+ * The wire, the session, the config, the voice, the dictionary, the memory, the
+ * windows, the commands, the registry and the plugins' home used to be module-level
+ * `export const x = new X()` with a note saying "the IDE's root object will own this
+ * one day". Now there is an owner: everything is created HERE, the connections are
+ * constructor arguments, and the order of the fields is the order things come up in.
+ * Two IDEs in one tab means two `new Core()`, with nothing to share.
+ */
 export class Core {
   readonly rpc = new RpcClient();
   readonly notifications = new Notifications();
   readonly config = new Config();
   readonly i18n = new I18n();
+  /** The tab's first half-second: the splash instead of "nobody to draw this". */
   readonly startup = new Startup();
   readonly memory = new Memory();
   readonly commands = new Commands();
   readonly session = new Session(this.rpc, this.config, this.notifications, this.i18n);
+  /** The shared store of declarations: the core writes its own, the plugins theirs. */
   readonly store = new Registry((message) => this.notifications.complain(message));
   readonly plugins = new Plugins(this.rpc, {
     commands: this.commands,
@@ -42,12 +54,24 @@ export class Core {
     memory: this.memory,
     i18n: this.i18n,
   });
+  /** Where the IDE is mounted: the root, its size, and where to listen for events. */
   readonly mount: RootMount;
+  /**
+   * Whether the core's own `fs` section has already been declared in the settings
+   * registry.
+   */
   private coreDeclared = false;
+  /** The settings layers, in the sections' registry keys. */
   private readonly layers = new SettingsLayers(this.store, (message) => this.notifications.complain(message));
+  /** Whether a setting may be written: the declaration plus the section's schema. */
   private readonly writes = new SettingsWrite(this.store);
+  /** The core's services for plugins: as fields on `ide`, and as context for markup. */
   readonly services: IdeServices;
 
+  /**
+   * The root and the mode arrive from whoever mounts it: a whole page, or an element
+   * inside somebody else's page.
+   */
   constructor(
     private readonly root: HTMLElement,
     options: MountOptions,
@@ -97,11 +121,19 @@ export class Core {
     });
   }
 
+  /**
+   * Lay the config that arrived out into the sections' keys.
+   *
+   * Called from the event handler rather than from an effect on a signal: an effect
+   * that writes signals risks subscribing to what it changes itself. Here the flow is
+   * one-way — file, server, event, registry.
+   */
   applyLayers(): void {
     this.layers.apply(USER_LAYER, this.config.user.value);
     this.layers.apply(PROJECT_LAYER, this.config.project.value);
   }
 
+  /** Bring the tab up: the network, the frame, then the plugins. */
   start(): void {
     this.rpc.connect();
     this.startup.begin();
@@ -109,6 +141,11 @@ export class Core {
     void this.plugins.load(this.services, this.store);
   }
 
+  /**
+   * What is handed to plugins is listed HERE. The type annotation is not decoration:
+   * `IdeServices` is declared in the contract, so a mismatch is caught by an error
+   * right here rather than as "the plugin has the wrong type".
+   */
   private serve(): IdeServices {
     const store = this.store;
     const plugins = this.plugins;

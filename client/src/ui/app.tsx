@@ -8,12 +8,26 @@ import { PluginSurfaces } from './plugin-surfaces.js';
 import { Splash } from './splash.js';
 import type { Core } from '../core.js';
 
+/** A slot in the frame: whatever was put into it is what we draw. */
 function Region({ store, name, fallback }: { store: Registry; name: string; fallback?: JSX.Element }) {
   const views = store.all<() => unknown>(name).value;
   if (views.length === 0) return fallback ?? null;
   return <>{views.map((view) => view() as JSX.Element)}</>;
 }
 
+/**
+ * What is visible when nobody drew the layout.
+ *
+ * An empty toolbar is survivable — the keys are still there. An empty middle is not:
+ * that is where the whole editor, the whole tree and every panel live, and a white
+ * screen is indistinguishable from "the IDE broke". A silent failure is the worst kind
+ * of error, and this one would be the loudest of the silent ones.
+ *
+ * So the core holds NOT a spare layout — a second layout would drift from the first on
+ * the first edit — but an explanation: who was supposed to take this slot, what is
+ * missing, and what did come up. It is fixed by editing one line in `settings.json`,
+ * and that line has to be named.
+ */
 function NoShell({ plugins, i18n }: { plugins: Plugins; i18n: I18n }) {
   const loaded = plugins.list.value.map((one) => one.name);
   return (
@@ -29,6 +43,10 @@ function NoShell({ plugins, i18n }: { plugins: Plugins; i18n: I18n }) {
   );
 }
 
+/**
+ * The tab's frame. Everything it lives on arrives from the root: the registry, the
+ * plugins, the dictionary, and the services for plugin markup.
+ */
 export function App({ core }: { core: Core }) {
   const { startup } = core;
   const shell = core.store.all<() => unknown>('chrome.main').value.length > 0;
@@ -44,7 +62,9 @@ export function App({ core }: { core: Core }) {
       <div
         class="app"
       >
+        
         <Region store={core.store} name="chrome.top" />
+        
         <Region
           store={core.store}
           name="chrome.main"
