@@ -95,7 +95,7 @@ export class Stand {
       probe.listen(0, '127.0.0.1', () => {
         const address = probe.address();
         const port = typeof address === 'object' && address ? address.port : 0;
-        probe.close(() => (port ? resolve(port) : reject(new Error('порт не выдан'))));
+        probe.close(() => (port ? resolve(port) : reject(new Error('no port was given out'))));
       });
       probe.on('error', reject);
     });

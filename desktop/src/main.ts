@@ -44,7 +44,7 @@ class Desktop {
 
   private ready(): void {
     const seeded = this.paths.seedConfig();
-    if (seeded.length) console.info(`[desktop] конфиг засеян: ${seeded.join(', ')} → ${this.paths.config}`);
+    if (seeded.length) console.info(`[desktop] the config has been seeded: ${seeded.join(', ')} → ${this.paths.config}`);
     this.scheme.serve();
     new AppMenu().install();
     this.daemon.start();

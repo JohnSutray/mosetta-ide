@@ -4,8 +4,23 @@ import type { KeyScope } from '../../plugins/keymap/src/types.js';
 import { Chord, Rows } from '../src/chord.js';
 import { Stand } from '../src/stand.js';
 
+/**
+ * The layout whole, as a table, with real presses.
+ *
+ * Until this, not one of the two-hundred-odd rows of the layout was ever checked by a
+ * press: the browser's own tooling sends `event.code` empty, and the layout stands on
+ * it. Here the keys go through CDP with real `code`/`key`, and the question "does a new
+ * layout row get through" answers itself, for every row — the test grows along with the
+ * shipment.
+ *
+ * How the answer is read: the keys window (Cmd+9) CATCHES presses — it shows the echo
+ * but does not run the command. That is exactly what a table needs: everything can be
+ * pressed in turn with nothing saved, nothing reloaded and nothing opened. The echo is
+ * read from the `data-echo-*` attributes in the window.
+ */
+
 const chrome = await Stand.chromeHere();
-if (!chrome) console.warn('e2e: Chrome на этой машине не найден — раскладка нажатиями НЕ проверена');
+if (!chrome) console.warn('e2e: no Chrome found on this machine — the layout was NOT checked by pressing');
 
 const os = process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'win' : 'linux';
 const scopes: KeyScope[] = ['browser', `browser:${os}`];
@@ -16,7 +31,7 @@ interface Echo {
   seq: number;
 }
 
-describe.skipIf(!chrome)('раскладка таблицей, настоящим Chrome', () => {
+describe.skipIf(!chrome)('the layout as a table, with a real Chrome', () => {
   let stand: Stand;
   const chord = new Chord();
 
@@ -41,7 +56,7 @@ describe.skipIf(!chrome)('раскладка таблицей, настоящи�
     const show = FACTORY_KEYMAP.bindings.find(
       (binding) => binding.command === 'keys.show' && binding.where?.some((scope) => scopes.includes(scope)),
     );
-    if (!show) throw new Error(`в раскладке нет keys.show для ${scopes.join(', ')}`);
+    if (!show) throw new Error(`there is no keys.show in the layout for ${scopes.join(', ')}`);
     await press(show.key);
     await stand.page.waitForSelector('.keys-echo', { timeout: 20_000 });
   });
@@ -50,7 +65,7 @@ describe.skipIf(!chrome)('раскладка таблицей, настоящи�
     await stand?.down();
   });
 
-  it('каждая глобальная строка этого окружения доезжает до своей команды', async () => {
+  it('every global row of this environment reaches its own command', async () => {
     const rows = new Rows(scopes);
     const table = rows.global(FACTORY_KEYMAP.bindings).filter((binding) => binding.command !== 'keys.show');
     const misses: string[] = [];
@@ -59,29 +74,29 @@ describe.skipIf(!chrome)('раскладка таблицей, настоящи�
       await press(binding.key);
       const heard = await echo();
       if (!heard || heard.seq === last) {
-        misses.push(`${binding.key} → нажатие не дошло до раскладки вовсе (ждали ${binding.command})`);
+        misses.push(`${binding.key} → the press did not reach the layout at all (expected ${binding.command})`);
         continue;
       }
       last = heard.seq;
       if (heard.key !== binding.key || heard.command !== binding.command) {
-        misses.push(`${binding.key} → услышано «${heard.key}» = ${heard.command || 'ничего'} (ждали ${binding.command})`);
+        misses.push(`${binding.key} → heard «${heard.key}» = ${heard.command || 'nothing'} (expected ${binding.command})`);
       }
     }
     console.info(
-      `e2e раскладка: ${table.length} глобальных строк для ${scopes.join('/')} нажаты; ` +
-        `${rows.contextual(FACTORY_KEYMAP.bindings)} строк с поверхностью ждут своего сценария`,
+      `e2e layout: ${table.length} global rows for ${scopes.join('/')} pressed; ` +
+        `${rows.contextual(FACTORY_KEYMAP.bindings)} rows with a surface are waiting for a scenario of their own`,
     );
     expect(misses, misses.join('\n')).toEqual([]);
   });
 
-  it('калибровка: клавиши, которые Chrome оставляет себе, ДОХОДЯТ до страницы через CDP', async () => {
+  it('calibration: the keys Chrome keeps for itself DO reach the page through CDP', async () => {
     const before = (await echo())?.seq ?? 0;
     await stand.page.keyboard.press('Meta+KeyT');
     const after = (await echo())?.seq ?? 0;
-    expect(after, 'Cmd+T дошёл до страницы: слой браузера обойдён').toBeGreaterThan(before);
+    expect(after, 'Cmd+T reached the page: the browser\'s layer has been bypassed').toBeGreaterThan(before);
   });
 
-  it('клавиша, открывшая окно клавиш, его же и закрывает — изнутри', async () => {
+  it('the key that opened the keys window closes it too — from inside', async () => {
     const show = FACTORY_KEYMAP.bindings.find(
       (binding) => binding.command === 'keys.show' && binding.where?.some((scope) => scopes.includes(scope)),
     )!;

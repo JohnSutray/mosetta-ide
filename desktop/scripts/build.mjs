@@ -4,6 +4,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build as bundle } from 'esbuild';
 
+/**
+ * Build the IDE on this machine.
+ *
+ * There is no built code in the package — the human's choice: the IDE is built where it
+ * is going to live. Two steps: the client (vite) and Electron's main process (esbuild).
+ * The server runs from sources, and it builds the plugins itself. Packages are looked
+ * up by name: in the repository they are neighbours in a directory, in an installation
+ * neighbours in `node_modules`.
+ */
 export class DeviceBuild {
   constructor(pkg) {
     this.pkg = pkg;
@@ -11,11 +20,17 @@ export class DeviceBuild {
     this.require = createRequire(path.join(pkg, 'package.json'));
   }
 
+  /**
+   * The directory of a package visible from `from`: by searching upwards through
+   * `node_modules`, as Node does, but past `exports` — the plugins do not hand
+   * `./package.json` outwards, and `require.resolve` on it throws. pnpm's links are
+   * expanded into the real path: its own dependencies are looked for from there.
+   */
   findPackage(name, from = this.pkg) {
     for (let dir = from; ; dir = path.dirname(dir)) {
       const candidate = path.join(dir, 'node_modules', name);
       if (fs.existsSync(path.join(candidate, 'package.json'))) return fs.realpathSync(candidate);
-      if (path.dirname(dir) === dir) throw new Error(`не нашёл пакет ${name}, искал от ${from}`);
+      if (path.dirname(dir) === dir) throw new Error(`could not find the package ${name}, looked from ${from}`);
     }
   }
 
@@ -23,10 +38,20 @@ export class DeviceBuild {
     return this.findPackage(name);
   }
 
+  /**
+   * Electron's binary. The `electron` package downloads it lazily, on the first
+   * `require` — we make that an explicit build step rather than a surprise in the
+   * middle of making a shortcut.
+   */
   electron() {
     return this.require('electron');
   }
 
+  /**
+   * The execute bit on `node-pty`'s `spawn-helper`: both pnpm and npm unpack it without
+   * one, and then `posix_spawnp` throws and the terminal does not open at all. We mend
+   * it where the IDE is built — on every machine.
+   */
   nativeHelpers() {
     const server = this.findPackage('@mosetta/ide-server');
     const terminal = this.findPackage('@mosetta/ide-plugin-terminal', server);
@@ -40,6 +65,10 @@ export class DeviceBuild {
     }
   }
 
+  /**
+   * The client into `.build/client`: the daemon's port will arrive in the page's
+   * address.
+   */
   async client() {
     const root = this.packageDir('@mosetta/ide-client');
     process.env.VITE_IDE_PORT = 'url';

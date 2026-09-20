@@ -1,10 +1,16 @@
 import { app, BrowserWindow, Menu, shell, Tray, type NativeImage } from 'electron';
 
+/**
+ * The IDE's windows. A window is a tab: each has a project of its own, while the server
+ * is one for all of them.
+ */
 export class IdeWindows {
   private readonly all = new Set<BrowserWindow>();
 
   constructor(
+    /** The page's address — once the daemon names the port. */
     private readonly url: () => Promise<string>,
+    /** Ours and somebody else's: navigation only within the shell's scheme. */
     private readonly origin: string,
   ) {}
 
@@ -36,6 +42,10 @@ export class IdeWindows {
     await win.loadURL(await this.url());
   }
 
+  /**
+   * A click on the shortcut or on the tray: there is a window — to it; there is not — a
+   * new one.
+   */
   focusOrOpen(): void {
     const last = [...this.all].at(-1);
     if (!last) {
@@ -48,6 +58,7 @@ export class IdeWindows {
   }
 }
 
+/** The icon in the tray: the daemon is alive as long as it is there. */
 export class TrayIcon {
   private tray: Tray | null = null;
 
@@ -72,6 +83,13 @@ export class TrayIcon {
   }
 }
 
+/**
+ * The application's menu. On a Mac, with no Edit menu carrying the clipboard roles,
+ * Cmd+C and Cmd+V say nothing in Electron, so they are there — and they alone: undo and
+ * "select all" are held by the layout, and we do not set up a "Window" menu — it takes
+ * Cmd+` for itself. On Windows and Linux there is no menu at all: the clipboard works
+ * there without one.
+ */
 export class AppMenu {
   install(): void {
     if (process.platform !== 'darwin') {

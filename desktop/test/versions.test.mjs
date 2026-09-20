@@ -4,7 +4,11 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Versions } from '../bin/versions.mjs';
 
-describe('уборка старых версий', () => {
+/**
+ * Tidying away installations: the new one and the previous one stay, the rest is
+ * deleted and named with its size.
+ */
+describe('tidying away old versions', () => {
   let apps;
 
   beforeEach(() => {
@@ -20,23 +24,23 @@ describe('уборка старых версий', () => {
     fs.rmSync(apps, { recursive: true, force: true });
   });
 
-  it('видит версии, но не ссылку current', () => {
+  it('it sees the versions but not the current link', () => {
     expect(new Versions(apps).installed().sort()).toEqual(['0.1.0', '0.2.0', '0.3.0']);
   });
 
-  it('знает, куда показывает current, и не падает без него', () => {
+  it('it knows where current points, and does not fall over without it', () => {
     const versions = new Versions(apps);
     expect(versions.currentName(path.join(apps, 'current'))).toBe('0.3.0');
-    expect(versions.currentName(path.join(apps, 'нет'))).toBeNull();
+    expect(versions.currentName(path.join(apps, 'no'))).toBeNull();
   });
 
-  it('правило — чистое: остаются названные, null в списке не мешает', () => {
+  it('the rule is pure: the named ones stay, and a null in the list does not get in the way', () => {
     const versions = new Versions(apps);
     expect(versions.doomed(['0.1.0', '0.2.0', '0.3.0'], ['0.4.0', '0.3.0'])).toEqual(['0.1.0', '0.2.0']);
     expect(versions.doomed(['0.1.0'], ['0.1.0', null])).toEqual([]);
   });
 
-  it('удаляет остальное и называет размер', () => {
+  it('it deletes the rest and names the size', () => {
     const removed = new Versions(apps).prune(['0.3.0', '0.2.0']);
     expect(removed.map((one) => one.name)).toEqual(['0.1.0']);
     expect(removed[0].bytes).toBe(1024 * 10);
@@ -45,11 +49,11 @@ describe('уборка старых версий', () => {
     expect(fs.existsSync(path.join(apps, 'current'))).toBe(true);
   });
 
-  it('папки нет — удалять нечего, и это не ошибка', () => {
-    expect(new Versions(path.join(apps, 'нет')).prune(['x'])).toEqual([]);
+  it('there is no directory — nothing to delete, and that is not an error', () => {
+    expect(new Versions(path.join(apps, 'no')).prune(['x'])).toEqual([]);
   });
 
-  it('размер печатается мегабайтами', () => {
+  it('the size is printed in megabytes', () => {
     expect(Versions.megabytes(472 * 1024 * 1024)).toBe('472 MB');
   });
 });

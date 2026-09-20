@@ -1,5 +1,13 @@
 import type { KeyBinding, KeyScope } from '../../plugins/keymap/src/types.js';
 
+/**
+ * Our chord → a Playwright key name.
+ *
+ * The layout writes PHYSICAL names (`meta+shift+s`), and Playwright presses cells too
+ * (`Meta+Shift+KeyS` goes through CDP with real `code`, `key` and `location`). The
+ * translation is a table rather than a heuristic: an unknown name has to fall over here
+ * rather than quietly press the wrong thing.
+ */
 export class Chord {
   private readonly named: Record<string, string> = {
     meta: 'Meta',
@@ -33,6 +41,10 @@ export class Chord {
     end: 'End',
   };
 
+  /**
+   * `double:shift` — two bare presses in a row; we hand over the key and how many
+   * times.
+   */
   presses(key: string): { key: string; times: number } {
     const double = /^double:(.+)$/.exec(key);
     if (double) return { key: this.one(double[1]!), times: 2 };
@@ -44,10 +56,15 @@ export class Chord {
     if (/^[a-z]$/.test(part)) return `Key${part.toUpperCase()}`;
     if (/^[0-9]$/.test(part)) return `Digit${part}`;
     if (/^f([1-9]|1[0-2])$/.test(part)) return part.toUpperCase();
-    throw new Error(`не знаю, как нажать «${part}» — допиши таблицу в chord.ts`);
+    throw new Error(`do not know how to press «${part}» — add it to the table in chord.ts`);
   }
 }
 
+/**
+ * Which layout rows are checked on this stand: the global ones (with no `when`) and the
+ * ones that apply in this environment. Rows with a surface wait for the focus to be on
+ * their surface — that is the next scenario.
+ */
 export class Rows {
   constructor(private readonly scopes: KeyScope[]) {}
 

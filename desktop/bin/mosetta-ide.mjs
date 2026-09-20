@@ -7,6 +7,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Versions } from './versions.mjs';
 
+/**
+ * `npx @mosetta/ide install`.
+ *
+ * npx has already installed the package together with Electron, vite and every plugin —
+ * but into a temporary cache that npm cleans out. So installing means: copy this tree
+ * into `~/.mosetta/ide/app/<version>`, build the IDE in place, point `current` at that
+ * version, lay out a shortcut for the OS and start it.
+ */
+
 const NAME = 'Mosetta IDE';
 const ID = 'com.mosetta.ide';
 
@@ -20,6 +29,7 @@ class Layout {
     this.current = path.join(this.apps, 'current');
   }
 
+  /** The root npx installed the package into: the directory holding our `node_modules`. */
   sourceRoot() {
     let dir = this.pkg;
     while (path.basename(dir) !== 'node_modules') {
@@ -47,17 +57,31 @@ class Layout {
   }
 }
 
+/**
+ * The shortcut on a Mac: a real application in `~/Applications` — Spotlight and the
+ * Dock see it.
+ */
 class MacLauncher {
   constructor(layout) {
     this.layout = layout;
     this.app = path.join(os.homedir(), 'Applications', `${NAME}.app`);
   }
 
+  /**
+   * Whether the application is running: a process whose command line BEGINS with its
+   * binary. A substring would catch any shell whose command mentions the path.
+   */
   running() {
     const exe = path.join(this.app, 'Contents', 'MacOS', 'Electron').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return spawnSync('pgrep', ['-f', `^${exe}`]).status === 0;
   }
 
+  /**
+   * A copy of `Electron.app` with our name, icon and code — the way
+   * `@electron/packager` does it. After `Info.plist` is edited Electron's signature is
+   * invalid, and on Apple Silicon an unsigned app does not start — so we sign it again,
+   * locally (`-`): no developer account needed.
+   */
   create() {
     const root = this.layout.current;
     const bundle = path.resolve(this.layout.electronIn(root), '..', '..', '..');
@@ -101,6 +125,7 @@ class MacLauncher {
   }
 }
 
+/** The shortcut on Windows: a `.lnk` in the Start menu and on the desktop. */
 class WindowsLauncher {
   constructor(layout) {
     this.layout = layout;
@@ -131,6 +156,7 @@ class WindowsLauncher {
     }
   }
 
+  /** An ICO with one PNG inside: Windows has been able to do that since Vista. */
   writeIco() {
     const png = fs.readFileSync(this.layout.iconIn(this.layout.current));
     const head = Buffer.alloc(22);
@@ -157,6 +183,10 @@ class WindowsLauncher {
   }
 }
 
+/**
+ * The shortcut on Linux: a `.desktop` in the applications menu and an icon in the
+ * theme.
+ */
 class LinuxLauncher {
   constructor(layout) {
     this.layout = layout;

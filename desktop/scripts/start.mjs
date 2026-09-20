@@ -3,6 +3,10 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { deviceBuild } from './build.mjs';
 
+/**
+ * `pnpm desktop`: build in place and start Electron. The same `DeviceBuild` as the
+ * installation uses — one build rather than two.
+ */
 await deviceBuild.all();
 
 const electron = createRequire(import.meta.url)('electron');
