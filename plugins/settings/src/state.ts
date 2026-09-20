@@ -1,30 +1,51 @@
 import { signal } from '@preact/signals';
 import { PROJECT_LAYER, USER_LAYER, type SettingsEntry } from '@mosetta/ide-api/client';
 
+/** Which field to draw: the type is inferred from the default. */
 export type SettingKind = 'boolean' | 'number' | 'string' | 'choice' | 'list' | 'object';
 
+/**
+ * Where a value lives: nowhere (factory), in the personal file, or in the project's.
+ * This is also the switch in the row: click a position to move the value there, and
+ * `default` to reset it.
+ */
 export type SettingAt = 'default' | 'user' | 'project';
 
 export interface SettingRow {
   section: string;
   key: string;
+  /** The path in the settings file: `section.key`. */
   path: string;
+  /** The dictionary key holding the human-readable name: `settings.<section>.<key>`. */
   label: string;
   kind: SettingKind;
   value: unknown;
+  /** Factory — the default from the plugin's code. */
   fallback: unknown;
+  /** Set somewhere other than in code — then there is something to reset. */
   overridden: boolean;
+  /** Which layer the value in force lies in. */
   at: SettingAt;
   options?: readonly string[];
 }
 
 export interface SettingGroup {
+  /** The owner's package name, or `core`. */
   owner: string;
+  /** The owner's name — a dictionary key. */
   title: string;
   rows: SettingRow[];
+  /**
+   * Its own editor for the section: if there is one, we draw that instead of rows. A
+   * "key — field" row will not do for the keymap, so it brings a screen of its own.
+   */
   editor?: () => unknown;
 }
 
+/**
+ * The settings editor's model: from the section declarations, the live config and the
+ * human's file — rows grouped by owner. No DOM, hence a test.
+ */
 export class SettingsModel {
   kindOf(fallback: unknown, options?: readonly string[]): SettingKind {
     if (options?.length) return 'choice';
@@ -35,6 +56,14 @@ export class SettingsModel {
     return 'object';
   }
 
+  /**
+   * Rows from the declarations and the LAYERS.
+   *
+   * The layers arrive from the section's key through the registry, and an entry's
+   * author is its layer: the factory one is signed by the plugin, mine by the personal
+   * settings file, the project's by its own. The model no longer knows a separate "what
+   * the file says", and it has two fewer sources.
+   */
   groups(
     entries: readonly SettingsEntry[],
     layersOf: (section: string) => ReadonlyArray<{ by: string; value: unknown }>,
@@ -70,6 +99,7 @@ export class SettingsModel {
     return [...byOwner.values()];
   }
 
+  /** Searching by label and by path; a group with no rows disappears. */
   filter(groups: SettingGroup[], term: string, label: (row: SettingRow) => string): SettingGroup[] {
     const needle = term.trim().toLowerCase();
     if (!needle) return groups;
@@ -81,6 +111,11 @@ export class SettingsModel {
       .filter((group) => group.rows.length > 0);
   }
 
+  /**
+   * Split a label into pieces by what is being searched for: we are going to highlight
+   * with a BACKING, and for that we have to know where exactly it matched. No DOM,
+   * hence a test.
+   */
   split(text: string, term: string): Array<{ text: string; hit: boolean }> {
     const needle = term.trim().toLowerCase();
     if (needle === '') return [{ text, hit: false }];
@@ -98,6 +133,10 @@ export class SettingsModel {
     return parts.length > 0 ? parts : [{ text, hit: false }];
   }
 
+  /**
+   * A list of strings from the field: one line, one element, and empty ones do not
+   * count.
+   */
   lines(text: string): string[] {
     return text
       .split('\n')
@@ -106,9 +145,17 @@ export class SettingsModel {
   }
 }
 
+/**
+ * The editor window: whether it is open, what is being searched for, and which sections
+ * are expanded.
+ */
 export class SettingsWindow {
   readonly open = signal(false);
   readonly term = signal('');
+  /**
+   * The expanded sections, by owner. All collapsed by default: a long list is
+   * frightening, while a heading with the number of changed values says where to look.
+   */
   readonly expanded = signal<ReadonlySet<string>>(new Set());
 
   toggleGroup(owner: string): void {
@@ -118,6 +165,10 @@ export class SettingsWindow {
     this.expanded.value = next;
   }
 
+  /**
+   * Whether a section is expanded: while searching, always — otherwise the matches
+   * cannot be seen.
+   */
   isOpen(owner: string): boolean {
     return this.term.value.trim() !== '' || this.expanded.value.has(owner);
   }

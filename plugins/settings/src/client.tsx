@@ -6,6 +6,15 @@ import { SettingsPopup } from './popup.js';
 import { SettingsModel, SettingsWindow } from './state.js';
 import { STYLE } from './style.js';
 
+/**
+ * "Take me to this setting" — an entry in a key.
+ *
+ * A neighbour with something to suggest editing must not depend on us: `getPlugin`
+ * requires an import, and an import makes the settings window mandatory for whoever
+ * merely mentioned it. So the door is opened by the registry — exactly as the widgets
+ * hand out their tooltips through a key. If we are absent, the entry is empty and the
+ * click simply does nothing.
+ */
 export const REVEAL_SCHEMA = {
   type: 'object',
   required: ['id'],
@@ -13,6 +22,7 @@ export const REVEAL_SCHEMA = {
   additionalProperties: false,
 } as const;
 
+/** What whoever takes you to a setting can do. A shape rather than an import. */
 export interface RevealLike {
   reveal(query: string): void;
 }

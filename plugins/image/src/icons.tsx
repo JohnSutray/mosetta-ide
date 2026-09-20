@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 
+/** The view: a frame with a "picture" inside — a sun and a hill. */
 export function PictureIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round">
@@ -10,6 +11,7 @@ export function PictureIcon(): JSX.Element {
   );
 }
 
+/** Text: three lines — the same as the editor shows. */
 export function TextIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
@@ -18,6 +20,7 @@ export function TextIcon(): JSX.Element {
   );
 }
 
+/** Text and view: two columns, the left one in lines, the right one solid. */
 export function SplitIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round">
@@ -28,6 +31,11 @@ export function SplitIcon(): JSX.Element {
   );
 }
 
+/**
+ * The backing: a chequerboard, the sign for transparency, the same one every graphics
+ * editor uses. The icon is made of squares itself, otherwise it would have to be
+ * explained in words.
+ */
 export function CheckerIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -37,6 +45,7 @@ export function CheckerIcon(): JSX.Element {
   );
 }
 
+/** The backing, dark and light — two halves of a circle. */
 export function ContrastIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -46,6 +55,7 @@ export function ContrastIcon(): JSX.Element {
   );
 }
 
+/** Fit to the panel, and show pixel for pixel. */
 export function FitIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">

@@ -1,8 +1,25 @@
+/**
+ * What useful things can be said about an SVG without drawing it.
+ *
+ * The parsing is deliberately shallow — expressions over the head of the file rather
+ * than real XML: what we need is the canvas size and the order of magnitude, not a
+ * tree. A mistake here costs one inexact line under the picture, whereas real parsing
+ * would cost a dependency and time on every view.
+ *
+ * A pure class: no DOM, no network — so it is checked by a test rather than by eye.
+ */
 export interface SvgFacts {
+  /** The canvas from `viewBox`; `null` means there is none, which is news in itself. */
   box: { width: number; height: number } | null;
+  /** What the root's `width`/`height` say, as they are (`24`, `100%`, `1em`). */
   width: string | null;
   height: string | null;
+  /** How many shapes are inside: they show whether this is an icon or a map of Europe. */
   shapes: number;
+  /**
+   * How many colours are named explicitly — a hint as to whether `currentColor` will
+   * repaint.
+   */
   colors: string[];
 }
 
@@ -25,6 +42,10 @@ export class SvgReader {
     };
   }
 
+  /**
+   * An attribute of the ROOT: we look in the first tag, otherwise we would catch a
+   * nested one.
+   */
   private attribute(head: string, name: string): string | null {
     const root = /<svg\b[^>]*>/i.exec(head)?.[0] ?? '';
     return new RegExp(`\\b${name}\\s*=\\s*["']([^"']+)["']`, 'i').exec(root)?.[1] ?? null;
@@ -36,6 +57,11 @@ export class SvgReader {
     return count;
   }
 
+  /**
+   * The named colours, without duplicates and in order of appearance. `currentColor`
+   * counts among them — it is the most interesting answer of all: an icon with it will
+   * be repainted by the theme, an icon with `#cb3837` will not.
+   */
   private colors(text: string): string[] {
     const found = text.match(/(?:fill|stroke|stop-color)\s*[=:]\s*["']?\s*(#[0-9a-f]{3,8}|currentColor|rgba?\([^)]*\))/gi) ?? [];
     const out: string[] = [];
