@@ -6,6 +6,11 @@ import type { Ranked } from './ranker.js';
 import type { CompletionSession } from './session.js';
 import type { ItemKind } from './types.js';
 
+/**
+ * A kind's icon is a letter on a plate, in Darcula's colours: a method is yellow like a
+ * function's name in the code, a field purple like a field — the hand recognises what
+ * the eye sees in the text.
+ */
 const BADGES: Record<ItemKind, string> = {
   method: 'm',
   function: 'ƒ',
@@ -31,12 +36,22 @@ const BADGES: Record<ItemKind, string> = {
 };
 
 interface Props {
+  /** The code display is a neighbour: painting the signature in the card. */
   code: CodePlugin;
   session: CompletionSession;
   path: () => string | null;
   onPick: (index: number) => void;
 }
 
+/**
+ * The completion list. Our own layout on somebody else's positioning: the rows, the
+ * highlighting, the icons and the documentation are ours, while the place next to the
+ * caret and the flip at the edge are computed by CodeMirror.
+ *
+ * We suppress mousedown: focus has to stay in the editor, otherwise the list closes
+ * before the click reaches it. There is nothing to drag here, so the focus-on-click
+ * rule is untouched; choosing is done by the click.
+ */
 export function CompletionList({ session, path, onPick, code }: Props) {
   const t = useT();
   const items = session.items.value;
@@ -89,6 +104,7 @@ function Row({ ranked, selected, onClick }: { ranked: Ranked; selected: boolean;
   );
 }
 
+/** The matched letters get a backing rather than weight: bold rocks the row. */
 function marked(label: string, positions: number[]) {
   if (positions.length === 0) return label;
   const hit = new Set(positions);

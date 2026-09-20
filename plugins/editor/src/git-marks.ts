@@ -3,6 +3,7 @@ import { EditorView, gutter, GutterMarker } from '@codemirror/view';
 import type { HunkBox } from '@mosetta/ide-api/client';
 import type { Hunk, LineDiff } from '@mosetta/ide-plugin-code';
 
+/** What the file was in the last commit. `null` means it is not in the history at all. */
 export const setHeadText = StateEffect.define<string | null>();
 
 interface GitLines {
@@ -12,6 +13,10 @@ interface GitLines {
 
 const EMPTY: GitLines = { head: null, hunks: [] };
 
+/**
+ * The field holding the hunks runs on the code display's diff: one per `GitMarks`
+ * instance rather than module-level, because the diff is a neighbour's field.
+ */
 function linesFieldOf(diff: LineDiff) {
   return StateField.define<GitLines>({
     create() {
@@ -54,6 +59,11 @@ const MARKS = {
   removed: new Mark('removed'),
 };
 
+/**
+ * A hunk's screen bounds: from the top of its first line to the bottom of its last.
+ * Computed from the LINES rather than from the click: the popup stands relative to the
+ * text it talks about, and the mouse has nothing to do with it.
+ */
 function boxOf(view: EditorView, hunk: Hunk, event: MouseEvent): HunkBox {
   const doc = view.state.doc;
   const first = view.coordsAtPos(doc.line(Math.min(hunk.from, doc.lines)).from);
@@ -62,6 +72,7 @@ function boxOf(view: EditorView, hunk: Hunk, event: MouseEvent): HunkBox {
   return { left: view.dom.getBoundingClientRect().left, top: first.top, bottom: last.bottom };
 }
 
+/** The git strips on the left: computed on the CLIENT from the text. */
 export class GitMarks {
   private readonly field: StateField<GitLines>;
 
@@ -69,6 +80,7 @@ export class GitMarks {
     this.field = linesFieldOf(diff);
   }
 
+  /** The hunks by line number: a mark on a line has exactly one owner. */
   at(hunks: Hunk[], line: number): Hunk | null {
     for (const hunk of hunks) {
       if (line >= hunk.from && line <= hunk.to) return hunk;
@@ -106,6 +118,11 @@ export class GitMarks {
     ];
   }
 
+  /**
+   * Revert a hunk to what is in the commit. It works by LINE NUMBERS rather than by
+   * remembered positions: between the click and the button press the human could type
+   * anything, and a remembered offset would point at the wrong place.
+   */
   revert(view: EditorView, hunk: Hunk): void {
     const doc = view.state.doc;
     const restored = hunk.before.join('\n');

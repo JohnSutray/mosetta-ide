@@ -2,8 +2,24 @@ import { StateEffect, StateField, type EditorState, type Extension } from '@code
 import { Decoration, EditorView, type DecorationSet } from '@codemirror/view';
 import type { Diagnostic, Severity } from '@mosetta/ide-plugin-lsp';
 
+/**
+ * Underlining errors with our own decorations rather than through `@codemirror/lint`.
+ *
+ * The reason is the same one CodeMirror was chosen for: somebody else's package would
+ * bring its own panel, its own keys and its own idea of a tooltip, and we would start
+ * tearing that off. Everything visible here is drawn by us.
+ */
+
 export const setDiagnostics = StateEffect.define<Diagnostic[]>();
 
+/**
+ * An error's text travels TOGETHER with its underline.
+ *
+ * Not as a separate list: while the server thinks about new diagnostics, the old ones
+ * travel through the text along with the edits — CodeMirror can move decorations
+ * itself. A raw list cannot, and the tooltip would be showing an error that had slipped
+ * by a couple of characters.
+ */
 function mark(item: Diagnostic) {
   return Decoration.mark({
     class: `cm-diag cm-diag-${item.severity}`,
@@ -51,7 +67,9 @@ export const diagnosticsTheme = EditorView.theme({
 
 export const diagnosticsExtension: Extension = [diagnosticsField, diagnosticsTheme];
 
+/** Diagnostics in the editor: a wave under the text, and the caret landing in it. */
 export class Diagnostics {
+  /** Which errors stand at this place. Empty means the place is clean. */
   at(
     state: EditorState,
     pos: number,
@@ -64,6 +82,11 @@ export class Diagnostics {
     return found;
   }
 
+  /**
+   * LSP speaks in lines and characters, CodeMirror in offsets. The position may not
+   * exist: the server answers about a version of the text we have already retyped —
+   * that is normal rather than a reason to fall over.
+   */
   offsetOf(
     doc: { lines: number; line(n: number): { from: number; to: number } },
     line: number,
@@ -75,4 +98,5 @@ export class Diagnostics {
   }
 }
 
+/** One per plugin: the marks themselves live in a CodeMirror state field. */
 export const diagnostics = new Diagnostics();

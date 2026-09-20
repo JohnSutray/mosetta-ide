@@ -20,16 +20,32 @@ import SearchPlugin from '@mosetta/ide-plugin-search';
 
 export type { Answer, Ask, Details, Item, ItemKind, Source } from './types.js';
 
+/**
+ * Code completion is a plugin.
+ *
+ * The layers: the sources → merging and ordering (`CompletionSession`, `Ranker`) → the
+ * bridge to the editor (`CompletionBridge`) → the list (`CompletionList`). Only the
+ * bridge knows CodeMirror. The sources are entries in the `completion.source` key,
+ * which this plugin declares: our own three go in there alongside the neighbours' — and
+ * the next one (an AI, snippets from the config) will arrive as an entry, without an
+ * edit here.
+ *
+ * It enters the editor as an extension through `editor.extension`, reaches the language
+ * server through its plugin, and its keys are keymap rows with the `completion`
+ * surface.
+ */
 @registry({ key: 'completion.source', schema: SOURCE_SCHEMA })
 @configSection({ section: 'completion', defaults: COMPLETION_DEFAULTS, schema: COMPLETION_SCHEMA })
 @plugin({ title: 'plugin.completion' })
 export default class CompletionPlugin {
+  /** Documents are a neighbour: what is open, where to jump, how to edit. */
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);
   }
 
   constructor(private readonly ide: Ide) {}
 
+  /** The language server is a neighbour: we ask its plugin rather than the core. */
   private get lsp(): LspPlugin {
     return this.ide.getPlugin(LspPlugin);
   }
@@ -121,6 +137,7 @@ export default class CompletionPlugin {
     return stub();
   }
 
+  /** Our own sources are switched off by a setting; somebody else's by their own plugin. */
   private enabled(id: string, settings: CompletionSettings): boolean {
     if (id === 'buffer') return settings.words;
     if (id === 'postfix') return settings.postfix;

@@ -1,3 +1,13 @@
+/**
+ * The editor's styling.
+ *
+ * It left the core's stylesheet entirely: the language server's tooltip, the git strips
+ * beside the text, and the text's frame itself. A plugin that draws a panel has to be
+ * able to dress it — otherwise its CSS would have to be kept by the core.
+ *
+ * The "how it was" popup stayed in the core: the core shows it, and we only say which
+ * line was grabbed.
+ */
 export const STYLE = `
 .editor { height: 100%; }
 .editor .cm-editor { height: 100%; }

@@ -144,8 +144,7 @@ export class CompletionSession {
     try {
       answer = source.items(ask);
     } catch {
-      return;
-    }
+      return;     }
     if (!('then' in answer)) {
       this.answers.set(source.id, answer);
       return;

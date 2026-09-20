@@ -4,6 +4,11 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ChoiceStore } from '../src/choice-store.js';
 
+/**
+ * The history of choices on the server. Three promises: it survives a restart, two
+ * choices at once are both counted, and the ceiling throws out the rarest rather than
+ * what was just chosen.
+ */
 let dir: string;
 
 beforeEach(async () => {
@@ -14,21 +19,21 @@ afterEach(async () => {
   await fs.rm(dir, { recursive: true, force: true });
 });
 
-describe('история выборов на диске', () => {
-  it('переживает перезапуск: новый экземпляр читает то, что записал старый', async () => {
+describe('the history of choices on disk', () => {
+  it('survives a restart: a new instance reads what the old one wrote', async () => {
     const store = new ChoiceStore(() => dir);
     expect(await store.add('log')).toBe(1);
     expect(await store.add('log')).toBe(2);
     expect(await new ChoiceStore(() => dir).load()).toEqual({ log: 2 });
   });
 
-  it('выборы разом из разных вкладок засчитаны все', async () => {
+  it('choices made at once from different tabs are all counted', async () => {
     const store = new ChoiceStore(() => dir);
     await Promise.all(Array.from({ length: 20 }, () => store.add('bind')));
     expect(await new ChoiceStore(() => dir).load()).toEqual({ bind: 20 });
   });
 
-  it('потолок выбрасывает самое редкое, только что выбранное остаётся', async () => {
+  it('the ceiling throws out the rarest, what was just chosen stays', async () => {
     const store = new ChoiceStore(() => dir, 3);
     await store.add('often');
     await store.add('often');
@@ -39,8 +44,8 @@ describe('история выборов на диске', () => {
     expect(Object.keys(await store.load()).sort()).toEqual(['fresh', 'mid', 'often']);
   });
 
-  it('испорченный файл — чистый лист, а не падение', async () => {
-    await fs.writeFile(path.join(dir, 'choices.json'), '{ сломано', 'utf8');
+  it('a corrupt file is a clean slate rather than a crash', async () => {
+    await fs.writeFile(path.join(dir, 'choices.json'), '{ broken', 'utf8');
     const store = new ChoiceStore(() => dir);
     expect(await store.load()).toEqual({});
     expect(await store.add('call')).toBe(1);

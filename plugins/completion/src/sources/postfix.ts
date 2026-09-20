@@ -1,5 +1,9 @@
 import type { Answer, Ask, Item, Source } from '../types.js';
 
+/**
+ * A template: `$expr` is the expression left of the dot, `$0` is where the caret will
+ * land. A newline is shifted to the indentation of the line the expression sits on.
+ */
 interface Template {
   name: string;
   shape: string;
@@ -20,6 +24,16 @@ const TEMPLATES: readonly Template[] = [
 
 const SCRIPTS = new Set(['ts', 'tsx', 'mts', 'cts', 'js', 'jsx', 'mjs', 'cjs']);
 
+/**
+ * Postfix templates: `user.name.log` → `console.log(user.name)`. They are members of
+ * nothing — they rewrite the expression on the left, and they are mixed into the list
+ * because a dot is a convenient trigger. In IDEA this is what they are loved for: first
+ * you write what you have, then what to do with it.
+ *
+ * We look for the expression backwards from the dot: names, dots, `?.`, `!.` and
+ * balanced brackets. Parsing without a parser — a mistake costs one extra item, which
+ * the human sees and does not choose.
+ */
 export class Postfix implements Source {
   readonly id = 'postfix';
   readonly weight = -4;
@@ -50,6 +64,10 @@ export class Postfix implements Source {
     };
   }
 
+  /**
+   * The start of the expression before the dot, or `null` if there is none (a number, a
+   * string, nothing).
+   */
   expressionStart(text: string, dot: number): number | null {
     let at = dot;
     let depth = 0;

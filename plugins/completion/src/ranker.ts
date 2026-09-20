@@ -4,14 +4,26 @@ import type { Item } from './types.js';
 
 export interface Ranked {
   item: Item;
+  /** An item's identity between frames: the selection holds on to it. */
   key: string;
   positions: number[];
   score: number;
 }
 
+/**
+ * The checker's tier (local → member → global → import) — worth about two matched
+ * letters.
+ */
 const RANK_STEP = 6;
 const DEPRECATED = 40;
 
+/**
+ * The list's order. The sense of intelligence comes from the order rather than from
+ * completeness, and it adds up from four terms: how what was typed landed (the
+ * matcher), whose item it is (the source's weight), what the checker says (its crude
+ * tier) and what the human chose before (the history). Equals go alphabetically: after
+ * a dot nothing has been typed, and the order of members has to be predictable.
+ */
 export class Ranker {
   constructor(
     private readonly fuzzy: Fuzzy,

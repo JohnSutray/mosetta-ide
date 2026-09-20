@@ -1,3 +1,7 @@
+/**
+ * The completion list: the same dark plate as the hover tooltip, with the selected row
+ * in the tree's selection colour.
+ */
 export const STYLE = `
 .cm-tooltip.cmp-host { background: transparent; border: none; }
 .cmp-host { margin-left: -28px; }

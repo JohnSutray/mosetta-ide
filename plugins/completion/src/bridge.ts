@@ -10,18 +10,37 @@ import type { Ask, Details } from './types.js';
 const WORD_CHAR = /[\w$]/;
 const WORD_START = /[A-Za-z_$]/;
 const WORD = /^[\w$]*$/;
+/**
+ * Where the list does not open by itself: a comment, a string, a regex. By key,
+ * everywhere.
+ */
 const QUIET = /Comment|String|RegExp/;
 
+/** Where the list is visible and has something to choose — then the keys are its. */
 interface Shown {
   pos: number;
   keys: boolean;
 }
 
+/**
+ * The bridge to CodeMirror — the one file of the plugin that knows it. Positioning,
+ * flipping at the bottom edge and scrolling with the text come from `showTooltip`;
+ * inside is our list. The bridge decides three things: when to open, when to close and
+ * how to insert.
+ *
+ * While the list is visible, the editor's field calls itself `completion editor`: the
+ * arrows, Enter, Tab and Escape belong to the list, everything else to the editor.
+ * There are no key handlers of its own here — only the surface's name.
+ */
 export class CompletionBridge {
   private view: EditorView | null = null;
   private unwatch: (() => void) | null = null;
   private readonly show = StateEffect.define<Shown | null>();
   private readonly shown: StateField<Shown | null>;
+  /**
+   * The same tooltip while the place is the same: a new one means new DOM and a lost
+   * scroll position.
+   */
   private placed: Tooltip | null = null;
 
   constructor(
@@ -29,6 +48,7 @@ export class CompletionBridge {
     private readonly history: ChoiceHistory,
     private readonly pathOf: () => string | null,
     private readonly auto: () => boolean,
+    /** Draw the list into an element; returns a teardown. */
     private readonly mount: (dom: HTMLElement) => () => void,
   ) {
     const show = this.show;
@@ -64,6 +84,7 @@ export class CompletionBridge {
     ];
   }
 
+  /** Called by key: the list appears here even mid-word and inside a comment. */
   showHere(): void {
     const view = this.view;
     if (!view) return;
@@ -73,6 +94,16 @@ export class CompletionBridge {
     this.open(state, from, state.doc.sliceString(from - 1, from) === '.' ? '.' : null, true);
   }
 
+  /**
+   * Insert what is selected. `replace` (Tab, as in IDEA) also eats the tail of the word
+   * after the caret: `get|Value` plus `getName` gives `getName` rather than
+   * `getNameValue`.
+   *
+   * An import, if it has already been read in, lands as THE SAME edit — one undo
+   * removes both the name and the import line. Not read in yet: we insert the name at
+   * once and the import catches up when it arrives; waiting for the network on Enter is
+   * not on.
+   */
   accept(mode: 'insert' | 'replace'): void {
     const view = this.view;
     const chosen = this.session.current();
@@ -173,6 +204,14 @@ export class CompletionBridge {
     if (typed && this.auto() && !this.quiet(state, head)) this.maybeOpen(state, head, this.insertedFrom(update));
   }
 
+  /**
+   * Whether to open by ourselves. A word has to BEGIN in what was just typed: one
+   * letter is a word's first letter; several at once (IME, a paste by automation) count
+   * too, if the whole word is inside what was typed. A list closed by Escape does not
+   * pop up again on the next letter of the same word: the word's beginning is already
+   * in the previous edit. A word right after a dot, like a bare dot, is a question
+   * about members.
+   */
   private maybeOpen(state: EditorState, head: number, inserted: number): void {
     let start = head;
     while (start > 0 && WORD_CHAR.test(state.doc.sliceString(start - 1, start))) start -= 1;
@@ -186,6 +225,7 @@ export class CompletionBridge {
     if (start !== head) this.open(state, start, null, false);
   }
 
+  /** Where in the new text what this edit brought begins. */
   private insertedFrom(update: ViewUpdate): number {
     let from = update.state.doc.length;
     update.changes.iterChangedRanges((_fromA, _toA, fromB) => {
@@ -224,6 +264,10 @@ export class CompletionBridge {
     return false;
   }
 
+  /**
+   * Edits beyond the insertion (an import), except those that would touch the insertion
+   * itself.
+   */
   private edits(state: EditorState, details: Details | null, from: number, to: number): ChangeSpec[] {
     const out: ChangeSpec[] = [];
     for (const edit of details?.edits ?? []) {
@@ -235,6 +279,11 @@ export class CompletionBridge {
     return out;
   }
 
+  /**
+   * The import caught the insertion up. We only apply what is ABOVE the insertion's
+   * line: during those milliseconds the human was typing at the caret, and the lines
+   * above it are the ones the server saw; everything below may have shifted.
+   */
   private lateImport(details: Details | null, from: number): void {
     const view = this.view;
     if (!view || !details || details.edits.length === 0) return;

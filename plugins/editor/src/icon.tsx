@@ -1,3 +1,9 @@
+/**
+ * The editor's icon: lines of text with a caret.
+ *
+ * Its own rather than one of our shared ones: a plugin that cannot bring its own icon
+ * forces the core to know about it.
+ */
 export function EditorIcon(filled: boolean) {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">

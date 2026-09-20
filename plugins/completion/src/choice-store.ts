@@ -38,8 +38,7 @@ export class ChoiceStore {
     try {
       parsed = JSON.parse(await fs.readFile(this.file(), 'utf8'));
     } catch {
-      return {};
-    }
+      return {};     }
     const out: Record<string, number> = {};
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return out;
     for (const [label, times] of Object.entries(parsed)) {

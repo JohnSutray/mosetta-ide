@@ -10,6 +10,10 @@ import { Postfix } from '../src/sources/postfix.js';
 import type { Answer, Ask, Item, Source } from '../src/types.js';
 import { matcher, textIndex } from '@mosetta/ide-plugin-search';
 
+/**
+ * Text with the caret as `|`: where the word starts, the line, the column — as the
+ * bridge computes them.
+ */
 function askAt(marked: string, extra: Partial<Ask> = {}): Ask {
   const pos = marked.indexOf('|');
   const text = marked.replace('|', '');
@@ -38,8 +42,8 @@ const word = (label: string): Item => ({ label, kind: 'word', source: 'buffer' }
 const member = (label: string, extra: Partial<Item> = {}): Item => ({ label, kind: 'method', source: 'lsp', ...extra });
 const NO_WEIGHTS = new Map<string, number>();
 
-describe('совпадение и порядок', () => {
-  it('горбы находят имя, середина слова — нет', () => {
+describe('matching and order', () => {
+  it('the humps find the name, the middle of a word does not', () => {
     const fuzzy = new Fuzzy(matcher, textIndex);
     expect(fuzzy.match('gEBI', 'getElementById')).not.toBe(null);
     expect(fuzzy.match('ebi', 'getElementById')).not.toBe(null);
@@ -47,13 +51,13 @@ describe('совпадение и порядок', () => {
     expect(fuzzy.match('', 'anything')?.positions).toEqual([]);
   });
 
-  it('начало имени подряд важнее разбросанного', () => {
+  it('consecutive at the name\'s start matters more than scattered', () => {
     const { ranker: rank } = ranker();
     const out = rank.rank([member('toString'), member('stopTimer')], 'st', NO_WEIGHTS);
     expect(out.map((one) => one.item.label)).toEqual(['stopTimer', 'toString']);
   });
 
-  it('ступень чекера: локальное раньше глобального при равном совпадении', () => {
+  it('the checker\'s tier: local before global on an equal match', () => {
     const { ranker: rank } = ranker();
     const out = rank.rank(
       [member('valueB', { rank: 5 }), member('valueA', { rank: 0 }), member('valueC', { rank: 0 })],
@@ -63,7 +67,7 @@ describe('совпадение и порядок', () => {
     expect(out.map((one) => one.item.label)).toEqual(['valueA', 'valueC', 'valueB']);
   });
 
-  it('одинаковые пункты от сервера получают разные ключи — выделение и строки не путаются', () => {
+  it('identical items from the server get different keys — the selection and the rows do not get confused', () => {
     const { ranker: rank } = ranker();
     const out = rank.rank(
       [
@@ -77,7 +81,7 @@ describe('совпадение и порядок', () => {
     expect(new Set(out.map((one) => one.key)).size).toBe(3);
   });
 
-  it('история поднимает то, что выбирали', () => {
+  it('history raises what was chosen', () => {
     const { ranker: rank, history } = ranker();
     const items = [member('getAll'), member('getOne')];
     expect(rank.rank(items, 'get', NO_WEIGHTS)[0]!.item.label).toBe('getAll');
@@ -86,7 +90,7 @@ describe('совпадение и порядок', () => {
     expect(rank.rank(items, 'get', NO_WEIGHTS)[0]!.item.label).toBe('getOne');
   });
 
-  it('выбор уходит на сервер, а его число — точное: дважды не засчитывается (правка 10.09)', () => {
+  it('a choice travels to the server, and its number is exact: it is not counted twice', () => {
     const store = signal<Record<string, number>>({});
     const sent: string[] = [];
     const history = new ChoiceHistory(store, (label) => sent.push(label));
@@ -101,7 +105,7 @@ describe('совпадение и порядок', () => {
   });
 });
 
-describe('сеанс', () => {
+describe('the session', () => {
   function late() {
     let answer: (value: Answer) => void = () => undefined;
     const source: Source = {
@@ -112,7 +116,7 @@ describe('сеанс', () => {
     return { source, answer: (value: Answer) => answer(value) };
   }
 
-  it('первый кадр — из синхронных; язык догоняет и вытесняет одноимённое слово', async () => {
+  it('the first frame comes from the synchronous ones; the language catches up and displaces a word of the same name', async () => {
     const lsp = late();
     const buffer: Source = { id: 'buffer', weight: -20, items: () => ({ items: [word('render'), word('return')] }) };
     const session = new CompletionSession(ranker().ranker, () => [lsp.source, buffer]);
@@ -128,7 +132,7 @@ describe('сеанс', () => {
     expect(session.loading.value).toBe(false);
   });
 
-  it('опоздавший ответ не переставляет выделение, если по списку ходили или он провисел', async () => {
+  it('a late answer does not move the selection if the list was walked or has hung around', async () => {
     let clock = 0;
     const lsp = late();
     const buffer: Source = { id: 'buffer', weight: -20, items: () => ({ items: [word('alpha'), word('alsoWord')] }) };
@@ -154,7 +158,7 @@ describe('сеанс', () => {
     expect(session2.current()?.item.label).toBe('alpha');
   });
 
-  it('ответ не успели прочитать — лучшее встаёт наверх', async () => {
+  it('the answer was not read in time — the best one goes to the top', async () => {
     const lsp = late();
     const buffer: Source = { id: 'buffer', weight: -20, items: () => ({ items: [word('alpha')] }) };
     const session = new CompletionSession(ranker().ranker, () => [lsp.source, buffer], () => 0);
@@ -164,7 +168,7 @@ describe('сеанс', () => {
     expect(session.current()?.item.label).toBe('alert');
   });
 
-  it('неполный ответ переспрашивается на каждую букву, полный — нет', () => {
+  it('an incomplete answer is re-asked on every letter, a complete one is not', () => {
     let asked = 0;
     let whole = 0;
     const partial: Source = {
@@ -189,7 +193,7 @@ describe('сеанс', () => {
     expect([asked, whole]).toEqual([2, 1]);
   });
 
-  it('ответ на старый вопрос выбрасывается, закрытие гасит всё', async () => {
+  it('an answer to an old question is thrown away, and closing puts everything out', async () => {
     const lsp = late();
     const session = new CompletionSession(ranker().ranker, () => [lsp.source]);
     session.start(askAt('x|'));
@@ -200,7 +204,7 @@ describe('сеанс', () => {
     expect(session.items.value).toEqual([]);
   });
 
-  it('вызов клавишей не молчит: пока думают — виден пустым, пусто — говорит и закрывается', async () => {
+  it('a call by key does not stay silent: while they think it is visible empty; empty means it says so and closes', async () => {
     const lsp = late();
     const told: string[] = [];
     const session = new CompletionSession(ranker().ranker, () => [lsp.source], () => 0, (what) => told.push(what));
@@ -221,7 +225,7 @@ describe('сеанс', () => {
     expect(told).toEqual(['empty']);
   });
 
-  it('упавший источник говорит, чей и что; остальные показывают своё', async () => {
+  it('a source that failed says whose it was and what happened; the others show theirs', async () => {
     const told: string[] = [];
     const broken: Source = { id: 'lsp', weight: 10, items: () => Promise.reject(new Error('Debug Failure')) };
     const buffer: Source = { id: 'buffer', weight: -20, items: () => ({ items: [word('render')] }) };
@@ -236,7 +240,7 @@ describe('сеанс', () => {
     expect(session.loading.value).toBe(false);
   });
 
-  it('документация дочитывается для выделенного и один раз', async () => {
+  it('the documentation is read in for the selected one, and once', async () => {
     let resolved = 0;
     const item = member('run', {
       resolve: async () => {
@@ -255,19 +259,19 @@ describe('сеанс', () => {
   });
 });
 
-describe('источники', () => {
-  it('слова буфера: без слова под кареткой, коротких и повторов', () => {
+describe('the sources', () => {
+  it('the buffer\'s words: without the word under the caret, the short ones and the duplicates', () => {
     const buffer = new BufferWords(() => true);
     const labels = buffer.items(askAt('render(); return renderer; ab; render; ren|')).items.map((one) => one.label);
     expect(labels).toEqual(['render', 'return', 'renderer']);
   });
 
-  it('после точки в типизированном файле слова молчат — члены скажет сервер', () => {
+  it('after a dot in a typed file the words stay silent — the members are the server\'s to name', () => {
     expect(new BufferWords(() => true).items(askAt('word foo.|')).items).toEqual([]);
     expect(new BufferWords(() => false).items(askAt('word foo.|', { path: 'a.md' })).items.length).toBe(2);
   });
 
-  it('постфикс забирает выражение слева и ставит каретку', () => {
+  it('a postfix takes the expression on the left and places the caret', () => {
     const postfix = new Postfix();
     const ask = askAt('  user.name(a[0]).lo|');
     const log = postfix.items(ask).items.find((one) => one.label === 'log')!;
@@ -280,7 +284,7 @@ describe('источники', () => {
     expect(branch.insert!.slice(0, branch.caret)).toBe('if (ok) {\n    ');
   });
 
-  it('постфикс молчит у дроби, строки и вне скриптов', () => {
+  it('a postfix stays silent at a fraction, a string, and outside scripts', () => {
     const postfix = new Postfix();
     expect(postfix.items(askAt('1.|')).items).toEqual([]);
     expect(postfix.items(askAt("'a'.|")).items).toEqual([]);
@@ -288,7 +292,7 @@ describe('источники', () => {
     expect(postfix.items(askAt('foo|')).items).toEqual([]);
   });
 
-  it('языковой сервер: правки дописываются до вопроса, ступень — из sortText', async () => {
+  it('the language server: the edits are flushed before the question, and the tier comes from sortText', async () => {
     const calls: string[] = [];
     const lsp = new LspCompletions(
       {
