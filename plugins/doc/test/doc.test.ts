@@ -3,9 +3,15 @@ import { FakeHost } from '@mosetta/ide-api/testing';
 import { RpcErrorCode } from '@mosetta/ide-protocol';
 import DocPlugin from '../src/client.js';
 
+/**
+ * The document as a plugin: what it promises its neighbours.
+ *
+ * The wire is a fake: the "server" answers with what the test put in, and the test
+ * fires the events. What is checked are the layer's promises rather than the socket.
+ */
 const NAME = '@mosetta/ide-plugin-doc';
-const PROJECT = { id: 'p1', root: '/один', name: 'один' } as never;
-const OTHER = { id: 'p2', root: '/два', name: 'два' } as never;
+const PROJECT = { id: 'p1', root: '/one', name: 'one' } as never;
+const OTHER = { id: 'p2', root: '/two', name: 'two' } as never;
 
 let host: FakeHost;
 let plugin: DocPlugin;
@@ -18,33 +24,33 @@ beforeEach(async () => {
   (globalThis as Record<string, unknown>)['document'] ??= {};
   host = new FakeHost();
   plugin = host.add(DocPlugin, NAME);
-  host.surface.docs.texts.set('a.ts', 'раз');
-  host.surface.docs.texts.set('b.ts', 'два');
+  host.surface.docs.texts.set('a.ts', 'one');
+  host.surface.docs.texts.set('b.ts', 'two');
   await host.start();
   host.surface.workspaceCurrent.value = PROJECT;
   host.surface.project.value = PROJECT;
   await settle();
 });
 
-describe('документ', () => {
-  it('открывает по проводу и закрывает предыдущий', async () => {
+describe('the document', () => {
+  it('opens over the wire and closes the previous one', async () => {
     await plugin.openFile('a.ts');
-    expect(plugin.openDoc.value?.text).toBe('раз');
+    expect(plugin.openDoc.value?.text).toBe('one');
     await plugin.openFile('b.ts');
     expect(host.surface.docs.closed).toEqual(['a.ts']);
     expect(plugin.openDoc.value?.path).toBe('b.ts');
   });
 
-  it('правка едет на сервер после паузы, а грязь видна сразу', async () => {
+  it('an edit travels to the server after a pause, while the dirtiness shows at once', async () => {
     await plugin.openFile('a.ts');
-    plugin.editDoc('раз-два');
+    plugin.editDoc('one-two');
     expect(plugin.dirty.value).toBe(true);
     expect(host.surface.docs.edits).toEqual([]);
     await plugin.doc.sync.flush();
-    expect(host.surface.docs.edits).toEqual([{ path: 'a.ts', text: 'раз-два' }]);
+    expect(host.surface.docs.edits).toEqual([{ path: 'a.ts', text: 'one-two' }]);
   });
 
-  it('goTo открывает чужой файл и просит каретку; в своём — только просит', async () => {
+  it('goTo opens another file and asks for the caret; in its own it only asks', async () => {
     await plugin.goTo('a.ts', 7, 2);
     expect(plugin.openDoc.value?.path).toBe('a.ts');
     expect(plugin.pendingReveal.value).toMatchObject({ path: 'a.ts', line: 7, character: 2, epoch: 1 });
@@ -53,18 +59,18 @@ describe('документ', () => {
     expect(plugin.pendingReveal.value).toMatchObject({ line: 9, epoch: 2 });
   });
 
-  it('Cmd+S упёрся в диск — просит показать спор, а не жалуется', async () => {
+  it('a save ran into disk — it asks for the argument to be shown rather than complaining', async () => {
     await plugin.openFile('a.ts');
     const asked: string[] = [];
     plugin.doc.onMergeRequested((path) => asked.push(path));
-    host.surface.docs.saveFails = { code: RpcErrorCode.RevisionConflict, message: 'диск ушёл' };
+    host.surface.docs.saveFails = { code: RpcErrorCode.RevisionConflict, message: 'disk moved on' };
     host.run('file.save');
     await settle();
     expect(asked).toEqual(['a.ts']);
     expect(host.ide(NAME).complaints).toEqual([]);
   });
 
-  it('файл исчез — возвращаемся к предыдущему', async () => {
+  it('the file vanished — we go back to the previous one', async () => {
     await plugin.openFile('a.ts');
     await plugin.openFile('b.ts');
     host.surface.docs.fireRemoved({ path: 'b.ts' });
@@ -73,7 +79,7 @@ describe('документ', () => {
     expect(host.ide(NAME).complaints.at(-1)).toContain('file.gone');
   });
 
-  it('прикрепление открывает то, что помнила вкладка; смена проекта — обнуляет', async () => {
+  it('attaching opens what the tab remembered; changing project resets it', async () => {
     await plugin.openFile('a.ts');
     host.surface.project.value = null;
     host.surface.project.value = PROJECT;
@@ -87,12 +93,12 @@ describe('документ', () => {
     expect(plugin.openDoc.value).toBeNull();
   });
 
-  it('внешняя правка обновляет открытый файл и говорит об этом, ожидаемая — молчит', async () => {
+  it('an external edit updates the open file and says so, an expected one stays silent', async () => {
     await plugin.openFile('a.ts');
-    host.surface.docs.texts.set('a.ts', 'снаружи');
+    host.surface.docs.texts.set('a.ts', 'from outside');
     host.surface.docs.fireExternal({ path: 'a.ts', revision: 'r2' });
     await settle();
-    expect(plugin.openDoc.value?.text).toBe('снаружи');
+    expect(plugin.openDoc.value?.text).toBe('from outside');
     expect(host.ide(NAME).said.at(-1)).toContain('file.external');
     plugin.doc.expectExternal('a.ts');
     host.surface.docs.fireExternal({ path: 'a.ts', revision: 'r3' });
@@ -100,36 +106,36 @@ describe('документ', () => {
     expect(host.ide(NAME).said.filter((one) => one.includes('file.external'))).toHaveLength(1);
   });
 
-  it('чужая вкладка правила тот же файл — берём текст сервера, свою версию не выдумываем', async () => {
+  it('another tab was editing the same file — we take the server\'s text rather than inventing our version', async () => {
     await plugin.openFile('a.ts');
     const epoch = plugin.externalEpoch.value;
     host.surface.docs.fireChanged({ path: 'a.ts', version: plugin.openDoc.value!.version, dirty: false });
     await settle();
     expect(plugin.externalEpoch.value).toBe(epoch);
-    host.surface.docs.texts.set('a.ts', 'из соседней вкладки');
+    host.surface.docs.texts.set('a.ts', 'from the neighbouring tab');
     host.surface.docs.fireChanged({ path: 'a.ts', version: plugin.openDoc.value!.version + 1, dirty: true });
     await settle();
-    expect(plugin.openDoc.value?.text).toBe('из соседней вкладки');
+    expect(plugin.openDoc.value?.text).toBe('from the neighbouring tab');
     expect(plugin.externalEpoch.value).toBe(epoch + 1);
   });
 
-  it('устаревшая версия при отправке — тоже подтягиваем сервер, а не жалуемся', async () => {
+  it('an outdated version on sending also pulls the server in rather than complaining', async () => {
     await plugin.openFile('a.ts');
     const epoch = plugin.externalEpoch.value;
     host.surface.docs.editFails = { code: RpcErrorCode.StaleVersion, message: 'stale' };
-    host.surface.docs.texts.set('a.ts', 'сервер знает лучше');
-    plugin.editDoc('моё');
+    host.surface.docs.texts.set('a.ts', 'the server knows better');
+    plugin.editDoc('mine');
     await plugin.doc.sync.flush();
     await settle();
-    expect(plugin.openDoc.value?.text).toBe('сервер знает лучше');
+    expect(plugin.openDoc.value?.text).toBe('the server knows better');
     expect(plugin.externalEpoch.value).toBe(epoch + 1);
     expect(host.ide(NAME).complaints).toEqual([]);
   });
 
-  it('номер открытия растёт на другом файле и не растёт на переезде того же', async () => {
+  it('the open number rises on another file and does not rise when the same one moves', async () => {
     await plugin.openFile('a.ts');
     const epoch = plugin.openEpoch.value;
-    host.surface.docs.texts.set('c.ts', 'раз');
+    host.surface.docs.texts.set('c.ts', 'one');
     host.surface.docs.fireMoved({ from: 'a.ts', path: 'c.ts' });
     await settle();
     expect(plugin.openDoc.value?.path).toBe('c.ts');
@@ -139,7 +145,15 @@ describe('документ', () => {
   });
 });
 
-describe('файл, открытый не документом', () => {
+/**
+ * A file is not always a document.
+ *
+ * An image is not pulled into memory and does not become a document at all. It can
+ * still be opened: a view of its own takes it on, and then a FILE is open and it has no
+ * text.
+ */
+describe('a file opened by something other than a document', () => {
+  /** A view entry as the image plugin puts it in. */
   function shows(prefix: string, text: boolean): void {
     host.registry.add(
       'file.view',
@@ -148,7 +162,7 @@ describe('файл, открытый не документом', () => {
     );
   }
 
-  it('показ без текста: документ не открываем вовсе', async () => {
+  it('a view without text: we do not open a document at all', async () => {
     shows('.png', false);
     await plugin.openFile('logo.png');
     expect(plugin.viewedFile.value).toBe('logo.png');
@@ -156,14 +170,14 @@ describe('файл, открытый не документом', () => {
     expect(host.surface.docs.opened).not.toContain('logo.png');
   });
 
-  it('показ, которому текст нужен, открывает документ как обычно', async () => {
+  it('a view that does need text opens a document as usual', async () => {
     shows('.ts', true);
     await plugin.openFile('a.ts');
     expect(plugin.openDoc.value?.path).toBe('a.ts');
     expect(plugin.viewedFile.value).toBeNull();
   });
 
-  it('документ и показ гасят друг друга: место одно', async () => {
+  it('the document and the view put each other out: there is one place', async () => {
     shows('.png', false);
     await plugin.openFile('a.ts');
     await plugin.openFile('logo.png');
@@ -175,17 +189,17 @@ describe('файл, открытый не документом', () => {
     expect(plugin.openDoc.value?.path).toBe('a.ts');
   });
 
-  it('закрыть можно и то, что документом не было', async () => {
+  it('what was never a document can be closed too', async () => {
     shows('.png', false);
     await plugin.openFile('logo.png');
     await plugin.closeFile();
     expect(plugin.viewedFile.value).toBeNull();
   });
 
-  it('живой текст — это правка, а не то, что успел подтвердить сервер', async () => {
+  it('the live text is the edit rather than what the server managed to confirm', async () => {
     await plugin.openFile('a.ts');
-    expect(plugin.liveText.value).toBe('раз');
-    plugin.editDoc('раз-два');
-    expect(plugin.liveText.value).toBe('раз-два');
+    expect(plugin.liveText.value).toBe('one');
+    plugin.editDoc('one-two');
+    expect(plugin.liveText.value).toBe('one-two');
   });
 });

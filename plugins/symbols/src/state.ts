@@ -5,25 +5,50 @@ import type { SymbolSpot } from '@mosetta/ide-plugin-editor';
 import DocPlugin from '@mosetta/ide-plugin-doc';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * Going to a declaration, and finding usages.
+ *
+ * One key for two actions — that is how WebStorm does it, and that is how it reads:
+ * "show me about this symbol". Standing on a usage, a human wants the declaration;
+ * standing on the declaration, they want to see who uses it. Working out which they
+ * meant is not their job.
+ */
+
 export type SymbolKind = 'definition' | 'usages';
 
 export interface SymbolList {
   kind: SymbolKind;
+  /** The word that was asked about — the heading is captioned with it. */
   word: string;
   sites: SymbolSite[];
   at: number;
+  /** The symbol's screen coordinates: the list stands next to it. */
   x: number;
   y: number;
 }
 
 export class Symbols {
+  /**
+   * How many rows we draw. `null` is used thirteen hundred times in a TypeScript
+   * project, and drawing that as a list means hanging the tab for the sake of data
+   * nobody reads anyway. The truncation is VISIBLE as a line of its own.
+   */
   readonly maxSites = 200;
 
   readonly list = signal<SymbolList | null>(null);
   readonly preview = signal<{ path: string; text: string; line: number } | null>(null);
 
+  /**
+   * Whether to hide the import rows. They are the first thing hidden: in a list of
+   * forty usages half are `import { foo } from './foo'`. The answer is remembered: a
+   * human decides this once rather than in every list.
+   *
+   * The memory is the core's: it survives a reload, and in a test it is substituted
+   * along with the host.
+   */
   readonly hideImports: Signal<boolean>;
 
+  /** Who answers about symbols — a neighbour, the language server plugin. */
   constructor(
     private readonly ide: Ide,
     private readonly lsp: {
@@ -47,22 +72,33 @@ export class Symbols {
     if (this.ide.getPlugin(UiPlugin).windows.activePick.value === this.pick) this.ide.getPlugin(UiPlugin).windows.activePick.value = null;
   }
 
+  /** The arrows and Enter arrive as `pick.*` commands, to whoever registered for them. */
   private readonly pick = {
     next: () => this.step(1),
     prev: () => this.step(-1),
     accept: () => this.accept(),
   };
 
+  /** What passed the import filter — before truncation. */
   filtered(list: SymbolList): SymbolSite[] {
     if (!this.hideImports.value) return list.sites;
     const kept = list.sites.filter((site) => !site.isImport);
     return kept.length > 0 ? kept : list.sites;
   }
 
+  /** What is really visible in the list — with the filter and with the ceiling. */
   shown(list: SymbolList): SymbolSite[] {
     return this.filtered(list).slice(0, this.maxSites);
   }
 
+  /**
+   * Ask about the symbol in this place.
+   *
+   * The place is named by WHOEVER DRAWS THE TEXT: the line, the column, the whole line
+   * itself, and where it is on screen. This used to take a live `EditorView` and get
+   * everything itself — that is, the core held a reference to CodeMirror for the sake
+   * of going to a declaration.
+   */
   async ask(where: SymbolSpot): Promise<void> {
     const file = this.ide.getPlugin(DocPlugin).openDoc.value;
     if (!file) return;
@@ -151,6 +187,7 @@ export class Symbols {
     return site.path === spot.path && site.line === spot.line;
   }
 
+  /** The word under the caret — for the heading only, hence the simple rule. */
   private wordAt(text: string, character: number): string {
     const left = text.slice(0, character).match(/[\w$]+$/)?.[0] ?? '';
     const right = text.slice(character).match(/^[\w$]+/)?.[0] ?? '';

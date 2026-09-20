@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { DocSync } from '../src/sync.js';
 
-describe('отправка правок', () => {
-  it('flush во время летящей правки дожидается её и досылает накопленное', async () => {
+/**
+ * Sending edits. `flush` promises "everything typed is already on the server" — the
+ * question to the language server about completion rests on that: ask it before the
+ * text and tsserver receives a line it does not have.
+ */
+describe('sending edits', () => {
+  it('a flush during an edit in flight waits for it and sends what accumulated', async () => {
     const sent: string[] = [];
     const answers: Array<() => void> = [];
     const sync = new DocSync(

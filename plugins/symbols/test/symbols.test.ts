@@ -6,10 +6,18 @@ import LspPlugin, { type SymbolSite } from '@mosetta/ide-plugin-lsp';
 import SymbolsPlugin from '../src/client.js';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * Declarations and usages as a plugin.
+ *
+ * One key for two actions: standing on a usage we jump to the declaration, standing on
+ * the declaration we show who uses it. The list takes the arrows like any list with a
+ * search field, and hides the imports while there is anything besides them.
+ */
 function site(path: string, line: number, preview = 'foo()', isImport = false): SymbolSite {
   return { path, line, character: 0, preview, isImport };
 }
 
+/** The language server's answers: put in by the test, handed over by a neighbour. */
 const fake = { definitions: [] as SymbolSite[], referencesFound: [] as SymbolSite[] };
 
 async function raise() {
@@ -43,8 +51,8 @@ async function raise() {
 
 const HERE = { line: 3, character: 2, text: 'foo()', box: { x: 10, y: 20 } };
 
-describe('символы', () => {
-  it('единственное объявление в другом месте — прыгаем сразу, без списка', async () => {
+describe('symbols', () => {
+  it('a single declaration elsewhere — we jump at once, with no list', async () => {
     const { host, symbols } = await raise();
     fake.definitions.push(site('b.ts', 7));
     await symbols.ask(HERE);
@@ -53,11 +61,11 @@ describe('символы', () => {
     expect(symbols.list.value).toBeNull();
   });
 
-  it('стоим на объявлении — показываем использования и забираем стрелки', async () => {
+  it('standing on the declaration — we show the usages and take the arrows', async () => {
     const { host, symbols } = await raise();
     fake.definitions.push(site('a.ts', 3));
     fake.referencesFound.push(site('a.ts', 3), site('c.ts', 1), site('d.ts', 9));
-    host.surface.docs.texts.set('c.ts', 'один\nдва');
+    host.surface.docs.texts.set('c.ts', 'one\ntwo');
     await symbols.ask(HERE);
 
     const list = symbols.list.value!;
@@ -73,7 +81,7 @@ describe('символы', () => {
     expect(host.plugin(UiPlugin).windows.activePick.value).toBeNull();
   });
 
-  it('импорты спрятаны, пока кроме них есть что показать', async () => {
+  it('the imports are hidden while there is anything else to show', async () => {
     const { symbols } = await raise();
     fake.referencesFound.push(site('c.ts', 1, "import { foo } from './a'", true), site('d.ts', 9));
     await symbols.ask(HERE);
@@ -83,7 +91,7 @@ describe('символы', () => {
     expect(symbols.shown(list).map((one) => one.path)).toEqual(['c.ts', 'd.ts']);
   });
 
-  it('вопрос от редактора доходит до списка', async () => {
+  it('the question from the editor reaches the list', async () => {
     const { host, symbols } = await raise();
     fake.referencesFound.push(site('c.ts', 1));
     host.plugin(Editor);

@@ -1,3 +1,7 @@
+/**
+ * The symbol list's own styling. It moved out of the core's stylesheet word for word.
+ * The theme's variables come from the core.
+ */
 export const STYLE = `
 
 .symbols-head {

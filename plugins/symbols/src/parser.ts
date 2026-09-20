@@ -30,7 +30,7 @@ export class SymbolParser {
     try {
       child = this.wake();
     } catch (err) {
-      this.log.warn(`символы: не запустился разборщик — ${String(err)}`);
+      this.log.warn(`symbols: the parser did not start — ${String(err)}`);
       return {};
     }
     const id = this.next++;
@@ -92,7 +92,7 @@ export class SymbolParser {
       if (line.trim() === '') continue;
       try {
         const answer = JSON.parse(line) as { id: number; files: Record<string, TsSymbol[]>; failed?: string };
-        if (answer.failed) this.log.warn(`символы: разборщик споткнулся — ${answer.failed}`);
+        if (answer.failed) this.log.warn(`symbols: the parser stumbled — ${answer.failed}`);
         this.waiting.get(answer.id)?.(answer.files ?? {});
         this.waiting.delete(answer.id);
       } catch {}
@@ -103,7 +103,7 @@ export class SymbolParser {
     if (this.idle) clearTimeout(this.idle);
     const taken = (await this.live?.memoryMb()) ?? 0;
     if (taken > this.budgetMb) {
-      this.log.info(`символы: разборщик взял ${Math.round(taken)} МБ — перезапускаю`);
+      this.log.info(`symbols: the parser took ${Math.round(taken)} MB — restarting it`);
       this.stop();
       return;
     }
