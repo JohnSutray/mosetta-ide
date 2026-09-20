@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 
+/** Text: three lines — the same as the editor shows. */
 export function TextIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
@@ -8,6 +9,7 @@ export function TextIcon(): JSX.Element {
   );
 }
 
+/** Text and view: two columns, the left one in lines, the right one solid. */
 export function SplitIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round">
@@ -18,6 +20,7 @@ export function SplitIcon(): JSX.Element {
   );
 }
 
+/** The view: a page with a heading and text — what the markup will turn into. */
 export function PreviewIcon(): JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round">

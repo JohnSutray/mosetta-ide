@@ -1,3 +1,9 @@
+/**
+ * How to show code — the `editor` section of the settings file. It lives with the code
+ * display rather than with the editor: the previews live on it too — search, symbols,
+ * merging — while the editor merely declares the section its own and writes into it. It
+ * is handed to neighbours as a permit: a constant rather than behaviour.
+ */
 export interface EditorSettings {
   fontFamily: string;
   fontSize: number;
@@ -16,6 +22,7 @@ export const EDITOR_DEFAULTS: EditorSettings = {
   ligatures: false,
 };
 
+/** The shape of the section's value: the human's file is validated against it. */
 export const EDITOR_SCHEMA = {
   type: 'object',
   additionalProperties: false,

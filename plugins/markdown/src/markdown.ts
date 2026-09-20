@@ -1,3 +1,19 @@
+/**
+ * Parsing markup — PURE mechanics.
+ *
+ * Our own rather than a library, and the reason is not pride. Ready-made parsers hand
+ * over HTML as a STRING, and a string has to be inserted into the page with
+ * `dangerouslySetInnerHTML` — that is, executing what is written in a project's file.
+ * And we have a code painter of our own, and a code block in the view has to look the
+ * way it looks in the editor; it cannot be extracted from a string of HTML.
+ *
+ * So the parsing hands over a TREE and preact draws it. Not one line of markup from the
+ * file reaches the page — only text.
+ *
+ * There is no CommonMark completeness here and none is planned: what is parsed is what
+ * our README and our own decision records are written with. Whatever the parser did not
+ * understand stays a paragraph — text one can see rather than emptiness.
+ */
 
 export type Inline =
   | { kind: 'text'; text: string }
@@ -16,6 +32,7 @@ export type Block =
   | { kind: 'table'; head: Inline[][]; rows: Inline[][][] };
 
 export class Markdown {
+  /** Markup to a tree of blocks. No DOM, no network: hence a test. */
   blocks(text: string): Block[] {
     return this.parse(text.replace(/\r\n?/g, '\n').split('\n'));
   }
@@ -114,6 +131,7 @@ export class Markdown {
     return out;
   }
 
+  /** Whether a line starts a new block: a paragraph breaks off against it. */
   private starts(line: string): boolean {
     return (
       /^(#{1,6})\s+/.test(line) ||
@@ -124,6 +142,7 @@ export class Markdown {
     );
   }
 
+  /** Whether a list item continues after a blank line. */
   private more(lines: string[], at: number): boolean {
     for (let i = at + 1; i < lines.length; i += 1) {
       if (lines[i]!.trim() === '') continue;
@@ -149,6 +168,10 @@ export class Markdown {
       .map((one) => this.inline(one.trim()));
   }
 
+  /**
+   * Inline markup: code, an image, a link, bold, italic, strikethrough. The order of
+   * the checks IS the priority — code first, because there is no markup inside it.
+   */
   inline(text: string): Inline[] {
     const out: Inline[] = [];
     let plain = '';

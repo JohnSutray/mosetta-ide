@@ -4,16 +4,36 @@ import type { Extension } from '@codemirror/state';
 import { tagHighlighter, tags as t, type Highlighter } from '@lezer/highlight';
 import type { Palette } from '@mosetta/ide-plugin-theme';
 
+/**
+ * Where the look gets its colours: from the theme plugin. There is not one colour here:
+ * Darcula is the theme's data, and assembling a CodeMirror theme and syntax
+ * highlighting out of it is the mechanics of showing code.
+ */
 export interface ThemeSource {
   readonly palette: Palette;
   readonly codeFont: string;
   readonly dark: boolean;
 }
 
+/**
+ * How code looks: the CodeMirror theme, the syntax highlighting and the font rules,
+ * assembled from the theme's palette.
+ *
+ * The list of "which tag, which colour role" is ONE for two jobs: both the editor's
+ * highlighting and the painting of single lines in lists are assembled from it. Having
+ * drifted apart, they would look like two different schemes in one window.
+ */
 export class CodeLook {
+  /** Colours by role: read by those who draw without CodeMirror's text too. */
   readonly palette: Palette;
   readonly font: string;
+  /** The theme and the syntax highlighting in one piece — that is how it is plugged in. */
   readonly extension: Extension;
+  /**
+   * The same list, but handing over a COLOUR instead of a class name:
+   * `HighlightStyle`'s classes live in a stylesheet CodeMirror mixes in when an editor
+   * is mounted, and a line outside an editor has nothing to lean on there.
+   */
   readonly highlighter: Highlighter;
 
   constructor(theme: ThemeSource) {
@@ -24,6 +44,16 @@ export class CodeLook {
     this.highlighter = tagHighlighter(ink.map((item) => ({ tag: item.tag, class: item.color })));
   }
 
+  /**
+   * The text's font rules, identical in every editor.
+   *
+   * Ligatures are switched off by TWO properties rather than one:
+   * `font-variant-ligatures` removes the required and discretionary ones, while
+   * contextual alternates (`calt`) live separately and are on by default. In JetBrains
+   * Mono it is precisely those that change a character's shape according to its
+   * neighbour. The ones that stay on are written EXPLICITLY: the theme kills ligatures
+   * across the whole page body, and "setting nothing" would mean inheriting "off".
+   */
   textStyle(settings: { fontFamily: string; ligatures: boolean }) {
     const off = { fontVariantLigatures: 'none !important', fontFeatureSettings: "'calt' 0, 'liga' 0, 'dlig' 0 !important" };
     const on = { fontVariantLigatures: 'normal !important', fontFeatureSettings: 'normal !important' };
@@ -64,6 +94,7 @@ export class CodeLook {
     );
   }
 
+  /** Colours by the meaning of the code: which tag is painted with which palette role. */
   private ink(p: Palette) {
     return [
       { tag: [t.keyword, t.modifier, t.controlKeyword, t.operatorKeyword], color: p.keyword },

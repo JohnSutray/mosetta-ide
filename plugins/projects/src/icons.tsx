@@ -1,5 +1,9 @@
 import type { JSX } from 'preact';
 
+/**
+ * The picker's own icon. Two folders: "switch project" rather than "open a folder".
+ * Monochrome, taking its colour from the button; filled when the window is open.
+ */
 const common = {
   width: 16,
   height: 16,

@@ -1,19 +1,48 @@
+/**
+ * A line-by-line diff: what changed between what is in the last commit and what a human
+ * has typed right now.
+ *
+ * Computed on the client rather than on the server, and that is the main decision here:
+ * the strips at the side have to move with the caret rather than lag by one save.
+ * Sending the text to the server on every keystroke for this is a bad bargain, and `git
+ * diff` knows nothing about unsaved work anyway.
+ */
 
 export type HunkKind = 'added' | 'modified' | 'removed';
 
 export interface Hunk {
   kind: HunkKind;
+  /**
+   * The first line in the CURRENT text, one-based. For a removal, the line AFTER the
+   * hole.
+   */
   from: number;
+  /** The last line in the current text, one-based. For a removal, equal to `from`. */
   to: number;
+  /** What used to be here. Empty for an addition. */
   before: string[];
 }
 
+/** A step of the walk: how many lines were eaten on each side. */
 export interface Step {
   kind: 'same' | 'del' | 'ins';
   count: number;
 }
 
+/**
+ * The line-by-line diff.
+ *
+ * A class rather than a bundle of functions: the complexity ceiling is its field, and
+ * one day its methods will carry measurements. Myers on a large file is the first thing
+ * one will want to measure when told "the editor feels sluggish".
+ */
 export class LineDiff {
+  /**
+   * The complexity ceiling. Myers finds a path of length D in O(N·D); on a sensible
+   * edit D is in the tens. If there are more than a thousand differences, the file was
+   * rewritten whole, and nobody will read a detailed breakdown anyway: it is more
+   * honest to say "this middle is different" than to spend a minute counting.
+   */
   private readonly maxEdits = 1000;
 
   hunks(before: string, after: string): Hunk[] {
@@ -23,6 +52,14 @@ export class LineDiff {
     return this.toHunks(this.steps(a, b), a);
   }
 
+  /**
+   * The whole script for turning `a` into `b`, from the first line to the last.
+   *
+   * It is exposed not for the strips' sake: the strips make do with hunks. It is asked
+   * for by three-way merging — there one needs to know WHICH lines of the common
+   * ancestor each side left untouched, and hunks no longer remember that. One Myers for
+   * two jobs: a second one would have drifted from the first on the first day.
+   */
   steps(a: string[], b: string[]): Step[] {
     let head = 0;
     while (head < a.length && head < b.length && a[head] === b[head]) head += 1;
@@ -44,6 +81,7 @@ export class LineDiff {
     return steps;
   }
 
+  /** Neighbouring steps of one kind are one step. */
   private add(steps: Step[], step: Step): void {
     const last = steps[steps.length - 1];
     if (last && last.kind === step.kind) last.count += step.count;
@@ -62,6 +100,10 @@ export class LineDiff {
     ];
   }
 
+  /**
+   * Myers, the greedy variant with a trace. Returns `null` if there are more
+   * differences than the ceiling.
+   */
   private myers(a: string[], b: string[]): Step[] | null {
     const n = a.length;
     const m = b.length;
@@ -95,6 +137,7 @@ export class LineDiff {
     return null;
   }
 
+  /** We walk the trace backwards and stack the steps in forward order. */
   private walkBack(
     trace: Int32Array[],
     a: string[],
@@ -144,6 +187,11 @@ export class LineDiff {
     else steps.push({ kind, count: 1 });
   }
 
+  /**
+   * Steps to hunks. A deletion immediately followed by an insertion is a REPLACEMENT:
+   * the human was editing a line rather than throwing one away and writing another, and
+   * there should be one strip.
+   */
   private toHunks(steps: Step[], before: string[]): Hunk[] {
     const hunks: Hunk[] = [];
     let oldAt = 0;
@@ -188,6 +236,10 @@ export class LineDiff {
     return hunks;
   }
 
+  /**
+   * A trailing newline is not an empty line. Otherwise a file ending in a newline —
+   * that is, almost any file — would get an extra line in the diff.
+   */
   split(text: string): string[] {
     if (text === '') return [];
     const lines = text.split('\n');
@@ -195,6 +247,14 @@ export class LineDiff {
     return lines;
   }
 
+  /**
+   * What the text becomes if this hunk is reverted.
+   *
+   * A pure function over a STRING rather than a transaction over a live editor.
+   * Reverting used to be something only an `EditorView` could do, and because of that
+   * one button the core held a reference to the editor — that is, to CodeMirror. The
+   * rule is the same as with `goTo`: one asks not "give me the editor" but "do this".
+   */
   reverted(text: string, hunk: Hunk): string {
     const lines = this.split(text);
     const restored = hunk.before;

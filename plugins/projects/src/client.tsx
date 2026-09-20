@@ -7,6 +7,16 @@ import { STYLE } from './style.js';
 import type { DirSuggestion, RecentProject } from './types.js';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * The project picker is a plugin.
+ *
+ * Opening a project is the core's job (reset everything project-scoped, attach the
+ * socket, remember it in the address), and the core does it: the contract hands over
+ * `workspaces`. Here is the window one chooses in: the history, the path field, the
+ * directory tree, the suggestions on Cmd+Space, and the rule "while there is no
+ * project, the picker is open by itself". The machine's directories and the history
+ * belong to its own server half rather than to the core.
+ */
 @plugin({ title: 'plugin.projects' })
 export default class ProjectsPlugin implements ProjectsRemote {
   readonly projects: Projects;

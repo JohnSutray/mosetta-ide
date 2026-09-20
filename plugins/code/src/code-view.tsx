@@ -5,13 +5,31 @@ import type { EditorSettings } from './settings.js';
 import type { CodeLook } from './look.js';
 import type { Languages } from './languages.js';
 
+/** What to show; the look and the languages are supplied by the plugin. */
 export interface CodeViewProps {
   path: string;
   text: string;
+  /**
+   * The line all this is being shown for, zero-based. −1 means simply the start of the
+   * file.
+   */
   line: number;
   settings: EditorSettings;
 }
 
+/**
+ * Show a file — always by one and the same means.
+ *
+ * The search preview used to be drawn by hand: a `<pre>` with line numbers and not one
+ * colour. The result was two different "editors" in one application, the one people
+ * edit in and the one they look in — and the second knew nothing about the language or
+ * about the scheme.
+ *
+ * Here is the same CodeMirror with the same Darcula and the same highlighting by
+ * extension. There is exactly one difference and it is deliberate: it is NOT EDITABLE,
+ * so focus stays with whoever showed it (the search field, for instance) and the arrows
+ * keep walking the list.
+ */
 export function CodeView({
   path,
   text,
@@ -58,6 +76,7 @@ export function CodeView({
   return <div class="code-view" ref={host} />;
 }
 
+/** Highlighting that one line: the same role as the active line in the editor. */
 const hitLine = EditorView.decorations.compute(['selection'], (state) => {
   const head = state.selection.main.head;
   const line = state.doc.lineAt(head);
