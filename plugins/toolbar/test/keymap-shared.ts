@@ -1,25 +1,25 @@
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { FACTORY_KEYMAP } from '../../keymap/src/keymap.js';
+import { TOOLBAR_DEFAULTS } from '../src/settings.js';
 import type { KeyBinding, KeyScope, Keymap } from '../../keymap/src/types.js';
 
+/**
+ * The factory keymap is the PLUGIN'S DATA: a human's file holds only their differences,
+ * and we check the distribution where it lives — in the code.
+ */
 export function keymap(): Keymap {
   return FACTORY_KEYMAP;
 }
 
+/**
+ * The order of the toolbar's buttons is a setting too, and the SHIPPED order is the
+ * plugin's defaults. A human's file holds only their differences, so we check the
+ * shipment where it lives — in the code, exactly as we do with the keymap.
+ */
 export function toolbarOrder(): string[] {
-  return read<{ toolbar?: { order?: string[] } }>('../../../config/settings.json').toolbar?.order ?? [];
+  return TOOLBAR_DEFAULTS.order;
 }
 
-function read<T>(where: string): T {
-  const raw = fs.readFileSync(fileURLToPath(new URL(where, import.meta.url)), 'utf8');
-  const clean = raw
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/,(\s*[}\]])/g, '$1');
-  return JSON.parse(clean) as T;
-}
-
+/** Every environment the keymap has to make sense for. */
 export const WORLDS: Array<{ scope: KeyScope; host: KeyScope; isMac: boolean }> = [
   { scope: 'browser:mac', host: 'browser', isMac: true },
   { scope: 'browser:win', host: 'browser', isMac: false },

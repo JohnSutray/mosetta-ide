@@ -2,19 +2,18 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { defaults } from '../src/config/defaults.js';
 import { jsonc } from '../src/config/jsonc.js';
 import { ConfigStore } from '../src/config/store.js';
 import { waitFor } from './helpers.js';
 
-const SHIPPED = fileURLToPath(new URL('../../config', import.meta.url));
 
 describe('JSONC', () => {
   it('understands comments and trailing commas', () => {
     const parsed = jsonc.parse<{ a: number; b: string[] }>(
       `{
          // a line comment
-         "a": 1, 
+         "a": 1, /* a block one */
          "b": ["x", "y",],
        }`,
       'test',
@@ -35,7 +34,7 @@ describe('JSONC', () => {
 
   it('the same inside an array and through a block comment', () => {
     const parsed = jsonc.parse<{ a: number[] }>(
-      `{ "a": [1, 2,  ] }`,
+      `{ "a": [1, 2, /* and that is all */ ] }`,
       'test',
     );
     expect(parsed.a).toEqual([1, 2]);
@@ -58,11 +57,16 @@ describe('JSONC', () => {
 });
 
 describe('the real config', () => {
-  it('settings.json parses and is visible as a source', async () => {
-    const store = await ConfigStore.load(SHIPPED);
-    expect(store.current.sources).toHaveLength(1);
-    expect(store.current.sources[0]).toContain('settings.json');
-    expect(store.settings.fs.maxFileMb).toBe(8);
+  /**
+   * No file at all is the normal state: the repository ships no settings of its own, and
+   * a fresh machine has none either. The store comes up on the code's defaults and says
+   * so by naming no sources — which is what the settings window reads to tell a factory
+   * value from mine.
+   */
+  it('a missing directory is legitimate: the defaults, and no sources', async () => {
+    const store = await ConfigStore.load(path.join(os.tmpdir(), 'ide-config-absent', String(Date.now())));
+    expect(store.current.sources).toEqual([]);
+    expect(store.settings.fs.maxFileMb).toBe(defaults.settings.fs.maxFileMb);
     store.dispose();
   });
 
@@ -123,6 +127,11 @@ describe('a broken config', () => {
   });
 });
 
+/**
+ * Choosing a shell is the one setting the server writes itself. Checked end to end:
+ * written → re-read → the bundle holds the new value, and the human's comments are
+ * still in place.
+ */
 describe('writing a setting', () => {
   it('two writes at once do not lose each other', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-config-race-'));

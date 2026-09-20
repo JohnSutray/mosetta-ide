@@ -5,6 +5,13 @@ import { DesktopPaths } from './paths.js';
 import { AppScheme } from './scheme.js';
 import { AppMenu, IdeWindows, TrayIcon } from './shell.js';
 
+/**
+ * The Mosetta IDE shell: the supervisor over the daemon, the windows and the tray.
+ *
+ * The architecture is the same as in the browser: the server apart, the windows apart,
+ * a socket between them. Electron adds three things — a single instance, an icon in the
+ * tray while the daemon is alive, and windows instead of tabs.
+ */
 class Desktop {
   private readonly paths = new DesktopPaths(path.resolve(__dirname, '..'));
   private readonly scheme = new AppScheme(this.paths.client);
@@ -43,8 +50,6 @@ class Desktop {
   }
 
   private ready(): void {
-    const seeded = this.paths.seedConfig();
-    if (seeded.length) console.info(`[desktop] the config has been seeded: ${seeded.join(', ')} → ${this.paths.config}`);
     this.scheme.serve();
     new AppMenu().install();
     this.daemon.start();

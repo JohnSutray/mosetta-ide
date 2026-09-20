@@ -21,7 +21,7 @@
   "shell.missing": "No one is drawing the panels",
   "shell.missing.loaded": "Plugins that did load: {names}",
   "shell.missing.none": "No plugins loaded at all — check the server log.",
-  "shell.missing.why": "The layout is a plugin: the core keeps a registry of panels and a place for them, but nothing has claimed that place. Add a layout plugin to \"plugins.enabled\" in config/settings.json — ours is @mosetta/ide-plugin-layout.",
+  "shell.missing.why": "The layout is a plugin: the core keeps a registry of panels and a place for them, but nothing has claimed that place. Add a layout plugin to \"plugins.enabled\" in settings.json — ours is @mosetta/ide-plugin-layout.",
   "toolbar.editor": "Editor panel",
   "toolbar.fetch": "Fetch from remote"
 }
