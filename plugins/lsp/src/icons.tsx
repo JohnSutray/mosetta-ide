@@ -1,9 +1,23 @@
 import type { JSX } from 'preact';
 
+/**
+ * A language server's icon — a plate with letters.
+ *
+ * The same form as the file icons in the tree: a language cannot be depicted by a
+ * drawing, it is recognised by its letters. A copy of our own rather than an import
+ * from the widgets plugin: there is no point depending on it for two rectangles, and
+ * the form here is a convention of the build rather than data.
+ *
+ * A server names itself (`typescript`), so the table is small and open: an unfamiliar
+ * server gets the first two letters of its name and a grey plate — which is more honest
+ * than inventing a colour for it.
+ */
+
 const KNOWN: Record<string, { label: string; color: string }> = {
   typescript: { label: 'TS', color: '#3178c6' },
 };
 
+/** What to call a server with this name, and what to paint it with. */
 function badgeOf(server: string): { label: string; color: string } {
   return KNOWN[server] ?? { label: server.slice(0, 2).toUpperCase(), color: '#6b7275' };
 }

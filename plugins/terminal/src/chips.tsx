@@ -1,6 +1,17 @@
 import { useT } from '@mosetta/ide-api/client';
 import type { TerminalInfo } from './types.js';
 
+/**
+ * The terminal chips in the toolbar.
+ *
+ * Not a button: there are several terminals, and one icon will not show their state.
+ * The toolbar's registry knows this and takes markup from us rather than an icon —
+ * `toolbar.widget` instead of `toolbar.button`.
+ *
+ * Blue lights up for WORK only: the foreground process in the terminal is not the
+ * shell. The one shown right now is outlined, a dead one is dimmed — but it stays; its
+ * output is still wanted.
+ */
 export function Chips({
   list,
   active,

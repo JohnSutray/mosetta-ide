@@ -10,6 +10,13 @@ import type {
   PushPreview,
 } from './types.js';
 
+/**
+ * What `Git` talks to its server half with.
+ *
+ * Not `ide.rpc.call('state')` as strings all over the file but named methods: the
+ * plugin implements them through `@remote`, and the state classes receive them through
+ * the CONSTRUCTOR — so a test substitutes its own without bringing a socket up.
+ */
 export interface GitRemote {
   state(): Promise<GitState>;
   branches(): Promise<GitBranch[]>;
@@ -18,12 +25,42 @@ export interface GitRemote {
   run(action: GitAction, branch?: string, name?: string): Promise<{ error: string | null }>;
 }
 
+/**
+ * git on the client.
+ *
+ * The state arrives whole as a snapshot and is updated by an event: the server computes
+ * it in the background while we only paint. So there is not one `await` on the way to
+ * drawing the tree.
+ *
+ * There are THREE classes here rather than one, or thirty-four exports as there used to
+ * be. Three — because these are three different things with different lifetimes: the
+ * repository's state lives while the project is open, whereas the two windows live
+ * while they are held open. Dumping them into one class would give the same armful,
+ * only with a dot in the middle.
+ *
+ * The windows receive `Git` through the CONSTRUCTOR: they need its state and its
+ * ability to call git, but they must not own it.
+ */
+
 const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {}, moved: {} };
 
+/** How much output we keep: git with `--progress` prints by the kilometre. */
 const OUTPUT_LIMIT = 64 * 1024;
 
+/**
+ * A row's colour in the tree. Three values, and all three are about a file: blue
+ * "changed", green "new", red "conflict".
+ */
 export type TreeTint = 'modified' | 'added' | 'conflict';
 
+/**
+ * A git state to a colour. An unversioned file is painted GREEN, like one added to the
+ * index: to a human they are the same thing — "this file is not in the history yet".
+ * IDEA had a separate olive shade for "unversioned", but there is no point
+ * distinguishing two kinds of newness in the tree: the action for them is one.
+ *
+ * A deleted file is not in the tree by definition — there is nothing to paint.
+ */
 const FILE_TINT: Partial<Record<GitFileState, TreeTint>> = {
   modified: 'modified',
   added: 'added',
@@ -31,6 +68,11 @@ const FILE_TINT: Partial<Record<GitFileState, TreeTint>> = {
   conflict: 'conflict',
 };
 
+/**
+ * What we know about the repository, and how we call git.
+ *
+ * Not a word about windows: this state may be shown by anybody, including nobody.
+ */
 export class Git {
   constructor(
     private readonly remote: GitRemote,
@@ -48,9 +90,25 @@ export class Git {
   readonly state = signal<GitState>(EMPTY);
   readonly branches = signal<GitBranch[]>([]);
 
+  /**
+   * What is spinning right now and what it is printing.
+   *
+   * `fetch`, `pull` and `push` go over the network; while they go, the button has to be
+   * visibly busy and the output has to run before one's eyes. Otherwise the only output
+   * available to a human is "I pressed it and I am waiting", and that is the worst
+   * interface there is.
+   */
   readonly running = signal<GitAction | null>(null);
   readonly output = signal('');
 
+  /**
+   * The colour of every row in the tree, DIRECTORIES included.
+   *
+   * There is EXACTLY ONE rule for painting a directory: a directory is blue if there is
+   * at least one painted file inside it. Not "the strongest status within", not shades
+   * — simply "there is something here". A collapsed directory answers one question —
+   * whether to look inside or not — and one colour is enough for that.
+   */
   readonly tint: ReadonlySignal<Map<string, TreeTint>> = computed(() => {
     const out = new Map<string, TreeTint>();
     for (const [path, state] of Object.entries(this.state.value.files)) {
@@ -66,6 +124,10 @@ export class Git {
     return out;
   });
 
+  /**
+   * Whether there is a repository at all. There is not — and half the actions are
+   * meaningless.
+   */
   get repo(): boolean {
     return this.state.value.repo;
   }
@@ -90,6 +152,12 @@ export class Git {
     } catch {}
   }
 
+  /**
+   * Call git and show how it is doing it. The arguments are assembled by the server —
+   * only the action's name travels here. The branch is supplied by different callers
+   * from different places: the branches popup the chosen one, the push window the
+   * current one.
+   */
   async run(action: GitAction, branchName?: string, name?: string): Promise<boolean> {
     if (this.running.value) return false;
     const branch = branchName ?? null;
@@ -115,6 +183,10 @@ export class Git {
     }
   }
 
+  /**
+   * What to say on completion. Every action has a phrase of its own, because "fetch
+   * fix/typo — done" is a lie: fetch is not about a branch but about the whole remote.
+   */
   private doneText(action: GitAction, branch: string | null, name?: string): string {
     const of = name ?? branch ?? '';
     switch (action) {
@@ -142,21 +214,35 @@ export class Git {
   }
 }
 
+/** A popup row: a section heading, a remote's subheading, or the branch itself. */
 export type BranchRow =
   | { kind: 'head'; title: string }
   | { kind: 'remote'; title: string }
   | { kind: 'branch'; branch: GitBranch; at: number; label: string };
 
+/**
+ * The menu's approximate width and height: needed so that it does not run off the
+ * screen.
+ */
 const MENU_W = 200;
 const MENU_H = 230;
 
+/** The branches popup and the action submenu unfolded inside it. */
 export class BranchesWindow {
   readonly open = signal(false);
   readonly selected = signal(0);
+  /** A fuzzy filter over the branches — as everywhere in this IDE. */
   readonly filter = signal('');
+  /** Where to stick the dropdown action menu: the row's screen coordinates. */
   readonly menu = signal<{ name: string; x: number; y: number } | null>(null);
+  /** Which action is currently asking for a name: rename and create. */
   readonly prompt = signal<{ action: GitAction; value: string } | null>(null);
 
+  /**
+   * The branches after the filter. It is precisely these the arrows walk and the
+   * selection is computed from: otherwise an arrow would travel to a row that is not on
+   * screen.
+   */
   readonly shown: ReadonlySignal<GitBranch[]> = computed(() => {
     const query = this.filter.value.trim();
     if (query === '') return this.git.branches.value;
@@ -171,6 +257,22 @@ export class BranchesWindow {
     () => this.shown.value[this.selected.value] ?? null,
   );
 
+  /**
+   * The branches with explicit headings:
+   *
+   * ```
+   * local
+   * main
+   * feature
+   * remote
+   * origin
+   * main
+   * ```
+   *
+   * The headings are unselectable — the same rule as in the double Shift: a heading
+   * explains rather than acts. The rows' order matches the order in the list of
+   * branches, so the arrows walk exactly as it looks.
+   */
   readonly rows: ReadonlySignal<BranchRow[]> = computed(() => {
     const rows: BranchRow[] = [];
     let seenLocal = false;
@@ -206,6 +308,7 @@ export class BranchesWindow {
   constructor(
     private readonly git: Git,
     private readonly ide: Pick<Ide, 'on' | 'complain' | 't'> & { readonly mount: Pick<Mount, 'bounds'> },
+    /** Fuzzy search is a field of the widgets plugin. */
     private readonly fuzzy: () => Pick<Fuzzy, 'find'>,
   ) {
     this.ide.on('state', () => {
@@ -261,6 +364,10 @@ export class BranchesWindow {
     });
   }
 
+  /**
+   * Unfold the menu at the selected row — for the keyboard. Enter and → do the same
+   * thing: they show what can be done with the branch.
+   */
   openMenuHere(): void {
     const branch = this.current.value;
     if (!branch) return;
@@ -269,6 +376,11 @@ export class BranchesWindow {
     this.openMenu(branch.name, row.getBoundingClientRect());
   }
 
+  /**
+   * Open the action menu at a row: to its right, as in IDEA. If there is no room on the
+   * right, then on the left: a menu half of which is off the screen is worse than a
+   * menu on the wrong side.
+   */
   openMenu(name: string, rect: DOMRect): void {
     if (this.menu.value?.name === name) {
       this.menu.value = null;
@@ -289,6 +401,7 @@ export class BranchesWindow {
     this.prompt.value = { action, value: action === 'rename' ? branch.name : '' };
   }
 
+  /** Perform an action on the selected branch and clean up after ourselves. */
   async do(action: GitAction, name?: string): Promise<void> {
     const ok = await this.git.run(action, this.current.value?.name, name);
     if (!ok) return;
@@ -298,6 +411,7 @@ export class BranchesWindow {
     });
   }
 
+  /** Close everything: the project changed, and there is nothing more to talk about. */
   reset(): void {
     batch(() => {
       this.open.value = false;
@@ -307,6 +421,10 @@ export class BranchesWindow {
   }
 }
 
+/**
+ * The push window. Separate from the branches: a push is not "one more button in a
+ * list" but a decision with consequences — especially with the checkbox.
+ */
 export class PushWindow {
   constructor(
     private readonly git: Git,
@@ -318,9 +436,15 @@ export class PushWindow {
   readonly preview = signal<PushPreview | null>(null);
   readonly force = signal(false);
 
+  /**
+   * The selected commit of ours, and the files shown on the left. Nothing selected
+   * means we show the whole outgoing diff: that is the answer to "what am I sending",
+   * and it is the main question in this window.
+   */
   readonly selected = signal<string | null>(null);
   readonly changes = signal<GitChange[]>([]);
 
+  /** The chosen commit whole — its message is shown under the tree. */
   readonly commit: ReadonlySignal<PushPreview['local'][number] | null> = computed(() => {
     const short = this.selected.value;
     const preview = this.preview.value;
@@ -332,6 +456,10 @@ export class PushWindow {
     );
   });
 
+  /**
+   * An answer to an outdated request is thrown away: people click faster than git
+   * counts.
+   */
   private token = 0;
 
   async show(): Promise<void> {
@@ -362,17 +490,23 @@ export class PushWindow {
     });
   }
 
+  /** Clear the selection: the whole outgoing diff on the left again. */
   clear(): void {
     if (this.selected.value === null) return;
     this.selected.value = null;
     void this.loadChanges();
   }
 
+  /** A click on one of our commits: select it, or clear the selection. */
   select(short: string): void {
     this.selected.value = this.selected.value === short ? null : short;
     void this.loadChanges();
   }
 
+  /**
+   * Send. Force is `--force-with-lease` on the server: the human agreed to overwrite
+   * WHAT THEY WERE SHOWN rather than what appeared in the remote later.
+   */
   async send(): Promise<void> {
     const branch = this.preview.value?.branch ?? null;
     const ok = await this.git.run(this.force.value ? 'force-push' : 'push', branch ?? undefined);

@@ -34,6 +34,10 @@ import { sharedModules } from './shared-modules.js';
 import type { Registry } from './registry.js';
 import type { I18n } from '../i18n/index.js';
 
+/**
+ * What the plugins' home takes from the tab's root: commands, the voice, memory, the
+ * dictionary.
+ */
 export interface PluginDeps {
   commands: Pick<Commands, 'registerPlugin'>;
   notes: Pick<Notifications, 'say' | 'complain' | 'notify' | 'settle'>;
@@ -48,18 +52,46 @@ interface Built {
 }
 
 export class Plugins {
+  /**
+   * The socket arrives through the CONSTRUCTOR.
+   *
+   * Not for elegance: otherwise a test cannot slip its own event in, and unpacking the
+   * `plugins.event` envelope is the one place where the core decides whose event this
+   * is — getting it wrong there means handing over somebody else's.
+   */
   constructor(
     private readonly rpc: RpcLike,
     private readonly deps: PluginDeps,
   ) {}
 
   readonly list = signal<PluginInfo[]>([]);
+  /**
+   * The commands declared by annotations on the plugins that came up. This is where the
+   * command list in the keymap editor takes them from: a package manifest no longer
+   * knows anything about commands.
+   */
   readonly commands = signal<Array<{ id: string }>>([]);
   readonly surfaces = signal<Array<() => unknown>>([]);
 
+  /**
+   * The live plugins, by their class. The key is the constructor itself, so
+   * `getPlugin(NpmScripts)` finds the instance without string names, and the type is
+   * inferred from the same object.
+   */
   private readonly instances = new Map<unknown, unknown>();
+  /** One line per slot: a note's id, by the slot's name. */
   private readonly slots = new Map<string, number>();
 
+  /**
+   * What the application hands outwards. The list is closed — that is precisely what
+   * makes it a contract.
+   *
+   * Our components arrive as a PARAMETER rather than by import: state must not know
+   * about the interface. An import from here into the UI closed a circle through the
+   * panel layout, and the panel registry turned out empty at the moment of reading — a
+   * rare breakage that only a test catches, and that looks to the eye like "panels of
+   * zero width".
+   */
   private expose(): void {
     (globalThis as Record<string, unknown>).__ideApi = {
       modules: {
@@ -84,10 +116,18 @@ export class Plugins {
     };
   }
 
+  /** Put a plugin that came up onto the shared table under its own name. */
   private serve(name: string, mod: unknown): void {
     (globalThis as unknown as { __ideApi: { modules: Record<string, unknown> } }).__ideApi.modules[name] = mod;
   }
 
+  /**
+   * Bring the plugins up: ask for the list, fetch the code, activate.
+   *
+   * ONE of them failing does not stop the others. A plugin that brings the editor down
+   * is exactly what other plugin systems get scolded for; here a crash is visible as a
+   * line and goes no further.
+   */
   async load(surface: IdeServices, registry: Registry): Promise<void> {
     this.expose();
     this.shared = surface;
@@ -97,7 +137,8 @@ export class Plugins {
     try {
       list = await this.rpc.call('plugins.list', null);
     } catch {
-      return;     }
+      return;
+    }
     this.list.value = list;
 
     for (const info of list) {
@@ -144,8 +185,10 @@ export class Plugins {
     }
   }
 
+  /** The core services shared by every plugin: they arrive from the frame. */
   private shared: IdeServices | null = null;
 
+  /** The store of declarations: it arrives from the frame and lives just as long. */
   private store: Registry | null = null;
 
   private registryOf(): Registry {
@@ -175,11 +218,16 @@ export class Plugins {
     }
   }
 
+  /**
+   * What a plugin receives through its constructor. Everything BOUND to it is here:
+   * calls leave into its namespace, and there is nowhere for two plugins to collide.
+   */
   services(name: string): Ide {
     if (!this.shared) throw new Error('the services were not supplied: the plugins were loaded past plugins.load');
     return { ...this.shared, ...this.bound(name) };
   }
 
+  /** What is bound to a plugin: calls, memory, commands, events — all in its namespace. */
   bound(name: string): Omit<Ide, keyof IdeServices> {
     return {
       name,
@@ -202,20 +250,50 @@ export class Plugins {
           },
         };
       },
+      /**
+       * A plugin's memory across reloads.
+       *
+       * The core does not know WHAT it remembers: whether a panel is open, which tab is
+       * selected, whether a section is collapsed. What used to stand here was a
+       * `panel()` that set up the memory, the command and a registry entry all at once
+       * — that is, the core knew the word "panel", although a panel is a concept
+       * belonging to the layout plugin.
+       *
+       * The key is partitioned BY PLUGIN: two plugins are entitled to name their state
+       * alike, and they must not silently share a cell. As a bonus, nobody's state can
+       * collide with ours.
+       */
       remember: <T,>(key: string, initial: T, scope: 'tab' | 'both' = 'both'): Signal<T> =>
         this.deps.memory.signal(`${name}/${key}`, initial, scope),
 
+      /**
+       * Your own styles in one piece. The tag is marked with the plugin's name:
+       * otherwise there would be no way to answer "where does this padding come from".
+       */
       css(text: string) {
         const tag = document.createElement('style');
         tag.dataset.plugin = name;
         tag.textContent = text;
         document.head.append(tag);
       },
+      /**
+       * Subscribing to events from YOUR OWN server half.
+       *
+       * The core carries them in a single `plugins.event` envelope and does not look
+       * inside: that `term.data` exists is known only to the terminal's two halves.
+       * Here we filter out what is not ours — by the plugin's name and by the event's
+       * name — and hand back an unsubscribe.
+       */
       on: (event: string, handler: (payload: unknown) => void) =>
         this.rpc.on('plugins.event', (frame) => {
           if (frame.name !== name || frame.event !== event) return;
           handler(frame.payload);
         }),
+      /**
+       * Somebody else's plugin, by its class. Not "it might turn up": if a plugin
+       * declared that it needs another, that other one came up first — the load order
+       * is topological, and otherwise loading would not have reached this point.
+       */
       getPlugin: <T,>(ctor: PluginClass<T>): T => {
         const found = this.instances.get(ctor);
         if (!found) throw new Error(`plugin not up: ${ctor.name}`);

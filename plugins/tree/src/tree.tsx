@@ -9,18 +9,36 @@ import type { TreeTints } from './tints.js';
 import type { Typeahead } from '@mosetta/ide-plugin-ui';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
 
+/** Everything the drawing lives on: the state arrives as props rather than by import. */
 export interface TreeProps {
   files: FileTree;
   selection: TreeSelection;
   ops: TreeOps;
   menu: TreeMenuState;
   tints: TreeTints;
+  /** Paths holding a broken file inside — a red wave under the name. */
   broken: { readonly value: ReadonlySet<string> };
+  /** Type-ahead search: what was typed, and where it matched in the name. */
   typeahead: Typeahead;
+  /** Documents are a neighbour: what is open, and how to open it. */
   docs: DocPlugin;
+  /** Whether the leading modifier is held — we ask the keymap. */
   primaryHeld: (event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }) => boolean;
 }
 
+/**
+ * The project tree. It is built by the plugin's memory, and on a change of project that
+ * memory is reset whole rather than "topped up".
+ *
+ * The look is taken from IDEA: the project root as a row with the path, an icon on
+ * every row, a chevron only on directories.
+ *
+ * The colour of a name means EXACTLY ONE thing — git status. A file has three values
+ * (changed, new, conflict), a directory one: blue if there is a painted file inside — a
+ * collapsed directory answers one question, whether to look inside or not. Olive marks
+ * directories outside the walk: that is not git but a warning. A language server's
+ * error is a red wave under the name rather than its colour.
+ */
 export function Tree(props: TreeProps) {
   const ide = useIde();
   const t = useT();
@@ -218,12 +236,21 @@ function Row({
   );
 }
 
+/**
+ * Where something dropped will land: the directory itself, or the directory the file
+ * lies in.
+ */
 function folderFor(entry: DirEntry): string {
   if (entry.kind === 'dir') return entry.path;
   const at = entry.path.lastIndexOf('/');
   return at === -1 ? '' : entry.path.slice(0, at);
 }
 
+/**
+ * The highlight of the receiving directory. It deliberately lives outside the signals:
+ * dragging sends `dragover` dozens of times a second, and redrawing the whole tree on
+ * every event is noticeable work for the sake of one outline.
+ */
 let marked: Element | null = null;
 
 function markDrop(folder: string): void {
@@ -239,6 +266,11 @@ function clearDrop(): void {
   marked = null;
 }
 
+/**
+ * `/Users/john/code/app` → `~/code/app`. This is pure display cosmetics: there is
+ * nobody for the client to ask about the home directory, so it is recognised by the
+ * path's shape. Not recognised means we show the whole path — we will not lie.
+ */
 function shortenHome(root: string): string {
   const unix = /^(\/Users\/[^/]+|\/home\/[^/]+)(\/.*)?$/.exec(root);
   if (unix) return `~${unix[2] ?? ''}`;
@@ -247,10 +279,15 @@ function shortenHome(root: string): string {
   return root;
 }
 
+/**
+ * A path put inside a selector. File names come with quotes and brackets in them, and
+ * then a raw path breaks not the search but the parsing of the whole selector.
+ */
 function cssEscape(path: string): string {
   return typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(path) : path.replace(/"/g, '\\"');
 }
 
+/** The name with what was typed highlighted: the match in bold. */
 function found(name: string, at: [number, number] | null) {
   if (!at) return name;
   return (

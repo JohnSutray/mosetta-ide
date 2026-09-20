@@ -10,6 +10,27 @@ import { scriptId } from './script-id.js';
 import TerminalPlugin from '@mosetta/ide-plugin-terminal';
 import type { RunPlan } from './server.js';
 
+/**
+ * The scripts plugin's client half.
+ *
+ * Note the imports: `@preact/signals` and `@mosetta/ide-api/client` here are the very
+ * same objects the application holds, because the plugin is built ON THE SPOT and those
+ * names are substituted with the live ones. No second copy of the signals appears, and
+ * so "the signal changes and nothing redraws" cannot happen.
+ *
+ * The shape is a default-exported class, and the services arrive through the
+ * constructor. From which follows the thing it was all done for: the PUBLIC methods of
+ * this class are the API for neighbouring plugins — exactly those, and nothing else. A
+ * neighbour calls `getPlugin(NpmScripts)` and sees `run`, `scripts`, `refresh`. Neither
+ * the IDE services, nor the lifecycle, nor the conversation with the server appear in
+ * that list — all of it is private.
+ *
+ * There used to be a panel; now there is a popup with a search field: it is needed for
+ * exactly two beats, find and run. In a monorepo there are fifty such scripts and half
+ * the names repeat, so the package is a SECTION HEADING rather than a prefix on every
+ * row.
+ */
+
 export interface ScriptInfo {
   id: string;
   script: string;
@@ -19,8 +40,15 @@ export interface ScriptInfo {
 
 export type { RunPlan } from './server.js';
 
+/**
+ * A second action on a script, from a neighbour: "debug" next to "run". A key rather
+ * than an import of the debugger: scripts know nothing about debugging, and the
+ * debugger can be turned off — in which case the row simply has no second button. The
+ * icon is theirs, the label a dictionary key belonging to whoever brought it.
+ */
 export interface ScriptAction {
   id: string;
+  /** A dictionary key for the tooltip. */
   title: string;
   icon: () => unknown;
   run: (scriptId: string) => void;
@@ -40,6 +68,11 @@ export default class NpmScripts {
   private readonly open = signal(false);
   private readonly known = signal<ScriptInfo[]>([]);
 
+  /**
+   * What runs the scripts: what was found on the machine, what the project suggests,
+   * what is in use, and whether the choice window is open. The `tools.packageManager`
+   * setting is ours, and choosing it happens here.
+   */
   readonly managers = signal<PackageManagerInfo[]>([]);
   readonly managerPicker = signal(false);
 
@@ -51,6 +84,7 @@ export default class NpmScripts {
     if (this.open.value) void this.refresh();
   }
 
+  /** The key that opened the window closes it — the toggle is its own. */
   @command('scripts.packageManager')
   protected pickManager(): void {
     this.managerPicker.value = !this.managerPicker.value;
@@ -136,6 +170,7 @@ export default class NpmScripts {
     }
   }
 
+  /** Write the choice into the settings file; empty means "as the project decides". */
   async chooseManager(ref: string): Promise<void> {
     try {
       await this.ide.setSetting('tools', 'packageManager', ref);
@@ -159,6 +194,15 @@ export default class NpmScripts {
     return stub();
   }
 
+  /**
+   * Run a script by id. A second run lands in the same terminal.
+   *
+   * The terminal is a NEIGHBOUR now rather than a core service. There used to be a
+   * borrowed contract method here — the core carried a method about terminals for the
+   * sake of one plugin. Now it is a plugin-to-plugin link: `getPlugin` hands over the
+   * live instance, and the type comes from the same object, so a typo is caught by the
+   * compiler.
+   */
   async run(id: string): Promise<void> {
     const terminal = this.ide.getPlugin(TerminalPlugin);
     await terminal.show(async () => {
@@ -167,14 +211,21 @@ export default class NpmScripts {
     });
   }
 
+  /**
+   * WHAT and WHERE a script runs — without running it. The debugger needs the same
+   * command the terminal does, but in pieces: the executable and the arguments apart,
+   * so that its adapter can be put between them.
+   */
   plan(id: string): Promise<RunPlan> {
     return this.ask({ id });
   }
 
+  /** What we know about the scripts right now. */
   scripts(): ScriptInfo[] {
     return this.known.value;
   }
 
+  /** Ask for the list again. */
   async refresh(): Promise<void> {
     try {
       this.known.value = await this.list();

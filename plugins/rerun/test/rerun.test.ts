@@ -4,6 +4,17 @@ import NpmScripts, { type ScriptInfo } from '@mosetta/ide-plugin-npm-scripts';
 import TerminalPlugin from '@mosetta/ide-plugin-terminal';
 import Rerun from '../src/client.js';
 
+/**
+ * Two plugins crossing over, checked with a fake host.
+ *
+ * This is the one place where class identity is really put to the test.
+ * `getPlugin(NpmScripts)` looks the instance up BY CONSTRUCTOR, and the whole
+ * construction rests on there being one constructor: at build time plugin packages are
+ * external to one another, like preact, and are substituted with the live class. Let a
+ * second copy appear and the lookup would come back empty — which is exactly the kind
+ * of failure that looks to the eye like "the button does not work".
+ */
+
 const NPM = '@mosetta/ide-plugin-npm-scripts';
 const RERUN = '@mosetta/ide-plugin-rerun';
 
@@ -51,9 +62,9 @@ describe('re-running the last script', () => {
   });
 
   it('exactly what the neighbour made public is visible', () => {
-    // @ts-expect-error
+    // @ts-expect-error the neighbour's conversation with the server is private
     void npm.list;
-    // @ts-expect-error
+    // @ts-expect-error the IDE's services all the more so
     void npm.ide;
     expect(typeof npm.run).toBe('function');
     expect(typeof npm.scripts).toBe('function');

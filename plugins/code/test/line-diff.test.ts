@@ -3,6 +3,11 @@ import { LineDiff } from '../src/line-diff.js';
 
 const lineDiff = new LineDiff();
 
+/**
+ * A row-by-row diff for the strips at the side. We check the PROMISES a human sees
+ * rather than the algorithm: where the mark will stand, what kind it is, and what it
+ * will show for "how it was".
+ */
 const text = (...lines: string[]) => `${lines.join('\n')}\n`;
 
 describe('the line-by-line diff', () => {

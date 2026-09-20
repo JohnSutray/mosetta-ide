@@ -5,7 +5,25 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Shells } from '../src/shells.js';
 
+/**
+ * What to launch terminals with.
+ *
+ * We check what is settled by arithmetic rather than by which shells happen to be on
+ * the checker's machine: we put our own shell in our own directory and add it to PATH
+ * ourselves. Otherwise the test would be checking different things on a Mac and on
+ * Windows.
+ *
+ * There is one main promise here: **what is written into the config has to read back to
+ * the same file on the machine where it was written, and must not break a machine that
+ * has no such shell.** The settings file travels in git, and a full path in it is a
+ * delayed-action mine.
+ *
+ * `which` comes from the core; here it is substituted and searches this process's PATH,
+ * as the real one searches the human's.
+ */
+
 const WIN = process.platform === 'win32';
+/** On Windows executability is an extension rather than a bit. */
 const EXT = WIN ? '.cmd' : '';
 
 let dir: string;

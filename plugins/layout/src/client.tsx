@@ -14,14 +14,39 @@ import {
 } from './schema.js';
 import { STYLE } from './style.js';
 
+/**
+ * The panel layout.
+ *
+ * Requirement two of the original brief: the interface consists ONLY of panels, no tabs
+ * and no sidebars, and a panel above a panel does not happen at all — any split unfolds
+ * into a column by one common rule. The tree and git press LEFT, working panels —
+ * terminal, scripts, problems — open on the RIGHT, and the editor in the middle takes
+ * the remainder.
+ *
+ * All of that is our idea of what an IDE looks like rather than a property of an IDE.
+ * Which is why it is here rather than in the core. The core set aside a slot
+ * (`chrome.main`), holds the registry of wishes, and knows nothing about columns, about
+ * sides, or about the editor being in the middle: `side: 'main'` is as much a string to
+ * it as `left`.
+ *
+ * From which the main inconvenience and the main honesty follow: without this plugin
+ * what one sees is not a white screen but an explanation of who was supposed to draw
+ * and why they did not. The layout is the one thing moved out of the core whose absence
+ * cannot be survived in silence.
+ */
 @registry({ key: 'panel', schema: PANEL_SCHEMA })
 @registry({ key: 'panel.action', schema: PANEL_ACTION_SCHEMA })
 @registry({ key: 'main.overlay', schema: MAIN_OVERLAY_SCHEMA })
 @plugin({ title: 'plugin.layout' })
 export default class Layout {
+  /**
+   * How much of the screen the columns are not allowed to eat. This is the LAYOUT's
+   * decision: a panel dragged across the whole screen leaves no room to drag it back.
+   */
   private readonly keepFree = 320;
   private readonly fallbackWidth = 260;
   private readonly fallbackMin = 150;
+  /** The sum of the side columns is guarded here rather than by each column separately. */
   private readonly fit = new ColumnFit(this.keepFree);
 
   constructor(private readonly ide: Ide) {}
@@ -64,6 +89,11 @@ export default class Layout {
     );
   }
 
+  /**
+   * Who covered the middle. Several may be open — we show the LAST one: overlays do not
+   * share the space, they cover one another, and it is honest to count whoever came
+   * later as being on top.
+   */
   private overlay() {
     const open = this.ide.registry<MainOverlay>('main.overlay').all.value.filter((one) => one.open.value);
     const top = open[open.length - 1];
@@ -103,6 +133,14 @@ export default class Layout {
     );
   }
 
+  /**
+   * Neighbours' actions in THIS panel's header.
+   *
+   * The neighbour brings a description and we draw it: every button gets one size, one
+   * backing and one tooltip — the same decision as with toolbar badges, and for the
+   * same reason. A disabled button stays visible and explains itself through its
+   * tooltip: one that vanished gets looked for as a missing feature.
+   */
   private actionsOf(panel: string) {
     const tips = this.ide.getPlugin(UiPlugin).windows.tips;
     return this.ide
@@ -131,6 +169,13 @@ export default class Layout {
       });
   }
 
+  /**
+   * The strip one drags. The limits are worked out by the layout — they are its
+   * business. The ceiling is computed with LIVE neighbours: what is left after the
+   * middle and the other side columns, rather than after the middle alone. One drags
+   * from the shown width rather than the remembered one: otherwise a squeezed column
+   * would jump on the first movement of the mouse.
+   */
   private grip(panel: PanelWish, side: 'left' | 'right', asks: ColumnAsk[], shown: number) {
     return (
       <Resizer windows={this.ide.getPlugin(UiPlugin).windows}
@@ -147,6 +192,12 @@ export default class Layout {
     );
   }
 
+  /**
+   * Whoever was dragged last keeps their width, and the neighbours give way. The
+   * resizer reports the grab itself (`onGrab`): guessing from a change in geometry will
+   * not do — the remembered width is already at its ceiling, and dragging does not
+   * change it, while the column still has to be shown.
+   */
   private readonly kept = signal<string | undefined>(undefined);
 
   private asks(open: PanelWish[]): ColumnAsk[] {

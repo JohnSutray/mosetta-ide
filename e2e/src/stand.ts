@@ -10,6 +10,18 @@ import { boot, type RunningServer } from '../../server/src/server.js';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(here, '..', '..');
 
+/**
+ * A stand for checks with a real browser.
+ *
+ * Three processes, as a human has: our server on a random port, Vite with the client
+ * (the backend's port arrives as the `VITE_IDE_PORT` variable, as in `dev:scratch`) and
+ * Chrome. Specifically the REAL Chrome (`channel: 'chrome'`) rather than the Chromium
+ * from Playwright's cache: the question the stand was set up for is "what does the
+ * browser the human lives in do with a key".
+ *
+ * The config is the stand's (`server/test/fixtures/config`) rather than the personal
+ * one: the language servers are off, and there is no point watching the disk.
+ */
 export class Stand {
   private constructor(
     readonly server: RunningServer,
@@ -19,6 +31,12 @@ export class Stand {
     private readonly stateDir: string,
   ) {}
 
+  /**
+   * Whether there is a Chrome on this machine; without one the check is skipped LOUDLY.
+   * Playwright looks for `channel: 'chrome'` along the same paths but does not hand
+   * them outwards (`executablePath` knows only its own Chromium), so the list is
+   * repeated here.
+   */
   static async chromeHere(): Promise<boolean> {
     const candidates =
       process.platform === 'darwin'

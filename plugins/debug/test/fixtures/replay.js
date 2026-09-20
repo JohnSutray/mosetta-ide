@@ -1,3 +1,7 @@
+// How React 19 in dev mode counterfeits a server component's stack: a function is born
+// through eval with the sourceURL `about://React/…` and a map onto the REAL file, and
+// React CALLS it to get a pretty stack. A breakpoint set in the real file lands, through
+// the map, in the counterfeit as well.
 const path = require('node:path');
 const { replayed } = require('./replayed.js');
 

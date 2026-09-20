@@ -1,3 +1,22 @@
+/**
+ * Parsing symbols in a SEPARATE process.
+ *
+ * Why a process rather than a thread or a parser of our own: TypeScript's parse tree
+ * costs tens of megabytes per file, and V8 does not give that memory back to the
+ * operating system even after garbage collection. Measured on a built bundle of 760 KB:
+ * 61 MB of RSS in the daemon, and it stayed there for good. A process that has exited
+ * gives everything back at once.
+ *
+ * The parser is THE VERY SAME one, though: the symbols are complete, with no
+ * approximations. A lexer with no tree, and other people's grammars (lezer,
+ * tree-sitter), were rejected — they would be catching up with the reference
+ * implementation, with unpredictable divergences.
+ *
+ * The conversation is JSON lines on stdin and stdout: one line per request, one per
+ * answer. The path to TypeScript itself arrives as an argument: the child looks for its
+ * dependencies where they were installed for the plugin rather than where it was
+ * started from.
+ */
 import { createRequire } from 'node:module';
 import readline from 'node:readline';
 

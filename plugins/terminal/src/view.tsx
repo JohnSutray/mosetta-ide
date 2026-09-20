@@ -8,6 +8,11 @@ import { FitAddon } from '@xterm/addon-fit';
 
 import type { Attached } from './types.js';
 
+/**
+ * The terminal's font: its own `terminal.fontFamily`, and empty means the editor's. A
+ * terminal has requirements of its own for a font (character width, Powerline), so the
+ * setting is its own, but by default the two do not diverge.
+ */
 function fontOf(settingsOf: IdeServices['settingsOf']): string {
   const own = settingsOf('terminal', TERMINAL_DEFAULTS).value.fontFamily.trim();
   const family = own || settingsOf('editor', EDITOR_DEFAULTS).value.fontFamily;
@@ -15,13 +20,28 @@ function fontOf(settingsOf: IdeServices['settingsOf']): string {
 }
 
 export interface Screen {
+  /** The name of the terminal being shown. `null` means there is nothing to show. */
   name: string | null;
+  /** Subscribe to this terminal's output stream. */
   onData(name: string, sink: (data: string) => void): () => void;
+  /** Catch up on what has already been printed: after a tab reload the screen is empty. */
   attach(name: string): Promise<Attached>;
   write(name: string, data: string): void;
   resize(name: string, cols: number, rows: number): void;
 }
 
+/**
+ * The terminal's screen.
+ *
+ * Under it is a real console on the server; here there is only xterm: it draws, and
+ * everything the human types goes into the pty as it is — Ctrl+C, the arrows, TUIs.
+ *
+ * The instance is recreated when the terminal changes and replays the accumulated
+ * output afresh, so a tab reload does not lose the screen.
+ *
+ * The colours come from the core: there is one Darcula for the whole IDE, and picking
+ * its shades afresh would mean setting up a second one.
+ */
 export function TerminalView({ screen, palette }: { screen: Screen; palette: Palette }) {
   const ide = useIde();
   const t = useT();
@@ -74,7 +94,8 @@ export function TerminalView({ screen, palette }: { screen: Screen; palette: Pal
       try {
         fit.fit();
       } catch {
-        return;       }
+        return;
+      }
       screen.resize(name, term.cols, term.rows);
     };
 

@@ -7,6 +7,19 @@ import { EDITOR_DEFAULTS } from '@mosetta/ide-plugin-code';
 import { FileIcon, Popup } from '@mosetta/ide-plugin-ui';
 import type { Merge } from './state.js';
 
+/**
+ * The conflict resolution screen.
+ *
+ * One for every supplier: disk having diverged from memory, a git rebase and the shelf
+ * bring the same thing here — a path, two versions and a common ancestor. So there is
+ * not a word here about where a particular argument came from: the columns' captions
+ * arrive with the file.
+ *
+ * Full-screen rather than a panel: while a conflict is unsettled there is nothing to
+ * work on anyway, and nothing to divide one's attention between the columns and the
+ * tree for. The frame is the ordinary one, so the cross, Escape and the window stack
+ * came to it by the fact of being born.
+ */
 export function MergeScreen({ windows, merge, code }: { windows: Windows; merge: Merge; code: CodePlugin }) {
   const ide = useIde();
   const t = useT();
@@ -131,6 +144,13 @@ function FileRow({
   );
 }
 
+/**
+ * The third panel: one side of the file does not exist at all.
+ *
+ * The argument here is not about lines but about the file's very existence, so there
+ * are no columns: two answers, both as a button. Showing an empty editor in such a pair
+ * would be worse than silence — an empty file and a missing file would look the same.
+ */
 function WholeFile({ file, merge, code }: { file: MergeFile; merge: Merge; code: CodePlugin }) {
   const ide = useIde();
   const t = useT();

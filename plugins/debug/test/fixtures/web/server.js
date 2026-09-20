@@ -2,6 +2,8 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 
+// We hand files out FROM the project's root: the address `/web/app.js` is the file
+// `web/app.js`, as with Vite, where `/src/main.ts` lies in `src/main.ts`.
 const root = path.join(__dirname, '..');
 
 const server = http.createServer((req, res) => {

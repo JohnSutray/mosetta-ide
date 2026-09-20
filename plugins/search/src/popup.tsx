@@ -8,6 +8,18 @@ import type { FileViewLike, IndexHit } from './types.js';
 import { Chevron, Chip, ChipRow, FileIcon, Popup, Tag } from '@mosetta/ide-plugin-ui';
 import type { Search } from './state.js';
 
+/**
+ * A double Shift: a rectangle OVER the panels with a search field, results and a
+ * preview — requirement four of the brief.
+ *
+ * This is an ordinary div rather than a separate window. The whole class of problems
+ * that made an earlier codebase need a decision record of its own (the mouse over a
+ * child frame works only while the OS focus belongs to the frame) simply does not arise
+ * here: the wheel turns, the click lands, nothing vanishes.
+ *
+ * There are no key handlers of its own here: the arrows, Enter and Escape are commands
+ * with the `search` surface in the keymap.
+ */
 export function SearchEverywhere({
   windows,
   search,
@@ -17,6 +29,7 @@ export function SearchEverywhere({
   windows: Windows;
   search: Search;
   code: CodePlugin;
+  /** Who can show a file as something other than text: the `file.view` key. */
   views: FileViewLike[];
 }) {
   const ide = useIde();
@@ -146,6 +159,14 @@ export function SearchEverywhere({
   );
 }
 
+/**
+ * A file preview.
+ *
+ * The view here is THE SAME as in the middle: an image is taken on by the image viewer,
+ * markup by the markup view. Otherwise the "search everywhere" window would find a file
+ * and honestly show emptiness about it — and "there is no preview" and "the preview is
+ * empty" look identical.
+ */
 function Preview({
   preview,
   views,
@@ -179,6 +200,7 @@ function Row({
   onOpen,
 }: {
   hit: IndexHit;
+  /** The kind's icon from whoever brought the kind; `null` means we draw by the rule. */
   icon: unknown;
   current: boolean;
   onPick: () => void;
@@ -200,12 +222,20 @@ function Row({
   );
 }
 
+/**
+ * The default icon: the same as in the tree.
+ *
+ * One rule for every kind nobody named: there is a path to a file — the file's icon;
+ * there is none — nothing. A sheet of paper under a setting or a terminal would assert
+ * that this is a file, while an icon is obliged to assert exactly what is known.
+ */
 function fileIcon(hit: IndexHit) {
   const name = hit.path.split('/').pop() ?? '';
   if (name === '' || !name.includes('.')) return null;
   return <FileIcon name={name} />;
 }
 
+/** Highlight the matched letters — the very positions the matcher returned. */
 function highlight(label: string, matches: number[]) {
   if (matches.length === 0) return label;
   const hot = new Set(matches);

@@ -21,9 +21,29 @@ import DocPlugin from '@mosetta/ide-plugin-doc';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * git on the client is a plugin.
+ *
+ * The IDE's second AXIS with a source of truth of its own left the core entirely: the
+ * core knows neither what a branch is nor what colour a changed file is. What it lends
+ * it — the project, the document and the neighbouring editor — was in the contract
+ * before git, or appeared for git's sake by name.
+ *
+ * The three state classes (`Git`, `BranchesWindow`, `PushWindow`) are the same ones
+ * that were in the core; only where they get their services from has changed — through
+ * the constructor from the plugin rather than by import from a module.
+ *
+ * There are three seams outwards, and all three go through neighbours rather than
+ * through the core:
+ *
+ * * the tree's colour: we write into the `tree.tint` registry, and the tree reads;
+ * * the strips in the editor: we bring the editor the commit's version and take a click on a strip back from it;
+ * * the branch in the toolbar and two buttons: wishes, like everyone's.
+ */
 @configSection({ section: 'git', defaults: GIT_DEFAULTS, schema: GIT_SCHEMA })
 @plugin({ title: 'plugin.git' })
 export default class GitPlugin implements GitRemote {
+  /** Documents are a neighbour: what is open, where to jump, how to edit. */
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);
   }
@@ -107,10 +127,19 @@ export default class GitPlugin implements GitRemote {
     });
   }
 
+  /** A snapshot of the repository: the branch, how far behind, the files' states. */
   get snapshot(): ReadonlySignal<GitState> {
     return this.git.state;
   }
 
+  /**
+   * Recount the snapshot NOW.
+   *
+   * Normally memory recounts it: a file was saved, moved, vanished. But a commit does
+   * not touch files — only the history changes — and without this request the change
+   * list would stay complete right after being committed. Whoever knows what they did
+   * asks.
+   */
   refresh(): Promise<void> {
     return this.git.refresh();
   }
@@ -144,6 +173,15 @@ export default class GitPlugin implements GitRemote {
     return this.askRun({ action, ...(branch ? { branch } : {}), ...(name ? { name } : {}) });
   }
 
+  /**
+   * The branch is not a caption but a button: it is the first thing asked about and
+   * changed.
+   *
+   * The badge is drawn by the toolbar from a description: the same form, the same size
+   * and the same colour as the shell, the package manager and the memory beside it.
+   * Ours was written in the text colour rather than the muted one, and in a row of
+   * identical things it looked like a thing of another kind — while the kind is one.
+   */
   private branchChip() {
     if (!this.ide.project.value) return null;
     const state = this.git.state.value;

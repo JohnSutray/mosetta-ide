@@ -2,18 +2,49 @@ import { computed, signal } from '@preact/signals';
 import type { Ranked, Ranker } from './ranker.js';
 import type { Answer, Ask, Details, Item, Source } from './types.js';
 
+/** How many rows a page scrolls. */
 const PAGE = 8;
+/**
+ * How long the list has to hang around for someone to have read it. A late answer
+ * before that puts the best one at the top; after it, it leaves the selection alone:
+ * the human is already pressing Enter on what they see.
+ */
 const SETTLE_MS = 200;
 
+/**
+ * One session of the list: the question to the sources, merging the answers, the order
+ * and the selection. Not one import of CodeMirror — which is why "our popup or somebody
+ * else's" stays a matter of replacing one file, and why the session is checked by a
+ * test without a DOM.
+ *
+ * The main promise is that the selection does not jump under your hand. Synchronous
+ * sources answer in the first frame, the language server in tens of milliseconds, and
+ * without the rule below comes the classic ailment: the list rebuilt at exactly the
+ * moment of Enter and the wrong thing was inserted. Typing letters resets the selection
+ * to the top — that is a new question; a late answer does not, if the list has already
+ * been read or the human has walked it with the arrows.
+ */
 export class CompletionSession {
   readonly active = signal(false);
   readonly items = signal<Ranked[]>([]);
   readonly selected = signal(0);
+  /**
+   * One of the sources is still thinking — we show that as a line rather than as
+   * silence.
+   */
   readonly loading = signal(false);
   readonly details = signal<Details | null>(null);
+  /** Rises on every new question: the list may have moved elsewhere. */
   readonly started = signal(0);
+  /** Called by key: while the sources think, the list is visible even empty. */
   private readonly explicit = signal(false);
+  /** There is something to choose — then the list's keys are its own. */
   readonly listed = computed(() => this.items.value.length > 0);
+  /**
+   * Whether the list is visible. Empty only when called by key and only while somebody
+   * is thinking: the human pressed and is waiting, and silence is indistinguishable
+   * from "there is nothing". Auto-opening does not flash an empty frame.
+   */
   readonly visible = computed(
     () => this.active.value && (this.listed.value || (this.explicit.value && this.loading.value)),
   );
@@ -22,19 +53,30 @@ export class CompletionSession {
   private query = '';
   private sources: readonly Source[] = [];
   private readonly answers = new Map<string, Answer>();
+  /**
+   * The number of the last question to a source: an answer to an old one is thrown
+   * away.
+   */
   private readonly asking = new Map<string, number>();
   private readonly pending = new Set<string>();
   private readonly resolving = new Map<string, Promise<Details | null>>();
   private readonly resolved = new Map<string, Details>();
   private generation = 0;
+  /** The human walked the list themselves. */
   private pinned = false;
+  /** When the list first became non-empty; `null` means it has not been shown yet. */
   private shownAt: number | null = null;
+  /** We have already spoken out loud about this question — we do not repeat ourselves. */
   private told = false;
 
   constructor(
     private readonly ranker: Ranker,
     private readonly sourcesOf: () => readonly Source[],
     private readonly now: () => number = () => Date.now(),
+    /**
+     * Say it out loud: a call by key found nothing, or a source failed. A silent
+     * failure is indistinguishable from "there is nothing to suggest".
+     */
     private readonly report: (what: 'empty' | 'failed', detail?: string) => void = () => undefined,
   ) {}
 
@@ -46,6 +88,7 @@ export class CompletionSession {
     return this.asked;
   }
 
+  /** A new question: another place, or another trigger. */
   start(ask: Ask): void {
     this.generation += 1;
     this.asked = ask;
@@ -68,6 +111,7 @@ export class CompletionSession {
     this.checkEmpty();
   }
 
+  /** Typed or deleted within the same word: we filter what has already been said. */
   refine(ask: Ask): void {
     const asked = this.asked;
     if (!asked) return;
@@ -86,6 +130,7 @@ export class CompletionSession {
     this.loadDetails();
   }
 
+  /** An arrow: in a circle, as in IDEA. */
   move(delta: 1 | -1): void {
     const count = this.items.value.length;
     if (count === 0) return;
@@ -93,6 +138,7 @@ export class CompletionSession {
     this.select((((this.selected.value + delta) % count) + count) % count);
   }
 
+  /** A page: no circle — we hit the edge and stay there. */
   page(delta: 1 | -1): void {
     if (this.items.value.length === 0) return;
     this.pinned = true;
@@ -103,10 +149,12 @@ export class CompletionSession {
     return this.items.value[this.selected.value] ?? null;
   }
 
+  /** What is already read in — without waiting: the import then lands as the same edit. */
   settled(key: string): Details | null {
     return this.resolved.get(key) ?? null;
   }
 
+  /** Read an item in; a repeated question about the same one gives the same answer. */
   detailsOf(ranked: Ranked): Promise<Details | null> {
     const known = this.resolving.get(ranked.key);
     if (known) return known;
@@ -144,7 +192,8 @@ export class CompletionSession {
     try {
       answer = source.items(ask);
     } catch {
-      return;     }
+      return;
+    }
     if (!('then' in answer)) {
       this.answers.set(source.id, answer);
       return;
@@ -169,6 +218,10 @@ export class CompletionSession {
     );
   }
 
+  /**
+   * Called by key, everyone answered, and there is nothing to choose — say so and
+   * close.
+   */
   private checkEmpty(): void {
     if (!this.active.value || !this.explicit.value || this.pending.size > 0 || this.items.value.length > 0) return;
     this.tell('empty');
@@ -186,6 +239,10 @@ export class CompletionSession {
     this.loading.value = this.pending.size > 0;
   }
 
+  /**
+   * Buffer words give way to an item of the same name that has a type: `lsp` knows this
+   * is a method, while the buffer only knows such a word occurred.
+   */
   private merge(): Item[] {
     const all: Item[] = [];
     for (const source of this.sources) all.push(...(this.answers.get(source.id)?.items ?? []));

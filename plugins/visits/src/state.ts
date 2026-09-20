@@ -3,6 +3,7 @@ import type { Visit } from './types.js';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
 import { type Mount } from '@mosetta/ide-api/client';
 
+/** What the list asks of the server: read the project's history, and write it. */
 export interface VisitsRemote {
   list(): Promise<Visit[]>;
   save(visits: Visit[]): Promise<unknown>;
@@ -10,17 +11,37 @@ export interface VisitsRemote {
 
 export class Visits {
   readonly list = signal<Visit[]>([]);
+  /** Where we are in the list right now. -1 means nowhere yet. */
   readonly at = signal(-1);
 
+  /** How many rows already count as a jump rather than as moving through the text. */
   private readonly far = 12;
+  /** How many steps we remember. The server truncates to the same number. */
   private readonly limit = 30;
+  /** How long we wait before writing the history to the server. */
   private readonly saveDelay = 800;
+  /**
+   * How long we write no visits after a jump. Opening a file moves the caret twice —
+   * when the editor is born and when the line is revealed — and neither of those
+   * movements should be recorded as a new place.
+   */
   private readonly settleDelay = 400;
 
+  /**
+   * While we are walking through the history, new visits are not recorded: otherwise a
+   * "back" would immediately be recorded as a new place, and there would be nowhere
+   * left to go "forward" to.
+   */
   private walking = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
 
+  /**
+   * The server arrives through the constructor: the plugin calls its own server half
+   * through `@remote`, and the list has no business knowing that — a test substitutes
+   * its own.
+   */
   constructor(private readonly remote: VisitsRemote,
+    /** Documents are a neighbour: the jump to a place. */
     private readonly docs: () => Pick<DocPlugin, 'goTo'>,
   ) {}
 
@@ -32,6 +53,7 @@ export class Visits {
     return this.at.value >= 0 && this.at.value < this.list.value.length - 1;
   }
 
+  /** Load the project's history. The server has already thrown the dead rows away. */
   async load(): Promise<void> {
     try {
       const list = await this.remote.list();
@@ -47,6 +69,7 @@ export class Visits {
     this.at.value = -1;
   }
 
+  /** Note that the caret has been somewhere. Called often — the filter is inside. */
   visit(path: string, line: number, character = 0): void {
     if (this.walking) return;
     const next = this.next(this.list.value, this.at.value, path, line, character);
@@ -56,6 +79,13 @@ export class Visits {
     this.schedule();
   }
 
+  /**
+   * What the list turns into after a visit. A pure method: the rules here are delicate,
+   * and checking them by eye will not work.
+   *
+   * Returns `null` if nothing changed: writing a signal the same value means waking
+   * everyone watching it for no reason.
+   */
   next(
     list: Visit[],
     at: number,
@@ -74,8 +104,21 @@ export class Visits {
     }
     const kept = list.slice(0, at + 1).slice(-(limit - 1));
     const next = [...kept, { path, line, character }];
-    return { list: next, at: next.length - 1 };  }
+    return { list: next, at: next.length - 1 };
+  }
 
+  /**
+   * Recent FILES, freshest first.
+   *
+   * Not the same thing as the caret history: one file lies in that as many rows as
+   * there were places jumped to inside it, and a list of "recent files" made of those
+   * would be half one and the same file. So we walk from the end and take each path
+   * ONCE — together with the line we were last at in it: one returns to where one left
+   * off.
+   *
+   * A pure method: the rule is simple, and checking it by eye will not work anyway —
+   * the order IS the content of the list.
+   */
   recentFiles(limit: number): Array<{ path: string; line: number }> {
     const out: Array<{ path: string; line: number }> = [];
     if (limit <= 0) return out;
@@ -100,6 +143,14 @@ export class Visits {
     void this.jump(this.at.value + 1);
   }
 
+  /**
+   * The mouse's side buttons are the caret history: lower goes back, upper goes
+   * forward.
+   *
+   * Suppressing the event is mandatory, and mandatory on `mousedown`: otherwise the
+   * browser understands them its own way and goes back through the TAB's history,
+   * taking the whole session with it.
+   */
   installMouseNav(mount: Pick<Mount, 'listen'>): () => void {
     const noMenu = (event: Event) => event.preventDefault();
 
@@ -138,6 +189,7 @@ export class Visits {
     }
   }
 
+  /** We do not write on every step: a history is not a journal, it is read whole. */
   private schedule(): void {
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => {

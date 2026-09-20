@@ -2,12 +2,25 @@ import type { ComponentChildren, JSX } from 'preact';
 import type { Block, Inline } from './markdown.js';
 import type { MarkdownImages } from './images.js';
 
+/** A neighbour's code painter: the same one that paints the editor. */
 export interface Painter {
   paint(text: string, path: string): Array<{ text: string; color: string | null }>;
 }
 
+/**
+ * A markup tree to a page.
+ *
+ * Drawn by preact rather than `innerHTML`: a project's file may hold anything at all,
+ * including a `<script>`, and there is no reason for us to run it. What reaches the
+ * page here is only TEXT — not one tag from the file survives.
+ *
+ * A code block is painted by our own painter, the very one that draws search hit rows
+ * and language server hints. So a TypeScript example in a README looks exactly like the
+ * same code in the editor one column to the left.
+ */
 export interface Draw {
   painter: Painter | null;
+  /** Where to get the images from, and what to compute their paths relative to. */
   images: MarkdownImages;
   path: string;
 }
@@ -70,6 +83,13 @@ function draw(block: Block, key: number, how: Draw): ComponentChildren {
   }
 }
 
+/**
+ * A code block in the same painting as the editor.
+ *
+ * The language is named by the fence itself (```ts), and we turn that into a FILE NAME:
+ * the painter picks a grammar by extension, and inventing a second way for it to ask
+ * about a language is pointless.
+ */
 function Code({ lang, text, painter }: { lang: string; text: string; painter: Painter | null }): JSX.Element {
   const named = LANGS[lang.toLowerCase()] ?? lang.toLowerCase();
   const pieces = painter && named ? painter.paint(text, `code.${named}`) : null;
@@ -89,6 +109,7 @@ function Code({ lang, text, painter }: { lang: string; text: string; painter: Pa
   );
 }
 
+/** How a fence names a language → what a file calls it. */
 const LANGS: Record<string, string> = {
   typescript: 'ts',
   javascript: 'js',
@@ -105,6 +126,7 @@ const LANGS: Record<string, string> = {
   bash: 'sh',
 };
 
+/** Inline markup. The keys go by position: the order of a line's pieces is fixed. */
 function inline(how: Draw) {
   return function text(part: Inline, key: number): ComponentChildren {
   switch (part.kind) {
@@ -134,6 +156,11 @@ function inline(how: Draw) {
   };
 }
 
+/**
+ * An image from markup: the path is computed from the file, and the bytes arrive
+ * through the third layer of reading. No bytes means a caption: it at least says what
+ * is missing, whereas a broken icon says nothing.
+ */
 function Picture({ src, alt, how }: { src: string; alt: string; how: Draw }): JSX.Element {
   const url = how.images.source(src, how.path).value;
   if (!url) return <span class="md-image">{alt || src}</span>;

@@ -5,6 +5,22 @@ import { STYLE } from './style.js';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * The toolbar.
+ *
+ * Every panel can be reached from here, and a button's look corresponds reactively to
+ * its state: open means the icon is filled with a rounded square beneath it. The
+ * buttons do not know what they do: they call a command by id, exactly as keys do.
+ *
+ * But the toolbar itself is a PLUGIN, and that is the main thing. The core does not
+ * know it exists: it holds a registry and writes its wishes into it ("here is the tree,
+ * here is its icon and command"), and whether those turn into a strip of icons, a
+ * spotlight-like grid or nothing at all is none of its business.
+ *
+ * The keys' schema is declared by us: whoever reads knows the shape. The declaration
+ * hangs on the CLASS, so the host sees it right after the import — before anyone has
+ * started writing.
+ */
 @registry({ key: 'toolbar.button', schema: BUTTON_SCHEMA })
 @registry({ key: 'toolbar.widget', schema: WIDGET_SCHEMA })
 @configSection({ section: 'toolbar', defaults: TOOLBAR_DEFAULTS, schema: TOOLBAR_SCHEMA })
@@ -45,6 +61,13 @@ export default class Toolbar {
     );
   }
 
+  /**
+   * A widget: either markup of your own, or a BADGE as data.
+   *
+   * We draw the badge, and so everyone's is the same: one size, one colour, one
+   * backing, one tooltip. The neighbour brings the icon, the words, and what happens on
+   * a click.
+   */
   private widget(one: ToolbarWidget) {
     if (!one.chip) return one.view ? one.view() : null;
     const said = one.chip();
@@ -121,6 +144,14 @@ export default class Toolbar {
     );
   }
 
+  /**
+   * The buttons in the order from the settings.
+   *
+   * The order is data, like the keys and the labels. Whatever is not in the list goes
+   * to the end in order of appearance; conditional buttons go there too, because the
+   * list does not name them: a button that is sometimes absent has no right to occupy a
+   * digit.
+   */
   private buttons(): ToolbarButton[] {
     const order = this.ide.settingsOf('toolbar', TOOLBAR_DEFAULTS).value.order;
     const all = this.ide

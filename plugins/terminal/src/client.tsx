@@ -12,6 +12,22 @@ import xtermCss from '@xterm/xterm/css/xterm.css?raw';
 import { STYLE } from './style.js';
 import type { Attached, OpenAsk, ShellInfo, TerminalInfo } from './types.js';
 
+/**
+ * Terminals.
+ *
+ * The first plugin for which "ask and answer" was not enough: a pty lives as long as
+ * the project, prints of its own accord, and has to survive the panel closing. The
+ * PROJECT was added to the contract for its sake.
+ *
+ * The state here is minimal: the list, and who is shown. The output itself lives in
+ * xterm and on the server rather than in signals — pushing a stream of bytes through
+ * signals at typing speed would mean redrawing the interface on every character.
+ *
+ * The PUBLIC methods of this class are the API for neighbours: `show`, `open`,
+ * `showing`. The npm scripts use them, needing a terminal of their own per script — the
+ * core's contract used to carry a borrowed method for that, and now it does not have
+ * to.
+ */
 @configSection({ section: 'terminal', defaults: TERMINAL_DEFAULTS, schema: TERMINAL_SCHEMA })
 @plugin({ title: 'plugin.terminal' })
 export default class TerminalPlugin {
@@ -19,8 +35,15 @@ export default class TerminalPlugin {
   private readonly active = signal<string | null>(null);
   private readonly shown = signal(false);
 
+  /** The subscribers to the output stream: the panel's screen sets them up. */
   private readonly sinks = new Map<string, Set<(data: string) => void>>();
 
+  /**
+   * What to open a terminal with: what was found on the machine, what is in use, and
+   * whether the choice window is open. This is OUR setting — `terminal.shell` — and
+   * choosing it happens here rather than in a shared "tools" window: the domain is one,
+   * and the window is its.
+   */
   readonly shells = signal<ShellInfo[]>([]);
   readonly shellPicker = signal(false);
 
@@ -28,6 +51,7 @@ export default class TerminalPlugin {
 
   @command('terminal.create') protected createOne(): void { void this.create(); }
 
+  /** The key that opened the window closes it — the toggle is its own. */
   @command('terminal.shell')
   protected pickShell(): void {
     this.shellPicker.value = !this.shellPicker.value;
@@ -165,6 +189,13 @@ export default class TerminalPlugin {
     void this.refresh();
   }
 
+  /**
+   * Show a terminal set up by anything at all.
+   *
+   * The core used to be able to do this, because terminals were part of it. Now it is
+   * an ordinary method of an ordinary plugin, and a neighbour calls it through
+   * `getPlugin` — a plugin-to-plugin link rather than one through the core.
+   */
   async show(open: () => Promise<TerminalInfo>): Promise<void> {
     try {
       const info = await open();
@@ -178,14 +209,21 @@ export default class TerminalPlugin {
     }
   }
 
+  /** Open a terminal by name, or return the existing one. */
   open(ask: OpenAsk): Promise<TerminalInfo> {
     return this.ask(ask);
   }
 
+  /** Which terminal is shown now. `null` means the panel is empty. */
   showing(): string | null {
     return this.active.value;
   }
 
+  /**
+   * Ask the server what there is on the machine. We do NOT swallow the error: not
+   * finding one and not managing to ask are different things, and the second is cured
+   * by a restart.
+   */
   async refreshShells(): Promise<void> {
     try {
       this.shells.value = await this.askShells();
@@ -195,6 +233,11 @@ export default class TerminalPlugin {
     }
   }
 
+  /**
+   * Write the choice into the settings file. Terminals already open are left alone:
+   * there are live processes under them, and killing those for the sake of a setting is
+   * not on.
+   */
   async chooseShell(ref: string): Promise<void> {
     try {
       await this.ide.setSetting('terminal', 'shell', ref);
@@ -232,10 +275,12 @@ export default class TerminalPlugin {
     return stub();
   }
 
+  /** Every call sets up a NEW terminal: manual, manual-2, … */
   private create(): Promise<void> {
     return this.show(() => this.askCreate({}));
   }
 
+  /** Show an existing one: a click on a chip. */
   private focus(name: string): void {
     batch(() => {
       this.active.value = name;
@@ -259,6 +304,7 @@ export default class TerminalPlugin {
     } catch {}
   }
 
+  /** What the screen can ask the plugin. The panel knows nothing about the socket. */
   private screen() {
     return {
       name: this.active.value,

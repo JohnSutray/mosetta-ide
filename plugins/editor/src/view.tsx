@@ -23,6 +23,17 @@ import { setHeadText, type GitMarks } from './git-marks.js';
 import { lspHover } from './hover.js';
 import type { HoverSource } from './schema.js';
 
+/**
+ * CodeMirror's tooltip layer.
+ *
+ * CodeMirror puts a container of its own, carrying the editor theme's classes, into its
+ * parent, and the theme's root is `height: 100%`. Placed straight into `body`, the
+ * empty container stood in the flow below the IDE's root with the height of the window,
+ * and the page scrolled by a second screenful. In a zero-sized `fixed` layer the
+ * container is zero-sized and out of the flow, while the tooltips inside it stay
+ * `fixed` — measured from the window, as they need to be. There is one layer per
+ * document: it is found by id rather than held in a variable.
+ */
 class TooltipLayer {
   private readonly id = 'cm-tooltip-layer';
 
@@ -39,32 +50,72 @@ class TooltipLayer {
 
 const tooltipLayer = new TooltipLayer();
 
+/**
+ * A mark saying "the text was replaced from outside". Without it, replacing the
+ * document would fly back to the server as an ordinary user edit.
+ */
 const externalUpdate = Annotation.define<boolean>();
 
 interface Props {
   file: DocState;
+  /** What the file was in the commit: the git strips are computed from it. */
   head: string | null;
   onHunk: (hunk: Hunk, box: HunkBox) => void;
+  /** The open number: a change means a new editor, a file moving means the same one. */
   docKey: number;
   externalEpoch: number;
+  /** Where to jump: a line from the symbol search. */
   reveal: { path: string; line: number; character?: number; epoch: number } | null;
+  /**
+   * A request to move the keyboard here — as a COUNTER. Needed where the file is
+   * already open: the editor is not born again, and the focus-on-birth mark has nothing
+   * to fire on.
+   */
   wantsFocus: number;
   settings: EditorSettings;
   diagnostics: Diagnostic[];
   onEdit: (text: string) => void;
+  /**
+   * The keyboard left the text. What that means is not the editor's decision: it
+   * reports a FACT, as it does about the caret — and the document, if the human asked
+   * for it, writes itself to disk.
+   */
   onBlur: () => void;
+  /** The caret landed somewhere (line and column, zero-based). Called often. */
   onCaret: (line: number, character: number) => void;
+  /**
+   * A click with the go-to-symbol chord. What it means is unknown to the editor — it
+   * only reports where the click landed.
+   */
   onModClick: (pos: number) => void;
   onHover: (path: string, line: number, character: number) => Promise<HoverInfo | null>;
+  /** Who else answers a hover — the entries of the `editor.hover` key. */
   hoverSources: () => readonly HoverSource[];
   onMount: (view: EditorView | null) => void;
+  /** The neighbours' extensions from the `editor.extension` key. */
   extra: Extension[];
+  /** The code display is a neighbour: the look, the languages, the input mechanics. */
   code: CodePlugin;
+  /** This editor's git strips: computed by the code display's diff. */
   marks: GitMarks;
+  /** Whether to take the keyboard on birth — we ask the documents. */
   takeFocus: () => boolean;
+  /** Whether the command chord was held during the click — we ask the keymap. */
   chordHeld: (command: string, event: MouseEvent) => boolean;
 }
 
+/**
+ * The wrapper around CodeMirror.
+ *
+ * There are no keys of its own here and there cannot be: Cmd+S, Cmd+Z and all the rest
+ * arrive from the keymap through the dispatcher, and the editor merely hands its
+ * `EditorView` outwards for the commands to work on. Of the foreign bindings only the
+ * INPUT mechanics are kept — the arrows, Backspace, newline, Cmd+A. `defaultKeymap`
+ * used to stand here whole, and along with the mechanics it brought a dozen foreign
+ * commands on top of our keys.
+ *
+ * The buffer's text is not mirrored upwards: there is one owner, CodeMirror's state.
+ */
 export function CodeEditor({
   file,
   docKey,

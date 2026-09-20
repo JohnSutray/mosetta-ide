@@ -12,6 +12,18 @@ import SearchPlugin from '@mosetta/ide-plugin-search';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 import type { SymbolHit } from './cache.js';
 
+/**
+ * Definitions and references are a plugin.
+ *
+ * One key for two actions: from a reference it leads to the definition, from a
+ * definition it shows the references. Where the caret is, the editor knows, and it
+ * NAMES the place (`onSymbolAsk`); what that place means we ask the neighbour, the
+ * language servers plugin (`definition`, `references`), and we show it next to the
+ * symbol.
+ *
+ * The arrows and Enter are the common `pick.*` commands: the list registers itself as
+ * the active one while it is open.
+ */
 @plugin({ title: 'plugin.symbols' })
 export default class SymbolsPlugin {
   readonly symbols: Symbols;
@@ -20,10 +32,19 @@ export default class SymbolsPlugin {
     this.symbols = new Symbols(ide, ide.getPlugin(LspPlugin));
   }
 
+  /** The files whose symbols we never got to: a line under the search field. */
   private readonly uncovered = signal(0);
 
+  /**
+   * The files larger than the parsing ceiling: their reason is a different one, and so
+   * is the setting.
+   */
   private readonly tooBig = signal(0);
 
+  /**
+   * The candidates from the server half's cache: the sifting happens there, the scoring
+   * here.
+   */
   @remote('find') protected askSymbols(_p: { query: string; limit: number; kinds?: string[] }): Promise<SymbolHit[]> { return stub(); }
   @remote('stats') protected askStats(): Promise<{ symbols: number; uncovered: number; tooBig: number }> { return stub(); }
 

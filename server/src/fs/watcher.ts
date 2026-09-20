@@ -6,6 +6,19 @@ import { DirWatch } from './dir-watch.js';
 import { disk } from './os-fs.js';
 import { paths } from '../workspace/paths.js';
 
+/**
+ * A recursive mode comes in TWO DIFFERENT KINDS, and the difference is not speed.
+ *
+ * On a Mac and on Windows the OS does it — FSEvents and ReadDirectoryChangesW: one
+ * call, events about the whole subtree. The Linux kernel cannot do that, and Node
+ * substitutes ITS OWN implementation for the flag: it walks the tree and puts an
+ * `fs.watch` on EVERY FILE. Inotify watches an inode, and a file replaced by a rename
+ * is a new inode; the watch stays on the dead one, and after that NOTHING arrives about
+ * that path again. And a rename is how we write ourselves (a temporary file plus
+ * `rename`), and so do `git checkout`, editors and build tools.
+ *
+ * So where recursion is not done by the OS, we watch ourselves — by directory.
+ */
 const NATIVE_RECURSIVE = process.platform === 'darwin' || process.platform === 'win32';
 
 export interface WatcherOptions {
@@ -14,11 +27,24 @@ export interface WatcherOptions {
 
 export class OsWatcher {
   private watcher: fs.FSWatcher | null = null;
+  /** Our own directory watching — where the OS does not do recursion. */
   private tree: DirWatch | null = null;
   private readonly pending = new Set<string>();
   private timer: NodeJS.Timeout | null = null;
   private readonly debounceMs: number;
   private failed = false;
+  /**
+   * Watching has started, but we are not handing anything upwards yet.
+   *
+   * Between `fs.watch` and the moment the OS really starts sending events there is a
+   * window: on a Mac, FSEvents arms itself asynchronously. If watching started AFTER
+   * the project walk, a file created during that window would appear neither in the
+   * walk nor in the events — and memory would drift from disk forever, without a single
+   * symptom.
+   *
+   * So we start watching BEFORE the walk and pile the events up, handing them over
+   * afterwards (`release`): the arming window is covered by the walk itself.
+   */
   private held = true;
 
   constructor(
@@ -38,6 +64,7 @@ export class OsWatcher {
     if (!same) this.tree?.rescan();
   }
 
+  /** Start watching and pile events up until `release` is called. */
   start(): void {
     if (this.watcher || this.tree) return;
 
@@ -68,6 +95,7 @@ export class OsWatcher {
     this.log.debug('watching the filesystem');
   }
 
+  /** The walk is over — what piled up, and everything after it, may be handed over. */
   release(): void {
     if (!this.held) return;
     this.held = false;
@@ -84,6 +112,7 @@ export class OsWatcher {
     this.tree = null;
   }
 
+  /** Whether watching works. If it does not, memory may fall behind disk. */
   get healthy(): boolean {
     return (this.watcher !== null || this.tree !== null) && !this.failed;
   }
@@ -93,13 +122,18 @@ export class OsWatcher {
     try {
       key = paths.toKey(raw.split(path.sep).join('/'));
     } catch {
-      return;     }
+      return;
+    }
     if (key === '' || this.ignored(key)) return;
 
     this.pending.add(key);
     if (this.held) return;     this.schedule();
   }
 
+  /**
+   * Editors write in batches (a temporary file, a rename, permissions), and so do we.
+   * There is no point parsing that on every twitch.
+   */
   private schedule(): void {
     if (this.timer) return;
     this.timer = setTimeout(() => {
@@ -111,6 +145,7 @@ export class OsWatcher {
     this.timer.unref?.();
   }
 
+  /** The same list? The order does not matter — this is a set of names. */
   private sameList(before: readonly string[], after: readonly string[]): boolean {
     if (before.length !== after.length) return false;
     const had = new Set(before);

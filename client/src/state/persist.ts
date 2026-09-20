@@ -1,5 +1,22 @@
 import { signal, type Signal } from '@preact/signals';
 
+/**
+ * The tab's memory and the machine's memory.
+ *
+ * This continues the rule by which the project moved into the tab's ADDRESS: two tabs
+ * holding different projects must not fight over one cell. The same is true of
+ * everything else a person arranged by hand — panel widths, popup sizes, which panels
+ * are open, which file is on screen.
+ *
+ * Hence two stores and one reading rule:
+ *
+ * * `sessionStorage` is this tab. It survives a reload and the browser restoring the session, but every tab has its own; drag the panels about in one and the other stays as it was.
+ * * `localStorage` is the last layout on this machine. A new tab GROWS OUT of it: opening one with factory widths while a familiar layout lies right there would be silly.
+ *
+ * We read the tab, then the machine. We write to both, except for what only makes sense
+ * here and now (the open file).
+ */
+
 export type Scope = 'tab' | 'both';
 
 export class Memory {
@@ -39,6 +56,11 @@ export class Memory {
     }
   }
 
+  /**
+   * Rename keys wholesale: `rename` receives a key without its prefix and returns a new
+   * one, or `null`. If the new one already exists, the old one simply goes: we never
+   * overwrite the fresher of the two.
+   */
   migrate(rename: (key: string) => string | null): void {
     for (const store of [this.tab(), this.machine()]) {
       if (!store) continue;

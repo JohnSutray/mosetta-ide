@@ -20,18 +20,43 @@ import type {
   SymbolSite,
 } from './types.js';
 
+/**
+ * A language server on top of the project's BORROWED memory.
+ *
+ * It lives above the memory layer and only above it: a document's contents come from
+ * the core's memory rather than from disk. From that we get for free what is usually
+ * fought for: diagnostics arrive against unsaved text, because in memory that text is
+ * the current truth. If the server read disk, errors would appear only after a save.
+ *
+ * It used to live in the core — because only core code could stand on memory. Now the
+ * contract lends the memory (`project.memory`), the project spawns the process
+ * (`project.start`), and there is not one import from the core in the class.
+ * Requirement five (it starts when the project opens) is held by the `onProject` hook.
+ */
+
 export type LspEvent =
   | { type: 'status'; status: LspStatus }
   | { type: 'diagnostics'; path: string; diagnostics: Diagnostic[] };
 
 const SEVERITY: Record<number, Severity> = { 1: 'error', 2: 'warning', 3: 'info', 4: 'hint' };
 
+/** What the sweep checks by default: files with types. */
 const TYPED = ['ts', 'tsx', 'mts', 'cts'];
 
+/**
+ * How many files we sweep BLIND — when this system's memory cannot be measured. A
+ * constant rather than a setting: a second ceiling would breed a second message, and a
+ * human would not know which of them they hit.
+ */
 const BLIND_LIMIT = 2000;
 
+/**
+ * How often to recount the memory after the sweep. The same beat as the daemon's
+ * heartbeat: the numbers in one row of the toolbar have to be about one moment.
+ */
 const MEMORY_BEAT_MS = 15_000;
 
+/** What to call the end of the sweep in the journal. */
 const STOP_WORDS: Record<SweepStop, string> = {
   done: 'went through whole',
   budget: 'stopped by the memory budget',
@@ -39,6 +64,7 @@ const STOP_WORDS: Record<SweepStop, string> = {
   blind: 'stopped by the fallback count: memory cannot be measured',
 };
 
+/** A protocol key's extension: `src/a.test.ts` → `ts`. */
 function extensionOf(key: string): string {
   const name = key.slice(key.lastIndexOf('/') + 1);
   const at = name.lastIndexOf('.');
@@ -46,14 +72,29 @@ function extensionOf(key: string): string {
 }
 
 export class LspServer {
+  /** The pipes come from the project: that is where the process was born. */
   private child: ProcessChild | null = null;
   private process: ProcessHandle | null = null;
   private readonly decoder = new FrameDecoder();
   private readonly pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: unknown) => void }>();
   private readonly diagnostics = new Map<string, Diagnostic[]>();
   private readonly openDocs = new Set<string>();
+  /** Who is waiting for this file's diagnostics — the project sweep. */
   private readonly waiting = new Map<string, () => void>();
+  /**
+   * What the sweep managed to cover: how many were checked of how many eligible. `null`
+   * means there has been no sweep yet (or it is off by a setting), and lying about the
+   * coverage is not on in either direction.
+   */
   private sweep: LspSweep | null = null;
+  /**
+   * Recounting the memory after the sweep.
+   *
+   * A number taken at the sweep's end froze forever — and next to it in the toolbar
+   * stands the daemon's live number, and together they read as "right now". Worse,
+   * after the sweep the server keeps working: memory grows on every edit, and we would
+   * sleep through going over budget.
+   */
   private watching: ReturnType<typeof setInterval> | null = null;
   private readonly listeners = new Set<(event: LspEvent) => void>();
   private readonly extensions: Set<string>;
@@ -150,6 +191,13 @@ export class LspServer {
     }
   }
 
+  /**
+   * Keep the memory number live while the server is alive.
+   *
+   * The same beat as the daemon's heartbeat: two numbers in one row of the toolbar have
+   * to be about one and the same moment, otherwise the smaller turns out bigger than
+   * the bigger — which a human noticed.
+   */
   private watchMemory(): void {
     this.stopWatching();
     if (!this.sweep) return;
@@ -206,6 +254,30 @@ export class LspServer {
     return this.extensions.has(extensionOf(key));
   }
 
+  /**
+   * Check the WHOLE project rather than only what is open.
+   *
+   * tsserver answers with diagnostics only about open documents — that is how its
+   * protocol works, and `typescript-language-server` does not ask for project errors at
+   * all (`areProjectDiagnosticsEnabled` is nailed to `false` there). So opening the
+   * files is up to us: in batches, wait for the answer, and close them again.
+   *
+   * The files STAY open, and that is the main decision here.
+   *
+   * The temptation was to close after ourselves: checked, released. But checking a
+   * closed file is a snapshot rather than knowledge. Remove a field from an interface
+   * in one file and everyone who used it becomes broken, while the server no longer
+   * looks at them: it does not check closed documents. A minute into the work such a
+   * list of errors is lying.
+   *
+   * On top of that, closing also ERASES: a closed document is accompanied by empty
+   * diagnostics — "there is nothing more to show". A tidy sweep that cleaned up after
+   * itself took away exactly what it went for.
+   *
+   * So we opened them, and we hold them. The price is tsserver's memory and its work on
+   * every edit, and it is bounded by the MEMORY BUDGET rather than by a count of files:
+   * the count was a proxy with an unknown multiplier.
+   */
   async checkProject(
     skip: (key: string) => boolean,
     budgetMb: number,
@@ -263,6 +335,7 @@ export class LspServer {
     return this.finish(blind && take.length < queue.length ? 'blind' : 'done', broken, started);
   }
 
+  /** The memory of the server's process tree, in MB. `null` means it cannot be measured. */
   async memoryMb(): Promise<number | null> {
     if (!this.process) return null;
     try {
@@ -272,6 +345,7 @@ export class LspServer {
     }
   }
 
+  /** The sweep ended: record how, say so in the journal, and announce it outwards. */
   private finish(stopped: SweepStop, broken: number, started: number): void {
     if (this.sweep) this.sweep = { ...this.sweep, stopped };
     this.emitStatus();
@@ -285,6 +359,20 @@ export class LspServer {
     }
   }
 
+  /**
+   * Wait until the server has FINISHED SPEAKING about this file.
+   *
+   * Not the first answer: tsserver answers about a file SEVERAL times — first syntax
+   * (almost always empty), then semantics, which is where "no such field" and "wrong
+   * type" live. Having waited for the first and closed the document, we cut the check
+   * off right before the interesting part: on a large project the sweep returned zero
+   * errors where `tsc` found nine.
+   *
+   * So we wait for SILENCE: an answer arrived — we give the server a little more time
+   * for the next one, and only then close. Plus an overall ceiling: a server is
+   * entitled to stay silent altogether (the file is outside tsconfig, the parse
+   * failed), and hanging the whole project's sweep on that is not on.
+   */
   private expectDiagnostics(key: string, quietMs = 500, capMs = 15_000): Promise<void> {
     return new Promise((resolve) => {
       let quiet: NodeJS.Timeout | null = null;
@@ -310,6 +398,11 @@ export class LspServer {
     return this.diagnostics.get(key) ?? [];
   }
 
+  /**
+   * Everything the server has already counted. Needed by a tab that connected AFTER the
+   * project check: diagnostics arrive as an event, and it missed the event — and would
+   * be left with a clean tree on a broken project.
+   */
   knownDiagnostics(): Array<{ path: string; diagnostics: Diagnostic[] }> {
     const out: Array<{ path: string; diagnostics: Diagnostic[] }> = [];
     for (const [path, diagnostics] of this.diagnostics) {
@@ -332,10 +425,15 @@ export class LspServer {
     return result.range ? { markdown, range: result.range } : { markdown };
   }
 
+  /**
+   * Where a symbol is declared. The servers' answers differ in form — one place, a list
+   * of places, or a "link" with two ranges — so the parsing is shared.
+   */
   async definition(key: string, line: number, character: number): Promise<SymbolSite[]> {
     return this.sites('textDocument/definition', key, line, character);
   }
 
+  /** Where a symbol is used. We include the declaration: it is a usage too. */
   async references(key: string, line: number, character: number): Promise<SymbolSite[]> {
     return this.sites('textDocument/references', key, line, character, {
       context: { includeDeclaration: true },
@@ -378,6 +476,12 @@ export class LspServer {
     return out;
   }
 
+  /**
+   * What can be inserted here. The server hands the list over WHOLE for a position,
+   * while the client filters and sorts: that way the list's "feel" is entirely in our
+   * hands, and the socket is not nudged on every letter — unless the server asked for
+   * that itself (`incomplete`).
+   */
   async completion(key: string, line: number, character: number, trigger?: string): Promise<CompletionAnswer> {
     if (this.state !== 'ready') throw new Error(`${this.name} is not ready (${this.state})`);
     this.didOpen(key);
@@ -390,6 +494,7 @@ export class LspServer {
     return { items: (list.items ?? []).map(toEntry), incomplete: Boolean(list.isIncomplete) };
   }
 
+  /** Read an item in: the signature, the documentation and the import line. */
   async resolveCompletion(raw: unknown): Promise<CompletionDetails> {
     if (this.state !== 'ready') throw new Error(`${this.name} is not ready (${this.state})`);
     const item = (await this.request('completionItem/resolve', raw)) as RawCompletion | null;
@@ -488,7 +593,8 @@ export class LspServer {
     try {
       key = this.keyOf(params.uri);
     } catch {
-      return;     }
+      return;
+    }
     const diagnostics = params.diagnostics.map(
       (d): Diagnostic => ({
         range: d.range,
@@ -540,6 +646,28 @@ export class LspServer {
     return rel.split(path.sep).join('/');
   }
 
+  /**
+   * The process died — and that is an answer to EVERYONE still waiting.
+   *
+   * Until now the process dying changed only the state, while a request hanging on the
+   * pipe honestly sat out its fifteen seconds — and its refusal OVERWROTE the reason.
+   * In the journal it looked like this:
+   *
+   * ```
+   * 21:26:21.669 warn typescript: spawn typescript-language-server ENOENT
+   * 21:26:36.660 warn typescript: initialize: the server did not answer within 15 s
+   * ```
+   *
+   * The truth was told at the thirteenth millisecond and lost at the fifteenth second.
+   * What went outwards was the second line: "did not answer" — that is, "the server is
+   * there but silent", whereas there is no server at all, and that is cured by
+   * installing rather than by waiting. A fresh machine is exactly the case where there
+   * is no language server yet: the first thing an IDE says on a new OS has to be the
+   * truth.
+   *
+   * So the cause of death is one answer to everything: the state and every hanging
+   * request receive it at once and verbatim.
+   */
   private died(reason: string): void {
     this.setState('failed', reason);
     const waiting = [...this.pending.values()];
@@ -591,6 +719,7 @@ interface RawCompletion {
   tags?: number[];
 }
 
+/** LSP's `CompletionItemKind` numbers into the names the list draws. */
 const KINDS: Record<number, CompletionKind> = {
   1: 'text',
   2: 'method',
@@ -613,8 +742,19 @@ const KINDS: Record<number, CompletionKind> = {
   25: 'type',
 };
 
+/**
+ * `typescript-language-server`'s auto-import mark: it glues this character to the front
+ * of `sortText` so that such items go to the end, and puts the module into `detail`. It
+ * fills `labelDetails` only with a separate tsserver setting, and relying on that is
+ * not on.
+ */
 const IMPORT_MARK = '\uffff';
 
+/**
+ * A server's item into ours. The raw one travels alongside: `completionItem/resolve`
+ * takes the item back whole, and the server remembers what it was about in its `data`.
+ * The import line will come with a second request.
+ */
 function toEntry(item: RawCompletion): CompletionEntry {
   const edit = item.textEdit;
   const range = edit?.range ?? edit?.insert;
@@ -635,6 +775,7 @@ function toEntry(item: RawCompletion): CompletionEntry {
   };
 }
 
+/** An item's documentation: a string, or a `MarkupContent` — both are live. */
 function renderDocumentation(value: unknown): string {
   if (typeof value === 'string') return value;
   if (value && typeof value === 'object' && typeof (value as { value?: unknown }).value === 'string') {
@@ -658,6 +799,7 @@ function languageIdFor(key: string): string {
   }
 }
 
+/** LSP hands a tooltip's contents over in three different ways — all three are live. */
 function renderHover(contents: unknown): string {
   if (typeof contents === 'string') return contents;
   if (Array.isArray(contents)) return contents.map(renderHover).join('\n\n');
@@ -670,6 +812,10 @@ function renderHover(contents: unknown): string {
   return '';
 }
 
+/**
+ * The answer to `definition` comes in three forms: a `Location`, an array of
+ * `Location`, and a `LocationLink` with two ranges. We take the one to jump to.
+ */
 function asLocation(item: unknown): { uri: string; line: number; character: number } | null {
   if (typeof item !== 'object' || item === null) return null;
   const any = item as Record<string, unknown>;
@@ -681,6 +827,13 @@ function asLocation(item: unknown): { uri: string; line: number; character: numb
   return { uri, line: range.start.line, character: range.start.character ?? 0 };
 }
 
+/**
+ * A line of text to show, and a mark for an import.
+ *
+ * We recognise an "import" by the line's beginning rather than by parsing: parsing
+ * would have to be done per language, and a mistake here costs one extra item in a list
+ * the human sees anyway.
+ */
 function describe(text: string, line: number): { preview: string; isImport: boolean } {
   const raw = text.split(/\r?\n/)[line] ?? '';
   const preview = raw.trim().slice(0, 200);

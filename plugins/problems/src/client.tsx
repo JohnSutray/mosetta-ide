@@ -5,16 +5,42 @@ import { ProblemsIcon } from './icon.js';
 import DocPlugin from '@mosetta/ide-plugin-doc';
 import type { RevealLike } from '@mosetta/ide-plugin-lsp';
 
+/**
+ * The errors of the WHOLE project rather than of the open file.
+ *
+ * While only the open file was checked, the list and the panel were about the same
+ * thing. Now the project is checked whole, and a panel showing one file is a shop
+ * window with the rest hidden behind it.
+ *
+ * By file, in sections: the path as a heading, the rows beneath it. The current file
+ * first — it is what gets asked about most often; the rest alphabetically, as in the
+ * tree.
+ *
+ * The panel is only a VIEW: the diagnostics are held by a neighbour, the language
+ * server plugin, and we take them through `getPlugin`. The toolbar button, the toggle
+ * command and the memory of being open are set up by the plugin system from one
+ * declaration.
+ */
 @plugin({ title: 'plugin.problems' })
 export default class Problems {
+  /** Documents are a neighbour: what is open, where to jump, how to edit. */
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);
   }
 
+  /**
+   * How many rows we draw. A list of five thousand errors is not a list but a way to
+   * hang the tab; the truncation is visible as a line.
+   */
   private readonly maxRows = 500;
 
   constructor(private readonly ide: Ide) {}
 
+  /**
+   * Whether the panel is open — the core's memory. A lazy field rather than a local
+   * inside `activate`: the command is declared by an annotation, and it may be called
+   * before the plugin comes up.
+   */
   private open: { value: boolean } | null = null;
   private opened(): { value: boolean } {
     this.open ??= this.ide.remember('panel.open', false);
@@ -53,13 +79,37 @@ export default class Problems {
     });
   }
 
+  /**
+   * What raises the ceiling. The button's label is the key itself: "raise the ceiling"
+   * does not say WHAT to raise, and looking for it afterwards means combing the whole
+   * settings window.
+   */
   private static readonly BUDGET = 'lsp.memoryBudgetMb';
+  /** What the settings window will find this row by. */
   private static readonly BUDGET_KEY = 'memoryBudgetMb';
 
+  /**
+   * Who will lead to the setting. Through the registry rather than by import:
+   * `getPlugin` throws if the neighbour is missing, and the problems panel would fall
+   * over because somebody turned the settings off. No entry means no button, while the
+   * key's name stays as text: there is still something to look for by eye.
+   */
   private get opener(): RevealLike | null {
     return this.ide.registry<RevealLike>('settings.reveal').all.value[0] ?? null;
   }
 
+  /**
+   * "Not everything was checked" — where people look at it.
+   *
+   * The sweep is cut short by a memory budget, and until now the truncation was
+   * announced as a line in the journal. The journal is read by whoever already suspects
+   * something; a person opening the panel sees a list and draws the only conclusion
+   * available — that this is the whole list. An empty panel lies loudest of all here:
+   * "no errors" and "we did not look" look identical.
+   *
+   * A line for EVERY server that did not finish rather than one summary: each has its
+   * own budget, and adding them up would mean naming a number that does not exist.
+   */
   private partial() {
     const statuses = this.ide.getPlugin(LspPlugin).statuses.value;
     const unfinished = statuses.filter((one) => one.sweep && one.sweep.checked < one.sweep.total);
@@ -91,6 +141,12 @@ export default class Problems {
     });
   }
 
+  /**
+   * However the sweep ended is how we explain it. One line for every case will not do:
+   * "0 of 2010 checked" is equally true when the budget did not stretch to the project
+   * itself and when the system cannot be measured — and those ailments are cured
+   * differently.
+   */
   private static readonly SAY = {
     running: 'problems.sweeping',
     budget: 'problems.partial.budget',
@@ -99,9 +155,25 @@ export default class Problems {
     done: 'problems.partial.budget',
   } as const;
 
+  /** What the settings window will find the row with the server's command by. */
   private static readonly SERVERS_KEY = 'servers';
   private static readonly SERVERS = 'lsp.servers';
 
+  /**
+   * "Nobody checked" — in the same place as "not everything was checked".
+   *
+   * The truncation rule taught the panel to admit an INCOMPLETE sweep and left the
+   * worse case unanswered: there was no sweep at all, because the server did not come
+   * up. Then there is no `sweep`, the truncation line is not drawn, and the panel shows
+   * "no problems" — the very lie the rule was written against, at full height.
+   *
+   * The case is not exotic but the FIRST one: on a fresh machine there is no language
+   * server yet (`spawn typescript-language-server ENOENT`), and a human sees a clean
+   * project instead of "install this".
+   *
+   * We stay silent where silence is truthful: `off` means a server turned off by a
+   * setting, and that is said elsewhere.
+   */
   private down() {
     const statuses = this.ide.getPlugin(LspPlugin).statuses.value;
     const mute = statuses.filter((one) => one.state === 'failed' || one.state === 'starting');
@@ -187,6 +259,10 @@ export default class Problems {
     );
   }
 
+  /**
+   * The jump to an error. Open the file if it is not open and place the caret — through
+   * one door: a live editor is not handed to a plugin, and rightly so.
+   */
   private async jump(path: string, item: Diagnostic | undefined): Promise<void> {
     if (!item) return;
     await this.docs.goTo(path, item.range.start.line, item.range.start.character);

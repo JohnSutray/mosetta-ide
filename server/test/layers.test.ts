@@ -3,8 +3,25 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/**
+ * The layers must not spill over one another. A rule recorded only in a comment lives
+ * until the first "but going straight there is faster", so this one is recorded here
+ * and fails in red.
+ *
+ * * the RAM filesystem (layer 2) — downwards only through the OS layer
+ * * the OS filesystem (layer 3) — the only one allowed to touch `node:fs`
+ */
+
 const SRC = fileURLToPath(new URL('../src', import.meta.url));
 
+/**
+ * Who is allowed to touch disk directly. The list is closed — that is the whole point:
+ * the OS layer, its watching half, and the half of THAT where the recursion is ours
+ * rather than the OS's; the config store, which reads its own `settings.json`; the
+ * defaults, because the factory keymap is shipped as package data; the one-off move from
+ * the old `keymap.json`; the search for a program along the human's PATH; and the plugin
+ * host with its shared table, which reads package manifests and the contract's source.
+ */
 const MAY_TOUCH_DISK = [
   'fs/os-fs.ts',
   'fs/watcher.ts',
@@ -17,11 +34,24 @@ const MAY_TOUCH_DISK = [
   'plugins/shared.ts',
 ];
 
+/**
+ * Who is supposed to spawn subprocesses.
+ *
+ * The list is OPEN, unlike the disk one: a direct `spawn` is not forbidden — server
+ * code is entitled to launch whatever it likes. Something else is required: saying so
+ * out loud, as a line here, and naming the reason. Otherwise what already happened
+ * happens again — four launch sites, four different timeouts, a launch plan bypassing
+ * three of them, and nowhere to see the live processes.
+ *
+ * Two lines so far: the process layer, which exists for this, and the terminal's host,
+ * because `node-pty` opens a device rather than a pipe and the two share no signature.
+ */
 const MAY_SPAWN = [
   'env/processes.ts',
   'term/host.ts',
 ];
 
+/** The forbidden arrows: what may not import what. */
 const FORBIDDEN: Array<{ from: RegExp; importing: RegExp; why: string }> = [
   {
     from: /^fs\/ram-fs\.ts$/,
@@ -123,6 +153,17 @@ describe('the layers do not spill over', () => {
   });
 });
 
+/**
+ * The server writes outside the project only where it was told to.
+ *
+ * The rule was recorded as a decision and got broken all the same, a second time: two
+ * tests brought a server up directly, without a state directory, and it honestly wrote
+ * the history of open projects into the user's home. A live human LOST their own
+ * projects over it — twelve history slots stuffed with temporary fixtures.
+ *
+ * So the rule is now executable: in tests, only the helper brings a server up, and it
+ * substitutes a temporary state directory.
+ */
 describe('the machine\'s state', () => {
   it('the tests bring a server up only through the helpers', async () => {
     const dir = fileURLToPath(new URL('.', import.meta.url));

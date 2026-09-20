@@ -5,15 +5,47 @@ import type { Logger } from '../log.js';
 import { paths } from '../workspace/paths.js';
 import type { OsFs } from './os-fs.js';
 
+/**
+ * LAYER 2 — the filesystem in RAM. The truth as far as the editor is concerned.
+ *
+ * Greedy: when a project opens, the tree is walked whole and stays in memory, and the
+ * sources are pulled in in the background up to a budget. Hence the main property the
+ * layer exists for: `listSync` and `docSync` are SYNCHRONOUS. No key ever waits for
+ * disk.
+ *
+ * Downwards it goes only through the OS layer; `node:fs` is never imported here.
+ * Upwards, only events. The index and the language servers read those and have no right
+ * to poke at disk themselves.
+ */
+
 export interface Doc {
   path: string;
   text: string;
+  /** The edit counter IN MEMORY. It rises on every edit and has nothing to do with disk. */
   version: number;
+  /** The disk stamp we count from. `null` means the file is not on disk yet. */
   revision: string | null;
   dirty: boolean;
   truncated: boolean;
+  /**
+   * Disk moved away while there are unsaved edits here.
+   *
+   * Held as a FACT about the document rather than as a single event: an event is seen
+   * only by the tab that happened to be on screen that second, whereas the document
+   * stays diverged until the argument has been settled.
+   */
   diverged?: 'changed' | 'removed';
+  /**
+   * How many times the document was opened explicitly, by an editor. For
+   * didOpen/didClose.
+   */
   openCount: number;
+  /**
+   * The text as it lies on disk. Created on the first edit and living while the
+   * document is dirty: only that way can `dirty` be the truth rather than "someone
+   * touched it once". Undo the edits and the "changed" mark goes out by itself. Memory
+   * is spent only on changed documents rather than on every resident one.
+   */
   savedText?: string;
 }
 
@@ -23,19 +55,40 @@ export type RamEvent =
   | { type: 'doc.changed'; path: string; version: number; dirty: boolean }
   | { type: 'doc.saved'; path: string; revision: string }
   | { type: 'doc.external'; path: string; revision: string }
+  /**
+   * The memory has parted company with the disk. This is a FACT rather than a conflict:
+   * nobody is blocked by anything, each has a text of their own. The tab will show a
+   * plate, and an argument only becomes necessary when an action runs into it.
+   *
+   * `changed` — the text on disk is different; `removed` — the file is no longer there.
+   */
   | { type: 'doc.diverged'; path: string; reason: 'changed' | 'removed' }
+  /**
+   * The saving did not happen: the disk has moved on. THAT is a conflict — an action
+   * the human asked for cannot carry itself out.
+   */
   | { type: 'doc.saveBlocked'; path: string }
   | { type: 'doc.closed'; path: string }
   | { type: 'doc.removed'; path: string }
+  /**
+   * The document has moved: the path is new, the contents and the edits are the same.
+   * `path` is where to, `from` is where from; `path` counts as the current one, so
+   * subscribers who care only about it work unchanged.
+   */
   | { type: 'doc.moved'; path: string; from: string }
   | { type: 'tree.changed'; path: string };
 
+/**
+ * Whether two settings lists are the same. The order does not matter, and there are no
+ * duplicates.
+ */
 function same(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((one) => b.includes(one));
 }
 
 interface DirNode {
   entries: DirEntry[];
+  /** Whether we walked it greedily. For `noScan` this is false: it is read lazily. */
   scanned: boolean;
 }
 
@@ -43,12 +96,31 @@ export class RamFs {
   private readonly dirs = new Map<string, DirNode>();
   private readonly docs = new Map<string, Doc>();
   private readonly listeners = new Set<(event: RamEvent) => void>();
+  /**
+   * Reads already in flight. Without this, the background preload and a `doc.open` can
+   * read one file at the same time, and the second result overwrites the first — along
+   * with its version and its edits. Caught by a test.
+   */
   private readonly loading = new Map<string, Promise<Doc>>();
+  /**
+   * Files we are writing ourselves right now.
+   *
+   * Our own write reaches us by two routes — a `wrote` event from the OS layer and a
+   * watcher event — and both arrive BEFORE the save has managed to write the new
+   * revision into the document. Without this mark the editor declares a conflict with
+   * itself on every save (caught by a test).
+   */
   private readonly writing = new Set<string>();
   private bytesResident = 0;
   private builtMs = 0;
   private fileCount = 0;
   private preloading: Promise<void> | null = null;
+  /**
+   * Files that turned out to be binary when read.
+   *
+   * Remembered so as not to read them again, and so that "not text" can be told from
+   * "has not arrived yet": those are different ailments, cured differently.
+   */
   private readonly binaries = new Set<string>();
   private disposed = false;
   private readonly offOs: () => void;
@@ -75,6 +147,13 @@ export class RamFs {
     void this.reprime().catch((err) => this.log.warn(`rebuilding the tree: ${String(err)}`));
   }
 
+  /**
+   * Walk again, and tell everyone who remembers the old state.
+   *
+   * Events are sent both for the new directories and for the ones we knew BEFORE: a
+   * directory may have moved into `noScan` and vanished from memory while staying on
+   * screen.
+   */
   private async reprime(): Promise<void> {
     const known = [...this.dirs.keys()];
     this.dirs.clear();
@@ -98,6 +177,7 @@ export class RamFs {
     this.docs.clear();
   }
 
+  /** The greedy walk. Directories from `noScan` are shown, but we do not go inside. */
   async prime(): Promise<void> {
     const started = Date.now();
     await this.scan('');
@@ -121,10 +201,18 @@ export class RamFs {
     }
   }
 
+  /**
+   * A synchronous read from memory. `undefined` means the directory was not walked
+   * greedily.
+   */
   listSync(key: string): DirEntry[] | undefined {
     return this.dirs.get(key)?.entries;
   }
 
+  /**
+   * From memory, or — if the directory was not walked (`noScan`) — from disk and into
+   * memory.
+   */
   async list(key: string): Promise<DirEntry[]> {
     const cached = this.dirs.get(key);
     if (cached) return cached.entries;
@@ -133,6 +221,7 @@ export class RamFs {
     return entries;
   }
 
+  /** Every known file. The index is built from this and from nothing else. */
   *files(): Generator<DirEntry> {
     for (const node of this.dirs.values()) {
       for (const entry of node.entries) {
@@ -151,6 +240,19 @@ export class RamFs {
     return { files, dirs, bytesResident: this.bytesResident, builtMs: this.builtMs };
   }
 
+  /**
+   * Whether we consider this file textual.
+   *
+   * The answer comes from the CONTENTS rather than from the name: there used to be a
+   * list of extensions here, and everything absent from it silently dropped out of
+   * search — along with `.gitignore`, `Dockerfile` and every language we had not
+   * enumerated. Now "not text" means "we read it and saw that it is not text"; about
+   * something unread we answer YES — not seen is not sentenced.
+   *
+   * The index asks when a result supplier is waiting for a file that is not in memory:
+   * "has not loaded yet" and "will never load" are different ailments, cured
+   * differently.
+   */
   isTextual(path: string): boolean {
     return !this.binaries.has(path);
   }
@@ -190,6 +292,10 @@ export class RamFs {
     );
   }
 
+  /**
+   * Drag a file into memory. Idempotent and race-free: a document already loaded comes
+   * back as it is, and parallel calls share one read.
+   */
   private residentize(key: string): Promise<Doc> {
     const existing = this.docs.get(key);
     if (existing) return Promise.resolve(existing);
@@ -225,10 +331,15 @@ export class RamFs {
     return doc;
   }
 
+  /** Synchronously — if the file is in memory already. The fast path for hotkeys. */
   docSync(key: string): Doc | undefined {
     return this.docs.get(key);
   }
 
+  /**
+   * Pull a document into memory WITHOUT counting it as an open. Needed by the preview
+   * in search, and by everything that reads a file in passing.
+   */
   peekDoc(key: string): Promise<Doc> {
     return this.residentize(key);
   }
@@ -240,6 +351,11 @@ export class RamFs {
     return doc;
   }
 
+  /**
+   * An edit. `baseVersion` is the one the client started from: if the versions have
+   * diverged, another tab has touched the document, and gluing the texts together
+   * silently is not on.
+   */
   editDoc(key: string, text: string, baseVersion: number): Doc {
     const doc = this.requireDoc(key);
     if (doc.truncated) {
@@ -262,6 +378,7 @@ export class RamFs {
     return doc;
   }
 
+  /** A write downwards, to disk. The only place where memory pushes into the OS. */
   async saveDoc(key: string): Promise<Doc> {
     const doc = this.requireDoc(key);
     this.writing.add(doc.path);
@@ -285,6 +402,14 @@ export class RamFs {
     return doc;
   }
 
+  /**
+   * A merge's verdict: the assembled text becomes both memory and disk. `null` means
+   * the human accepted the file's deletion.
+   *
+   * We write WITHOUT checking the revision, deliberately: both versions have just been
+   * shown to the human whole, and optimistic locking here would argue with the very
+   * decision it was opened for.
+   */
   async resolveDoc(key: string, text: string | null): Promise<void> {
     if (text === null) {
       this.writing.add(key);
@@ -328,6 +453,16 @@ export class RamFs {
     this.emit({ type: 'doc.external', path: key, revision });
   }
 
+  /**
+   * A merge's verdict that stays IN MEMORY.
+   *
+   * This is the session's second direction: the human pressed not "save" but "reload",
+   * i.e. asked to pull somebody else's version in without throwing their own away. Disk
+   * is not touched at all — only what we hold changes, and the document stays exactly
+   * as dirty as the result diverged from disk.
+   *
+   * `null` means the human accepted the deletion: the document is gone.
+   */
   async adoptDoc(key: string, text: string | null): Promise<void> {
     const doc = this.requireDoc(key);
 
@@ -360,6 +495,7 @@ export class RamFs {
     this.emit({ type: 'doc.external', path: key, revision: doc.revision ?? '' });
   }
 
+  /** Take it from disk afresh, throwing away the edits held in memory. */
   async reloadDoc(key: string): Promise<Doc> {
     const file = await this.os.read(key);
     if (file.binary) {
@@ -380,6 +516,10 @@ export class RamFs {
     return doc;
   }
 
+  /**
+   * Close in the sense of "the editor is no longer looking". The text stays in memory:
+   * the layer is greedy for a reason, and reopening has to be instant.
+   */
   closeDoc(key: string): void {
     const doc = this.docs.get(key);
     if (!doc) return;
@@ -395,6 +535,17 @@ export class RamFs {
     return doc;
   }
 
+  /**
+   * Make sense of the paths the watcher pointed at.
+   *
+   * The watcher only says "look here" — the truth comes from a `stat` here and now.
+   * That is the only way not to guess: `fs.watch` sends one and the same event for a
+   * creation and for a deletion, collapses batches and arrives late.
+   *
+   * The decision is taken HERE rather than in the OS layer, because only memory knows
+   * whether a document holds unsaved edits. Below, it does not know that; above, it
+   * does not know about disk.
+   */
   async syncFromDisk(keys: string[]): Promise<void> {
     if (this.disposed) return;
     const ordered = [...new Set(keys)].sort((a, b) => depth(a) - depth(b) || a.localeCompare(b));
@@ -425,6 +576,11 @@ export class RamFs {
     await this.refreshDirs(dirsToRefresh);
   }
 
+  /**
+   * Re-read directories whole instead of performing surgery on the list: one readdir is
+   * cheaper than five branches of "insert / update / reorder", and it sorts out the
+   * ordering, the symlinks and the noScan flag along the way.
+   */
   private async refreshDirs(dirs: Iterable<string>): Promise<void> {
     for (const dir of dirs) {
       if (!this.dirs.has(dir)) continue;
@@ -436,6 +592,15 @@ export class RamFs {
     }
   }
 
+  /**
+   * A file or directory moved by our hands.
+   *
+   * The document is NOT thrown away: its key changes, and that is all — the text, the
+   * version, the unsaved edits and the open counter stay with it. To the editor this is
+   * the same file under a new path rather than "died and was reborn", and that is
+   * precisely why the event comes from here rather than from the watcher: the watcher
+   * sees two separate events and knows nothing of their kinship.
+   */
   private async onDiskMove(from: string, to: string): Promise<void> {
     if (this.disposed) return;
 
@@ -473,6 +638,15 @@ export class RamFs {
     } catch {}
   }
 
+  /**
+   * Remove from memory a path that is no longer on disk.
+   *
+   * With one exception: if the document holds unsaved edits, it is NOT thrown away. The
+   * file was deleted from outside while the human's work is still alive — that is an
+   * argument between two versions, and settling it is theirs: accept the deletion, or
+   * write their own text back. The edits used to be simply declared dead along with the
+   * file.
+   */
   private forget(key: string): boolean {
     let touched = false;
 
@@ -539,6 +713,17 @@ export class RamFs {
     for (const listener of this.listeners) listener(event);
   }
 
+  /**
+   * The paths whose memory has diverged from disk.
+   *
+   * The memory layer is the only one that knows this in full: a tab sees ONE open
+   * document, whereas a dirty one lives here even after being closed (closing does not
+   * throw unsaved work away). It is asked before a program is launched: the program
+   * reads disk while the human is looking at memory.
+   *
+   * Ordered by path: the list is shown to a human, and it must not reshuffle depending
+   * on the order files happened to enter memory.
+   */
   unsavedDocs(): string[] {
     return [...this.docs.values()].filter((doc) => doc.dirty).map((doc) => doc.path).sort();
   }

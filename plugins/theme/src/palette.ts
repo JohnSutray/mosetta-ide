@@ -1,3 +1,10 @@
+/**
+ * The palette BY ROLE: what is painted in which colour, without a single piece of
+ * knowledge about CodeMirror. It is read by the code display (which assembles the
+ * editor theme and the highlighting), by the terminal, and by everyone who draws
+ * without styles. A second theme is a second table like this one rather than an edit in
+ * six places.
+ */
 export interface Palette {
   fg: string;
   bg: string;
@@ -31,6 +38,11 @@ export interface Palette {
   selectionMatch: string;
 }
 
+/**
+ * Darcula as in WebStorm. The values were not picked by eye but carried over from an
+ * earlier config, into which they had gone straight from JetBrains' own scheme: an
+ * eyedropper on a screenshot lies, because of anti-aliasing.
+ */
 export const DARCULA: Palette = {
   fg: '#A9B7C6',
   bg: '#2B2B2B',
@@ -64,4 +76,16 @@ export const DARCULA: Palette = {
   selectionMatch: '#33475B',
 };
 
+/**
+ * What code is set in. The TAIL of the chain is about three systems rather than one.
+ *
+ * Until recently, our `JetBrains Mono` was followed only by the Mac's `SF Mono` and
+ * `Menlo`. On Linux none of the three exists, and the chain fell through to the generic
+ * `monospace` — that is, to whatever font the browser was given by default, usually
+ * narrow and not ours. Verified on that machine: not one name from the chain turned up
+ * in `fc-list`.
+ *
+ * The generic `monospace` stays last: it always exists, and falling there is no
+ * disgrace — the disgrace is falling there AT ONCE.
+ */
 export const CODE_FONT = "'JetBrains Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace";

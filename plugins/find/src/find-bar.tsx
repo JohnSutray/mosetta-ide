@@ -14,6 +14,11 @@ interface ToolProps {
   children: ComponentChildren;
 }
 
+/**
+ * A panel button. It calls a command rather than acting itself: the mouse and the key
+ * do literally the same thing. Pressing it does not take the focus out of the field —
+ * otherwise after "next" one would have to click back into the search.
+ */
 function Tool({ keysFor, windows, command, title, on, children }: ToolProps) {
   const ide = useIde();
   const t = useT();
@@ -34,6 +39,12 @@ function Tool({ keysFor, windows, command, title, on, children }: ToolProps) {
   );
 }
 
+/**
+ * The find and replace panel above the text. Two rows: the term with its toggles, the
+ * counter and the arrows; in replace mode, the replacement too, with two buttons. Every
+ * field names its own key surface: Enter in the first means "next", in the second
+ * "replace".
+ */
 export function FindBar({ keysFor, windows, find }: { keysFor: (command: string) => string[]; windows: Windows; find: FindState }) {
   const t = useT();
   const field = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);

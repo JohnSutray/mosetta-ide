@@ -1,6 +1,15 @@
+/**
+ * LSP frames over stdio: `Content-Length: N\r\n\r\n{json}`.
+ *
+ * Twenty lines of our own instead of a dependency: the protocol here is trivial, and an
+ * extra package in a hot path is not something we need. The one subtlety is that the
+ * length is in BYTES rather than characters: non-Latin text in a diagnostic breaks a
+ * naive `text.length` instantly.
+ */
 export class FrameDecoder {
   private buffer: Buffer = Buffer.alloc(0);
 
+  /** We feed it chunks of stdout and get parsed messages back. */
   push(chunk: Uint8Array): unknown[] {
     const piece = Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength);
     this.buffer = this.buffer.length === 0 ? piece : Buffer.concat([this.buffer, piece]);

@@ -21,6 +21,7 @@ interface ToolProps {
   children: ComponentChildren;
 }
 
+/** A popup button: it calls a command and does not take the focus out of the field. */
 function Tool({ keysFor, windows, command, title, on, disabled, children }: ToolProps) {
   const ide = useIde();
   const t = useT();
@@ -42,6 +43,12 @@ function Tool({ keysFor, windows, command, title, on, disabled, children }: Tool
   );
 }
 
+/**
+ * Find and replace across the project: a rectangle over the panels — the term with its
+ * toggles, the replacement, the mask chips, the list by file and the preview. There are
+ * no keys of its own: the arrows, Enter, Tab and Escape are commands with the
+ * `find-files` and `find-files-mask` surfaces.
+ */
 export function FindFilesPopup({
   keysFor,
   windows,
@@ -53,6 +60,7 @@ export function FindFilesPopup({
   windows: Windows;
   files: FindFiles;
   code: CodePlugin;
+  /** Painting a hit row — an instance of the plugin. */
   line: HitLine;
 }) {
   const ide = useIde();
@@ -215,6 +223,12 @@ export function FindFilesPopup({
   );
 }
 
+/**
+ * The field's width follows what was typed: the field is small but it grows. The
+ * fields' font is monospaced, so `ch` is an exact measure rather than a guess. The
+ * minimum fits the prompt, the ceiling keeps a long query from pushing everything to
+ * the right.
+ */
 function width(value: string, least: number): number {
   return Math.min(88, Math.max(least, value.length + 1));
 }
@@ -247,6 +261,19 @@ function Row({
   );
 }
 
+/**
+ * The row of filter chips.
+ *
+ * One component for both rows: inclusions and exclusions are built alike, and the
+ * difference between them has to be exactly the one declared — a struck-through name
+ * and its own prompt in the field, rather than a random two pixels.
+ *
+ * **The colour speaks of being enabled, the strikethrough of the row's meaning.** A
+ * disabled chip used to be drawn struck through, and that was one sign doing two jobs:
+ * in the exclusions row a strikethrough has to mean "I will not be in the results"
+ * rather than "I am not working right now". Now an enabled one is blue and a disabled
+ * one grey, in both rows; the whole lower row is struck through, in any state.
+ */
 function ChipRow({
   field,
   chips,

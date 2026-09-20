@@ -5,6 +5,7 @@ import type { RunningServer } from '../src/server.js';
 import os from 'node:os';
 import { connect, makeProject, removeProject, waitFor, withServer, type TestClient } from './helpers.js';
 
+/** The index is a plugin: we go through the plugin door. */
 interface Hit {
   kind: string;
   label: string;
@@ -12,6 +13,7 @@ interface Hit {
   line?: number;
   matches: number[];
 }
+/** Hits. The index hands them over together with the number found up to the ceiling. */
 async function search(c: TestClient, params: { query: string; limit?: number; kinds?: string[] }): Promise<Hit[]> {
   const answer = (await c.call('plugins.call', {
     name: '@mosetta/ide-plugin-search',
@@ -21,6 +23,11 @@ async function search(c: TestClient, params: { query: string; limit?: number; ki
   return answer.hits;
 }
 
+/**
+ * The memory layer apart from the disk layer. What is checked is not "does reading
+ * work" but that the layers REALLY are different: their answers diverge until they are
+ * synchronised, and that is by design rather than a bug.
+ */
 describe('RAM FS', () => {
   let server: RunningServer;
   let root: string;
@@ -99,6 +106,11 @@ describe('RAM FS', () => {
     expect(await fs.readFile(path.join(root, 'src/main.ts'), 'utf8')).toBe('const a = 2;\n');
   });
 
+  /**
+   * What is unsaved is a question for the LAYER: before launching a program every dirty
+   * document matters, not just the one a tab has open. A closed document with edits
+   * does not leave memory, and it has to be in the list.
+   */
   it('what is unsaved is listed as paths — including what the tab has closed', async () => {
     expect((await c.call('doc.unsaved', null)).paths).toEqual([]);
 
@@ -203,11 +215,20 @@ describe('the "changed" flag tells the truth', () => {
     expect(back.version).toBe(2);   });
 });
 
+/**
+ * Text or not is decided by the CONTENTS rather than by the name.
+ *
+ * This used to be decided by a list of extensions in the settings, and everything
+ * absent from it silently dropped out of search: `.gitignore`, `Dockerfile`, any
+ * language we had not enumerated. Checked over the wire, like everything else: this is
+ * a promise of the distribution rather than an internal of the layer.
+ */
 describe('a binary is recognised by its contents', () => {
   let server: RunningServer;
   let root: string;
   let c: TestClient;
 
+  /** Full-text search is one half of the find-in-files plugin. */
   async function grep(query: string): Promise<Array<{ path: string }>> {
     const answer = (await c.call('plugins.call', {
       name: '@mosetta/ide-plugin-find',
@@ -252,6 +273,14 @@ describe('a binary is recognised by its contents', () => {
   });
 });
 
+/**
+ * An edit to `fs.noScan` takes effect without a restart.
+ *
+ * The "past the search" mark is stamped onto a tree entry at walk time rather than
+ * asked for at display time. So changing the setting is obliged to REBUILD the tree —
+ * otherwise the promise "an edit takes effect at once" breaks exactly where it is
+ * checked by eye: the directory does not turn yellow.
+ */
 describe('a directory leaves the walk by a setting', () => {
   let server: RunningServer;
   let configDir: string;

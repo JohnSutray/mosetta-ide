@@ -11,6 +11,10 @@ import { patch } from './patch.js';
 
 const log = journal.logger('config');
 
+/**
+ * The file we are looking at the directory for in the first place. There is only one of
+ * them: the keymap moved into the settings as a `keymap` section.
+ */
 const WATCHED = new Set(['settings.json']);
 
 export class ConfigStore {
@@ -52,6 +56,16 @@ export class ConfigStore {
     return () => this.listeners.delete(listener);
   }
 
+  /**
+   * Watch the config and re-read it. Debounced — editors write in two goes.
+   *
+   * We watch the DIRECTORY rather than the files. A decent editor saves atomically: it
+   * writes a neighbouring temporary file and renames it into place — which is what our
+   * own OS layer does too. That changes the file's inode, and `fs.watch` on a file
+   * holds on to precisely the inode, so after the first such save it goes deaf FOREVER,
+   * and silently. Verified the hard way: an edit to the keymap stopped reaching the
+   * tab, and the server said nothing about it.
+   */
   watch(): void {
     try {
       const watcher = fs.watch(this.dir, (_event, name) => {
@@ -62,6 +76,7 @@ export class ConfigStore {
     } catch {}
   }
 
+  /** Writes go one at a time: two at once would read the same file and lose one of them. */
   private writing: Promise<unknown> = Promise.resolve();
 
   set(section: string, key: string, value: SettingValue): Promise<{ rewritten: boolean }> {
@@ -84,6 +99,10 @@ export class ConfigStore {
     return { rewritten: patched.rewritten };
   }
 
+  /**
+   * Remove a key from `settings.json`: the value goes back to factory and travels on
+   * with the defaults in code. The same queue as `set` uses.
+   */
   unset(section: string, key: string): Promise<void> {
     const next = this.writing.then(() => this.remove(section, key));
     this.writing = next.catch(() => undefined);
@@ -96,7 +115,8 @@ export class ConfigStore {
     try {
       raw = await fsp.readFile(file, 'utf8');
     } catch {
-      return;     }
+      return;
+    }
     const patched = patch.unset(raw, section, key);
     if (patched.text === raw) return;
     await fsp.writeFile(file, patched.text, 'utf8');
@@ -158,6 +178,10 @@ export class ConfigStore {
   }
 }
 
+/**
+ * A deep merge: objects are merged, arrays are REPLACED whole. Appending to an array
+ * would be a surprise — removing an element from a default would become impossible.
+ */
 export function mergeSettings(base: Settings, override: Partial<Settings> | null): Settings {
   if (!override) return base;
   return deepMerge(base, override) as Settings;

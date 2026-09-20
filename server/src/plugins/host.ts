@@ -25,6 +25,19 @@ import { Env } from '../env/env.js';
 import type { Processes } from '../env/processes.js';
 import { legacyNames } from '@mosetta/ide-protocol';
 
+/**
+ * A home for plugins.
+ *
+ * It builds them from source, keeps what was built, and calls the server halves. It
+ * knows nothing about WHAT a plugin does: it gives it a place to declare methods and
+ * files them in its own table.
+ *
+ * The core stays closed while this happens: a plugin method is not called like an
+ * ordinary one (`doc.open`) but through `plugins.call`, with the plugin's name. There
+ * is nowhere for two plugins to collide, and the core's types are not blurred into a
+ * shared union.
+ */
+
 interface Loaded {
   info: PluginInfo;
   dir: string;
@@ -33,25 +46,38 @@ interface Loaded {
   methods: Map<string, CommandHandler>;
 }
 
+/**
+ * What the plugins' home knows about the MACHINE and the HUMAN: the settings, their
+ * shell's environment, where a program lies in their PATH. As functions rather than
+ * values: settings are picked up without a restart. The home knows nothing about the
+ * config or about the `env/` axis — whoever assembles the whole server brings them
+ * together.
+ */
 export interface Machine {
   settings(): Settings;
   environment(): Record<string, string>;
   which(name: string): string | null;
+  /** The server's process ledger: plugins' launches go into it. */
   readonly processes: Pick<Processes, 'run' | 'stream' | 'adopt' | 'start' | 'killTree'>;
 }
 
 export class PluginHost {
   private readonly loaded = new Map<string, Loaded>();
+  /** The live instances by their class: the key is the constructor itself. */
   private readonly instances = new Map<unknown, unknown>();
 
+  /** Who wants to know that a project opened, by plugin name. */
   private readonly projectHandlers = new Map<string, Array<(project: Project) => void>>();
 
   private readonly build: PluginBuild;
 
   constructor(
     private readonly log: Logger,
+    /** The server's state outside the project, as a parameter. */
     private readonly stateDir: string,
+    /** The shared table: what was brought up once and is imported by name. */
     private readonly shared: SharedModules,
+    /** The machine and the human behind it; without them, empty answers. */
     private readonly machine: Machine = {
       settings: () => {
         throw new Error('this plugin host was given no settings');
@@ -64,6 +90,11 @@ export class PluginHost {
     this.build = new PluginBuild(shared);
   }
 
+  /**
+   * A workspace shown to a plugin as a project. Assembled HERE rather than by every
+   * caller: a project has the server's process ledger, and it is the plugins' home that
+   * knows it.
+   */
   projectFor(ws: Workspace, plugin: string): PluginProject {
     return new PluginProject(ws, plugin, this.machine.processes);
   }
@@ -80,6 +111,10 @@ export class PluginHost {
     }
   }
 
+  /**
+   * What a plugin's server half sees under the name `@mosetta/ide-api`. Set once: the
+   * substituted imports look here.
+   */
   private expose(): void {
     const global_ = globalThis as Record<string, unknown>;
     const had = (global_.__ideApi as { modules?: Record<string, unknown> } | undefined)?.modules ?? {};
@@ -89,6 +124,7 @@ export class PluginHost {
     };
   }
 
+  /** Put a module that came up onto the table under its own name. */
   private serve(name: string, mod: unknown): void {
     const table = (globalThis as { __ideApi?: { modules: Record<string, unknown> } }).__ideApi;
     if (table) table.modules[name] = mod;
@@ -102,6 +138,7 @@ export class PluginHost {
     return this.loaded.get(name)?.clientCode ?? null;
   }
 
+  /** Every command of every plugin: the keymap needs to know about them before startup. */
   commands(): Record<string, string> {
     const out: Record<string, string> = {};
     for (const item of this.loaded.values()) Object.assign(out, item.info.commands);
@@ -116,6 +153,11 @@ export class PluginHost {
     return handler(params, ctx);
   }
 
+  /**
+   * Bring a list of plugins up. ONE of them failing does not stop the others: a plugin
+   * that crashes has no right to take the editor with it, and it reports the reason as
+   * a line rather than as silence.
+   */
   async load(names: string[]): Promise<void> {
     this.expose();
     const { order, needs } = await this.ordered(names);
@@ -144,6 +186,16 @@ export class PluginHost {
     }
   }
 
+  /**
+   * The load order: those that others depend on come first.
+   *
+   * Dependencies are not declared — they are DERIVED from the imports: a quick esbuild
+   * pass over both entry points hands back the bare names, and the ones matching
+   * enabled plugins are the graph. This is not for elegance: a substituted import of a
+   * neighbour reads from the table, and by the time the module is resolved the
+   * neighbour has to be lying there. A cycle is an error said out loud rather than half
+   * the list quietly dropped.
+   */
   private async ordered(names: string[]): Promise<{ order: string[]; needs: Map<string, string[]> }> {
     const needs = new Map<string, string[]>();
     for (const name of names) {
@@ -173,6 +225,7 @@ export class PluginHost {
     return { order: out, needs };
   }
 
+  /** The bare imports of both halves of a plugin. */
   private async importsOf(name: string): Promise<string[]> {
     const pkgPath = await this.shared.manifestOf(name);
     const dir = path.dirname(pkgPath);
@@ -185,6 +238,11 @@ export class PluginHost {
     return [...out];
   }
 
+  /**
+   * A plugin's state directory, named after it. The rebrand changed the package names,
+   * and a directory under an old name moves over once: the recent projects, the caret
+   * history and the completion choices survive.
+   */
   private async stateOf(name: string): Promise<string> {
     const root = path.join(this.stateDir, 'plugins');
     const safe = (one: string) => one.replace(/[^\w.-]/g, '_');
@@ -305,6 +363,10 @@ export class PluginHost {
   }
 }
 
+/**
+ * `@mosetta/ide-plugin-x/server` → `@mosetta/ide-plugin-x`: the name of the plugin
+ * whose half is being imported.
+ */
 function serverHalfOf(spec: string): string {
   return spec.endsWith('/server') ? spec.slice(0, -'/server'.length) : spec;
 }

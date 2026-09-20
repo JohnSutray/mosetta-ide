@@ -5,6 +5,10 @@ import type { GitBranch } from './types.js';
 import { Chevron, Icon, Menu, Popup, type MenuItem } from '@mosetta/ide-plugin-ui';
 import type { Windows } from '@mosetta/ide-plugin-ui';
 
+/**
+ * What the window needs from the plugin: the state, its own window, and the push window
+ * next to it.
+ */
 export interface BranchesProps {
   windows: Windows;
   git: Git;
@@ -155,6 +159,7 @@ export function Branches({ windows, git, window, push }: BranchesProps) {
   );
 }
 
+/** A branch row: the name, the behind arrows and a short sha. */
 function BranchRow({
   branch,
   at,
@@ -192,6 +197,7 @@ function BranchRow({
   );
 }
 
+/** A branch's actions — to the right of the row, as in IDEA. */
 function BranchActions({ windows, git, window, push }: BranchesProps) {
   const menu = window.menu.value;
   const branch = window.current.value;

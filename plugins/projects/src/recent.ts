@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { RecentProject } from './types.js';
 
+/** More than a dozen rows and a human is no longer choosing by eye. */
 const LIMIT = 12;
 
 async function exists(dir: string): Promise<boolean> {
@@ -25,6 +26,7 @@ function valid(item: unknown): item is RecentProject {
 export class Recent {
   private cache: RecentProject[] | null = null;
 
+  /** Where to write — as a parameter: a test has a directory of its own. */
   constructor(private readonly stateDir: string) {}
 
   private get file(): string {
@@ -47,6 +49,7 @@ export class Recent {
     return list;
   }
 
+  /** Remember an opened project. It also becomes first in the list. */
   async remember(root: string, name: string): Promise<RecentProject[]> {
     const list = await this.list();
     const next = [{ root, name, openedAt: Date.now() }, ...list.filter((item) => item.root !== root)].slice(

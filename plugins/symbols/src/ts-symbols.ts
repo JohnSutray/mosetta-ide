@@ -1,5 +1,17 @@
 import type TS from 'typescript';
 
+/**
+ * The top-level structure of a TS module: functions, classes with their methods,
+ * interfaces, types, enums with their members, variables.
+ *
+ * We parse it ourselves with the TypeScript compiler rather than asking the language
+ * server. There are three reasons, and all of them matter:
+ *
+ * * search has to work before tsserver has come up, and when it has crashed;
+ * * tsserver's `workspace/symbol` answers one query, whereas we need the whole index at once — that is thousands of queries;
+ * * `createSourceFile` is a pure parser without type checking: it is fast and it needs neither a project, nor a tsconfig, nor disk. The text comes from memory, so the layer stays a derived one.
+ */
+
 export type SymbolKind =
   | 'function'
   | 'class'
@@ -12,8 +24,10 @@ export type SymbolKind =
   | 'variable';
 
 export interface TsSymbol {
+  /** How to show it and what to search it by: `MyClass.foo()`, `MY_VARIABLE`. */
   name: string;
   kind: SymbolKind;
+  /** The line in the file, zero-based. */
   line: number;
   exported: boolean;
 }
@@ -31,7 +45,12 @@ const SCRIPT_KIND: Record<string, number> = {
   jsx: 2,
 };
 
+/** Symbols from TypeScript: the compiler itself, taken from the project. */
 export class TsSymbols {
+  /**
+   * The compiler is loaded lazily: it weighs a fair amount, and with the symbol index
+   * off it is not needed at all.
+   */
   async load(): Promise<typeof TS> {
     ts ??= (await import('typescript')).default ?? (await import('typescript'));
     return ts;
@@ -169,4 +188,5 @@ export class TsSymbols {
   }
 }
 
+/** One per process: it holds the loaded TypeScript module. */
 export const tsSymbols = new TsSymbols();

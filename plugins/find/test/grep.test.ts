@@ -3,6 +3,12 @@ import { signal } from '@preact/signals';
 import { Grep } from '../src/grep.js';
 import { FindFiles } from '../src/files.js';
 
+/**
+ * Search across the project. The mechanics are pure: no disk and no memory — the texts
+ * are supplied by the test, and what is checked are the promises: a mask means what it
+ * says, a literal search does not read a `$` as a group, a line break in the term is
+ * found, and the mask chips are a setting and are written as a setting.
+ */
 const grep = new Grep();
 const plain = (query: string) => grep.pattern({ query, regex: false, caseSensitive: false, words: false })!;
 
@@ -66,6 +72,7 @@ describe('replacement', () => {
 });
 
 describe('the mask and exclusion chips', () => {
+  /** A row of chips as the state sees it: the setting live, and the writing into it. */
   function row(initial: string[] = []) {
     const all = signal<string[]>(initial);
     const off = signal<string[]>([]);

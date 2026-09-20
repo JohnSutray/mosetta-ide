@@ -3,12 +3,27 @@ import { createRequire } from 'node:module';
 import type { Logger, ProcessHandle, Project } from '@mosetta/ide-api/server';
 import type { TsSymbol } from './ts-symbols.js';
 
+/** A file handed over to be parsed. */
 export interface ParseAsk {
   path: string;
   text: string;
   ext: string;
 }
 
+/**
+ * Parsing symbols in a child process.
+ *
+ * The measurement it was all for: on a built 760 KB bundle the parser cost the daemon
+ * 61 MB of RSS, and after garbage collection it did not come back — V8 does not return
+ * its arena to the operating system. The same parsing in a process that exits leaves
+ * the daemon only the result: 1.6 MB.
+ *
+ * There is ONE process per project and it lives while it is being used: bringing
+ * TypeScript itself up costs a quarter of a second, and paying that on every save would
+ * be worse than the ailment. We kill it on idleness and on crossing a memory threshold
+ * — the same device as the project sweep uses, and for the same reason: somebody else's
+ * parser is not obliged to be tidy, and we are.
+ */
 export class SymbolParser {
   private live: ProcessHandle | null = null;
   private idle: ReturnType<typeof setTimeout> | null = null;
@@ -18,12 +33,16 @@ export class SymbolParser {
 
   constructor(
     private readonly project: Project,
+    /** The package's directory: `import.meta.url` lies in a built half. */
     private readonly dir: string,
     private readonly log: Logger,
+    /** How long to wait with no work before letting the process go. */
     private readonly idleMs = 60_000,
+    /** The memory threshold: past it the process is restarted between batches. */
     private readonly budgetMb = 700,
   ) {}
 
+  /** Parse a batch. The process refusing is an empty answer rather than an exception. */
   async parse(files: ParseAsk[]): Promise<Record<string, TsSymbol[]>> {
     if (files.length === 0) return {};
     let child: ProcessHandle;
@@ -43,6 +62,7 @@ export class SymbolParser {
     return parsed;
   }
 
+  /** Let the process go: it will return everything it took to the operating system. */
   stop(): void {
     if (this.idle) clearTimeout(this.idle);
     this.idle = null;
@@ -57,6 +77,7 @@ export class SymbolParser {
     this.stop();
   }
 
+  /** Whether the parser is alive right now — for a test and for the journal. */
   get running(): boolean {
     return this.live !== null;
   }
@@ -82,6 +103,7 @@ export class SymbolParser {
     return handle;
   }
 
+  /** The answers arrive as lines: we glue the tail together and parse the whole ones. */
   private feed(chunk: string): void {
     this.rest += chunk;
     let at = this.rest.indexOf('\n');

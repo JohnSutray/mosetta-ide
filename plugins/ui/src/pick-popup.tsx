@@ -6,6 +6,7 @@ import type { ComponentChildren, JSX } from 'preact';
 
 export interface PickItem<T> {
   key: string;
+  /** What we search by. Exactly the string a human sees. */
   text: string;
   value: T;
 }
@@ -23,14 +24,40 @@ export interface PickProps<T> {
   onClose: () => void;
   onPick: (value: T) => void;
   row: (value: T, matches: number[], picked: boolean) => JSX.Element;
+  /**
+   * What distinguishes a row from its neighbour in the group. Present means the list
+   * gathers into sections with an UNSELECTABLE heading: fifty scripts in a monorepo can
+   * only be read by eye that way. The heading is not part of the navigation.
+   */
   section?: (value: T) => string;
   footer?: ComponentChildren;
+  /** What to draw over the top — a dropdown menu, for instance. */
   extra?: ComponentChildren;
   onMouseDown?: (event: MouseEvent) => void;
 }
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { fuzzy } from './fuzzy.js';
 import { Popup } from './popup.js';
+
+/**
+ * A popup with a list and fuzzy search.
+ *
+ * The shape of the props is declared HERE: the popup moved into the shared package, and
+ * the types moved with it. They used to stand in the plugin contract — because the
+ * contract was the only place both sides could look. The old doctrine below stayed true
+ * in substance: this popup is handed to plugins, so its signature is a contract, and it
+ * lives where the rest of the contract does. Drifting is impossible: the application
+ * signs up to `IdeServices`, and a mismatched signature is caught by the compiler right
+ * there.
+ *
+ * This turned out to be the most reused piece of the interface: branches, scripts, and
+ * next will be actions and anything else. So there is one of it — with search, arrows,
+ * Enter, matched-letter highlighting and a stack of popups.
+ *
+ * What to show in a row is decided by the caller: `row` receives the item and the match
+ * positions. Everything else is shared, and a new list gets it by the fact of being
+ * born rather than rewriting it.
+ */
 
 export function PickPopup<T>({ windows,
   id,
@@ -144,6 +171,13 @@ export function PickPopup<T>({ windows,
   );
 }
 
+/**
+ * Gather rows into sections without breaking the order by relevance.
+ *
+ * Sections go in the order their BEST row was met, and inside a section the order stays
+ * as it was. That way a search neither scatters the groups across the whole list nor
+ * sinks the most suitable into the middle.
+ */
 export function grouped<T>(
   found: Array<{ item: PickItem<T>; matches: number[] }>,
   section: (value: T) => string,
@@ -159,12 +193,20 @@ export function grouped<T>(
     .map((entry) => entry.row);
 }
 
+/**
+ * Highlighting the matched letters.
+ *
+ * Two pure questions about one thing: where the letters matched, and how to show that.
+ * They are kept together, because the second is meaningless without the first.
+ */
 export class Matches {
   shiftMatches(matches: number[], from: number, length: number): number[] {
     return matches
       .map((at) => at - from)
       .filter((at) => at >= 0 && at < length);
   }
+
+  /** Highlight the matched letters — the very positions the matcher returned. */
 
   highlight(text: string, matches: number[]): ComponentChildren {
     if (matches.length === 0) return text;
@@ -186,4 +228,5 @@ export class Matches {
   }
 }
 
+/** One per tab. */
 export const matches = new Matches();

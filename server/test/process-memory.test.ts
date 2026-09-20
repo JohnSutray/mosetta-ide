@@ -1,8 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { ProcessMemory, type ProcessRow } from '../src/env/memory.js';
 
+/**
+ * Memory is measured BY TREE rather than by process.
+ *
+ * This is not pedantry: we launch `typescript-language-server`, which holds some fifty
+ * megabytes — while the gigabyte sits in the `tsserver.js` it spawned itself. Asking
+ * only about the one we launched, the budget would never have triggered, and the
+ * setting would have been decoration.
+ */
+
 const memory = new ProcessMemory();
 
+/**
+ * The very arrangement one sees in `ps` on a live machine: somebody else's root,
+ * `typescript-language-server`, its two `tsserver` children — one on
+ * `--serverMode partialSemantic`, one doing the semantics — and one foreign process that
+ * has nothing to do with us.
+ */
 const LANGUAGE_SERVER: ProcessRow[] = [
   { pid: 1, ppid: 0, kb: 1000 },
   { pid: 100, ppid: 1, kb: 62_000 },

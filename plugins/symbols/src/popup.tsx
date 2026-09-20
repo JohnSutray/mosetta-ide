@@ -6,12 +6,18 @@ import { Popup, Resizer } from '@mosetta/ide-plugin-ui';
 import type { Windows } from '@mosetta/ide-plugin-ui';
 import type { Symbols } from './state.js';
 
+/** How the list opens the first time. After that its size is remembered for it. */
 const SIZE = { w: 620, h: 420 };
 const MIN = { w: 320, h: 220 };
 
+/**
+ * The height of the list of places: it is dragged, and remembered by the same
+ * mechanism.
+ */
 const LIST_ID = 'symbols.list';
 const LIST_DEFAULT = 150;
 const LIST_MIN = 60;
+/** Below this the preview stops being a preview. */
 const PREVIEW_MIN = 120;
 
 export function SymbolsPopup({ windows, symbols, code }: { windows: Windows; symbols: Symbols; code: CodePlugin }) {

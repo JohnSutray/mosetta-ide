@@ -15,6 +15,13 @@ const reader = new SvgReader();
 
 type Say = (key: string, params?: Record<string, string | number>) => string;
 
+/**
+ * The strip above the view: what is controlled, and what is known.
+ *
+ * The facts about the file stand HERE rather than as a caption under the picture: their
+ * place is fixed, and the eye finds them without re-reading. Switches on the left,
+ * details on the right: the canvas size, the weight, everything else.
+ */
 function Bar({
   windows,
   ground,
@@ -62,6 +69,13 @@ function Bar({
   );
 }
 
+/**
+ * A raster image.
+ *
+ * The size in pixels is asked OF THE BROWSER rather than parsed out of the file's
+ * header: it decodes the image anyway, and `naturalWidth` is the same answer without us
+ * parsing eight formats.
+ */
 export function RasterView({
   path,
   store,
@@ -122,6 +136,18 @@ export function RasterView({
   );
 }
 
+/**
+ * SVG, an image made of text.
+ *
+ * Which is why it gets both views at once: the text in a real editor on the left, what
+ * came out of it on the right. The mode is as in WebStorm: "text", "text and view",
+ * "view".
+ *
+ * It is drawn through a `data:` URL in an `<img>` rather than by inserting the markup
+ * into the page. The difference is not cosmetic: SVG can do scripts and external
+ * references, and an `<img>` runs neither. A file in a project is data, and it has to
+ * be treated as data.
+ */
 export function SvgView({
   path,
   text,
@@ -209,6 +235,7 @@ export function SvgView({
   );
 }
 
+/** Text to base64 with non-Latin support: `btoa` does not survive it. */
 function base64(text: string): string {
   const bytes = new TextEncoder().encode(text);
   let binary = '';

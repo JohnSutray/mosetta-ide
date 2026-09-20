@@ -4,6 +4,15 @@ import { Chevron, Popup, type Windows } from '@mosetta/ide-plugin-ui';
 import { useRef, useState } from 'preact/hooks';
 import type { SettingAt, SettingGroup, SettingRow, SettingsModel, SettingsWindow } from './state.js';
 
+/**
+ * The settings editor: sections by plugin, and in a row the path, the name, a field to
+ * match the type, and a reset to factory.
+ *
+ * It writes the same settings file a human edits by hand: the file stays the source of
+ * truth, and the window is a second way of editing it. A value leaves on `change` — on
+ * Enter or on losing focus, rather than on every letter: every write is an edit to the
+ * file.
+ */
 export function SettingsPopup({
   windows,
   window: win,
@@ -15,6 +24,10 @@ export function SettingsPopup({
   window: SettingsWindow;
   model: SettingsModel;
   entries: { readonly value: readonly SettingsEntry[] };
+  /**
+   * A section's layers from its registry key: supplied by the plugin, which has the
+   * registry.
+   */
   layersOf: (section: string) => ReadonlyArray<{ by: string; value: unknown }>;
 }) {
   const ide = useIde();
@@ -30,6 +43,7 @@ export function SettingsPopup({
   const fail = (err: unknown) => ide.notes.notify(err instanceof Error ? err.message : String(err), 'error');
   const write = (row: SettingRow, value: SettingValue) =>
     void ide.setSetting(row.section, row.key, value, row.at === 'project' ? 'project' : 'user').catch(fail);
+  /** Move a value into another layer; `default` removes it altogether. */
   const place = (row: SettingRow, at: SettingAt) => {
     if (at === row.at) return;
     if (at === 'default') return void ide.resetSetting(row.section, row.key).catch(fail);
@@ -102,6 +116,17 @@ export function SettingsPopup({
   );
 }
 
+/**
+ * Where a value lives and where an edit will go — one slider with three positions:
+ * factory, mine, the project's.
+ *
+ * The position does not only show but ACTS: a click moves the value into that layer,
+ * and `default` removes it from everywhere. A value has one home, so the switch cannot
+ * lie: it shows exactly the layer the value currently acts from.
+ *
+ * An object (the language servers) is edited by hand in the file — there is nothing to
+ * switch.
+ */
 function Scope({
   row,
   canProject,
@@ -136,6 +161,10 @@ function Scope({
   );
 }
 
+/**
+ * What was found is marked with a BACKING rather than with weight: bold changes the
+ * text's width with every letter typed, and the rows twitch under the cursor.
+ */
 function Hit({ text, term, model }: { text: string; term: string; model: SettingsModel }) {
   const parts = model.split(text, term);
   if (parts.length === 1) return <>{text}</>;
@@ -154,6 +183,10 @@ function Hit({ text, term, model }: { text: string; term: string; model: Setting
   );
 }
 
+/**
+ * A section: a heading button with a chevron; collapsed, it shows how many there are in
+ * total and how many are yours.
+ */
 function Group({
   group,
   open,
@@ -191,6 +224,10 @@ function Group({
   );
 }
 
+/**
+ * A field to match the setting's type: a toggle, a number, a choice, chips, a string;
+ * an object is shown only.
+ */
 function Field({ row, write }: { row: SettingRow; write: (row: SettingRow, value: SettingValue) => void }) {
   const t = useT();
   switch (row.kind) {
@@ -245,6 +282,11 @@ function Field({ row, write }: { row: SettingRow; write: (row: SettingRow, value
   }
 }
 
+/**
+ * A list of strings as chips with crosses: an element is visible whole and removed with
+ * one click. A new one goes in the field on the right: Enter, or "+". A duplicate is
+ * not added — this is a list, not a bag.
+ */
 function Chips({ values, onChange }: { values: string[]; onChange: (next: string[]) => void }) {
   const t = useT();
   const [draft, setDraft] = useState('');

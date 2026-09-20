@@ -6,11 +6,13 @@ import { ChangedTree } from './changed-tree.js';
 import { Popup, Resizer } from '@mosetta/ide-plugin-ui';
 import type { Windows } from '@mosetta/ide-plugin-ui';
 
+/** The diff tree's default width, and how much room has to be left for the commits. */
 const FILES_ID = 'push.files';
 const FILES_DEFAULT = 460;
 const FILES_MIN = 220;
 const COMMITS_MIN = 300;
 
+/** The height of the commit message box — it is dragged and remembered too. */
 const MESSAGE_ID = 'push.message';
 const MESSAGE_DEFAULT = 96;
 const MESSAGE_MIN = 48;
@@ -28,11 +30,17 @@ export function Push({ windows, git, push }: PushProps) {
   const split = useRef<HTMLDivElement>(null);
   const files = useRef<HTMLDivElement>(null);
 
+  /**
+   * The resizer's limits are measured from the WINDOW's width rather than the screen's:
+   * the dialog is elastic, and a remembered 700 pixels on a narrow laptop must not
+   * squeeze the commits to nothing.
+   */
   const limits = () => {
     const full = split.current?.getBoundingClientRect().width ?? mount.size.value.w;
     return { min: FILES_MIN, max: Math.max(FILES_MIN, full - COMMITS_MIN) };
   };
 
+  /** The message grows upwards, but room has to be left for the tree. */
   const messageLimits = () => {
     const full = files.current?.getBoundingClientRect().height ?? mount.size.value.h;
     return { min: MESSAGE_MIN, max: Math.max(MESSAGE_MIN, full - TREE_MIN) };
@@ -166,6 +174,7 @@ export function Push({ windows, git, push }: PushProps) {
   );
 }
 
+/** The chosen commit's whole message: the subject and the body. */
 function Message({ push }: { push: PushWindow }) {
   const t = useT();
   const commit = push.commit.value;
@@ -183,6 +192,11 @@ function Message({ push }: { push: PushWindow }) {
   );
 }
 
+/**
+ * The column of commits. ANY of them can be clicked — ours, theirs, and long since
+ * shared: `git show` knows about all of them equally, and looking at what was in an old
+ * commit is wanted no less often than in one's own.
+ */
 function Lane({
   push,
   title,

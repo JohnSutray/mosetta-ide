@@ -5,6 +5,16 @@ import type { DirSuggestion } from './types.js';
 import { Chevron, DirIcon, Icon, Popup } from '@mosetta/ide-plugin-ui';
 import type { Projects } from './state.js';
 
+/**
+ * The project picker. Top to bottom, by how often each is used:
+ *
+ * * the recent projects — one click and we are there
+ * * the path field and Open — a path is typed by hand or poked out in the tree
+ * * the directory tree — it only fills the path in; one cannot open with it
+ *
+ * There are no keys of its own here: the arrows, Tab, Enter, Escape and Cmd+Space are
+ * commands with the `projects` surface in the keymap.
+ */
 export function ProjectsPopup({ windows, projects }: { windows: Windows; projects: Projects }) {
   const t = useT();
   const input = useRef<HTMLInputElement>(null);
@@ -69,6 +79,10 @@ export function ProjectsPopup({ windows, projects }: { windows: Windows; project
   );
 }
 
+/**
+ * The recently opened. The one place in the picker where a click opens a project AT
+ * ONCE: people come here deliberately rather than in passing.
+ */
 function Recent({ projects }: { projects: Projects }) {
   const ide = useIde();
   const list = projects.recent.value;
@@ -99,12 +113,14 @@ function Recent({ projects }: { projects: Projects }) {
   );
 }
 
+/** `/Users/john/code/app` → `~/code/app`. The same cosmetics as in the tree. */
 function shortenHome(root: string): string {
   const unix = /^(\/Users\/[^/]+|\/home\/[^/]+)(\/.*)?$/.exec(root);
   if (unix) return `~${unix[2] ?? ''}`;
   return root;
 }
 
+/** What lies in the typed directory. It drops down on Cmd+Space, over the tree. */
 function Suggestions({ projects }: { projects: Projects }) {
   const t = useT();
   const list = projects.suggestions.value;
@@ -128,6 +144,7 @@ function Suggestions({ projects }: { projects: Projects }) {
   );
 }
 
+/** A directory in the choice tree. A click fills in the path and expands it — no more. */
 function PickerNode({ item, depth, projects }: { item: DirSuggestion; depth: number; projects: Projects }) {
   const t = useT();
   const isOpen = projects.expanded.value.has(item.path);
