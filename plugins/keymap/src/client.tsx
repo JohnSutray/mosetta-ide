@@ -24,8 +24,21 @@ export type { KeyBinding, KeyContext, KeyHost, KeyOs, KeyScope, Keymap, TipsLike
 export { keymapRules } from './rules.js';
 export { FACTORY_KEYMAP, KEYMAP_SCHEMA } from './keymap.js';
 
+/**
+ * An instance for our OWN section editor.
+ *
+ * The `@configSection` decorator runs when the module is imported, while the plugin is
+ * born later: `editor` is a function, and by the time it is called the instance already
+ * exists. The module-level variable here is a deliberate exception: it is not state but
+ * a reference to the owner, and it lives exactly as long as the owner does.
+ */
 let keymapPlugin: KeymapPlugin | null = null;
 
+/**
+ * A contribution to the `keys.mechanics` key: somebody's input mechanics — the keys the
+ * widget handles itself, past the layout. The editor puts them there; we neither
+ * swallow such keys nor complain about them.
+ */
 export interface InputMechanicsEntry {
   id: string;
   keys(isMac: boolean): ReadonlySet<string>;
@@ -49,7 +62,17 @@ export default class KeymapPlugin {
   readonly echo: KeysEcho;
   private dispatcher: Dispatcher | null = null;
 
+  /**
+   * The whole layout: the factory one plus my own rows, merged BY PLACE — key, context,
+   * environment.
+   *
+   * The layers lie as entries in their section's key, and the plugin merges them
+   * itself: the general rule for settings is "an array is replaced whole", while a
+   * layout needs it row by row, or the first personal edit of a key would carry off a
+   * copy of the entire shipment.
+   */
   readonly layout: ReadonlySignal<Keymap>;
+  /** Only MY rows — what lies in my own `settings.json`. */
   readonly personal: ReadonlySignal<Keymap>;
 
   constructor(private readonly ide: Ide) {
@@ -73,6 +96,11 @@ export default class KeymapPlugin {
     });
   }
 
+  /**
+   * The keys as the dispatcher sees them: the environment, the whole layout, what has
+   * been taken away, and the echo of the last press. The "Keys" window reads this from
+   * here — through the instance rather than through a module name.
+   */
   readonly keys: {
     readonly host: KeyHost;
     readonly os: KeyOs;
@@ -101,18 +129,27 @@ export default class KeymapPlugin {
     },
   }))(this);
 
+  /**
+   * Our own tips for the section editor: the widgets plugin shows them, and they reach
+   * us as an entry in the `ui.tips` key. They cannot be taken by import — the widgets
+   * depend on us, and an arrow back would close the circle. Turn the widgets off and
+   * the icons stay without captions; that is all that happens.
+   */
   get tips(): TipsLike | null {
     return this.ide.registry<TipsLike>('ui.tips').all.value[0] ?? null;
   }
 
+  /** What keys a command is called by — the captions of buttons and tips. */
   keysFor(command: string): string[] {
     return keysFor(this.layout.value.bindings, command);
   }
 
+  /** Whether this command's chord is held at the moment of the click. */
   chordHeld(command: string, event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean }): boolean {
     return chordHeld(this.layout.value.bindings, command, event);
   }
 
+  /** Whether the MAIN modifier of this environment is held: Cmd on a Mac. */
   primaryHeld(event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }): boolean {
     return keyHost.primaryHeld(event);
   }

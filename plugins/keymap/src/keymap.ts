@@ -1,5 +1,38 @@
 import type { Keymap } from './types.js';
 
+/**
+ * The default layout.
+ *
+ * It reads as a sentence: "a chord of CONCRETE keys runs such-and-such a command in
+ * such-and-such a context in such-and-such an environment on such-and-such a system".
+ * Roles like `mod` and `clip` are gone from here: they saved rows at the cost of
+ * clarity, and three times in three days a human read `mod` as "Cmd" and pressed the
+ * wrong thing.
+ *
+ * `key` — the physical names of the keys: `meta` (Cmd/Win), `control`, `alt` (Option), `shift`. The order of the parts is always this one.
+ * `when` — the surface where the key has force. Empty means everywhere.
+ * `where` — the environments the row applies in. Empty means all of them.
+ *
+ * The model this is assembled from:
+ *
+ *
+ * environment main secondary clipboard
+ * Mac (browser and native) Cmd Option Cmd
+ * Windows (both) Control Alt Control
+ *
+ * The main one is the least robbed modifier of that environment. On a Mac it is Cmd,
+ * and in the browser too: out of a hundred-odd chords with Cmd the browser keeps FIVE
+ * for itself — Cmd+Q, Cmd+W, Cmd+N, Cmd+T and Cmd+E — while the rest reach the page and
+ * are swallowed by `preventDefault`.
+ *
+ * The main modifier in the browser on a Mac used to be Option: Cmd was believed to
+ * belong to the browser entirely. Nobody ever checked the premise, a check refuted it,
+ * and the two Mac environments almost merged — which is why most of the rows below
+ * stand with both scopes at once.
+ *
+ * What we do not have, and why, is in `reserved.ts`. A test will not let a row in here
+ * onto a key that is taken for good.
+ */
 export const FACTORY_KEYMAP: Keymap = {
   "version": 2,
   "bindings": [
@@ -299,6 +332,10 @@ export const FACTORY_KEYMAP: Keymap = {
   ]
 };
 
+/**
+ * The shape of the `keymap` section's value: what the human wrote in their own file is
+ * checked against it. A removal row (`remove`) names no command — it takes one away.
+ */
 export const KEYMAP_SCHEMA = {
   type: 'object',
   additionalProperties: false,

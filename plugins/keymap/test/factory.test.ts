@@ -4,19 +4,33 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { FACTORY_KEYMAP } from '../src/keymap.js';
 
-describe('заводская раскладка', () => {
-  it('заводская раскладка ссылается только на существующие команды', async () => {
+/**
+ * The factory layout is the PLUGIN's DATA: it travels with the plugin, while the
+ * human's file holds only their own differences. A distribution test: what we ship is
+ * obliged to call commands that exist.
+ */
+describe('the factory layout', () => {
+  it('the factory layout refers only to commands that exist', async () => {
     const raw = FACTORY_KEYMAP;
     const fromPlugins = await pluginCommands();
     const dead = raw.bindings.filter((b) => !fromPlugins.has(b.command));
-    expect(dead, `мёртвые клавиши: ${dead.map((d) => d.key).join(', ')}`).toEqual([]);
+    expect(dead, `dead keys: ${dead.map((d) => d.key).join(', ')}`).toEqual([]);
   });
 
-  it('в поставке нет строк-снятий: снимать у себя же нечего', () => {
+  it('there are no removal rows in the shipment: there is nothing of our own to remove', () => {
     expect(FACTORY_KEYMAP.bindings.filter((one) => one.remove)).toEqual([]);
   });
 });
 
+/**
+ * Plugins' commands come from their sources.
+ *
+ * Manifests used to be read: a command's id lay in `package.json` and the handler in
+ * the code, and they were obliged to agree on their honour. Now there is nothing left
+ * to agree: the declaration is ONE, an annotation on a method, and it can be found
+ * where it is written. We look for the literal: the first argument of `@command` is
+ * always a string, or the layout would have nothing to refer to.
+ */
 async function pluginCommands(): Promise<Set<string>> {
   const dir = fileURLToPath(new URL('../..', import.meta.url));
   const out = new Set<string>();

@@ -2,8 +2,16 @@ import { reserved } from '../src/reserved.js';
 import { describe, expect, it } from 'vitest';
 import { WORLDS, inWorld, keymap } from './keymap-shared.js';
 
-describe('раскладка не лезет на отнятые клавиши', () => {
-  it('каждый спор либо расшит, либо назван в биндинге', () => {
+/**
+ * The taken keys.
+ *
+ * The test is the table's second job after the plate: a binding on a taken key does not
+ * pass until it says explicitly that it does not work there. Otherwise the knowledge
+ * crawls back into people's heads and surfaces as half an hour of investigation.
+ */
+
+describe('the layout does not climb onto taken keys', () => {
+  it('every argument is either resolved or named in the binding', () => {
     const bindings = keymap().bindings;
     const clashes: string[] = [];
 
@@ -18,34 +26,34 @@ describe('раскладка не лезет на отнятые клавиши'
       }
     }
 
-    expect(clashes, `биндинги на отнятые клавиши:\n${clashes.join('\n')}`).toEqual([]);
+    expect(clashes, `bindings on taken keys:\n${clashes.join('\n')}`).toEqual([]);
   });
 
-  it('в раскладке нет ролей — только физические имена', () => {
+  it('there are no roles in the layout — only physical names', () => {
     for (const binding of keymap().bindings) {
-      expect(binding.key, `роль в раскладке: ${binding.key}`).not.toMatch(
+      expect(binding.key, `a role in the layout: ${binding.key}`).not.toMatch(
         /\b(mod|clip|aux|cmd|ctrl)\b/,
       );
     }
   });
 
-  it('у каждой команды есть клавиша в КАЖДОМ окружении', () => {
+  it('every command has a key in EVERY environment', () => {
     const bindings = keymap().bindings;
     const everywhere = new Set(bindings.map((b) => b.command));
     for (const world of WORLDS) {
       const here = new Set(inWorld(bindings, world).map((b) => b.command));
       const lost = [...everywhere].filter((command) => !here.has(command));
-      expect(lost, `${world.scope}: команды без клавиши — ${lost.join(', ')}`).toEqual([]);
+      expect(lost, `${world.scope}: commands with no key — ${lost.join(', ')}`).toEqual([]);
     }
   });
 
-  it('в таблице нет дублей и записана она физикой', () => {
+  it('there are no duplicates in the table, and it is written in physics', () => {
     const seen = new Set<string>();
     for (const item of reserved.table) {
-      expect(item.scopes.length, `${item.key}: не сказано, где отнято`).toBeGreaterThan(0);
+      expect(item.scopes.length, `${item.key}: it does not say where it is taken`).toBeGreaterThan(0);
       for (const scope of item.scopes) {
         const id = `${scope} ${item.key}`;
-        expect(seen.has(id), `дубль: ${id}`).toBe(false);
+        expect(seen.has(id), `a duplicate: ${id}`).toBe(false);
         seen.add(id);
       }
       expect(item.key).not.toMatch(/\b(mod|clip)\b/);

@@ -11,6 +11,18 @@ import { keymapRules } from './rules.js';
 import type KeymapPlugin from './client.jsx';
 import type { KeyBinding, KeyContext, KeyHost, Keymap, KeyOs, KeyScope, TipsLike } from './types.js';
 
+/**
+ * The layout editor — the section's OWN editor.
+ *
+ * The settings window can do a "key — field" row, and for a layout that is meaningless:
+ * its value is a list of chords with contexts and environments. So the section brings
+ * its own screen, and the window draws it.
+ *
+ * What is here besides the list: a KEYBOARD (you see what is held down rather than only
+ * the string `meta+shift+s`) and a hint about commands — the id, the caption from the
+ * dictionary and the description from the manifest. Assigning a key to a command that
+ * does not exist is not offered to the human.
+ */
 export function KeymapEditor({ plugin }: { plugin: KeymapPlugin }) {
   const ide = useIde();
   const t = useT();
@@ -175,6 +187,14 @@ export function KeymapEditor({ plugin }: { plugin: KeymapPlugin }) {
   );
 }
 
+/**
+ * A row's button is an icon rather than a word.
+ *
+ * The word `remove` on every row read as part of the text, and a column of twenty
+ * identical words said nothing. An icon is recognised silently, while the name of the
+ * action lives in OUR tip — not in the native `title`, which waits a second and is
+ * drawn past the theme.
+ */
 function Act({
   tips,
   title,
@@ -202,6 +222,11 @@ function Act({
   );
 }
 
+/**
+ * Our tip instead of the native `title` — on everything drawn as an icon. The handlers
+ * are handed out loose: the elements differ (a button, a chip) while the rule for them
+ * is one.
+ */
 function tipOf(tips: TipsLike | null, title: string) {
   if (!tips) return {};
   return {
@@ -210,6 +235,14 @@ function tipOf(tips: TipsLike | null, title: string) {
   };
 }
 
+/**
+ * The row's surface is a COLUMN of its own.
+ *
+ * The context and the environments used to stand in one cell, and the eye did not
+ * separate them at all. And emptiness in place of the context meant "works everywhere"
+ * — that is, the row's strongest property was shown by NOTHING. Now it is written in a
+ * word.
+ */
 function Surface({ when }: { when?: KeyContext }) {
   const t = useT();
   return (
@@ -223,6 +256,11 @@ function Surface({ when }: { when?: KeyContext }) {
   );
 }
 
+/**
+ * The row's environments as icons. A whole host is one icon, a part of one is an icon
+ * with letters; "everywhere" is written as a WORD: an empty cell read as "unknown",
+ * though it means the widest thing possible.
+ */
 function Where({ where, tips }: { where?: readonly KeyScope[]; tips: TipsLike | null }) {
   const t = useT();
   const parts = scopes.summary(where);
@@ -251,6 +289,14 @@ function Where({ where, tips }: { where?: readonly KeyScope[]; tips: TipsLike | 
   );
 }
 
+/**
+ * Catch a chord and choose a command.
+ *
+ * The keys are caught by the DISPATCHER rather than by a subscription of our own: the
+ * surface calls itself `keymap-edit`, and the dispatcher swallows such keys without
+ * running them — otherwise assigning Cmd+S would save the file along the way. What
+ * exactly was pressed lies in the echo.
+ */
 function Chord({
   plugin,
   title,
@@ -271,6 +317,7 @@ function Chord({
   const [chord, setChord] = useState(binding?.key ?? '');
   const [command, setCommand] = useState(binding?.command ?? '');
   const [listening, setListening] = useState(false);
+  /** Whether the list of commands is open: only while the field holds the focus. */
   const [picking, setPicking] = useState(false);
   const [when, setWhen] = useState<KeyContext | ''>(binding?.when ?? '');
   const [cells, setCells] = useState(() => scopes.cells(binding?.where));
@@ -301,6 +348,7 @@ function Chord({
     );
   }, [commands, command, t]);
 
+  /** A finished id of an existing command in the field — or `null`. */
   const chosen = useMemo(() => {
     const id = command.trim();
     return commands.some((one) => one.id === id) ? id : null;
@@ -416,6 +464,12 @@ function Chord({
   );
 }
 
+/**
+ * The chevron is our own rather than the widgets': the `chevron` class is a common
+ * theme style, and the turn on expanding comes from it. Dragging in a dependency on the
+ * widgets package — which itself depends on us for types — for the sake of one tick
+ * would be a bad trade.
+ */
 function Chevron() {
   return (
     <svg width={12} height={12} viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width={1.5}>
@@ -424,6 +478,10 @@ function Chevron() {
   );
 }
 
+/**
+ * A new row: everything chosen in the box. "Everywhere" is written by the absence of
+ * the key.
+ */
 function bindingOf(key: string, command: string, when: KeyContext | '', where?: KeyScope[]): KeyBinding {
   return {
     command,
@@ -433,11 +491,17 @@ function bindingOf(key: string, command: string, when: KeyContext | '', where?: 
   };
 }
 
+/** The surface's name in words: the dictionary belongs to whoever declared the list. */
 function contextName(t: IdeServices['t'], context: KeyContext): string {
   const said = t(`keymap.context.${context}`);
   return said === `keymap.context.${context}` ? context : said;
 }
 
+/**
+ * The command's name in words. From the dictionary rather than from the registry: the
+ * dictionary is the translated surface, a manifest's description is not. No caption —
+ * we show the id, and that is visible.
+ */
 function commandLabel(t: IdeServices['t'], id: string): string {
   const said = t(`command.${id}`);
   return said === `command.${id}` ? id : said;

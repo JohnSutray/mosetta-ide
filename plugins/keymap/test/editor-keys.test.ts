@@ -5,10 +5,16 @@ import { WORLDS, inWorld, keymap } from './keymap-shared.js';
 
 const inputMechanics = new InputMechanics();
 
+/** On a Mac `mac` applies if it is given; otherwise the common `key`. */
 function macKey(binding: CmBinding): string {
   return binding.mac ?? binding.key ?? '';
 }
 
+/**
+ * Everything the editor is allowed. This is MECHANICS: moving the caret, selecting,
+ * erasing, breaking a line, indenting with Tab, and Cmd+A. Not one row that would do
+ * something to the text on a decision of its own.
+ */
 const MECHANICS = new Set([
   'ArrowLeft', 'Alt-ArrowLeft', 'Cmd-ArrowLeft',
   'ArrowRight', 'Alt-ArrowRight', 'Cmd-ArrowRight',
@@ -21,29 +27,29 @@ const MECHANICS = new Set([
   'Alt-Backspace', 'Alt-Delete', 'Mod-Backspace', 'Mod-Delete',
 ]);
 
-describe('редактор не приносит чужих клавиш', () => {
-  it('у редактора только механика ввода — и ничего сверх списка', () => {
+describe('the editor brings no keys of other people\'s', () => {
+  it('the editor has only the input mechanics — and nothing beyond the list', () => {
     const extra = inputMechanics.keymap.map(macKey).filter((key) => !MECHANICS.has(key));
     expect(
       extra,
-      `редактор завёл свои клавиши помимо механики: ${extra.join(', ')}`,
+      `the editor has taken keys of its own besides the mechanics: ${extra.join(', ')}`,
     ).toEqual([]);
   });
 
-  it('эмаксовый слой на Control выкинут целиком', () => {
+  it('the emacs layer on Control is thrown out whole', () => {
     const alive = inputMechanics.keymap.map(macKey).filter((key) => inputMechanics.droppedEmacs.includes(key));
-    expect(alive, `эмаксовые клавиши живы: ${alive.join(', ')}`).toEqual([]);
+    expect(alive, `emacs keys are alive: ${alive.join(', ')}`).toEqual([]);
     expect(inputMechanics.droppedEmacs).toContain('Ctrl-k');
   });
 
-  it('механика на месте: без неё редактор перестанет быть редактором', () => {
+  it('the mechanics are in place: without them the editor stops being an editor', () => {
     const keys = new Set(inputMechanics.keymap.map(macKey));
     for (const must of ['ArrowLeft', 'Backspace', 'Enter', 'Mod-a']) {
-      expect(keys.has(must), `пропала механика ${must}`).toBe(true);
+      expect(keys.has(must), `the mechanics for ${must}`).toBe(true);
     }
   });
 
-  it('ни одна клавиша редактора не спорит с объявленной раскладкой', () => {
+  it('not one of the editor\'s keys argues with the declared layout', () => {
     const SAME = new Set([
       'edit.wordLeft',
       'edit.wordRight',
@@ -62,7 +68,7 @@ describe('редактор не приносит чужих клавиш', () =>
       const clashes = [...mechanics]
         .filter((key) => ours.has(key) && !SAME.has(ours.get(key)!))
         .map((key) => `${key} = ${ours.get(key)}`);
-      expect(clashes, `${world.scope}: чужая клавиша поверх нашей — ${clashes.join(', ')}`).toEqual(
+      expect(clashes, `${world.scope}: somebody else's key on top of ours — ${clashes.join(', ')}`).toEqual(
         [],
       );
     }

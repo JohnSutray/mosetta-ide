@@ -1,5 +1,6 @@
 import { keyHost } from './host.js';
 
+/** Rows of cells: the `code`, and what is printed on the key. */
 const ROWS: Array<Array<[string, string, number?]>> = [
   [
     ['escape', 'esc'],
@@ -65,6 +66,7 @@ const ROWS: Array<Array<[string, string, number?]>> = [
   ],
 ];
 
+/** The bottom row depends on the system: on a Mac Cmd sits next to the space bar. */
 function bottom(isMac: boolean): Array<[string, string, number?]> {
   return isMac
     ? [
@@ -91,6 +93,12 @@ function bottom(isMac: boolean): Array<[string, string, number?]> {
       ];
 }
 
+/**
+ * Highlight a chord: `meta+shift+s` → Cmd, Shift and S are held down.
+ *
+ * A double press (`double:shift`) is a rhythm rather than a chord: we show the same
+ * key, and that it is pressed twice is said by the caption above the keyboard.
+ */
 export function Keyboard({ chord }: { chord: string }) {
   const pressed = new Set(
     chord

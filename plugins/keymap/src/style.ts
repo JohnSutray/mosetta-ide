@@ -1,3 +1,4 @@
+/** The layout editor: the section's own screen in the settings window. */
 export const STYLE = `
 .keymap-editor { --keymap-inset: 14px; display: flex; flex-direction: column; gap: 10px; padding: 4px 0 10px; }
 .keymap-top { display: flex; align-items: center; gap: 8px; padding: 0 var(--keymap-inset); }

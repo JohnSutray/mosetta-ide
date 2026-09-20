@@ -1,5 +1,13 @@
 import type { KeyHost, KeyOs } from './types.js';
 
+/**
+ * Where the IDE lives: the browser as a wheel, like Chrome's, the shell as a window
+ * with a title bar.
+ *
+ * A window with an address bar did not read as a browser: two rectangles side by side
+ * differed only in the thickness of a strip. A wheel is recognised by its shape rather
+ * than by a detail — and so it works at thirteen pixels.
+ */
 export function HostIcon({ host }: { host: KeyHost }) {
   if (host === 'browser') {
     return (
@@ -20,6 +28,7 @@ export function HostIcon({ host }: { host: KeyHost }) {
   );
 }
 
+/** An apple, a Windows window, a penguin — the things recognised without a caption. */
 export function OsIcon({ os }: { os: KeyOs }) {
   if (os === 'mac') {
     return (
@@ -47,6 +56,11 @@ export function OsIcon({ os }: { os: KeyOs }) {
   );
 }
 
+/**
+ * Remove the row. The word `remove` stood on every row and read as part of the text —
+ * the human asked for an icon; a bin is recognised at once, and red on hover says the
+ * action is not a harmless one.
+ */
 export function TrashIcon() {
   return (
     <svg width={13} height={13} viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width={1.1}>
@@ -58,6 +72,10 @@ export function TrashIcon() {
   );
 }
 
+/**
+ * Bring back the factory one: an anticlockwise arrow, which is the same as "undo my
+ * edit".
+ */
 export function RevertIcon() {
   return (
     <svg width={13} height={13} viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width={1.1}>

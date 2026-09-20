@@ -2,20 +2,25 @@ import { describe, expect, it } from 'vitest';
 import { Scopes } from '../src/scopes.js';
 import { FACTORY_KEYMAP } from '../src/keymap.js';
 
+/**
+ * A row's environments as a "where × on what" grid. Folding it wrongly means quietly
+ * changing the row's meaning, so both directions are checked, and on the real shipment
+ * too.
+ */
 const scopes = new Scopes();
 
-describe('окружения строки раскладки', () => {
-  it('пусто в файле — значит все шесть клеток', () => {
+describe('a layout row\'s environments', () => {
+  it('empty in the file means all six cells', () => {
     expect(scopes.cells(undefined)).toEqual({ browser: ['mac', 'win', 'linux'], electron: ['mac', 'win', 'linux'] });
-    expect(scopes.where(scopes.cells(undefined)), 'и обратно — пустотой').toBeUndefined();
+    expect(scopes.where(scopes.cells(undefined)), 'and back again — as emptiness').toBeUndefined();
   });
 
-  it('весь хост пишется одним словом, часть — парами', () => {
+  it('a whole host is written in one word, a part of one in pairs', () => {
     expect(scopes.cells(['browser'])).toMatchObject({ browser: ['mac', 'win', 'linux'], electron: [] });
     expect(scopes.where({ browser: ['mac', 'win', 'linux'], electron: ['win'] })).toEqual(['browser', 'electron:win']);
   });
 
-  it('туда и обратно — то же самое', () => {
+  it('there and back is the same thing', () => {
     const all = [
       ['browser:mac', 'electron:mac'],
       ['browser:win', 'browser:linux', 'electron:win', 'electron:linux'],
@@ -27,12 +32,12 @@ describe('окружения строки раскладки', () => {
     }
   });
 
-  it('ни одной клетки — строка мертва, и это видно', () => {
+  it('not a single cell — the row is dead, and that is visible', () => {
     expect(scopes.empty({ browser: [], electron: [] })).toBe(true);
     expect(scopes.empty({ browser: ['mac'], electron: [] })).toBe(false);
   });
 
-  it('короткая сводка: весь хост без букв, часть — с буквами, «везде» — пусто', () => {
+  it('a short summary: a whole host without letters, a part of one with letters, "everywhere" empty', () => {
     expect(scopes.summary(undefined)).toEqual([]);
     expect(scopes.summary(['browser'])).toEqual([{ host: 'browser', oses: ['mac', 'win', 'linux'], all: true }]);
     expect(scopes.summary(['browser:mac', 'electron:mac'])).toEqual([
@@ -41,7 +46,7 @@ describe('окружения строки раскладки', () => {
     ]);
   });
 
-  it('вся поставка сворачивается обратно в себя', () => {
+  it('the whole shipment folds back into itself', () => {
     for (const binding of FACTORY_KEYMAP.bindings) {
       expect(scopes.where(scopes.cells(binding.where)), binding.key).toEqual(binding.where);
     }

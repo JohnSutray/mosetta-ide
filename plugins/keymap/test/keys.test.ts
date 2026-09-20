@@ -8,6 +8,12 @@ import { WORLDS, inWorld, keymap } from './keymap-shared.js';
 const inputMechanics = new InputMechanics();
 keyRules.useMechanics(inputMechanics.keys(keyHost.isMac));
 
+/**
+ * A rule that runs through the whole layout: an input field owns the keys text is
+ * edited with. It is checked here rather than by eye, because a breach of this rule
+ * looks accidental: Backspace in the project path field called "delete" from the tree
+ * and offered to demolish the project root.
+ */
 function press(key: string, target: unknown, mods: Record<string, boolean> = {}) {
   return {
     key,
@@ -39,19 +45,19 @@ const EMPTY = { tagName: 'INPUT', isContentEditable: false, value: '' };
 const EDITOR = { tagName: 'DIV', isContentEditable: true };
 const ROW = { tagName: 'DIV', isContentEditable: false };
 
-describe('раскладка и поля ввода', () => {
-  it('стирающие клавиши в поле принадлежат полю', () => {
+describe('the layout and input fields', () => {
+  it('the erasing keys in a field belong to the field', () => {
     expect(keyRules.typedIntoField(press('Backspace', INPUT))).toBe(true);
     expect(keyRules.typedIntoField(press('Delete', AREA))).toBe(true);
     expect(keyRules.typedIntoField(press('x', EDITOR))).toBe(true);
   });
 
-  it('вне поля они достаются раскладке', () => {
+  it('outside a field they go to the layout', () => {
     expect(keyRules.typedIntoField(press('Backspace', ROW))).toBe(false);
     expect(keyRules.typedIntoField(press('Backspace', null))).toBe(false);
   });
 
-  it('контекст editable стоит между своим и глобальным и даётся только полю (ADR-0194)', () => {
+  it('the editable context stands between one\'s own and the global one, and is given to a field alone', () => {
     const bindings = [
       { command: 'field.native', key: 'meta+z', when: 'editable' as const },
       { command: 'edit.undo', key: 'meta+z' },
@@ -65,7 +71,7 @@ describe('раскладка и поля ввода', () => {
     expect(keyRules.inPlainField(ROW as never)).toBe(false);
   });
 
-  it('цепочка контекстов: своё первым, чего нет — у следующего, потом глобальное (ADR-0200)', () => {
+  it('a chain of contexts: one\'s own first, what is missing from the next one, then the global one', () => {
     const bindings = [
       { command: 'completion.accept', key: 'enter', when: 'completion' as const },
       { command: 'edit.undo', key: 'meta+z', when: 'editor' as const },
@@ -78,26 +84,30 @@ describe('раскладка и поля ввода', () => {
     expect(keyRules.pick(bindings, 'editor', 'enter', false)).toBeUndefined();
   });
 
-  it('в ПУСТОМ поле стирать нечего — Backspace достаётся раскладке (ADR-0193)', () => {
+  it('in an EMPTY field there is nothing to erase — Backspace goes to the layout', () => {
     expect(keyRules.typedIntoField(press('Backspace', EMPTY))).toBe(false);
     expect(keyRules.typedIntoField(press('Delete', EMPTY))).toBe(false);
     expect(keyRules.typedIntoField(press('x', EMPTY))).toBe(true);
   });
 
-  it('аккорд с модификатором текстом не является', () => {
+  it('a chord with a modifier is not text', () => {
     expect(keyRules.typedIntoField(press('s', INPUT, { metaKey: true }))).toBe(false);
     expect(keyRules.typedIntoField(press('Backspace', INPUT, { altKey: true }))).toBe(false);
   });
 
-  it('Enter, Escape и стрелки проходят: на них держатся списки с поиском', () => {
+  it('Enter, Escape and the arrows pass through: lists with a search rest on them', () => {
     expect(keyRules.typedIntoField(press('Enter', INPUT))).toBe(false);
     expect(keyRules.typedIntoField(press('Escape', INPUT))).toBe(false);
     expect(keyRules.typedIntoField(press('ArrowDown', INPUT))).toBe(false);
   });
 });
 
-describe('строка нажатия', () => {
-  it('модификаторы называются физически и всегда в одном порядке', () => {
+/**
+ * A press string is PHYSICAL, and one for every environment. There are no roles like
+ * `mod` in it: the event and the layout speak one language.
+ */
+describe('the press string', () => {
+  it('the modifiers are named physically and always in one order', () => {
     expect(keyRules.eventToKey(stroke('KeyS', 's', { metaKey: true }))).toBe('meta+s');
     expect(keyRules.eventToKey(stroke('KeyS', 's', { ctrlKey: true }))).toBe('control+s');
     expect(keyRules.eventToKey(stroke('KeyS', 's', { altKey: true }))).toBe('alt+s');
@@ -108,7 +118,7 @@ describe('строка нажатия', () => {
     ).toBe('meta+control+alt+shift+k');
   });
 
-  it('ролей в строке события не бывает', () => {
+  it('there are no roles in an event\'s string', () => {
     const cases: Array<Record<string, boolean>> = [
       { metaKey: true },
       { ctrlKey: true },
@@ -120,100 +130,114 @@ describe('строка нажатия', () => {
   });
 });
 
-describe('клавиша от клетки, а не от символа', () => {
-  it('кириллица не отменяет сохранение', () => {
+/**
+ * A key is called by its CELL rather than by the character printed on it. All three
+ * breakages below happened live, and looked alike — "the key just does not work".
+ */
+describe('a key from the cell rather than from the character', () => {
+  it('Cyrillic does not cancel saving', () => {
     expect(keyRules.eventToKey(stroke('KeyS', 'ы', { ctrlKey: true }))).toBe('control+s');
     expect(keyRules.eventToKey(stroke('KeyS', 's', { ctrlKey: true }))).toBe('control+s');
   });
 
-  it('Option приходит собранным символом, а клетка остаётся прежней', () => {
+  it('Option arrives as an assembled character while the cell stays the same', () => {
     expect(keyRules.eventToKey(stroke('Digit2', '™', { altKey: true }))).toBe('alt+2');
     expect(keyRules.eventToKey(stroke('Digit3', '£', { altKey: true }))).toBe('alt+3');
   });
 
-  it('клавиша под Escape одна в обеих раскладках', () => {
+  it('the key under Escape is one and the same in both layouts', () => {
     expect(keyRules.eventToKey(stroke('Backquote', '`'))).toBe('backquote');
     expect(keyRules.eventToKey(stroke('Backquote', 'ё'))).toBe('backquote');
   });
 
-  it('имена клавиш берутся из кода как есть', () => {
+  it('the names of the keys are taken from the code as they are', () => {
     expect(keyRules.eventToKey(stroke('ArrowDown', 'ArrowDown'))).toBe('arrowdown');
     expect(keyRules.eventToKey(stroke('Escape', 'Escape'))).toBe('escape');
     expect(keyRules.eventToKey(stroke('Space', ' '))).toBe('space');
     expect(keyRules.eventToKey(stroke('Slash', '.'))).toBe('slash');
   });
 
-  it('голый модификатор клавишей не считается', () => {
+  it('a bare modifier does not count as a key', () => {
     expect(keyRules.eventToKey(stroke('ShiftLeft', 'Shift', { shiftKey: true }))).toBe(null);
   });
 
-  it('без кода остаётся запасной путь по символу', () => {
+  it('without a code there is a fallback path by character', () => {
     expect(keyRules.eventToKey(stroke('', 'ё'))).toBe('backquote');
     expect(keyRules.eventToKey(stroke('', 'k', { ctrlKey: true }))).toBe('control+k');
   });
 });
 
-describe('жалоба на клавишу без команды', () => {
+/**
+ * Which keys the editor complains about out loud. The rule is shared with swallowing:
+ * we complain about exactly what we took. Eat a press and do nothing with it — the
+ * silence looks like a breakage.
+ */
+describe('the complaint about a key with no command', () => {
   const clip = new Set([`${keyHost.primary}+c`, `${keyHost.primary}+x`, `${keyHost.primary}+v`]);
   const once = { repeat: false, clip };
 
-  it('аккорд без команды — говорим', () => {
+  it('a chord with no command — we speak up', () => {
     expect(keyRules.complains(`${keyHost.primary}+j`, once)).toBe(true);
     expect(keyRules.complains(`${keyHost.primary}+shift+j`, once)).toBe(true);
   });
 
-  it('другой наш модификатор тоже говорит: мы и его забрали', () => {
+  it('another modifier of ours speaks up too: we took that one as well', () => {
     const other = keyHost.primary === 'control' ? 'meta' : 'control';
     expect(keyRules.complains(`${other}+j`, once)).toBe(true);
   });
 
-  it('Shift сам по себе аккорда не делает', () => {
+  it('Shift on its own makes no chord', () => {
     expect(keyRules.complains('shift+arrowleft', once)).toBe(false);
     expect(keyRules.complains('shift+k', once)).toBe(false);
   });
 
-  it('голая клавиша это ввод, а не промах', () => {
+  it('a bare key is input rather than a miss', () => {
     expect(keyRules.complains('k', once)).toBe(false);
     expect(keyRules.complains('escape', once)).toBe(false);
   });
 
-  it('механика ввода редактора молчит', () => {
+  it('the editor\'s input mechanics keep quiet', () => {
     for (const key of inputMechanics.keys(keyHost.isMac)) {
       if (!key.split('+').includes(keyHost.primary)) continue;
       expect(keyRules.complains(key, once), key).toBe(false);
     }
   });
 
-  it('зажатая клавиша не бубнит', () => {
+  it('a held key does not mutter', () => {
     expect(keyRules.complains(`${keyHost.primary}+j`, { repeat: true, clip })).toBe(false);
   });
 
-  it('буфер обмена молчит, даже когда он на главном модификаторе', () => {
+  it('the clipboard keeps quiet even when it is on the main modifier', () => {
     expect(keyRules.complains(`${keyHost.primary}+c`, once)).toBe(false);
   });
 });
 
-describe('перехват чужих эффектов', () => {
+/**
+ * Other people's consequences of our chord are swallowed: otherwise the browser adds
+ * its own to our action — printing, saving the page, going back through the tab's
+ * history.
+ */
+describe('catching other people\'s effects', () => {
   const clip = new Set([`${keyHost.primary}+c`, `${keyHost.primary}+v`]);
 
-  it('аккорд с главным модификатором гасится, даже если не назначен', () => {
+  it('a chord with the main modifier is swallowed even when it is not assigned', () => {
     expect(keyRules.swallows(`${keyHost.primary}+s`, clip)).toBe(true);
     expect(keyRules.swallows(`${keyHost.primary}+p`, clip)).toBe(true);
     expect(keyRules.swallows(`${keyHost.primary}+j`, clip)).toBe(true);
   });
 
-  it('любой наш модификатор гасится, а не только главный', () => {
+  it('any modifier of ours is swallowed rather than only the main one', () => {
     for (const mod of ['meta', 'control', 'alt']) {
       expect(keyRules.swallows(`${mod}+j`, clip), mod).toBe(true);
     }
   });
 
-  it('Shift сам по себе не аккорд: выделение остаётся выделением', () => {
+  it('Shift on its own is no chord: a selection stays a selection', () => {
     expect(keyRules.swallows('shift+arrowleft', clip)).toBe(false);
     expect(keyRules.swallows('shift+home', clip)).toBe(false);
   });
 
-  it('буфер обмена и механика ввода не гасятся', () => {
+  it('the clipboard and the input mechanics are not swallowed', () => {
     expect(keyRules.swallows(`${keyHost.primary}+c`, clip)).toBe(false);
     for (const key of inputMechanics.keys(keyHost.isMac)) {
       if (!key.split('+').includes(keyHost.primary)) continue;
@@ -221,33 +245,34 @@ describe('перехват чужих эффектов', () => {
     }
   });
 
-  it('голая клавиша это ввод, а не аккорд', () => {
+  it('a bare key is input rather than a chord', () => {
     expect(keyRules.swallows('enter', clip)).toBe(false);
     expect(keyRules.swallows('k', clip)).toBe(false);
   });
 
-  it('мягко отнятое гасится везде, даже мимо всех прочих правил', () => {
+  it('what is softly taken is swallowed everywhere, past every other rule', () => {
     const key = [...inputMechanics.keys(keyHost.isMac)][0]!;
     expect(keyRules.swallows(key, clip)).toBe(false);
     expect(keyRules.swallows(key, clip, { soft: new Set([key]) })).toBe(true);
   });
 
-  it('оставленное браузеру не гасится: это клавиша выхода', () => {
+  it('what is left to the browser is not swallowed: it is the way out', () => {
     const left = new Set([`${keyHost.primary}+r`]);
     expect(keyRules.swallows(`${keyHost.primary}+r`, clip)).toBe(true);
     expect(keyRules.swallows(`${keyHost.primary}+r`, clip, { left })).toBe(false);
   });
 });
 
-describe('двойные модификаторы', () => {
-  it('раскладка и человек называют клавишу одинаково', () => {
+/** A double press of a modifier: a rhythm rather than a chord. */
+describe('double modifiers', () => {
+  it('the layout and the human name the key alike', () => {
     expect(keyHost.humanize('double:meta')).toBe(keyHost.isMac ? 'Cmd Cmd' : 'Win Win');
     expect(keyHost.humanize('double:control')).toBe('Control Control');
     expect(keyHost.humanize('double:alt')).toBe(keyHost.isMac ? 'Option Option' : 'Alt Alt');
     expect(keyHost.humanize('double:shift')).toBe('Shift Shift');
   });
 
-  it('все четыре модификатора заняты и заняты разным', () => {
+  it('all four modifiers are taken, and taken by different things', () => {
     const doubles = keymap().bindings.filter((b) => b.key.startsWith('double:'));
     expect(doubles.map((b) => b.key).sort()).toEqual([
       'double:alt',
@@ -258,7 +283,7 @@ describe('двойные модификаторы', () => {
     expect(new Set(doubles.map((b) => b.command)).size).toBe(doubles.length);
   });
 
-  it('двойной тап живёт там, где голый тап свободен', () => {
+  it('a double tap lives where the bare tap is free', () => {
     for (const world of WORLDS) {
       const taken = new Set(reserved.hardIn([world.scope]).map((item) => item.key));
       const doubles = inWorld(keymap().bindings, world).filter((b) => b.key.startsWith('double:'));
