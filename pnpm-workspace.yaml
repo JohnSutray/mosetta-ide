@@ -6,6 +6,8 @@ packages:
   - e2e
   - plugins/*
 
+# esbuild and node-pty build a binary in a postinstall script, and Electron downloads
+# one; pnpm refuses to run those without being told to, and fails the install.
 allowBuilds:
   esbuild: true
   node-pty: true

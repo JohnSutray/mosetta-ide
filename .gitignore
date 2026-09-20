@@ -5,6 +5,7 @@ node_modules/
 dist/
 client/.vite/
 *.tsbuildinfo
+vitest.config.ts.timestamp-*.mjs
 
 /img*.png
 

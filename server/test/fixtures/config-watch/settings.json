@@ -1,3 +1,4 @@
+// The watcher test's config: watching is on and the debounce is short.
 {
   "fs": {
     "noScan": ["node_modules", ".git"],

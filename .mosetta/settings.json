@@ -1,7 +1,16 @@
+// THIS project's settings: they live in the repository and travel with it — to a second
+// machine, to a colleague, into a fresh clone. On top of the personal
+// `~/.mosetta/ide/config/settings.json`; the defaults are in the code.
+//
+// Edited by hand or through the settings window (Cmd+,), where every row has a
+// "default | user | project" switch.
 {
   "lsp": {
     "servers": {
       "typescript": {
+        // This repository's imports are in single quotes and end in `.js` (ESM):
+        // auto-import has to write them the same way, even in a file with nothing
+        // to follow yet.
         "preferences": { "quotePreference": "single", "importModuleSpecifierEnding": "js" }
       }
     }

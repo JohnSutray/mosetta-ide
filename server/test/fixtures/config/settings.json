@@ -1,7 +1,12 @@
+// The tests' config: the language servers are off, so that every test does not bring
+// tsserver up. The LSP's own test turns it on explicitly, with a config of its own.
 {
   "fs": {
     "noScan": ["node_modules", ".git"],
     "preloadBudgetMb": 4,
+    // Watching is off on purpose: otherwise EVERY test would depend on whether an
+    // inotify event arrived in time. The watcher is checked separately, with a config
+    // of its own (fixtures/config-watch).
     "watch": false
   },
   "lsp": {

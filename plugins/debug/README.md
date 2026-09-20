@@ -1,23 +1,21 @@
 # @mosetta/ide-plugin-debug
 
-Отладчик: точки останова, запуск под отладкой, стек, переменные, шаги
-(ADR-0235).
+The debugger: breakpoints, running under the debugger, the stack, the variables, steps.
 
-Две половины. Серверная — клиент DAP поверх адаптера `vscode-js-debug`:
-дерево сеансов, точки, стек, переменные, вычисление, текст источников
-за корнем, программа в настоящем терминале соседа. Клиентская — точки
-в поле редактора (`editor.extension`), строка выполнения, панель (шаги,
-кадры, переменные, вывод), значение под курсором (`editor.hover`),
-показ файлов за корнем (`file.view`, имя `debug:…`), «отладить» у
-скрипта (`scripts.action`). Чего ещё нет — в `docs/todo.md`.
+Two halves. The server one is a DAP client on top of the `vscode-js-debug` adapter: the
+tree of sessions, the breakpoints, the stack, the variables, evaluation, the text of
+sources beyond the root, and the program in the neighbour's real terminal. The client one
+is the breakpoints in the editor's gutter (`editor.extension`), the line being executed,
+the panel (steps, frames, variables, output), the value under the cursor
+(`editor.hover`), the view of files beyond the root (`file.view`, named `debug:…`) and
+"debug" on a script (`scripts.action`).
 
-Адаптер лежит в `vendor/js-debug` КАК ВЫПУЩЕН, без правок; откуда он,
-какой версии и с какой контрольной суммой — `vendor/js-debug.json`. В npm
-его нет, а редактор везёт свои инструменты сам (ADR-0226), поэтому он в
-репозитории.
+The adapter lies in `vendor/js-debug` AS RELEASED, with no edits; where it came from,
+which version it is and what its checksum is are in `vendor/js-debug.json`. It is not on
+npm, and the editor brings its own tools along, so it lives in the repository.
 
-Обновить адаптер: скачать `js-debug-dap-v<версия>.tar.gz` из релизов
-`microsoft/vscode-js-debug`, распаковать на место `vendor/js-debug`,
-переписать `vendor/js-debug.json` (версия, адрес, `shasum -a 256`) и
-прогнать `pnpm --filter @mosetta/ide-plugin-debug test` — тесты ходят в
-настоящий адаптер и стерегут недокументированное (`__workspaceFolder`).
+To update the adapter: download `js-debug-dap-v<version>.tar.gz` from
+`microsoft/vscode-js-debug`'s releases, unpack it in place of `vendor/js-debug`, rewrite
+`vendor/js-debug.json` (the version, the address, `shasum -a 256`) and run
+`pnpm --filter @mosetta/ide-plugin-debug test` — the tests go to the real adapter and
+guard the undocumented parts (`__workspaceFolder`).

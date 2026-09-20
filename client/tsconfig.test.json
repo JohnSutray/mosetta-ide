@@ -1,4 +1,10 @@
 {
+  /*
+   * The tests are type-checked too.
+   *
+   * In a file of its own, because the main project is `composite` and its `rootDir` is
+   * `src`: the tests do not fit in there. Nothing is built here, only checked.
+   */
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": true,

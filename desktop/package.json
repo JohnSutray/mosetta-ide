@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Mosetta IDE — оболочка Электрона: окна, трей и демон (ADR-0211)",
+  "description": "Mosetta IDE — the Electron shell: the windows, the tray and the daemon",
   "scripts": {
     "start": "node scripts/start.mjs",
     "test": "vitest run"

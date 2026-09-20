@@ -2,13 +2,36 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { RUSSIAN_DEBT } from './russian.debt.js';
 
+/**
+ * There must be no Russian in the LABELS anywhere in the repository — neither as a
+ * string in code nor in the default dictionary. English is the base; Russian is an
+ * ordinary locale, chosen by a setting.
+ *
+ * This is about labels. Text a human will see has to be data: arriving from the
+ * dictionary, and translatable.
+ *
+ * The test reads the sources, like the passport test and the border test. What it
+ * catches is exactly what it all started with: Cyrillic in a STRING LITERAL. There used
+ * to be a list of debt beside it, of files not yet translated; it is empty now, so the
+ * expectation is simply nothing. `RUSSIAN_DUMP=1` prints whatever is found.
+ */
 const root = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const CYRILLIC = /[Ѐ-ӿ]/;
 
+/**
+ * Where we look. The server and the desktop shell too: they speak into the log and into
+ * dialogs.
+ */
 const AREAS = ['client/src', 'plugins', 'protocol/src', 'server/src', 'desktop/src'];
 
+/**
+ * Cyrillic that is NOT a label but data, and therefore legitimate.
+ *
+ * A keyboard layout: "йцукен…" is a description of a Russian keyboard, used for
+ * searching the tree and the index. It cannot be translated — it IS the Russian
+ * language as a fact about hardware.
+ */
 const DATA_NOT_LABELS = ['plugins/search/src/layout.ts'];
 
 function* sources(dir: string): Generator<string> {
@@ -23,6 +46,14 @@ function* sources(dir: string): Generator<string> {
   }
 }
 
+/**
+ * A file's string literals, WITHOUT the comments.
+ *
+ * By hand rather than by parsing: a full parser for the sake of one check is a
+ * dependency that would outlive its reason. We eat the comments and the template
+ * literals (those hold styles and hints for developers), and then collect what is left
+ * inside quotes.
+ */
 function literals(text: string): string[] {
   const out: string[] = [];
   let at = 0;
@@ -81,7 +112,7 @@ describe('the repository\'s language', () => {
     }
     const left = [...new Set(guilty)].sort();
     if (process.env['RUSSIAN_DUMP']) console.log(JSON.stringify(left, null, 2));
-    expect(left).toEqual([...RUSSIAN_DEBT]);
+    expect(left).toEqual([]);
   });
 
   it('no Cyrillic in the default dictionaries: en.json is English', () => {

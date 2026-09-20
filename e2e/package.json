@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Проверки настоящим браузером: раскладка таблицей, слой клавиш (todo → Playwright)",
+  "description": "Checks with a real browser: the keymap as a table, through the keys layer",
   "scripts": {
     "test": "vitest run"
   },
