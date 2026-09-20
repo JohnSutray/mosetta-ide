@@ -33,8 +33,7 @@ describe('овцы', () => {
 
   it('приходят из-за края и заходят внутрь', () => {
     const world = sheepfold.create();
-    sheepfold.spawn(world, W, H, () => 0.1);
-    const sheep = world.flock[0]!;
+    sheepfold.spawn(world, W, H, () => 0.1);     const sheep = world.flock[0]!;
     expect(sheep.x).toBeLessThan(0);
     walk(world, 200);
     expect(sheep.x).toBeGreaterThan(0);

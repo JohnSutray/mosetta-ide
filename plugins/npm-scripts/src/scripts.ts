@@ -1,5 +1,20 @@
 import type { FindProvider, Found } from '@mosetta/ide-plugin-search/server';
 
+/**
+ * Scripts from package.json as a SUPPLIER OF HITS.
+ *
+ * The row's format is `npm::@distrojs/core::dev`: namespace, package, script. The `::`
+ * separator lies in the index's string itself, so a query of `::dev` naturally pulls
+ * out the scripts, and `npm::` only them.
+ *
+ * This parsing used to live in the core, and the index opened `package.json` itself.
+ * Now it is the other way round: the index brings the text, and only we know what to do
+ * with it. A supplier has no disk reading of its own and should not: the truth for
+ * search is memory.
+ *
+ * A class rather than a couple of functions: the kind and the parsing have one owner,
+ * and a test assembles it in one line without bringing up a server or a plugin.
+ */
 export class ScriptsInPackageJson implements FindProvider {
   readonly kind = 'npm';
 

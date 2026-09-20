@@ -4,12 +4,17 @@ import { pixelFont } from './pixel-font.js';
 import { pixelGrid } from './pixel-grid.js';
 import { useT } from '@mosetta/ide-api/client';
 
+/**
+ * The same font as the interface: the number on a sheep is a label rather than a
+ * sprite.
+ */
 const DIGIT_FONT = "'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif";
 
 const MERGED_KEY = 'sheep.merged';
 const SHORN_KEY = 'sheep.shorn';
 const PAUSED_KEY = 'sheep.paused';
 
+/** The body without legs: the legs are a separate row, and they have two phases. */
 const BODY = [
   '..wwww..',
   '.wwwwww.',
@@ -18,6 +23,7 @@ const BODY = [
   '.wwwwww.',
 ];
 
+/** Two phases of a step. No more are needed: this is an eight-bit sheep, not a ballet. */
 const LEGS = ['.l...l..', '..l.l...'];
 
 const MINI = ['.mmm.', 'mmmmm', 'kmmmm', '.k.k.'];
@@ -26,6 +32,7 @@ const PLUS = ['..k..', '.kkk.', '..k..'];
 const EQUALS = ['kkk', '...', 'kkk'];
 const SCISSORS = ['k...k', '.k.k.', '..k..', '.k.k.', 'k...k'];
 const WOOL = ['mmmm', 'mmmm'];
+/** A merge's result: the same sheep but bigger — drawn with a pixel twice the size. */
 const BIG = MINI;
 
 const BARN = [
@@ -52,6 +59,7 @@ const COLORS: Record<string, string> = {
   w: '#e8e4dc',
   s: '#e0a9a4',
   h: '#4a4a4a',
+  /** The eye is the darkest pixel on the sheep, otherwise the face does not read. */
   e: '#0b0b0b',
   l: '#3b3b3b',
   '#': '#8d8880',
@@ -90,6 +98,13 @@ function paint(
   });
 }
 
+/**
+ * A whole sheep: the body, a leg in its phase, and the growth number on its flank.
+ *
+ * The legs always move when the sheep is not standing still: without that it does not
+ * walk but glides. While it is held, the phase flickers four times faster — it is
+ * panicking.
+ */
 function drawSheep(ctx: CanvasRenderingContext2D, s: Sheep): void {
   const px = sheepfold.PX * s.level;
   const flip = s.face > 0;
@@ -109,6 +124,11 @@ function drawSheep(ctx: CanvasRenderingContext2D, s: Sheep): void {
   }
 }
 
+/**
+ * The sign above a hut: a formula made of pictures instead of a caption.
+ * `sheep+sheep=bigger` and `sheep+shears=shorn+wool` read at once and need no
+ * translation.
+ */
 function drawSign(
   ctx: CanvasRenderingContext2D,
   house: { x: number; y: number },
@@ -135,12 +155,21 @@ function drawSign(
   }
 }
 
+/**
+ * The shadow under the feet: without it the sheep does not stand on the ground but
+ * hovers above it.
+ */
 function drawShadow(ctx: CanvasRenderingContext2D, s: Sheep): void {
   const px = sheepfold.PX * s.level;
   ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
   pixelGrid.cell(ctx, s.x + px, s.y + 6 * px, 6 * px, Math.max(2, px / 2));
 }
 
+/**
+ * The field's switch — a board on a post, like a signpost by a road. There is no place
+ * for such a thing in the settings: if it irritates you, you switch it off where it
+ * irritates you.
+ */
 function drawSwitch(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -176,6 +205,7 @@ function drawSwitch(
   return box;
 }
 
+/** The score, in the same cells as everything else on the panel. */
 function drawScore(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -188,6 +218,11 @@ function drawScore(
   pixelFont.write(ctx, line, w - pixelFont.measure(line, px) - 12, h - 8 - pixelFont.GLYPH_H * px, px, '#5f6871');
 }
 
+/**
+ * The panel's captions. The size is computed from the width: a panel may be a third of
+ * the screen or the whole of it, and a caption has to fit whole — a joke cut off stops
+ * being a joke.
+ */
 function drawWords(ctx: CanvasRenderingContext2D, w: number, h: number, t: (key: string) => string): void {
   const title = t('editor.empty.title');
   const hint = t('editor.empty.hint');
@@ -236,6 +271,7 @@ export function SheepField() {
     };
     resize();
 
+    /** The switch's rectangle from the last draw: that is what clicks land on. */
     let switchBox = { x: 0, y: 0, w: 0, h: 0 };
 
     const draw = () => {
@@ -338,6 +374,11 @@ export function SheepField() {
       if (sheepfold.grab(world, p.x, p.y)) el.setPointerCapture(event.pointerId);
     };
 
+    /**
+     * The switch. Constant movement on screen does not annoy everyone, but those it
+     * annoys, it annoys in earnest, and the switch has to be right there rather than in
+     * the settings.
+     */
     const toggle = () => {
       world.paused = !world.paused;
       localStorage.setItem(PAUSED_KEY, world.paused ? '1' : '0');

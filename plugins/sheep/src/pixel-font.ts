@@ -1,4 +1,19 @@
 import { pixelGrid } from './pixel-grid.js';
+/**
+ * A five-by-seven pixel font.
+ *
+ * Needed exactly where a caption lives inside a pixel picture: on the empty panel with
+ * the sheep. An ordinary font next to sprites looks like somebody else's signature over
+ * somebody else's drawing, and here the whole scene is drawn in cells — so the letters
+ * have to be cells too.
+ *
+ * Capitals, digits and a few signs only: lower case would demand twice the glyphs for
+ * half the legibility in such a grid. Capitals also make it sound like the screen of an
+ * eight-bit game, which is exactly right here.
+ *
+ * Latin. A caption handed in here has to be Latin — a limitation recorded in the
+ * dictionary as well.
+ */
 
 const G: Record<string, string[]> = {
   A: ['.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
@@ -50,8 +65,10 @@ const G: Record<string, string[]> = {
   '·': ['.....', '.....', '.....', '.##..', '.##..', '.....', '.....'],
 };
 
+/** Empty cells between letters. */
 const TRACK = 1;
 
+/** What cannot be drawn is reduced to what can: an em dash is a hyphen. */
 function normalize(text: string): string {
   return text
     .toUpperCase()
@@ -60,6 +77,7 @@ function normalize(text: string): string {
     .replace(/[’]/g, "'");
 }
 
+/** A pixel font: letters in cells, like everything else. */
 export class PixelFont {
   readonly GLYPH_W = 5;
 
@@ -69,6 +87,7 @@ export class PixelFont {
     return normalize(text).length * (this.GLYPH_W + TRACK) * px - TRACK * px;
   }
 
+  /** Write from the top left corner. An unknown character is skipped silently. */
   write(
     ctx: CanvasRenderingContext2D,
     text: string,
@@ -94,4 +113,5 @@ export class PixelFont {
   }
 }
 
+/** One per plugin. */
 export const pixelFont = new PixelFont();
