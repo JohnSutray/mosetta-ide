@@ -3,6 +3,13 @@ import { FakeHost } from '@mosetta/ide-api/testing';
 import TerminalPlugin from '../src/client.js';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * What to open a terminal with — the TERMINAL's window.
+ *
+ * The `terminal.shell` setting is its, the list of shells comes from its own server
+ * half, and the choice is written by the core. The window is shared, but what is in it
+ * and what it means is here.
+ */
 const NAME = '@mosetta/ide-plugin-terminal';
 
 async function raise() {
@@ -19,13 +26,13 @@ async function raise() {
   return { host, plugin };
 }
 
-describe('оболочка терминала', () => {
-  it('плашка подписана тем, что в работе', async () => {
+describe('the terminal\'s shell', () => {
+  it('the badge is captioned with what is in use', async () => {
     const { plugin } = await raise();
     expect(plugin.shells.value.find((one) => one.current)?.name).toBe('zsh');
   });
 
-  it('клавиша открывает и закрывает окно выбора', async () => {
+  it('the key opens and closes the choice window', async () => {
     const { host, plugin } = await raise();
     host.run('terminal.shell');
     expect(plugin.shellPicker.value).toBe(true);
@@ -33,7 +40,7 @@ describe('оболочка терминала', () => {
     expect(plugin.shellPicker.value).toBe(false);
   });
 
-  it('выбор пишется в настройки ядром, окно закрывается', async () => {
+  it('the choice is written into the settings by the core, and the window closes', async () => {
     const { host, plugin } = await raise();
     host.run('terminal.shell');
     await plugin.chooseShell('bash');
@@ -41,17 +48,17 @@ describe('оболочка терминала', () => {
     expect(plugin.shellPicker.value).toBe(false);
   });
 
-  it('сервер не ответил — говорим вслух, а не показываем пустоту', async () => {
+  it('the server did not answer — we say so out loud rather than showing emptiness', async () => {
     const host = new FakeHost();
     host.add(UiPlugin, '@mosetta/ide-plugin-ui');
     const plugin = host.add(TerminalPlugin, NAME);
     host.ide(NAME).answers.set('list', () => []);
     host.ide(NAME).answers.set('shells', () => {
-      throw new Error('старый сервер');
+      throw new Error('an old server');
     });
     await host.start();
     await new Promise((r) => setTimeout(r, 0));
     expect(plugin.shells.value).toEqual([]);
-    expect(host.ide(NAME).complaints.some((one) => one.includes('старый сервер'))).toBe(true);
+    expect(host.ide(NAME).complaints.some((one) => one.includes('an old server'))).toBe(true);
   });
 });

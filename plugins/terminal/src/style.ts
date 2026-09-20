@@ -1,3 +1,14 @@
+/**
+ * The terminal's own styling.
+ *
+ * It moved out of the core's stylesheet word for word. A plugin that draws a panel has
+ * to be able to dress it: otherwise its CSS would stay in the core's styles — exactly
+ * the leak the npm icon was.
+ *
+ * Only what is its own is here: the theme's variables (`--divider`, `--accent`,
+ * `--treesel`) come from the core. A plugin does not pick colours afresh — there is one
+ * Darcula for the whole IDE, and a second shade of it would be visible at once.
+ */
 export const STYLE = `
 .term-chip {
   display: inline-flex;

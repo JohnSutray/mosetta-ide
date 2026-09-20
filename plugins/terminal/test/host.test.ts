@@ -5,6 +5,7 @@ import path from 'node:path';
 import type { ProcessHandle, Project, ProjectMemory, ProjectResource } from '@mosetta/ide-api/server';
 import { TerminalHost } from '../src/host.js';
 
+/** A decoy project: it remembers the holds and everything it was told. */
 class FakeProject implements Project {
   readonly heard: Array<{ event: string; payload: unknown }> = [];
   readonly holds: string[] = [];
@@ -13,7 +14,7 @@ class FakeProject implements Project {
 
   constructor(
     readonly root: string,
-    readonly name = 'проект',
+    readonly name = 'a project',
   ) {}
 
   use<T extends ProjectResource>(key: string, create: () => T): T {
@@ -29,7 +30,7 @@ class FakeProject implements Project {
   }
 
   start(): ProcessHandle {
-    throw new Error('долгоживущих процессов в этом тесте нет: pty рождается сам');
+    throw new Error('there are no long-lived processes in this test: a pty is born by itself');
   }
 
   settings<T extends object>(_section: string, defaults: T): T {
@@ -70,6 +71,7 @@ class FakeProject implements Project {
 
 const silent = { debug() {}, info() {}, warn() {}, error() {} };
 
+/** The human's shell: in a test we take the system's, and without banners. */
 const shell = () => ({
   file: process.platform === 'win32' ? 'powershell.exe' : '/bin/sh',
   args: [] as string[],
@@ -92,6 +94,7 @@ async function tempDir(): Promise<string> {
   return dir;
 }
 
+/** We wait for what we need to appear in the output: a pty prints when it feels like it. */
 function waitForOutput(project: FakeProject, name: string, want: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const started = Date.now();
@@ -107,7 +110,7 @@ function waitForOutput(project: FakeProject, name: string, want: string): Promis
         resolve(text);
       } else if (Date.now() - started > 15_000) {
         clearInterval(tick);
-        reject(new Error(`не дождались «${want}», видели: ${text.slice(-300)}`));
+        reject(new Error(`never saw «${want}», we saw: ${text.slice(-300)}`));
       }
     }, 50);
   });
@@ -120,17 +123,17 @@ afterEach(async () => {
   }
 });
 
-describe('терминалы', () => {
-  it('под терминалом настоящая консоль', async () => {
+describe('terminals', () => {
+  it('there is a real console under the terminal', async () => {
     const root = await tempDir();
     const { host, project } = make(root);
     const info = host.create({ cwd: root });
 
-    host.write(info.name, 'echo живая-консоль\r');
-    expect(await waitForOutput(project, info.name, 'живая-консоль')).toContain('живая-консоль');
+    host.write(info.name, 'echo live-console\r');
+    expect(await waitForOutput(project, info.name, 'live-console')).toContain('live-console');
   }, 25_000);
 
-  it('каждый ручной терминал новый и получает своё имя', async () => {
+  it('every manual terminal is a new one and gets a name of its own', async () => {
     const root = await tempDir();
     const { host } = make(root);
     const names = [
@@ -144,7 +147,7 @@ describe('терминалы', () => {
     expect(host.list()).toHaveLength(3);
   }, 25_000);
 
-  it('освободившееся имя переиспользуется', async () => {
+  it('a name that has come free is reused', async () => {
     const root = await tempDir();
     const { host } = make(root);
     host.create({ cwd: root });
@@ -154,7 +157,7 @@ describe('терминалы', () => {
     expect(host.create({ cwd: root }).name).toBe('manual');
   }, 25_000);
 
-  it('одно имя — один терминал', async () => {
+  it('one name, one terminal', async () => {
     const root = await tempDir();
     const { host } = make(root);
     const first = host.open({ name: '@ide/core::dev', kind: 'script', cwd: root });
@@ -164,7 +167,7 @@ describe('терминалы', () => {
     expect(host.list()).toHaveLength(1);
   }, 25_000);
 
-  it('чип показывает короткое имя, а не длинное', async () => {
+  it('the chip shows the short name rather than the long one', async () => {
     const root = await tempDir();
     const { host } = make(root);
     const info = host.open({ name: '@distrojs/core::dev', kind: 'script', cwd: root });
@@ -173,23 +176,23 @@ describe('терминалы', () => {
     expect(info.title).toBe('core::dev');
   }, 25_000);
 
-  it('переживает уход вкладки и отдаёт накопленный вывод', async () => {
+  it('it survives the tab leaving and hands over the accumulated output', async () => {
     const root = await tempDir();
     const { host, project } = make(root);
     const info = host.create({ cwd: root });
-    host.write(info.name, 'echo я-пережил\r');
-    await waitForOutput(project, info.name, 'я-пережил');
+    host.write(info.name, 'echo i-survived\r');
+    await waitForOutput(project, info.name, 'i-survived');
 
     const { buffer, info: same } = host.attach(info.name);
     expect(same.alive).toBe(true);
-    expect(buffer).toContain('я-пережил');
+    expect(buffer).toContain('i-survived');
   }, 25_000);
 
-  it('живой терминал держит проект, закрытый — отпускает', async () => {
+  it('a live terminal holds the project, a closed one lets it go', async () => {
     const root = await tempDir();
     const { host, project } = make(root);
     const info = host.create({ cwd: root });
-    expect(project.holds).toEqual([`терминал ${info.name}`]);
+    expect(project.holds).toEqual([`terminal ${info.name}`]);
     expect(project.listed).toHaveLength(1);
 
     host.close(info.name);
@@ -197,7 +200,7 @@ describe('терминалы', () => {
     expect(project.listed).toEqual([]);
   }, 25_000);
 
-  it('занятость либо честно считается, либо честно объявлена неизвестной', async () => {
+  it('busyness is either honestly computed or honestly declared unknown', async () => {
     const root = await tempDir();
     const { host } = make(root);
     const info = host.create({ cwd: root });
@@ -210,20 +213,20 @@ describe('терминалы', () => {
     }
   }, 25_000);
 
-  it('умерший перезапускается под тем же именем', async () => {
+  it('a dead one is restarted under the same name', async () => {
     const root = await tempDir();
     const { host } = make(root);
-    const first = host.open({ name: 'скрипт', kind: 'script', cwd: root, command: 'exit 0' });
+    const first = host.open({ name: 'a script', kind: 'script', cwd: root, command: 'exit 0' });
     await new Promise((resolve) => setTimeout(resolve, 1500));
     expect(host.list()[0]?.alive).toBe(false);
 
-    const second = host.open({ name: 'скрипт', kind: 'script', cwd: root, command: 'exit 0' });
-    expect(second.name).toBe('скрипт');
+    const second = host.open({ name: 'a script', kind: 'script', cwd: root, command: 'exit 0' });
+    expect(second.name).toBe('a script');
     expect(second.pid).not.toBe(first.pid);
     expect(host.list()).toHaveLength(1);
   }, 25_000);
 
-  it('runIn выполняет команду: в живом промпте — строкой, в занятом — заново (ADR-0235)', async () => {
+  it('runIn runs the command: at a live prompt as a line, in a busy one afresh', async () => {
     const root = await tempDir();
     const project = new FakeProject(root);
     const own = process.platform !== 'win32' && process.env['SHELL'] ? process.env['SHELL'] : shell().file;
@@ -239,7 +242,7 @@ describe('терминалы', () => {
     expect(host.list().filter((one) => one.name === 'debug::x')).toHaveLength(1);
   });
 
-  it('закрытие проекта гасит все терминалы', async () => {
+  it('closing the project kills every terminal', async () => {
     const root = await tempDir();
     const { host } = make(root);
     host.create({ cwd: root });

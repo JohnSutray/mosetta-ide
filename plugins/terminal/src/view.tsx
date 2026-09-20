@@ -74,8 +74,7 @@ export function TerminalView({ screen, palette }: { screen: Screen; palette: Pal
       try {
         fit.fit();
       } catch {
-        return;
-      }
+        return;       }
       screen.resize(name, term.cols, term.rows);
     };
 

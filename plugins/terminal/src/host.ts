@@ -73,7 +73,7 @@ export class TerminalHost {
     const shell = this.shellOf();
     if (shell.problem) {
       this.log.warn(
-        `оболочка «${shell.problem}» на этой машине не нашлась — запускаю ${shell.file}`,
+        `the shell «${shell.problem}» was not found on this machine — launching ${shell.file}`,
       );
     }
     const cols = options.cols ?? 80;
@@ -90,7 +90,7 @@ export class TerminalHost {
       });
     } catch (err) {
       throw new Error(
-        `Не удалось открыть терминал: ${err instanceof Error ? err.message : String(err)}`,
+        `Could not open the terminal: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
 
@@ -112,9 +112,9 @@ export class TerminalHost {
       info,
       pty,
       buffer: '',
-      release: this.project.hold(`терминал ${options.name}`),
+      release: this.project.hold(`terminal ${options.name}`),
       unlist: this.project.spawned(
-        { pid: pty.pid, command: shell.file, reason: `терминал ${options.name}` },
+        { pid: pty.pid, command: shell.file, reason: `terminal ${options.name}` },
         () => pty.kill(),
       ),
       shell: baseName(shell.file),
@@ -133,7 +133,7 @@ export class TerminalHost {
       terminal.info = { ...terminal.info, alive: false, exitCode, busy: false };
       delete terminal.info.running;
       terminal.release();
-      this.log.info(`терминал ${options.name} завершился (${exitCode})`);
+      this.log.info(`terminal ${options.name} exited (${exitCode})`);
       this.emit('exit', { name: options.name, exitCode });
       this.announce();
     });
@@ -142,7 +142,7 @@ export class TerminalHost {
       pty.write(`${options.command}\r`);
     }
 
-    this.log.info(`терминал ${options.name} открыт (pid ${pty.pid})`);
+    this.log.info(`terminal ${options.name} opened (pid ${pty.pid})`);
     this.watchBusy();
     this.announce();
     return info;
@@ -152,7 +152,7 @@ export class TerminalHost {
     const existing = this.terminals.get(options.name);
     if (existing?.pty && existing.info.alive) {
       if (this.busyNow(existing)) {
-        this.log.info(`терминал ${options.name} занят — перезапускаю ради новой команды`);
+        this.log.info(`terminal ${options.name} is busy — restarting it for the new command`);
         this.close(options.name);
         return this.open(options);
       }
@@ -248,7 +248,7 @@ export class TerminalHost {
   close(name: string): void {
     const terminal = this.terminals.get(name);
     if (!terminal) return;
-    this.log.info(`терминал ${name} закрыт по просьбе`);
+    this.log.info(`terminal ${name} closed on request`);
     terminal.pty?.kill();
     this.forget(name);
     this.announce();
@@ -262,7 +262,7 @@ export class TerminalHost {
       this.busyTimer = null;
     }
     if (this.terminals.size > 0) {
-      this.log.info(`гашу терминалы вместе с воркспейсом: ${this.terminals.size}`);
+      this.log.info(`killing the terminals along with the workspace: ${this.terminals.size}`);
     }
     for (const name of [...this.terminals.keys()]) {
       this.terminals.get(name)?.pty?.kill();
@@ -294,7 +294,7 @@ export class TerminalHost {
 
   private require(name: string): Terminal {
     const terminal = this.terminals.get(name);
-    if (!terminal) throw new Error(`Нет терминала ${name}`);
+    if (!terminal) throw new Error(`No terminal ${name}`);
     return terminal;
   }
 

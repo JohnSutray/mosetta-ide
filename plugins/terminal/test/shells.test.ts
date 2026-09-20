@@ -46,48 +46,48 @@ afterAll(async () => {
   await fs.rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
 });
 
-describe('чем запускать терминалы', () => {
-  it('имя ищется по PATH, а путь берётся как есть', () => {
+describe('what to launch terminals with', () => {
+  it('a name is looked up in PATH, and a path is taken as it is', () => {
     expect(shells.resolveShell(`ide-fake-shell${EXT}`)).toBe(shell);
     expect(shells.resolveShell(shell)).toBe(shell);
-    expect(shells.resolveShell(path.join(dir, 'нет-такой'))).toBeNull();
-    expect(shells.resolveShell('ide-нет-такой-оболочки')).toBeNull();
+    expect(shells.resolveShell(path.join(dir, 'no-such'))).toBeNull();
+    expect(shells.resolveShell('ide-no-such-shell')).toBeNull();
     expect(shells.resolveShell('   ')).toBeNull();
   });
 
-  it('в конфиг уезжает имя, когда это без потерь', () => {
+  it('the name travels into the config when that is lossless', () => {
     expect(shells.ref(shell)).toBe(`ide-fake-shell${EXT}`);
     expect(path.isAbsolute(shells.ref(shell))).toBe(false);
   });
 
-  it('одноимённая чужая оболочка сокращаться не должна', () => {
+  it('a foreign shell of the same name must not be shortened', () => {
     expect(shells.ref(hidden)).toBe(hidden);
   });
 
-  it('записанное читается обратно в тот же файл', () => {
+  it('what was written reads back to the same file', () => {
     for (const original of [shell, hidden]) {
       const stored = shells.ref(original);
       expect(shells.loginShell({ shell: stored }).file, stored).toBe(original);
     }
   });
 
-  it('оболочка с чужой машины не ломает эту, но и не молчит', () => {
+  it('a shell from another machine does not break this one, but it does not stay silent either', () => {
     const alien = WIN ? '/bin/zsh' : 'C:\\WINDOWS\\system32\\cmd.exe';
     const choice = shells.loginShell({ shell: alien });
 
-    expect(choice.problem, 'подмена обязана быть названа').toBe(alien);
+    expect(choice.problem, 'the substitution has to be named').toBe(alien);
     expect(choice.file).not.toBe(alien);
     expect(choice.file).toBe(shells.loginShell().file);
   });
 
-  it('пустая строка — это «как решит система», а не поломка', () => {
+  it('an empty string means "as the system decides" rather than a breakage', () => {
     expect(shells.loginShell({ shell: '' }).problem).toBeUndefined();
     expect(shells.loginShell({ shell: '' }).file).toBe(shells.loginShell().file);
   });
 
-  it('аргументы подбираются по НАЙДЕННОЙ оболочке, а не по записи', () => {
+  it('the arguments are picked by the shell that was FOUND rather than by the entry', () => {
     const choice = shells.loginShell({ shell: `ide-fake-shell${EXT}` });
     expect(choice.file).toBe(shell);
-    expect(shells.loginShell({ shell: shell, args: ['--мои'] }).args).toEqual(['--мои']);
+    expect(shells.loginShell({ shell: shell, args: ['--mine'] }).args).toEqual(['--mine']);
   });
 });

@@ -1,5 +1,15 @@
 import type { JSX } from 'preact';
 
+/**
+ * The terminal's own icon.
+ *
+ * It used to lie in the core's icon set along with ours. The core carried it for the
+ * sake of one button it no longer has: the terminals left, and the mark left with them.
+ *
+ * Monochrome, taking its colour from the button, like all of ours. Filled when the
+ * panel is open: the same promise as the other toolbar icons — the state is visible
+ * without moving the mouse.
+ */
 export function TerminalIcon({ filled = false }: { filled?: boolean }): JSX.Element {
   return (
     <svg
