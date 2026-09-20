@@ -7,12 +7,28 @@ import type { Choice, Diff3, Region } from './diff3.js';
 import { layout, type Lane, type LaneLayout } from './layout.js';
 import { useT } from '@mosetta/ide-api/client';
 
+/**
+ * Three columns of one file.
+ *
+ * All three are a real CodeMirror with Darcula and highlighting by extension: there is
+ * no second way of looking at code in a project. The side ones are read-only, while the
+ * middle one shows what the choices assembled.
+ *
+ * The arrows live BETWEEN the columns and are positioned by arithmetic: since every row
+ * is the same height and a hunk occupies the same number of cells in all three columns,
+ * an arrow's place is a cell number times the row height. Not one DOM measurement, and
+ * so nothing to drift while scrolling.
+ */
+
 interface Props {
+  /** The file's key: changing path rebuilds the editors along with the language. */
   path: string;
   regions: Region[];
   choices: Choice[];
+  /** The hunk under the caret — we highlight it more brightly than the rest. */
   cursor: number;
   settings: EditorSettings;
+  /** The code display is a neighbour: the look and the columns' highlighting. */
   code: CodePlugin;
   diff3: Diff3;
   leftLabel: string;
@@ -150,6 +166,13 @@ function Column({
   );
 }
 
+/**
+ * The column of arrows between two editors.
+ *
+ * It scrolls with them and is drawn by cells: a hunk's `top` is its cell number times
+ * the row height. The columns' heading above takes up space too, so the rail starts
+ * lower — which is what the empty header inside it is for.
+ */
 function Rail({
   rails,
   side,
@@ -228,6 +251,11 @@ interface LaneState {
 
 const setLane = StateEffect.define<LaneState>();
 
+/**
+ * The spacers and the painting live in the state rather than in the view plugin: a
+ * spacer is a block widget, it changes the document's height, and CodeMirror wants to
+ * see such a thing at the state level.
+ */
 const laneField = StateField.define({
   create: () => Decoration.none,
   update(value, tr) {

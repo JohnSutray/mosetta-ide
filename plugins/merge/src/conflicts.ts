@@ -2,6 +2,20 @@ import type { Logger, ProjectMemory } from '@mosetta/ide-api/server';
 import type { MergeSessions } from './sessions.js';
 import type { MergeFile, MergeSession } from './types.js';
 
+/**
+ * The supplier of filesystem conflicts.
+ *
+ * It stands on BORROWED memory: it takes its texts from it and from disk
+ * (`memory.disk`), and hands the result over with two verbs — `settle` (onto disk) and
+ * `adopt` (into memory). A conflict is started ONLY by an action being refused: memory
+ * diverging from disk is not an argument in itself.
+ *
+ * There are exactly two actions that can run into it, and they differ not in the
+ * argument's content but in WHERE the result goes:
+ *
+ * * a save — the result goes to DISK (the human asked for it to be written)
+ * * a reload — the result goes into MEMORY (the human asked to pull somebody else's in)
+ */
 export class FsConflicts {
   private readonly off: () => void;
 
@@ -13,11 +27,12 @@ export class FsConflicts {
     this.off = memory.on((event) => {
       if (event.type !== 'doc.saveBlocked') return;
       void this.openFor(event.path, 'save').catch((err) => {
-        log.warn(`конфликт ${event.path} не собрался: ${String(err)}`);
+        log.warn(`the conflict ${event.path} did not assemble: ${String(err)}`);
       });
     });
   }
 
+  /** Pull disk in without throwing our own away. The result will land in memory. */
   forReload(path: string): Promise<MergeSession | null> {
     return this.openFor(path, 'reload');
   }

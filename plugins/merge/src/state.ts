@@ -5,6 +5,7 @@ import { batch, computed, effect, signal, type ReadonlySignal, type Signal } fro
 import type { MergeFile, MergeSession } from './types.js';
 import DocPlugin from '@mosetta/ide-plugin-doc';
 
+/** The merging server half — it arrives through the constructor. */
 export interface MergeRemote {
   state(): Promise<MergeSession | null>;
   resolve(path: string, text: string | null): Promise<MergeSession | null>;
@@ -13,18 +14,36 @@ export interface MergeRemote {
 }
 
 export class Merge {
+  /** The three-way diff runs on the code display's line-by-line diff. */
   readonly diff3 = new Diff3(() => this.ide.getPlugin(CodePlugin).diff);
 
   readonly session = signal<MergeSession | null>(null);
   readonly open = signal(false);
+  /** Which file is being settled. Empty means we take the first unsettled one. */
   readonly path = signal<string | null>(null);
 
+  /** The choice per file: path to decisions about hunks. */
   private readonly decisions = signal<Map<string, Choice[]>>(new Map());
 
+  /**
+   * The hunk under the caret: the keys work on it. `null` means the human has not stood
+   * anywhere yet, and then the caret itself stands on the FIRST argument.
+   *
+   * Zero will not do here: hunk zero is almost always the file's common beginning, and
+   * an arrow on it would stay silent. The first version did stay silent.
+   */
   private readonly cursorRaw: Signal<number | null> = signal(null);
 
+  /**
+   * Files whose screen was promised but whose session does not exist yet.
+   *
+   * "Yet", because a session is born LATER than the refusal: the server assembles its
+   * texts asynchronously (disk has to be re-read), and the save has already returned a
+   * refusal by then. We wait here for one event and open.
+   */
   private readonly promised = new Set<string>();
 
+  /** How many files are still waiting for a decision — the toolbar shows this number. */
   readonly pending: ReadonlySignal<number> = computed(
     () => this.session.value?.files.filter((file) => !file.done).length ?? 0,
   );
@@ -41,6 +60,10 @@ export class Merge {
     );
   });
 
+  /**
+   * The current file's hunks. A "text against deletion" pair has none at all: there the
+   * argument is not about lines but about the file's very existence.
+   */
   readonly regions: ReadonlySignal<Region[]> = computed(() => {
     const file = this.file.value;
     if (!file || file.left.text === null || file.right.text === null) return [];
@@ -56,10 +79,12 @@ export class Merge {
     return this.diff3.defaultChoices(regions);
   });
 
+  /** The middle column's text — right now, given the current choice. */
   readonly result: ReadonlySignal<string> = computed(() =>
     this.diff3.buildText(this.regions.value, this.choices.value),
   );
 
+  /** Whether the file may be confirmed: no contested hunks are left undecided. */
   readonly ready: ReadonlySignal<boolean> = computed(() => {
     const file = this.file.value;
     if (!file) return false;
@@ -67,6 +92,10 @@ export class Merge {
     return this.diff3.allDecided(this.regions.value, this.choices.value);
   });
 
+  /**
+   * The current file's contested hunks — the keys walk them. ALL of them, settled ones
+   * included: people come back to their decision and change it.
+   */
   readonly conflicts: ReadonlySignal<number[]> = computed(() =>
     this.regions.value
       .map((region, at) => ({ region, at }))
@@ -80,6 +109,10 @@ export class Merge {
     return this.conflicts.value[0] ?? 0;
   });
 
+  /**
+   * How many arguments are still waiting for an answer — this number is visible in the
+   * footer.
+   */
   readonly left: ReadonlySignal<number> = computed(() => {
     const regions = this.regions.value;
     const choices = this.choices.value;
@@ -122,6 +155,7 @@ export class Merge {
     this.cursorRaw.value = at;
   }
 
+  /** Open the screen on this file — now, or as soon as it appears. */
   openFor(path: string): void {
     if (this.focusOn(path)) return;
     this.promised.add(path);
@@ -151,6 +185,7 @@ export class Merge {
     });
   }
 
+  /** The next or previous file in the sidebar. */
   stepFile(delta: number): void {
     const session = this.session.value;
     const current = this.file.value;
@@ -160,6 +195,7 @@ export class Merge {
     if (next) this.pickFile(next.path);
   }
 
+  /** The next contested hunk. We walk in a circle — as through search results. */
   stepConflict(delta: number): void {
     const spots = this.conflicts.value;
     if (spots.length === 0) return;
@@ -174,6 +210,7 @@ export class Merge {
     this.cursorRaw.value = spots[(at + delta + spots.length) % spots.length]!;
   }
 
+  /** Say something about one side of one hunk. */
   decide(at: number, side: 'left' | 'right', choice: SideChoice): void {
     const file = this.file.value;
     if (!file) return;
@@ -188,11 +225,13 @@ export class Merge {
     this.remember(file.path, next);
   }
 
+  /** The same for the hunk under the caret — which is what working by key means. */
   decideHere(side: 'left' | 'right', choice: SideChoice): void {
     this.decide(this.cursor.value, side, choice);
     if (choice !== null) this.stepConflict(1);
   }
 
+  /** Accept one side whole — the developer is sure it is the more correct one. */
   acceptSide(side: 'left' | 'right'): void {
     const file = this.file.value;
     if (!file) return;
@@ -203,6 +242,7 @@ export class Merge {
     this.remember(file.path, this.diff3.takeSide(this.regions.value, side));
   }
 
+  /** Confirm the file. No `text` passed means we take what the choice assembled. */
   async resolve(text?: string | null): Promise<void> {
     const file = this.file.value;
     if (!file) return;
@@ -238,6 +278,7 @@ export class Merge {
     });
   }
 
+  /** Asked on connecting to a project: a session survives a reload. */
   async load(): Promise<void> {
     try {
       this.session.value = await this.access.state();
@@ -257,6 +298,7 @@ export class Merge {
     });
   }
 
+  /** The undecided argument under the caret — so as to highlight it separately. */
   isUndecided(at: number): boolean {
     const region = this.regions.value[at];
     const choice = this.choices.value[at];

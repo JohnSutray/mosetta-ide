@@ -1,5 +1,14 @@
 import type { MergeSession, MergeSupply } from './types.js';
 
+/**
+ * Merge sessions.
+ *
+ * There is not one layer here, and that is the module's main property: a session holds
+ * the triples of text and the supplier's telephone number. Where the texts came from
+ * and what to do with the result is known to the SUPPLIER. It used to live in the core;
+ * the supplier of disk conflicts sits next door, on borrowed memory.
+ */
+
 interface Live extends MergeSupply {
   id: string;
 }
@@ -14,6 +23,13 @@ export class MergeSessions {
     return () => this.listeners.delete(listener);
   }
 
+  /**
+   * Declare a conflict.
+   *
+   * Files from ONE supplier merge into one session: while the human was settling the
+   * first file, a second could have diverged on disk. Different suppliers queue up:
+   * there is one screen for all of them.
+   */
   open(supply: MergeSupply): void {
     const existing = this.queue.find((item) => item.source === supply.source);
     if (existing) {
@@ -33,6 +49,7 @@ export class MergeSessions {
     this.announce();
   }
 
+  /** The session currently on screen. */
   state(): MergeSession | null {
     const live = this.queue[0];
     if (!live) return null;
@@ -41,9 +58,9 @@ export class MergeSessions {
 
   async resolve(path: string, text: string | null): Promise<MergeSession | null> {
     const live = this.queue[0];
-    if (!live) throw new Error('конфликтов нет');
+    if (!live) throw new Error('there are no conflicts');
     const file = live.files.find((item) => item.path === path);
-    if (!file) throw new Error(`не в этом сеансе: ${path}`);
+    if (!file) throw new Error(`not in this session: ${path}`);
 
     await live.apply(path, text);
     file.done = true;
@@ -67,6 +84,7 @@ export class MergeSessions {
     await live?.cancel?.();
   }
 
+  /** The project is closing. We do not call the suppliers: they are already gone. */
   dispose(): void {
     this.queue.length = 0;
     this.listeners.clear();

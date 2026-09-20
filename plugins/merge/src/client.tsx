@@ -11,6 +11,19 @@ export type { MergeFile, MergeSession, MergeSide, MergeSource, MergeSupply } fro
 import { STYLE } from './style.js';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * The conflict resolution screen is a plugin.
+ *
+ * The core is left with the ARGUMENT: the session lives in the workspace, it is started
+ * by the document layer (a save ran into disk having moved on, or the "pull disk in"
+ * strip), and the triples of text are held by the server. Here is everything that shows
+ * it and settles it: the diff3 hunks, the choice per hunk, the middle column, the keys,
+ * the toolbar button with the number of unsettled files.
+ *
+ * The link to the core is the contract's `merge` facade: the state, the answer, the
+ * cancellation, and two requests outwards ("the session changed", "show the argument
+ * about this file").
+ */
 @plugin({ title: 'plugin.merge' })
 export default class MergePlugin implements MergeRemote {
   readonly merge: Merge;

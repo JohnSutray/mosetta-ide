@@ -1,5 +1,9 @@
 import type { JSX } from 'preact';
 
+/**
+ * The merge icon, its own. Two lines converge into one: two were arguing, and one goes
+ * on. Monochrome, taking its colour from the button; filled when the screen is open.
+ */
 const common = {
   width: 16,
   height: 16,

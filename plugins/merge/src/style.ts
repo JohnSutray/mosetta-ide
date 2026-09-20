@@ -1,3 +1,9 @@
+/**
+ * The merging screen's own styling. It moved out of the core's stylesheet word for
+ * word: the full-screen window, the file sidebar, the three columns, the "file against
+ * deletion" third panel, the footer. The theme's variables come from the core — there
+ * is one Darcula for the whole IDE.
+ */
 export const STYLE = `
 .merge-reason { color: var(--error); font: 12px var(--ui-font); }
 
