@@ -1,3 +1,4 @@
+/** The settings editor. */
 export const STYLE = `
 .settings-top { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--divider); }
 .settings-title { flex: none; color: var(--fg); font: 600 14px var(--ui-font); }

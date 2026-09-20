@@ -1,3 +1,11 @@
+/**
+ * The problems panel's styles.
+ *
+ * A plugin that draws a panel has to be able to dress it — otherwise its CSS would have
+ * to live in the core's stylesheet, exactly as the npm icon once lived in the core's
+ * icon set. The theme's variables (`--panel-bg`, `--muted`) stay shared, though: the
+ * theme is common ground, and a palette of its own would mean the plugin looks foreign.
+ */
 export const STYLE = `
 .column-problems { background: var(--panel-bg); }
 

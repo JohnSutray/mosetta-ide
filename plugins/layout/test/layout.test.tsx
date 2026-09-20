@@ -5,6 +5,15 @@ import Layout from '../src/client.js';
 import { Overlay } from '../src/overlay.js';
 import type { PanelWish } from '../src/schema.js';
 
+/**
+ * The panel layout.
+ *
+ * Requirement two of the original brief is checked here: an interface of columns,
+ * navigation on the left, working panels on the right, the editor in the middle taking
+ * the remainder. This used to rest on markup in the core's frame and was checked by
+ * nothing but the eye.
+ */
+
 const NAME = '@mosetta/ide-plugin-layout';
 
 (globalThis as { window?: object }).window = { innerWidth: 1200, innerHeight: 800, addEventListener: () => {} };
@@ -20,6 +29,15 @@ function wish(id: string, side: PanelWish['side'], extra: Partial<PanelWish> = {
   };
 }
 
+/**
+ * The columns and the strips between them, in the order the eye sees them.
+ *
+ * The resizer is recognised BY FUNCTION IDENTITY rather than by node name: the plugin
+ * takes it from `@mosetta/ide-api/client` and the test from `@mosetta/ide-api/testing`,
+ * and it is one and the same object, because the substitution leads to one file. As a
+ * bonus, this checks that the plugin uses the shared resizer rather than one of its
+ * own.
+ */
 function shape(tree: unknown): string[] {
   return nodes(tree)
     .map((node) => {
@@ -31,7 +49,7 @@ function shape(tree: unknown): string[] {
     .filter((one): one is string => one !== null);
 }
 
-describe('раскладка', () => {
+describe('the layout', () => {
   let host: FakeHost;
   let main: () => unknown;
 
@@ -43,25 +61,25 @@ describe('раскладка', () => {
     main = host.registry.all<() => unknown>('chrome.main')[0]!;
   });
 
-  it('объявляет форму колонки до того, как кто-то начал писать', () => {
+  it('declares the shape of a column before anyone has started writing', () => {
     const early = new FakeHost();
     early.add(Layout, NAME);
     expect(early.registry.declared()).toEqual(['main.overlay', 'panel', 'panel.action']);
   });
 
-  it('занимает середину рамы и приносит свои стили', () => {
+  it('takes the frame\'s middle and brings its own styles', () => {
     expect(typeof main).toBe('function');
     expect(host.ide(NAME).styles.join('')).toContain('.columns');
   });
 
-  it('навигация слева, рабочее справа, остаток посередине', () => {
+  it('navigation on the left, working panels on the right, the remainder in the middle', () => {
     host.registry.add('panel', wish('tree', 'left'), 'core');
     host.registry.add('panel', wish('editor', 'main'), 'core');
     host.registry.add('panel', wish('terminal', 'right'), 'core');
     expect(shape(main())).toEqual(['tree', '|tree', 'editor', '|terminal', 'terminal']);
   });
 
-  it('полоска стоит с той стороны, за которую тянут', () => {
+  it('the strip stands on the side one drags from', () => {
     host.registry.add('panel', wish('tree', 'left'), 'core');
     host.registry.add('panel', wish('git', 'left'), 'core');
     host.registry.add('panel', wish('terminal', 'right'), 'core');
@@ -72,7 +90,7 @@ describe('раскладка', () => {
     ]);
   });
 
-  it('порядок внутри стороны — порядок пожеланий', () => {
+  it('the order within a side is the order of the wishes', () => {
     host.registry.add('panel', wish('terminal', 'right'), 'core');
     host.registry.add('panel', wish('problems', 'right'), '@mosetta/ide-plugin-problems');
     expect(shape(main()).filter((one) => !one.startsWith('|'))).toEqual([
@@ -81,7 +99,7 @@ describe('раскладка', () => {
     ]);
   });
 
-  it('закрытую колонку не рисуют вовсе', () => {
+  it('a closed column is not drawn at all', () => {
     const open = { value: false };
     host.registry.add('panel', wish('tree', 'left', { open }), 'core');
     expect(shape(main())).toEqual([]);
@@ -89,14 +107,14 @@ describe('раскладка', () => {
     expect(shape(main())).toEqual(['tree', '|tree']);
   });
 
-  it('у середины ширины нет: она забирает остаток', () => {
+  it('the middle has no width: it takes the remainder', () => {
     host.registry.add('panel', wish('editor', 'main'), 'core');
     const column = of(main(), 'section')[0]!;
     expect(column.props['style']).toBeUndefined();
     expect(String(column.props['class'])).toContain('is-main');
   });
 
-  it('ширина берётся из памяти, а без памяти — из пожелания', () => {
+  it('the width comes from memory, and without memory from the wish', () => {
     host.registry.add('panel', wish('tree', 'left', { defaultWidth: 260 }), 'core');
     const width = () =>
       (of(main(), 'section')[0]!.props['style'] as { width: string }).width;
@@ -105,7 +123,7 @@ describe('раскладка', () => {
     expect(width()).toBe('410px');
   });
 
-  it('колонка не съедает экран целиком', () => {
+  it('a column does not eat the whole screen', () => {
     host.registry.add('panel', wish('tree', 'left', { minWidth: 150 }), 'core');
     const grip = nodes(main()).find((node) => node.type === Resizer)!;
     const limits = (grip.props['limits'] as () => { min: number; max: number })();
@@ -114,7 +132,7 @@ describe('раскладка', () => {
     expect(limits.max).toBeGreaterThan(150);
   });
 
-  it('три правые колонки не съедают середину: показ ужат, память цела', () => {
+  it('three right columns do not eat the middle: the display is squeezed, the memory is whole', () => {
     host.registry.add('panel', wish('editor', 'main'), 'core');
     host.registry.add('panel', wish('terminal', 'right', { defaultWidth: 460, minWidth: 240 }), 'core');
     host.registry.add('panel', wish('debug', 'right', { defaultWidth: 340, minWidth: 240 }), 'core');
@@ -139,7 +157,7 @@ describe('раскладка', () => {
     expect(after.reduce((a, b) => a + b, 0)).toBe(1280 - 320 - 3);
   });
 
-  it('оверлей накрывает СЕРЕДИНУ и закрывается своим крестиком', () => {
+  it('an overlay covers the MIDDLE and closes by its own cross', () => {
     host.registry.add('panel', wish('editor', 'main'), 'core');
     const open = { value: false };
     let closed = 0;
@@ -157,11 +175,11 @@ describe('раскладка', () => {
     );
 
     const overlay = () => of(main(), 'section').find((node) => String(node.props['class']).includes('is-overlay'));
-    expect(overlay(), 'закрытый оверлей не рисуют вовсе').toBeUndefined();
+    expect(overlay(), 'a closed overlay is not drawn at all').toBeUndefined();
 
     open.value = true;
     const shown = nodes(main()).find((node) => node.type === Overlay);
-    expect(shown, 'раму рисует раскладка, а не сосед').toBeDefined();
+    expect(shown, 'the frame is drawn by the layout rather than by the neighbour').toBeDefined();
     expect((shown!.props['overlay'] as { keys: string }).keys).toBe('diff');
     expect(shape(main())).toContain('editor');
 
@@ -169,7 +187,7 @@ describe('раскладка', () => {
     expect(closed).toBe(1);
   });
 
-  it('сосед ставит действие в заголовок чужой панели', () => {
+  it('a neighbour puts an action into another panel\'s header', () => {
     host.registry.add('panel', wish('editor', 'main'), 'core');
     let ran = 0;
     host.registry.add(
@@ -190,7 +208,7 @@ describe('раскладка', () => {
     expect(ran).toBe(1);
   });
 
-  it('действие без права работать погашено, а не спрятано', () => {
+  it('an action with no right to work is disabled rather than hidden', () => {
     host.registry.add('panel', wish('editor', 'main'), 'core');
     host.registry.add(
       'panel.action',
@@ -208,7 +226,7 @@ describe('раскладка', () => {
     expect(button.props['disabled']).toBe(true);
   });
 
-  it('заголовок постоянный — ключ словаря, непостоянный — своя строка', () => {
+  it('a permanent title is a dictionary key, an impermanent one is a string of its own', () => {
     host.registry.add('panel', wish('tree', 'left'), 'core');
     host.registry.add(
       'panel',
@@ -221,13 +239,13 @@ describe('раскладка', () => {
     expect(titles).toEqual(['panel.tree', 'src/app.tsx']);
   });
 
-  it('нечего сказать заголовком — показываем имя панели', () => {
+  it('nothing to say as a title — we show the panel\'s name', () => {
     host.registry.add('panel', wish('editor', 'main', { heading: () => null }), 'core');
     const title = of(main(), 'span').find((node) => node.props['class'] === 'panel-title')!;
     expect(title.props['children']).toBe('panel.editor');
   });
 
-  it('крестик есть только у того, кто умеет закрываться', () => {
+  it('only whoever can close has a cross', () => {
     let closed = 0;
     host.registry.add('panel', wish('tree', 'left', { close: () => closed++ }), 'core');
     host.registry.add('panel', wish('editor', 'main'), 'core');
@@ -237,7 +255,7 @@ describe('раскладка', () => {
     expect(closed).toBe(1);
   });
 
-  it('метки панели живут в её заголовке', () => {
+  it('a panel\'s marks live in its header', () => {
     host.registry.add(
       'panel',
       wish('editor', 'main', { badges: () => <span class="tag">read-only</span> }),
@@ -248,20 +266,20 @@ describe('раскладка', () => {
     expect(tags).toHaveLength(1);
   });
 
-  it('содержимое зовётся функцией: раскладка не знает, что внутри', () => {
+  it('the contents are called as a function: the layout does not know what is inside', () => {
     host.registry.add('panel', wish('tree', 'left'), 'core');
     const body = of(main(), 'div').find((node) => node.props['class'] === 'panel-body')!;
     expect(nodes(body).some((node) => node.props['data-id'] === 'tree')).toBe(true);
   });
 
-  it('пожелание не той формы отвергается вместе с именем автора', () => {
-    host.registry.add('panel', { id: 'x', title: 'panel.x', side: 'left' }, '@mosetta/ide-plugin-чей-то');
+  it('a wish of the wrong shape is rejected along with its author\'s name', () => {
+    host.registry.add('panel', { id: 'x', title: 'panel.x', side: 'left' }, '@mosetta/ide-plugin-someone');
     expect(host.complaints).toHaveLength(1);
-    expect(host.complaints[0]).toContain('@mosetta/ide-plugin-чей-то');
+    expect(host.complaints[0]).toContain('@mosetta/ide-plugin-someone');
     expect(host.complaints[0]).toContain('«open»');
   });
 
-  it('сторона выдумана — тоже отказ', () => {
+  it('an invented side is a refusal too', () => {
     host.registry.add('panel', { ...wish('x', 'left'), side: 'top' as never }, 'core');
     expect(host.complaints.join('')).toContain('/side');
   });

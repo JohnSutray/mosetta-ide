@@ -4,6 +4,13 @@ import NpmScripts from '../src/client.js';
 import TerminalPlugin from '@mosetta/ide-plugin-terminal';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * What to run scripts with — the SCRIPTS window.
+ *
+ * The manager is about the project: without a project it is not asked for, and with one
+ * it is asked of our own server half. The choice is written by the core into
+ * `tools.packageManager`.
+ */
 const NAME = '@mosetta/ide-plugin-npm-scripts';
 
 async function raise() {
@@ -22,8 +29,8 @@ async function raise() {
   return { host, plugin };
 }
 
-describe('пакетный менеджер', () => {
-  it('без проекта не спрашивается, с проектом — приходит', async () => {
+describe('the package manager', () => {
+  it('without a project it is not asked for; with one it arrives', async () => {
     const { host, plugin } = await raise();
     expect(plugin.managers.value).toEqual([]);
     host.surface.project.value = { id: '1', root: '/p', name: 'p', sessions: 1, held: [], openedAt: 0 };
@@ -31,7 +38,7 @@ describe('пакетный менеджер', () => {
     expect(plugin.managers.value.find((one) => one.current)?.name).toBe('pnpm');
   });
 
-  it('выбор пишется в настройки под старым ключом `tools.packageManager`', async () => {
+  it('the choice is written into the settings under the key `tools.packageManager`', async () => {
     const { host, plugin } = await raise();
     host.surface.project.value = { id: '1', root: '/p', name: 'p', sessions: 1, held: [], openedAt: 0 };
     host.run('scripts.packageManager');

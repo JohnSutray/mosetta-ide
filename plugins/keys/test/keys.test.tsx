@@ -7,10 +7,20 @@ import { KeysSheet } from '../src/popup.js';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 import { settingsKey, USER_LAYER } from '@mosetta/ide-api/client';
 
+/** The keys facade is a field on the keymap instance, taken from the stand. */
 let keys: KeymapPlugin['keys'];
+/** The stand's windows: its own per boot. */
 let windows: Windows;
+/** The stand's labels are keys: a core service rather than an import. */
 let t: (key: string, params?: Record<string, string | number>) => string;
 
+/**
+ * The keys window as a plugin: what it promises.
+ *
+ * It shows the RESOLVED keymap — only the rows of the environment being looked at — and
+ * the echo of the last keystroke, which arrives from the core. The switch shows
+ * somebody else's layout without reopening the IDE.
+ */
 async function raise() {
   const host = new FakeHost();
   host.add(UiPlugin, '@mosetta/ide-plugin-ui');
@@ -32,10 +42,15 @@ async function raise() {
   return { host, plugin };
 }
 
+/**
+ * We call the markup ourselves: the harness hands over nodes rather than rendering
+ * them.
+ */
 function rendered(plugin: KeysPlugin) {
   return nodes(KeysSheet({ keys, windows, window: plugin.window, t }));
 }
 
+/** Every row the window shows, in reading order. */
 function texts(plugin: KeysPlugin): string[] {
   return rendered(plugin)
     .flatMap((node) => {
@@ -45,8 +60,8 @@ function texts(plugin: KeysPlugin): string[] {
     .filter((one): one is string => typeof one === 'string');
 }
 
-describe('окно клавиш', () => {
-  it('закрыто по умолчанию, клавиша открывает и закрывает', async () => {
+describe('the keys window', () => {
+  it('closed by default, and the key opens and closes it', async () => {
     const { host, plugin } = await raise();
     expect(plugin.window.open.value).toBe(false);
     host.run('keys.show');
@@ -55,7 +70,7 @@ describe('окно клавиш', () => {
     expect(plugin.window.open.value).toBe(false);
   });
 
-  it('показывает только строки СВОЕГО окружения', async () => {
+  it('shows only the rows of ITS OWN environment', async () => {
     const { host, plugin } = await raise();
     host.run('keys.show');
     const kbds = of(rendered(plugin), 'kbd').map((one) => String(one.props.children));
@@ -64,14 +79,14 @@ describe('окно клавиш', () => {
     expect(kbds).toContain(keys.humanize('arrowdown'));
   });
 
-  it('переключатель показывает чужую раскладку и говорит об этом', async () => {
+  it('the switch shows somebody else\'s layout and says so', async () => {
     const { host, plugin } = await raise();
     host.run('keys.show');
     plugin.window.viewHost.value = 'electron';
     expect(texts(plugin)).toContain('keys.elsewhere');
   });
 
-  it('эхо нажатия приходит от ядра и видно сразу', async () => {
+  it('the keystroke echo arrives from the core and is visible at once', async () => {
     const { host, plugin } = await raise();
     host.run('keys.show');
     host.plugin(KeymapPlugin).echo.lastKey.value = { key: 'meta+k', context: 'global', command: null, seq: 1 };

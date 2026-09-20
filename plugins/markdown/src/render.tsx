@@ -72,7 +72,7 @@ function draw(block: Block, key: number, how: Draw): ComponentChildren {
 
 function Code({ lang, text, painter }: { lang: string; text: string; painter: Painter | null }): JSX.Element {
   const named = LANGS[lang.toLowerCase()] ?? lang.toLowerCase();
-  const pieces = painter && named ? painter.paint(text, `код.${named}`) : null;
+  const pieces = painter && named ? painter.paint(text, `code.${named}`) : null;
   return (
     <pre class="md-code">
       <code>

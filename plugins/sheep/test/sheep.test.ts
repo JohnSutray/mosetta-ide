@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { sheepfold, type World } from '../src/world.js';
 
+/**
+ * Sheep on an empty panel. A gimmick, but it has rules, and they cannot be checked by
+ * eye: in a background tab the browser counts no frames, and a screenshot shows one. So
+ * the rules live apart from the drawing and are checked here.
+ */
 const W = 600;
 const H = 400;
 
+/** A constant "chance": a test needs repeatability rather than variety. */
 const steady = () => 0.5;
 
 function walk(world: World, frames: number): void {
@@ -18,8 +24,8 @@ function put(world: World, x: number, y: number): void {
   sheepfold.moveHeld(world, x, y);
 }
 
-describe('овцы', () => {
-  it('появляются, когда у поля появился размер, а не при создании мира', () => {
+describe('the sheep', () => {
+  it('they appear once the field has a size rather than when the world is created', () => {
     const world = sheepfold.create();
     sheepfold.step(world, 0, 0, steady);
     expect(world.flock).toHaveLength(0);
@@ -31,7 +37,7 @@ describe('овцы', () => {
     }
   });
 
-  it('приходят из-за края и заходят внутрь', () => {
+  it('they come from beyond the edge and walk inside', () => {
     const world = sheepfold.create();
     sheepfold.spawn(world, W, H, () => 0.1);     const sheep = world.flock[0]!;
     expect(sheep.x).toBeLessThan(0);
@@ -39,7 +45,7 @@ describe('овцы', () => {
     expect(sheep.x).toBeGreaterThan(0);
   });
 
-  it('не стоят на месте, даже если погасили скорость', () => {
+  it('they do not stand still even with the speed killed', () => {
     const world = sheepfold.create();
     sheepfold.spawn(world, W, H, steady);
     const sheep = world.flock[0]!;
@@ -49,7 +55,7 @@ describe('овцы', () => {
     expect(Math.hypot(sheep.vx, sheep.vy)).toBeGreaterThan(0);
   });
 
-  it('сталкиваются и разбегаются', () => {
+  it('they collide and scatter', () => {
     const world = sheepfold.create();
     sheepfold.spawn(world, W, H, steady);
     sheepfold.spawn(world, W, H, steady);
@@ -63,7 +69,7 @@ describe('овцы', () => {
     expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(before);
   });
 
-  it('первая в сарае ждёт, вторая сливается с ней в большую', () => {
+  it('the first in the barn waits, the second merges with it into a bigger one', () => {
     const world = sheepfold.create();
     const barn = sheepfold.barnAt(W, H);
     const middle = { x: barn.x + sheepfold.HOUSE_W / 2 - sheepfold.SHEEP_W / 2, y: barn.y + sheepfold.HOUSE_H / 2 - sheepfold.SHEEP_H / 2 };
@@ -82,9 +88,10 @@ describe('овцы', () => {
     expect(world.flock[0]!.level).toBe(2);
   });
 
-  it('слияние поднимает на ступень, но не выше пятой', () => {
+  it('a merge raises the stage, but no higher than the fifth', () => {
     const barn = sheepfold.barnAt(W, H);
 
+    /** Create a sheep of the required stage and put it into the barn, middle first. */
     const bring = (world: World, level: number) => {
       sheepfold.spawn(world, W, H, steady);
       const fresh = world.flock[world.flock.length - 1]!;
@@ -110,7 +117,7 @@ describe('овцы', () => {
     }
   });
 
-  it('схватить можно и рядом с овцой, не только точно по ней', () => {
+  it('one can grab next to a sheep rather than only exactly on it', () => {
     const world = sheepfold.create();
     sheepfold.spawn(world, W, H, steady);
     const sheep = world.flock[0]!;
@@ -122,7 +129,7 @@ describe('овцы', () => {
     expect(sheepfold.grab(world, 100 - sheepfold.GRAB_PAD * 3, 100)).toBe(false);
   });
 
-  it('сквозь домик не ходят, а обходят', () => {
+  it('they do not walk through a hut but round it', () => {
     const world = sheepfold.create();
     const barn = sheepfold.barnAt(W, H);
     sheepfold.spawn(world, W, H, steady);
@@ -140,7 +147,7 @@ describe('овцы', () => {
     expect(inside).toBe(false);
   });
 
-  it('на руках домик не отбивает: несут — значит несут', () => {
+  it('while carried the hut does not repel: carried means carried', () => {
     const world = sheepfold.create();
     const barn = sheepfold.barnAt(W, H);
     sheepfold.spawn(world, W, H, steady);
@@ -153,7 +160,7 @@ describe('овцы', () => {
     expect(sheepfold.release(world, W, H)).toBe('waiting');
   });
 
-  it('в парикмахерской стригут и роняют брикет шерсти', () => {
+  it('at the barber\'s they are shorn and drop a bale of wool', () => {
     const world = sheepfold.create();
     const salon = sheepfold.salonAt(W, H);
     sheepfold.spawn(world, W, H, steady);
@@ -164,7 +171,7 @@ describe('овцы', () => {
     expect(world.shorn).toBe(1);
   });
 
-  it('стриженую второй раз не стригут', () => {
+  it('a shorn one is not shorn a second time', () => {
     const world = sheepfold.create();
     const salon = sheepfold.salonAt(W, H);
     sheepfold.spawn(world, W, H, steady);
@@ -174,7 +181,7 @@ describe('овцы', () => {
     expect(world.shorn).toBe(0);
   });
 
-  it('брошенная в чистом поле просто идёт дальше', () => {
+  it('one dropped in the open field simply walks on', () => {
     const world = sheepfold.create();
     sheepfold.spawn(world, W, H, steady);
     put(world, 20, 20);

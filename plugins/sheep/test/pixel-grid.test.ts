@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { pixelGrid } from '../src/pixel-grid.js';
 
-describe('сетка физических пикселей', () => {
-  it('край клетки попадает в целый физический пиксель', () => {
+/**
+ * The seams between cells. Checked by arithmetic, because by eye this is visible only
+ * on a screen with a fractional scale — that is, on Windows at 125%, where I do not go.
+ */
+describe('the grid of physical pixels', () => {
+  it('a cell\'s edge lands on a whole physical pixel', () => {
     for (const ratio of [1, 1.25, 1.5, 2, 2.5]) {
       for (const value of [0, 3, 7.4, 13.9, 100.3]) {
         const device = pixelGrid.snap(value, ratio) * ratio;
@@ -11,7 +15,7 @@ describe('сетка физических пикселей', () => {
     }
   });
 
-  it('соседние клетки делят ровно один край — без щели и без нахлёста', () => {
+  it('neighbouring cells share exactly one edge — no gap and no overlap', () => {
     pixelGrid.setRatio(1.25);
     const drawn: Array<[number, number, number, number]> = [];
     const ctx = {
@@ -23,7 +27,7 @@ describe('сетка физических пикселей', () => {
     for (let i = 1; i < drawn.length; i += 1) {
       const [prevX, , prevW] = drawn[i - 1]!;
       const [x] = drawn[i]!;
-      expect(prevX + prevW, `клетка ${i} не сошлась с предыдущей`).toBeCloseTo(x, 10);
+      expect(prevX + prevW, `cell ${i} did not meet the previous one`).toBeCloseTo(x, 10);
     }
     for (const [, , w, h] of drawn) {
       expect(w).toBeGreaterThan(0);

@@ -1,3 +1,8 @@
+/**
+ * The keys window's own styling. It moved out of the core's stylesheet rule by rule:
+ * the header, the echo, the grid, the key caps, the sections of what was taken away,
+ * the layout switch.
+ */
 export const STYLE = `
 .keys-help { padding: 10px 12px; gap: 8px; }
 

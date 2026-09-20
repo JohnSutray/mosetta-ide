@@ -1,3 +1,11 @@
+/**
+ * The strip's styles.
+ *
+ * Only its own. The square icon button stayed in the core: the fetch button in the
+ * branches window uses it too, which makes it an element of the THEME rather than of
+ * the toolbar. Widgets — terminal chips, the branch, the shell — are drawn by their
+ * owners with their own markup, and their styles are their own too.
+ */
 export const STYLE = `
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .dot.is-on { background: #6a8759; }

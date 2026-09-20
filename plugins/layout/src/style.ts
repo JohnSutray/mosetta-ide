@@ -1,3 +1,10 @@
+/**
+ * The columns' styling.
+ *
+ * It left the core's stylesheet entirely, along with the layout itself. A plugin that
+ * draws a panel has to be able to dress it — otherwise its CSS would have to be kept by
+ * the core, which is exactly the leak that carrying the npm icon was.
+ */
 export const STYLE = `
 .columns {
   display: flex;

@@ -3,32 +3,38 @@ import { ImageKinds } from '../src/kinds.js';
 import { SvgReader } from '../src/svg-facts.js';
 import { ImageStore } from '../src/state.js';
 
-describe('кого показываем картинкой', () => {
+/**
+ * The image viewer. What is checked is what can be checked without a screen: which
+ * files we take on, what we say about an SVG, and how loading behaves when answers
+ * arrive in a different order from the one they were asked in.
+ */
+
+describe('whom we show as an image', () => {
   const kinds = new ImageKinds();
 
-  it('растровое — по расширению, регистр не важен', () => {
+  it('raster by extension, and the case does not matter', () => {
     expect(kinds.isRaster('a/b/logo.PNG')).toBe(true);
     expect(kinds.isRaster('icon.webp')).toBe(true);
     expect(kinds.isRaster('notes.md')).toBe(false);
     expect(kinds.isRaster('.png')).toBe(false);
   });
 
-  it('SVG отдельно: он картинка, сделанная из текста', () => {
+  it('SVG apart: it is an image made of text', () => {
     expect(kinds.isSvg('sheep.svg')).toBe(true);
     expect(kinds.isRaster('sheep.svg')).toBe(false);
   });
 
-  it('размер файла читается людьми, а не в байтах', () => {
+  it('a file\'s size is read by people rather than in bytes', () => {
     expect(kinds.size(512)).toBe('512 B');
     expect(kinds.size(2048)).toBe('2.0 KB');
     expect(kinds.size(3 * 1024 * 1024)).toBe('3.00 MB');
   });
 });
 
-describe('что можно сказать про SVG, не рисуя его', () => {
+describe('what can be said about an SVG without drawing it', () => {
   const reader = new SvgReader();
 
-  it('холст из viewBox, заявленный размер из корня, фигуры и цвета', () => {
+  it('the canvas from viewBox, the declared size from the root, the shapes and the colours', () => {
     const facts = reader.facts(
       `<svg width="24" height="24" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
          <rect x="1" y="1" width="14" height="14" fill="#cb3837"/>
@@ -42,17 +48,17 @@ describe('что можно сказать про SVG, не рисуя его', 
     expect(facts.colors).toEqual(['#cb3837', 'currentColor']);
   });
 
-  it('нет viewBox — так и говорим, а не выдумываем размер', () => {
+  it('no viewBox — we say so rather than inventing a size', () => {
     expect(reader.facts('<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h1v1H0z"/></svg>').box).toBeNull();
   });
 
-  it('атрибут берётся у КОРНЯ, а не у первой попавшейся фигуры', () => {
+  it('the attribute is taken from the ROOT rather than from the first shape that turns up', () => {
     const facts = reader.facts('<svg viewBox="0 0 10 10"><rect width="4" height="4"/></svg>');
     expect(facts.width).toBeNull();
   });
 });
 
-describe('загрузка байтов', () => {
+describe('loading the bytes', () => {
   function store(answers: Record<string, string>) {
     const calls: string[] = [];
     const wire = {
@@ -64,7 +70,7 @@ describe('загрузка байтов', () => {
     return { calls, image: new ImageStore(wire, (err) => String(err)) };
   }
 
-  it('готовый адрес собирается из типа файла и байтов', async () => {
+  it('a ready address is assembled from the file\'s type and its bytes', async () => {
     const { image } = store({ 'a.png': 'QUJD' });
     image.load('a.png');
     await Promise.resolve();
@@ -72,7 +78,7 @@ describe('загрузка байтов', () => {
     expect(image.shown.value?.url).toBe('data:image/png;base64,QUJD');
   });
 
-  it('тот же файл второй раз не перечитывается', async () => {
+  it('the same file is not re-read a second time', async () => {
     const { calls, image } = store({ 'a.png': 'QUJD' });
     image.load('a.png');
     await Promise.resolve();
@@ -81,7 +87,7 @@ describe('загрузка байтов', () => {
     expect(calls).toEqual(['a.png']);
   });
 
-  it('опоздавший ответ про старый файл не перебивает новый', async () => {
+  it('a late answer about the old file does not override the new one', async () => {
     type Answer = { path: string; base64: string; bytes: number; truncated: boolean };
     const held: Array<(value: Answer) => void> = [];
     const wire = {
@@ -102,16 +108,16 @@ describe('загрузка байтов', () => {
     expect(image.shown.value?.url).toContain('RkFTVA==');
   });
 
-  it('не прочиталось — говорим словами, а не показываем пустоту', () => {
+  it('it did not read — we say so in words rather than showing emptiness', () => {
     const image = new ImageStore(
-      { bytes: () => Promise.reject(new Error('нет такого файла')) },
+      { bytes: () => Promise.reject(new Error('no such file')) },
       (err) => (err instanceof Error ? err.message : String(err)),
     );
     image.load('gone.png');
     return Promise.resolve()
       .then(() => Promise.resolve())
       .then(() => {
-        expect(image.shown.value?.error).toBe('нет такого файла');
+        expect(image.shown.value?.error).toBe('no such file');
       });
   });
 });

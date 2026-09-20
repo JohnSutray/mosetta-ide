@@ -16,7 +16,7 @@ function tick(): Promise<void> {
   return new Promise((done) => setTimeout(done, 0));
 }
 
-describe('перезапуск последнего скрипта', () => {
+describe('re-running the last script', () => {
   let host: FakeHost;
   let npm: NpmScripts;
 
@@ -28,13 +28,13 @@ describe('перезапуск последнего скрипта', () => {
     host.add(Rerun, RERUN);
     host.ide(NPM).answers.set('list', () => SCRIPTS);
     host.ide(NPM).answers.set('run', () => ({
-      name: 'скрипт',
+      name: 'a script',
       command: 'pnpm run dev',
       cwd: '.',
     }));
     host.ide('@mosetta/ide-plugin-terminal').answers.set('open', () => ({
-      name: 'скрипт',
-      title: 'скрипт',
+      name: 'a script',
+      title: 'a script',
       kind: 'script',
       pid: 1,
       cols: 80,
@@ -46,11 +46,11 @@ describe('перезапуск последнего скрипта', () => {
     await host.start();
   });
 
-  it('сосед находится по классу, а не по имени', () => {
+  it('a neighbour is found by class rather than by name', () => {
     expect(host.plugin(NpmScripts)).toBe(npm);
   });
 
-  it('видно ровно то, что сосед объявил публичным', () => {
+  it('exactly what the neighbour made public is visible', () => {
     // @ts-expect-error
     void npm.list;
     // @ts-expect-error
@@ -60,20 +60,20 @@ describe('перезапуск последнего скрипта', () => {
     expect(typeof npm.refresh).toBe('function');
   });
 
-  it('нечего перезапускать — говорит вслух', () => {
+  it('nothing to re-run — it says so out loud', () => {
     host.run('scripts.rerun');
     expect(host.ide(RERUN).said).toEqual(['rerun.nothing']);
     expect(host.ide(NPM).calls).toEqual([]);
   });
 
-  it('первый раз берёт первый известный скрипт', async () => {
+  it('the first time it takes the first script it knows', async () => {
     await npm.refresh();
     host.run('scripts.rerun');
     await tick();
     expect(host.ide(NPM).calls).toContainEqual({ method: 'run', params: { id: 'core::dev' } });
   });
 
-  it('дальше повторяет ровно его', async () => {
+  it('after that it repeats exactly that one', async () => {
     await npm.refresh();
     host.run('scripts.rerun');
     host.run('scripts.rerun');
@@ -85,7 +85,7 @@ describe('перезапуск последнего скрипта', () => {
     ]);
   });
 
-  it('чужая память переставляется снаружи', async () => {
+  it('somebody else\'s memory is rearranged from outside', async () => {
     await npm.refresh();
     host.plugin(Rerun).remember('ui::test');
     host.run('scripts.rerun');
@@ -93,7 +93,7 @@ describe('перезапуск последнего скрипта', () => {
     expect(host.ide(NPM).calls).toContainEqual({ method: 'run', params: { id: 'ui::test' } });
   });
 
-  it('порядок активации не решает', async () => {
+  it('the order of activation does not decide', async () => {
     const other = new FakeHost();
     other.add(Rerun, RERUN);
     const late = other.add(NpmScripts, NPM);

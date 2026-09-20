@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { WORLDS, inWorld, keymap, toolbarOrder } from './keymap-shared.js';
 
-describe('порядок кнопок', () => {
-  it('цифра зовёт кнопку с тем же номером в каждом окружении', () => {
+/**
+ * A digit is a button's ordinal position in the toolbar, left to right. A rule rather
+ * than a list: a button inserted in the middle is obliged to shift the numbers,
+ * otherwise the third digit calls something other than what the finger points at. The
+ * order comes from the `toolbar.order` setting in the REAL settings file, and the
+ * keymap from the real keymap.
+ */
+describe('the order of the buttons', () => {
+  it('a digit calls the button with the same number in every environment', () => {
     const NUMBERED = toolbarOrder().slice(0, 10);
     const bindings = keymap().bindings;
     for (const world of WORLDS) {
@@ -14,9 +21,9 @@ describe('порядок кнопок', () => {
       }
       NUMBERED.forEach((command, at) => {
         const digit = String((at + 1) % 10);
-        expect(numbered.get(digit), `${world.scope}: цифра ${digit} зовёт не ту кнопку`).toBe(command);
+        expect(numbered.get(digit), `${world.scope}: digit ${digit} calls the wrong button`).toBe(command);
       });
-      expect(numbered.size, `${world.scope}: лишние цифры`).toBe(NUMBERED.length);
+      expect(numbered.size, `${world.scope}: extra digits`).toBe(NUMBERED.length);
     }
   });
 });

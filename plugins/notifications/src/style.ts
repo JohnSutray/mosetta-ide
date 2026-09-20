@@ -1,3 +1,4 @@
+/** The stack of notifications in the bottom right corner. */
 export const STYLE = `
 
 .notes {

@@ -1,3 +1,4 @@
+/** The scripts' own styling. */
 export const STYLE = `
 
 .scripts { padding: 3px 0; }

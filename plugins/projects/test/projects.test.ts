@@ -4,6 +4,14 @@ import { FakeHost } from '@mosetta/ide-api/testing';
 import ProjectsPlugin from '../src/client.js';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * The picker as a plugin: what it promises.
+ *
+ * While there is no project it is open by itself and cannot be closed; once one appears
+ * it closes, even if it was opened elsewhere. A click in the directory tree fills the
+ * path in and does NOT open a project. A live project is switched to rather than opened
+ * afresh.
+ */
 function ws(id: string, root: string): WorkspaceInfo {
   return { id, root, name: root.slice(root.lastIndexOf('/') + 1), sessions: 1, held: [], openedAt: 0 };
 }
@@ -23,15 +31,15 @@ async function raise() {
   return { host, projects: plugin.projects };
 }
 
-describe('открывашка', () => {
-  it('без проекта открыта сама, и Escape её не закрывает', async () => {
+describe('the project picker', () => {
+  it('without a project it is open by itself, and Escape does not close it', async () => {
     const { host, projects } = await raise();
     expect(projects.visible.value).toBe(true);
     host.run('projects.close');
     expect(projects.visible.value).toBe(true);
   });
 
-  it('проект появился откуда угодно — закрывается', async () => {
+  it('a project appeared from anywhere — it closes', async () => {
     const { host, projects } = await raise();
     host.surface.workspaceCurrent.value = ws('1', '/home/me/app');
     expect(projects.visible.value).toBe(false);
@@ -41,7 +49,7 @@ describe('открывашка', () => {
     expect(projects.visible.value).toBe(false);
   });
 
-  it('тык по папке подставляет путь и НЕ открывает проект', async () => {
+  it('poking a directory fills the path in and does NOT open the project', async () => {
     const { host, projects } = await raise();
     projects.pickDir({ path: '/home/me/code', name: 'code' });
     expect(projects.draft.value).toBe('/home/me/code');
@@ -49,7 +57,7 @@ describe('открывашка', () => {
     expect(host.surface.workspaceCalls.filter((c) => c.op === 'open')).toEqual([]);
   });
 
-  it('Enter открывает набранное, а живой проект — переключает', async () => {
+  it('Enter opens what was typed, and a live project is switched to', async () => {
     const { host, projects } = await raise();
     projects.setDraft('/home/me/app');
     projects.accept();
@@ -61,7 +69,7 @@ describe('открывашка', () => {
     expect(host.surface.workspaceCalls.at(-1)).toEqual({ op: 'switchTo', args: ['live-7'] });
   });
 
-  it('подсказки ходят по кругу через «ничего не выбрано»', async () => {
+  it('the suggestions walk in a circle through «nothing selected»', async () => {
     const { host, projects } = await raise();
     host.ide(NAME).answers.set('browse', (params) =>
       (params as { prefix: string }).prefix === '/home/me/'

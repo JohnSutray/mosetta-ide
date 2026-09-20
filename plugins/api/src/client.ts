@@ -142,7 +142,7 @@ export function IdeProvider(props: { value: IdeServices; children?: ComponentChi
 
 export function useIde(): IdeServices {
   const ide = useContext(IdeContext);
-  if (!ide) throw new Error('службы IDE не найдены: корень разметки не обёрнут в IdeProvider');
+  if (!ide) throw new Error('the IDE services were not found: the markup root is not wrapped in IdeProvider');
   return ide;
 }
 
@@ -288,7 +288,7 @@ export function remote(name?: string) {
 }
 
 export function stub(): never {
-  throw new Error('метод не подменён: забыт декоратор @remote?');
+  throw new Error('the method was not substituted: a forgotten @remote decorator?');
 }
 
 export * from './host.js';

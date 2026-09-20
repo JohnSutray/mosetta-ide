@@ -6,6 +6,12 @@ import { VisitsStore } from '../src/store.js';
 
 const visitsStore = new VisitsStore();
 
+/**
+ * The visit history on disk. We check exactly what it is read through the server for in
+ * the first place: dead rows must not survive as far as the user, and two projects'
+ * histories must not mix.
+ */
+
 let state: string;
 let root: string;
 
@@ -20,13 +26,13 @@ afterAll(async () => {
   await fs.rm(root, { recursive: true, force: true });
 });
 
-describe('история посещений', () => {
-  it('переживает перезапуск', async () => {
+describe('the visit history', () => {
+  it('survives a restart', async () => {
     await visitsStore.save(state, root, [{ path: 'alive.ts', line: 7 }]);
     expect(await visitsStore.load(state, root)).toEqual([{ path: 'alive.ts', line: 7 }]);
   });
 
-  it('строка с исчезнувшим файлом выпадает', async () => {
+  it('a row whose file has vanished drops out', async () => {
     await visitsStore.save(state, root, [
       { path: 'alive.ts', line: 1 },
       { path: 'gone.ts', line: 1 },
@@ -34,13 +40,13 @@ describe('история посещений', () => {
     expect(await visitsStore.load(state, root)).toEqual([{ path: 'alive.ts', line: 1 }]);
   });
 
-  it('длиннее лимита не хранится', async () => {
+  it('nothing longer than the limit is kept', async () => {
     const many = Array.from({ length: visitsStore.limit * 2 }, () => ({ path: 'alive.ts', line: 1 }));
     await visitsStore.save(state, root, many);
     expect(await visitsStore.load(state, root)).toHaveLength(visitsStore.limit);
   });
 
-  it('у двух проектов истории разные', async () => {
+  it('two projects have different histories', async () => {
     const other = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-proj-'));
     await fs.writeFile(path.join(other, 'alive.ts'), '', 'utf8');
     await visitsStore.save(state, root, [{ path: 'alive.ts', line: 1 }]);
@@ -50,9 +56,9 @@ describe('история посещений', () => {
     await fs.rm(other, { recursive: true, force: true });
   });
 
-  it('битый файл не роняет чтение', async () => {
+  it('a corrupt file does not bring the reading down', async () => {
     for (const file of await fs.readdir(state)) {
-      await fs.writeFile(path.join(state, file), 'не json', 'utf8');
+      await fs.writeFile(path.join(state, file), 'not json', 'utf8');
     }
     expect(await visitsStore.load(state, root)).toEqual([]);
   });

@@ -1,3 +1,8 @@
+/**
+ * Darcula and the shared elements of windows: the palette, the scrollbars, the input
+ * field and the button. A plugin rather than the core: without a theme the interface
+ * works, it just looks like a browser.
+ */
 export const STYLE = `
 :root {
   --fg: #a9b7c6;

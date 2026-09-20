@@ -2,29 +2,34 @@ import { describe, expect, it } from 'vitest';
 import { Markdown } from '../src/markdown.js';
 import { MarkdownImages } from '../src/images.js';
 
+/**
+ * Parsing markup. Pure mechanics: no DOM, no network — so it is checked by a test
+ * rather than by eye. The cases checked are the ones OUR texts are made of: the README,
+ * the decision records and the diary.
+ */
 const md = new Markdown();
 
-describe('блоки', () => {
-  it('заголовки, абзацы и черта', () => {
-    const blocks = md.blocks('# Раз\n\nтекст\nещё строка\n\n---\n\n## Два ##');
+describe('blocks', () => {
+  it('headings, paragraphs and a rule', () => {
+    const blocks = md.blocks('# One\n\ntext\none more line\n\n---\n\n## Two ##');
     expect(blocks.map((one) => one.kind)).toEqual(['heading', 'paragraph', 'rule', 'heading']);
     expect(blocks[0]).toMatchObject({ level: 1 });
     expect(blocks[3]).toMatchObject({ level: 2 });
-    expect((blocks[3] as { parts: Array<{ text: string }> }).parts[0]!.text).toBe('Два');
+    expect((blocks[3] as { parts: Array<{ text: string }> }).parts[0]!.text).toBe('Two');
   });
 
-  it('забор кода: внутри разметки нет вовсе', () => {
-    const blocks = md.blocks('```ts\nconst a = `**не жирное**`;\n```');
-    expect(blocks[0]).toEqual({ kind: 'code', lang: 'ts', text: 'const a = `**не жирное**`;' });
+  it('a code fence: there is no markup inside it at all', () => {
+    const blocks = md.blocks('```ts\nconst a = `**not bold**`;\n```');
+    expect(blocks[0]).toEqual({ kind: 'code', lang: 'ts', text: 'const a = `**not bold**`;' });
   });
 
-  it('незакрытый забор дочитывается до конца файла, а не теряется', () => {
-    const blocks = md.blocks('```\nраз\nдва');
-    expect(blocks[0]).toMatchObject({ kind: 'code', text: 'раз\nдва' });
+  it('an unclosed fence is read to the end of the file rather than lost', () => {
+    const blocks = md.blocks('```\none\ntwo');
+    expect(blocks[0]).toMatchObject({ kind: 'code', text: 'one\ntwo' });
   });
 
-  it('список, вложенный список и продолжение пункта', () => {
-    const blocks = md.blocks('- раз\n- два\n  - вложенный\n- три');
+  it('a list, a nested list and a continued item', () => {
+    const blocks = md.blocks('- one\n- two\n  - nested\n- three');
     expect(blocks).toHaveLength(1);
     const list = blocks[0] as { kind: 'list'; ordered: boolean; items: Array<Array<{ kind: string }>> };
     expect(list.ordered).toBe(false);
@@ -32,34 +37,34 @@ describe('блоки', () => {
     expect(list.items[1]!.map((one) => one.kind)).toEqual(['paragraph', 'list']);
   });
 
-  it('нумерованный список — свой, не смешивается с маркированным', () => {
-    const blocks = md.blocks('1. раз\n2. два\n\n- а\n- б');
+  it('a numbered list is its own and does not mix with a bulleted one', () => {
+    const blocks = md.blocks('1. one\n2. two\n\n- a\n- b');
     expect(blocks.map((one) => (one as { ordered?: boolean }).ordered)).toEqual([true, false]);
   });
 
-  it('цитата разбирается как текст внутри цитаты', () => {
-    const blocks = md.blocks('> # заголовок в цитате\n> и абзац');
+  it('a quote is parsed as text inside a quote', () => {
+    const blocks = md.blocks('> # a heading in a quote\n> and a paragraph');
     const quote = blocks[0] as { kind: 'quote'; blocks: Array<{ kind: string }> };
     expect(quote.kind).toBe('quote');
     expect(quote.blocks.map((one) => one.kind)).toEqual(['heading', 'paragraph']);
   });
 
-  it('таблица: шапка, разделитель, строки', () => {
-    const blocks = md.blocks('| Фича | ADR |\n|---|---|\n| раз | 0234 |\n| два | 0233 |');
+  it('a table: a head, a separator, rows', () => {
+    const blocks = md.blocks('| Feature | Decision |\n|---|---|\n| one | 0234 |\n| two | 0233 |');
     const table = blocks[0] as { kind: 'table'; head: unknown[]; rows: unknown[][] };
     expect(table.kind).toBe('table');
     expect(table.head).toHaveLength(2);
     expect(table.rows).toHaveLength(2);
   });
 
-  it('строка с вертикальной чертой без разделителя — просто абзац', () => {
-    expect(md.blocks('раз | два').map((one) => one.kind)).toEqual(['paragraph']);
+  it('a line with a vertical bar and no separator is just a paragraph', () => {
+    expect(md.blocks('one | two').map((one) => one.kind)).toEqual(['paragraph']);
   });
 });
 
-describe('строчная разметка', () => {
-  it('код, жирное, курсив, зачёркнутое', () => {
-    expect(md.inline('`код` **жир** *кур* ~~нет~~').map((one) => one.kind)).toEqual([
+describe('inline markup', () => {
+  it('code, bold, italic, strikethrough', () => {
+    expect(md.inline('`code` **bold** *ital* ~~no~~').map((one) => one.kind)).toEqual([
       'code',
       'text',
       'strong',
@@ -70,44 +75,49 @@ describe('строчная разметка', () => {
     ]);
   });
 
-  it('звёздочка и подчёркивание внутри слова курсивом не делаются', () => {
+  it('a star or an underscore inside a word does not make italics', () => {
     expect(md.inline('snake_case_name').map((one) => one.kind)).toEqual(['text']);
     expect(md.inline('a*b*c').map((one) => one.kind)).toEqual(['text']);
   });
 
-  it('ссылка и картинка различаются восклицательным знаком', () => {
-    const parts = md.inline('[имя](/путь) и ![альт](/pic.png)');
-    expect(parts[0]).toMatchObject({ kind: 'link', href: '/путь' });
-    expect(parts[2]).toMatchObject({ kind: 'image', src: '/pic.png', alt: 'альт' });
+  it('a link and an image differ by the exclamation mark', () => {
+    const parts = md.inline('[name](/path) and ![alt](/pic.png)');
+    expect(parts[0]).toMatchObject({ kind: 'link', href: '/path' });
+    expect(parts[2]).toMatchObject({ kind: 'image', src: '/pic.png', alt: 'alt' });
   });
 
-  it('внутри кода разметки нет', () => {
-    expect(md.inline('`**не жирное**`')).toEqual([{ kind: 'code', text: '**не жирное**' }]);
+  it('there is no markup inside code', () => {
+    expect(md.inline('`**not bold**`')).toEqual([{ kind: 'code', text: '**not bold**' }]);
   });
 
-  it('голая ссылка в угловых скобках', () => {
+  it('a bare link in angle brackets', () => {
     expect(md.inline('<https://example.com>')[0]).toMatchObject({ kind: 'link', href: 'https://example.com' });
   });
 });
 
-describe('пути картинок', () => {
+/**
+ * An image's path is computed FROM THE FILE: in markup it is written relative to it,
+ * while the page lives at the application's address. The arithmetic is pure — hence a
+ * test rather than "we will have a look".
+ */
+describe('image paths', () => {
   const images = new MarkdownImages({ bytes: async () => ({ path: '', base64: '', bytes: 0, truncated: false }) });
 
-  it('рядом, глубже и на этаж вверх', () => {
+  it('next to it, deeper, and one floor up', () => {
     expect(images.resolve('pic.png', 'docs/readme.md')).toBe('docs/pic.png');
     expect(images.resolve('./img/pic.png', 'docs/readme.md')).toBe('docs/img/pic.png');
-    expect(images.resolve('../pic.png', 'docs/diary/один.md')).toBe('docs/pic.png');
+    expect(images.resolve('../pic.png', 'docs/diary/one.md')).toBe('docs/pic.png');
   });
 
-  it('от корня проекта — это путь без ведущей косой', () => {
+  it('from the project root is a path with no leading slash', () => {
     expect(images.resolve('/assets/pic.png', 'docs/readme.md')).toBe('assets/pic.png');
   });
 
-  it('внешнюю ссылку отдаём как есть: значки сборки в README именно такие', () => {
+  it('an external link is handed over as it is: the build badges in a README are exactly that', () => {
     expect(images.source('https://example.com/badge.svg', 'readme.md').value).toBe('https://example.com/badge.svg');
   });
 
-  it('незнакомое расширение не читаем вовсе', () => {
+  it('an unfamiliar extension is not read at all', () => {
     expect(images.source('data.bin', 'readme.md').value).toBeNull();
   });
 });

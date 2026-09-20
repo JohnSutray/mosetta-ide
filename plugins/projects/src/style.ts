@@ -1,3 +1,8 @@
+/**
+ * The picker's own styling. It moved out of the core's stylesheet word for word: the
+ * history, the field with its button, the directory tree, the suggestions. The field
+ * and the button are shared and stayed with the core.
+ */
 export const STYLE = `
 
 .projects-popup { display: flex; flex-direction: column; }

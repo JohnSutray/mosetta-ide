@@ -4,6 +4,13 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PackageManagers } from '../src/managers.js';
 
+/**
+ * Package managers. We check what is settled by arithmetic rather than by whether pnpm
+ * happens to be installed on the checker's machine: whose choice wins, and what happens
+ * to a manager that is asked for and absent. PATH is substituted: it holds only `pnpm`
+ * and `npm`.
+ */
+
 let root: string;
 const onPath = new Set(['pnpm', 'npm']);
 const tools = new PackageManagers((name) => (onPath.has(name) ? `/usr/bin/${name}` : null));
@@ -17,8 +24,8 @@ afterAll(async () => {
   await fs.rm(root, { recursive: true, force: true });
 });
 
-describe('чем запускать скрипты', () => {
-  it('локфайл решает, когда человек не выбрал', () => {
+describe('what to run scripts with', () => {
+  it('the lockfile decides when the human has not chosen', () => {
     expect(tools.suggested((file) => file === 'pnpm-lock.yaml')).toBe('pnpm');
     expect(tools.suggested((file) => file === 'yarn.lock')).toBe('yarn');
     expect(tools.suggested((file) => file === 'bun.lockb')).toBe('bun');
@@ -27,21 +34,21 @@ describe('чем запускать скрипты', () => {
     expect(tools.chosen('pnpm', ' yarn ')).toBe('yarn');
   });
 
-  it('выбор человека сильнее локфайла', () => {
+  it('the human\'s choice beats the lockfile', () => {
     const list = tools.detect('pnpm', 'yarn', root);
     expect(list.find((item) => item.current)?.name).toBe('yarn');
     expect(list.find((item) => item.suggested)?.name).toBe('pnpm');
   });
 
-  it('просимый проектом виден, даже если его на машине нет', () => {
+  it('the one the project asks for is visible even if it is not on the machine', () => {
     const list = tools.detect('bun', '', root);
     const bun = list.find((item) => item.name === 'bun');
-    expect(bun, 'просимый менеджер пропал из списка').toBeDefined();
+    expect(bun, 'the manager being asked for is gone from the list').toBeDefined();
     expect(bun!.suggested).toBe(true);
     expect(bun!.current).toBe(true);
   });
 
-  it('свой путь попадает в список, даже если он ни на что не похож', () => {
+  it('a path of your own reaches the list even if it looks like nothing', () => {
     const weird = path.join(root, 'my-runner');
     const list = tools.detect('npm', weird, root);
     const mine = list.find((item) => item.path === weird);
@@ -49,7 +56,7 @@ describe('чем запускать скрипты', () => {
     expect(mine?.name).toBe('my-runner');
   });
 
-  it('локальный шим находится', async () => {
+  it('a local shim is found', async () => {
     const shim = path.join(root, 'node_modules', '.bin', 'yarn');
     await fs.writeFile(shim, '#!/bin/sh\n', 'utf8');
     const list = tools.detect('npm', '', root);

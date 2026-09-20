@@ -5,8 +5,25 @@ import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import { settingsKey, USER_LAYER } from '@mosetta/ide-api/client';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * The toolbar is checked as a PLUGIN.
+ *
+ * Before it moved out, a core test guarded it, and one still does — but from the other
+ * side: there it is checked that the CORE wrote a wish into the registry for each of
+ * its panels. What a reader does with those wishes is invisible to that test, and that
+ * is honest — there may be no reader at all.
+ *
+ * Here is the second half: the toolbar is brought up by a fake host, the wishes are
+ * written by the test, and what is checked is what a human would see — which buttons,
+ * in what order, and what happens on a click.
+ */
+
 const NAME = '@mosetta/ide-plugin-toolbar';
 
+/**
+ * A button as the core writes it. The icon is marked so as to be recognised in the
+ * tree.
+ */
 function wish(id: string, extra: Record<string, unknown> = {}) {
   return {
     id,
@@ -17,13 +34,14 @@ function wish(id: string, extra: Record<string, unknown> = {}) {
   };
 }
 
+/** The icons in order — which is the order of the buttons as a human sees them. */
 function order(tree: unknown): string[] {
   return nodes(tree)
     .map((node) => node.props['data-id'])
     .filter((id): id is string => typeof id === 'string');
 }
 
-describe('тулбар', () => {
+describe('the toolbar', () => {
   let host: FakeHost;
   let top: () => unknown;
 
@@ -36,25 +54,25 @@ describe('тулбар', () => {
     top = host.registry.all<() => unknown>('chrome.top')[host.registry.authors('chrome.top').indexOf(NAME)]!;
   });
 
-  it('объявляет свои ключи до того, как кто-то начал писать', () => {
+  it('declares its keys before anyone has started writing', () => {
     const early = new FakeHost();
     early.add(Toolbar, NAME);
     expect(early.registry.declared()).toEqual(['toolbar.button', 'toolbar.widget']);
   });
 
-  it('занимает место наверху и приносит свои стили', () => {
+  it('takes the place at the top and brings its own styles', () => {
     expect(typeof top).toBe('function');
     expect(host.ide(NAME).styles.join('')).toContain('.toolbar');
   });
 
-  it('порядок кнопок — список команд из настроек', () => {
+  it('the order of the buttons is a list of commands from the settings', () => {
     host.setSettings({ toolbar: { order: ['panel.git', 'panel.tree'] } });
     host.registry.add('toolbar.button', wish('tree'), 'core');
     host.registry.add('toolbar.button', wish('git'), 'core');
     expect(order(top())).toEqual(['git', 'tree']);
   });
 
-  it('чего в списке нет — встаёт в конец в порядке появления', () => {
+  it('whatever is not in the list goes to the end in order of appearance', () => {
     host.setSettings({ toolbar: { order: ['panel.tree'] } });
     host.registry.add('toolbar.button', wish('git'), 'core');
     host.registry.add('toolbar.button', wish('tree'), 'core');
@@ -62,13 +80,13 @@ describe('тулбар', () => {
     expect(order(top())).toEqual(['tree', 'git', 'keys']);
   });
 
-  it('без настроек порядок остаётся тем, в котором пришли', () => {
+  it('without settings the order stays the one they arrived in', () => {
     host.registry.add('toolbar.button', wish('tree'), 'core');
     host.registry.add('toolbar.button', wish('git'), 'core');
     expect(order(top())).toEqual(['tree', 'git']);
   });
 
-  it('условная кнопка появляется и исчезает', () => {
+  it('a conditional button appears and disappears', () => {
     const visible = { value: false };
     host.registry.add('toolbar.button', wish('merge', { visible }), 'core');
     expect(order(top())).toEqual([]);
@@ -76,7 +94,7 @@ describe('тулбар', () => {
     expect(order(top())).toEqual(['merge']);
   });
 
-  it('открытая панель залита, закрытая контуром', () => {
+  it('an open panel is filled, a closed one outlined', () => {
     const active = { value: true };
     host.registry.add('toolbar.button', wish('tree', { active }), 'core');
     const filled = () => nodes(top()).find((n) => n.props['data-id'] === 'tree')!.props['data-filled'];
@@ -87,7 +105,7 @@ describe('тулбар', () => {
     expect(of(top(), 'button')[0]!.props['class']).not.toContain('is-active');
   });
 
-  it('нажатие зовёт команду — ровно то же, что делает клавиша', () => {
+  it('a click calls the command — exactly what a key does', () => {
     const called: string[] = [];
     host.ide(NAME).command('panel.tree', () => called.push('tree'));
     host.registry.add('toolbar.button', wish('tree'), 'core');
@@ -96,7 +114,7 @@ describe('тулбар', () => {
     expect(called).toEqual(['tree']);
   });
 
-  it('подсказка берёт клавиши из раскладки, а не из словаря', () => {
+  it('the tooltip takes its keys from the keymap rather than from the dictionary', () => {
     host.registry.add(
       settingsKey('keymap'),
       { version: 1, bindings: [{ command: 'panel.tree', key: 'meta+1' }] },
@@ -118,7 +136,7 @@ describe('тулбар', () => {
     expect(host.plugin(UiPlugin).windows.tips.spot.value).toBeNull();
   });
 
-  it('число на кнопке показывается только когда оно есть', () => {
+  it('a number on the button is shown only when there is one', () => {
     host.registry.add('toolbar.button', wish('git', { badge: { value: 0 } }), 'core');
     expect(of(top(), 'span').filter((n) => n.props['class'] === 'tool-count')).toHaveLength(0);
     host.registry.add('toolbar.button', wish('push', { badge: { value: 3 } }), 'core');
@@ -127,7 +145,7 @@ describe('тулбар', () => {
     expect(counts[0]!.props['children']).toBe(3);
   });
 
-  it('виджеты стоят по своим сторонам', () => {
+  it('the widgets stand on their own sides', () => {
     host.registry.add(
       'toolbar.widget',
       { id: 'terminals', side: 'left', view: () => <i data-id="terminals" /> },
@@ -144,15 +162,15 @@ describe('тулбар', () => {
     expect(order(right)).toEqual(['link']);
   });
 
-  it('запись не той формы отвергается вместе с именем автора', () => {
-    host.registry.add('toolbar.button', { id: 'tree', title: 'toolbar.tree' }, '@mosetta/ide-plugin-чей-то');
+  it('an entry of the wrong shape is rejected along with its author\'s name', () => {
+    host.registry.add('toolbar.button', { id: 'tree', title: 'toolbar.tree' }, '@mosetta/ide-plugin-someone');
     expect(host.complaints).toHaveLength(1);
-    expect(host.complaints[0]).toContain('@mosetta/ide-plugin-чей-то');
+    expect(host.complaints[0]).toContain('@mosetta/ide-plugin-someone');
     expect(host.complaints[0]).toContain('toolbar.button');
     expect(host.complaints[0]).toContain('command');
   });
 
-  it('лишнее поле — тоже отказ: схема закрытая', () => {
+  it('an extra field is a refusal too: the schema is closed', () => {
     host.registry.add('toolbar.button', { ...wish('tree'), side: 'left' }, 'core');
     expect(host.complaints.join('')).toContain('side');
   });

@@ -1,3 +1,4 @@
+/** The viewer's own styling. */
 export const STYLE = `
 .image-host { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--bg); }
 

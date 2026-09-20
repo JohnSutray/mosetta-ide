@@ -1,3 +1,10 @@
+/**
+ * The markup view's own styling.
+ *
+ * The colours are the theme's variables: a palette of its own would mean the view looks
+ * foreign next to the editor it is made from. The text's font is the interface one
+ * rather than monospace: the point of a view is that this is no longer code.
+ */
 export const STYLE = `
 .md-host { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--bg); }
 

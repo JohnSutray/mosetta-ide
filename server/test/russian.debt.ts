@@ -1,7 +1,5 @@
 export const RUSSIAN_DEBT: readonly string[] = [
   'desktop/src/daemon.ts',
-  'plugins/api/src/client.ts',
-  'plugins/api/src/host.ts',
   'plugins/completion/src/server.ts',
   'plugins/git/src/cli.ts',
   'plugins/git/src/index-git.ts',
@@ -11,10 +9,7 @@ export const RUSSIAN_DEBT: readonly string[] = [
   'plugins/lsp/src/toolchain.ts',
   'plugins/merge/src/server.ts',
   'plugins/merge/src/sessions.ts',
-  'plugins/npm-scripts/src/server.ts',
-  'plugins/projects/src/server.ts',
   'plugins/search/src/server.ts',
   'plugins/terminal/src/server.ts',
   'plugins/tree/src/server.ts',
-  'plugins/visits/src/server.ts',
 ];
