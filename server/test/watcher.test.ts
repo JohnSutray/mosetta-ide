@@ -110,6 +110,19 @@ describe('слежение за диском', () => {
     expect(doc.dirty).toBe(false);
   });
 
+  it('чужая правка видна и ПОСЛЕ нашего сохранения', async () => {
+    const doc = await c.call('doc.open', { path: 'src/main.ts' });
+    await c.call('doc.edit', { path: 'src/main.ts', text: 'наше\n', baseVersion: doc.version });
+    await c.call('doc.save', { path: 'src/main.ts' });
+    await settle(300);
+
+    const waiting = c.nextEvent('doc.external', 5000);
+    await fs.writeFile(path.join(root, 'src', 'main.ts'), 'чужое после нашего\n', 'utf8');
+    await waiting;
+
+    expect((await c.call('doc.state', { path: 'src/main.ts' })).text).toBe('чужое после нашего\n');
+  });
+
   it('чужая правка поверх несохранённого — расхождение, а не потеря', async () => {
     const doc = await c.call('doc.open', { path: 'src/main.ts' });
     await c.call('doc.edit', { path: 'src/main.ts', text: 'наше\n', baseVersion: doc.version });
