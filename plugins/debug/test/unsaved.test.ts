@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { BeforeRun, type BeforeRunServices } from '../src/unsaved.js';
 
+/**
+ * What is unsaved before a run.
+ *
+ * The rule is checked with no modal and no adapter: it is about ORDER — who is asked,
+ * who is not asked at all, and what happens when the writing did not work out.
+ */
+
 interface Stand {
   before: BeforeRun;
   asked: Array<{ title: string; text: string; confirm: string }>;
@@ -33,15 +40,15 @@ function stand(options: {
   return state;
 }
 
-describe('перед запуском программы', () => {
-  it('нечего сохранять — не спрашивает и не пишет', async () => {
+describe('before a program is run', () => {
+  it('there is nothing to save — it neither asks nor writes', async () => {
     const it_ = stand({ unsaved: [] });
     expect(await it_.before.ready()).toBe(true);
     expect(it_.asked).toEqual([]);
     expect(it_.saves).toBe(0);
   });
 
-  it('спрашивает, перечисляя файлы, и по согласию сохраняет', async () => {
+  it('it asks, listing the files, and saves on consent', async () => {
     const it_ = stand({ unsaved: ['src/a.ts', 'src/b.ts'] });
     expect(await it_.before.ready()).toBe(true);
     expect(it_.asked).toHaveLength(1);
@@ -50,26 +57,26 @@ describe('перед запуском программы', () => {
     expect(it_.saves).toBe(1);
   });
 
-  it('отказались — не запускаем и ничего не пишем', async () => {
+  it('they refused — we do not run and we write nothing', async () => {
     const it_ = stand({ unsaved: ['src/a.ts'], answer: false });
     expect(await it_.before.ready()).toBe(false);
     expect(it_.saves).toBe(0);
   });
 
-  it('с автосохранением вопроса не бывает — молча пишет и идёт дальше', async () => {
+  it('with autosave there is no question — it writes silently and goes on', async () => {
     const it_ = stand({ unsaved: ['src/a.ts', 'src/b.ts'], autosaves: true });
     expect(await it_.before.ready()).toBe(true);
     expect(it_.asked).toEqual([]);
     expect(it_.saves).toBe(1);
   });
 
-  it('не записалось — не запускаем и называем файлы', async () => {
+  it('it did not save — we do not run, and we name the files', async () => {
     const it_ = stand({ unsaved: ['src/a.ts'], autosaves: true, failed: ['src/a.ts'] });
     expect(await it_.before.ready()).toBe(false);
     expect(it_.complaints.join(' ')).toContain('src/a.ts');
   });
 
-  it('длинный список режется ВИДИМО: перечислено двенадцать, остальные числом', async () => {
+  it('a long list is cut VISIBLY: twelve listed, the rest as a number', async () => {
     const many = Array.from({ length: 15 }, (_, at) => `src/f${at}.ts`);
     const it_ = stand({ unsaved: many });
     await it_.before.ready();

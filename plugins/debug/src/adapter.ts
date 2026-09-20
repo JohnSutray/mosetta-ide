@@ -5,9 +5,26 @@ import path from 'node:path';
 import type { ProcessHandle, RunAsk } from '@mosetta/ide-api/server';
 import { DapWire } from './wire.js';
 
+/**
+ * The `vscode-js-debug` adapter's process.
+ *
+ * The adapter is brought along with the editor (`vendor/js-debug`) and is started by
+ * the SAME executable we live in ourselves, with `ELECTRON_RUN_AS_NODE=1` — under
+ * Electron there may be no second Node.
+ *
+ * One adapter per ONE run. A shared one per project would save 60 ms of start-up but
+ * would mix fates: a fallen adapter would carry off every debugging session at once,
+ * and "stop" would have to be sorted out session by session instead of one `kill`.
+ *
+ * The adapter listens on a UNIX SOCKET in a directory with 0700 rights rather than on a
+ * port. A port on localhost is open to any process on the machine, and the adapter
+ * starts whatever it is first asked to — that would be a door for somebody else's code.
+ */
 export class JsDebugAdapter {
   constructor(
+    /** The plugin PACKAGE's directory (`ide.dir`): `vendor` is looked for from it. */
     private readonly dir: string,
+    /** Where to set up the socket's directory — as a parameter rather than a constant. */
     private readonly tempDir: string,
   ) {}
 
@@ -15,6 +32,7 @@ export class JsDebugAdapter {
     return path.join(this.dir, 'vendor', 'js-debug', 'src', 'dapDebugServer.js');
   }
 
+  /** Start it and wait until the adapter says it is listening. */
   async open(start: (ask: RunAsk) => ProcessHandle, reason: string): Promise<AdapterProcess> {
     const { address, cleanup } = await this.address();
     let handle: ProcessHandle;
@@ -47,6 +65,7 @@ export class JsDebugAdapter {
   }
 }
 
+/** How long to wait for the adapter's first line. A cold start is 60 ms. */
 const LISTEN_TIMEOUT_MS = 10_000;
 
 export class AdapterProcess {
@@ -66,6 +85,10 @@ export class AdapterProcess {
     handle.child.on('exit', (code, signal) => this.exit(this.explain(code, signal)));
   }
 
+  /**
+   * The process has died — with a reason. If it has died already, this is called at
+   * once.
+   */
   onExit(listener: (why: string) => void): void {
     if (this.exited) listener(this.exited);
     else this.exits.add(listener);
@@ -79,6 +102,10 @@ export class AdapterProcess {
     return this.handle.memoryMb();
   }
 
+  /**
+   * A new connection is a new session: that is how the adapter's DAP server tells them
+   * apart.
+   */
   connect(): Promise<DapWire> {
     return new Promise((resolve, reject) => {
       const socket = net.connect(this.address);
@@ -91,6 +118,7 @@ export class AdapterProcess {
     if (this.alive) this.handle.kill(signal);
   }
 
+  /** The adapter's pid: the TREE is killed by it — it gives birth to node itself. */
   get pid(): number | undefined {
     return this.handle.child.pid;
   }
@@ -115,6 +143,11 @@ export class AdapterProcess {
     });
   }
 
+  /**
+   * The reason for death in the process's own words. A line with `Error` rather than
+   * the tail: the adapter is minified, and Node prints a line of source hundreds of
+   * kilobytes long before the error, and after it a stack with no reason in it.
+   */
   private explain(code: number | null, signal: string | null): string {
     const lines = this.stderr.split('\n').map((line) => line.trim());
     const cause = lines.find((line) => /^\w*Error\b/.test(line)) ?? lines.filter(Boolean).at(-1) ?? '';

@@ -34,6 +34,7 @@ import type {
 export type { Breakpoint, BreakpointAsk, ExceptionMode, FileBreakpoints, Frame, RunInfo, SessionInfo, SourceRef, Variable } from './types.js';
 export type { BreakpointEdit, Paused, VarNode, Watch } from './state.js';
 
+/** What hovering answers with (the editor's `editor.hover` key): with code. */
 interface HoverSpot {
   path: string;
   line: number;
@@ -41,10 +42,25 @@ interface HoverSpot {
   text: string;
 }
 
+/** What we debug straight from the editor: a script for `node`. */
 const DEBUGGABLE = /\.(?:m?js|cjs|m?ts|cts)$/i;
 
+/** How long to wait for the edits to stop pouring in before sending the breakpoints. */
 const MOVE_DEBOUNCE_MS = 300;
 
+/**
+ * The debugger — the client half.
+ *
+ * The server half speaks DAP to the adapter; here is what the human sees: the
+ * breakpoints in the editor's gutter, the line being executed, the panel with the stack
+ * and the variables, the value under the cursor, the "debug" button by a script.
+ *
+ * The truth is on the server: the breakpoints and the runs live with the project and
+ * survive a reload of the tab. The tab ASKS for them on attachment and listens to
+ * events after that. The tab has a memory of its own for one thing only — the
+ * breakpoints, in case the server has been restarted: they come back into place without
+ * the human's involvement.
+ */
 @configSection({ section: 'debug', defaults: DEBUG_DEFAULTS, schema: DEBUG_SCHEMA })
 @plugin({ title: 'plugin.debug' })
 export default class DebugPlugin {
@@ -53,7 +69,9 @@ export default class DebugPlugin {
   private view: EditorView | null = null;
   private open: Signal<boolean> | null = null;
   private moveTimer: ReturnType<typeof setTimeout> | null = null;
+  /** The question before a run: "save what is unsaved?" — the widget is a common one. */
   private readonly asking = new Asking();
+  /** Whether the program's output goes to a terminal: the server said so with an event. */
   private readonly inTerminal = signal(false);
 
   private get docs(): DocPlugin {
@@ -88,6 +106,11 @@ export default class DebugPlugin {
     void this.launch({ name: path, program: path });
   }
 
+  /**
+   * Run the open file WITHOUT the debugger — in a real terminal, like a script. A pair
+   * to `debug.file`: in the panel's heading the triangle and the bug stand side by
+   * side, as in WebStorm.
+   */
   @command('debug.runFile')
   protected runOpenFile(): void {
     const path = this.docs.openDoc.value?.path;
@@ -116,6 +139,12 @@ export default class DebugPlugin {
     for (const run of this.state.live.value) void this.askStop({ run: run.id }).catch((err) => this.fail(err));
   }
 
+  /**
+   * KILL (after WebStorm's example): the program did not obey "stop", and it is put out
+   * by its process tree, with no asking. A command of its own rather than a flag on
+   * `debug.stop`: this is a different action, and one day it will be given a key of its
+   * own.
+   */
   @command('debug.kill')
   protected kill(): void {
     for (const run of this.state.live.value) void this.askStop({ run: run.id, force: true }).catch((err) => this.fail(err));
@@ -128,6 +157,7 @@ export default class DebugPlugin {
     void this.toggleAt(view, view.state.doc.lineAt(view.state.selection.main.head).number);
   }
 
+  /** Enter in the condition window: apply what has been typed. */
   @command('debug.edit.apply')
   protected applyEdit(): void {
     void this.applyDraft();
@@ -251,6 +281,18 @@ export default class DebugPlugin {
   @remote('source') protected askSource(_p: { run: string; session: string; reference: number }): Promise<{ text: string }> { return stub(); }
   @remote('readForeign') protected askForeign(_p: { absolute: string }): Promise<{ text: string }> { return stub(); }
 
+  /**
+   * Two doors in the EDITOR's heading: run the open file and debug it.
+   *
+   * At first they stood in the debug panel's heading — and were not found: the human's
+   * panel is closed, and there is no reason to open it in order to run a file. The
+   * buttons have to be where the FILE is. A slot in somebody else's heading is the
+   * layout's `panel.action` key: `badges` is written by the panel's owner, and a
+   * neighbour has nothing to write there with.
+   *
+   * The triangle icon is the same as "continue": in both places it means "start
+   * moving", and WebStorm draws exactly that.
+   */
   private declareTitleActions(): void {
     const path = () => this.docs.openDoc.value?.path ?? this.docs.viewedFile.value ?? '';
     const can = () => DEBUGGABLE.test(path()) && this.state.stuck.value.length === 0;
@@ -268,6 +310,10 @@ export default class DebugPlugin {
     add('debug.file', () => BugIcon(true), 'debug.title.debug');
   }
 
+  /**
+   * What is unsaved before a run — the rule is in a class of its own, the modal is
+   * here: the asking happens even when the debug panel is closed.
+   */
   private readonly before = new BeforeRun({
     unsaved: () => this.docs.unsaved().catch(() => [] as string[]),
     autosaves: () => this.docs.autosaves,
@@ -291,6 +337,7 @@ export default class DebugPlugin {
       }),
   });
 
+  /** The open file into a real terminal, and show it. */
   private async runInTerminal(path: string): Promise<void> {
     if (!(await this.before.ready())) return;
     try {
@@ -302,6 +349,7 @@ export default class DebugPlugin {
     }
   }
 
+  /** Forget a finished run: the badge goes, and with it "finished" for ever. */
   private async forgetRun(id: string): Promise<void> {
     try {
       this.state.setRuns(await this.askForget({ run: id }));
@@ -310,6 +358,7 @@ export default class DebugPlugin {
     }
   }
 
+  /** Run under the debugger. The panel opens by itself: the human has only just asked. */
   async launch(ask: LaunchAsk): Promise<void> {
     if (this.state.stuck.value.length > 0) {
       this.ide.complain(this.ide.t('debug.stuck'));
@@ -326,6 +375,10 @@ export default class DebugPlugin {
     }
   }
 
+  /**
+   * A page in the browser under the debugger. To a live run — as a second root (the
+   * server and its viewer go out together); with no run — as a root of its own.
+   */
   async openUrl(url: string): Promise<void> {
     const clean = url.trim();
     if (clean === '') return;
@@ -342,6 +395,7 @@ export default class DebugPlugin {
     }
   }
 
+  /** Debug a `package.json` script — by the same command the terminal runs it with. */
   async debugScript(id: string): Promise<void> {
     try {
       const plan = await this.ide.getPlugin(NpmScripts).plan(id);
@@ -436,6 +490,10 @@ export default class DebugPlugin {
     return this.ide.remember<string[]>(`watches:${root}`, [], 'both');
   }
 
+  /**
+   * The breakpoints into the memory of the tab and of the machine, in case the daemon
+   * is restarted.
+   */
   private remember(): void {
     const root = this.ide.workspaces.current.value?.root;
     if (!root) return;
@@ -444,6 +502,7 @@ export default class DebugPlugin {
     this.breakpointMemory(root).value = next;
   }
 
+  /** Write down a file's breakpoints whole — one door for every edit. */
   private async write(path: string, breakpoints: BreakpointAsk[]): Promise<void> {
     try {
       this.state.setBreakpoints(await this.askSetBreakpoints({ path, breakpoints }));
@@ -453,6 +512,7 @@ export default class DebugPlugin {
     }
   }
 
+  /** Open the condition window for a line: with whatever already stands there. */
   openEdit(path: string, line: number, at: { x: number; y: number }): void {
     this.state.menu.value = null;
     this.state.edit.value = { path, ask: this.state.askAt(path, line) ?? { line }, at };
@@ -516,6 +576,7 @@ export default class DebugPlugin {
     }
   }
 
+  /** The console: evaluate in the stopped frame, the answer into the output. */
   async evaluateLine(expression: string): Promise<void> {
     const clean = expression.trim();
     const paused = this.state.paused.value;
@@ -533,6 +594,7 @@ export default class DebugPlugin {
     }
   }
 
+  /** A breakpoint's menu, the condition window, and the question about what is unsaved. */
   private overlays() {
     return (
       <>
@@ -598,6 +660,10 @@ export default class DebugPlugin {
     }
   }
 
+  /**
+   * Show a frame: open its file and stand on the line. A project file goes through the
+   * documents; somebody else's through a view of our own under the name `debug:`.
+   */
   private async showFrame(at: number): Promise<void> {
     const paused = this.state.paused.value;
     const frame = this.state.frames.value[at];
@@ -645,6 +711,10 @@ export default class DebugPlugin {
     }
   }
 
+  /**
+   * The text of somebody else's source: from the adapter by number, or from the disk by
+   * path.
+   */
   private async fetchForeign(foreign: Foreign): Promise<string> {
     if (foreign.source.kind === 'adapter') {
       return (await this.askSource({ run: foreign.run, session: foreign.session, reference: foreign.source.reference })).text;
@@ -652,6 +722,7 @@ export default class DebugPlugin {
     return (await this.askForeign({ absolute: foreign.source.absolute })).text;
   }
 
+  /** The line being executed for the open file, if we are standing in that very file. */
   private executionLine(path: string | null): number | null {
     const frame = this.state.frame.value;
     if (!path || !frame || !this.state.paused.value) return null;
@@ -677,6 +748,10 @@ export default class DebugPlugin {
     await this.write(path, next);
   }
 
+  /**
+   * The breakpoints have travelled with the edits: the server finds out once the edits
+   * have settled.
+   */
   private moved(_view: EditorView, asks: BreakpointAsk[]): void {
     const path = this.docs.openDoc.peek()?.path;
     if (!path) return;
@@ -689,6 +764,11 @@ export default class DebugPlugin {
     }, MOVE_DEBOUNCE_MS);
   }
 
+  /**
+   * The value under the cursor, while we are standing in this file. The expression is a
+   * chain of names through dots around the cursor: `box.count` rather than only
+   * `count`.
+   */
   private async hover(spot: HoverSpot): Promise<{ code: string } | null> {
     const paused = this.state.paused.value;
     const frame = this.state.frame.value;
@@ -736,6 +816,7 @@ function find(list: VarNode[], ref: number): VarNode | null {
   return null;
 }
 
+/** `foo.bar[0].baz` around the position — what the human wants to see. */
 export function expressionAt(text: string, character: number): string | null {
   const isWord = (ch: string) => /[\w$]/.test(ch);
   let from = character;

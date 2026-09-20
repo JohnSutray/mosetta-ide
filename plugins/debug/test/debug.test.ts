@@ -14,6 +14,19 @@ import type { FileBreakpoints, Output, RunInfo, Stop } from '../src/types.js';
 import { DapSession, type SessionOwner } from '../src/session.js';
 import { DapWire, type Stream } from '../src/wire.js';
 
+/**
+ * The debugger's server half against the REAL adapter.
+ *
+ * Only the core is faked: a project is a root, `resolve`, `emit` and `start`, while the
+ * process is born by an ordinary `spawn`. The adapter, Node and the program are real:
+ * everything this plugin exists for lives in the undocumented habits of
+ * `vscode-js-debug` (the tree of sessions, `__workspaceFolder`, the late confirmations
+ * of breakpoints), and a fake adapter would check only our belief in them.
+ *
+ * Every scenario was found by a probe, and every one has a reason to break when the
+ * adapter is updated.
+ */
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pkg = path.resolve(here, '..');
 const fixtures = path.join(here, 'fixtures');
@@ -28,7 +41,9 @@ class Bench {
   readonly held = new Set<string>();
   readonly host: DebugHost;
 
+  /** Whether a "program" is running in the terminal: the test sets that itself. */
   running: { pid: number | undefined } | null = null;
+  /** Who was asked to be killed: the process tree. */
   readonly killed: Array<{ pid: number; self: boolean }> = [];
 
   constructor(terminal: TerminalRunner = null, root = fixtures, settings: Partial<DebugSettings> = {}) {
@@ -76,6 +91,7 @@ class Bench {
     return this.emitted.filter((one) => one.event === event).map((one) => one.payload as T);
   }
 
+  /** Wait for a STATE rather than for time. */
   async until<T>(what: string, probe: () => T | undefined | null | false, ms = 15_000): Promise<T> {
     const deadline = Date.now() + ms;
     for (;;) {
@@ -114,6 +130,12 @@ let bench: Bench;
 
 afterEach(() => bench?.dispose());
 
+/**
+ * A terminal faked by a SHELL: `sh -c <line>`. We assemble the line, the shell is real
+ * — and it is the shell that is being checked: the quoting, the environment, the
+ * adapter's bootloader through NODE_OPTIONS. The output is handed both to the list and
+ * to the watchers — as a real terminal hands it to the debugger.
+ */
 function shellRunner(consoles: Array<{ command: string; sameShell: string; env: Record<string, string>; out: string }>): TerminalRunner {
   return (ask) => {
     const entry = { command: ask.command, sameShell: ask.sameShell, env: ask.env, out: '' };
@@ -137,6 +159,10 @@ function shellRunner(consoles: Array<{ command: string; sameShell: string; env: 
   };
 }
 
+/**
+ * Whether there is a Chrome for the adapter to open the page with. There is not — the
+ * test is skipped LOUDLY.
+ */
 function chromeMissing(): string | null {
   const candidates =
     process.platform === 'darwin'
@@ -148,8 +174,8 @@ function chromeMissing(): string | null {
 const NO_CHROME = chromeMissing();
 if (NO_CHROME) console.warn(`[debug] ${NO_CHROME} — the browser test is skipped`);
 
-describe('адаптер привезён', () => {
-  it('лежит в пакете той версии, что записана в паспорте', () => {
+describe('the adapter is brought along', () => {
+  it('it lies in the package at the version written in its passport', () => {
     const passport = JSON.parse(readFileSync(path.join(pkg, 'vendor', 'js-debug.json'), 'utf8')) as {
       version: string;
       entry: string;
@@ -160,8 +186,8 @@ describe('адаптер привезён', () => {
   });
 });
 
-describe('отладка против настоящего адаптера', { timeout: 30_000 }, () => {
-  it('точка в JS: стек, переменные с раскрытием, вычисление, шаг, текст внутренностей Node', async () => {
+describe('debugging against the real adapter', { timeout: 30_000 }, () => {
+  it('a breakpoint in JS: the stack, the variables with expanding, evaluation, a step, the text of Node\'s innards', async () => {
     bench = new Bench();
     await bench.host.setBreakpoints('plain.js', [{ line: 4 }]);
     const run = await bench.host.launch({ program: 'plain.js' });
@@ -199,7 +225,7 @@ describe('отладка против настоящего адаптера', { 
     expect(bench.held.size).toBe(0);
   });
 
-  it('точка подтверждается позже ответа — и событие это говорит', async () => {
+  it('the breakpoint is confirmed later than the answer — and an event says so', async () => {
     bench = new Bench();
     const before = await bench.host.setBreakpoints('plain.js', [{ line: 4 }]);
     expect(before.breakpoints).toEqual([{ line: 4, verified: false }]);
@@ -212,7 +238,7 @@ describe('отладка против настоящего адаптера', { 
     await bench.until('run end', () => bench.ended(run.id));
   });
 
-  it('TS без сборки: Node отбрасывает типы, строки совпадают', async () => {
+  it('TS with no build: Node throws the types away, the lines match', async () => {
     bench = new Bench();
     await bench.host.setBreakpoints('strip.ts', [{ line: 6 }]);
     const run = await bench.host.launch({ program: 'strip.ts' });
@@ -223,7 +249,7 @@ describe('отладка против настоящего адаптера', { 
     await bench.until('run end', () => bench.ended(run.id));
   });
 
-  it('TS через карты исходников: точка в .ts, запускается .js (`__workspaceFolder`)', async () => {
+  it('TS through source maps: the breakpoint is in the .ts, the .js is run (`__workspaceFolder`)', async () => {
     bench = new Bench();
     await bench.host.setBreakpoints('mapped/src/app.ts', [{ line: 7 }]);
     const run = await bench.host.launch({ program: 'mapped/out/app.js' });
@@ -235,7 +261,7 @@ describe('отладка против настоящего адаптера', { 
     await bench.until('run end', () => bench.ended(run.id));
   });
 
-  it('дочерний процесс — дочерний сеанс: точка срабатывает в нём', async () => {
+  it('a child process is a child session: the breakpoint fires in it', async () => {
     bench = new Bench();
     await bench.host.setBreakpoints('child.js', [{ line: 2 }]);
     const run = await bench.host.launch({ program: 'parent.js' });
@@ -251,7 +277,7 @@ describe('отладка против настоящего адаптера', { 
     expect(bench.output()).toContain('child says 42');
   });
 
-  it('точка, поставленная в работающей программе, срабатывает без перезапуска', async () => {
+  it('a breakpoint set in a running program fires with no restart', async () => {
     bench = new Bench();
     const run = await bench.host.launch({ program: 'ticker.js' });
     await bench.until('ticking', () => bench.output().includes('tick 2'));
@@ -262,7 +288,7 @@ describe('отладка против настоящего адаптера', { 
     expect(bench.ended(run.id)).toBe(true);
   });
 
-  it('«остановить» гасит программу и адаптер, удержание проекта отпускается', async () => {
+  it('"stop" puts out the program and the adapter, and the hold on the project is let go', async () => {
     bench = new Bench();
     const run = await bench.host.launch({ program: 'ticker.js' });
     await bench.until('ticking', () => bench.output().includes('tick 1'));
@@ -274,7 +300,7 @@ describe('отладка против настоящего адаптера', { 
     await bench.until('adapter exit', () => adapter.exitCode !== null || adapter.signalCode !== null);
   });
 
-  it('новый запуск гасит предыдущий: под отладкой живёт ровно один', async () => {
+  it('a new run puts out the previous one: exactly one lives under the debugger', async () => {
     bench = new Bench();
     const first = await bench.host.launch({ program: 'ticker.js' });
     await bench.until('ticking', () => bench.output().includes('tick 1'));
@@ -286,14 +312,14 @@ describe('отладка против настоящего адаптера', { 
     await bench.until('second end', () => bench.ended(second.id));
   });
 
-  it('нет программы — отказ до адаптера, а не «отработала за 100 мс»', async () => {
+  it('there is no program — a refusal before the adapter rather than "it ran in 100 ms"', async () => {
     bench = new Bench();
     await expect(bench.host.launch({ program: 'missing.js' })).rejects.toThrow(/program not found: missing\.js/);
     expect(bench.children).toHaveLength(0);
     expect(bench.held.size).toBe(0);
   });
 
-  it('программа упала на старте — запуск закончен, причина в выводе', async () => {
+  it('the program fell over at start-up — the run is finished, the reason is in the output', async () => {
     bench = new Bench();
     const run = await bench.host.launch({ program: 'crash.js' });
     await bench.until('run end', () => bench.ended(run.id));
@@ -302,7 +328,8 @@ describe('отладка против настоящего адаптера', { 
   });
 });
 
-describe('провод DAP', () => {
+describe('the DAP wire', () => {
+  /** A stream the test puts bytes into in pieces, as a real socket does. */
   function pipe(): { stream: Stream; input: PassThrough; written: Buffer[] } {
     const input = new PassThrough();
     const written: Buffer[] = [];
@@ -319,20 +346,19 @@ describe('провод DAP', () => {
     return Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`), body]);
   }
 
-  it('собирает кадр, разрезанный посреди кириллицы', async () => {
+  it('it reassembles a frame cut in the middle of a multi-byte character', async () => {
     const { stream, input } = pipe();
     const wire = new DapWire(stream);
     const seen: unknown[] = [];
     wire.onEvent((event, body) => seen.push({ event, body }));
     const bytes = frame({ type: 'event', event: 'output', body: { output: 'нота' } });
-    const middle = bytes.length - 5;
-    input.write(bytes.subarray(0, middle));
+    const middle = bytes.length - 5;     input.write(bytes.subarray(0, middle));
     input.write(bytes.subarray(middle));
     await new Promise((resolve) => setImmediate(resolve));
     expect(seen).toEqual([{ event: 'output', body: { output: 'нота' } }]);
   });
 
-  it('обрыв — ответ всем, кто ждёт', async () => {
+  it('a break is an answer to everyone waiting', async () => {
     const { stream, input } = pipe();
     const wire = new DapWire(stream);
     const waiting = wire.request('threads');
@@ -341,7 +367,7 @@ describe('провод DAP', () => {
     await expect(wire.request('stackTrace')).rejects.toThrow(/stackTrace/);
   });
 
-  it('`initialized` одним куском с ответом на `initialize` не теряется', async () => {
+  it('an `initialized` in one piece with the answer to `initialize` is not lost', async () => {
     const { stream, input, written } = pipe();
     const wire = new DapWire(stream);
     const seen = new Set<string>();
@@ -388,7 +414,7 @@ describe('провод DAP', () => {
     expect(session.state).toBe('running');
   });
 
-  it('встречную просьбу без обработчика отклоняет, а не молчит', () => {
+  it('a request coming the other way with no handler is rejected rather than ignored', () => {
     const { stream, input, written } = pipe();
     new DapWire(stream);
     input.write(frame({ type: 'request', seq: 7, command: 'runInTerminal', arguments: {} }));
@@ -402,8 +428,8 @@ describe('провод DAP', () => {
   });
 });
 
-describe('настоящий терминал и файлы за корнем', { timeout: 30_000 }, () => {
-  it.skipIf(process.platform === 'win32')('с терминалом программа выполняется В НЁМ: вывод в консоли, остановка — у нас', async () => {
+describe('a real terminal and files beyond the root', { timeout: 30_000 }, () => {
+  it.skipIf(process.platform === 'win32')('with a terminal the program runs IN IT: the output in the console, the stop with us', async () => {
     const consoles: Array<{ command: string; sameShell: string; env: Record<string, string>; out: string }> = [];
     bench = new Bench(shellRunner(consoles));
     await bench.host.setBreakpoints('plain.js', [{ line: 4 }]);
@@ -419,7 +445,7 @@ describe('настоящий терминал и файлы за корнем', 
     expect(bench.output()).not.toContain('sum 6 нота');
   });
 
-  it.skipIf(process.platform === 'win32')('программа не послушалась: запуск не «завершён», а «не останавливается»', async () => {
+  it.skipIf(process.platform === 'win32')('the program did not obey: the run is not "finished" but "not stopping"', async () => {
     const consoles: Array<{ command: string; sameShell: string; env: Record<string, string>; out: string }> = [];
     bench = new Bench(shellRunner(consoles));
     const run = await bench.host.launch({ program: 'plain.js' });
@@ -440,7 +466,7 @@ describe('настоящий терминал и файлы за корнем', 
     await bench.until('next end', () => bench.ended(next.id));
   });
 
-  it('кадр за корнем: файл читается, но только тот, что назвал адаптер', async () => {
+  it('a frame beyond the root: the file is read, but only the one the adapter named', async () => {
     bench = new Bench(null, path.join(fixtures, 'foreign'));
     const run = await bench.host.launch({ program: 'main.js' });
     const hit = await bench.until('stop on debugger statement', () => bench.stops()[0]);
@@ -457,8 +483,8 @@ describe('настоящий терминал и файлы за корнем', 
   });
 });
 
-describe('браузер под отладчиком', { timeout: 60_000 }, () => {
-  it('адрес в выводе распознаётся по законченной строке, без цветов и один раз', () => {
+describe('the browser under the debugger', { timeout: 60_000 }, () => {
+  it('an address in the output is recognised by a finished line, with no colours, and once', () => {
     const ready = new ServerReady(new RegExp(DEBUG_DEFAULTS.serverReady));
     expect(ready.feed('\x1b[32mready\x1b[0m listening on http://127.0.0.1:51')).toBeNull();
     expect(ready.feed('234/ (open it)\n')).toBe('http://127.0.0.1:51234/');
@@ -467,7 +493,7 @@ describe('браузер под отладчиком', { timeout: 60_000 }, () =
   });
 
   it.skipIf(NO_CHROME || process.platform === 'win32')(
-    'сервер напечатал адрес — открылся браузер, и точка в скрипте страницы сработала',
+    'the server printed an address — the browser opened, and a breakpoint in the page\'s script fired',
     async () => {
       const consoles: Array<{ command: string; sameShell: string; env: Record<string, string>; out: string }> = [];
       bench = new Bench(shellRunner(consoles), fixtures, { browserArgs: ['--headless=new'] });
@@ -490,7 +516,7 @@ describe('браузер под отладчиком', { timeout: 60_000 }, () =
     },
   );
 
-  it.skipIf(NO_CHROME)('страницу можно открыть и без сервера — по адресу', async () => {
+  it.skipIf(NO_CHROME)('a page can be opened with no server too — by address', async () => {
     bench = new Bench(null, fixtures, { browserArgs: ['--headless=new'] });
     const run = await bench.host.launch({ url: 'about:blank' });
     expect(run.url).toBe('about:blank');
@@ -499,8 +525,8 @@ describe('браузер под отладчиком', { timeout: 60_000 }, () =
   });
 });
 
-describe('поддельные кадры React', { timeout: 30_000 }, () => {
-  it('точка в настоящем файле не срабатывает в подделках `about://React/…`', async () => {
+describe('React\'s counterfeit frames', { timeout: 30_000 }, () => {
+  it('a breakpoint in a real file does not fire in the `about://React/…` counterfeits', async () => {
     bench = new Bench();
     await bench.host.setBreakpoints('replayed.js', [{ line: 2 }]);
     const run = await bench.host.launch({ program: 'replay.js' });
@@ -515,8 +541,8 @@ describe('поддельные кадры React', { timeout: 30_000 }, () => {
   });
 });
 
-describe('условия, logpoint и исключения', { timeout: 30_000 }, () => {
-  it('условная точка стоит один раз — когда условие истинно', async () => {
+describe('conditions, logpoints and exceptions', { timeout: 30_000 }, () => {
+  it('a conditional breakpoint stands once — when the condition is true', async () => {
     bench = new Bench();
     await bench.host.setBreakpoints('loop.js', [{ line: 2, condition: 'n === 3' }]);
     const run = await bench.host.launch({ program: 'loop.js' });
@@ -529,7 +555,7 @@ describe('условия, logpoint и исключения', { timeout: 30_000 }
     expect(bench.stops()).toHaveLength(1);
   });
 
-  it('счётчик срабатываний: `>=4` — стоит на четвёртом и пятом', async () => {
+  it('the hit count: `>=4` stands on the fourth and the fifth', async () => {
     bench = new Bench();
     await bench.host.setBreakpoints('loop.js', [{ line: 2, hitCondition: '>=4' }]);
     const run = await bench.host.launch({ program: 'loop.js' });
@@ -541,7 +567,7 @@ describe('условия, logpoint и исключения', { timeout: 30_000 }
     expect(bench.stops()).toHaveLength(2);
   });
 
-  it('logpoint печатает вместо остановки, подставляя выражения', async () => {
+  it('a logpoint prints instead of stopping, substituting the expressions', async () => {
     bench = new Bench();
     await bench.host.setBreakpoints('loop.js', [{ line: 3, logMessage: 'square of {n} is {square}' }]);
     const run = await bench.host.launch({ program: 'loop.js' });
@@ -550,7 +576,7 @@ describe('условия, logpoint и исключения', { timeout: 30_000 }
     expect(bench.output()).toContain('square of 3 is 9');
   });
 
-  it('стоп на необработанном исключении — до того, как программа умерла', async () => {
+  it('a stop on an unhandled exception — before the program died', async () => {
     bench = new Bench();
     await bench.host.setExceptions('uncaught');
     expect(bench.of<string>('exceptions')).toEqual(['uncaught']);

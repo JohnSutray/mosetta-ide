@@ -4,6 +4,15 @@ import { useEffect, useRef } from 'preact/hooks';
 import type { BreakpointEdit } from './state.js';
 import type { BreakpointAsk } from './types.js';
 
+/**
+ * A breakpoint's condition window: the condition, the hit count, a line for the log
+ * instead of a stop. It holds on to the place of the click (`anchor`), Enter applies
+ * (the `debug-edit` context), Escape closes it like any window.
+ *
+ * The keyboard goes straight into the first field: the popup's frame takes the focus
+ * for itself by the sheer fact of being born, and without this what was typed went into
+ * the frame rather than into the condition.
+ */
 export function BreakpointEditor({
   windows,
   edit,

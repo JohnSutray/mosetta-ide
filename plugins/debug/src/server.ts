@@ -11,6 +11,15 @@ export type { BreakpointAsk, ExceptionMode, FileBreakpoints, Frame, LaunchAsk, R
 
 const STEPS: readonly Step[] = ['continue', 'next', 'stepIn', 'stepOut', 'pause'];
 
+/**
+ * The debugger's server half.
+ *
+ * A DAP client on top of the `vscode-js-debug` we bring along. The host is a resource
+ * of the project (`project.use`): the runs, the breakpoints and the adapters live as
+ * long as the project does, and another project never gets them. It is set up on the
+ * first call rather than on `onProject`: while nobody is debugging, the debugger costs
+ * nothing.
+ */
 export default class DebugServer {
   private readonly adapter: JsDebugAdapter;
 
@@ -35,6 +44,7 @@ export default class DebugServer {
     );
   }
 
+  /** Whether a program is running in the terminal — we ask the neighbour, if it is up. */
   private terminalRunning(project: Project, name: string): { pid: number | undefined } | null {
     try {
       return this.ide.getPlugin(TerminalServer).runningIn(project.root, name);
@@ -82,6 +92,7 @@ export default class DebugServer {
     return this.host(call).launch(launchAsk(params));
   }
 
+  /** Open a page in the browser under the debugger on a live run. */
   @command() protected openBrowser(params: unknown, call: CallContext): Promise<RunInfo> {
     return this.host(call).openBrowser(field(params, 'run'), field(params, 'url'));
   }
@@ -96,10 +107,19 @@ export default class DebugServer {
     return null;
   }
 
+  /** Remove a finished run from the list. A live one is left alone. */
   @command() protected forget(params: unknown, call: CallContext): RunInfo[] {
     return this.host(call).forget(field(params, 'run'));
   }
 
+  /**
+   * Run a file WITHOUT the debugger — in a real terminal. A pair to `launch`: the human
+   * has two actions in the panel, the triangle and the bug, as in WebStorm.
+   *
+   * It lives here next door to the debugger's terminal rather than in a plugin of its
+   * own, and this is a temporary home: the real owner is a "runner" of recent runs, and
+   * when it appears the method will move to it along with the terminal's name.
+   */
   @command() protected runFile(params: unknown, call: CallContext): { name: string } {
     const path = field(params, 'path');
     call.project.resolve(path);
@@ -146,6 +166,7 @@ export default class DebugServer {
     return this.host(call).source(field(params, 'run'), field(params, 'session'), number(params, 'reference'));
   }
 
+  /** A file beyond the root, named by the adapter in the stack. */
   @command() protected readForeign(params: unknown, call: CallContext): Promise<{ text: string }> {
     return this.host(call).readForeign(field(params, 'absolute'));
   }

@@ -4,25 +4,40 @@ import type { DebugState, VarNode } from './state.js';
 import type { ExceptionMode, Frame, RunInfo } from './types.js';
 import { Arrow, ContinueIcon, PauseIcon, SkullIcon, StepIntoIcon, StepOutIcon, StepOverIcon, StopIcon } from './icons.js';
 
+/**
+ * What the panel needs from the plugin: actions and hints. It knows nothing of the
+ * socket.
+ */
 export interface PanelApi {
   state: DebugState;
+  /** Call a command — the same thing a key does. */
   run: (command: string) => void;
   keysFor: (command: string) => string[];
   tip: { show: (el: Element, title: string, keys: string[]) => void; hide: () => void };
   showFrame: (at: number) => void;
   expand: (node: VarNode) => void;
+  /** The editor's current file is dirty, and we are standing in it. */
   dirtyHere: () => boolean;
+  /** The program's output goes to a terminal: it will not be in the panel. */
   outputInTerminal: boolean;
+  /** Remove a FINISHED run from the list. */
   forget: (run: string) => void;
+  /** A page in the browser under the debugger — to a live run, or as a root of its own. */
   openUrl: (url: string) => void;
   setExceptions: (mode: ExceptionMode) => void;
   addWatch: (expression: string) => void;
   removeWatch: (expression: string) => void;
+  /** The console: evaluate in the stopped frame. */
   evaluate: (expression: string) => void;
 }
 
 const EXCEPTION_MODES: ExceptionMode[] = ['none', 'uncaught', 'all'];
 
+/**
+ * Enter in a field submits the form. With our own hands rather than the browser's:
+ * between the field and the browser stands the keys dispatcher, and a press it did not
+ * recognise does not always reach the native `submit`.
+ */
 function submitOnEnter(event: KeyboardEvent): void {
   if (event.key !== 'Enter' || event.isComposing) return;
   event.preventDefault();
@@ -37,6 +52,12 @@ const STEPS: Array<{ command: string; icon: () => JSX.Element; kind?: string; wh
   { command: 'debug.pause', icon: PauseIcon, whenPaused: false },
 ];
 
+/**
+ * The debug panel: the step buttons, where we are standing, the stack, the variables,
+ * the output. A VIEW only: the state is held by the plugin, and the actions are called
+ * as commands — the same ones the keys call, so that a button and a key do literally
+ * the same thing.
+ */
 export function DebugPanel({ api }: { api: PanelApi }) {
   const t = useT();
   const { state } = api;
@@ -119,6 +140,11 @@ function RunLabel({ run, paused, onForget }: { run: RunInfo; paused: boolean; on
   );
 }
 
+/**
+ * A page under the debugger by address: to a live server as its viewer, with no server
+ * as a run of its own. Usually the address arrives by itself, from the program's
+ * output; the field is for when the server was started by somebody other than us.
+ */
 function UrlField({ api }: { api: PanelApi }) {
   const t = useT();
   const send = (input: HTMLInputElement): void => {
@@ -248,6 +274,10 @@ function VarRow({ node, depth, scope, api }: { node: VarNode; depth: number; sco
   );
 }
 
+/**
+ * The watched expressions: a list recomputed at every stop. They live with the project
+ * rather than with a run: they watch one and the same thing through a dozen restarts.
+ */
 function Watches({ api }: { api: PanelApi }) {
   const t = useT();
   const watches = api.state.watches.value;
@@ -290,6 +320,10 @@ function Watches({ api }: { api: PanelApi }) {
   );
 }
 
+/**
+ * The console: the expression is evaluated in the stopped frame, the answer goes into
+ * the output.
+ */
 function Console({ api }: { api: PanelApi }) {
   const t = useT();
   return (

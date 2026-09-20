@@ -22,35 +22,79 @@ import type {
   Variable,
 } from './types.js';
 
+/**
+ * Whose scripts the debugger SKIPS.
+ *
+ * React 19 in dev mode gives birth through eval to functions with
+ * `sourceURL=about://React/…` and a map onto a real file — and CALLS them, so that a
+ * server component's stack in the console shows `layout.tsx`. A breakpoint in
+ * `layout.tsx` landed through the map in the counterfeit as well, and fired on every
+ * revival of an RSC answer: in the SSR process, in the browser, on every request. One
+ * real stop and five counterfeit ones.
+ *
+ * Skipping is not enough: on a breakpoint in a skipped script the adapter stops all the
+ * same, and it marks the file the counterfeit referred to through its map as skipped
+ * WHOLE — so a real stop cannot be told from a counterfeit one by the marks. So a stop
+ * in such a file is checked by the session itself (`DapSession.arrived`).
+ */
 const SKIP_FILES = ['<node_internals>/**', 'about://React/**'];
 
+/** How much of the project the debugger needs — exactly that much, and no more. */
 export type DebugProject = Pick<Project, 'root' | 'resolve' | 'emit' | 'hold' | 'start'>;
 
+/**
+ * A real terminal for the program: who will carry out the line in the project's
+ * console. `null` means there is no terminal in this build, and the adapter starts the
+ * program itself.
+ */
 export interface TerminalAskOut {
   name: string;
   cwd: string;
+  /** What to type at the prompt. */
   command: string;
+  /** The environment for a NEW shell: the variables enter it at birth. */
   env: Record<string, string>;
+  /**
+   * The same command for an ALREADY OPEN shell: its environment cannot be changed, so
+   * it travels in the line.
+   */
   sameShell: string;
 }
 
+/** What the terminal returned: who lives there and how to read its output. */
 export interface TerminalRun {
   pid: number;
+  /**
+   * Read the terminal's output; returns an unsubscribe. The debugger waits there for
+   * the server's address.
+   */
   watch: (listener: (data: string) => void) => () => void;
 }
 
 export type TerminalRunner = ((ask: TerminalAskOut) => TerminalRun) | null;
 
+/** How soon to ask "is the program dead yet?", and how many times. */
 const SETTLE_MS = 150;
 const SETTLE_TRIES = 8;
 
 export class DebugHost implements ProjectResource, RunOwner {
   private readonly lines = new Map<string, BreakpointAsk[]>();
+  /** Which exceptions to stop on — the project's property, like the breakpoints. */
   private exceptionMode: ExceptionMode = 'none';
   private readonly runs = new Map<string, DebugRun>();
   private readonly holds = new Map<string, () => void>();
   private readonly sources: Sources;
+  /**
+   * The files BEYOND the root that the adapter named in the stack. We may read those
+   * from the disk and no others: the path was named by the debugger rather than by the
+   * tab, and that is the only thing telling "show the frame from `~/.nvm`" apart from a
+   * door outwards for any path.
+   */
   private readonly foreign = new Set<string>();
+  /**
+   * Who is waiting for the server's address in a run's output: run → watcher and
+   * unsubscribe.
+   */
   private readonly ready = new Map<string, { watcher: ServerReady; off: () => void }>();
   private next = 1;
 
@@ -60,13 +104,24 @@ export class DebugHost implements ProjectResource, RunOwner {
     private readonly log: Logger,
     private readonly terminalRunner: TerminalRunner = null,
     private readonly readDisk: (absolute: string) => Promise<string> = (absolute) => readFile(absolute, 'utf8'),
+    /**
+     * The settings section as a function: an edit to the file is visible without a
+     * restart.
+     */
     private readonly settings: () => DebugSettings = () => DEBUG_DEFAULTS,
+    /**
+     * Whether a program is running in this terminal — we ask the neighbour. `null`
+     * where there are no terminals at all: then the program was started by the adapter
+     * itself, and it goes away with it.
+     */
     private readonly terminalRunning: ((name: string) => { pid: number | undefined } | null) | null = null,
+    /** Kill a process tree — a core service (`ide.killTree`). */
     private readonly killTree: (pid: number, options?: { self?: boolean }) => Promise<number> = async () => 0,
   ) {
     this.sources = new Sources(project.root, (relative) => project.resolve(relative));
   }
 
+  /** Set a file's breakpoints WHOLE: an empty list takes them all off. */
   async setBreakpoints(path: string, asks: BreakpointAsk[]): Promise<FileBreakpoints> {
     this.project.resolve(path);
     const seen = new Set<number>();
@@ -88,6 +143,11 @@ export class DebugHost implements ProjectResource, RunOwner {
     return state;
   }
 
+  /**
+   * The state of a file's breakpoints across every live session. A breakpoint is
+   * confirmed if AT LEAST ONE has confirmed it: in an `npm → node` tree the script is
+   * loaded in one process only, and the rest honestly answer "I know no such line".
+   */
   breakpointsOf(path: string): FileBreakpoints {
     const sessions = this.liveSessions();
     const breakpoints = (this.lines.get(path) ?? []).map((ask): Breakpoint => {
@@ -104,6 +164,7 @@ export class DebugHost implements ProjectResource, RunOwner {
     return this.exceptionMode;
   }
 
+  /** Which exceptions to stop on — to every live session at once. */
   async setExceptions(mode: ExceptionMode): Promise<ExceptionMode> {
     this.exceptionMode = mode;
     await Promise.all(
@@ -146,6 +207,11 @@ export class DebugHost implements ProjectResource, RunOwner {
     return run.info();
   }
 
+  /**
+   * Open a page in the browser under the debugger — as a second root of THE SAME run.
+   * By the same adapter: it has one socket for every session, and "stop" puts out the
+   * server together with the browser.
+   */
   async openBrowser(runId: string, url: string): Promise<RunInfo> {
     const run = this.run(runId);
     if (run.state === 'ended') throw new Error(`run ${runId} has ended`);
@@ -156,6 +222,11 @@ export class DebugHost implements ProjectResource, RunOwner {
     return run.info();
   }
 
+  /**
+   * Watch a run's output: the program has printed an address — open it in the browser
+   * under the debugger. We look where the human looks: into the program's terminal;
+   * with no terminal (Windows) into the output events.
+   */
   private awaitServer(run: DebugRun, watch: TerminalRun['watch'] | null): void {
     if (!this.settings().openBrowser || this.ready.has(run.id)) return;
     const watcher = new ServerReady(ServerReady.compile(this.settings().serverReady, DEBUG_DEFAULTS.serverReady));
@@ -173,6 +244,7 @@ export class DebugHost implements ProjectResource, RunOwner {
     if (!watch) this.readyFromOutput.set(run.id, listener);
   }
 
+  /** With no terminal the address is looked for in the output events: run → listener. */
   private readonly readyFromOutput = new Map<string, (data: string) => void>();
 
   private forgetReady(runId: string): void {
@@ -181,6 +253,12 @@ export class DebugHost implements ProjectResource, RunOwner {
     this.readyFromOutput.delete(runId);
   }
 
+  /**
+   * The browser's configuration: the adapter finds Chrome itself (or whatever is named
+   * in the setting), gives it a PROFILE of its own in a temporary directory — the
+   * human's windows and bookmarks are left alone — and opens the address. `webRoot` is
+   * where paths from the page land: `/app.js` → `<root>/app.js`.
+   */
   private browserConfiguration(name: string, url: string): Record<string, unknown> {
     const { browser, browserArgs, webRoot } = this.settings();
     return {
@@ -205,10 +283,16 @@ export class DebugHost implements ProjectResource, RunOwner {
     await this.run(runId).stop(options);
   }
 
+  /**
+   * Put out everything currently being debugged.
+   *
+   * One trouble does not bring the others down: a run that did not go out must not stop
+   * a new one starting — the journal will tell of it.
+   */
   private async stopLive(): Promise<void> {
     const live = [...this.runs.values()].filter((run) => run.state !== 'ended');
     if (live.length === 0) return;
-    this.log.info(`debug: гашу предыдущие запуски: ${live.map((run) => run.name).join(', ')}`);
+    this.log.info(`debug: putting out the previous runs: ${live.map((run) => run.name).join(', ')}`);
     await Promise.all(
       live.map((run) => run.stop().catch((err) => this.log.warn(`debug: ${run.name} not stopped: ${String(err)}`))),
     );
@@ -235,6 +319,11 @@ export class DebugHost implements ProjectResource, RunOwner {
     return frames;
   }
 
+  /**
+   * The text of a file BEYOND the root — only of one the adapter named in the stack. We
+   * read the disk ourselves, past the core's OS layer: its door outwards checks the
+   * root, and widening it for the sake of one reader is not allowed.
+   */
   async readForeign(absolute: string): Promise<{ text: string }> {
     if (!this.foreign.has(absolute)) throw new Error(`not a debugger source: ${absolute}`);
     return { text: await this.readDisk(absolute) };
@@ -290,6 +379,7 @@ export class DebugHost implements ProjectResource, RunOwner {
     };
   }
 
+  /** Text that is not on the disk: `<node_internals>/…`, a source from a map. */
   async source(runId: string, sessionId: string, reference: number): Promise<{ text: string; mime?: string }> {
     const source: DapSource = { sourceReference: reference };
     const answer = await this.run(runId)
@@ -318,6 +408,11 @@ export class DebugHost implements ProjectResource, RunOwner {
     return this.terminalRunner !== null;
   }
 
+  /**
+   * Where a run's program lives: the terminal's name and the pid of its SHELL. Needed
+   * for exactly two questions — whether it is still alive and how to kill it: in a
+   * terminal the program is not our child but a descendant of the human's shell.
+   */
   private readonly shells = new Map<string, { name: string; pid: number | undefined }>();
 
   async terminal(run: DebugRun, ask: TerminalAsk): Promise<{ shellProcessId?: number; processId?: number }> {
@@ -343,6 +438,14 @@ export class DebugHost implements ProjectResource, RunOwner {
     return { shellProcessId: opened.pid };
   }
 
+  /**
+   * Remove a FINISHED run from the list.
+   *
+   * A live one is left alone: it is put out by "stop", and the two actions must not be
+   * confused. Before this, a finished run only went away by itself when a new one
+   * started WITH THE SAME NAME — that is, having debugged one file the human was left
+   * with its badge for ever, and there was nothing to remove it with.
+   */
   forget(id: string): RunInfo[] {
     const run = this.runs.get(id);
     if (run && run.state === 'ended') {
@@ -361,6 +464,14 @@ export class DebugHost implements ProjectResource, RunOwner {
     this.project.emit('runs', this.list());
   }
 
+  /**
+   * Whether the program is alive after a polite stop.
+   *
+   * We ask the TERMINAL: there the program is a descendant of the human's shell, and a
+   * `disconnect` does not always reach it. Where there is no terminal the program was
+   * started by the adapter itself and goes away with it — there is nothing to lie about
+   * there, and we answer "dead".
+   */
   async stuck(run: DebugRun): Promise<boolean> {
     const shell = this.shells.get(run.id);
     if (!shell || !this.terminalRunning) return false;
@@ -371,17 +482,21 @@ export class DebugHost implements ProjectResource, RunOwner {
     return true;
   }
 
+  /**
+   * KILL a run's process tree: the adapter with its descendants, and the program in the
+   * terminal. The human's shell is left alone — we put out only what was started in it.
+   */
   async kill(run: DebugRun): Promise<void> {
     const shell = this.shells.get(run.id);
     if (shell?.pid !== undefined) {
       await this.killTree(shell.pid, { self: false }).catch((err) =>
-        this.log.warn(`debug: программа ${run.name} не погасла: ${String(err)}`),
+        this.log.warn(`debug: the program ${run.name} did not go out: ${String(err)}`),
       );
     }
     const pid = run.adapterPid;
     if (pid !== undefined) {
       await this.killTree(pid, { self: true }).catch((err) =>
-        this.log.warn(`debug: адаптер ${run.name} не погас: ${String(err)}`),
+        this.log.warn(`debug: the adapter ${run.name} did not go out: ${String(err)}`),
       );
     }
     this.shells.delete(run.id);
@@ -413,6 +528,14 @@ export class DebugHost implements ProjectResource, RunOwner {
       .filter((session) => session.state !== 'ended');
   }
 
+  /**
+   * The `pwa-node` configuration for the adapter.
+   *
+   * `__workspaceFolder` is documented nowhere, but without it the source maps are not
+   * looked for AT ALL: the program runs straight past a breakpoint in a `.ts` without a
+   * single error. VS Code supplies it itself; we are guarded by a test with a compiled
+   * fixture file.
+   */
   private configuration(name: string, ask: LaunchAsk): Record<string, unknown> {
     const root = this.project.root;
     return {
@@ -433,6 +556,7 @@ export class DebugHost implements ProjectResource, RunOwner {
   }
 }
 
+/** A request with no empty strings in it: an empty condition is the absence of one. */
 function trimAsk(ask: BreakpointAsk): BreakpointAsk {
   const out: BreakpointAsk = { line: ask.line };
   if (ask.condition?.trim()) out.condition = ask.condition.trim();

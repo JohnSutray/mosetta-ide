@@ -4,8 +4,22 @@ import type CodePlugin from '@mosetta/ide-plugin-code';
 import { useEffect, useState } from 'preact/hooks';
 import type { Foreign } from './state.js';
 
+/**
+ * The view's name for a source beyond the root: that is how it is captioned in the
+ * editor's panel.
+ */
 export const FOREIGN_PREFIX = 'debug:';
 
+/**
+ * A view of a file BEYOND the project's root — a tenant of the `file.view` key. A stack
+ * frame can be in `~/.nvm/…/node_modules`, or not on the disk at all
+ * (`<node_internals>`); such a thing does not become a document (the memory holds only
+ * the project's keys, and rightly so), but it has to be shown — otherwise "step into"
+ * runs into a wall.
+ *
+ * The same `CodeView` as everywhere: Darcula, highlighting by extension, read-only.
+ * Above it — whose text this is.
+ */
 export function ForeignView({
   path,
   foreign,

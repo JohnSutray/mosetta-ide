@@ -2,25 +2,48 @@ import type { AdapterProcess } from './adapter.js';
 import { DapSession, type SessionOwner, type TerminalAsk } from './session.js';
 import type { BreakpointAsk, ExceptionMode, RunInfo, Stop } from './types.js';
 
+/** What a run needs from the project's host. */
 export interface RunOwner {
   breakpoints(): ReadonlyMap<string, readonly BreakpointAsk[]>;
   exceptions(): ExceptionMode;
   toAdapter(key: string): string;
+  /**
+   * Carry it out in a real terminal on behalf of THIS run; `null` means there is no
+   * terminal.
+   */
   terminal(run: DebugRun, ask: TerminalAsk): Promise<{ shellProcessId?: number; processId?: number }>;
   hasTerminal(): boolean;
   changed(run: DebugRun): void;
+  /**
+   * Whether this run's program is still alive AFTER a polite stop. It is not the run
+   * that knows this but the host: the program may live in the human's terminal, and
+   * only the terminal can be asked about it.
+   */
   stuck(run: DebugRun): Promise<boolean>;
+  /** KILL: put out the run's whole process tree, with no asking. */
   kill(run: DebugRun): Promise<void>;
   stopped(run: DebugRun, session: DapSession, stop: Stop): void;
   output(run: DebugRun, session: DapSession, category: string, text: string): void;
   verified(run: DebugRun, key: string): void;
 }
 
+/** How long to wait for the adapter to put the program out itself, before killing it. */
 const DISCONNECT_MS = 2000;
 
+/**
+ * One run under debugging is a TREE of sessions.
+ *
+ * The adapter sets up a root session for the run itself, and for every process it asks
+ * the client to open a child one (`startDebugging`) — with a new connection carrying
+ * `__pendingTargetId`. The breakpoints fire and the stops happen there, in the
+ * children; the root never confirms them. `npm run dev` gives three levels: run → npm →
+ * node. So from outside a "session" is always a pair (run, session) rather than one
+ * number.
+ */
 export class DebugRun implements SessionOwner {
   state: RunInfo['state'] = 'starting';
   error: string | undefined;
+  /** The address opened in the browser under the debugger. */
   url: string | undefined;
   private readonly sessions = new Map<string, DapSession>();
   private next = 0;
@@ -51,6 +74,11 @@ export class DebugRun implements SessionOwner {
     }
   }
 
+  /**
+   * A second ROOT on the same run: the browser to the server. The same adapter, a new
+   * connection, no parent — this is not the server's child but its viewer. A run ends
+   * when ALL the roots have ended.
+   */
   async openRoot(configuration: Record<string, unknown>): Promise<void> {
     await this.open(null, 'launch', configuration);
   }
@@ -65,6 +93,15 @@ export class DebugRun implements SessionOwner {
     return [...this.sessions.values()];
   }
 
+  /**
+   * Stop: ask the adapter to put the program out, and if it did not manage in time,
+   * kill the adapter itself. The adapter's children go away with it: it was the adapter
+   * that started them.
+   *
+   * We put them out FROM THE LEAVES TO THE ROOT. The root does not answer a
+   * `disconnect` while even one child is alive: from the root a stop ran into the
+   * timeout and took two seconds, from the leaves it takes 26 ms.
+   */
   async stop(options: { force?: boolean } = {}): Promise<void> {
     if (options.force) {
       await this.owner.kill(this);
@@ -101,6 +138,7 @@ export class DebugRun implements SessionOwner {
     this.end(this.error);
   }
 
+  /** The adapter's pid: its tree is put out by it. */
   get adapterPid(): number | undefined {
     return this.adapter.pid;
   }
@@ -138,6 +176,7 @@ export class DebugRun implements SessionOwner {
     });
   }
 
+  /** How many stops in React's counterfeits were skipped — we say so once per run. */
   private skippedFakes = 0;
 
   skipped(session: DapSession): void {

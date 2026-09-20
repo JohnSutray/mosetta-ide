@@ -1,4 +1,5 @@
 
+/** The stream structurally: Node's socket fits as it is, and a test slips in its own. */
 export interface Stream {
   write(data: Uint8Array): unknown;
   on(event: 'data', handler: (chunk: Uint8Array) => void): unknown;
@@ -22,6 +23,10 @@ export class DapWire {
   private readonly events = new Set<(event: string, body: unknown) => void>();
   private readonly closers = new Set<(why: string) => void>();
   private closed: string | null = null;
+  /**
+   * A request coming the other way from the adapter. An answer is obligatory: the
+   * adapter is waiting for it.
+   */
   onReverse: (request: Reverse) => void = (request) => this.refuse(request, 'not supported');
 
   constructor(private readonly stream: Stream) {
@@ -52,6 +57,7 @@ export class DapWire {
     return () => this.events.delete(listener);
   }
 
+  /** The wire has broken — with a reason. Called once. */
   onClose(listener: (why: string) => void): () => void {
     if (this.closed) {
       listener(this.closed);
@@ -115,6 +121,10 @@ export class DapWire {
     }
   }
 
+  /**
+   * The reason for a break is an answer to EVERYONE still waiting: otherwise the
+   * interface hangs on a request there is nobody left to answer.
+   */
   private close(why: string): void {
     if (this.closed) return;
     this.closed = why;

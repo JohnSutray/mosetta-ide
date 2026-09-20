@@ -1,12 +1,25 @@
 import type { Breakpoint, BreakpointAsk, ExceptionMode, SessionInfo, Stop } from './types.js';
 import type { DapWire, Reverse } from './wire.js';
 
+/** What a session needs from the run it belongs to. */
 export interface SessionOwner {
+  /** The project's breakpoints: key → requests. Asked for at the moment of sending. */
   breakpoints(): ReadonlyMap<string, readonly BreakpointAsk[]>;
+  /** Which exceptions to stop on — also the project's property. */
   exceptions(): ExceptionMode;
   toAdapter(key: string): string;
+  /** The adapter asks for a child session to be opened — for a new process. */
   child(parent: DapSession, request: 'launch' | 'attach', configuration: Record<string, unknown>): void;
+  /**
+   * The adapter asks for the program to be carried out in a real terminal. `null` means
+   * we have no terminal, and the adapter has been told so in advance
+   * (`supportsRunInTerminalRequest`), so the request will not come.
+   */
   runInTerminal: ((ask: TerminalAsk) => Promise<{ shellProcessId?: number; processId?: number }>) | null;
+  /**
+   * A stop in one of React's counterfeits — we went on by ourselves, without showing
+   * it.
+   */
   skipped(session: DapSession): void;
   changed(session: DapSession): void;
   stopped(session: DapSession, stop: Stop): void;
@@ -14,8 +27,14 @@ export interface SessionOwner {
   verified(session: DapSession, key: string): void;
 }
 
+/**
+ * How long to wait for a session's handshake. Usually tens of milliseconds; the
+ * deadline is not about speed but about a lost answer becoming an error in words rather
+ * than an eternal wait, which from outside is indistinguishable from "thinking".
+ */
 const HANDSHAKE_MS = 30_000;
 
+/** A `runInTerminal` request, as DAP words it. */
 export interface TerminalAsk {
   kind?: 'integrated' | 'external';
   title?: string;
@@ -36,12 +55,23 @@ interface DapBreakpoint {
   source?: { path?: string };
 }
 
+/**
+ * One DAP session is one connection to the adapter and one process of the program.
+ *
+ * The opening ritual is the same for all of them, and the order in it is not a matter
+ * of taste: the `launch` request goes off AT ONCE, but the answer to it comes only
+ * after `configurationDone`, while breakpoints can only be set between the
+ * `initialized` event and that `configurationDone`. Waiting for the answer to `launch`
+ * before sending the breakpoints means hanging for ever.
+ */
 export class DapSession {
   state: SessionInfo['state'] = 'starting';
   stop: Stop | undefined;
+  /** What the adapter answered about THIS session's breakpoints: key → one per line. */
   private readonly placed = new Map<string, Placed[]>();
   private readonly offs: Array<() => void> = [];
 
+  /** Where the program lives; set from the configuration at `begin`. */
   kind: 'node' | 'browser' = 'node';
 
   constructor(
@@ -102,6 +132,7 @@ export class DapSession {
     await launched;
   }
 
+  /** Send the adapter one file's breakpoints — all the ones standing now. */
   async sync(key: string): Promise<void> {
     if (!this.wire.alive) return;
     const asks = this.owner.breakpoints().get(key) ?? [];
@@ -121,6 +152,7 @@ export class DapSession {
     this.owner.verified(this, key);
   }
 
+  /** Tell the adapter which exceptions to stop on. Its words: `all`, `uncaught`. */
   async syncExceptions(): Promise<void> {
     if (!this.wire.alive) return;
     const mode = this.owner.exceptions();
@@ -136,6 +168,7 @@ export class DapSession {
     return this.wire.request<T>(command, args);
   }
 
+  /** A step has begun — the program is running again, until the adapter says otherwise. */
   resumed(): void {
     this.stop = undefined;
     if (this.state === 'paused') this.setState('running');
@@ -197,6 +230,21 @@ export class DapSession {
     }
   }
 
+  /**
+   * We have stopped — but where?
+   *
+   * React 19 in dev mode gives birth through eval to functions with
+   * `sourceURL=about://React/…` and a map onto a real file, and CALLS them for the sake
+   * of a pretty stack. A breakpoint in `layout.tsx` lands through the map in the
+   * counterfeit as well. The adapter skips such a script (`skipFiles`), but on a
+   * breakpoint in it it stops all the same, and it marks the file as skipped whole — by
+   * its marks a real stop cannot be told from a counterfeit one.
+   *
+   * V8 ITSELF tells them apart: `new Error().stack`, evaluated in the stopped frame,
+   * names the script by its real address — it does not use the map, neither in Node nor
+   * in the browser. A counterfeit — we go on and count it; the stop is not shown to the
+   * human at all.
+   */
   private async arrived(stop: Stop): Promise<void> {
     if (stop.reason === 'exception') stop = { ...stop, description: await this.exceptionText(stop) };
     if (stop.reason === 'breakpoint' && (await this.inFakeFrame(stop.thread))) {
@@ -209,6 +257,10 @@ export class DapSession {
     this.owner.stopped(this, stop);
   }
 
+  /**
+   * What kind of exception: "Paused on exception" with no name of the error says
+   * nothing.
+   */
   private async exceptionText(stop: Stop): Promise<string | undefined> {
     try {
       const info = await this.wire.request<{ exceptionId?: string; description?: string }>('exceptionInfo', {
@@ -239,6 +291,10 @@ export class DapSession {
     }
   }
 
+  /**
+   * The confirmation comes LATER than the answer: while the script is not loaded, the
+   * adapter knows nothing about the line. We look the breakpoint up by number.
+   */
   private breakpointChanged(answer: DapBreakpoint | undefined): void {
     if (!answer || answer.id === undefined) return;
     for (const [key, list] of this.placed) {

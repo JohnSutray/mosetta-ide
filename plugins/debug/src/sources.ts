@@ -1,6 +1,7 @@
 import path from 'node:path';
 import type { Frame, SourceRef } from './types.js';
 
+/** A frame's source, as DAP named it. */
 export interface DapSource {
   name?: string;
   path?: string;
@@ -17,6 +18,14 @@ export interface DapFrame {
   presentationHint?: string;
 }
 
+/**
+ * The adapter's paths ↔ the project's paths.
+ *
+ * INTO the adapter a protocol path is expanded by the core (`project.resolve`) — there
+ * is one check for going outside the root. OUTWARDS goes an absolute path, and here it
+ * is decided whose it is: the project's (it will become a key), somebody else's file on
+ * disk, or text that is not on the disk at all.
+ */
 export class Sources {
   constructor(
     private readonly root: string,
@@ -52,6 +61,7 @@ export class Sources {
     };
   }
 
+  /** The adapter's absolute path → the project's key, if it is inside. */
   keyOf(absolute: string): string | null {
     const ref = this.fromAdapter({ path: absolute });
     return ref?.kind === 'project' ? ref.path : null;

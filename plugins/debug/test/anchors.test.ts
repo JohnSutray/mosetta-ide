@@ -1,54 +1,60 @@
 import { describe, expect, it } from 'vitest';
 import { Anchors } from '../src/anchors.js';
 
+/**
+ * A breakpoint remembers a place rather than a number.
+ *
+ * The whole rule is in the choice of line: which of the identical ones to take, and
+ * what to do when none is found. Hence a test rather than a comment.
+ */
 const anchors = new Anchors();
 
 function finder(lines: string[]) {
   return (line: number) => lines[line - 1] ?? '';
 }
 
-describe('якорь точки', () => {
-  it('помнит текст без отступов: форматтер сдвинул — место то же', () => {
+describe('a breakpoint\'s anchor', () => {
+  it('it remembers the text without the indentation: the formatter shifted it, the place is the same', () => {
     expect(anchors.of('    return value;  ')).toBe('return value;');
   });
 
-  it('на своём месте — там и остаётся', () => {
+  it('in its own place — that is where it stays', () => {
     const lines = ['a', 'return value;', 'c'];
     expect(anchors.find(finder(lines), lines.length, 'return value;', 2)).toBe(2);
   });
 
-  it('строка уехала вниз — точка едет за ней', () => {
+  it('the line has moved down — the breakpoint travels after it', () => {
     const lines = ['a', 'b', 'c', 'return value;', 'e'];
     expect(anchors.find(finder(lines), lines.length, 'return value;', 2)).toBe(4);
   });
 
-  it('строка уехала вверх — тоже находится', () => {
+  it('the line has moved up — it is found too', () => {
     const lines = ['return value;', 'b', 'c', 'd'];
     expect(anchors.find(finder(lines), lines.length, 'return value;', 4)).toBe(1);
   });
 
-  it('одинаковых много — берётся БЛИЖАЙШАЯ, а не первая', () => {
+  it('there are many identical ones — the NEAREST is taken rather than the first', () => {
     const lines = ['}', 'a', 'b', 'c', '}', 'd'];
     expect(anchors.find(finder(lines), lines.length, '}', 4)).toBe(5);
     expect(anchors.find(finder(lines), lines.length, '}', 2)).toBe(1);
   });
 
-  it('на равном расстоянии берётся верхняя — правило одно, а не «как повезёт»', () => {
+  it('at equal distance the upper one is taken — there is one rule rather than "as luck has it"', () => {
     const lines = ['x', '}', 'near', '}', 'y'];
     expect(anchors.find(finder(lines), lines.length, '}', 3)).toBe(2);
   });
 
-  it('не нашлось — номер остаётся прежним: молча выбрасывать точку нельзя', () => {
+  it('none found — the number stays as it was: a breakpoint must not be thrown away silently', () => {
     const lines = ['a', 'b', 'c'];
     expect(anchors.find(finder(lines), lines.length, 'return value;', 2)).toBe(2);
   });
 
-  it('пустой якорь не ищем вовсе: любая пустая строка совпала бы', () => {
+  it('an empty anchor is not searched for at all: any empty line would match', () => {
     const lines = ['a', '', 'c', ''];
     expect(anchors.find(finder(lines), lines.length, '', 3)).toBe(3);
   });
 
-  it('файл стал короче — номер прижимается к последней строке', () => {
+  it('the file has become shorter — the number is pressed against the last line', () => {
     const lines = ['a', 'b'];
     expect(anchors.find(finder(lines), lines.length, 'return value;', 9)).toBe(2);
   });

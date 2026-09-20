@@ -5,6 +5,11 @@ import DocPlugin from '@mosetta/ide-plugin-doc';
 import DebugPlugin, { expressionAt } from '../src/client.js';
 import type { Frame, RunInfo } from '../src/types.js';
 
+/**
+ * The debugger's client half, as a plugin: what it asks of the host, what it puts into
+ * the neighbours' keys, and what it does when the server says "we have stopped".
+ */
+
 const NAME = '@mosetta/ide-plugin-debug';
 
 function frame(source: Frame['source'], line = 4): Frame {
@@ -18,7 +23,7 @@ const RUN: RunInfo = {
   sessions: [{ id: '1.0', name: 'plain.js', parent: null, kind: 'node', state: 'running' }],
 };
 
-describe('отладчик на вкладке', () => {
+describe('the debugger in the tab', () => {
   let host: FakeHost;
   let debug: DebugPlugin;
 
@@ -46,7 +51,7 @@ describe('отладчик на вкладке', () => {
   const wish = () =>
     host.registry.all<{ id: string; side: string; open: { value: boolean }; defaultWidth: number; minWidth: number }>('panel')[0]!;
 
-  it('заводит панель справа, кнопку и команду-переключатель по общим правилам', () => {
+  it('it sets up a panel on the right, a button and a toggle command by the common rules', () => {
     const panel = wish();
     expect(panel.id).toBe('debug');
     expect(panel.side).toBe('right');
@@ -59,7 +64,7 @@ describe('отладчик на вкладке', () => {
     expect(button.active).toBe(panel.open);
   });
 
-  it('входит в редактор расширением, в окно скриптов — действием, в наведение — ответом', () => {
+  it('it enters the editor as an extension, the scripts window as an action, hovering as an answer', () => {
     expect(host.registry.authors('editor.extension')).toEqual([NAME]);
     expect(host.registry.all<{ id: string }>('scripts.action')[0]?.id).toBe('debug');
     expect(host.registry.all<{ id: string }>('editor.hover')[0]?.id).toBe('debug');
@@ -69,7 +74,7 @@ describe('отладчик на вкладке', () => {
     expect(view.text).toBe(false);
   });
 
-  it('«остановились» — читает стек, открывает файл и встаёт на строку', async () => {
+  it('"we have stopped" — it reads the stack, opens the file and stands on the line', async () => {
     host.ide(NAME).emit('runs', [RUN]);
     host.ide(NAME).emit('stopped', { run: '1', session: '1.0', stop: { thread: 0, reason: 'breakpoint' } });
     const docs = host.plugin(DocPlugin);
@@ -81,7 +86,7 @@ describe('отладчик на вкладке', () => {
     expect(debug.state.scopes.value[0]?.children?.[0]).toMatchObject({ name: 'sum', value: '0' });
   });
 
-  it('кадр за корнем открывается своим показом под именем debug:', async () => {
+  it('a frame beyond the root opens in a view of its own under the name debug:', async () => {
     host.ide(NAME).answers.set('stack', () => [frame({ kind: 'adapter', name: '<node_internals>/x', reference: 5 }, 12)]);
     host.ide(NAME).emit('runs', [RUN]);
     host.ide(NAME).emit('stopped', { run: '1', session: '1.0', stop: { thread: 0, reason: 'step' } });
@@ -91,7 +96,7 @@ describe('отладчик на вкладке', () => {
     expect(debug.state.foreign.get('debug:<node_internals>/x')).toMatchObject({ run: '1', session: '1.0', line: 12 });
   });
 
-  it('запуск кончился — стек и остановка гаснут', async () => {
+  it('the run has ended — the stack and the stop go out', async () => {
     host.ide(NAME).emit('runs', [RUN]);
     host.ide(NAME).emit('stopped', { run: '1', session: '1.0', stop: { thread: 0, reason: 'breakpoint' } });
     await until(() => debug.state.frames.value.length > 0);
@@ -100,7 +105,7 @@ describe('отладчик на вкладке', () => {
     expect(debug.state.frames.value).toEqual([]);
   });
 
-  it('прикрепились к проекту — спрашивает запуски и точки; пустому серверу возвращает свои', async () => {
+  it('attached to a project — it asks for the runs and the breakpoints; to an empty server it returns its own', async () => {
     const ide = host.ide(NAME);
     host.surface.workspaceCurrent.value = { id: 'w', root: '/p', name: 'p' } as never;
     ide.remembered.set('breakpoints:/p', signal({ 'plain.js': [{ line: 4 }] }));
@@ -110,7 +115,7 @@ describe('отладчик на вкладке', () => {
     expect(debug.state.linesOf('plain.js')).toEqual([4]);
   });
 
-  it('несохранённое держит запуск, пока не ответили', async () => {
+  it('what is unsaved holds the run back until it has been answered', async () => {
     const ide = host.ide(NAME);
     host.surface.docs.unsavedPaths.add('src/a.ts');
     void debug.launch({ name: 'plain.js', program: 'plain.js' });
@@ -119,7 +124,7 @@ describe('отладчик на вкладке', () => {
     expect(wish().open.value).toBe(false);
   });
 
-  it('с автосохранением запуск не спрашивает: пишет файлы и идёт', async () => {
+  it('with autosave the run does not ask: it writes the files and goes', async () => {
     const ide = host.ide(NAME);
     host.setSettings({ doc: { autosave: 'focusLost' } });
     host.surface.docs.texts.set('src/a.ts', 'let x = 1\n');
@@ -130,7 +135,7 @@ describe('отладчик на вкладке', () => {
     expect(ide.calls.some((call) => call.method === 'launch')).toBe(true);
   });
 
-  it('вывод: шум про карты исходников прячется, но считается', () => {
+  it('the output: the noise about source maps is hidden, but counted', () => {
     host.ide(NAME).emit('output', { run: '1', session: '1.0', category: 'stderr', text: 'Could not read source map for file:///x\n' });
     host.ide(NAME).emit('output', { run: '1', session: '1.0', category: 'stdout', text: 'hello\n' });
     expect(debug.state.output.value.map((one) => one.text)).toEqual(['hello\n']);
@@ -138,7 +143,7 @@ describe('отладчик на вкладке', () => {
   });
 });
 
-describe('условия, наблюдения, исключения', () => {
+describe('conditions, watches, exceptions', () => {
   let host: FakeHost;
   let debug: DebugPlugin;
 
@@ -157,7 +162,7 @@ describe('условия, наблюдения, исключения', () => {
     await host.start();
   });
 
-  it('окно условия открывается с тем, что стоит, и пишет точку целиком', async () => {
+  it('the condition window opens with what stands there, and writes the breakpoint whole', async () => {
     host.ide(NAME).emit('breakpoints', { path: 'a.js', breakpoints: [{ line: 2, verified: true }, { line: 5, verified: true, condition: 'x > 1' }] });
     debug.openEdit('a.js', 5, { x: 0, y: 0 });
     expect(debug.state.edit.value?.ask).toEqual({ line: 5, condition: 'x > 1' });
@@ -168,7 +173,7 @@ describe('условия, наблюдения, исключения', () => {
     expect(sent.breakpoints).toEqual([{ line: 2 }, { line: 5, condition: 'x > 1', logMessage: 'x is {x}' }]);
   });
 
-  it('наблюдение вычисляется на остановке и помнится по проекту', async () => {
+  it('a watch is evaluated at a stop and is remembered per project', async () => {
     host.surface.workspaceCurrent.value = { id: 'w', root: '/p', name: 'p' } as never;
     debug.addWatch('items.length');
     expect(host.ide(NAME).remembered.get('watches:/p')?.value).toEqual(['items.length']);
@@ -182,7 +187,7 @@ describe('условия, наблюдения, исключения', () => {
     expect(debug.state.watches.value).toEqual([]);
   });
 
-  it('режим исключений уезжает на сервер, помнится по проекту и приходит событием', async () => {
+  it('the exceptions mode travels to the server, is remembered per project and arrives as an event', async () => {
     host.surface.workspaceCurrent.value = { id: 'w', root: '/p', name: 'p' } as never;
     await debug.setExceptions('uncaught');
     expect(debug.state.exceptions.value).toBe('uncaught');
@@ -192,15 +197,15 @@ describe('условия, наблюдения, исключения', () => {
   });
 });
 
-describe('выражение под курсором', () => {
-  it('берёт цепочку имён через точку, а не одно слово', () => {
+describe('the expression under the cursor', () => {
+  it('it takes a chain of names through dots rather than one word', () => {
     const text = '  const n = box.count + items.length;';
     expect(expressionAt(text, text.indexOf('count') + 2)).toBe('box.count');
     expect(expressionAt(text, text.indexOf('box'))).toBe('box');
     expect(expressionAt(text, text.indexOf('items') + 1)).toBe('items');
   });
 
-  it('на пробеле и на числе молчит', () => {
+  it('on a space and on a number it says nothing', () => {
     expect(expressionAt('a = 42;', 2)).toBeNull();
     expect(expressionAt('a = 42;', 5)).toBeNull();
   });

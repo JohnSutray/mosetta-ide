@@ -1,3 +1,8 @@
+/**
+ * The debugger's styling. The colours are the theme's variables: the breakpoint and the
+ * line being executed are declared there (`--debug-breakpoint`, `--debug-line`), and
+ * only the shape is here.
+ */
 export const STYLE = `
 .column-debug { background: var(--panel-bg); }
 

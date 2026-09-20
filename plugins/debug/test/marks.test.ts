@@ -2,6 +2,11 @@ import { EditorState } from '@codemirror/state';
 import { describe, expect, it } from 'vitest';
 import { DebugMarks, setBreakpoints, setExecution } from '../src/marks.js';
 
+/**
+ * The breakpoints in the editor are POSITIONS rather than numbers: an edit above moves
+ * a breakpoint along with the code, like the git strips. CodeMirror's state fields are
+ * checked with no screen: `EditorState` lives in Node too.
+ */
 function stand() {
   const heard: Array<Array<{ line: number }>> = [];
   const marks = new DebugMarks({
@@ -14,21 +19,21 @@ function stand() {
   return { marks, state, heard };
 }
 
-describe('точки в редакторе', () => {
-  it('ставятся по номерам и читаются обратно', () => {
+describe('the breakpoints in the editor', () => {
+  it('they are set by number and read back', () => {
     const { marks, state } = stand();
     const next = state.update({ effects: setBreakpoints.of([{ line: 2, verified: true }, { line: 4, verified: false }]) }).state;
     expect(marks.lines(next)).toEqual([2, 4]);
   });
 
-  it('едут вместе с текстом: строка, вставленная выше, сдвигает точку', () => {
+  it('they travel with the text: a line inserted above shifts a breakpoint', () => {
     const { marks, state } = stand();
     const placed = state.update({ effects: setBreakpoints.of([{ line: 3, verified: true }]) }).state;
     const edited = placed.update({ changes: { from: 0, insert: 'new\n' } }).state;
     expect(marks.lines(edited)).toEqual([4]);
   });
 
-  it('текст заменили целиком — точка находит свою строку по якорю', () => {
+  it('the text was replaced whole — a breakpoint finds its line by the anchor', () => {
     const marks = new DebugMarks({
       attached: () => undefined,
       toggled: () => undefined,
@@ -46,7 +51,7 @@ describe('точки в редакторе', () => {
     expect(marks.asks(reread)).toEqual([{ line: 4, anchor: 'return value;' }]);
   });
 
-  it('якоря нет (старая запись) — точка остаётся на своём номере', () => {
+  it('there is no anchor (an old entry) — the breakpoint stays on its number', () => {
     const marks = new DebugMarks({
       attached: () => undefined,
       toggled: () => undefined,
@@ -59,20 +64,20 @@ describe('точки в редакторе', () => {
     expect(marks.lines(reread)).toEqual([2]);
   });
 
-  it('точка на удалённой строке пропадает, а не прилипает к соседней', () => {
+  it('a breakpoint on a deleted line disappears rather than sticking to the neighbouring one', () => {
     const { marks, state } = stand();
     const placed = state.update({ effects: setBreakpoints.of([{ line: 2, verified: true }]) }).state;
     const edited = placed.update({ changes: { from: 2, to: 4, insert: '' } }).state;
     expect(marks.lines(edited)).toEqual([]);
   });
 
-  it('номер за концом файла не ставится вовсе', () => {
+  it('a number beyond the end of the file is not set at all', () => {
     const { marks, state } = stand();
     const next = state.update({ effects: setBreakpoints.of([{ line: 99, verified: false }]) }).state;
     expect(marks.lines(next)).toEqual([]);
   });
 
-  it('строка выполнения — тоже позиция, и снимается null', () => {
+  it('the line being executed is a position too, and is taken off with null', () => {
     const { state } = stand();
     const on = state.update({ effects: setExecution.of(3) }).state;
     const moved = on.update({ changes: { from: 0, insert: 'x\n' } }).state;
@@ -81,8 +86,8 @@ describe('точки в редакторе', () => {
   });
 });
 
-describe('условия едут с точкой', () => {
-  it('просьба хранится в метке и возвращается с новым номером строки', () => {
+describe('the conditions travel with the breakpoint', () => {
+  it('a request is kept in the mark and comes back with the new line number', () => {
     const { marks, state } = stand();
     const placed = state.update({
       effects: setBreakpoints.of([{ line: 2, verified: true, condition: 'n === 3', logMessage: 'hi {n}' }]),
