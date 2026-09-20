@@ -6,8 +6,17 @@ import { Visits, type VisitsRemote } from './state.js';
 import type { Visit } from './types.js';
 import DocPlugin from '@mosetta/ide-plugin-doc';
 
+/**
+ * The caret history is a plugin.
+ *
+ * "Back" and "forward" through the places the caret has been: keys, the mouse's side
+ * buttons, memory on the server. What counts as a visit is known to `Visits`; where the
+ * caret is, the editor says through `onCaret`, as it does about a symbol. The core does
+ * not know the word "history": `goTo` is enough for it.
+ */
 @plugin({ title: 'plugin.visits' })
 export default class VisitsPlugin implements VisitsRemote {
+  /** Documents are a neighbour: what is open, where to jump, how to edit. */
   private get docs(): DocPlugin {
     return this.ide.getPlugin(DocPlugin);
   }

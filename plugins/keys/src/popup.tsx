@@ -6,12 +6,28 @@ import { Popup } from '@mosetta/ide-plugin-ui';
 import type { KeysWindow } from './state.js';
 import type KeymapPlugin from '@mosetta/ide-plugin-keymap';
 
+/**
+ * The keyboard cheat sheet.
+ *
+ * A keymap is data, but data nobody had ever seen: the file lives in the repository,
+ * and the leading modifier inside it depends on the environment. A user honestly
+ * assumed the config held two alternatives, Cmd and Control — which is exactly what
+ * could not be learned without reading the source.
+ *
+ * So the window shows not the file but the RESOLVED keymap: the very rows a keystroke
+ * is compared against. And above it, the echo: what the last keystroke turned into, and
+ * whether a command was found.
+ */
 interface KeysProps {
   keys: KeymapPlugin['keys'];
   windows: Windows;
   window: KeysWindow;
 }
 
+/**
+ * The hook lives here and the markup in `KeysSheet`: a test calls that itself, without
+ * rendering.
+ */
 export function KeysPopup(props: KeysProps) {
   return <KeysSheet {...props} t={useT()} />;
 }
@@ -51,6 +67,7 @@ export function KeysSheet({ keys, windows, window: win, t }: KeysProps & { t: Id
       <div class="keys-head">
         <div class="keys-title">
           {t('keys.title')}
+          
           <span class="keys-hosts">
             {(['browser', 'electron'] as const).map((one) => (
               <span
@@ -71,6 +88,8 @@ export function KeysSheet({ keys, windows, window: win, t }: KeysProps & { t: Id
         <div class="keys-note is-loud">{t('keys.captured')}</div>
       </div>
 
+      
+      
       <div
         class="keys-echo"
         data-echo-key={echo?.key}
@@ -93,7 +112,9 @@ export function KeysSheet({ keys, windows, window: win, t }: KeysProps & { t: Id
       </div>
       <div class="keys-hint">{t('keys.echo.hint')}</div>
 
+      
       <div class="keys-list">
+        
         {gone.length > 0 && (
           <details class="keys-taken">
             <summary>{t('keys.taken', { count: gone.length })}</summary>
@@ -124,6 +145,7 @@ export function KeysSheet({ keys, windows, window: win, t }: KeysProps & { t: Id
           </details>
         )}
 
+        
         <div class="keys-grid">
           {[...groups.entries()].map(([context, list]) => (
             <Fragment key={context}>
@@ -142,10 +164,19 @@ export function KeysSheet({ keys, windows, window: win, t }: KeysProps & { t: Id
   );
 }
 
+/**
+ * A command's name in words. Taken from the dictionary rather than from the command
+ * registry, and a test makes sure every command has a string.
+ */
 function commandName(t: IdeServices['t'], id: string): string {
   return t(`command.${id}`);
 }
 
+/**
+ * A surface's name in words. The words live with the KEYMAP: in the same place the list
+ * of surfaces is declared, otherwise they would drift apart on the first new surface.
+ * Missing from the dictionary means the key shows, and that is visible.
+ */
 function contextName(t: IdeServices['t'], context: KeyContext): string {
   return t(`keymap.context.${context}`);
 }

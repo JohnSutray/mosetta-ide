@@ -1,5 +1,12 @@
 import type { JSX } from 'preact';
 
+/**
+ * The problems panel's own icon.
+ *
+ * A triangle with an exclamation mark: the same shape as the road sign for "caution",
+ * and it is recognised before it is read. Outlined means the panel is closed, filled
+ * means open: the two states are part of the rule rather than decoration.
+ */
 export function ProblemsIcon(filled: boolean): JSX.Element {
   return (
     <svg

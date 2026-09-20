@@ -61,7 +61,8 @@ describe('перезапуск последнего скрипта', () => {
   });
 
   it('нечего перезапускать — говорит вслух', () => {
-    hod).toEqual(['rerun.nothing']);
+    host.run('scripts.rerun');
+    expect(host.ide(RERUN).said).toEqual(['rerun.nothing']);
     expect(host.ide(NPM).calls).toEqual([]);
   });
 
@@ -85,10 +86,20 @@ describe('перезапуск последнего скрипта', () => {
   });
 
   it('чужая память переставляется снаружи', async () => {
-:test');
+    await npm.refresh();
+    host.plugin(Rerun).remember('ui::test');
     host.run('scripts.rerun');
     await tick();
     expect(host.ide(NPM).calls).toContainEqual({ method: 'run', params: { id: 'ui::test' } });
   });
 
   it('порядок активации не решает', async () => {
+    const other = new FakeHost();
+    other.add(Rerun, RERUN);
+    const late = other.add(NpmScripts, NPM);
+    await other.start();
+    expect(other.plugin(NpmScripts)).toBe(late);
+    other.run('scripts.rerun');
+    expect(other.ide(RERUN).said).toEqual(['rerun.nothing']);
+  });
+});

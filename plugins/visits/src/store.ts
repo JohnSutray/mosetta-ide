@@ -3,6 +3,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Visit } from './types.js';
 
+/**
+ * The file's name: a readable beginning plus a hash of the full path. The beginning so
+ * that one can tell by eye whose history it is inside the directory; the hash because
+ * everyone has two projects called `client`.
+ */
 function fileFor(stateDir: string, root: string): string {
   const name = path.basename(root).replace(/[^\w.-]+/g, '_').slice(0, 32) || 'project';
   const hash = createHash('sha1').update(root).digest('hex').slice(0, 12);
@@ -25,7 +30,16 @@ async function exists(root: string, key: string): Promise<boolean> {
   }
 }
 
+/**
+ * The caret's visit history on disk.
+ *
+ * It writes outside the project — into the PLUGIN's state directory, which the core
+ * supplies (`ide.state`), rather than into a constant. Dead rows — files that no longer
+ * exist — are thrown away on reading: a row you jump to and get emptiness from is a
+ * trap rather than a memory.
+ */
 export class VisitsStore {
+  /** How many steps we remember. Nobody walks more than thirty back. */
   readonly limit = 30;
 
   async load(stateDir: string, root: string): Promise<Visit[]> {

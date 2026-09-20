@@ -7,6 +7,20 @@ import { STYLE } from './style.js';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * The keys window is a plugin.
+ *
+ * The core listens to the keyboard, and it is the core that knows what a keystroke
+ * turned into, which environment we are in and what has been taken from us; all of that
+ * arrives through the keys facade. Here is the window: the resolved keymap by surface,
+ * an echo of the last keystroke, two sections of what was taken away, and a switch
+ * between layouts.
+ *
+ * The window CATCHES keys: its surface shows a keystroke as an echo but does not
+ * execute the command — a tool for checking keys has no right to change the editor's
+ * state. Which is also why Escape closes nothing here; the way out is the cross, or the
+ * same key again.
+ */
 @plugin({ title: 'plugin.keys' })
 export default class KeysPlugin {
   readonly window = new KeysWindow();

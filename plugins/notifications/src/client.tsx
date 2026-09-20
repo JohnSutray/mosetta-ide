@@ -3,8 +3,17 @@ import type { Ide, Note } from '@mosetta/ide-api/client';
 import { effect } from '@preact/signals';
 import { STYLE } from './style.js';
 
+/**
+ * Notifications are a plugin.
+ *
+ * The core is left with the VOICE: a list of notes and four verbs (`notify`, `settle`,
+ * `dismiss`, `dismissAll`), without a single timer. How to show them and how long to
+ * hold them is here: a stack in the bottom right corner, newest at the bottom, a minute
+ * of life for everything except work — which has an end of its own.
+ */
 @plugin({ title: 'plugin.notifications' })
 export default class NotificationsPlugin {
+  /** How long a notification lives if nobody closes it by hand. */
   readonly lifetimeMs = 60_000;
   private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();
 

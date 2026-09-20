@@ -1,5 +1,9 @@
 import type { JSX } from 'preact';
 
+/**
+ * The keys window's icon, its own. A keyboard: three rows of keys and a space bar.
+ * Filled means the window is open.
+ */
 const common = {
   width: 16,
   height: 16,
