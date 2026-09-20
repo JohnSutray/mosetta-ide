@@ -6,6 +6,11 @@ import { BranchesWindow, Git, type GitRemote } from '../src/state.js';
 
 new FakeHost();
 
+/**
+ * The services the state classes receive through the constructor: the server and the
+ * IDE are substituted, and there is no socket. `new Git()` used to silently pull in a
+ * module-level wire; now what the test did not give does not exist.
+ */
 function fakeIde() {
   const listeners = new Map<string, Array<(payload: unknown) => void>>();
   const complaints: string[] = [];
@@ -32,9 +37,20 @@ const remote: GitRemote = {
   run: async () => ({ error: null }),
 };
 
+/** `new Git()` from the old test — now with its services. */
 function makeGit(ide = fakeIde()) {
   return new Git(remote, ide);
 }
+
+/**
+ * git on the client — and at the same time the proof of what it was rewritten as
+ * classes for.
+ *
+ * There used to be thirty-four module-level exports here, and writing this file was
+ * impossible: the state lived in the module, a test received it from the previous test,
+ * and "set up a git of my own" meant reloading the module. Now it is `new Git(remote,
+ * ide)` — and it knows what it was given, and nothing else.
+ */
 
 function state(files: GitState['files']): GitState {
   return { repo: true, branch: 'main', ahead: 0, behind: 0, files, moved: {} };
@@ -45,7 +61,7 @@ function branch(name: string, extra: Partial<GitBranch> = {}): GitBranch {
 }
 
 describe('git', () => {
-  it('два экземпляра не делят ничего', () => {
+  it('two instances share nothing', () => {
     const one = makeGit();
     const two = makeGit();
     one.state.value = state({ 'a.ts': 'modified' });
@@ -53,7 +69,7 @@ describe('git', () => {
     expect(two.repo).toBe(false);
   });
 
-  it('вся дорога до изменённого файла синяя', () => {
+  it('the whole road to a changed file is blue', () => {
     const git = makeGit();
     git.state.value = state({ 'src/deep/a.ts': 'modified' });
     expect([...git.tint.value.entries()].sort()).toEqual([
@@ -63,7 +79,7 @@ describe('git', () => {
     ]);
   });
 
-  it('новый и неверсионированный красятся одинаково', () => {
+  it('new and unversioned are painted alike', () => {
     const git = makeGit();
     git.state.value = state({ 'a.ts': 'added', 'b.ts': 'untracked', 'c.ts': 'conflict' });
     expect(git.tint.value.get('a.ts')).toBe('added');
@@ -71,13 +87,13 @@ describe('git', () => {
     expect(git.tint.value.get('c.ts')).toBe('conflict');
   });
 
-  it('удалённый файл не красится: в дереве его нет', () => {
+  it('a deleted file is not painted: it is not in the tree', () => {
     const git = makeGit();
     git.state.value = state({ 'a.ts': 'deleted' });
     expect(git.tint.value.size).toBe(0);
   });
 
-  it('окно веток берёт список у git, а не держит свой', () => {
+  it('the branches window takes the list from git rather than keeping its own', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
     const window = new BranchesWindow(git, ide, () => fuzzy);
@@ -85,7 +101,7 @@ describe('git', () => {
     expect(window.shown.value.map((one) => one.name)).toEqual(['main', 'feature/x']);
   });
 
-  it('стрелки ходят по отфильтрованному, а не по всему списку', () => {
+  it('the arrows walk the filtered list rather than the whole one', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
     const window = new BranchesWindow(git, ide, () => fuzzy);
@@ -97,7 +113,7 @@ describe('git', () => {
     expect(window.current.value?.name).toBe('feature/y');
   });
 
-  it('фильтр сбрасывает выделение на первую строку', () => {
+  it('the filter resets the selection to the first row', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
     const window = new BranchesWindow(git, ide, () => fuzzy);
@@ -108,7 +124,7 @@ describe('git', () => {
     expect(window.selected.value).toBe(0);
   });
 
-  it('заголовки разделов невыбираемы и стоят перед своими ветками', () => {
+  it('the section headings are unselectable and stand before their branches', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
     const window = new BranchesWindow(git, ide, () => fuzzy);
@@ -124,7 +140,7 @@ describe('git', () => {
     expect(last.kind === 'branch' && last.label).toBe('main');
   });
 
-  it('Escape закрывает по одному слою', () => {
+  it('Escape closes one layer at a time', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
     const window = new BranchesWindow(git, ide, () => fuzzy);
@@ -146,7 +162,7 @@ describe('git', () => {
     expect(window.open.value).toBe(false);
   });
 
-  it('без репозитория окно веток не открывается и говорит об этом', () => {
+  it('without a repository the branches window does not open, and it says so', () => {
     const ide = fakeIde();
     const git = new Git(remote, ide);
     const window = new BranchesWindow(git, ide, () => fuzzy);

@@ -1,42 +1,54 @@
 import { describe, expect, it } from 'vitest';
 import { GitMarks } from '../src/marks.js';
 
+/**
+ * The text from a commit belongs to a file.
+ *
+ * The bug was visible and had lived a long time: for a fraction of a second on every
+ * open, a file was highlighted blue whole — that was the new text being compared with
+ * the old answer left over from the previous file. The answer and the path travel
+ * together, and somebody else's answer is not taken even if it arrived later than our
+ * own request.
+ *
+ * The server is substituted: the marks receive it through the constructor, and the test
+ * decides what it will answer and WHEN.
+ */
 function remoteAnswering(answers: Record<string, string | null>) {
   return {
     head: async (path: string) => ({ path, text: answers[path] ?? null }),
   };
 }
 
-describe('текст из коммита принадлежит файлу', () => {
-  it('ответ про этот файл — берём', async () => {
-    const marks = new GitMarks(remoteAnswering({ 'a.ts': 'было' }), () => ({ openDoc: { value: null }, replaceText: () => undefined }) as never);
+describe('the text from a commit belongs to a file', () => {
+  it('the answer is about this file — we take it', async () => {
+    const marks = new GitMarks(remoteAnswering({ 'a.ts': 'it was' }), () => ({ openDoc: { value: null }, replaceText: () => undefined }) as never);
     await marks.load('a.ts');
-    expect(marks.head.value).toEqual({ path: 'a.ts', text: 'было' });
+    expect(marks.head.value).toEqual({ path: 'a.ts', text: 'it was' });
   });
 
-  it('ответ про соседний файл — не берём', async () => {
-    const marks = new GitMarks({ head: async () => ({ path: 'b.ts', text: 'чужое' }) }, () => ({ openDoc: { value: null }, replaceText: () => undefined }) as never);
+  it('the answer is about a neighbouring file — we do not take it', async () => {
+    const marks = new GitMarks({ head: async () => ({ path: 'b.ts', text: 'somebody else\'s' }) }, () => ({ openDoc: { value: null }, replaceText: () => undefined }) as never);
     await marks.load('a.ts');
     expect(marks.head.value).toBe(null);
   });
 
-  it('закрыли файл — ответа нет и полосок нет', async () => {
-    const marks = new GitMarks(remoteAnswering({ 'a.ts': 'было' }), () => ({ openDoc: { value: null }, replaceText: () => undefined }) as never);
+  it('the file was closed — there is no answer and no strips', async () => {
+    const marks = new GitMarks(remoteAnswering({ 'a.ts': 'it was' }), () => ({ openDoc: { value: null }, replaceText: () => undefined }) as never);
     await marks.load('a.ts');
     await marks.load(null);
     expect(marks.head.value).toBe(null);
   });
 
-  it('файла не было в истории — это тоже ответ, и он пустой', async () => {
+  it('the file was not in the history — that is an answer too, and it is empty', async () => {
     const marks = new GitMarks(remoteAnswering({ 'new.ts': null }), () => ({ openDoc: { value: null }, replaceText: () => undefined }) as never);
     await marks.load('new.ts');
     expect(marks.head.value).toEqual({ path: 'new.ts', text: null });
   });
 
-  it('сервер отказал — считаем, что истории нет', async () => {
+  it('the server refused — we take it that there is no history', async () => {
     const marks = new GitMarks({
       head: async () => {
-        throw new Error('не репозиторий');
+        throw new Error('not a repository');
       },
     }, () => ({ openDoc: { value: null }, replaceText: () => undefined }) as never);
     await marks.load('a.ts');
@@ -44,27 +56,27 @@ describe('текст из коммита принадлежит файлу', () 
   });
 });
 
-describe('откат куска зовёт СОСЕДСКУЮ дверь (правка 18.09)', () => {
-  it('текст уходит через `replaceText`, а не через `editDoc`', () => {
+describe('reverting a hunk calls the NEIGHBOUR\'S door', () => {
+  it('the text leaves through `replaceText` rather than through `editDoc`', () => {
     const asked: string[] = [];
     const docs = () =>
       ({
-        openDoc: { value: { path: 'a.ts', text: 'один\nдва\nтри\n' } },
+        openDoc: { value: { path: 'a.ts', text: 'one\ntwo\nthree\n' } },
         replaceText: (text: string) => asked.push(text),
       }) as never;
     const marks = new GitMarks({ head: async (path: string) => ({ path, text: null }) }, docs);
 
-    marks.show({ kind: 'modified', from: 2, to: 2, before: ['ДВА'] }, { top: 0, left: 0, bottom: 0 });
+    marks.show({ kind: 'modified', from: 2, to: 2, before: ['TWO'] }, { top: 0, left: 0, bottom: 0 });
     marks.revertOpen();
 
-    expect(asked).toEqual(['один\nДВА\nтри\n']);
+    expect(asked).toEqual(['one\nTWO\nthree\n']);
   });
 
-  it('откат не снимает у файла последний перевод строки (правка 18.09)', () => {
+  it('a revert does not take the file\'s last newline away', () => {
     const asked: string[] = [];
     const docs = () =>
       ({
-        openDoc: { value: { path: 'a.ts', text: 'один\nдва\n' } },
+        openDoc: { value: { path: 'a.ts', text: 'one\ntwo\n' } },
         replaceText: (text: string) => asked.push(text),
       }) as never;
     const marks = new GitMarks({ head: async (path: string) => ({ path, text: null }) }, docs);
@@ -72,6 +84,6 @@ describe('откат куска зовёт СОСЕДСКУЮ дверь (пра
     marks.show({ kind: 'added', from: 2, to: 2, before: [] }, { top: 0, left: 0, bottom: 0 });
     marks.revertOpen();
 
-    expect(asked).toEqual(['один\n']);
+    expect(asked).toEqual(['one\n']);
   });
 });

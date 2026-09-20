@@ -2,6 +2,18 @@ import { useT } from '@mosetta/ide-api/client';
 import type { GitChange } from './types.js';
 import { DirIcon, FileIcon } from '@mosetta/ide-plugin-ui';
 
+/**
+ * The tree of touched files.
+ *
+ * It does NOT expand or collapse: this is not navigation through the project but a list
+ * of what will travel, and it has to be readable all at once. Expanding twenty
+ * directories to see twenty files would be work without a purpose.
+ *
+ * Single chains of directories, on the other hand, are collapsed into one row
+ * (`atoms/atom-text`), as in IDEA: an empty level of nesting carries no information
+ * while taking up space.
+ */
+
 interface Node {
   name: string;
   path: string;
@@ -63,10 +75,12 @@ function File({ change, depth }: { change: GitChange; depth: number }) {
   );
 }
 
+/** How many files are inside — including every subdirectory. */
 function count(node: Node): number {
   return node.files.length + node.dirs.reduce((sum, dir) => sum + count(dir), 0);
 }
 
+/** Flat paths into a tree, then collapsing the single chains. */
 function build(changes: GitChange[]): Node {
   const root: Node = { name: '', path: '', dirs: [], files: [] };
 
@@ -92,6 +106,11 @@ function build(changes: GitChange[]): Node {
   return root;
 }
 
+/**
+ * `a` → `b` → `c/file` becomes `a/b/c`. We collapse only while a directory is an ONLY
+ * child with no files of its own: otherwise we would be hiding from the human what lies
+ * along the way.
+ */
 function collapse(node: Node): void {
   for (const dir of node.dirs) collapse(dir);
   node.dirs = node.dirs.map((dir) => {

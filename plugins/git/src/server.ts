@@ -5,7 +5,29 @@ import { GitIndex } from './index-git.js';
 import { GitStatus } from './status.js';
 import type { GitAction, GitState } from './types.js';
 
+/**
+ * git's server half.
+ *
+ * git is the second AXIS rather than a layer of the cake: it has a source of truth of
+ * its own, the `.git` directory, which our layers do not see. That is exactly why it
+ * moved into a plugin entirely: the core had nothing to lend it beyond spawning
+ * subprocesses — and the contract now gives that.
+ *
+ * The index is taken with `project.use`: it is a resource of the PROJECT — one per open
+ * project, going out with it, and telling the tabs itself that it has recounted.
+ *
+ * Reading hands over the snapshot from memory and waits for NOTHING: git spins in the
+ * background, otherwise repainting the tree would run into somebody else's process.
+ * Actions are the opposite — they wait: a human pressed "checkout" and has to learn the
+ * result.
+ */
 export default class GitServer {
+  /**
+   * The only place where git is launched — and therefore it is OPEN to neighbours: the
+   * changes panel commits and shelves with the same hands, through
+   * `getPlugin(GitServer).cli`. A second git launcher would mean second rules about the
+   * index lock, the environment and the complaints.
+   */
   readonly cli: GitCli;
   private readonly status = new GitStatus();
 
@@ -13,6 +35,12 @@ export default class GitServer {
     this.cli = new GitCli(ide);
   }
 
+  /**
+   * The index lives with the project from the first second: the tree has to open
+   * already painted. It hears memory — a file was saved, moved, vanished — and recounts
+   * at once rather than by polling; the auto-fetch reads its own setting itself, since
+   * the server half now has `ide.settings`.
+   */
   @activate() protected start(): void {
     this.ide.onProject((project) => {
       const index = this.indexOf(project);
@@ -64,7 +92,7 @@ export default class GitServer {
 
   @command() protected async head(params: unknown, call: CallContext) {
     const asked = params as { path?: unknown } | null;
-    if (!asked || typeof asked.path !== 'string') throw new Error('нужен path');
+    if (!asked || typeof asked.path !== 'string') throw new Error('path required');
     return { path: asked.path, text: await this.index(call).headText(asked.path) };
   }
 
@@ -74,9 +102,15 @@ export default class GitServer {
     return index.snapshot();
   }
 
+  /**
+   * git's arguments are assembled HERE rather than arriving from the client. The client
+   * names an action and a branch; everything else is our business. A branch's name is
+   * validated before it reaches the command line: a name beginning with a hyphen would
+   * otherwise become a flag.
+   */
   @command() protected async run(params: unknown, call: CallContext) {
     const asked = params as { action?: unknown; branch?: string; name?: string } | null;
-    if (!asked || typeof asked.action !== 'string') throw new Error('нужен action');
+    if (!asked || typeof asked.action !== 'string') throw new Error('action required');
     const args = argsFor(asked.action as GitAction, asked.branch, asked.name);
     return { error: await this.index(call).run(asked.action as GitAction, args) };
   }
@@ -109,15 +143,20 @@ function argsFor(action: GitAction, branch?: string, name?: string): string[] {
     case 'merge':
       return ['merge', ref(branch)];
     default:
-      throw new Error(`неизвестное действие git: ${String(action)}`);
+      throw new Error(`unknown git action: ${String(action)}`);
   }
 }
 
+/**
+ * A branch name that can be trusted with a place on the command line. The prohibitions
+ * are taken from git itself (`git check-ref-format`), plus one of our own: a name may
+ * not begin with a hyphen, otherwise git takes it for a flag.
+ */
 function ref(value: string | undefined): string {
   const name = (value ?? '').trim();
-  if (name === '') throw new Error('нужно имя ветки');
+  if (name === '') throw new Error('a branch name is required');
   if (name.startsWith('-') || /[\s~^:?*[\\]/.test(name) || name.includes('..')) {
-    throw new Error(`недопустимое имя ветки: ${name}`);
+    throw new Error(`an inadmissible branch name: ${name}`);
   }
   return name;
 }

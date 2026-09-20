@@ -1,3 +1,11 @@
+/**
+ * git's own styling.
+ *
+ * It moved out of the core's stylesheet word for word: the branches popup, the push
+ * window, the branch in the toolbar, the filter with its menu, the "how it was" popup.
+ * The theme's variables (`--divider`, `--accent`, `--muted`) come from the core — there
+ * is one Darcula for the whole IDE.
+ */
 export const STYLE = `
 
 .branches { display: flex; flex-direction: column; }

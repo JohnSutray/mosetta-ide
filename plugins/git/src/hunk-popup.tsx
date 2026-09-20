@@ -4,11 +4,28 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import type { Windows } from '@mosetta/ide-plugin-ui';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
 
+/**
+ * "How it was" — a popup next to the git strip.
+ *
+ * Not a modal: the conversation is about particular lines, and taking one's eyes away
+ * from them to the middle of the screen means losing the place. It stands BELOW them or
+ * ABOVE them, but never over: "how it was" can only be compared with "how it is" when
+ * both are visible. It closes on a click outside — like a dropdown menu.
+ *
+ * The lines inside are deliberately not highlighted by language: this is a QUOTATION
+ * from the history rather than code being edited. Highlighting would make it look like
+ * a second editor, which is not what it is.
+ */
 export function HunkPopup({ docs, windows, marks }: { docs: DocPlugin; windows: Windows; marks: GitMarks }) {
   const t = useT();
   const mount = useIde().mount;
   const open = marks.popup.value;
   const self = useRef<HTMLDivElement>(null);
+  /**
+   * We place it BELOW the changed lines, and if it does not fit below, above them. The
+   * height is learned after the first showing: before that nobody knows it, and
+   * guessing from the number of lines means missing on every long hunk.
+   */
   const [top, setTop] = useState(open ? open.box.bottom + 4 : 0);
   const alive = docs.openDoc.value !== null;
 

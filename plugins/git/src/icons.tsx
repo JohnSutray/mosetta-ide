@@ -1,5 +1,12 @@
 import type { JSX } from 'preact';
 
+/**
+ * The git icons, our own.
+ *
+ * The branch and the push arrow moved over from the widgets plugin along with the only
+ * buttons of their own. Monochrome, taking their colour from the button; filled when
+ * the window is open.
+ */
 export function BranchIcon({ filled = false }: { filled?: boolean }): JSX.Element {
   return (
 

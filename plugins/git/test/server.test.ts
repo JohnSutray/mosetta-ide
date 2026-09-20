@@ -24,11 +24,12 @@ import type { GitBranch, GitChange, GitState, PushPreview } from '../src/types.j
 
 const run = promisify(execFile);
 
+/** A decoy project: it remembers the resources and everything it was told. */
 class FakeProject implements Project {
   readonly heard: Array<{ event: string; payload: unknown }> = [];
   private readonly resources = new Map<string, ProjectResource>();
   constructor(readonly root: string) {}
-  readonly name = 'проект';
+  readonly name = 'a project';
   use<T extends ProjectResource>(key: string, create: () => T): T {
     const have = this.resources.get(key);
     if (have) return have as T;
@@ -52,9 +53,10 @@ class FakeProject implements Project {
     return () => undefined;
   }
   start(): ProcessHandle {
-    throw new Error('долгоживущих процессов в этом тесте нет');
+    throw new Error('there are no long-lived processes in this test');
   }
   readonly listeners = new Set<(event: MemoryEvent) => void>();
+  /** Memory spoke — as if a file had been saved. */
   remember(event: MemoryEvent): void {
     for (const one of this.listeners) one(event);
   }
@@ -76,6 +78,7 @@ class FakeProject implements Project {
   }
 }
 
+/** The launching is real but without the core: exactly what the contract promises. */
 function running(spec: RunAsk, onChunk?: (text: string) => void): Promise<RunResult> {
   return new Promise((resolve) => {
     const child = spawn(spec.command, spec.args, { cwd: spec.cwd, env: { ...process.env, LC_ALL: 'C', ...spec.env } });
@@ -105,7 +108,7 @@ function fakeIde(projects: Array<(project: Project) => void>): Ide {
     name: '@mosetta/ide-plugin-git',
     method: () => undefined,
     getPlugin: () => {
-      throw new Error('соседей в этом тесте нет');
+      throw new Error('there are no neighbours in this test');
     },
     onProject: (handler) => {
       projects.push(handler);
@@ -139,9 +142,9 @@ describe('git', () => {
     await fs.writeFile(path.join(root, 'src/util.ts'), 'export const two = 2;\n');
     await git('init', '-b', 'main');
     await git('config', 'user.email', 'test@example.com');
-    await git('config', 'user.name', 'Тест');
+    await git('config', 'user.name', 'A test');
     await git('add', '.');
-    await git('commit', '-m', 'первый');
+    await git('commit', '-m', 'the first');
 
     project = new FakeProject(root);
     const projects: Array<(project: Project) => void> = [];
@@ -152,7 +155,7 @@ describe('git', () => {
     const ctx: CallContext = { project, services: null };
     call = (method, params = null) => {
       const handler = methods.get(method);
-      if (!handler) throw new Error(`нет метода ${method}`);
+      if (!handler) throw new Error(`no such method: ${method}`);
       return Promise.resolve(handler(params, ctx));
     };
   });
@@ -169,14 +172,14 @@ describe('git', () => {
   const act = (p: { action: string; branch?: string; name?: string }) =>
     call('run', p) as Promise<{ error: string | null }>;
 
-  it('чистый репозиторий: ветка есть, изменений нет', async () => {
+  it('a clean repository: there is a branch and no changes', async () => {
     const fresh = (await call('refresh')) as GitState;
     expect(fresh.repo).toBe(true);
     expect(fresh.branch).toBe('main');
     expect(fresh.files).toEqual({});
   });
 
-  it('правка файла видна как изменение, новый файл — как неверсионированный', async () => {
+  it('an edit to a file shows as a change, a new file as unversioned', async () => {
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 111;\n');
     await fs.writeFile(path.join(root, 'src/new.ts'), 'export const three = 3;\n');
     const got = (await call('refresh')) as GitState;
@@ -185,20 +188,20 @@ describe('git', () => {
     expect(got.files['src/util.ts']).toBeUndefined();
   });
 
-  it('отдаёт файл таким, каким он был в коммите', async () => {
+  it('it hands the file over as it was in the commit', async () => {
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 999;\n');
     const head = (await call('head', { path: 'src/main.ts' })) as { path: string; text: string | null };
     expect(head.path).toBe('src/main.ts');
     expect(head.text).toBe('export const one = 1;\n');
   });
 
-  it('файла нет в истории — это ответ, а не ошибка', async () => {
+  it('the file is not in the history — that is an answer rather than an error', async () => {
     await fs.writeFile(path.join(root, 'src/fresh.ts'), 'export const three = 3;\n');
     const head = (await call('head', { path: 'src/fresh.ts' })) as { text: string | null };
     expect(head.text).toBeNull();
   });
 
-  it('индекс слышит память: сохранили файл — покраска обновилась без опроса (ADR-0188)', async () => {
+  it('the index hears memory: a file was saved and the painting updated with no poll', async () => {
     await state();
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 11;\n');
     project.remember({ type: 'doc.saved', path: 'src/main.ts' });
@@ -206,20 +209,20 @@ describe('git', () => {
     for (;;) {
       const now = await state();
       if (now.files['src/main.ts']) break;
-      if (Date.now() - started > 2000) throw new Error('индекс не услышал память');
+      if (Date.now() - started > 2000) throw new Error('the index did not hear memory');
       await new Promise((r) => setTimeout(r, 50));
     }
     expect(Date.now() - started).toBeLessThan(2000);
   });
 
-  it('состояние отдаётся из памяти, а не считается на запрос', async () => {
+  it('the state is handed over from memory rather than computed on request', async () => {
     await call('refresh');
     const started = Date.now();
     for (let i = 0; i < 20; i += 1) await state();
     expect(Date.now() - started).toBeLessThan(300);
   });
 
-  it('ветки: текущая помечена, новая появляется и на неё переключаются', async () => {
+  it('branches: the current one is marked, a new one appears and is switched to', async () => {
     await call('refresh');
     expect((await act({ action: 'create', name: 'feature' })).error).toBeNull();
     let list = await branches();
@@ -237,7 +240,7 @@ describe('git', () => {
     expect((await branches()).map((b) => b.name)).not.toContain('renamed');
   }, 20_000);
 
-  it('действие печатает свой вывод, а не молчит до конца', async () => {
+  it('an action prints its output rather than staying silent to the end', async () => {
     await call('refresh');
     await act({ action: 'create', name: 'streamed' });
     const chunks = project.heard
@@ -245,26 +248,26 @@ describe('git', () => {
       .map((one) => one.payload as { action: string; chunk: string });
     const text = chunks.map((one) => one.chunk).join('');
     expect(text).toContain('$ git checkout -b streamed');
-    expect(text).toContain('[готово]');
+    expect(text).toContain('[done]');
     expect(chunks.every((one) => one.action === 'create')).toBe(true);
   }, 15_000);
 
-  it('отказ git приходит его словами, а не нашим пересказом', async () => {
+  it('git\'s refusal arrives in its own words rather than our retelling', async () => {
     await call('refresh');
-    const { error } = await act({ action: 'checkout', branch: 'нет-такой' });
+    const { error } = await act({ action: 'checkout', branch: 'no-such' });
     expect(error).toMatch(/did not match|pathspec|not found/i);
   });
 
-  it('имя ветки не может стать флагом git', async () => {
+  it('a branch name cannot become a git flag', async () => {
     await expect(act({ action: 'checkout', branch: '--exec=rm -rf /' })).rejects.toThrow(
-      /недопустимое имя ветки/,
+      /an inadmissible branch name/,
     );
-    await expect(act({ action: 'create', name: 'две ветки' })).rejects.toThrow(
-      /недопустимое имя ветки/,
+    await expect(act({ action: 'create', name: 'two branches' })).rejects.toThrow(
+      /an inadmissible branch name/,
     );
   });
 
-  it('окно пуша знает, что уедет и что затрётся', async () => {
+  it('the push window knows what will travel and what will be overwritten', async () => {
     await call('refresh');
     const bare = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-bare-'));
     await run('git', ['init', '--bare', '-b', 'main', bare]);
@@ -273,34 +276,34 @@ describe('git', () => {
 
     await fs.writeFile(path.join(root, 'src/mine.ts'), 'export const mine = 1;\n');
     await git('add', '.');
-    await git('commit', '-m', 'моё');
+    await git('commit', '-m', 'mine');
 
     let preview = await outgoing();
     expect(preview.branch).toBe('main');
     expect(preview.upstream).toBe('origin/main');
-    expect(preview.local.map((c) => c.subject)).toEqual(['моё']);
+    expect(preview.local.map((c) => c.subject)).toEqual(['mine']);
     expect(preview.remote).toEqual([]);
-    expect(preview.common.map((c) => c.subject)).toEqual(['первый']);
+    expect(preview.common.map((c) => c.subject)).toEqual(['the first']);
 
     const other = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-other-'));
     await run('git', ['clone', bare, other]);
     await run('git', ['-C', other, 'config', 'user.email', 'other@example.com']);
-    await run('git', ['-C', other, 'config', 'user.name', 'Другой']);
+    await run('git', ['-C', other, 'config', 'user.name', 'Another']);
     await fs.writeFile(path.join(other, 'theirs.ts'), 'export const theirs = 1;\n');
     await run('git', ['-C', other, 'add', '.']);
-    await run('git', ['-C', other, 'commit', '-m', 'чужое']);
+    await run('git', ['-C', other, 'commit', '-m', 'theirs']);
     await run('git', ['-C', other, 'push']);
 
     await act({ action: 'fetch' });
     preview = await outgoing();
-    expect(preview.local.map((c) => c.subject)).toEqual(['моё']);
-    expect(preview.remote.map((c) => c.subject)).toEqual(['чужое']);
+    expect(preview.local.map((c) => c.subject)).toEqual(['mine']);
+    expect(preview.remote.map((c) => c.subject)).toEqual(['theirs']);
 
     await fs.rm(bare, { recursive: true, force: true });
     await fs.rm(other, { recursive: true, force: true });
   }, 30_000);
 
-  it('файлы пуша: весь исходящий дифф и дифф одного коммита', async () => {
+  it('a push\'s files: the whole outgoing diff, and one commit\'s diff', async () => {
     await call('refresh');
     const bare = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-bare2-'));
     await run('git', ['init', '--bare', '-b', 'main', bare]);
@@ -309,11 +312,11 @@ describe('git', () => {
 
     await fs.writeFile(path.join(root, 'src/one.ts'), 'export const one = 1;\n');
     await git('add', '.');
-    await git('commit', '-m', 'первый мой');
+    await git('commit', '-m', 'my first');
     await fs.writeFile(path.join(root, 'src/two.ts'), 'export const two = 2;\n');
     await fs.writeFile(path.join(root, 'src/main.ts'), 'export const one = 111;\n');
     await git('add', '.');
-    await git('commit', '-m', 'второй мой');
+    await git('commit', '-m', 'my second');
 
     const all = await changes();
     expect(all.map((c) => c.path).sort()).toEqual(['src/main.ts', 'src/one.ts', 'src/two.ts']);
@@ -322,14 +325,14 @@ describe('git', () => {
 
     const preview = await outgoing();
     const older = preview.local[preview.local.length - 1]!;
-    expect(older.subject).toBe('первый мой');
+    expect(older.subject).toBe('my first');
     const one = await changes({ commit: older.short });
     expect(one.map((c) => c.path)).toEqual(['src/one.ts']);
 
     await fs.rm(bare, { recursive: true, force: true });
   }, 30_000);
 
-  it('переименование в разборе статуса не съедает следующую запись', () => {
+  it('a rename in the status parsing does not eat the next record', () => {
     const raw = 'R  new.ts\0old.ts\0 M src/main.ts\0?? src/fresh.ts\0';
     expect(new GitStatus().parse(raw).files).toEqual({
       'new.ts': 'modified',
@@ -338,7 +341,7 @@ describe('git', () => {
     });
   });
 
-  it('переезд ЗАПОМИНАЕТСЯ: без старого имени дифф покажет файл написанным заново', () => {
+  it('a move is REMEMBERED: without the old name a diff would show the file written afresh', () => {
     const raw = 'R  plugins/ui/src/ask-popup.tsx\0plugins/tree/src/prompt.tsx\0';
     expect(new GitStatus().parse(raw).moved).toEqual({
       'plugins/ui/src/ask-popup.tsx': 'plugins/tree/src/prompt.tsx',
