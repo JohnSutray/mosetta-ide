@@ -64,7 +64,10 @@ export function TerminalView({ screen, palette }: { screen: Screen; palette: Pal
       if (!disposed) term.write(data);
     });
 
-    const offInput = term.onData((data) => screen.write(name, data));
+    let replaying = false;
+    const offInput = term.onData((data) => {
+      if (!replaying) screen.write(name, data);
+    });
 
     const sync = () => {
       if (disposed) return;
@@ -80,9 +83,18 @@ export function TerminalView({ screen, palette }: { screen: Screen; palette: Pal
       .attach(name)
       .then(({ buffer }) => {
         if (disposed) return;
-        if (buffer) term.write(buffer);
-        sync();
-        term.focus();
+        const shown = () => {
+          replaying = false;
+          if (disposed) return;
+          sync();
+          term.focus();
+        };
+        if (!buffer) {
+          shown();
+          return;
+        }
+        replaying = true;
+        term.write(buffer, shown);
       })
       .catch(() => undefined);
 
