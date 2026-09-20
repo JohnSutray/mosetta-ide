@@ -3,12 +3,29 @@ import type { Windows } from './windows/windows.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 
 export interface MenuItem {
+  /** A dictionary key: labels are data. */
   label: string;
+  /**
+   * Substitutions in a label: "move to {name}" is one item with a parameter rather than
+   * ten dictionary keys for ten changelists.
+   */
   args?: Record<string, string | number>;
   danger?: boolean;
   run: () => void;
 }
 
+/**
+ * A dropdown menu — one for everyone.
+ *
+ * Its main property is not its look but that it TAKES CONTROL. While a menu is open,
+ * the arrows and Enter belong to it rather than to the list beneath: a branch's action
+ * menu used to hang over the branch list while the arrows went on scrolling the list —
+ * that is, choosing by eye in one place and by key in another.
+ *
+ * The mechanics are the same as everything else's: the menu takes the OS focus and
+ * names its own surface, so the "capture" comes about by itself rather than from a list
+ * of exceptions. On leaving, it gives the focus back to whoever it took it from.
+ */
 export function Menu({ windows,
   x,
   y,

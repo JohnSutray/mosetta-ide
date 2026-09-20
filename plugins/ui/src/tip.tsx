@@ -2,6 +2,13 @@ import type { Tips } from './windows/tips.js';
 import { useLayoutEffect, useRef } from 'preact/hooks';
 import { useIde } from '@mosetta/ide-api/client';
 
+/**
+ * The tooltip. One for the whole application: there are many tooltips, and exactly one
+ * is ever shown — the one the mouse is currently under.
+ *
+ * The mouse does not catch it (`pointer-events: none`): a tooltip appears next to what
+ * is hovered, and it must not intercept the hover — otherwise it would put itself out.
+ */
 export function Tip({ tips }: { tips: Tips }) {
   const shown = tips.spot.value;
   const mount = useIde().mount;

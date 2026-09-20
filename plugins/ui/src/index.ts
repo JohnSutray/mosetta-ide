@@ -1,3 +1,16 @@
+/**
+ * `@mosetta/ide-plugin-ui` — the IDE's widgets, and it is a PLUGIN.
+ *
+ * A window frame, a list with a search field, a menu, a choice window, a resizer, a
+ * tooltip, icons. The core draws none of them; plugins import them under this name, and
+ * the build substitutes what THIS plugin provided. It can be turned off — and then
+ * there is nobody to draw the windows, which is said out loud rather than by emptiness.
+ *
+ * The windows' state is here too, as the `UiPlugin.windows` field: the stack, the
+ * tooltip, the sizes, the active list and menu. The core turned out to have not one
+ * question of its own about windows, and the separate package existed only so that the
+ * core and this plugin imported the same thing.
+ */
 
 export { Popup } from './popup.js';
 export { PickPopup, grouped, matches, type PickItem, type PickProps } from './pick-popup.js';

@@ -1,4 +1,9 @@
 
+/**
+ * A drawing instead of a caption. Set up where the SHAPE is recognised faster than two
+ * letters: a lock, a branch, an image, a terminal. For the rest a plate with letters is
+ * more honest — inventing icons for `TS` and `PY` means making things up.
+ */
 export type GlyphName =
   | 'lock'
   | 'git'
@@ -10,21 +15,30 @@ export type GlyphName =
   | 'archive';
 
 export interface FileType {
+  /**
+   * The caption on the plate. Two or three characters: more does not read at sixteen
+   * pixels, and a test guards that limit.
+   */
   label: string;
+  /** The plate's colour. */
   color: string;
+  /** The colour of the letters on the plate. Dark if the plate is light. */
   ink: string;
+  /** Present means we draw an icon and no plate with letters at all. */
   glyph?: GlyphName;
 }
 
 const LIGHT = '#e8eef2';
 const DARK = '#1f2224';
 
+/** An unfamiliar extension means just a sheet of paper, with no plate and no lying. */
 const PLAIN: FileType = { label: '', color: '#6f7679', ink: LIGHT };
 
 function type(label: string, color: string, ink = LIGHT): FileType {
   return { label, color, ink };
 }
 
+/** The same, but as a drawing. The caption stays — search and the tests need it. */
 function drawn(label: string, color: string, glyph: GlyphName): FileType {
   return { label, color, ink: LIGHT, glyph };
 }
@@ -41,6 +55,7 @@ const GIT = drawn('git', '#e0603a', 'git');
 const NPM = drawn('npm', '#cb3837', 'npm');
 const TEXT = drawn('TXT', '#8a8f92', 'text');
 
+/** Extension (without the dot) to type. The keys are lower-case only. */
 const BY_EXTENSION: Record<string, FileType> = {
   ts: TS,
   tsx: type('TSX', '#3178c6'),
@@ -102,6 +117,7 @@ const BY_EXTENSION: Record<string, FileType> = {
   gz: drawn('GZ', '#a08f75', 'archive'),
 };
 
+/** A whole name to a type. Stronger than an extension: package.json is not "just json". */
 const BY_NAME: Record<string, FileType> = {
   'package.json': NPM,
   'package-lock.json': LOCK,
@@ -119,6 +135,11 @@ const BY_NAME: Record<string, FileType> = {
   makefile: type('MK', '#8a7f6f'),
 };
 
+/**
+ * A name's tail to a type. Needed where the extension lies: `foo.d.ts` is a declaration
+ * rather than a source, and `tsconfig.build.json` is a config rather than data. The
+ * order matters and is checked top to bottom.
+ */
 const BY_SUFFIX: Array<[string, FileType]> = [
   ['.d.ts', type('D', '#5a7ea8')],
   ['.tsbuildinfo', GENERATED],
@@ -129,15 +150,31 @@ const BY_SUFFIX: Array<[string, FileType]> = [
   ['.spec.ts', type('TS', '#4e9a68')],
 ];
 
+/**
+ * A name's beginning to a type. This is where families live: `tsconfig.json`,
+ * `tsconfig.build.json`, `tsconfig.node.json` are all one config.
+ */
 const BY_PREFIX: Array<[string, FileType]> = [
   ['tsconfig.', TS],
   ['jsconfig.', JS],
   ['.env', CONF],
 ];
 
+/**
+ * A file's icon by its name.
+ *
+ * A class rather than a handful of tables and a function: the tables are its fields,
+ * and one day a user's own will be added to them, from the settings file. The
+ * resolution rule will then not change — only where the rows came from will.
+ */
 export class FileTypes {
+  /** An unfamiliar extension means just a sheet of paper, with no plate and no lying. */
   readonly plain = PLAIN;
 
+  /**
+   * A file's type by name. The resolution rule goes from the particular to the general:
+   * the whole name, the tail, the beginning, the extension, the sheet of paper.
+   */
   of(name: string): FileType {
     const key = name.toLowerCase();
     const exact = BY_NAME[key];
@@ -156,6 +193,10 @@ export class FileTypes {
     return PLAIN;
   }
 
+  /**
+   * Every declared type. A test reads them — the caption has to fit the plate — and one
+   * day the settings window will.
+   */
   all(): FileType[] {
     return [
       ...Object.values(BY_EXTENSION),
@@ -165,6 +206,7 @@ export class FileTypes {
     ];
   }
 
+  /** What they are recognised by: extensions, names, tails, beginnings. */
   keys(): string[] {
     return [
       ...Object.keys(BY_EXTENSION),
@@ -175,4 +217,5 @@ export class FileTypes {
   }
 }
 
+/** One per tab. */
 export const fileTypes = new FileTypes();

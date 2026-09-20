@@ -1,3 +1,20 @@
+/**
+ * A fuzzy filter for short lists.
+ *
+ * The heavy matcher lives on the server: it walks the whole project's index, learns a
+ * dictionary and is worth it. Here there is a list of a dozen branches, and dragging
+ * the same machinery to the client for its sake would mean tying two ends together for
+ * a task a subsequence solves.
+ *
+ * The rules are simple and predictable: the query's letters have to occur in order; a
+ * match at a word's start is worth more than one in the middle; consecutive is worth
+ * more than scattered. We return the positions — they get highlighted.
+ *
+ * A class rather than a function. The weights are its fields: today they are constants,
+ * tomorrow they will arrive from the settings, and the callers will not have to be
+ * rewritten. As a bonus, a measurement can be hung on a method: "the search feels
+ * sluggish" is a question somebody will ask one day.
+ */
 
 export interface FuzzyHit {
   score: number;
@@ -5,7 +22,9 @@ export interface FuzzyHit {
 }
 
 export class Fuzzy {
+  /** A match at a word's start is worth most of all: that is how one searches by eye. */
   private readonly wordStart = 12;
+  /** Consecutive is worth more than scattered. */
   private readonly consecutive = 8;
   private readonly match = 4;
 
@@ -34,4 +53,5 @@ export class Fuzzy {
   }
 }
 
+/** One per tab. */
 export const fuzzy = new Fuzzy();

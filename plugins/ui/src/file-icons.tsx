@@ -1,6 +1,25 @@
 import type { JSX } from 'preact';
 import { fileTypes, type FileType, type GlyphName } from './file-types.js';
 
+/**
+ * The tree's icons. The knowledge about languages lives in the file-types table; here
+ * there are only the shapes.
+ *
+ * There are three shapes, and choosing between them is choosing what is more honest to
+ * show:
+ *
+ * * a DRAWING where a shape is recognised faster than letters: a lock, a branch, an image, a terminal;
+ * * a PLATE WITH LETTERS for languages: `TS` and `PY` are not drawn as pictures, that is how they are recognised — by their letters;
+ * * a SHEET OF PAPER for the unfamiliar: it asserts nothing.
+ *
+ * The shape used to be one — a sheet with a tiny caption underneath — and the sheet
+ * took two thirds of the space while saying nothing: every file is a file anyway.
+ *
+ * The 16-pixel size was not chosen by eye: it is the row height minus the air. The
+ * caption is stretched with `textLength`, so two characters and three take one width
+ * and the name column does not dance.
+ */
+
 const ICON = {
   width: 16,
   height: 16,
@@ -19,6 +38,12 @@ export function FileIcon({ name }: { name: string }): JSX.Element {
   return <svg {...ICON}>{tile(type)}</svg>;
 }
 
+/**
+ * A plate with letters. It used to be a caption ON a sheet of paper and became the icon
+ * itself: the sheet took two thirds of the space and said nothing — every file is a
+ * file anyway — while the caption got a narrow strip where three characters turned into
+ * dirt.
+ */
 function tile(type: FileType): JSX.Element {
   const wide = type.label.length > 2;
   return (
@@ -42,6 +67,7 @@ function tile(type: FileType): JSX.Element {
   );
 }
 
+/** A sheet of paper with a folded corner — "just a file", as in IDEA. */
 function paper(): JSX.Element {
   return (
     <>
@@ -57,6 +83,14 @@ function paper(): JSX.Element {
   );
 }
 
+/**
+ * Icons for the types where the SHAPE is recognised faster than two letters.
+ *
+ * There are few of them and they are drawn with lines of one weight — a set has to read
+ * as a set rather than as a collection of somebody else's logos. There is one
+ * exception: npm, because somebody else's mark is recognised by colour and shape before
+ * it is recognised by meaning.
+ */
 const GLYPHS: Record<GlyphName, (color: string) => JSX.Element> = {
   lock: (color) => (
     <g stroke={color} stroke-width="1.4" fill="none" stroke-linecap="round">
@@ -112,6 +146,12 @@ const GLYPHS: Record<GlyphName, (color: string) => JSX.Element> = {
   ),
 };
 
+/**
+ * A folder. Its colour means exactly one thing: orange means the folder is excluded
+ * from the walk (`fs.noScan`), so search and the language server do not go into it.
+ * That is precisely how IDEA paints `node_modules` and `dist`, and it is a warning
+ * rather than decoration.
+ */
 export function DirIcon({ excluded = false }: { excluded?: boolean }): JSX.Element {
   const body = excluded ? '#a8703a' : '#7f8a91';
   const flap = excluded ? '#8a5a2c' : '#6a747a';
@@ -126,6 +166,7 @@ export function DirIcon({ excluded = false }: { excluded?: boolean }): JSX.Eleme
   );
 }
 
+/** The project root: the same folder, but in the module colour — so as not to get lost. */
 export function RootIcon(): JSX.Element {
   return (
     <svg {...ICON}>
@@ -138,6 +179,10 @@ export function RootIcon(): JSX.Element {
   );
 }
 
+/**
+ * The disclosure chevron. Turned down means the folder is open; the turning is done by
+ * CSS.
+ */
 export function Chevron(): JSX.Element {
   return (
     <svg width="9" height="9" viewBox="0 0 9 9" fill="none">

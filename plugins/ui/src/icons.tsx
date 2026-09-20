@@ -1,5 +1,14 @@
 import type { JSX } from 'preact';
 
+/**
+ * The toolbar's icons.
+ *
+ * Each has two states: outlined means the feature is closed, filled means open. That is
+ * not decoration but part of the rule: what the toolbar shows has to correspond
+ * reactively to a feature's state, and "filled or not" reads at a glance, before the
+ * backing does.
+ */
+
 export type IconName =
   | 'editor'
   | 'terminal'

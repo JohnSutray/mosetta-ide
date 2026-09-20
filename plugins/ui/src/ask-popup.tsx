@@ -4,11 +4,18 @@ import { Popup } from './popup.js';
 import type { Ask, Asking } from './asking.js';
 import type { Windows } from './windows/windows.js';
 
+/** A row of the modal's text: 12px × 1.5. */
 const LINE = 18;
+/**
+ * Everything but the text: the heading, the padding, the buttons — and the field, if
+ * there is one.
+ */
 const CHROME = 86;
 const FIELD = 36;
+/** We grow no taller: a full-screen window frightens more than scrolling does. */
 const CEILING = 420;
 
+/** How many characters fit on a row at the window's default width. */
 const COLUMNS = 60;
 
 function heightFor(ask: Ask): number {
@@ -18,6 +25,18 @@ function heightFor(ask: Ask): number {
   return Math.min(CEILING, CHROME + (ask.field ? FIELD : 0) + lines * LINE);
 }
 
+/**
+ * A modal with one question.
+ *
+ * Needed where a name cannot be computed: "what shall we call it?" and "delete for
+ * sure?". One for both cases, because the difference between them is the presence of an
+ * input field rather than a separate window; and one for every asker — the tree and the
+ * changes panel ask one and the same question.
+ *
+ * A dangerous action paints its button and does NOT select it by default: Enter in a
+ * modal confirms, and if Enter deletes a directory then one day it will delete one by
+ * accident.
+ */
 export function AskPopup({
   windows,
   asking,
@@ -25,6 +44,10 @@ export function AskPopup({
 }: {
   windows: Windows;
   asking: Asking;
+  /**
+   * The modal closed. It took the keyboard from somebody, and only whoever asked knows
+   * how to give it back: for the tree that is its rows, for a created file the editor.
+   */
   onClosed?: () => void;
 }) {
   const t = useT();

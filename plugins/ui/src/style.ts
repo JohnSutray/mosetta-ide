@@ -1,3 +1,13 @@
+/**
+ * The widgets' styling, the plugin's own.
+ *
+ * Gathered from four places: the window frame and the dimmer lay with the search (that
+ * is where they were born), the menu with git, and the list, the choice window, the
+ * resizer and the tooltip in the core. Now everything `@mosetta/ide-plugin-ui` draws is
+ * painted by `@mosetta/ide-plugin-ui`; turn the plugin off and the styles leave with
+ * the widgets rather than staying behind as orphans. The theme's variables belong to
+ * the core — there is one Darcula for the whole IDE.
+ */
 export const STYLE = `
 
 .resizer {

@@ -3,6 +3,14 @@ import { Popups } from '../src/windows/popups.js';
 
 const popups = new Popups();
 
+/**
+ * A popup closed means the human returned to where they came from.
+ *
+ * The rule is end-to-end, which is why it lives in the frame rather than in every
+ * popup. Checking it by eye is expensive: one would have to open every popup, close it
+ * three ways and see where the focus went. Here that is six lines.
+ */
+
 interface FakeEl {
   isConnected: boolean;
   focused: number;
@@ -11,6 +19,11 @@ interface FakeEl {
   children: FakeEl[];
 }
 
+/**
+ * A fake element instead of a real DOM: the focus rule is checked without a browser.
+ * The cast is used where it goes into core code — which is more honest than erecting
+ * three hundred properties of an HTMLElement for the sake of four that are used.
+ */
 function asEl(fake: FakeEl): HTMLElement {
   return fake as unknown as HTMLElement;
 }
@@ -35,6 +48,7 @@ function setActive(node: FakeEl | HTMLElement | null): void {
   (globalThis as { document?: unknown }).document = { activeElement: node ?? body, body };
 }
 
+/** Wait for a microtask: the decision to return is taken in exactly that one. */
 const settle = () => new Promise<void>((done) => queueMicrotask(() => done()));
 
 beforeEach(() => {
@@ -46,8 +60,8 @@ afterEach(() => {
   Reflect.deleteProperty(globalThis as object, 'document');
 });
 
-describe('возврат фокуса из попапа', () => {
-  it('фокус возвращается туда, где был', async () => {
+describe('returning the focus from a popup', () => {
+  it('the focus goes back where it was', async () => {
     const editor = el();
     setActive(asEl(editor));
 
@@ -61,7 +75,7 @@ describe('возврат фокуса из попапа', () => {
     expect(editor.focused).toBe(1);
   });
 
-  it('мышь сильнее: щёлкнули по дереву — фокус остаётся там', async () => {
+  it('the mouse wins: a click on the tree leaves the focus there', async () => {
     const editor = el();
     setActive(asEl(editor));
     const popup = el();
@@ -77,7 +91,7 @@ describe('возврат фокуса из попапа', () => {
     expect(tree.focused).toBe(1);
   });
 
-  it('попап над попапом возвращает фокус нижнему', async () => {
+  it('a popup above a popup gives the focus back to the lower one', async () => {
     const editor = el();
     setActive(asEl(editor));
     const branches = el();
@@ -100,7 +114,7 @@ describe('возврат фокуса из попапа', () => {
     expect(editor.focused).toBe(1);
   });
 
-  it('исчезнувшему элементу фокус не возвращают', async () => {
+  it('an element that has vanished is not given the focus back', async () => {
     const gone = el();
     setActive(asEl(gone));
     const popup = el();
