@@ -1,6 +1,7 @@
 import { createContext, createElement, type ComponentChildren } from 'preact';
 import { useContext } from 'preact/hooks';
 import type { Signal } from '@preact/signals';
+import { ideOf, setHook, tables } from './host.js';
 import type {
   DirEntry,
   DocState,
@@ -191,13 +192,11 @@ export interface RegistryHandle<T> {
 export function registry(spec: RegistrySpec) {
   return function (target: object, ctx: ClassDecoratorContext): void {
     void ctx;
-    const list = declared.get(target) ?? [];
+    const list = tables.declared.get(target) ?? [];
     list.push(spec);
-    declared.set(target, list);
+    tables.declared.set(target, list);
   };
 }
-
-const declared = new WeakMap<object, RegistrySpec[]>();
 
 export interface SettingField {
   options?: readonly string[];
@@ -226,13 +225,11 @@ export function inLayerOrder<T>(entries: ReadonlyArray<{ by: string; value: T }>
 export function configSection(spec: SettingsSection) {
   return function (target: object, ctx: ClassDecoratorContext): void {
     void ctx;
-    const list = sections.get(target) ?? [];
+    const list = tables.sections.get(target) ?? [];
     list.push(spec);
-    sections.set(target, list);
+    tables.sections.set(target, list);
   };
 }
-
-const sections = new WeakMap<object, SettingsSection[]>();
 
 export interface SettingsEntry extends SettingsSection {
   owner: string;
@@ -247,18 +244,16 @@ export interface PluginSpec {
 export function plugin(spec: PluginSpec) {
   return function (target: object, ctx: ClassDecoratorContext): void {
     void ctx;
-    passports.set(target, spec);
+    tables.passports.set(target, spec);
   };
 }
-
-const passports = new WeakMap<object, PluginSpec>();
 
 export function activate() {
   return function (method: () => unknown, ctx: ClassMethodDecoratorContext): void {
     void ctx;
     ctx.addInitializer(function (this: unknown) {
       const target = this as object;
-      hooks.set(target, { ...hooks.get(target), start: method.bind(target) });
+      setHook(target, method.bind(target));
     });
   };
 }
@@ -268,9 +263,9 @@ export function command(id: string) {
     void ctx;
     ctx.addInitializer(function (this: unknown) {
       const target = this as object;
-      const list = declaredCommands.get(target) ?? [];
+      const list = tables.declaredCommands.get(target) ?? [];
       list.push({ id, run: method.bind(target) as () => unknown });
-      declaredCommands.set(target, list);
+      tables.declaredCommands.set(target, list);
     });
   };
 }
@@ -279,8 +274,6 @@ export interface DeclaredCommand {
   id: string;
   run: () => unknown;
 }
-
-const declaredCommands = new WeakMap<object, DeclaredCommand[]>();
 
 export function remote(name?: string) {
   return function <This extends object, Args extends unknown[], R>(
@@ -298,56 +291,4 @@ export function stub(): never {
   throw new Error('метод не подменён: забыт декоратор @remote?');
 }
 
-export function commandsOf(instance: object): DeclaredCommand[] {
-  return declaredCommands.get(instance) ?? [];
-}
-
-export function registriesOf(ctor: object): RegistrySpec[] {
-  return declared.get(ctor) ?? [];
-}
-
-export function passportOf(ctor: object): PluginSpec | null {
-  return passports.get(ctor) ?? null;
-}
-
-export function sectionsOf(ctor: object): SettingsSection[] {
-  return sections.get(ctor) ?? [];
-}
-
-export const SETTINGS_SCHEMA = {
-  type: 'object',
-  required: ['section', 'defaults', 'owner', 'title'],
-  additionalProperties: false,
-  properties: {
-    section: { type: 'string' },
-    defaults: { type: 'object' },
-    fields: { type: 'object' },
-    schema: { type: 'object' },
-    editor: {},
-    owner: { type: 'string' },
-    title: { type: 'string' },
-  },
-} as const;
-
-interface Hooks {
-  start?: () => unknown;
-}
-
-const hooks = new WeakMap<object, Hooks>();
-const services = new WeakMap<object, Ide>();
-
-export function attach(instance: object, ide: Ide): void {
-  services.set(instance, ide);
-}
-
-export function hooksOf(instance: object): Hooks {
-  return hooks.get(instance) ?? {};
-}
-
-function ideOf(instance: object): Ide {
-  const found = services.get(instance);
-  if (!found) {
-    throw new Error('плагин создан мимо плагинной системы: службы не прикреплены');
-  }
-  return found;
-}
+export * from './host.js';

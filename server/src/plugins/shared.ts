@@ -24,30 +24,16 @@ export const CORE_PROVIDED = [
 export type Side = 'client' | 'server';
 
 export class ContractNames {
-  readonly hostMarker = '--- то, чем пользуется ХОСТ';
-
   injected(text: string): string[] {
     return [...text.matchAll(/^export declare (?:function|const) (\w+)/gm)].map((m) => m[1]!);
   }
 
   real(text: string): string[] {
-    return [
-      ...this.forPlugins(text).matchAll(/^export (?:abstract class|function|const) (\w+)/gm),
-    ].map((m) => m[1]!);
+    return [...text.matchAll(/^export (?:abstract class|function|const) (\w+)/gm)].map((m) => m[1]!);
   }
 
   offered(text: string): string[] {
     return [...new Set([...this.injected(text), ...this.real(text)])];
-  }
-
-  forPlugins(text: string): string {
-    const at = text.indexOf(this.hostMarker);
-    if (at < 0) throw new Error('в пакете нет черты «хостовое ниже»');
-    return text.slice(0, at);
-  }
-
-  forHost(text: string): string {
-    return text.slice(text.indexOf(this.hostMarker));
   }
 }
 

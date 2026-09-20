@@ -1,3 +1,4 @@
+import { declareMethod, setHook } from './server-host.js';
 
 export interface Logger {
   debug(message: string): void;
@@ -137,9 +138,7 @@ export function command(name?: string) {
   return function (method: CommandHandler, ctx: ClassMethodDecoratorContext): void {
     ctx.addInitializer(function (this: unknown) {
       const target = this as object;
-      const now = declared.get(target) ?? new Map<string, CommandHandler>();
-      now.set(name ?? String(ctx.name), method.bind(target));
-      declared.set(target, now);
+      declareMethod(target, name ?? String(ctx.name), method.bind(target));
     });
   };
 }
@@ -148,23 +147,9 @@ export function activate() {
   return function (method: () => unknown, ctx: ClassMethodDecoratorContext): void {
     void ctx;
     ctx.addInitializer(function (this: unknown) {
-      const target = this as object;
-      hooks.set(target, { ...hooks.get(target), start: method.bind(target) });
+      setHook(this as object, method.bind(this as object));
     });
   };
 }
 
-interface Hooks {
-  start?: () => unknown;
-}
-
-const declared = new WeakMap<object, Map<string, CommandHandler>>();
-const hooks = new WeakMap<object, Hooks>();
-
-export function declaredOf(instance: object): Map<string, CommandHandler> {
-  return declared.get(instance) ?? new Map();
-}
-
-export function hooksOf(instance: object): Hooks {
-  return hooks.get(instance) ?? {};
-}
+export * from './server-host.js';

@@ -31,10 +31,14 @@ describe('контракт @mosetta/ide-api', () => {
   });
 
   it('хостовое наружу не отдаётся', () => {
-    for (const file of ['client.ts', 'server.ts'] as const) {
-      const text = source(file);
-      const offered = new Set(names.offered(text));
-      for (const m of names.forHost(text).matchAll(/^export (?:abstract class|function) (\w+)/gm)) {
+    for (const [entry, host] of [
+      ['client.ts', 'host.ts'],
+      ['server.ts', 'server-host.ts'],
+    ] as const) {
+      const offered = new Set(names.offered(source(entry)));
+      const hostNames = [...source(host).matchAll(/^export (?:abstract class|function|const) (\w+)/gm)];
+      expect(hostNames.length, `${host} должен что-то отдавать хосту`).toBeGreaterThan(0);
+      for (const m of hostNames) {
         expect(offered, `${m[1]} — для хоста, плагину он приедет пустым`).not.toContain(m[1]);
       }
     }
