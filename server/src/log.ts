@@ -10,8 +10,19 @@ export interface Logger {
 }
 
 export class Journal {
+  /**
+   * Who listens to the lines besides stdout: the tabs. A field rather than a
+   * module-level set.
+   */
   private readonly sinks = new Set<Sink>();
 
+  /**
+   * The journal: it writes to a stream and hands lines to its subscribers.
+   *
+   * The status strip at the bottom of the editor stays silent — everything the editor
+   * has to say goes to the log panel. So the log is a stream of events heading
+   * outwards, and stdout is only a duplicate, for development.
+   */
   onLog(sink: Sink): () => void {
     this.sinks.add(sink);
     return () => this.sinks.delete(sink);
@@ -40,4 +51,5 @@ export class Journal {
   }
 }
 
+/** One per process: the subscribers live in it. */
 export const journal = new Journal();

@@ -6,6 +6,11 @@ import { pluginMethods } from './plugins.js';
 import { treeMethods } from './tree.js';
 import { workspaceMethods } from './workspace.js';
 
+/**
+ * The whole API surface in one table, by layer. The type is derived from `Api` in the
+ * protocol, so the compiler will not let anyone add a method to the protocol and forget
+ * to implement it here.
+ */
 export const handlers: HandlerTable = {
   'server.ping': async (_params, ctx) => ({
     uptimeMs: Date.now() - ctx.startedAt,

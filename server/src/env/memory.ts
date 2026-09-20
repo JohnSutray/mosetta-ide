@@ -1,5 +1,6 @@
 
 
+/** How to run `ps`: exactly as much as we need from the process ledger. */
 export interface Runner {
   run(spec: { command: string; args: string[]; reason: string; timeoutMs?: number }): Promise<{
     ok: boolean;
@@ -7,8 +8,10 @@ export interface Runner {
   }>;
 }
 
+/** How long we wait for `ps`. It is instant; if it is not, we no longer need the answer. */
 const PATIENCE_MS = 2000;
 
+/** A row of the process table: who, whose, and how much it holds. */
 export interface ProcessRow {
   pid: number;
   ppid: number;
@@ -16,12 +19,28 @@ export interface ProcessRow {
 }
 
 export class ProcessMemory {
+  /**
+   * The process ledger, lazily: `Processes` holds us and we hold it, so the reference
+   * has to be deferred. Without it there is nothing to measure with, and that is not an
+   * error: it means `null`, it means "we do not know".
+   */
   constructor(private readonly runner: () => Runner | null = () => null) {}
 
+  /**
+   * Whether we can measure on this system at all.
+   *
+   * Named separately, because "we cannot" is a property of the machine rather than an
+   * error, and it has to be said out loud rather than returned as a silent zero: a
+   * budget that always adds up is worse than no budget.
+   */
   get measurable(): boolean {
     return process.platform !== 'win32';
   }
 
+  /**
+   * The resident megabytes of a process and all its descendants. `null` means measuring
+   * is impossible (wrong system, or `ps` did not answer).
+   */
   async treeMb(pid: number | undefined): Promise<number | null> {
     if (pid === undefined || !this.measurable) return null;
     const rows = await this.snapshot();
@@ -29,6 +48,14 @@ export class ProcessMemory {
     return Math.round(this.subtreeKb(rows, pid) / 1024);
   }
 
+  /**
+   * How much the descendants hold ONLY, without the process itself.
+   *
+   * Computed here rather than by subtracting on the client: our own number there comes
+   * from Node (`process.memoryUsage().rss`) while the tree comes from `ps`, and the
+   * difference between two DIFFERENT sources can go negative out of nowhere. Taken from
+   * one snapshot it is honest.
+   */
   async kidsMb(pid: number | undefined): Promise<number | null> {
     if (pid === undefined || !this.measurable) return null;
     const rows = await this.snapshot();
@@ -37,6 +64,11 @@ export class ProcessMemory {
     return Math.round(Math.max(0, this.subtreeKb(rows, pid) - own) / 1024);
   }
 
+  /**
+   * One snapshot of the whole process table. In a single call rather than per process:
+   * the tree is not known in advance, and a system-wide `ps` costs the same as one for
+   * a single pid.
+   */
   private async snapshot(): Promise<ProcessRow[] | null> {
     const runner = this.runner();
     if (!runner) return null;
@@ -50,6 +82,7 @@ export class ProcessMemory {
     return this.parse(ran.stdout);
   }
 
+  /** Parsing `ps` output. Public and pure: that is how it gets tested. */
   parse(out: string): ProcessRow[] | null {
     const rows: ProcessRow[] = [];
     for (const line of out.split('\n')) {
@@ -64,6 +97,13 @@ export class ProcessMemory {
     return rows.length > 0 ? rows : null;
   }
 
+  /**
+   * The pids of a subtree, root first.
+   *
+   * The same walk as the memory sum uses, but without the arithmetic: needed by whoever
+   * KILLS the tree. Public and pure for the same reason — the walk is the whole point,
+   * and checking it by running `ps` would mean checking `ps`.
+   */
   subtree(rows: ProcessRow[], root: number): number[] {
     const children = new Map<number, number[]>();
     for (const row of rows) {
@@ -84,6 +124,10 @@ export class ProcessMemory {
     return out;
   }
 
+  /**
+   * A process's descendants, without the process itself. `null` means measuring is
+   * impossible.
+   */
   async descendants(pid: number | undefined): Promise<number[] | null> {
     if (pid === undefined || !this.measurable) return null;
     const rows = await this.snapshot();

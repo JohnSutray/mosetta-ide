@@ -103,8 +103,7 @@ export class ProjectConfig implements WorkspaceResource {
     try {
       return (await this.ws.services.ram.peekDoc(PROJECT_SETTINGS)).text;
     } catch {
-      return null;
-    }
+      return null;     }
   }
 
   private async write(text: string): Promise<void> {

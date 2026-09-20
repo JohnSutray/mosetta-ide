@@ -3,12 +3,33 @@ import { sectionOf } from '@mosetta/ide-api/section';
 import type { Processes } from '../env/processes.js';
 import type { Workspace } from '../workspace/workspace.js';
 
+/**
+ * A workspace shown to a plugin as a PROJECT.
+ *
+ * A thin overlay, and its whole job is in two `key` lines: resource keys and event
+ * names are partitioned BY PLUGIN. Without that, two plugins naming theirs `terminals`
+ * alike would silently share one object, and a tab subscribed to `data` would hear
+ * somebody else's.
+ *
+ * It lives among the plugin code rather than among the workspace code: this is
+ * knowledge about the plugin system rather than about how a project is built. The
+ * workspace knows nothing about it and should not — otherwise the core starts
+ * understanding what a plugin is again.
+ */
 export class PluginProject implements Project {
+  /**
+   * The memory layer, lent to a plugin. An overlay rather than the real thing: what
+   * goes outwards is a subset of the events and three ways of reading, with nothing to
+   * write with. The one place where a plugin touches a project's data — and it is
+   * named.
+   */
   readonly memory: ProjectMemory;
 
   constructor(
     private readonly ws: Workspace,
+    /** The plugin package's name: also the namespace of its keys and its events. */
     private readonly plugin: string,
+    /** The server's process ledger: a project's long-lived processes go into it. */
     private readonly processes: Pick<Processes, 'adopt' | 'start'>,
   ) {
     const ram = ws.services.ram;
@@ -70,6 +91,7 @@ export class PluginProject implements Project {
     return this.ws.resolve(relative);
   }
 
+  /** This project's effective settings: the machine's plus its own `.mosetta` file. */
   settings<T extends object>(section: string, defaults: T): T {
     return sectionOf(this.ws.settings, section, defaults);
   }
@@ -96,6 +118,10 @@ export class PluginProject implements Project {
   }
 }
 
+/**
+ * Which of the memory layer's events go outwards. The rest is a conversation with the
+ * editor.
+ */
 function asMemoryEvent(event: { type: string; path: string; from?: string }): MemoryEvent | null {
   switch (event.type) {
     case 'doc.resident':

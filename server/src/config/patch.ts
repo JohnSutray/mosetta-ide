@@ -3,9 +3,21 @@ import { jsonc } from './jsonc.js';
 
 export interface PatchResult {
   text: string;
+  /** The file had to be rebuilt whole: the comments did not survive the edit. */
   rewritten: boolean;
 }
 
+/**
+ * Where the value that started at `at` ends.
+ *
+ * Values used to be found by a regular expression, and it handled exactly the flat
+ * ones: a string, a number, a flag, a `[…]` without nesting. A keymap is an array of
+ * OBJECTS, and such an expression tripped over the first inner brace, sending the file
+ * off for a full rebuild — along with the human's comments.
+ *
+ * So we count brackets, with strings and comments accounted for: a `{` inside a string
+ * or after `// …` is not a bracket.
+ */
 function valueEnd(text: string, at: number): number | null {
   const first = text[at];
   if (first === '"') return stringEnd(text, at);
@@ -43,6 +55,7 @@ function valueEnd(text: string, at: number): number | null {
   return null;
 }
 
+/** The end of a string literal, with its own escaping. */
 function stringEnd(text: string, at: number): number | null {
   for (let i = at + 1; i < text.length; i += 1) {
     if (text[i] === '\\') {
@@ -54,8 +67,21 @@ function stringEnd(text: string, at: number): number | null {
   return null;
 }
 
+/**
+ * The longest we will keep on one line. A hundred and sixty rather than eighty: that is
+ * what a keymap line with a surface and two environments takes, and that is exactly how
+ * they are written in the distribution — one line per key.
+ */
 const ONE_LINE = 160;
 
+/**
+ * A value as text, put in its place.
+ *
+ * Not `JSON.stringify(…, 2)`: that unfolds EVERY field onto its own line, and a keymap
+ * of a hundred and sixty lines would become a thousand. A human writes such files
+ * differently — one element per line, the element itself on one line — and a write from
+ * a window has to look the same: the file is theirs, and they are the one who reads it.
+ */
 function render(value: SettingValue, indent: string): string {
   const compact = JSON.stringify(value);
   if (compact === undefined) return 'null';
@@ -72,6 +98,7 @@ function render(value: SettingValue, indent: string): string {
   return `${open}\n${inner}${parts.join(`,\n${inner}`)}\n${indent}${close}`;
 }
 
+/** `{"a":1}` → `{ "a": 1 }`: spaces where a human puts them. */
 function spaced(json: string): string {
   let out = '';
   let inString = false;
@@ -98,11 +125,13 @@ function spaced(json: string): string {
   return out.replace(/\{ \}/g, '{}');
 }
 
+/** The indentation of the line a position sits on. */
 function indentAt(text: string, at: number): string {
   const start = text.lastIndexOf('\n', at - 1) + 1;
   return /^[ \t]*/.exec(text.slice(start, at))?.[0] ?? '';
 }
 
+/** Whether the edit actually came out right — asked by parsing rather than by hoping. */
 function applied(text: string, section: string, key: string, value: SettingValue): boolean {
   try {
     const parsed = jsonc.parse<Record<string, Record<string, unknown>>>(text, 'settings.json');
@@ -145,6 +174,10 @@ function tryMinimal(
   return `${text.slice(0, start)} "${key}": ${quoted}${tail}${text.slice(start)}`;
 }
 
+/**
+ * The fallback: assemble the file afresh. Comments are lost in the process, and one may
+ * not keep quiet about it — the caller is obliged to tell the human.
+ */
 function rewrite(text: string, section: string, key: string, value: SettingValue): string {
   let parsed: Record<string, unknown> = {};
   try {
@@ -160,6 +193,7 @@ function rewrite(text: string, section: string, key: string, value: SettingValue
   return `${JSON.stringify({ ...parsed, [section]: merged }, null, 2)}\n`;
 }
 
+/** A surgical edit of one setting: the file belongs to the human. */
 function valueAt(text: string, section: string, key: string): unknown {
   try {
     return jsonc.parse<Record<string, Record<string, unknown>>>(text, 'settings.json')?.[section]?.[key];
@@ -168,6 +202,10 @@ function valueAt(text: string, section: string, key: string): unknown {
   }
 }
 
+/**
+ * Without the key, and everything else the same: this is how a surgical deletion is
+ * checked.
+ */
 function removedCleanly(before: string, after: string, section: string, key: string): boolean {
   try {
     const a = jsonc.parse<Record<string, Record<string, unknown>>>(before, 'settings.json') ?? {};
@@ -180,6 +218,11 @@ function removedCleanly(before: string, after: string, section: string, key: str
   }
 }
 
+/**
+ * Cut a fragment out carefully: a key alone on its line takes the whole line with its
+ * newline; one squeezed in by an edit next to a brace (`{ "k": v,`) goes along with its
+ * space. That way "write it in, then reset it" gives the file back byte for byte.
+ */
 function cut(text: string, start: number, end: number): string {
   const lineStart = text.lastIndexOf('\n', start - 1) + 1;
   const lineEnd = text.indexOf('\n', end);
@@ -207,6 +250,14 @@ function tryRemove(text: string, section: string, key: string): string | null {
   return cut(text, start, end);
 }
 
+/**
+ * A section whose last key has been removed. An empty `"find": {}` is litter: moving a
+ * setting into the project and back must leave no trace, otherwise the human's file
+ * grows shells around things it no longer holds.
+ *
+ * A section WITH A COMMENT inside is not considered empty: those are their words, and
+ * throwing them away silently is not on.
+ */
 function tryRemoveSection(text: string, section: string): string | null {
   const empty = `"${section}"\\s*:\\s*\\{\\s*\\}`;
   const before = new RegExp(`,\\s*${empty}`).exec(text);
@@ -218,6 +269,7 @@ function tryRemoveSection(text: string, section: string): string | null {
   return null;
 }
 
+/** Without the section, and everything else the same. */
 function sectionRemovedCleanly(before: string, after: string, section: string): boolean {
   try {
     const a = jsonc.parse<Record<string, unknown>>(before, 'settings.json') ?? {};
@@ -255,6 +307,7 @@ function rewriteWithout(text: string, section: string, key: string): string {
   return `${JSON.stringify(parsed, null, 2)}\n`;
 }
 
+/** Whether the document has such a top-level key. */
 function topLevel(text: string, key: string): unknown {
   try {
     return jsonc.parse<Record<string, unknown>>(text, 'settings.json')?.[key];
@@ -264,6 +317,15 @@ function topLevel(text: string, key: string): unknown {
 }
 
 export class Patch {
+  /**
+   * Write a whole section in as ready-made TEXT: this is how a keymap moves into
+   * `settings.json` when migrating from an old separate file. The value arrives as text
+   * rather than as an object, because it may contain the human's comments — which
+   * `JSON.stringify` knows nothing about.
+   *
+   * If the section is already there, we leave it alone: overwriting it blind would mean
+   * losing what the human wrote there.
+   */
   section(raw: string, key: string, valueText: string, note?: string): PatchResult {
     const text = raw.trim() === '' ? '{\n}\n' : raw;
     if (topLevel(text, key) !== undefined) return { text, rewritten: false };
@@ -295,6 +357,10 @@ export class Patch {
     return { text: rewrite(text, section, key, value), rewritten: true };
   }
 
+  /**
+   * Remove a key, as surgically as `setting` writes one in: the comments and the
+   * neighbours stay. No such key means the same text back.
+   */
   unset(raw: string, section: string, key: string): PatchResult {
     if (valueAt(raw, section, key) === undefined) return { text: raw, rewritten: false };
     const minimal = tryRemove(raw, section, key);
@@ -304,6 +370,7 @@ export class Patch {
     return { text: rewriteWithout(raw, section, key), rewritten: true };
   }
 
+  /** Remove a section if nothing is left in it after a deletion. */
   private tidy(text: string, section: string): string {
     if (!isEmptySection(text, section)) return text;
     const without = tryRemoveSection(text, section);
@@ -311,4 +378,5 @@ export class Patch {
   }
 }
 
+/** One per process. */
 export const patch = new Patch();

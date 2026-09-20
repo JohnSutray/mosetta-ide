@@ -46,8 +46,7 @@ describe('RAM FS', () => {
   it('дерево обошли жадно при открытии проекта', async () => {
     const stats = await c.call('tree.stats', null);
     expect(stats.files).toBe(3);
-    expect(stats.dirs).toBe(3);
-  });
+    expect(stats.dirs).toBe(3);   });
 
   it('tree.list читает память, fs.list читает диск — и это видно', async () => {
     await fs.writeFile(path.join(root, 'src', 'sneaky.ts'), 'export const s = 1;\n', 'utf8');
@@ -201,8 +200,7 @@ describe('флаг «изменён» говорит правду', () => {
       baseVersion: changed.version,
     });
     expect(back.dirty).toBe(false);
-    expect(back.version).toBe(2);
-  });
+    expect(back.version).toBe(2);   });
 });
 
 describe('двоичное узнаётся по содержимому', () => {

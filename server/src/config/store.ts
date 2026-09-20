@@ -96,8 +96,7 @@ export class ConfigStore {
     try {
       raw = await fsp.readFile(file, 'utf8');
     } catch {
-      return;
-    }
+      return;     }
     const patched = patch.unset(raw, section, key);
     if (patched.text === raw) return;
     await fsp.writeFile(file, patched.text, 'utf8');

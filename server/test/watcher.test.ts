@@ -155,8 +155,7 @@ describe('слежение за диском', () => {
 
   it('возня в node_modules память не тревожит', async () => {
     await fs.mkdir(path.join(root, 'node_modules', 'left-pad'), { recursive: true });
-    await treeChanged(c, '');
-    await settle();
+    await treeChanged(c, '');     await settle();
 
     const before = c.events('tree.changed').length;
     for (let i = 0; i < 20; i += 1) {

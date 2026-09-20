@@ -43,8 +43,7 @@ describe('команды плагинов', () => {
   it('объявлены аннотацией, а не вызовом ide.command', () => {
     const callers: string[] = [];
     for (const { dir, pkg } of packages()) {
-      if (dir === 'api') continue;
-      for (const text of sourcesOf(dir)) {
+      if (dir === 'api') continue;       for (const text of sourcesOf(dir)) {
         if (text.includes('ide.command(')) callers.push(pkg.name);
       }
     }

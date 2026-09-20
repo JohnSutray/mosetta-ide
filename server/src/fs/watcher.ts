@@ -93,13 +93,11 @@ export class OsWatcher {
     try {
       key = paths.toKey(raw.split(path.sep).join('/'));
     } catch {
-      return;
-    }
+      return;     }
     if (key === '' || this.ignored(key)) return;
 
     this.pending.add(key);
-    if (this.held) return;
-    this.schedule();
+    if (this.held) return;     this.schedule();
   }
 
   private schedule(): void {

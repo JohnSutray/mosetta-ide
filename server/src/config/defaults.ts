@@ -1,6 +1,11 @@
 import type { Settings } from '@mosetta/ide-protocol';
 
 export class Defaults {
+  /**
+   * The defaults of the CORE SECTIONS live here; a settings file holds only the
+   * differences from them. Plugin sections are not named here: their defaults are the
+   * plugin's code, and the human's file carries them as they are.
+   */
   readonly settings: Settings = {
     ui: { locale: 'en' },
     plugins: {
@@ -49,4 +54,5 @@ export class Defaults {
   };
 }
 
+/** One per process. */
 export const defaults = new Defaults();

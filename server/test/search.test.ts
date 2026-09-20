@@ -85,8 +85,7 @@ describe('поиск всего', () => {
   it('видит свои сорта: файлы и находки поставщиков', async () => {
     const stats = await indexStats(c);
     expect(stats.files).toBeGreaterThan(0);
-    expect(stats.provided).toBe(3);
-    expect(stats.vocabulary).toBeGreaterThan(5);
+    expect(stats.provided).toBe(3);     expect(stats.vocabulary).toBeGreaterThan(5);
     expect(stats.symbols).toBe(0);
   });
 

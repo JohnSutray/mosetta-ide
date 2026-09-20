@@ -460,11 +460,8 @@ export class RamFs {
   }
 
   private async syncFile(key: string, revision: string): Promise<void> {
-    if (this.writing.has(key)) return;
-    const doc = this.docs.get(key);
-    if (!doc) return;
-    if (doc.revision === revision) return;
-
+    if (this.writing.has(key)) return;     const doc = this.docs.get(key);
+    if (!doc) return;     if (doc.revision === revision) return; 
     if (doc.dirty) {
       doc.diverged = 'changed';
       this.emit({ type: 'doc.diverged', path: key, reason: 'changed' });
@@ -523,14 +520,12 @@ export class RamFs {
   }
 
   private onDiskWrite(key: string, revision: string): void {
-    if (this.writing.has(key)) return;
-    const doc = this.docs.get(key);
+    if (this.writing.has(key)) return;     const doc = this.docs.get(key);
     if (!doc) {
       this.emit({ type: 'tree.changed', path: parentOf(key) });
       return;
     }
-    if (doc.revision === revision) return;
-    if (doc.dirty) {
+    if (doc.revision === revision) return;     if (doc.dirty) {
       doc.diverged = 'changed';
       this.emit({ type: 'doc.diverged', path: key, reason: 'changed' });
       return;

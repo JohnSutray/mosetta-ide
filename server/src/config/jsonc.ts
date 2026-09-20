@@ -1,6 +1,14 @@
 
 
 export class Jsonc {
+  /**
+   * JSON with comments. A config is edited by hand, and the explanation of "why this
+   * way" has to lie next to the value — otherwise in a month nobody remembers what put
+   * `eln-cache` into `noScan`.
+   *
+   * Parsed by scanning rather than by a regular expression: a `//` inside a string (in
+   * a path, say, or a URL) is not a comment.
+   */
   parse<T>(text: string, source: string): T {
     try {
       return JSON.parse(stripComments(text)) as T;
@@ -57,4 +65,5 @@ export class Jsonc {
   }
 }
 
+/** One per process. */
 export const jsonc = new Jsonc();

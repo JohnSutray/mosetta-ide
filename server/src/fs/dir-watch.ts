@@ -65,8 +65,7 @@ export class DirWatch {
     try {
       key = paths.toKey(paths.joinKey(dirKey, name.split(path.sep).join('/')));
     } catch {
-      return;
-    }
+      return;     }
     if (key === '') return;
     this.onPath(key);
     if (this.skip(paths.baseName(key))) return;
@@ -79,8 +78,7 @@ export class DirWatch {
     try {
       stat = await fsp.stat(path.join(this.root, key));
     } catch {
-      this.close(key);
-      return;
+      this.close(key);       return;
     }
     if (stat.isDirectory()) this.add(key, true);
     else this.close(key);
@@ -91,8 +89,7 @@ export class DirWatch {
     try {
       entries = fs.readdirSync(absolute, { withFileTypes: true });
     } catch {
-      return;
-    }
+      return;     }
     for (const entry of entries) {
       if (this.skip(entry.name)) continue;
       const child = paths.joinKey(key, entry.name);
