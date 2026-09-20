@@ -11,3 +11,6 @@ vitest.config.ts.timestamp-*.mjs
 
 desktop/.build/
 desktop/defaults/
+
+# The docs live in a private repository; this is a symlink into it.
+CLAUDE.md
