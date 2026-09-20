@@ -78,5 +78,8 @@
   "debug.title.debug": "Debug the open file",
   "debug.forget": "Forget this run",
   "debug.tree.run": "Run without the debugger",
-  "debug.tree.debug": "Debug"
+  "debug.tree.debug": "Debug",
+  "command.debug.kill": "Kill the program",
+  "debug.state.stopping": "not stopping",
+  "debug.stuck": "The program did not stop. Kill it with the skull button — until then nothing new starts."
 }

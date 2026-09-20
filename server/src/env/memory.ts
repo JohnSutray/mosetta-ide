@@ -64,6 +64,33 @@ export class ProcessMemory {
     return rows.length > 0 ? rows : null;
   }
 
+  subtree(rows: ProcessRow[], root: number): number[] {
+    const children = new Map<number, number[]>();
+    for (const row of rows) {
+      const list = children.get(row.ppid);
+      if (list) list.push(row.pid);
+      else children.set(row.ppid, [row.pid]);
+    }
+    const out: number[] = [];
+    const queue = [root];
+    const seen = new Set<number>();
+    while (queue.length > 0) {
+      const pid = queue.shift()!;
+      if (seen.has(pid)) continue;
+      seen.add(pid);
+      out.push(pid);
+      queue.push(...(children.get(pid) ?? []));
+    }
+    return out;
+  }
+
+  async descendants(pid: number | undefined): Promise<number[] | null> {
+    if (pid === undefined || !this.measurable) return null;
+    const rows = await this.snapshot();
+    if (!rows) return null;
+    return this.subtree(rows, pid).filter((one) => one !== pid);
+  }
+
   subtreeKb(rows: ProcessRow[], root: number): number {
     const children = new Map<number, number[]>();
     const own = new Map<number, number>();

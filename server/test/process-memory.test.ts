@@ -29,6 +29,19 @@ describe('память дерева процессов', () => {
     expect(memory.subtreeKb(deep, 10)).toBe(1110);
   });
 
+  it('отдаёт пиды поддерева, корень первым', () => {
+    expect(memory.subtree(LANGUAGE_SERVER, 100)).toEqual([100, 101, 102]);
+    expect(memory.subtree(LANGUAGE_SERVER, 102)).toEqual([102]);
+  });
+
+  it('круг в таблице не вешает и обход пидов', () => {
+    const loop: ProcessRow[] = [
+      { pid: 10, ppid: 11, kb: 10 },
+      { pid: 11, ppid: 10, kb: 100 },
+    ];
+    expect(memory.subtree(loop, 10)).toEqual([10, 11]);
+  });
+
   it('круг в таблице не вешает обход', () => {
     const loop: ProcessRow[] = [
       { pid: 10, ppid: 11, kb: 10 },

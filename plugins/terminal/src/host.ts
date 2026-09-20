@@ -172,6 +172,12 @@ export class TerminalHost {
     };
   }
 
+  running(name: string): { pid: number | undefined } | null {
+    const terminal = this.terminals.get(name);
+    if (!terminal?.pty || !terminal.info.alive) return null;
+    return this.busyNow(terminal) ? { pid: terminal.pty.pid } : null;
+  }
+
   private busyNow(terminal: Terminal): boolean {
     if (NO_FOREGROUND || !terminal.pty) return terminal.info.busy;
     try {

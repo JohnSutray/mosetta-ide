@@ -31,6 +31,7 @@ export interface BreakpointAsk {
   condition?: string;
   hitCondition?: string;
   logMessage?: string;
+  anchor?: string;
 }
 
 export interface Breakpoint extends BreakpointAsk {
@@ -64,7 +65,7 @@ export interface SessionInfo {
 export interface RunInfo {
   id: string;
   name: string;
-  state: 'starting' | 'running' | 'ended';
+  state: 'starting' | 'running' | 'stopping' | 'ended';
   sessions: SessionInfo[];
   url?: string;
   error?: string;

@@ -51,6 +51,7 @@ export interface ProcessStream {
 }
 
 export interface ProcessChild {
+  readonly pid?: number | undefined;
   readonly stdin: { readonly writable: boolean; write(data: Uint8Array | string): boolean; end(): void };
   readonly stdout: ProcessStream;
   readonly stderr: ProcessStream;
@@ -125,6 +126,7 @@ export interface Ide {
   which(name: string): string | null;
   run(ask: RunAsk): Promise<RunResult>;
   stream(ask: RunAsk, onChunk: (text: string) => void): Promise<RunResult>;
+  killTree(pid: number, options?: { self?: boolean; signal?: 'SIGTERM' | 'SIGKILL' }): Promise<number>;
   readonly log: Logger;
   readonly dir: string;
   readonly state: string;

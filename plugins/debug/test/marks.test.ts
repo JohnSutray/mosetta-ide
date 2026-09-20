@@ -28,6 +28,37 @@ describe('точки в редакторе', () => {
     expect(marks.lines(edited)).toEqual([4]);
   });
 
+  it('текст заменили целиком — точка находит свою строку по якорю', () => {
+    const marks = new DebugMarks({
+      attached: () => undefined,
+      toggled: () => undefined,
+      menu: () => undefined,
+      moved: () => undefined,
+    });
+    const state = EditorState.create({ doc: 'a\nreturn value;\nc\n', extensions: marks.extension() });
+    const placed = state.update({
+      effects: setBreakpoints.of([{ line: 2, verified: true, anchor: 'return value;' }]),
+    }).state;
+    const reread = placed.update({
+      changes: { from: 0, to: placed.doc.length, insert: 'header\nmore\na\n  return value;\nc\n' },
+    }).state;
+    expect(marks.lines(reread)).toEqual([4]);
+    expect(marks.asks(reread)).toEqual([{ line: 4, anchor: 'return value;' }]);
+  });
+
+  it('якоря нет (старая запись) — точка остаётся на своём номере', () => {
+    const marks = new DebugMarks({
+      attached: () => undefined,
+      toggled: () => undefined,
+      menu: () => undefined,
+      moved: () => undefined,
+    });
+    const state = EditorState.create({ doc: 'a\nb\nc\n', extensions: marks.extension() });
+    const placed = state.update({ effects: setBreakpoints.of([{ line: 2, verified: true }]) }).state;
+    const reread = placed.update({ changes: { from: 0, to: placed.doc.length, insert: 'x\ny\nz\n' } }).state;
+    expect(marks.lines(reread)).toEqual([2]);
+  });
+
   it('точка на удалённой строке пропадает, а не прилипает к соседней', () => {
     const { marks, state } = stand();
     const placed = state.update({ effects: setBreakpoints.of([{ line: 2, verified: true }]) }).state;
@@ -57,6 +88,6 @@ describe('условия едут с точкой', () => {
       effects: setBreakpoints.of([{ line: 2, verified: true, condition: 'n === 3', logMessage: 'hi {n}' }]),
     }).state;
     const edited = placed.update({ changes: { from: 0, insert: 'new\n' } }).state;
-    expect(marks.asks(edited)).toEqual([{ line: 3, condition: 'n === 3', logMessage: 'hi {n}' }]);
+    expect(marks.asks(edited)).toEqual([{ line: 3, anchor: 'b', condition: 'n === 3', logMessage: 'hi {n}' }]);
   });
 });

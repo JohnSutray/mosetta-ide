@@ -2,7 +2,7 @@ import { useT } from '@mosetta/ide-api/client';
 import type { JSX } from 'preact';
 import type { DebugState, VarNode } from './state.js';
 import type { ExceptionMode, Frame, RunInfo } from './types.js';
-import { Arrow, ContinueIcon, PauseIcon, StepIntoIcon, StepOutIcon, StepOverIcon, StopIcon } from './icons.js';
+import { Arrow, ContinueIcon, PauseIcon, SkullIcon, StepIntoIcon, StepOutIcon, StepOverIcon, StopIcon } from './icons.js';
 
 export interface PanelApi {
   state: DebugState;
@@ -43,6 +43,7 @@ export function DebugPanel({ api }: { api: PanelApi }) {
   const paused = state.paused.value;
   const live = state.live.value;
   const runs = state.runs.value;
+  const stuck = state.stuck.value.length > 0;
   const current = paused ? runs.find((run) => run.id === paused.run) : live[0] ?? runs[runs.length - 1];
 
   const button = (command: string, icon: () => JSX.Element, enabled: boolean, kind = '') => (
@@ -67,7 +68,9 @@ export function DebugPanel({ api }: { api: PanelApi }) {
       <div class="debug-bar">
         {STEPS.map((step) => button(step.command, step.icon, step.whenPaused ? paused !== null : live.length > 0 && !paused, step.kind))}
         <span class="debug-bar-gap" />
-        {button('debug.stop', StopIcon, live.length > 0, 'is-stop')}
+        {stuck
+          ? button('debug.kill', SkullIcon, true, 'is-kill')
+          : button('debug.stop', StopIcon, live.length > 0, 'is-stop')}
         <span class="debug-bar-gap" />
         <select
           class="debug-exc"
@@ -84,6 +87,7 @@ export function DebugPanel({ api }: { api: PanelApi }) {
         {current && <RunLabel run={current} paused={paused !== null} onForget={() => api.forget(current.id)} />}
       </div>
       <div class="debug-body">
+        {stuck && <div class="debug-note is-warn">{t('debug.stuck')}</div>}
         {live.length === 0 && <Empty api={api} />}
         <UrlField api={api} />
         {paused && api.dirtyHere() && <div class="debug-note">{t('debug.dirty')}</div>}

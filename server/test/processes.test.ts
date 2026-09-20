@@ -21,6 +21,26 @@ describe('запуск подпроцессов', () => {
     expect(ran.timedOut).toBe(false);
   });
 
+  it.skipIf(process.platform === 'win32')('прикончить можно только своё — и вместе с потомками', async () => {
+    const env = new Env();
+    const processes = env.processes;
+    const handle = processes.start({
+      command: node,
+      args: script('const { spawn } = require("node:child_process"); spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"]); setInterval(() => {}, 1000);'),
+      reason: 'тест',
+    });
+    const pid = handle.child.pid!;
+    await new Promise((done) => setTimeout(done, 400));
+    const kids = (await env.memory.descendants(pid)) ?? [];
+    expect(kids.length).toBeGreaterThan(0);
+
+    expect(await processes.killTree(pid)).toBeGreaterThanOrEqual(2);
+    await new Promise((done) => setTimeout(done, 200));
+    for (const one of [pid, ...kids]) expect(() => process.kill(one, 0)).toThrow();
+
+    await expect(processes.killTree(process.pid)).rejects.toThrow(/не наш/);
+  });
+
   it('чужой отказ — это ответ, а не исключение', async () => {
     const processes = new Env().processes;
     const ran = await processes.run({

@@ -64,6 +64,7 @@ export class DebugState {
   readonly foreign = new Map<string, Foreign>();
 
   readonly live: ReadonlySignal<RunInfo[]> = computed(() => this.runs.value.filter((run) => run.state !== 'ended'));
+  readonly stuck: ReadonlySignal<RunInfo[]> = computed(() => this.runs.value.filter((run) => run.state === 'stopping'));
   readonly frame: ReadonlySignal<Frame | null> = computed(() => this.frames.value[this.frameAt.value] ?? null);
 
   setRuns(list: RunInfo[]): void {
@@ -149,9 +150,10 @@ export class DebugState {
   askAt(path: string, line: number): BreakpointAsk | null {
     const found = (this.breakpoints.value.get(path) ?? []).find((one) => one.line === line);
     if (!found) return null;
-    const { condition, hitCondition, logMessage } = found;
+    const { condition, hitCondition, logMessage, anchor } = found;
     return {
       line,
+      ...(anchor ? { anchor } : {}),
       ...(condition ? { condition } : {}),
       ...(hitCondition ? { hitCondition } : {}),
       ...(logMessage ? { logMessage } : {}),

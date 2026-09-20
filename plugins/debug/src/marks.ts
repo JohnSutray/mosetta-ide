@@ -1,5 +1,6 @@
 import { RangeSet, StateEffect, StateField, type EditorState, type Extension, type Transaction } from '@codemirror/state';
 import { Decoration, EditorView, GutterMarker, ViewPlugin, gutter, type DecorationSet } from '@codemirror/view';
+import { anchors } from './anchors.js';
 import type { Breakpoint, BreakpointAsk } from './types.js';
 
 export const setBreakpoints = StateEffect.define<Breakpoint[]>();
@@ -55,8 +56,10 @@ const breakpointsField = StateField.define<RangeSet<Mark>>({
       if (!effect.is(setBreakpoints)) continue;
       const ranges = [];
       for (const one of effect.value) {
-        if (one.line < 1 || one.line > tr.state.doc.lines) continue;
-        ranges.push(new Mark(one.verified, kindOf(one), one).range(tr.state.doc.line(one.line).from));
+        if (one.line < 1 && !one.anchor) continue;
+        const line = lineFor(tr.state, one);
+        if (line < 1 || line > tr.state.doc.lines) continue;
+        ranges.push(new Mark(one.verified, kindOf(one), { ...one, line }).range(tr.state.doc.line(line).from));
       }
       ranges.sort((a, b) => a.from - b.from);
       next = RangeSet.of(ranges, true);
@@ -65,7 +68,39 @@ const breakpointsField = StateField.define<RangeSet<Mark>>({
   },
 });
 
+function lineFor(state: EditorState, one: BreakpointAsk): number {
+  if (!one.anchor) return one.line;
+  return anchors.find((line) => state.doc.line(line).text, state.doc.lines, one.anchor, one.line);
+}
+
+function replacedWhole(tr: Transaction): boolean {
+  let changes = 0;
+  let whole = false;
+  tr.changes.iterChangedRanges((fromA, toA) => {
+    changes += 1;
+    if (fromA === 0 && toA === tr.startState.doc.length && toA > fromA) whole = true;
+  });
+  return changes === 1 && whole;
+}
+
+function reanchor(value: RangeSet<Mark>, tr: Transaction): RangeSet<Mark> {
+  const ranges = [];
+  const iter = value.iter();
+  while (iter.value) {
+    const was = tr.startState.doc.lineAt(iter.from).number;
+    const ask = { ...iter.value.ask, line: was };
+    const line = lineFor(tr.state, ask);
+    if (line >= 1 && line <= tr.state.doc.lines) {
+      ranges.push(new Mark(false, iter.value.kind, { ...ask, line }).range(tr.state.doc.line(line).from));
+    }
+    iter.next();
+  }
+  ranges.sort((a, b) => a.from - b.from);
+  return RangeSet.of(ranges, true);
+}
+
 function survive(value: RangeSet<Mark>, tr: Transaction): RangeSet<Mark> {
+  if (replacedWhole(tr)) return reanchor(value, tr);
   const gone = new Set<number>();
   const iter = value.iter();
   while (iter.value) {
@@ -126,6 +161,7 @@ export class DebugMarks {
         const { condition, hitCondition, logMessage } = iter.value.ask;
         out.set(line, {
           line,
+          ...(anchors.of(state.doc.line(line).text) ? { anchor: anchors.of(state.doc.line(line).text) } : {}),
           ...(condition ? { condition } : {}),
           ...(hitCondition ? { hitCondition } : {}),
           ...(logMessage ? { logMessage } : {}),

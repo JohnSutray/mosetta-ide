@@ -79,7 +79,7 @@ export class Processes {
   constructor(
     private readonly userEnv: UserEnv,
     private readonly exec: Pick<Exec, 'plan'>,
-    private readonly memory: Pick<ProcessMemory, 'treeMb'> = new ProcessMemory(),
+    private readonly memory: Pick<ProcessMemory, 'treeMb' | 'descendants'> = new ProcessMemory(),
   ) {}
 
   run(spec: RunSpec): Promise<Ran> {
@@ -129,6 +129,27 @@ export class Processes {
       kill,
     });
     return () => this.live.delete(id);
+  }
+
+  async killTree(pid: number, options: { self?: boolean; signal?: NodeJS.Signals } = {}): Promise<number> {
+    const known = [...this.live.values()].some((entry) => entry.info.pid === pid);
+    if (!known) throw new Error(`процесс ${pid} не наш: гасим только то, что запускали сами`);
+    const signal = options.signal ?? 'SIGKILL';
+    const kids = (await this.memory.descendants(pid)) ?? [];
+    let killed = 0;
+    for (const one of [...kids].reverse()) killed += this.signal(one, signal);
+    if (options.self !== false) killed += this.signal(pid, signal);
+    log.info(`прикончено процессов: ${killed} (дерево ${pid}, ${signal})`);
+    return killed;
+  }
+
+  private signal(pid: number, signal: NodeJS.Signals): number {
+    try {
+      process.kill(pid, signal);
+      return 1;
+    } catch {
+      return 0;
+    }
   }
 
   alive(): Running[] {

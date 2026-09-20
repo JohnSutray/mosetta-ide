@@ -113,6 +113,7 @@ function fakeIde(projects: Array<(project: Project) => void>): Ide {
     settings: <T>(_section: string, defaults: T) => defaults,
     environment: () => ({}),
     which: () => null,
+    killTree: async () => 0,
     dir: '',
     state: '',
     run: (ask) => running(ask),

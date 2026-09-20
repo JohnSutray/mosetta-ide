@@ -9,6 +9,8 @@ export interface RunOwner {
   terminal(run: DebugRun, ask: TerminalAsk): Promise<{ shellProcessId?: number; processId?: number }>;
   hasTerminal(): boolean;
   changed(run: DebugRun): void;
+  stuck(run: DebugRun): Promise<boolean>;
+  kill(run: DebugRun): Promise<void>;
   stopped(run: DebugRun, session: DapSession, stop: Stop): void;
   output(run: DebugRun, session: DapSession, category: string, text: string): void;
   verified(run: DebugRun, key: string): void;
@@ -30,6 +32,7 @@ export class DebugRun implements SessionOwner {
     private readonly owner: RunOwner,
   ) {
     adapter.onExit((why) => {
+      if (this.state === 'stopping') return;
       if (this.state !== 'ended') this.end(this.error ?? (this.sessions.size === 0 ? why : undefined));
     });
   }
@@ -62,7 +65,14 @@ export class DebugRun implements SessionOwner {
     return [...this.sessions.values()];
   }
 
-  async stop(): Promise<void> {
+  async stop(options: { force?: boolean } = {}): Promise<void> {
+    if (options.force) {
+      await this.owner.kill(this);
+      for (const session of this.sessions.values()) session.dispose();
+      this.adapter.kill('SIGKILL');
+      this.end(this.error);
+      return;
+    }
     const live = [...this.sessions.values()].filter((session) => session.state !== 'ended');
     const levels = new Map<number, DapSession[]>();
     for (const session of live) {
@@ -83,7 +93,16 @@ export class DebugRun implements SessionOwner {
     await Promise.race([asked, deadline]);
     for (const session of this.sessions.values()) session.dispose();
     this.adapter.kill();
+    if (await this.owner.stuck(this)) {
+      this.state = 'stopping';
+      this.owner.changed(this);
+      return;
+    }
     this.end(this.error);
+  }
+
+  get adapterPid(): number | undefined {
+    return this.adapter.pid;
   }
 
   info(): RunInfo {
@@ -131,7 +150,7 @@ export class DebugRun implements SessionOwner {
   changed(session: DapSession): void {
     const roots = [...this.sessions.values()].filter((one) => one.parent === null);
     if (roots.length > 0 && roots.every((one) => one.state === 'ended')) {
-      this.end(this.error);
+      if (this.state !== 'stopping') this.end(this.error);
       return;
     }
     this.owner.changed(this);

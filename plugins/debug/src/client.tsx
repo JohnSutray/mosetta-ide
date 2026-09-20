@@ -12,6 +12,7 @@ import { ForeignView, FOREIGN_PREFIX } from './foreign.js';
 import { BugIcon, ContinueIcon } from './icons.js';
 import { DebugMarks, setBreakpoints, setExecution } from './marks.js';
 import { DebugPanel, type PanelApi } from './panel.js';
+import { anchors } from './anchors.js';
 import { BeforeRun } from './unsaved.js';
 import { DEBUG_DEFAULTS, DEBUG_SCHEMA } from './settings.js';
 import { DebugState, type Foreign, type VarNode } from './state.js';
@@ -113,6 +114,11 @@ export default class DebugPlugin {
   @command('debug.stop')
   protected stop(): void {
     for (const run of this.state.live.value) void this.askStop({ run: run.id }).catch((err) => this.fail(err));
+  }
+
+  @command('debug.kill')
+  protected kill(): void {
+    for (const run of this.state.live.value) void this.askStop({ run: run.id, force: true }).catch((err) => this.fail(err));
   }
 
   @command('debug.toggleBreakpoint')
@@ -236,7 +242,7 @@ export default class DebugPlugin {
   @remote('forget') protected askForget(_p: { run: string }): Promise<RunInfo[]> { return stub(); }
   @remote('runFile') protected askRunFile(_p: { path: string }): Promise<{ name: string }> { return stub(); }
   @remote('openBrowser') protected askOpenBrowser(_p: { run: string; url: string }): Promise<RunInfo> { return stub(); }
-  @remote('stop') protected askStop(_p: { run: string }): Promise<null> { return stub(); }
+  @remote('stop') protected askStop(_p: { run: string; force?: boolean }): Promise<null> { return stub(); }
   @remote('step') protected askStep(_p: { run: string; session: string; thread: number; action: Step }): Promise<null> { return stub(); }
   @remote('stack') protected askStack(_p: { run: string; session: string; thread: number }): Promise<Frame[]> { return stub(); }
   @remote('scopes') protected askScopes(_p: { run: string; session: string; frame: number }): Promise<Scope[]> { return stub(); }
@@ -247,7 +253,7 @@ export default class DebugPlugin {
 
   private declareTitleActions(): void {
     const path = () => this.docs.openDoc.value?.path ?? this.docs.viewedFile.value ?? '';
-    const can = () => DEBUGGABLE.test(path());
+    const can = () => DEBUGGABLE.test(path()) && this.state.stuck.value.length === 0;
     const add = (id: string, icon: () => unknown, title: string) =>
       this.ide.registry('panel.action').add({
         id,
@@ -305,6 +311,11 @@ export default class DebugPlugin {
   }
 
   async launch(ask: LaunchAsk): Promise<void> {
+    if (this.state.stuck.value.length > 0) {
+      this.ide.complain(this.ide.t('debug.stuck'));
+      this.opened().value = true;
+      return;
+    }
     if (!(await this.before.ready())) return;
     this.opened().value = true;
     try {
@@ -659,9 +670,10 @@ export default class DebugPlugin {
     const path = this.docs.openDoc.peek()?.path;
     if (!path) return;
     const asks = this.marks.asks(view.state);
+    const fresh = { line, anchor: anchors.of(view.state.doc.line(line).text) };
     const next = asks.some((one) => one.line === line)
       ? asks.filter((one) => one.line !== line)
-      : [...asks, { line }].sort((a, b) => a.line - b.line);
+      : [...asks, fresh].sort((a, b) => a.line - b.line);
     await this.write(path, next);
   }
 

@@ -48,6 +48,8 @@ export const STYLE = `
 .debug-btn:disabled { color: var(--muted); cursor: default; opacity: 0.55; }
 .debug-btn.is-go { color: #6a8759; }
 .debug-btn.is-stop { color: var(--error); }
+.debug-btn.is-kill { color: var(--error); }
+.debug-btn.is-kill svg { transform: scale(1.05); }
 .debug-bar-gap { width: 6px; }
 .debug-run {
   margin-left: auto;
@@ -144,6 +146,7 @@ export const STYLE = `
   font-size: 11px;
   border-bottom: 1px solid var(--divider);
 }
+.debug-note.is-warn { color: var(--error); }
 
 .debug-frames { list-style: none; margin: 0; padding: 2px 0 4px; }
 .debug-frame {

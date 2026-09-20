@@ -28,6 +28,9 @@ class Bench {
   readonly held = new Set<string>();
   readonly host: DebugHost;
 
+  running: { pid: number | undefined } | null = null;
+  readonly killed: Array<{ pid: number; self: boolean }> = [];
+
   constructor(terminal: TerminalRunner = null, root = fixtures, settings: Partial<DebugSettings> = {}) {
     const project: DebugProject = {
       root,
@@ -43,10 +46,20 @@ class Bench {
       },
       start: (ask) => this.start(ask),
     };
-    this.host = new DebugHost(project, new JsDebugAdapter(pkg, os.tmpdir()), quiet, terminal, undefined, () => ({
-      ...DEBUG_DEFAULTS,
-      ...settings,
-    }));
+    this.host = new DebugHost(
+      project,
+      new JsDebugAdapter(pkg, os.tmpdir()),
+      quiet,
+      terminal,
+      undefined,
+      () => ({ ...DEBUG_DEFAULTS, ...settings }),
+      () => this.running,
+      async (pid, options) => {
+        this.killed.push({ pid, self: options?.self !== false });
+        this.running = null;
+        return 1;
+      },
+    );
   }
 
   private start(ask: RunAsk): ProcessHandle {
@@ -261,6 +274,18 @@ describe('отладка против настоящего адаптера', { 
     await bench.until('adapter exit', () => adapter.exitCode !== null || adapter.signalCode !== null);
   });
 
+  it('новый запуск гасит предыдущий: под отладкой живёт ровно один', async () => {
+    bench = new Bench();
+    const first = await bench.host.launch({ program: 'ticker.js' });
+    await bench.until('ticking', () => bench.output().includes('tick 1'));
+    expect(bench.held.size).toBe(1);
+
+    const second = await bench.host.launch({ program: 'plain.js' });
+    expect(bench.ended(first.id)).toBe(true);
+    expect(bench.held.size).toBe(1);
+    await bench.until('second end', () => bench.ended(second.id));
+  });
+
   it('нет программы — отказ до адаптера, а не «отработала за 100 мс»', async () => {
     bench = new Bench();
     await expect(bench.host.launch({ program: 'missing.js' })).rejects.toThrow(/program not found: missing\.js/);
@@ -392,6 +417,27 @@ describe('настоящий терминал и файлы за корнем', 
     await bench.until('run end', () => bench.ended(run.id));
     await bench.until('console output', () => consoles[0]?.out.includes('sum 6 нота'));
     expect(bench.output()).not.toContain('sum 6 нота');
+  });
+
+  it.skipIf(process.platform === 'win32')('программа не послушалась: запуск не «завершён», а «не останавливается»', async () => {
+    const consoles: Array<{ command: string; sameShell: string; env: Record<string, string>; out: string }> = [];
+    bench = new Bench(shellRunner(consoles));
+    const run = await bench.host.launch({ program: 'plain.js' });
+    await bench.until('run start', () => bench.lastRuns().some((one) => one.id === run.id));
+    bench.running = { pid: 4242 };
+
+    await bench.host.stop(run.id);
+    expect(bench.lastRuns().find((one) => one.id === run.id)?.state).toBe('stopping');
+    expect(bench.ended(run.id)).toBe(false);
+
+    await expect(bench.host.launch({ program: 'plain.js' })).rejects.toThrow(/still running/);
+
+    await bench.host.stop(run.id, { force: true });
+    expect(bench.ended(run.id)).toBe(true);
+    expect(bench.killed.some((one) => !one.self)).toBe(true);
+    expect(bench.killed.some((one) => one.self)).toBe(true);
+    const next = await bench.host.launch({ program: 'plain.js' });
+    await bench.until('next end', () => bench.ended(next.id));
   });
 
   it('кадр за корнем: файл читается, но только тот, что назвал адаптер', async () => {

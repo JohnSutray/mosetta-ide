@@ -29,8 +29,18 @@ export default class DebugServer {
           this.terminalRunner(call.project),
           undefined,
           () => call.project.settings('debug', DEBUG_DEFAULTS),
+          (name) => this.terminalRunning(call.project, name),
+          (pid, options) => this.ide.killTree(pid, options),
         ),
     );
+  }
+
+  private terminalRunning(project: Project, name: string): { pid: number | undefined } | null {
+    try {
+      return this.ide.getPlugin(TerminalServer).runningIn(project.root, name);
+    } catch {
+      return null;
+    }
   }
 
   private terminalRunner(project: Project): TerminalRunner {
@@ -81,7 +91,8 @@ export default class DebugServer {
   }
 
   @command() protected async stop(params: unknown, call: CallContext): Promise<null> {
-    await this.host(call).stop(field(params, 'run'));
+    const asked = params as { force?: unknown } | null;
+    await this.host(call).stop(field(params, 'run'), { force: asked?.force === true });
     return null;
   }
 
@@ -193,7 +204,7 @@ function breakpointAsk(value: unknown): BreakpointAsk {
   const one = value as Record<string, unknown> | null;
   if (typeof one?.['line'] !== 'number') throw new Error('breakpoint.line: number is required');
   const ask: BreakpointAsk = { line: one['line'] };
-  for (const key of ['condition', 'hitCondition', 'logMessage'] as const) {
+  for (const key of ['condition', 'hitCondition', 'logMessage', 'anchor'] as const) {
     const text = one[key];
     if (text === undefined) continue;
     if (typeof text !== 'string') throw new Error(`breakpoint.${key}: string expected`);

@@ -48,6 +48,13 @@ export default class TerminalServer {
     return host.runIn({ ...options, kind: 'script' });
   }
 
+  runningIn(root: string, name: string): { pid: number | undefined } | null {
+    const project = this.projects.get(root);
+    if (!project) return null;
+    const host = project.use('host', () => new TerminalHost(project, this.ide.log, () => this.shell()));
+    return host.running(name);
+  }
+
   watch(root: string, name: string, listener: (data: string) => void): () => void {
     const project = this.projects.get(root);
     if (!project) throw new Error(`no project open at ${root}`);

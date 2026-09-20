@@ -36,6 +36,17 @@ export function StopIcon(): JSX.Element {
   );
 }
 
+export function SkullIcon(): JSX.Element {
+  return (
+    <svg {...frame}>
+      <path d="M3.5 7.5a4.5 4.5 0 0 1 9 0v2.2c0 .6-.4 1.1-1 1.2l-.6.1v1.5h-5.8V11l-.6-.1c-.6-.1-1-.6-1-1.2z" fill="currentColor" stroke="none" />
+      <circle cx="6.2" cy="7.8" r="1.25" fill="var(--panel-bg, #3c3f41)" stroke="none" />
+      <circle cx="9.8" cy="7.8" r="1.25" fill="var(--panel-bg, #3c3f41)" stroke="none" />
+      <path d="M6.6 11.2v1.3M8 11.2v1.3M9.4 11.2v1.3" stroke="var(--panel-bg, #3c3f41)" stroke-width="1" />
+    </svg>
+  );
+}
+
 export function StepOverIcon(): JSX.Element {
   return (
     <svg {...frame}>

@@ -41,6 +41,9 @@ export interface TerminalRun {
 
 export type TerminalRunner = ((ask: TerminalAskOut) => TerminalRun) | null;
 
+const SETTLE_MS = 150;
+const SETTLE_TRIES = 8;
+
 export class DebugHost implements ProjectResource, RunOwner {
   private readonly lines = new Map<string, BreakpointAsk[]>();
   private exceptionMode: ExceptionMode = 'none';
@@ -58,6 +61,8 @@ export class DebugHost implements ProjectResource, RunOwner {
     private readonly terminalRunner: TerminalRunner = null,
     private readonly readDisk: (absolute: string) => Promise<string> = (absolute) => readFile(absolute, 'utf8'),
     private readonly settings: () => DebugSettings = () => DEBUG_DEFAULTS,
+    private readonly terminalRunning: ((name: string) => { pid: number | undefined } | null) | null = null,
+    private readonly killTree: (pid: number, options?: { self?: boolean }) => Promise<number> = async () => 0,
   ) {
     this.sources = new Sources(project.root, (relative) => project.resolve(relative));
   }
@@ -120,6 +125,7 @@ export class DebugHost implements ProjectResource, RunOwner {
       throw new Error(`program not found: ${ask.program}`);
     }
     const name = ask.name ?? ask.program ?? ask.url ?? ask.runtime ?? 'debug';
+    await this.stopLive();
     for (const run of this.runs.values()) {
       if (run.name === name && run.state === 'ended') this.runs.delete(run.id);
     }
@@ -195,8 +201,21 @@ export class DebugHost implements ProjectResource, RunOwner {
     return [...this.runs.values()].map((run) => run.info());
   }
 
-  async stop(runId: string): Promise<void> {
-    await this.run(runId).stop();
+  async stop(runId: string, options: { force?: boolean } = {}): Promise<void> {
+    await this.run(runId).stop(options);
+  }
+
+  private async stopLive(): Promise<void> {
+    const live = [...this.runs.values()].filter((run) => run.state !== 'ended');
+    if (live.length === 0) return;
+    this.log.info(`debug: гашу предыдущие запуски: ${live.map((run) => run.name).join(', ')}`);
+    await Promise.all(
+      live.map((run) => run.stop().catch((err) => this.log.warn(`debug: ${run.name} not stopped: ${String(err)}`))),
+    );
+    const stuck = [...this.runs.values()].filter((run) => run.state === 'stopping');
+    if (stuck.length > 0) {
+      throw new Error(`still running: ${stuck.map((run) => run.name).join(', ')} — kill it first`);
+    }
   }
 
   async step(runId: string, sessionId: string, thread: number, step: Step): Promise<void> {
@@ -299,6 +318,8 @@ export class DebugHost implements ProjectResource, RunOwner {
     return this.terminalRunner !== null;
   }
 
+  private readonly shells = new Map<string, { name: string; pid: number | undefined }>();
+
   async terminal(run: DebugRun, ask: TerminalAsk): Promise<{ shellProcessId?: number; processId?: number }> {
     if (!this.terminalRunner) throw new Error('no terminal in this build');
     let opened: TerminalRun;
@@ -316,6 +337,7 @@ export class DebugHost implements ProjectResource, RunOwner {
       this.log.warn(`debug: terminal refused ${run.name}: ${String(err)}`);
       throw err;
     }
+    this.shells.set(run.id, { name: `debug::${run.name}`, pid: opened.pid });
     this.project.emit('terminal', { run: run.id, name: `debug::${run.name}` });
     this.awaitServer(run, opened.watch);
     return { shellProcessId: opened.pid };
@@ -337,6 +359,32 @@ export class DebugHost implements ProjectResource, RunOwner {
       this.forgetReady(run.id);
     }
     this.project.emit('runs', this.list());
+  }
+
+  async stuck(run: DebugRun): Promise<boolean> {
+    const shell = this.shells.get(run.id);
+    if (!shell || !this.terminalRunning) return false;
+    for (let attempt = 0; attempt < SETTLE_TRIES; attempt += 1) {
+      await new Promise((done) => setTimeout(done, SETTLE_MS));
+      if (this.terminalRunning(shell.name) === null) return false;
+    }
+    return true;
+  }
+
+  async kill(run: DebugRun): Promise<void> {
+    const shell = this.shells.get(run.id);
+    if (shell?.pid !== undefined) {
+      await this.killTree(shell.pid, { self: false }).catch((err) =>
+        this.log.warn(`debug: программа ${run.name} не погасла: ${String(err)}`),
+      );
+    }
+    const pid = run.adapterPid;
+    if (pid !== undefined) {
+      await this.killTree(pid, { self: true }).catch((err) =>
+        this.log.warn(`debug: адаптер ${run.name} не погас: ${String(err)}`),
+      );
+    }
+    this.shells.delete(run.id);
   }
 
   stopped(run: DebugRun, session: DapSession, stop: Stop): void {
@@ -390,5 +438,6 @@ function trimAsk(ask: BreakpointAsk): BreakpointAsk {
   if (ask.condition?.trim()) out.condition = ask.condition.trim();
   if (ask.hitCondition?.trim()) out.hitCondition = ask.hitCondition.trim();
   if (ask.logMessage?.trim()) out.logMessage = ask.logMessage.trim();
+  if (ask.anchor?.trim()) out.anchor = ask.anchor.trim();
   return out;
 }

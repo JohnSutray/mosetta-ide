@@ -87,8 +87,12 @@ export class AdapterProcess {
     });
   }
 
-  kill(): void {
-    if (this.alive) this.handle.kill();
+  kill(signal?: 'SIGTERM' | 'SIGKILL'): void {
+    if (this.alive) this.handle.kill(signal);
+  }
+
+  get pid(): number | undefined {
+    return this.handle.child.pid;
   }
 
   listening(): Promise<void> {

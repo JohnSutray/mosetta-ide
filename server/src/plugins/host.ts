@@ -37,7 +37,7 @@ export interface Machine {
   settings(): Settings;
   environment(): Record<string, string>;
   which(name: string): string | null;
-  readonly processes: Pick<Processes, 'run' | 'stream' | 'adopt' | 'start'>;
+  readonly processes: Pick<Processes, 'run' | 'stream' | 'adopt' | 'start' | 'killTree'>;
 }
 
 export class PluginHost {
@@ -272,6 +272,7 @@ export class PluginHost {
         run: (ask) => this.machine.processes.run({ ...ask, reason: `${name}: ${ask.reason}` }),
         stream: (ask, onChunk) =>
           this.machine.processes.stream({ ...ask, reason: `${name}: ${ask.reason}` }, onChunk),
+        killTree: (pid, options) => this.machine.processes.killTree(pid, options),
         log: this.log,
         dir,
         state: await this.stateOf(name),
