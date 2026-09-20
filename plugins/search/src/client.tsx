@@ -18,12 +18,22 @@ export { layout, Layout } from './layout.js';
 export { matcher, Matcher, type Match } from './matcher.js';
 export { textIndex, TextIndex, type Indexed } from './text.js';
 
+/**
+ * "Search everywhere" is a plugin. Requirement four of the brief: a rectangle OVER the
+ * panels with a search field, results and a preview, on a double Shift.
+ *
+ * The index is our server half, standing on borrowed memory; here is what to show, in
+ * what order, what to caption the sections with, and who to hand a hit to on Enter. The
+ * owners of the kinds register in the `search.opener` key, which we declare: a script
+ * gets run, a file gets opened. The preview is the same code view as everywhere else.
+ */
 @registry({ key: 'search.opener', schema: OPENER_SCHEMA })
 @registry({ key: 'search.source', schema: SOURCE_SCHEMA })
 @registry({ key: 'search.icon', schema: ICON_SCHEMA })
 @configSection({ section: 'index', defaults: INDEX_DEFAULTS, schema: INDEX_SCHEMA })
 @plugin({ title: 'plugin.search' })
 export default class SearchPlugin implements SearchRemote {
+  /** The matching mechanics are instance fields: neighbours take them from here. */
   readonly layout = layout;
   readonly matcher = matcher;
   readonly textIndex = textIndex;
@@ -45,6 +55,7 @@ export default class SearchPlugin implements SearchRemote {
     );
   }
 
+  /** Ask the index. Named `find` rather than `search`: `search` is the window's state. */
   find(query: string, limit?: number, kinds?: IndexKind[]): Promise<SearchAnswer> {
     return this.askSearch({ query, limit, kinds });
   }
@@ -57,6 +68,7 @@ export default class SearchPlugin implements SearchRemote {
     return stub();
   }
 
+  /** What the index managed to cover — the window asks on opening. */
   stats(): Promise<SearchStats> {
     return this.askStats();
   }

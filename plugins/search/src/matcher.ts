@@ -1,23 +1,49 @@
 import type { Indexed } from './text.js';
 
+/**
+ * Fuzzy search with a score.
+ *
+ * A query is a subsequence of characters; the value of a subsequence is determined by
+ * WHERE it landed. A match at a word's start is worth more than one in the middle,
+ * consecutive characters more than scattered ones, a whole word more than a piece. From
+ * those three rules it follows that `dccf` finds `DesktopCreditCardForm`: four
+ * characters land on four word beginnings.
+ *
+ * Ours rather than a ready library, for exactly the reason the whole project was
+ * started: tuning the rules here means editing the constants below rather than fighting
+ * somebody else's opinion about what a good result is.
+ */
+
 const MATCH = 16;
 const WORD_START = 20;
 const CONSECUTIVE = 14;
 const AT_ORIGIN = 10;
 const WHOLE_WORD = 25;
+/** For every character skipped between the first and the last match. */
 const SPREAD = 2;
 
 export interface Match {
+  /** More is better. */
   score: number;
+  /** The positions of the matched characters in the original string. */
   positions: number[];
 }
 
+/**
+ * A dynamic-programming layer: where the query's q-th character could land, and at what
+ * price.
+ */
 interface Layer {
   pos: number[];
   score: number[];
+  /** The index in the previous layer — the way back. */
   from: number[];
 }
 
+/**
+ * The positions are sorted and the lists are short — an ordinary walk beats a binary
+ * search.
+ */
 function findPos(layer: Layer, pos: number): number {
   for (let i = layer.pos.length - 1; i >= 0; i -= 1) {
     if (layer.pos[i] === pos) return i;
@@ -26,6 +52,10 @@ function findPos(layer: Layer, pos: number): number {
   return -1;
 }
 
+/**
+ * A whole word matched — great value: `dev` in `::dev` is what the human was looking
+ * for, while `dev` in `deviceRenderer` is a coincidence.
+ */
 function wholeWordBonus(item: Indexed, positions: number[]): number {
   const { text, starts } = item;
   let bonus = 0;
@@ -42,7 +72,12 @@ function wholeWordBonus(item: Indexed, positions: number[]): number {
   return bonus;
 }
 
+/** Matching a query against a parsed string. */
 export class Matcher {
+  /**
+   * A quick filter: does such a subsequence exist at all. A cheap walk that throws out
+   * almost every candidate before the expensive scoring.
+   */
   couldMatch(text: string, query: string): boolean {
     let at = 0;
     for (let q = 0; q < query.length; q += 1) {
@@ -53,6 +88,16 @@ export class Matcher {
     return true;
   }
 
+  /**
+   * Score a match. The query MUST be folded (`textIndex.fold`: NFC plus lower case) —
+   * here it is compared character by character with already folded text.
+   *
+   * Folding inside is not on: the matcher is called for every hit, and `fold` does a
+   * `normalize`, which on twenty thousand entries is no longer pennies. So THE ASKER
+   * folds, once per query. The rule cost a day: the commons' sources handed the query
+   * over as it was, and any capital letter found nothing — `themeplugin` worked,
+   * `ThemePlugin` did not.
+   */
   match(item: Indexed, query: string): Match | null {
     const { text, starts } = item;
     if (query.length === 0 || query.length > text.length) return null;
@@ -90,8 +135,7 @@ export class Matcher {
             }
             cursor += 1;
           }
-          if (bestIndex === -1) continue;
-
+          if (bestIndex === -1) continue; 
           let score = bestScore + base(at, false);
           let from = bestIndex;
           const neighbour = findPos(previous, at - 1);
@@ -134,4 +178,5 @@ export class Matcher {
   }
 }
 
+/** One per process. */
 export const matcher = new Matcher();

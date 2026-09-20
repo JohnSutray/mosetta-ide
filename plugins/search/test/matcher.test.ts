@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Vocabulary, textIndex } from '../src/text.js';
 import { matcher } from '../src/matcher.js';
 
+/** Sort the variants by how the matcher scored them. */
 function rank(query: string, items: string[], vocabulary?: Vocabulary): string[] {
   return items
     .map((item) => ({ item, m: matcher.match(textIndex.of(item, vocabulary), textIndex.fold(query)) }))
@@ -10,7 +11,7 @@ function rank(query: string, items: string[], vocabulary?: Vocabulary): string[]
     .map((r) => r.item);
 }
 
-describe('разбор на слова', () => {
+describe('splitting into words', () => {
   it.each([
     ['DesktopCreditCardForm', ['Desktop', 'Credit', 'Card', 'Form']],
     ['creditCardForm.ts', ['credit', 'Card', 'Form', 'ts']],
@@ -25,7 +26,7 @@ describe('разбор на слова', () => {
   });
 });
 
-describe('словарь проекта', () => {
+describe('the project\'s vocabulary', () => {
   const vocabulary = new Vocabulary();
   for (const sample of [
     'desktop/creditCardForm.ts',
@@ -35,15 +36,15 @@ describe('словарь проекта', () => {
     vocabulary.learn(sample);
   }
 
-  it('раскладывает слипшееся по словам, выученным из проекта', () => {
+  it('it takes glued-together text apart into words learned from the project', () => {
     expect(vocabulary.segment('creditcardform')).toEqual(['credit', 'card', 'form']);
   });
 
-  it('не выдумывает разбивку из незнакомых слов', () => {
-    expect(vocabulary.segment('квартирныйвопрос')).toBeNull();
+  it('it does not invent a split out of unknown words', () => {
+    expect(vocabulary.segment('housingproblem')).toBeNull();
   });
 
-  it('слипшееся имя ищется по первым буквам слов', () => {
+  it('a glued-together name is found by the words\' first letters', () => {
     const item = textIndex.of('creditcardform.ts', vocabulary);
     const withVocabulary = matcher.match(item, 'ccf');
     const without = matcher.match(textIndex.of('creditcardform.ts'), 'ccf');
@@ -51,8 +52,8 @@ describe('словарь проекта', () => {
   });
 });
 
-describe('оценка совпадений', () => {
-  it('dccf ловит все три формы записи', () => {
+describe('scoring matches', () => {
+  it('dccf catches all three ways of writing it', () => {
     const items = [
       'ts::DesktopCreditCardForm()',
       'desktop/creditCardForm.ts',
@@ -61,7 +62,7 @@ describe('оценка совпадений', () => {
     expect(rank('dccf', items)).toHaveLength(3);
   });
 
-  it('начала слов важнее случайных букв в середине', () => {
+  it('word beginnings matter more than random letters in the middle', () => {
     const ranked = rank('dccf', [
       'ts::advancedCheckoutConfigForm()',
       'ts::DesktopCreditCardForm()',
@@ -69,7 +70,7 @@ describe('оценка совпадений', () => {
     expect(ranked[0]).toBe('ts::DesktopCreditCardForm()');
   });
 
-  it('одинаково хорошие аббревиатуры обе находятся', () => {
+  it('two equally good abbreviations are both found', () => {
     const ranked = rank('dccf', [
       'ts::DesktopCreditCardForm()',
       'ts::doNotCallCheckFast()',
@@ -77,12 +78,12 @@ describe('оценка совпадений', () => {
     expect(ranked).toHaveLength(2);
   });
 
-  it('целое слово важнее куска слова', () => {
+  it('a whole word matters more than a piece of a word', () => {
     const ranked = rank('dev', ['npm::@distrojs/core::dev', 'ts::deviceValueRenderer()']);
     expect(ranked[0]).toBe('npm::@distrojs/core::dev');
   });
 
-  it('префикс пространства имён отбирает свой сорт', () => {
+  it('a namespace prefix picks out its own kind', () => {
     const items = [
       'npm::@distrojs/core::dev',
       'ts::DesktopCreditCardForm()',
@@ -92,23 +93,23 @@ describe('оценка совпадений', () => {
     expect(rank('npm::dev', items)[0]).toBe('npm::@distrojs/core::dev');
   });
 
-  it('подряд идущие символы ценнее разбросанных', () => {
+  it('consecutive characters are worth more than scattered ones', () => {
     const ranked = rank('form', ['ts::formBuilder()', 'ts::fooOrMore()']);
     expect(ranked[0]).toBe('ts::formBuilder()');
   });
 
-  it('чего нет — того нет', () => {
+  it('what is not there is not there', () => {
     expect(matcher.match(textIndex.of('src/main.ts'), 'zzz')).toBeNull();
   });
 
-  it('позиции совпадений указывают на настоящие символы', () => {
+  it('the match positions point at the real characters', () => {
     const item = 'ts::DesktopCreditCardForm()';
     const result = matcher.match(textIndex.of(item), 'dccf')!;
     const letters = result.positions.map((p) => item[p]);
     expect(letters).toEqual(['D', 'C', 'C', 'F']);
   });
 
-  it('кириллица ищется, несмотря на разложение с диска', () => {
+  it('Cyrillic is found despite the decomposition disk hands over', () => {
     const decomposed = 'src/находка.ts'.normalize('NFD');
     expect(matcher.match(textIndex.of(decomposed), textIndex.fold('находка'))).not.toBeNull();
   });

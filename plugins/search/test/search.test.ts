@@ -4,12 +4,20 @@ import DocPlugin from '@mosetta/ide-plugin-doc';
 import SearchPlugin, { type IndexHit } from '../src/client.js';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 
+/**
+ * "Search everywhere" as a plugin: what it promises.
+ *
+ * The hits go in sections by kind, and the sections' order is set by the best result in
+ * each. Enter on a script RUNS it rather than opening package.json: the kind's owner is
+ * taken from our own `search.opener` key.
+ */
 function hit(kind: string, label: string, path = `${label}.ts`, line?: number): IndexHit {
   return { kind, label, path, line, matches: [], score: 1 };
 }
 
 const NAME = '@mosetta/ide-plugin-search';
 
+/** Wait for the commons: the sources are asked after the typing pause. */
 const later = (ms = 220) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function raise() {
@@ -26,31 +34,31 @@ async function raise() {
   return { host, plugin, search: plugin.search, hits, answers };
 }
 
-describe('найти всё', () => {
-  it('находки собираются в секции, первый результат остаётся первым', async () => {
+describe('search everywhere', () => {
+  it('the hits gather into sections, and the first result stays first', async () => {
     const { search, hits } = await raise();
-    hits.push(hit('ts', 'один'), hit('file', 'два'), hit('ts', 'три'), hit('file', 'четыре'));
+    hits.push(hit('ts', 'one'), hit('file', 'two'), hit('ts', 'three'), hit('file', 'four'));
     search.show();
-    search.setQuery('о');
+    search.setQuery('o');
     await new Promise((r) => setTimeout(r, 0));
 
     const rows = search.rows.value.map((row) => ('header' in row ? `# ${row.header}` : row.hit.label));
-    expect(rows).toEqual(['# search.kind.ts', 'один', 'три', '# search.kind.file', 'два', 'четыре']);
+    expect(rows).toEqual(['# search.kind.ts', 'one', 'three', '# search.kind.file', 'two', 'four']);
   });
 
-  it('окно знает, что показало не всё', async () => {
+  it('the window knows it did not show everything', async () => {
     const { search, hits, answers } = await raise();
-    hits.push(hit('file', 'один'));
+    hits.push(hit('file', 'one'));
     answers.set('search', () => ({ hits, total: 42 }));
     search.show();
-    search.setQuery('о');
+    search.setQuery('o');
     await new Promise((r) => setTimeout(r, 0));
 
     expect(search.hits.value).toHaveLength(1);
     expect(search.total.value).toBe(42);
   });
 
-  it('Enter по скрипту отдаёт находку хозяину сорта, а не открывает файл', async () => {
+  it('Enter on a script hands the hit to the kind\'s owner rather than opening a file', async () => {
     const { host, search, hits } = await raise();
     const ran: string[] = [];
     host.registry.add('search.opener', { kind: 'npm', open: (found: { path: string }) => ran.push(found.path) }, '@mosetta/ide-plugin-npm-scripts');
@@ -65,7 +73,7 @@ describe('найти всё', () => {
     expect(search.open.value).toBe(false);
   });
 
-  it('Enter по файлу открывает его на найденной строке', async () => {
+  it('Enter on a file opens it at the line that was found', async () => {
     const { host, search, hits } = await raise();
     hits.push(hit('ts', 'Foo', 'src/foo.ts', 41));
     host.surface.docs.texts.set('src/foo.ts', '');
@@ -78,7 +86,7 @@ describe('найти всё', () => {
     expect(host.plugin(DocPlugin).doc.pendingReveal.value).toMatchObject({ path: 'src/foo.ts', line: 41 });
   });
 
-  it('клавиша, открывшая окно, его и закрывает', async () => {
+  it('the key that opened the window closes it', async () => {
     const { host, search } = await raise();
     host.run('search.everywhere');
     expect(search.open.value).toBe(true);
@@ -86,7 +94,7 @@ describe('найти всё', () => {
     expect(search.open.value).toBe(false);
   });
 
-  it('пустое поле занято недавними местами от поставщика', async () => {
+  it('an empty field is taken by recent places from a supplier', async () => {
     const { host, search } = await raise();
     host.registry.add(
       'search.source',
@@ -106,14 +114,14 @@ describe('найти всё', () => {
     expect(search.hits.value[0]?.line).toBe(4);
   });
 
-  it('поставщика нет — пустое поле остаётся пустым, и это не поломка', async () => {
+  it('no supplier means an empty field stays empty, and that is not a breakage', async () => {
     const { search } = await raise();
     search.show();
     await new Promise((r) => setTimeout(r, 0));
     expect(search.hits.value).toEqual([]);
   });
 
-  it('на пустом терме источник просят ровно столько, сколько велит настройка', async () => {
+  it('on an empty term a source is asked for exactly as many as the setting says', async () => {
     const { host, search } = await raise();
     const asked: number[] = [];
     host.registry.add(
@@ -134,7 +142,7 @@ describe('найти всё', () => {
     expect(search.hits.value).toHaveLength(15);
   });
 
-  it('стрелки ходят по кругу', async () => {
+  it('the arrows walk in a circle', async () => {
     const { host, search, hits } = await raise();
     hits.push(hit('ts', 'a'), hit('ts', 'b'));
     search.show();
@@ -149,40 +157,47 @@ describe('найти всё', () => {
   });
 });
 
-describe('общак', () => {
-  it('находки источника встают в выдачу рядом со своими', async () => {
+/**
+ * The commons: the window takes hits from anybody.
+ *
+ * The user's rule: "search everywhere" stays a MARKETPLACE. A source puts its own into
+ * the `search.source` key and is entitled to go outwards — to the server, into a child
+ * process — so it is asked AFTER the typing pause rather than on every letter.
+ */
+describe('the commons', () => {
+  it('a source\'s hits stand in the results next to our own', async () => {
     const { host, search, hits } = await raise();
-    hits.push(hit('file', 'файл', 'файл.ts'));
+    hits.push(hit('file', 'doc', 'doc.ts'));
     host.registry.add(
       'search.source',
-      { id: 'sym', kind: 'ts', find: () => [{ ...hit('ts', 'ts::Символ'), score: 9 }] },
+      { id: 'sym', kind: 'ts', find: () => [{ ...hit('ts', 'ts::Symbol'), score: 9 }] },
       '@mosetta/ide-plugin-symbols',
     );
     search.show();
-    search.setQuery('с');
+    search.setQuery('s');
     await later();
-    expect(search.hits.value.map((one) => one.label)).toContain('ts::Символ');
+    expect(search.hits.value.map((one) => one.label)).toContain('ts::Symbol');
   });
 
-  it('опоздавший ответ не переставляет выбранное', async () => {
+  it('a late answer does not move what is selected', async () => {
     const { host, search, hits } = await raise();
-    hits.push(hit('file', 'файл', 'файл.ts'));
+    hits.push(hit('file', 'doc', 'doc.ts'));
     host.registry.add(
       'search.source',
-      { id: 'sym', kind: 'ts', find: () => [{ ...hit('ts', 'ts::Первее'), score: 99 }] },
+      { id: 'sym', kind: 'ts', find: () => [{ ...hit('ts', 'ts::Sooner'), score: 99 }] },
       '@mosetta/ide-plugin-symbols',
     );
     search.show();
-    search.setQuery('ф');
+    search.setQuery('d');
     await new Promise((r) => setTimeout(r, 0));
     const chosen = search.current.value?.label;
     await later();
-    expect(search.current.value?.label, 'под кареткой то же, что было').toBe(chosen);
+    expect(search.current.value?.label, 'the same is under the caret as was before').toBe(chosen);
   });
 
-  it('чип заводится по объявленному сорту и выключает источник', async () => {
+  it('a chip is created from the declared kind and switches the source off', async () => {
     const { host, search, hits } = await raise();
-    hits.push(hit('file', 'файл', 'файл.ts'));
+    hits.push(hit('file', 'doc', 'doc.ts'));
     let asked = 0;
     host.registry.add(
       'search.source',
@@ -191,26 +206,26 @@ describe('общак', () => {
         kind: 'ts',
         find: () => {
           asked += 1;
-          return [{ ...hit('ts', 'ts::Символ'), score: 9 }];
+          return [{ ...hit('ts', 'ts::Symbol'), score: 9 }];
         },
       },
       '@mosetta/ide-plugin-symbols',
     );
     search.show();
-    search.setQuery('с');
+    search.setQuery('s');
     await later();
-    expect(search.kinds.value, 'чип есть').toContain('ts');
-    expect(asked, 'спросили').toBeGreaterThan(0);
+    expect(search.kinds.value, 'the chip exists').toContain('ts');
+    expect(asked, 'it was asked').toBeGreaterThan(0);
     const before = asked;
 
     search.toggleKind('ts');
     await later();
-    expect(asked, 'выключенный не спрошен').toBe(before);
+    expect(asked, 'the disabled one was not asked').toBe(before);
     expect(search.hits.value.some((one) => one.kind === 'ts')).toBe(false);
     expect(search.kinds.value).toContain('ts');
   });
 
-  it('недавние заводят свой чип и выключаются им же', async () => {
+  it('recents create their own chip and are switched off by it', async () => {
     const { host, search } = await raise();
     host.registry.add(
       'search.source',
@@ -228,46 +243,46 @@ describe('общак', () => {
     search.toggleKind('recent');
     await later();
     expect(search.hits.value).toEqual([]);
-    expect(search.kinds.value, 'чип остаётся, иначе его нечем вернуть').toContain('recent');
+    expect(search.kinds.value, 'the chip stays, otherwise there is nothing to bring it back with').toContain('recent');
   });
 
-  it('свёрнутая секция прячет строки, но не себя и не свой счёт', async () => {
+  it('a collapsed section hides its rows but not itself or its count', async () => {
     const { search, hits } = await raise();
-    hits.push(hit('ts', 'один'), hit('ts', 'два'), hit('file', 'три'));
+    hits.push(hit('ts', 'one'), hit('ts', 'two'), hit('file', 'three'));
     search.show();
-    search.setQuery('о');
+    search.setQuery('o');
     await later();
 
     search.toggleSection('ts');
     const rows = search.rows.value.map((row) => ('header' in row ? `# ${row.header} ${row.count}` : row.hit.label));
-    expect(rows).toEqual(['# search.kind.ts 2', '# search.kind.file 1', 'три']);
+    expect(rows).toEqual(['# search.kind.ts 2', '# search.kind.file 1', 'three']);
     expect(search.isFolded('ts')).toBe(true);
-    expect(search.current.value?.label).toBe('три');
+    expect(search.current.value?.label).toBe('three');
 
     search.move(1);
-    expect(search.current.value?.label).toBe('три');
+    expect(search.current.value?.label).toBe('three');
 
     search.toggleSection('ts');
     expect(search.rows.value.filter((row) => !('header' in row))).toHaveLength(3);
   });
 
-  it('значок сорта рисует тот, кто сорт принёс', async () => {
+  it('the kind\'s icon is drawn by whoever brought the kind', async () => {
     const { host, search, hits } = await raise();
     host.registry.add(
       'search.icon',
-      { kind: 'npm', icon: () => 'значок скрипта' },
+      { kind: 'npm', icon: () => 'a script icon' },
       '@mosetta/ide-plugin-npm-scripts',
     );
     hits.push(hit('npm', 'dev', 'package.json'), hit('file', 'foo', 'src/foo.ts'));
     search.show();
-    search.setQuery('о');
+    search.setQuery('o');
     await later();
 
-    expect(search.iconFor(hits[0]!)).toBe('значок скрипта');
+    expect(search.iconFor(hits[0]!)).toBe('a script icon');
     expect(search.iconFor(hits[1]!)).toBeNull();
   });
 
-  it('тег сужает выдачу и не тревожит чужие источники', async () => {
+  it('a tag narrows the results and does not disturb other sources', async () => {
     const { host, search, hits } = await raise();
     hits.push(hit('file', 'layout.ts', 'src/layout.ts'));
     let askedTerminals = 0;
@@ -305,10 +320,10 @@ describe('общак', () => {
     await later();
 
     expect(search.hits.value.map((one) => one.label)).toEqual(['fit']);
-    expect(askedTerminals, 'чужой источник не спрошен').toBe(before);
+    expect(askedTerminals, 'the other source was not asked').toBe(before);
   });
 
-  it('тег, которого никто не обещает, назван вслух', async () => {
+  it('a tag nobody promises is named out loud', async () => {
     const { host, search } = await raise();
     host.registry.add(
       'search.source',
@@ -318,14 +333,14 @@ describe('общак', () => {
     search.show();
     search.setQuery('ts function fit');
     await later();
-    expect(search.strayTags.value, 'всё знакомо — молчим').toEqual([]);
+    expect(search.strayTags.value, 'everything is familiar — we stay silent').toEqual([]);
 
     search.setQuery('fnction fit');
     await later();
     expect(search.strayTags.value).toEqual(['fnction']);
   });
 
-  it('тег с пустым термом просит у источника список, а не молчание', async () => {
+  it('a tag with an empty term asks a source for a list rather than for silence', async () => {
     const { host, search } = await raise();
     const asks: Array<{ term: string; tags: string[]; limit: number }> = [];
     host.registry.add(
@@ -353,7 +368,7 @@ describe('общак', () => {
     expect(asks.at(-1)?.limit).toBe(60);
   });
 
-  it('на голом теге впереди то, что чаще попадалось раньше', async () => {
+  it('on a bare tag what turned up more often before comes first', async () => {
     const { host, search } = await raise();
     const all = [hit('ts', 'Alpha'), hit('ts', 'Beta'), hit('ts', 'Gamma')];
     host.registry.add(
@@ -381,7 +396,7 @@ describe('общак', () => {
     expect(search.hits.value.map((one) => one.label)).toEqual(['Gamma', 'Alpha', 'Beta']);
   });
 
-  it('список, выданный на голый тег, не подтверждает сам себя', async () => {
+  it('a list handed over for a bare tag does not confirm itself', async () => {
     const { host, search } = await raise();
     host.registry.add(
       'search.source',
@@ -400,7 +415,7 @@ describe('общак', () => {
     expect(search.recall.countOf({ ...hit('ts', 'Alpha'), tags: ['class'] })).toBe(0);
   });
 
-  it('источник, сложивший запрос, находит и с заглавных букв', async () => {
+  it('a source that folded the query finds things from capital letters too', async () => {
     const { host, plugin, search } = await raise();
     host.registry.add(
       'search.source',
@@ -429,7 +444,7 @@ describe('общак', () => {
     expect(search.hits.value.map((one) => one.label)).toEqual(['ThemePlugin']);
   });
 
-  it('короткое имя тега разворачивается до того, как спросят источник', async () => {
+  it('a tag\'s short name is expanded before the source is asked', async () => {
     const { host, search } = await raise();
     const asks: string[][] = [];
     host.registry.add(
@@ -455,14 +470,14 @@ describe('общак', () => {
     expect(search.strayTags.value).toEqual([]);
   });
 
-  it('записка источника видна, только когда спросили, а он не ответил', async () => {
+  it('a source\'s note is visible only when it was asked and did not answer', async () => {
     const { host, search } = await raise();
     host.registry.add(
       'search.source',
       {
         id: 'sym',
         kind: 'ts',
-        find: ({ term }: { term: string }) => (term === 'есть' ? [{ ...hit('ts', 'Нашлось'), score: 3 }] : []),
+        find: ({ term }: { term: string }) => (term === 'present' ? [{ ...hit('ts', 'Found it'), score: 3 }] : []),
         note: () => ({ key: 'symbols.partial', params: { count: 3 } }),
       },
       '@mosetta/ide-plugin-symbols',
@@ -470,32 +485,32 @@ describe('общак', () => {
 
     search.show();
     await later();
-    expect(search.notes.value, 'молчим, пока не спросили').toEqual([]);
+    expect(search.notes.value, 'we stay silent until we are asked').toEqual([]);
 
-    search.setQuery('есть');
+    search.setQuery('present');
     await later();
-    expect(search.notes.value, 'нашёл — про дырки не спрашивают').toEqual([]);
+    expect(search.notes.value, 'it found something — nobody asks about its holes').toEqual([]);
 
-    search.setQuery('нету');
+    search.setQuery('absent');
     await later();
     expect(search.notes.value).toEqual([{ key: 'symbols.partial', params: { count: 3 } }]);
   });
 
-  it('поломка источника не роняет выдачу', async () => {
+  it('a source breaking does not bring the results down', async () => {
     const { host, search, hits } = await raise();
-    hits.push(hit('file', 'файл', 'файл.ts'));
+    hits.push(hit('file', 'doc', 'doc.ts'));
     host.registry.add(
       'search.source',
-      { id: 'битый', kind: 'x', find: () => Promise.reject(new Error('упал')) },
-      '@mosetta/ide-plugin-кто-то',
+      { id: 'corrupt', kind: 'x', find: () => Promise.reject(new Error('it fell over')) },
+      '@mosetta/ide-plugin-somebody',
     );
     search.show();
-    search.setQuery('ф');
+    search.setQuery('d');
     await later();
-    expect(search.hits.value.map((one) => one.label)).toEqual(['файл']);
+    expect(search.hits.value.map((one) => one.label)).toEqual(['doc']);
   });
 
-  it('источник говорит о своём покрытии сам', async () => {
+  it('a source speaks about its own coverage itself', async () => {
     const { host, search } = await raise();
     host.registry.add(
       'search.source',
@@ -503,7 +518,7 @@ describe('общак', () => {
       '@mosetta/ide-plugin-symbols',
     );
     search.show();
-    search.setQuery('что-нибудь');
+    search.setQuery('anything at all');
     await later();
     expect(search.notes.value).toEqual([{ key: 'symbols.partial', params: { count: 7 } }]);
   });

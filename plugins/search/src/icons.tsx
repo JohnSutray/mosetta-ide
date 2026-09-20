@@ -1,5 +1,9 @@
 import type { JSX } from 'preact';
 
+/**
+ * The search icon, our own. A magnifier. Monochrome, taking its colour from the button;
+ * filled when the window is open.
+ */
 const common = {
   width: 16,
   height: 16,
