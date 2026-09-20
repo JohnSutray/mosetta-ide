@@ -3,11 +3,20 @@ import { signal } from '@preact/signals';
 import { activate, plugin, registry, type Ide } from '@mosetta/ide-api/client';
 import UiPlugin, { Resizer } from '@mosetta/ide-plugin-ui';
 import { ColumnFit, type ColumnAsk } from './fit.js';
-import { PANEL_ACTION_SCHEMA, PANEL_SCHEMA, type PanelAction, type PanelWish } from './schema.js';
+import { Overlay } from './overlay.js';
+import {
+  MAIN_OVERLAY_SCHEMA,
+  PANEL_ACTION_SCHEMA,
+  PANEL_SCHEMA,
+  type MainOverlay,
+  type PanelAction,
+  type PanelWish,
+} from './schema.js';
 import { STYLE } from './style.js';
 
 @registry({ key: 'panel', schema: PANEL_SCHEMA })
 @registry({ key: 'panel.action', schema: PANEL_ACTION_SCHEMA })
+@registry({ key: 'main.overlay', schema: MAIN_OVERLAY_SCHEMA })
 @plugin({ title: 'plugin.layout' })
 export default class Layout {
   private readonly keepFree = 320;
@@ -39,8 +48,11 @@ export default class Layout {
           </Fragment>
         ))}
 
-        {side('main').map((panel) => this.column(panel))}
-        {side('main').length === 0 && <div class="columns-rest" />}
+        <div class="columns-middle">
+          {side('main').map((panel) => this.column(panel))}
+          {side('main').length === 0 && <div class="columns-rest" />}
+          {this.overlay()}
+        </div>
 
         {side('right').map((panel) => (
           <Fragment key={panel.id}>
@@ -49,6 +61,20 @@ export default class Layout {
           </Fragment>
         ))}
       </div>
+    );
+  }
+
+  private overlay() {
+    const open = this.ide.registry<MainOverlay>('main.overlay').all.value.filter((one) => one.open.value);
+    const top = open[open.length - 1];
+    if (!top) return null;
+    return (
+      <Overlay
+        key={top.id}
+        overlay={top}
+        title={top.heading?.() ?? this.ide.t(top.title)}
+        closeTitle={this.ide.t('panel.close')}
+      />
     );
   }
 

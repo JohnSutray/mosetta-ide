@@ -1,52 +1,10 @@
 import type { Ide } from '@mosetta/ide-api/client';
+export type { Ask } from '@mosetta/ide-plugin-ui';
 import type { FileTree } from './file-tree.js';
 import { batch, signal } from '@preact/signals';
+import { Asking } from '@mosetta/ide-plugin-ui';
 import type { EntryKind } from '@mosetta/ide-api/client';
 import DocPlugin from '@mosetta/ide-plugin-doc';
-
-export interface Ask {
-  id: number;
-  title: string;
-  text?: string;
-  field: boolean;
-  value?: string;
-  confirm: string;
-  danger?: boolean;
-  error?: string;
-  run: (value: string) => Promise<void>;
-}
-
-export class Prompt {
-  readonly ask = signal<Ask | null>(null);
-
-  readonly draft = signal('');
-
-  private nextId = 1;
-
-  show(spec: Omit<Ask, 'id'>): void {
-    batch(() => {
-      this.draft.value = spec.value ?? '';
-      this.ask.value = { ...spec, id: this.nextId++ };
-    });
-  }
-
-  cancel(): void {
-    this.ask.value = null;
-  }
-
-  async answer(): Promise<void> {
-    const asked = this.ask.value;
-    if (!asked) return;
-    const answer = this.draft.value.trim();
-    if (asked.field && answer === '') return;
-    try {
-      await asked.run(answer);
-      this.ask.value = null;
-    } catch (err) {
-      this.ask.value = { ...asked, error: describe(err) };
-    }
-  }
-}
 
 export class TreeSelection {
   constructor(
@@ -208,7 +166,7 @@ export class TreeOps {
 
   constructor(
     private readonly selection: TreeSelection,
-    private readonly prompt: Prompt,
+    private readonly prompt: Asking,
     private readonly files: FileTree,
     private readonly ide: Ide,
     private readonly reveal: (path: string) => Promise<void>,
@@ -220,6 +178,7 @@ export class TreeOps {
       title: kind === 'dir' ? this.ide.t('tree.newFolder') : this.ide.t('tree.newFile'),
       text: parent === '' ? this.ide.t('tree.inRoot') : parent,
       field: true,
+      filename: true,
       value: '',
       confirm: this.ide.t('tree.create'),
       run: async (name) => {
@@ -239,6 +198,7 @@ export class TreeOps {
       title: this.ide.t('tree.rename'),
       text: path,
       field: true,
+      filename: true,
       value: name,
       confirm: this.ide.t('tree.rename.do'),
       run: async (next) => {
@@ -375,6 +335,7 @@ export class TreeOps {
       title: this.ide.t('tree.pasteText'),
       text: text.slice(0, 200),
       field: true,
+      filename: true,
       value: '',
       confirm: this.ide.t('tree.create'),
       run: async (name) => {

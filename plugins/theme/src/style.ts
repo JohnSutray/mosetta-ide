@@ -18,12 +18,51 @@ export const STYLE = `
   --git-modified: #6897bb;
   --git-added: #629755;
   --git-conflict: #e0655f;
+  --diff-added-bg: #294436;
+  --diff-removed-bg: #452b2c;
   --noscan: #a3924a;
   --debug-breakpoint: #db5c5c;
   --debug-line: #2d6099;
   --font: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
   --ui-font: 'Inter', 'SF Pro Text', -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
+
+input[type='checkbox'] {
+  appearance: none;
+  flex: none;
+  margin: 0;
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--divider);
+  border-radius: 2px;
+  background: var(--control-bg);
+  cursor: default;
+}
+input[type='checkbox']:hover { background: var(--control-bg-hover); }
+input[type='checkbox']:checked,
+input[type='checkbox']:indeterminate {
+  background: #5a5f61;
+  border-color: #6d7376;
+}
+input[type='checkbox']:checked::after {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 7px;
+  margin: 0 auto;
+  transform: translateY(-1px) rotate(45deg);
+  border: solid var(--fg);
+  border-width: 0 2px 2px 0;
+}
+input[type='checkbox']:indeterminate::after {
+  content: '';
+  display: block;
+  width: 7px;
+  height: 2px;
+  margin: 4px auto;
+  background: var(--fg);
+}
+input[type='checkbox']:disabled { opacity: 0.45; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }

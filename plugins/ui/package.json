@@ -12,6 +12,8 @@
   "ide": {
     "client": "src/client.tsx",
     "shares": [
+      "AskPopup",
+      "Asking",
       "Chevron",
       "Chip",
       "ChipRow",
@@ -25,7 +27,8 @@
       "Popup",
       "Resizer",
       "RootIcon",
-      "Tag"
+      "Tag",
+      "Typeahead"
     ],
     "strings": {
       "en": "src/en.json",

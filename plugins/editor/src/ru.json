@@ -15,5 +15,12 @@
   "command.edit.wordLeft": "Каретка на слово влево",
   "command.edit.wordRight": "Каретка на слово вправо",
   "command.panel.editor": "Панель редактора",
-  "command.symbol.goto": "К объявлению или к использованиям"
+  "command.symbol.goto": "К объявлению или к использованиям",
+  "docs.diverged.changed": "файл изменился на диске",
+  "docs.diverged.discard": "выбросить мои правки",
+  "docs.diverged.discard.hint": "перечитать файл с диска, потеряв набранное",
+  "docs.diverged.merge.hint": "свести диск с вашим текстом — правки сохранятся",
+  "docs.diverged.reload": "подтянуть диск",
+  "docs.diverged.removed": "файл удалён на диске",
+  "docs.diverged.sort": "разобраться"
 }

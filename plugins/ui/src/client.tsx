@@ -42,6 +42,7 @@ export default class UiPlugin {
   @command('menu.prev') protected menuPrev(): void { this.windows.activeMenu.value?.prev(); }
   @command('menu.accept') protected menuAccept(): void { this.windows.activeMenu.value?.accept(); }
   @command('popup.close') protected popupClose(): void { this.windows.popups.closeTop(); }
+  @command('prompt.confirm') protected promptConfirm(): void { void this.windows.asking.value?.answer(); }
 
   @activate() protected start(): void {
     this.ide.css(STYLE);

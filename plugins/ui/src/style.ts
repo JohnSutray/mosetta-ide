@@ -10,6 +10,12 @@ export const STYLE = `
   transition: background-color 120ms linear;
 }
 .resizer:hover, .resizer:active { background: var(--treesel); }
+.resizer.is-y {
+  width: auto;
+  height: 5px;
+  margin: -2px 0;
+  cursor: row-resize;
+}
 .pick { display: flex; flex-direction: column; }
 .pick-list {
   flex: 1;
@@ -346,4 +352,34 @@ export const STYLE = `
   letter-spacing: 0.03em;
   white-space: nowrap;
 }
+
+.prompt { display: flex; flex-direction: column; }
+.prompt-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--divider);
+  flex: none;
+}
+.prompt-title { font-size: 14px; }
+.prompt-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.prompt-text {
+  color: var(--muted);
+  font: 12px/1.5 var(--ui-font);
+  white-space: pre-wrap;
+  overflow: auto;
+  flex: 0 1 auto;
+  min-height: 0;
+}
+.prompt .field { flex: none; }
+.prompt-error { color: var(--error); font: 12px/1.4 var(--ui-font); flex: none; }
+.prompt-foot { flex: none; margin-top: auto; display: flex; justify-content: flex-end; gap: 6px; }
 `;

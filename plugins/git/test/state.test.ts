@@ -25,7 +25,7 @@ function fakeIde() {
 }
 
 const remote: GitRemote = {
-  state: async () => ({ repo: false, branch: null, ahead: 0, behind: 0, files: {} }),
+  state: async () => ({ repo: false, branch: null, ahead: 0, behind: 0, files: {}, moved: {} }),
   branches: async () => [],
   outgoing: async () => ({ branch: null, upstream: null, local: [], remote: [], common: [] }) as never,
   changes: async () => [],
@@ -37,7 +37,7 @@ function makeGit(ide = fakeIde()) {
 }
 
 function state(files: GitState['files']): GitState {
-  return { repo: true, branch: 'main', ahead: 0, behind: 0, files };
+  return { repo: true, branch: 'main', ahead: 0, behind: 0, files, moved: {} };
 }
 
 function branch(name: string, extra: Partial<GitBranch> = {}): GitBranch {

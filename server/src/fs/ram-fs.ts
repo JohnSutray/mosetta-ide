@@ -12,6 +12,7 @@ export interface Doc {
   revision: string | null;
   dirty: boolean;
   truncated: boolean;
+  diverged?: 'changed' | 'removed';
   openCount: number;
   savedText?: string;
 }
@@ -270,6 +271,7 @@ export class RamFs {
       doc.revision = result.revision;
       doc.dirty = false;
       delete doc.savedText;
+      delete doc.diverged;
     } catch (err) {
       if (err instanceof RpcError && err.code === RpcErrorCode.RevisionConflict) {
         this.emit({ type: 'doc.saveBlocked', path: doc.path });
@@ -320,6 +322,7 @@ export class RamFs {
     doc.version += 1;
     doc.dirty = false;
     delete doc.savedText;
+    delete doc.diverged;
     this.emit({ type: 'doc.changed', path: key, version: doc.version, dirty: false });
     this.emit({ type: 'doc.saved', path: key, revision });
     this.emit({ type: 'doc.external', path: key, revision });
@@ -346,9 +349,11 @@ export class RamFs {
     if (disk && disk.text === text) {
       doc.dirty = false;
       delete doc.savedText;
+      delete doc.diverged;
     } else {
       doc.savedText = disk ? disk.text : '';
       doc.dirty = true;
+      doc.diverged = 'changed';
     }
 
     this.emit({ type: 'doc.changed', path: key, version: doc.version, dirty: doc.dirty });
@@ -369,6 +374,7 @@ export class RamFs {
     doc.truncated = file.truncated;
     doc.dirty = false;
     delete doc.savedText;
+    delete doc.diverged;
     doc.version += 1;
     this.emit({ type: 'doc.changed', path: doc.path, version: doc.version, dirty: false });
     return doc;
@@ -460,6 +466,7 @@ export class RamFs {
     if (doc.revision === revision) return;
 
     if (doc.dirty) {
+      doc.diverged = 'changed';
       this.emit({ type: 'doc.diverged', path: key, reason: 'changed' });
       return;
     }
@@ -474,6 +481,7 @@ export class RamFs {
 
     const doc = this.docs.get(key);
     if (doc?.dirty) {
+      doc.diverged = 'removed';
       this.emit({ type: 'doc.diverged', path: key, reason: 'removed' });
       return true;
     }
@@ -493,6 +501,7 @@ export class RamFs {
         if (!docKey.startsWith(prefix)) continue;
         const gone = this.docs.get(docKey)!;
         if (gone.dirty) {
+          gone.diverged = 'removed';
           this.emit({ type: 'doc.diverged', path: docKey, reason: 'removed' });
           continue;
         }
@@ -522,6 +531,7 @@ export class RamFs {
     }
     if (doc.revision === revision) return;
     if (doc.dirty) {
+      doc.diverged = 'changed';
       this.emit({ type: 'doc.diverged', path: key, reason: 'changed' });
       return;
     }
@@ -542,6 +552,7 @@ export class RamFs {
       revision: doc.revision,
       dirty: doc.dirty,
       truncated: doc.truncated,
+      ...(doc.diverged ? { diverged: doc.diverged } : {}),
     };
   }
 }

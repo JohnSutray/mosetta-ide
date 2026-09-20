@@ -1,8 +1,8 @@
-import type { Windows } from '@mosetta/ide-plugin-ui';
 import { useT } from '@mosetta/ide-api/client';
 import { useEffect, useRef } from 'preact/hooks';
-import { Popup } from '@mosetta/ide-plugin-ui';
-import type { Ask, Prompt as PromptState, TreeSelection } from './state.js';
+import { Popup } from './popup.js';
+import type { Ask, Asking } from './asking.js';
+import type { Windows } from './windows/windows.js';
 
 const LINE = 18;
 const CHROME = 86;
@@ -18,22 +18,38 @@ function heightFor(ask: Ask): number {
   return Math.min(CEILING, CHROME + (ask.field ? FIELD : 0) + lines * LINE);
 }
 
-export function Prompt({ windows, prompt, selection }: { windows: Windows; prompt: PromptState; selection: TreeSelection }) {
+export function AskPopup({
+  windows,
+  asking,
+  onClosed,
+}: {
+  windows: Windows;
+  asking: Asking;
+  onClosed?: () => void;
+}) {
   const t = useT();
   const field = useRef<HTMLInputElement>(null);
-  const ask = prompt.ask.value;
+  const ask = asking.ask.value;
 
   useEffect(() => {
     if (!ask?.field) return;
     field.current?.focus();
     const value = field.current?.value ?? '';
-    const dot = value.lastIndexOf('.');
+    const dot = ask.filename ? value.lastIndexOf('.') : -1;
     field.current?.setSelectionRange(0, dot > 0 ? dot : value.length);
   }, [ask?.id]);
 
   useEffect(() => {
-    if (!ask) selection.takeKeyboard();
+    if (!ask) onClosed?.();
   }, [ask === null]);
+
+  useEffect(() => {
+    if (!ask) return undefined;
+    windows.asking.value = asking;
+    return () => {
+      if (windows.asking.peek() === asking) windows.asking.value = null;
+    };
+  }, [ask !== null, asking]);
 
   if (!ask) return null;
 
@@ -44,7 +60,7 @@ export function Prompt({ windows, prompt, selection }: { windows: Windows; promp
       class="prompt"
       size={{ w: 460, h: heightFor(ask) }}
       min={{ w: 320, h: 140 }}
-      onClose={() => prompt.cancel()}
+      onClose={() => asking.cancel()}
     >
       <div class="prompt-head">
         <span class="prompt-title">{ask.title}</span>
@@ -54,7 +70,7 @@ export function Prompt({ windows, prompt, selection }: { windows: Windows; promp
         class="prompt-body"
         onSubmit={(event) => {
           event.preventDefault();
-          void prompt.answer();
+          void asking.answer();
         }}
       >
         {ask.text && <div class="prompt-text">{ask.text}</div>}
@@ -62,16 +78,16 @@ export function Prompt({ windows, prompt, selection }: { windows: Windows; promp
           <input
             ref={field}
             class="field"
-            value={prompt.draft.value}
+            value={asking.draft.value}
             spellcheck={false}
             autocomplete="off"
-            onInput={(event) => (prompt.draft.value = (event.target as HTMLInputElement).value)}
+            onInput={(event) => (asking.draft.value = (event.target as HTMLInputElement).value)}
           />
         )}
         {ask.error && <div class="prompt-error">{ask.error}</div>}
 
         <div class="prompt-foot">
-          <button class="button" type="button" onClick={() => prompt.cancel()}>
+          <button class="button" type="button" onClick={() => asking.cancel()}>
             {t('prompt.cancel')}
           </button>
           <button class={`button ${ask.danger ? 'is-danger' : ''}`} type="submit">

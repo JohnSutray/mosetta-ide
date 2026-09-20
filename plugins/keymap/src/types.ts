@@ -15,6 +15,7 @@ export type KeyContext =
   | 'keymap-edit'
   | 'merge'
   | 'changes'
+  | 'diff'
   | 'settings'
   | 'find'
   | 'debug-edit'

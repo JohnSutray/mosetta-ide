@@ -20,9 +20,12 @@
   },
   "dependencies": {
     "@mosetta/ide-api": "workspace:*",
-    "@mosetta/ide-plugin-git": "workspace:*",
+    "@mosetta/ide-plugin-code": "workspace:*",
     "@mosetta/ide-plugin-doc": "workspace:*",
+    "@mosetta/ide-plugin-git": "workspace:*",
     "@mosetta/ide-plugin-keymap": "workspace:*",
+    "@mosetta/ide-plugin-merge": "workspace:*",
+    "@mosetta/ide-plugin-search": "workspace:*",
     "@mosetta/ide-plugin-ui": "workspace:*"
   },
   "peerDependencies": {

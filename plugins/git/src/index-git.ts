@@ -13,13 +13,13 @@ import type { GitStatus } from './status.js';
 
 const DEBOUNCE_MS = 400;
 
-const POLL_MS = 3000;
+const TICK_MS = 1000;
 
 const COMMON_SHOWN = 5;
 
 const EMPTY_TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
 
-const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {} };
+const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {}, moved: {} };
 
 export class GitIndex {
   private state: GitState = EMPTY;
@@ -71,10 +71,16 @@ export class GitIndex {
     return this.branchList;
   }
 
-  start(): void {
+  start(secondsOf: () => number = () => 3): void {
     if (this.disposed || this.poll) return;
     void this.refresh();
-    this.poll = setInterval(() => void this.refresh(), POLL_MS);
+    let last = Date.now();
+    this.poll = setInterval(() => {
+      const seconds = secondsOf();
+      if (seconds <= 0 || Date.now() - last < seconds * 1000) return;
+      last = Date.now();
+      void this.refresh();
+    }, TICK_MS);
     this.poll.unref?.();
   }
 
@@ -123,7 +129,7 @@ export class GitIndex {
       return;
     }
 
-    const files = this.status.parse(status.stdout);
+    const { files, moved } = this.status.parse(status.stdout);
     const [head, tracking, branchList] = await Promise.all([
       this.git.run(this.root, ['rev-parse', '--abbrev-ref', 'HEAD']),
       this.git.run(this.root, ['rev-list', '--left-right', '--count', 'HEAD...@{upstream}']),
@@ -138,6 +144,7 @@ export class GitIndex {
       ahead,
       behind,
       files,
+      moved,
     });
   }
 

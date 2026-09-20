@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { DirEntry } from '@mosetta/ide-api/client';
 import { FileTree } from '../src/file-tree.js';
 import { TreeSelection } from '../src/state.js';
-import { TreeTypeahead } from '../src/typeahead.js';
+import { Typeahead } from '@mosetta/ide-plugin-ui';
 import { layout } from '@mosetta/ide-plugin-search';
 
 function entry(path: string, kind: 'file' | 'dir' = 'file'): DirEntry {
@@ -10,7 +10,7 @@ function entry(path: string, kind: 'file' | 'dir' = 'file'): DirEntry {
 }
 
 let selection: TreeSelection;
-let find: TreeTypeahead;
+let find: Typeahead;
 
 beforeEach(() => {
   const files = new FileTree({ list: async () => [], onChanged: () => () => {} }, () => {});
@@ -21,7 +21,15 @@ beforeEach(() => {
   files.children.value = children as never;
   files.expanded.value = new Set(['client']);
   selection = new TreeSelection(files);
-  find = new TreeTypeahead(selection, () => layout);
+  find = new Typeahead(
+    {
+      order: () => selection.visibleOrder(),
+      current: () => selection.focus.value,
+      go: (path) => selection.only(path),
+      nameOf: (path) => path.slice(path.lastIndexOf('/') + 1),
+    },
+    () => layout,
+  );
 });
 
 describe('поиск по дереву буквами', () => {

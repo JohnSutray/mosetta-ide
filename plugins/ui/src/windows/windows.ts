@@ -12,12 +12,17 @@ export interface KeyCapture {
   catches(context: KeyContext): boolean;
 }
 
+export interface Answerable {
+  answer(): Promise<void>;
+}
+
 export class Windows {
   readonly popups: Popups;
   readonly tips = new Tips();
   readonly geometry: Geometry;
   readonly activePick = signal<PickApi | null>(null);
   readonly activeMenu = signal<MenuApi | null>(null);
+  readonly asking = signal<Answerable | null>(null);
 
   constructor(
     remember: Remember,

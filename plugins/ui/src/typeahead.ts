@@ -1,14 +1,19 @@
-import type { Layout } from '@mosetta/ide-plugin-search';
 import { signal } from '@preact/signals';
-import type { TreeSelection } from './state.js';
 
-export class TreeTypeahead {
+export interface TypeaheadList {
+  order(): string[];
+  current(): string | null;
+  go(key: string): void;
+  nameOf(key: string): string;
+}
+
+export class Typeahead {
   readonly term = signal('');
   readonly found = signal(true);
 
   constructor(
-    private readonly selection: TreeSelection,
-    private readonly layout: () => Pick<Layout, 'retype'>,
+    private readonly list: TypeaheadList,
+    private readonly layout: () => { retype(text: string): string | null },
   ) {}
 
   private variants(): string[] {
@@ -34,13 +39,13 @@ export class TreeTypeahead {
       return;
     }
     const variants = this.variants();
-    const order = this.selection.visibleOrder();
+    const order = this.list.order();
     if (order.length === 0) {
       this.found.value = false;
       return;
     }
-    const current = order.indexOf(this.selection.focus.value ?? '');
-    const here = current === -1 ? null : nameOf(order[current]!);
+    const current = order.indexOf(this.list.current() ?? '');
+    const here = current === -1 ? null : this.list.nameOf(order[current]!).toLowerCase();
     if (here !== null && variants.some((variant) => here.includes(variant))) {
       this.found.value = true;
       return;
@@ -53,18 +58,18 @@ export class TreeTypeahead {
       if (found !== null) break;
     }
     this.found.value = found !== null;
-    if (found !== null) this.selection.only(found);
+    if (found !== null) this.list.go(found);
   }
 
   move(delta: 1 | -1): void {
     const variants = this.variants();
     if (variants.length === 0) return;
-    const order = this.selection.visibleOrder();
-    const current = order.indexOf(this.selection.focus.value ?? '');
+    const order = this.list.order();
+    const current = order.indexOf(this.list.current() ?? '');
     for (const variant of variants) {
       const found = this.seek(order, current + delta, delta, (name) => name.includes(variant));
       if (found !== null) {
-        this.selection.only(found);
+        this.list.go(found);
         return;
       }
     }
@@ -80,12 +85,8 @@ export class TreeTypeahead {
     for (let i = 0; i < n; i += 1) {
       const at = (((from + i * delta) % n) + n) % n;
       const path = order[at]!;
-      if (test(nameOf(path))) return path;
+      if (test(this.list.nameOf(path).toLowerCase())) return path;
     }
     return null;
   }
-}
-
-function nameOf(path: string): string {
-  return path.slice(path.lastIndexOf('/') + 1).toLowerCase();
 }

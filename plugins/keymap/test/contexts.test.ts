@@ -30,6 +30,7 @@ function declared(): Set<string> {
   for (const text of [...sources(SRC), ...pluginSources()]) {
     for (const [, name] of text.matchAll(/\bdata-keys="([\w-]+)"/g)) if (name) found.add(name);
     for (const [, name] of text.matchAll(/\bkeys="([\w-]+)"/g)) if (name) found.add(name);
+    for (const [, name] of text.matchAll(/\bkeys:\s*'([\w-]+)'/g)) if (name) found.add(name);
     for (const [, names] of text.matchAll(/'data-keys':\s*'([\w\s-]+)'/g)) {
       for (const name of names?.split(/\s+/) ?? []) if (name) found.add(name);
     }

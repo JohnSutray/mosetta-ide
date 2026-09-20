@@ -29,6 +29,7 @@ export class Doc {
   readonly externalEpoch = signal(0);
 
   readonly openEpoch = signal(0);
+  readonly openAsked = signal(0);
 
   readonly pendingReveal = signal<Reveal | null>(null);
 
@@ -87,6 +88,7 @@ export class Doc {
       }
       const doc = await this.wire.open(path);
       this.sync.attach(doc);
+      this.noteDiverged(doc);
       if (previous?.path !== path) this.openEpoch.value += 1;
       batch(() => {
         this.history.value = [path, ...this.history.value.filter((item) => item !== path)].slice(0, 20);
@@ -121,6 +123,16 @@ export class Doc {
     }
   }
 
+  replace(text: string): void {
+    const open = this.open.peek();
+    if (!open) return;
+    this.edit(text);
+    batch(() => {
+      this.open.value = { ...open, text };
+      this.externalEpoch.value += 1;
+    });
+  }
+
   edit(text: string): void {
     const open = this.open.peek();
     if (open) this.typed.value = { path: open.path, text, at: open.version };
@@ -135,6 +147,7 @@ export class Doc {
       const doc = await this.wire.state(file.path);
       if (this.open.value?.path !== file.path) return;
       this.sync.attach(doc);
+      this.noteDiverged(doc);
       batch(() => {
         this.open.value = doc;
         this.dirty.value = doc.dirty;
@@ -197,6 +210,21 @@ export class Doc {
 
   expectExternal(path: string): void {
     this.expected.add(path);
+  }
+
+  private noteDiverged(doc: { path: string; diverged?: 'changed' | 'removed' }): void {
+    const has = this.diverged.value.has(doc.path);
+    if (doc.diverged) {
+      if (this.diverged.value.get(doc.path) === doc.diverged) return;
+      const next = new Map(this.diverged.value);
+      next.set(doc.path, doc.diverged);
+      this.diverged.value = next;
+      return;
+    }
+    if (!has) return;
+    const next = new Map(this.diverged.value);
+    next.delete(doc.path);
+    this.diverged.value = next;
   }
 
   forgetDiverged(path: string): void {

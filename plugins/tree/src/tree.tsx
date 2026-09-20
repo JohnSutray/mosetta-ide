@@ -6,7 +6,7 @@ import type { FileTree } from './file-tree.js';
 import type { TreeMenuState } from './menu.js';
 import type { TreeOps, TreeSelection } from './state.js';
 import type { TreeTints } from './tints.js';
-import type { TreeTypeahead } from './typeahead.js';
+import type { Typeahead } from '@mosetta/ide-plugin-ui';
 import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export interface TreeProps {
@@ -16,7 +16,7 @@ export interface TreeProps {
   menu: TreeMenuState;
   tints: TreeTints;
   broken: { readonly value: ReadonlySet<string> };
-  typeahead: TreeTypeahead;
+  typeahead: Typeahead;
   docs: DocPlugin;
   primaryHeld: (event: { metaKey: boolean; ctrlKey: boolean; altKey: boolean }) => boolean;
 }

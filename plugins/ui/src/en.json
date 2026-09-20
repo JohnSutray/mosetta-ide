@@ -7,5 +7,7 @@
   "command.menu.next": "Menu: down",
   "command.menu.prev": "Menu: up",
   "command.menu.accept": "Menu: choose",
-  "command.popup.close": "Close the top popup"
+  "command.popup.close": "Close the top popup",
+  "prompt.cancel": "cancel",
+  "command.prompt.confirm": "Dialog: confirm"
 }

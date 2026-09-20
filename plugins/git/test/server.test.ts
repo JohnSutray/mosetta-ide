@@ -330,10 +330,17 @@ describe('git', () => {
 
   it('переименование в разборе статуса не съедает следующую запись', () => {
     const raw = 'R  new.ts\0old.ts\0 M src/main.ts\0?? src/fresh.ts\0';
-    expect(new GitStatus().parse(raw)).toEqual({
+    expect(new GitStatus().parse(raw).files).toEqual({
       'new.ts': 'modified',
       'src/main.ts': 'modified',
       'src/fresh.ts': 'untracked',
+    });
+  });
+
+  it('переезд ЗАПОМИНАЕТСЯ: без старого имени дифф покажет файл написанным заново', () => {
+    const raw = 'R  plugins/ui/src/ask-popup.tsx\0plugins/tree/src/prompt.tsx\0';
+    expect(new GitStatus().parse(raw).moved).toEqual({
+      'plugins/ui/src/ask-popup.tsx': 'plugins/tree/src/prompt.tsx',
     });
   });
 });

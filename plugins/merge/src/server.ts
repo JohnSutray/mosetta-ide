@@ -23,6 +23,8 @@ class MergeHost implements ProjectResource {
 }
 
 export default class MergeServer {
+  private readonly hosts = new Map<string, MergeHost>();
+
   constructor(private readonly ide: Ide) {}
 
   @activate() protected start(): void {
@@ -30,11 +32,15 @@ export default class MergeServer {
   }
 
   private host(project: Project): MergeHost {
-    return project.use('sessions', () => new MergeHost(project, this.ide));
+    const host = project.use('sessions', () => new MergeHost(project, this.ide));
+    this.hosts.set(project.root, host);
+    return host;
   }
 
-  open(project: Project, supply: MergeSupply): void {
-    this.host(project).sessions.open(supply);
+  open(root: string, supply: MergeSupply): void {
+    const host = this.hosts.get(root);
+    if (!host) throw new Error(`merge: проект ${root} не открыт`);
+    host.sessions.open(supply);
   }
 
   @command() protected state(_params: unknown, call: CallContext): MergeSession | null {

@@ -60,6 +60,13 @@ export class Shelf {
     return fs.readFile(path.join(this.dirFor(root), `${safe(id)}.patch`), 'utf8');
   }
 
+  async rename(root: string, id: string, name: string): Promise<void> {
+    const dir = this.dirFor(root);
+    const meta = await this.metaOf(dir, safe(id));
+    if (!meta) throw new Error(`no such shelf item: ${id}`);
+    await fs.writeFile(path.join(dir, `${safe(id)}.json`), JSON.stringify({ ...meta, name }, null, 2), 'utf8');
+  }
+
   async drop(root: string, id: string): Promise<void> {
     const dir = this.dirFor(root);
     await fs.rm(path.join(dir, `${safe(id)}.patch`), { force: true });

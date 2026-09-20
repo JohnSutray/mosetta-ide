@@ -18,7 +18,7 @@ export interface GitRemote {
   run(action: GitAction, branch?: string, name?: string): Promise<{ error: string | null }>;
 }
 
-const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {} };
+const EMPTY: GitState = { repo: false, branch: null, ahead: 0, behind: 0, files: {}, moved: {} };
 
 const OUTPUT_LIMIT = 64 * 1024;
 

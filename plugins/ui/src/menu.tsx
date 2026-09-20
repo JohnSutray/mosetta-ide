@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 
 export interface MenuItem {
   label: string;
+  args?: Record<string, string | number>;
   danger?: boolean;
   run: () => void;
 }
@@ -38,6 +39,14 @@ export function Menu({ windows,
       if (mine || mount.idle(here)) came?.focus();
     };
   }, []);
+
+  useEffect(
+    () =>
+      mount.listen('mousedown', (event) => {
+        if (!box.current?.contains(event.target as Node)) onClose();
+      }),
+    [onClose],
+  );
 
   useEffect(() => {
     const total = items.length;
@@ -76,7 +85,7 @@ export function Menu({ windows,
             item.run();
           }}
         >
-          {t(item.label)}
+          {t(item.label, item.args)}
         </button>
       ))}
     </div>

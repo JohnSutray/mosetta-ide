@@ -254,30 +254,6 @@ export const STYLE = `
   color: var(--muted);
   font: 12px var(--ui-font);
 }
-.push-force input {
-  appearance: none;
-  margin: 0;
-  width: 13px;
-  height: 13px;
-  border: 1px solid var(--divider);
-  background: var(--control-bg);
-  cursor: pointer;
-}
-.push-force input:hover { background: var(--control-bg-hover); }
-.push-force input:checked {
-  background: var(--treesel);
-  border-color: #4c7db3;
-}
-.push-force input:checked::after {
-  content: '';
-  display: block;
-  width: 3px;
-  height: 7px;
-  margin: 0 auto;
-  transform: translateY(-1px) rotate(45deg);
-  border: solid #dbe6ef;
-  border-width: 0 2px 2px 0;
-}
 .push-force.is-armed input:checked { background: #6b3a39; border-color: #8a4a49; }
 .push-force.is-armed { color: var(--error); }
 

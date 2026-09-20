@@ -57,6 +57,7 @@ export default class DocPlugin {
   }
 
   async openFile(path: string, options?: { focus?: boolean }): Promise<void> {
+    this.doc.openAsked.value += 1;
     const root = this.ide.workspaces.current.value?.root ?? null;
     if (this.shownWithoutText(path)) {
       await this.doc.view(path, root);
@@ -99,6 +100,9 @@ export default class DocPlugin {
   get openEpoch() {
     return this.doc.openEpoch;
   }
+  get openAsked() {
+    return this.doc.openAsked;
+  }
   get pendingReveal() {
     return this.doc.pendingReveal;
   }
@@ -113,6 +117,10 @@ export default class DocPlugin {
   }
   editDoc(text: string): void {
     this.doc.edit(text);
+  }
+
+  replaceText(text: string): void {
+    this.doc.replace(text);
   }
   reloadFile(): Promise<void> {
     return this.doc.reload();

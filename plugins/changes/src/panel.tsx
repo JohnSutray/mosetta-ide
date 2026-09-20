@@ -1,50 +1,151 @@
+import { useRef, useState } from 'preact/hooks';
 import { useT } from '@mosetta/ide-api/client';
-import { FileIcon } from '@mosetta/ide-plugin-ui';
-import type { ChangeRow, Changes } from './state.js';
+import { Chevron, FileIcon, Resizer, type Typeahead } from '@mosetta/ide-plugin-ui';
+import { RefreshIcon } from './icon.js';
+import type UiPlugin from '@mosetta/ide-plugin-ui';
+import type { ShelfItem } from './server.js';
+import type { Changelist } from './changelist.js';
+import { DEFAULT_LIST, type ChangeGroup, type ChangeRow, type Changes } from './state.js';
 
-export function ChangesPanel({ changes, onOpen }: { changes: Changes; onOpen: (path: string) => void }) {
+const DRAG_TYPE = 'application/x-ide-change-paths';
+
+const COMMIT_ID = 'changes.commit';
+const COMMIT_HEIGHT = 96;
+const COMMIT_MIN = 64;
+const LIST_KEEP = 120;
+
+export function ChangesPanel({
+  changes,
+  windows,
+  onOpen,
+  onDiff,
+  onShelfDiff,
+  onMenu,
+  onShelfMenu,
+  onShelve,
+  onRefresh,
+  typeahead,
+  shown,
+}: {
+  changes: Changes;
+  windows: UiPlugin['windows'];
+  onOpen: (path: string) => void;
+  onDiff: (row: ChangeRow) => void;
+  onShelfDiff: (item: ShelfItem, path: string) => void;
+  onMenu: (at: { x: number; y: number }, list: Changelist | null) => void;
+  onShelfMenu: (at: { x: number; y: number }, item: ShelfItem) => void;
+  onShelve: () => void;
+  onRefresh: () => void;
+  typeahead: Typeahead;
+  shown: string | null;
+}) {
   const t = useT();
   const rows = changes.rows.value;
   const picked = changes.picked.value.length;
   const shelf = changes.shelf.value;
+  const list = useRef<HTMLDivElement>(null);
+  const field = useRef<HTMLInputElement>(null);
+  const height = windows.geometry.widthOf(COMMIT_ID, COMMIT_HEIGHT);
+  const term = typeahead.term.value;
 
   return (
     <div class="chg" data-keys="changes">
       <div class="chg-head">
-        <label class="chg-all">
-          <input
-            type="checkbox"
-            checked={rows.length > 0 && picked === rows.length}
-            disabled={rows.length === 0}
-            onChange={() => changes.toggleAll()}
-          />
-          <span>{t('changes.picked', { picked, total: rows.length })}</span>
-        </label>
+        <span class="chg-all">{t('changes.picked', { picked, total: rows.length })}</span>
+        <button
+          type="button"
+          class="chg-refresh"
+          onMouseEnter={(event) => windows.tips.show(event.currentTarget as Element, t('changes.refresh'))}
+          onMouseLeave={() => windows.tips.hide()}
+          onClick={() => {
+            windows.tips.hide();
+            onRefresh();
+          }}
+        >
+          <RefreshIcon />
+        </button>
       </div>
 
-      <div class="chg-list">
+      <div
+        class="chg-list"
+        ref={list}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          onMenu({ x: event.clientX, y: event.clientY }, null);
+        }}
+        onClick={() => {
+          typeahead.clear();
+          field.current?.focus({ preventScroll: true });
+        }}
+      >
+        <div class="chg-find">
+          <div class={`chg-find-box ${term ? 'is-on' : ''} ${typeahead.found.value ? '' : 'is-missing'}`}>
+            <span class="chg-find-icon">⌕</span>
+            <input
+              ref={field}
+              class="chg-find-input"
+              value={term}
+              spellcheck={false}
+              autocomplete="off"
+              aria-label={t('changes.find')}
+              onInput={(event) => typeahead.type(event.currentTarget.value)}
+              onBlur={() => typeahead.clear()}
+            />
+          </div>
+        </div>
+
         {rows.length === 0 && <div class="chg-empty">{t('changes.clean')}</div>}
-        {rows.map((row) => (
-          <Row key={row.path} row={row} changes={changes} onOpen={onOpen} />
+        {changes.groups.value.map((group) => (
+          <Group
+            key={group.list.id}
+            group={group}
+            changes={changes}
+            onOpen={onOpen}
+            onDiff={onDiff}
+            onMenu={onMenu}
+            typeahead={typeahead}
+            shown={shown}
+          />
         ))}
       </div>
 
-      <div class="chg-commit">
+      <Resizer
+        windows={windows}
+        id={COMMIT_ID}
+        side="right"
+        axis="y"
+        defaultWidth={COMMIT_HEIGHT}
+        limits={() => {
+          const spare = (list.current?.clientHeight ?? 0) - LIST_KEEP;
+          return { min: COMMIT_MIN, max: Math.max(COMMIT_MIN, height + spare) };
+        }}
+      />
+
+      <div class="chg-commit" style={{ height: `${height}px` }}>
         <textarea
           class="chg-message"
-          rows={3}
           spellcheck={false}
           placeholder={t('changes.message')}
           value={changes.message.value}
           onInput={(event) => (changes.message.value = (event.target as HTMLTextAreaElement).value)}
         />
         {changes.error.value !== '' && <div class="chg-error">{changes.error.value}</div>}
+        {changes.conflicts.value.length > 0 && (
+          <div class="chg-note">
+            {t('changes.unshelveConflict')} {changes.conflicts.value.join(', ')}
+          </div>
+        )}
+        {changes.restored.value.length > 0 && (
+          <div class="chg-note">
+            {t('changes.unshelveRestored')} {changes.restored.value.join(', ')}
+          </div>
+        )}
         <div class="chg-buttons">
           <label class="chg-amend">
             <input
               type="checkbox"
               checked={changes.amend.value}
-              onChange={() => (changes.amend.value = !changes.amend.value)}
+              onChange={() => void changes.toggleAmend()}
             />
             <span>{t('changes.amend')}</span>
           </label>
@@ -60,49 +161,277 @@ export function ChangesPanel({ changes, onOpen }: { changes: Changes; onOpen: (p
             type="button"
             class="chg-shelve"
             disabled={changes.busy.value || picked === 0}
-            onClick={() => void changes.shelve()}
+            onClick={() => onShelve()}
           >
             {t('changes.shelve')}
           </button>
+        </div>
+
+        <div class="chg-who">
+          <input
+            class={`chg-who-field ${changes.authorName.value.trim() === '' ? 'is-missing' : ''}`}
+            spellcheck={false}
+            autocomplete="off"
+            placeholder={t('changes.authorName')}
+            value={changes.authorName.value}
+            onInput={(event) => (changes.authorName.value = (event.target as HTMLInputElement).value)}
+            onBlur={() => void changes.saveIdentity()}
+          />
+          <input
+            class={`chg-who-field ${changes.authorEmail.value.trim() === '' ? 'is-missing' : ''}`}
+            spellcheck={false}
+            autocomplete="off"
+            placeholder={t('changes.authorEmail')}
+            value={changes.authorEmail.value}
+            onInput={(event) => (changes.authorEmail.value = (event.target as HTMLInputElement).value)}
+            onBlur={() => void changes.saveIdentity()}
+          />
         </div>
       </div>
 
       <div class="chg-shelf">
         <div class="chg-section">{t('changes.shelf', { count: shelf.length })}</div>
+        <div class="chg-shelf-list">
         {shelf.length === 0 && <div class="chg-empty">{t('changes.shelfEmpty')}</div>}
         {shelf.map((item) => (
-          <div class="chg-shelf-row" key={item.id}>
-            <span class="chg-shelf-name" title={item.files.join('\n')}>
+          <div class="chg-shelf-item" key={item.id}>
+          <div
+            class={`chg-shelf-row ${changes.openShelf.value === item.id ? 'is-open' : ''}`}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onShelfMenu({ x: event.clientX, y: event.clientY }, item);
+            }}
+          >
+            <ShelfBox id={item.id} changes={changes} />
+            <button
+              type="button"
+              class="chg-shelf-name"
+              title={item.files.join('\n')}
+              onClick={() => changes.toggleShelf(item.id)}
+            >
+              <span class="chg-shelf-chevron">
+                <Chevron />
+              </span>
               {item.name}
+            </button>
+            <span class="chg-shelf-do">
+              <button type="button" class="chg-shelf-drop" onClick={() => void changes.drop(item.id)}>
+                ×
+              </button>
             </span>
             <span class="chg-shelf-when">{when(item.at)}</span>
-            <button type="button" class="chg-shelf-take" onClick={() => void changes.unshelve(item.id)}>
-              {t('changes.unshelve')}
-            </button>
-            <button type="button" class="chg-shelf-drop" onClick={() => void changes.drop(item.id)}>
-              ×
-            </button>
+          </div>
+          {changes.openShelf.value === item.id &&
+            item.files.map((path) => (
+              <div class="chg-shelf-file-row" key={path}>
+                <input
+                  type="checkbox"
+                  checked={(changes.shelfPicked.value[item.id] ?? []).includes(path)}
+                  onChange={() => changes.toggleShelfFile(item.id, path)}
+                />
+                <button
+                  type="button"
+                  class={`chg-shelf-file ${shown === path ? 'is-shown' : ''}`}
+                  title={path}
+                  onClick={() => onShelfDiff(item, path)}
+                >
+                  <span class="chg-icon">
+                    <FileIcon name={path.split('/').pop() ?? path} />
+                  </span>
+                  <span class="chg-shelf-file-name">{path}</span>
+                </button>
+              </div>
+            ))}
           </div>
         ))}
+        </div>
+        {shelf.length > 0 && (
+          <div class="chg-shelf-buttons">
+            <button
+              type="button"
+              class="chg-shelve"
+              disabled={changes.busy.value || !changes.canUnshelve.value}
+              onClick={() => void changes.unshelvePicked()}
+            >
+              {t('changes.unshelve')}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function Row({ row, changes, onOpen }: { row: ChangeRow; changes: Changes; onOpen: (path: string) => void }) {
+function ShelfBox({ id, changes }: { id: string; changes: Changes }) {
+  const box = useRef<HTMLInputElement>(null);
+  const state = changes.shelfChecked(id);
+  if (box.current) box.current.indeterminate = state === 'some';
+  return (
+    <input
+      ref={box}
+      type="checkbox"
+      checked={state === 'all'}
+      onChange={() => changes.toggleShelfItem(id)}
+    />
+  );
+}
+
+function Group({
+  group,
+  changes,
+  onOpen,
+  onDiff,
+  onMenu,
+  typeahead,
+  shown,
+}: {
+  group: ChangeGroup;
+  changes: Changes;
+  onOpen: (path: string) => void;
+  onDiff: (row: ChangeRow) => void;
+  onMenu: (at: { x: number; y: number }, list: Changelist | null) => void;
+  typeahead: Typeahead;
+  shown: string | null;
+}) {
+  const t = useT();
+  const box = useRef<HTMLInputElement>(null);
+  const [over, setOver] = useState(false);
+  const accepts = (event: DragEvent) => event.dataTransfer?.types.includes(DRAG_TYPE) ?? false;
+  const take = (event: DragEvent) => {
+    event.preventDefault();
+    setOver(false);
+    const raw = event.dataTransfer?.getData(DRAG_TYPE);
+    if (raw) void changes.moveTo(group.list.id, JSON.parse(raw) as string[]);
+  };
+  if (box.current) box.current.indeterminate = group.checked === 'some';
+
+  return (
+    <div
+      class={`chg-group ${over ? 'is-drop' : ''}`}
+      onDragOver={(event) => {
+        if (!accepts(event)) return;
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        setOver(true);
+      }}
+      onDragLeave={(event) => {
+        if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node)) setOver(false);
+      }}
+      onDrop={take}
+    >
+      <div
+        class={`chg-group-head ${group.folded ? 'is-folded' : ''}`}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onMenu({ x: event.clientX, y: event.clientY }, group.list);
+        }}
+      >
+        <input
+          ref={box}
+          type="checkbox"
+          checked={group.checked === 'all'}
+          disabled={group.rows.length === 0}
+          onChange={() => changes.toggleGroup(group.list.id)}
+        />
+        <button type="button" class="chg-group-name" onClick={() => changes.toggleFold(group.list.id)}>
+          <span class="chg-group-chevron">
+            <Chevron />
+          </span>
+          <span class="chg-group-title">{group.list.name}</span>
+          <span class="chg-group-count">{group.rows.length}</span>
+        </button>
+      </div>
+      {!group.folded &&
+        group.rows.map((row) => (
+          <Row
+            key={row.path}
+            row={row}
+            changes={changes}
+            onOpen={onOpen}
+            onDiff={onDiff}
+            onMenu={onMenu}
+            typeahead={typeahead}
+            shown={shown === row.path}
+          />
+        ))}
+      {!group.folded && group.rows.length === 0 && group.list.id === DEFAULT_LIST && (
+        <div class="chg-empty">{t('changes.clean')}</div>
+      )}
+    </div>
+  );
+}
+
+function Row({
+  row,
+  changes,
+  onOpen,
+  onDiff,
+  onMenu,
+  typeahead,
+  shown,
+}: {
+  row: ChangeRow;
+  changes: Changes;
+  onOpen: (path: string) => void;
+  onDiff: (row: ChangeRow) => void;
+  onMenu: (at: { x: number; y: number }, list: Changelist | null) => void;
+  typeahead: Typeahead;
+  shown: boolean;
+}) {
+  const t = useT();
   const name = row.path.split('/').pop() ?? row.path;
   const folder = row.path.slice(0, row.path.length - name.length).replace(/\/$/, '');
+  const selected = changes.selected.value.includes(row.path);
+  const focused = changes.focus.value === row.path;
+  const hit = typeahead.match(name);
   return (
-    <div class={`chg-row is-${row.state}`}>
+    <div
+      class={`chg-row is-${row.state} ${shown ? 'is-shown' : ''} ${selected ? 'is-picked' : ''} ${focused ? 'is-current' : ''}`}
+      draggable
+      onDragStart={(event) => {
+        const paths = changes.selected.value.includes(row.path) ? changes.selected.value : [row.path];
+        event.dataTransfer?.setData(DRAG_TYPE, JSON.stringify(paths));
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+      }}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!selected) changes.pick(row.path);
+        onMenu({ x: event.clientX, y: event.clientY }, null);
+      }}
+    >
       <input type="checkbox" checked={row.picked} onChange={() => changes.toggleFile(row.path)} />
-      <span class="chg-icon">
-        <FileIcon name={name} />
-      </span>
-      <button type="button" class="chg-name" onClick={() => onOpen(row.path)} title={row.path}>
-        {name}
+      <button
+        type="button"
+        class="chg-open"
+        onClick={(event) => {
+          changes.pick(row.path, { ctrl: event.ctrlKey || event.metaKey, shift: event.shiftKey });
+          if (!event.ctrlKey && !event.metaKey && !event.shiftKey) onDiff(row);
+        }}
+        onDblClick={() => onOpen(row.path)}
+        title={row.path}
+      >
+        <span class="chg-icon">
+          <FileIcon name={name} />
+        </span>
+        <span class="chg-name">{found(name, hit)}</span>
+        {row.from && <span class="chg-moved">{t('changes.movedFrom', { from: row.from })}</span>}
+        <span class="chg-folder">{folder}</span>
       </button>
-      <span class="chg-folder">{folder}</span>
     </div>
+  );
+}
+
+function found(name: string, hit: [number, number] | null) {
+  if (!hit) return name;
+  return (
+    <>
+      {name.slice(0, hit[0])}
+      <mark class="chg-hit">{name.slice(hit[0], hit[1])}</mark>
+      {name.slice(hit[1])}
+    </>
   );
 }
 

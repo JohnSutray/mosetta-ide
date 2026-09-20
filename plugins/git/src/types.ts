@@ -7,6 +7,7 @@ export interface GitState {
   ahead: number;
   behind: number;
   files: Record<string, GitFileState>;
+  moved: Record<string, string>;
   error?: string;
 }
 

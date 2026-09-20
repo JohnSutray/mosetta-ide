@@ -5,7 +5,7 @@ import type DocPlugin from '@mosetta/ide-plugin-doc';
 
 export class GitMarks {
   constructor(private readonly remote: { head(path: string): Promise<{ path: string; text: string | null }> },
-    private readonly docs: () => Pick<DocPlugin, 'openDoc' | 'editDoc'>,
+    private readonly docs: () => Pick<DocPlugin, 'openDoc' | 'replaceText'>,
   ) {}
 
   readonly popup = signal<{ hunk: Hunk; box: HunkBox } | null>(null);
@@ -30,7 +30,7 @@ export class GitMarks {
     const file = this.docs().openDoc.value;
     this.popup.value = null;
     if (!open || !file) return;
-    this.docs().editDoc(reverted(file.text, open.hunk));
+    this.docs().replaceText(reverted(file.text, open.hunk));
   }
 
   async load(path: string | null): Promise<void> {
@@ -50,21 +50,22 @@ export class GitMarks {
 function reverted(text: string, hunk: Hunk): string {
   const lines = split(text);
   const restored = hunk.before;
+  const tail = text.endsWith('\n') ? '\n' : '';
 
   if (hunk.kind === 'added') {
     const from = Math.min(hunk.from, lines.length + 1) - 1;
     const to = Math.min(hunk.to, lines.length);
-    return [...lines.slice(0, from), ...lines.slice(to)].join('\n');
+    return [...lines.slice(0, from), ...lines.slice(to)].join('\n') + tail;
   }
 
   if (hunk.kind === 'modified') {
     const from = Math.min(hunk.from, lines.length) - 1;
     const to = Math.min(hunk.to, lines.length);
-    return [...lines.slice(0, from), ...restored, ...lines.slice(to)].join('\n');
+    return [...lines.slice(0, from), ...restored, ...lines.slice(to)].join('\n') + tail;
   }
 
   const at = Math.min(hunk.from, lines.length + 1) - 1;
-  return [...lines.slice(0, at), ...restored, ...lines.slice(at)].join('\n');
+  return [...lines.slice(0, at), ...restored, ...lines.slice(at)].join('\n') + tail;
 }
 
 function split(text: string): string[] {

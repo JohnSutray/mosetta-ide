@@ -5,20 +5,19 @@ import { computed, effect, untracked } from '@preact/signals';
 import { FollowIcon, TreeIcon } from './icons.js';
 import { FileTree } from './file-tree.js';
 import { TreeFollow } from './follow.js';
-import { TreeTypeahead } from './typeahead.js';
 import { TreeMenuState } from './menu.js';
-import { Prompt as PromptState, TreeOps, TreeSelection } from './state.js';
+import { TreeOps, TreeSelection } from './state.js';
 import { TREE_DEFAULTS , TREE_SCHEMA} from './settings.js';
 import { STYLE } from './style.js';
 import { TREE_ACTION_SCHEMA, type TreeAction } from './actions.js';
 import { TINT_SCHEMA, TreeTints, type TintSource } from './tints.js';
-import { Prompt } from './prompt.js';
+
 import { Tree } from './tree.js';
 import { TreeMenu } from './tree-menu.js';
 import DocPlugin from '@mosetta/ide-plugin-doc';
 import KeymapPlugin from '@mosetta/ide-plugin-keymap';
 import SearchPlugin from '@mosetta/ide-plugin-search';
-import UiPlugin from '@mosetta/ide-plugin-ui';
+import UiPlugin, { AskPopup, Asking, Typeahead } from '@mosetta/ide-plugin-ui';
 
 @registry({ key: 'tree.tint', schema: TINT_SCHEMA })
 @registry({ key: 'tree.action', schema: TREE_ACTION_SCHEMA })
@@ -30,11 +29,11 @@ export default class TreePlugin {
   }
 
   readonly files: FileTree;
-  readonly prompt = new PromptState();
+  readonly prompt = new Asking();
   readonly selection: TreeSelection;
   readonly ops: TreeOps;
   readonly follow: TreeFollow;
-  readonly typeahead: TreeTypeahead;
+  readonly typeahead: Typeahead;
   readonly menu = new TreeMenuState(() => this.ide.mount.bounds());
   readonly tints: TreeTints;
   readonly shown;
@@ -58,7 +57,15 @@ export default class TreePlugin {
     this.selection = new TreeSelection(this.files, (el) => this.ide.mount.idle(el));
     this.ops = new TreeOps(this.selection, this.prompt, this.files, ide, (path) => this.askReveal({ path }));
     this.follow = new TreeFollow(this.selection, ide);
-    this.typeahead = new TreeTypeahead(this.selection, () => ide.getPlugin(SearchPlugin).layout);
+    this.typeahead = new Typeahead(
+      {
+        order: () => this.selection.visibleOrder(),
+        current: () => this.selection.focus.value,
+        go: (path) => this.selection.only(path),
+        nameOf: (path) => path.slice(path.lastIndexOf('/') + 1),
+      },
+      () => ide.getPlugin(SearchPlugin).layout,
+    );
     this.tints = new TreeTints(ide.registry<TintSource>('tree.tint'));
     this.shown = ide.remember('panel.tree', true);
   }
@@ -101,13 +108,15 @@ export default class TreePlugin {
   @command('tree.copyPath') protected copyPath(): void { this.onPicked((path) => void this.ops.copyAbsolutePath(path)); }
   @command('tree.reveal') protected reveal(): void { this.onPicked((path) => void this.ops.revealInOs(path)); }
   @command('tree.follow') protected followEditor(): void { void this.follow.toggle(); }
-  @command('prompt.confirm') protected confirmPrompt(): void { void this.prompt.answer(); }
 
   @activate() protected start(): void {
     this.ide.css(STYLE);
 
+    let seenRoot: string | null = null;
     effect(() => {
-      this.ide.workspaces.current.value;
+      const root = this.ide.workspaces.current.value?.root ?? null;
+      if (root === seenRoot) return;
+      seenRoot = root;
       this.files.reset();
     });
     effect(() => {
@@ -155,7 +164,11 @@ export default class TreePlugin {
 
     this.ide.registry<() => unknown>('chrome.top').add(() => (
       <>
-        <Prompt windows={this.ide.getPlugin(UiPlugin).windows} prompt={this.prompt} selection={this.selection} />
+        <AskPopup
+          windows={this.ide.getPlugin(UiPlugin).windows}
+          asking={this.prompt}
+          onClosed={() => this.selection.takeKeyboard()}
+        />
         <TreeMenu
           windows={this.ide.getPlugin(UiPlugin).windows}
           menu={this.menu}
@@ -169,10 +182,6 @@ export default class TreePlugin {
     effect(() => {
       const path = this.docs.openDoc.value?.path;
       if (path) untracked(() => void this.follow.now());
-    });
-
-    this.ide.mount.listen('mousedown', (event) => {
-      if (!(event.target as HTMLElement).closest('.tree-menu')) this.menu.close();
     });
   }
 

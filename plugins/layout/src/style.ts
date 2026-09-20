@@ -15,6 +15,22 @@ export const STYLE = `
 .panel.is-main { flex: 1; min-width: 0; }
 .columns-rest { flex: 1; min-width: 0; }
 
+.columns-middle {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+.columns-middle > .panel.is-main:last-child { border-right: none; }
+.panel.is-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  border-right: none;
+  z-index: 3;
+}
+.panel.is-overlay:focus { outline: none; }
+
 .panel-head {
   display: flex;
   align-items: center;

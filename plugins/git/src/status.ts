@@ -1,8 +1,14 @@
 import type { GitFileState } from './types.js';
 
+export interface StatusReport {
+  files: Record<string, GitFileState>;
+  moved: Record<string, string>;
+}
+
 export class GitStatus {
-  parse(raw: string): Record<string, GitFileState> {
+  parse(raw: string): StatusReport {
     const files: Record<string, GitFileState> = {};
+    const moved: Record<string, string> = {};
     const tokens = raw.split('\0');
     for (let i = 0; i < tokens.length; i += 1) {
       const token = tokens[i];
@@ -10,10 +16,14 @@ export class GitStatus {
       const x = token[0]!;
       const y = token[1]!;
       const path = token.slice(3);
-      if (x === 'R' || x === 'C') i += 1;
+      if (x === 'R' || x === 'C') {
+        i += 1;
+        const from = tokens[i];
+        if (from) moved[path] = from;
+      }
       files[path] = classify(x, y);
     }
-    return files;
+    return { files, moved };
   }
 }
 

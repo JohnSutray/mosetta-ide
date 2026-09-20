@@ -143,6 +143,9 @@ importers:
       '@mosetta/ide-api':
         specifier: workspace:*
         version: link:../api
+      '@mosetta/ide-plugin-code':
+        specifier: workspace:*
+        version: link:../code
       '@mosetta/ide-plugin-doc':
         specifier: workspace:*
         version: link:../doc
@@ -152,6 +155,12 @@ importers:
       '@mosetta/ide-plugin-keymap':
         specifier: workspace:*
         version: link:../keymap
+      '@mosetta/ide-plugin-merge':
+        specifier: workspace:*
+        version: link:../merge
+      '@mosetta/ide-plugin-search':
+        specifier: workspace:*
+        version: link:../search
       '@mosetta/ide-plugin-ui':
         specifier: workspace:*
         version: link:../ui

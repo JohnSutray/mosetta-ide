@@ -40,7 +40,7 @@ export default class GitServer {
         (state) => project.emit('state', state),
         (action, chunk) => project.emit('output', { action, chunk }),
       );
-      index.start();
+      index.start(() => project.settings('git', GIT_DEFAULTS).statusPollSec);
       return index;
     });
   }

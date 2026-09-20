@@ -6,5 +6,7 @@
   "command.pick.expand": "Список: раскрыть действия",
   "command.pick.next": "Список: вниз",
   "command.pick.prev": "Список: вверх",
-  "command.popup.close": "Закрыть верхний попап"
+  "command.popup.close": "Закрыть верхний попап",
+  "command.prompt.confirm": "Модалка: подтвердить",
+  "prompt.cancel": "отмена"
 }

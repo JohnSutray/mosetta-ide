@@ -136,9 +136,12 @@ describe('RAM FS', () => {
     expect(after.text).toBe('наше\n');
     expect(after.dirty).toBe(true);
 
+    expect(after.diverged).toBe('changed');
+
     const reloaded = await c.call('doc.reload', { path: 'src/main.ts' });
     expect(reloaded.text).toBe('чужое\n');
     expect(reloaded.dirty).toBe(false);
+    expect(reloaded.diverged, 'спор кончился — и метка гаснет').toBeUndefined();
   });
 
   it('индекс ищет по памяти', async () => {

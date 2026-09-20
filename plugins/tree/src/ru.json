@@ -1,6 +1,5 @@
 {
   "command.panel.tree": "Панель: дерево проекта",
-  "command.prompt.confirm": "Модалка: подтвердить",
   "command.tree.collapse": "Дерево: свернуть или выйти",
   "command.tree.copy": "Дерево: копировать",
   "command.tree.copyPath": "Дерево: скопировать путь",

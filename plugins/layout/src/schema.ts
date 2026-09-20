@@ -54,3 +54,32 @@ export interface PanelAction {
   run: () => void;
   enabled?: () => boolean;
 }
+
+export const MAIN_OVERLAY_SCHEMA = {
+  type: 'object',
+  required: ['id', 'title', 'open', 'view', 'close'],
+  properties: {
+    id: { type: 'string' },
+    title: { type: 'string' },
+    heading: {},
+    badges: {},
+    open: {},
+    view: {},
+    close: {},
+    keys: { type: 'string' },
+    takesFocus: { type: 'boolean' },
+  },
+  additionalProperties: false,
+} as const;
+
+export interface MainOverlay {
+  id: string;
+  title: string;
+  heading?: () => string | null;
+  badges?: () => unknown;
+  open: { readonly value: boolean };
+  view: () => unknown;
+  close: () => void;
+  keys?: string;
+  takesFocus?: boolean;
+}

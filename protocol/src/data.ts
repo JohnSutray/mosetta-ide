@@ -41,6 +41,7 @@ export interface DocState {
   revision: string | null;
   dirty: boolean;
   truncated: boolean;
+  diverged?: 'changed' | 'removed';
 }
 
 export interface DocVersion {

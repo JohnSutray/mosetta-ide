@@ -7,7 +7,7 @@ import { MergeScreen } from './screen.js';
 import { Merge, type MergeRemote } from './state.js';
 import type { MergeSession } from './types.js';
 
-export type { MergeFile, MergeSession, MergeSide, MergeSource } from './types.js';
+export type { MergeFile, MergeSession, MergeSide, MergeSource, MergeSupply } from './types.js';
 import { STYLE } from './style.js';
 import UiPlugin from '@mosetta/ide-plugin-ui';
 

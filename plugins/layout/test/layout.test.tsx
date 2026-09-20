@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeHost, nodes, of } from '@mosetta/ide-api/testing';
 import UiPlugin, { Resizer } from '@mosetta/ide-plugin-ui';
 import Layout from '../src/client.js';
+import { Overlay } from '../src/overlay.js';
 import type { PanelWish } from '../src/schema.js';
 
 const NAME = '@mosetta/ide-plugin-layout';
@@ -45,7 +46,7 @@ describe('раскладка', () => {
   it('объявляет форму колонки до того, как кто-то начал писать', () => {
     const early = new FakeHost();
     early.add(Layout, NAME);
-    expect(early.registry.declared()).toEqual(['panel', 'panel.action']);
+    expect(early.registry.declared()).toEqual(['main.overlay', 'panel', 'panel.action']);
   });
 
   it('занимает середину рамы и приносит свои стили', () => {
@@ -136,6 +137,36 @@ describe('раскладка', () => {
     expect(after[1]).toBe(330);
     expect(after[0]).toBeLessThan(shown[0]!);
     expect(after.reduce((a, b) => a + b, 0)).toBe(1280 - 320 - 3);
+  });
+
+  it('оверлей накрывает СЕРЕДИНУ и закрывается своим крестиком', () => {
+    host.registry.add('panel', wish('editor', 'main'), 'core');
+    const open = { value: false };
+    let closed = 0;
+    host.registry.add(
+      'main.overlay',
+      {
+        id: 'changes.diff',
+        title: 'changes.diffTitle',
+        open,
+        keys: 'diff',
+        view: () => <i data-id="diff" />,
+        close: () => { closed += 1; },
+      },
+      '@mosetta/ide-plugin-changes',
+    );
+
+    const overlay = () => of(main(), 'section').find((node) => String(node.props['class']).includes('is-overlay'));
+    expect(overlay(), 'закрытый оверлей не рисуют вовсе').toBeUndefined();
+
+    open.value = true;
+    const shown = nodes(main()).find((node) => node.type === Overlay);
+    expect(shown, 'раму рисует раскладка, а не сосед').toBeDefined();
+    expect((shown!.props['overlay'] as { keys: string }).keys).toBe('diff');
+    expect(shape(main())).toContain('editor');
+
+    (shown!.props['overlay'] as { close: () => void }).close();
+    expect(closed).toBe(1);
   });
 
   it('сосед ставит действие в заголовок чужой панели', () => {
