@@ -6,8 +6,8 @@ import { FindFiles } from '../src/files.js';
 const grep = new Grep();
 const plain = (query: string) => grep.pattern({ query, regex: false, caseSensitive: false, words: false })!;
 
-describe('маски файлов', () => {
-  it('без косой черты — по имени, с ней — по пути', () => {
+describe('file masks', () => {
+  it('without a slash by name, with one by path', () => {
     const ts = grep.masks(['*.ts']);
     expect(ts('src/a.ts')).toBe(true);
     expect(ts('src/a.tsx')).toBe(false);
@@ -16,7 +16,7 @@ describe('маски файлов', () => {
     expect(src('lib/a.ts')).toBe(false);
   });
 
-  it('несколько масок — любая из них; пусто — всё', () => {
+  it('several masks mean any of them; empty means everything', () => {
     const both = grep.masks(['*.ts', '*.tsx']);
     expect(both('a.tsx')).toBe(true);
     expect(both('a.md')).toBe(false);
@@ -25,8 +25,8 @@ describe('маски файлов', () => {
   });
 });
 
-describe('совпадения', () => {
-  it('строка, колонки и текст строки; перенос в искомом находится', () => {
+describe('matches', () => {
+  it('the line, the columns and the line\'s text; a newline in the term is found', () => {
     const hits = grep.scan('a.txt', 'foo bar\nbaz foo\n', plain('foo'), 10);
     expect(hits).toEqual([
       { path: 'a.txt', line: 0, from: 0, to: 3, text: 'foo bar' },
@@ -35,29 +35,29 @@ describe('совпадения', () => {
     expect(grep.scan('a', 'a\nb a\nb', plain('a\nb'), 10)).toHaveLength(2);
   });
 
-  it('буквальный поиск не читает точку как «что угодно», регулярка — читает', () => {
+  it('a literal search does not read a dot as "anything", a regex does', () => {
     expect(grep.scan('a', 'a.b axb', plain('a.b'), 10)).toHaveLength(1);
     const re = grep.pattern({ query: 'a.b', regex: true, caseSensitive: false, words: false })!;
     expect(grep.scan('a', 'a.b axb', re, 10)).toHaveLength(2);
     expect(grep.pattern({ query: '(', regex: true, caseSensitive: false, words: false })).toBe(null);
   });
 
-  it('целые слова и регистр', () => {
+  it('whole words and case', () => {
     const words = grep.pattern({ query: 'ab', regex: false, caseSensitive: false, words: true })!;
     expect(grep.scan('a', 'ab xab AB', words, 10)).toHaveLength(2);
     const strict = grep.pattern({ query: 'ab', regex: false, caseSensitive: true, words: false })!;
     expect(grep.scan('a', 'ab xab AB', strict, 10)).toHaveLength(2);
   });
 
-  it('потолок держится и пустое совпадение не зацикливает', () => {
+  it('the ceiling holds, and an empty match does not loop', () => {
     expect(grep.scan('a', 'aaaa', plain('a'), 2)).toHaveLength(2);
     const empty = grep.pattern({ query: 'x*', regex: true, caseSensitive: false, words: false })!;
     expect(grep.scan('a', 'abc', empty, 10)).toHaveLength(0);
   });
 });
 
-describe('замена', () => {
-  it('буквально — доллар остаётся долларом; регуляркой — группы работают', () => {
+describe('replacement', () => {
+  it('literally, a dollar stays a dollar; by regex, the groups work', () => {
     expect(grep.replace('a b', plain('a'), '$&$1', false)).toBe('$&$1 b');
     const re = grep.pattern({ query: '(\\w+) (\\w+)', regex: true, caseSensitive: false, words: false })!;
     expect(grep.replace('a b', re, '$2 $1', true)).toBe('b a');
@@ -65,7 +65,7 @@ describe('замена', () => {
   });
 });
 
-describe('чипы масок и исключений', () => {
+describe('the mask and exclusion chips', () => {
   function row(initial: string[] = []) {
     const all = signal<string[]>(initial);
     const off = signal<string[]>([]);
@@ -94,7 +94,7 @@ describe('чипы масок и исключений', () => {
   };
   const docs = () => ({ goTo: async () => undefined, peekFile: async (path: string) => ({ path, text: '' }) });
 
-  it('Enter добавляет, крестик снимает, повтор и пустота молчат — и всё через настройку', async () => {
+  it('Enter adds, the cross removes, a duplicate and emptiness stay silent — and all of it through the setting', async () => {
     const masks = row(['*.ts']);
     const files = new FindFiles(remote, masks.wire, row().wire, () => undefined, docs);
 
@@ -121,7 +121,7 @@ describe('чипы масок и исключений', () => {
     expect(files.ask().masks).toEqual(['*.tsx']);
   });
 
-  it('Enter правит ТОТ ряд, где стоит каретка (ADR-0232)', async () => {
+  it('Enter edits THE row the caret is in', async () => {
     const masks = row();
     const excludes = row();
     const files = new FindFiles(remote, masks.wire, excludes.wire, () => undefined, docs);
@@ -141,7 +141,7 @@ describe('чипы масок и исключений', () => {
     expect(files.ask().excludes).toEqual(['*.min.js']);
   });
 
-  it('выключенное исключение перестаёт исключать', async () => {
+  it('a disabled exclusion stops excluding', async () => {
     const excludes = row(['*.min.js']);
     const files = new FindFiles(remote, row().wire, excludes.wire, () => undefined, docs);
     expect(files.ask().excludes).toEqual(['*.min.js']);
@@ -150,7 +150,7 @@ describe('чипы масок и исключений', () => {
     expect(files.ask().excludes).toEqual([]);
   });
 
-  it('Tab ходит по полям, в режиме замены — через поле замены', () => {
+  it('Tab walks the fields, and in replace mode through the replacement field', () => {
     const files = new FindFiles(remote, row().wire, row().wire, () => undefined, docs);
     files.show('find');
     expect(files.focus.value.field).toBe('query');

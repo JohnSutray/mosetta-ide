@@ -12,6 +12,7 @@ export interface FilesAsk {
   caseSensitive: boolean;
   words: boolean;
   masks: string[];
+  /** What not to look at at all: lock files, minified output. */
   excludes: string[];
 }
 
@@ -22,6 +23,14 @@ export interface FindFilesRemote {
 
 export type FilesRow = { header: string; count: number } | { hit: FileHit; at: number };
 
+/**
+ * Find and replace across the project — the popup's state.
+ *
+ * The same drawing as "search everywhere": a field, a list, a preview. The differences
+ * are substantive: the rows gather into sections by FILE rather than by kind; above the
+ * field live the mask chips — they are a setting rather than the window's state, and
+ * they outlive not only the tab but the machine.
+ */
 export class FindFiles {
   readonly open = signal(false);
   readonly mode = signal<FilesMode>('find');
@@ -32,12 +41,20 @@ export class FindFiles {
   readonly regex = signal(false);
   readonly hits = signal<FileHit[]>([]);
   readonly files = signal(0);
+  /**
+   * How many files the exclusions kept out. Not "how many matches were in them" — that
+   * we do not know and do not want to: to find out, we would have to read exactly what
+   * was decided not to read. Whereas "this many went past" is the truth, and saying it
+   * is cheap.
+   */
   readonly skipped = signal(0);
   readonly truncated = signal(false);
   readonly busy = signal(false);
   readonly selected = signal(0);
   readonly preview = signal<{ path: string; text: string; line: number } | null>(null);
+  /** Where to give the keyboard and when: a rising epoch nudges the effect. */
   readonly focus = signal<{ field: FilesField; epoch: number }>({ field: 'query', epoch: 0 });
+  /** What to say after a replacement: "N replaced in M files". */
   readonly report = signal<{ files: number; replaced: number } | null>(null);
 
   private readonly delay = 150;
@@ -46,14 +63,18 @@ export class FindFiles {
   private previewTimer: ReturnType<typeof setTimeout> | null = null;
   private token = 0;
 
+  /** What to search: the row of chips above the results. */
   readonly masks: MaskChips;
+  /** What not to search: the second row, eternally struck through. */
   readonly excludes: MaskChips;
 
   constructor(
     private readonly remote: FindFilesRemote,
+    /** Both rows are a setting: we read them live and write through the core. */
     masks: ChipsWire,
     excludes: ChipsWire,
     private readonly complain: (message: string) => void,
+    /** Documents are a neighbour: open a hit, and look inside a file. */
     private readonly docs: () => Pick<DocPlugin, 'goTo' | 'peekFile'>,
   ) {
     this.masks = new MaskChips(masks, complain, () => this.run());
@@ -80,6 +101,10 @@ export class FindFiles {
     () => this.hits.value[this.selected.value] ?? null,
   );
 
+  /**
+   * Open in a mode; if it is open already, switch the mode without losing what was
+   * typed.
+   */
   show(mode: FilesMode): void {
     batch(() => {
       this.open.value = true;
@@ -97,6 +122,7 @@ export class FindFiles {
     });
   }
 
+  /** The key that opened the window closes it — if the mode is the same. */
   toggle(mode: FilesMode): void {
     if (this.open.value && this.mode.value === mode) this.close();
     else this.show(mode);
@@ -126,10 +152,16 @@ export class FindFiles {
     this.run();
   }
 
+  /**
+   * Enter in a chip field adds a chip TO THE FIELD the caret is in. One command for
+   * both rows, because there is one key: the surface calls itself `find-files-mask` in
+   * both rows, and which of them is taking input right now is known to the focus.
+   */
   addMask(): void {
     this.row().add();
   }
 
+  /** The row currently being edited: by where the caret is. */
   private row(): MaskChips {
     return this.focus.value.field === 'exclude' ? this.excludes : this.masks;
   }
@@ -153,6 +185,10 @@ export class FindFiles {
     void this.docs().goTo(hit.path, hit.line, hit.from);
   }
 
+  /**
+   * Tab walks the fields: the term → the replacement → a mask → an exclusion → the
+   * term.
+   */
   nextField(): void {
     const order: FilesField[] =
       this.mode.value === 'replace' ? ['query', 'replace', 'mask', 'exclude'] : ['query', 'mask', 'exclude'];
@@ -168,6 +204,7 @@ export class FindFiles {
     void this.replaceIn(undefined);
   }
 
+  /** Replace only inside the file of the selected hit. */
   replaceFile(): void {
     const hit = this.current.value;
     if (hit) void this.replaceIn([hit.path]);

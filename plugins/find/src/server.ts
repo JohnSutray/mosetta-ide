@@ -6,12 +6,14 @@ export type { FileHit, GrepOptions, GrepResult } from './grep.js';
 
 export interface GrepAsk extends GrepOptions {
   masks: string[];
+  /** The exclusion chips: these files we do not read at all. */
   excludes?: string[];
   limit?: number;
 }
 
 export interface ReplaceAsk extends GrepAsk {
   replacement: string;
+  /** These files only; empty means all that match the masks. */
   paths?: string[];
 }
 
@@ -20,9 +22,18 @@ export interface ReplaceResult {
   replaced: number;
 }
 
+/**
+ * Find and replace across the project — the server half.
+ *
+ * The texts come from the project's MEMORY rather than from disk: an unsaved edit is
+ * searched exactly as a saved one is — the truth belongs to the editor. A replacement
+ * is put back by the same route a settled argument takes (`settle`): the text becomes
+ * both memory and disk.
+ */
 export default class FindServer {
   private readonly engine = new Grep();
 
+  /** It no longer needs the core's services: the hit ceiling is read from the project. */
   constructor(_ide: Ide) {}
 
   @command() protected async grep(params: unknown, call: CallContext): Promise<GrepResult> {
@@ -78,6 +89,10 @@ export default class FindServer {
     memory: ProjectMemory,
     wanted: (path: string) => boolean,
     unwanted: (path: string) => boolean,
+    /**
+     * The counter of what was kept out: the number travels upwards and is written next
+     * to the chips.
+     */
     skip: { count: number },
   ): Iterable<string> {
     for (const file of memory.files()) {
@@ -90,6 +105,10 @@ export default class FindServer {
     }
   }
 
+  /**
+   * Text from memory: what is there comes at once, what is not is pulled in without
+   * opening it.
+   */
   private async textOf(memory: ProjectMemory, path: string): Promise<string | null> {
     const resident = memory.docSync(path);
     if (resident) return resident.text;

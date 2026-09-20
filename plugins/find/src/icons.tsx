@@ -1,5 +1,9 @@
 import type { JSX } from 'preact';
 
+/**
+ * The project search's icon — a magnifier over some lines. Monochrome, taking its
+ * colour from the button; filled when the window is open.
+ */
 export function FindFilesIcon({ filled = false }: { filled?: boolean }): JSX.Element {
   return (
     <svg
@@ -19,6 +23,15 @@ export function FindFilesIcon({ filled = false }: { filled?: boolean }): JSX.Ele
   );
 }
 
+/**
+ * Replacement: one thing becomes another.
+ *
+ * The replace toggle used to be a disclosure `▸`/`▾` — the arrow said "something will
+ * unfold here" but did not say WHAT, and next to `Cc`, `W`, `.*` it read as one more
+ * incomprehensible icon. Two lines with a down arrow will not do either: that is
+ * precisely the sort icon. A filled rectangle, an arrow, an empty rectangle — "we
+ * change this into that", and there is nothing to confuse it with.
+ */
 export function ReplaceIcon(): JSX.Element {
   return (
     <svg width={15} height={15} viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width={1.4} stroke-linecap="round" stroke-linejoin="round">

@@ -1,3 +1,7 @@
+/**
+ * The search panel in the editor and the match highlighting; the project search popup —
+ * the same drawing as "search everywhere".
+ */
 export const STYLE = `
 .editor .cm-panels { z-index: 4; }
 .editor .cm-panels.cm-panels-top { border-bottom: 1px solid var(--divider); background: var(--panel-bg); }

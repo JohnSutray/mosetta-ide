@@ -15,10 +15,27 @@ import { computed, signal, type ReadonlySignal } from '@preact/signals';
 export type FindMode = 'off' | 'find' | 'replace';
 
 export interface FindCount {
+  /**
+   * The number of the match under the selection, one-based; zero means the selection is
+   * not on a match.
+   */
   current: number;
   total: number;
 }
 
+/**
+ * Find and replace in a file.
+ *
+ * The state is here, the mechanics are in `@codemirror/search`: the query, the cursor
+ * over the matches, the highlighting and the replacement itself are its. The CodeMirror
+ * panel is opened only for the highlighting's sake: we draw into it, and it merely
+ * holds the place at the top. The live editor arrives as an extension (`attach`) rather
+ * than being handed over by a neighbour: the editor does not hand it outwards, whereas
+ * an extension is entitled to it.
+ *
+ * Find and replace are one state with two modes: moving from one to the other does not
+ * lose what was typed, and that is the main reason they are not two windows.
+ */
 export class FindState {
   readonly mode = signal<FindMode>('off');
   readonly term = signal('');
@@ -26,13 +43,23 @@ export class FindState {
   readonly caseSensitive = signal(false);
   readonly words = signal(false);
   readonly regex = signal(false);
+  /**
+   * A field of several lines is a PROPERTY OF THE TERM rather than a toggle of its own.
+   * This used to be a signal that could only be switched on: the button looked pressed
+   * and would not unpress. Now the state is derived from the text, and there is nowhere
+   * for them to drift.
+   */
   readonly multiline: ReadonlySignal<boolean> = computed(() => this.term.value.includes('\n'));
+  /** How many were found and where we are; `null` means there is nothing to search for. */
   readonly count = signal<FindCount | null>(null);
+  /** The regular expression parsed. */
   readonly valid = signal(true);
+  /** Rises when it is time for the search field to take the keyboard. */
   readonly focusEpoch = signal(0);
 
   private view: EditorView | null = null;
 
+  /** An editor was born with our extension. An open search moves into it. */
   attach(view: EditorView): void {
     this.view = view;
     if (this.mode.value === 'off') return;
@@ -57,6 +84,13 @@ export class FindState {
     });
   }
 
+  /**
+   * Open in the required mode. What is selected in the editor becomes the term — that
+   * is what IDEA does, and the hand is used to it; we do not take a multi-line
+   * selection, it is almost always accidental. We take it only when opening FROM
+   * SCRATCH: moving from find to replace has to keep what was typed, and by that moment
+   * the selection stands on the match and would overwrite its case.
+   */
   open(mode: 'find' | 'replace'): void {
     const view = this.view;
     if (view) {
@@ -105,6 +139,11 @@ export class FindState {
     this.apply();
   }
 
+  /**
+   * The multi-line toggle. Off: we append a newline at the end and the field unfolds.
+   * On: we remove the newlines and the field folds back — which is exactly the reverse
+   * action rather than a loss of text, and it is visible in the field at once.
+   */
   newline(): void {
     const term = this.term.value;
     this.term.value = term.includes('\n') ? term.replace(/\n/g, '') : `${term}\n`;
@@ -124,6 +163,11 @@ export class FindState {
     this.recount();
   }
 
+  /**
+   * Replace the CURRENT one and move to the next. CodeMirror's "replace" with the
+   * selection off a match merely selects it — a second press replaces; IDEA replaces on
+   * the first, and the hand expects that.
+   */
   replaceOne(): void {
     const view = this.view;
     if (!view || this.mode.value !== 'replace') return;
@@ -141,11 +185,17 @@ export class FindState {
     this.recount();
   }
 
+  /** The text changed under us — recount. */
   recount(): void {
     const view = this.view;
     this.count.value = view ? this.countIn(view.state) : null;
   }
 
+  /**
+   * How many matches there are and which of them is under the selection. Counted over
+   * the whole document rather than the visible part: the number "2/16" promises the
+   * whole file.
+   */
   countIn(state: EditorState): FindCount | null {
     const query = this.query();
     if (this.term.value === '' || !query.valid) return null;
@@ -170,6 +220,7 @@ export class FindState {
     this.recount();
   }
 
+  /** "Next" with no search open opens it: otherwise the key stays silent. */
   private ensureOpen(): boolean {
     if (!this.view) return false;
     if (this.mode.value === 'off') this.open('find');

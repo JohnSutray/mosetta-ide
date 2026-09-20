@@ -20,11 +20,25 @@ import UiPlugin from '@mosetta/ide-plugin-ui';
 
 export type { FileHit, GrepResult } from './grep.js';
 
+/**
+ * Find and replace is a plugin: in a file, and across the project.
+ *
+ * It enters the editor as an extension through the `editor.extension` key: a CodeMirror
+ * panel at the top, into which we draw our own row, and an observer that brings us the
+ * live `EditorView`. Across the project there is a popup over the panels and a server
+ * half that searches the project's memory. The keys come from the keymap; the commands
+ * call the state, and the state calls the mechanics.
+ */
 @configSection({ section: 'find', defaults: FIND_DEFAULTS, schema: FIND_SCHEMA })
 @plugin({ title: 'plugin.find' })
 export default class FindPlugin implements FindFilesRemote {
   readonly find = new FindState();
   readonly files: FindFiles;
+  /**
+   * Painting the hit rows. The neighbour arrives as a LAZY argument: there is no need
+   * to know the plugins' startup order, and in a test a stub is substituted for the
+   * highlighting.
+   */
   readonly line = new HitLine((text, path) => this.ide.getPlugin(CodePlugin).painter.paint(text, path));
 
   constructor(private readonly ide: Ide) {
@@ -37,6 +51,10 @@ export default class FindPlugin implements FindFilesRemote {
     );
   }
 
+  /**
+   * The chip row as a setting: two keys in the section — the whole row, and the
+   * disabled ones.
+   */
   private chips(all: 'masks' | 'excludes', off: 'masksOff' | 'excludesOff'): ChipsWire {
     return {
       all: computed(() => this.ide.settingsOf('find', FIND_DEFAULTS).value[all]),
