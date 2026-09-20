@@ -7,6 +7,7 @@ import type { Logger } from '@mosetta/ide-api/server';
 import { Toolchain } from '../src/toolchain.js';
 import { LSP_DEFAULTS, type LspSettings } from '../src/settings.js';
 
+/** A mute journal; we substitute `warn` where we check what is said out loud. */
 function silent(): Logger {
   return { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined };
 }
@@ -26,8 +27,8 @@ const settings: LspSettings = {
   },
 };
 
-describe('настройки языкового сервера по слоям', () => {
-  it('берутся из настроек сервера — теми, какими их слил конфиг', () => {
+describe('the language server\'s settings, by layer', () => {
+  it('they are taken from the server\'s settings, as the config merged them', () => {
     expect(toolchain.preferencesFor(settings, 'typescript')).toEqual({
       quotePreference: 'double',
       includePackageJsonAutoImports: 'off',
@@ -35,24 +36,35 @@ describe('настройки языкового сервера по слоям',
     expect(toolchain.preferencesFor(LSP_DEFAULTS, 'typescript')).toEqual({});
   });
 
-  it('заводские остаются, если их не перекрыли; перекрытое — побеждает', () => {
-    const options = toolchain.optionsFor('typescript', '/нет/такого', log, { quotePreference: 'single' }) as {
+  it('the factory ones stay unless overridden; what was overridden wins', () => {
+    const options = toolchain.optionsFor('typescript', '/no/such', log, { quotePreference: 'single' }) as {
       preferences: Record<string, unknown>;
     };
     expect(options.preferences).toMatchObject({
       includeCompletionsForModuleExports: true,
       quotePreference: 'single',
     });
-    expect(toolchain.optionsFor('eslint', '/нет/такого', log, { quotePreference: 'single' })).toBeUndefined();
+    expect(toolchain.optionsFor('eslint', '/no/such', log, { quotePreference: 'single' })).toBeUndefined();
   });
 });
 
-describe('чем запускать языковой сервер', () => {
+/**
+ * What the language server is launched with.
+ *
+ * The settings used to hold the bare name `typescript-language-server`, and it was
+ * looked up in PATH — that is, it worked exactly where a human had installed the server
+ * by hand. On a fresh machine there is none, and the IDE opened a project with no type
+ * checking at all, while saying "No problems".
+ *
+ * So the server now TRAVELS WITH US (a dependency of the plugin), and an empty command
+ * means "ours" — as an empty `terminal.shell` means "as the system decides".
+ */
+describe('what to launch the language server with', () => {
   const own = new Toolchain(fileURLToPath(new URL('../src', import.meta.url)));
 
-  it('заводская команда ПУСТА — и за ней стоит настоящий файл', () => {
+  it('the factory command is EMPTY — and a real file stands behind it', () => {
     expect(LSP_DEFAULTS.servers['typescript']!.command).toBe('');
-    const plan = own.launchFor('typescript', LSP_DEFAULTS.servers['typescript']!, '/нет/такого', log)!;
+    const plan = own.launchFor('typescript', LSP_DEFAULTS.servers['typescript']!, '/no/such', log)!;
     expect(plan).not.toBeNull();
     expect(fs.existsSync(plan.args[0]!)).toBe(true);
     expect(plan.command).toBe(process.execPath);
@@ -60,23 +72,23 @@ describe('чем запускать языковой сервер', () => {
     expect(plan.args.slice(1)).toEqual(['--stdio']);
   });
 
-  it('названную человеком команду берём дословно', () => {
+  it('a command the human named is taken verbatim', () => {
     const plan = own.launchFor(
       'typescript',
-      { enabled: true, command: '/opt/мой/сервер', args: ['--stdio'], extensions: ['ts'] },
-      '/нет/такого',
+      { enabled: true, command: '/opt/my/server', args: ['--stdio'], extensions: ['ts'] },
+      '/no/such',
       log,
     )!;
-    expect(plan.command).toBe('/opt/мой/сервер');
+    expect(plan.command).toBe('/opt/my/server');
     expect(plan.args).toEqual(['--stdio']);
     expect(plan.env).toBeUndefined();
   });
 
-  it('проектный сервер сильнее привезённого', () => {
+  it('the project\'s server beats the bundled one', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ide-tls-'));
     const cli = path.join(root, 'node_modules', 'typescript-language-server', 'lib', 'cli.mjs');
     fs.mkdirSync(path.dirname(cli), { recursive: true });
-    fs.writeFileSync(cli, '// проектный\n');
+    fs.writeFileSync(cli, '// the project\'s\n');
     try {
       const plan = own.launchFor('typescript', LSP_DEFAULTS.servers['typescript']!, root, log)!;
       expect(plan.args[0]).toBe(cli);
@@ -85,10 +97,10 @@ describe('чем запускать языковой сервер', () => {
     }
   });
 
-  it('чужой сервер с пустой командой — это незаполненная строка, а не умолчание', () => {
+  it('another server with an empty command is an unfilled row rather than a default', () => {
     const said: string[] = [];
     const loud: Logger = { ...silent(), warn: (m) => void said.push(m) };
-    const plan = own.launchFor('eslint', { enabled: true, command: '', args: [], extensions: ['js'] }, '/нет', loud);
+    const plan = own.launchFor('eslint', { enabled: true, command: '', args: [], extensions: ['js'] }, '/no', loud);
     expect(plan).toBeNull();
     expect(said.join(' ')).toContain('eslint');
   });

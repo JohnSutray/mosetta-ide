@@ -33,10 +33,10 @@ const BLIND_LIMIT = 2000;
 const MEMORY_BEAT_MS = 15_000;
 
 const STOP_WORDS: Record<SweepStop, string> = {
-  done: 'прошёл целиком',
-  budget: 'остановлен бюджетом памяти',
-  baseline: 'не начат: бюджета не хватило на сам проект',
-  blind: 'остановлен запасным счётом: память не мерится',
+  done: 'went through whole',
+  budget: 'stopped by the memory budget',
+  baseline: 'never started: the budget did not stretch to the project itself',
+  blind: 'stopped by the fallback count: memory cannot be measured',
 };
 
 function extensionOf(key: string): string {
@@ -86,12 +86,12 @@ export class LspServer {
   private async boot(): Promise<void> {
     this.setState('starting');
     const plan = this.toolchain.launchFor(this.name, this.settings, this.root, this.log);
-    if (!plan) throw new Error(`${this.settings.command || this.name}: нечем запустить`);
+    if (!plan) throw new Error(`${this.settings.command || this.name}: nothing to launch it with`);
     const handle = this.launch({
       command: plan.command,
       args: plan.args,
       cwd: this.root,
-      reason: `${this.name} для ${path.basename(this.root)}`,
+      reason: `${this.name} for ${path.basename(this.root)}`,
       ...(plan.env ? { env: plan.env } : {}),
       wants: ['user-shell'],
     });
@@ -103,8 +103,7 @@ export class LspServer {
       this.died(`${this.settings.command || this.name}: ${err.message}`);
     });
     child.on('exit', (code, signal) => {
-      if (this.state === 'off') return;
-      this.died(`процесс завершился (${code ?? signal})`);
+      if (this.state === 'off') return;       this.died(`the process exited (${code ?? signal})`);
     });
     child.stderr.on('data', (chunk) => {
       const text = Buffer.from(chunk).toString('utf8').trim();
@@ -175,7 +174,7 @@ export class LspServer {
     this.setState('off');
     this.offRam?.();
     this.offRam = null;
-    for (const [, slot] of this.pending) slot.reject(new Error('языковой сервер закрыт'));
+    for (const [, slot] of this.pending) slot.reject(new Error('the language server is closed'));
     this.pending.clear();
     const child = this.child;
     const running = this.process;
@@ -229,7 +228,7 @@ export class LspServer {
 
     if (baseMb !== null && baseMb >= budgetMb) {
       this.log.warn(
-        `${this.name}: проект сам занимает ${baseMb} МБ при бюджете ${budgetMb} — обход не начат`,
+        `${this.name}: the project itself takes ${baseMb} MB against a budget of ${budgetMb} — the sweep never started`,
       );
       return this.finish('baseline', 0, 0);
     }
@@ -255,8 +254,8 @@ export class LspServer {
       }
       if (mb !== null && mb > budgetMb) {
         this.log.warn(
-          `${this.name}: бюджет ${budgetMb} МБ исчерпан на ${mb} МБ — проверено ` +
-            `${this.sweep?.checked ?? 0} файлов из ${queue.length}`,
+          `${this.name}: the budget of ${budgetMb} MB was exhausted at ${mb} MB — checked ` +
+            `${this.sweep?.checked ?? 0} files of ${queue.length}`,
         );
         return this.finish('budget', broken, started);
       }
@@ -279,9 +278,9 @@ export class LspServer {
     this.watchMemory();
     if (started > 0) {
       this.log.info(
-        `${this.name}: обход ${STOP_WORDS[stopped]} — ${this.sweep?.checked ?? 0} файлов из ` +
-          `${this.sweep?.total ?? 0} за ${Date.now() - started} мс, ${broken} с ошибками, ` +
-          `${this.sweep?.mb ?? '?'} МБ; все остаются открытыми`,
+        `${this.name}: swept ${STOP_WORDS[stopped]} — ${this.sweep?.checked ?? 0} files of ` +
+          `${this.sweep?.total ?? 0} in ${Date.now() - started} ms, ${broken} with errors, ` +
+          `${this.sweep?.mb ?? '?'} MB; they all stay open`,
       );
     }
   }
@@ -320,7 +319,7 @@ export class LspServer {
   }
 
   async hover(key: string, line: number, character: number): Promise<HoverInfo | null> {
-    if (this.state !== 'ready') throw new Error(`${this.name} не готов (${this.state})`);
+    if (this.state !== 'ready') throw new Error(`${this.name} is not ready (${this.state})`);
     this.didOpen(key);
     const result = (await this.request('textDocument/hover', {
       textDocument: { uri: this.uri(key) },
@@ -350,7 +349,7 @@ export class LspServer {
     character: number,
     extra: Record<string, unknown> = {},
   ): Promise<SymbolSite[]> {
-    if (this.state !== 'ready') throw new Error(`${this.name} не готов (${this.state})`);
+    if (this.state !== 'ready') throw new Error(`${this.name} is not ready (${this.state})`);
     this.didOpen(key);
     const result = await this.request(method, {
       textDocument: { uri: this.uri(key) },
@@ -380,7 +379,7 @@ export class LspServer {
   }
 
   async completion(key: string, line: number, character: number, trigger?: string): Promise<CompletionAnswer> {
-    if (this.state !== 'ready') throw new Error(`${this.name} не готов (${this.state})`);
+    if (this.state !== 'ready') throw new Error(`${this.name} is not ready (${this.state})`);
     this.didOpen(key);
     const result = (await this.request('textDocument/completion', {
       textDocument: { uri: this.uri(key) },
@@ -392,7 +391,7 @@ export class LspServer {
   }
 
   async resolveCompletion(raw: unknown): Promise<CompletionDetails> {
-    if (this.state !== 'ready') throw new Error(`${this.name} не готов (${this.state})`);
+    if (this.state !== 'ready') throw new Error(`${this.name} is not ready (${this.state})`);
     const item = (await this.request('completionItem/resolve', raw)) as RawCompletion | null;
     const documentation = renderDocumentation(item?.documentation);
     return {
@@ -476,8 +475,7 @@ export class LspServer {
       this.send({ jsonrpc: '2.0', id: msg.id, result: null });
       return;
     }
-    if (msg.id === undefined) return;
-
+    if (msg.id === undefined) return; 
     const slot = this.pending.get(msg.id);
     if (!slot) return;
     this.pending.delete(msg.id);
@@ -490,8 +488,7 @@ export class LspServer {
     try {
       key = this.keyOf(params.uri);
     } catch {
-      return;
-    }
+      return;     }
     const diagnostics = params.diagnostics.map(
       (d): Diagnostic => ({
         range: d.range,
@@ -517,7 +514,7 @@ export class LspServer {
       this.send({ jsonrpc: '2.0', id, method, params });
       const timer = setTimeout(() => {
         if (!this.pending.delete(id)) return;
-        reject(new Error(`${method}: сервер не ответил за 15 с`));
+        reject(new Error(`${method}: the server did not answer within 15 s`));
       }, 15_000);
       timer.unref?.();
     });
@@ -539,7 +536,7 @@ export class LspServer {
   private keyOf(uri: string): string {
     const absolute = fileURLToPath(uri);
     const rel = path.relative(this.root, absolute);
-    if (rel.startsWith('..') || path.isAbsolute(rel)) throw new Error('вне проекта');
+    if (rel.startsWith('..') || path.isAbsolute(rel)) throw new Error('outside the project');
     return rel.split(path.sep).join('/');
   }
 

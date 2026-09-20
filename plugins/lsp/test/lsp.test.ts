@@ -3,9 +3,15 @@ import { FakeHost } from '@mosetta/ide-api/testing';
 import DocPlugin from '@mosetta/ide-plugin-doc';
 import LspPlugin, { type Diagnostic } from '../src/client.js';
 
+/**
+ * Language servers as a plugin: what the client half promises its neighbours.
+ * Diagnostics arrive as events and are asked for on attaching, the error list belongs
+ * to the project rather than to the tab, changing project resets what was said, and a
+ * dropped socket does not.
+ */
 const NAME = '@mosetta/ide-plugin-lsp';
-const PROJECT = { id: 'p1', root: '/один', name: 'один' } as never;
-const OTHER = { id: 'p2', root: '/два', name: 'два' } as never;
+const PROJECT = { id: 'p1', root: '/one', name: 'one' } as never;
+const OTHER = { id: 'p2', root: '/two', name: 'two' } as never;
 
 function problem(line: number, message: string): Diagnostic {
   return { range: { start: { line, character: 0 }, end: { line, character: 3 } }, severity: 'error', message };
@@ -24,7 +30,7 @@ beforeEach(async () => {
   (globalThis as Record<string, unknown>)['document'] ??= {};
   host.add(DocPlugin, '@mosetta/ide-plugin-doc');
   plugin = host.add(LspPlugin, NAME);
-  known = [{ path: 'b.ts', diagnostics: [problem(1, 'сломано')] }];
+  known = [{ path: 'b.ts', diagnostics: [problem(1, 'broken')] }];
   const ide = host.ide(NAME);
   ide.answers.set('status', () => [{ server: 'typescript', state: 'ready', openDocs: 0 }]);
   ide.answers.set('problems', () => known);
@@ -32,8 +38,8 @@ beforeEach(async () => {
   await host.start();
 });
 
-describe('языковой сервер у плагина', () => {
-  it('при прикреплении спрашивает статус и уже найденные ошибки', async () => {
+describe('the language server at the plugin', () => {
+  it('on attaching it asks for the status and the errors already found', async () => {
     host.surface.workspaceCurrent.value = PROJECT;
     host.surface.project.value = PROJECT;
     await settle();
@@ -41,27 +47,27 @@ describe('языковой сервер у плагина', () => {
     expect(plugin.problems.value.map((f) => f.path)).toEqual(['b.ts']);
   });
 
-  it('событие дописывает карту, список — по алфавиту и без пустых', async () => {
+  it('an event adds to the map, and the list is alphabetical and without empties', async () => {
     host.surface.workspaceCurrent.value = PROJECT;
     host.surface.project.value = PROJECT;
     await settle();
-    host.ide(NAME).emit('diagnostics', { path: 'a.ts', diagnostics: [problem(3, 'тут')] });
+    host.ide(NAME).emit('diagnostics', { path: 'a.ts', diagnostics: [problem(3, 'here')] });
     host.ide(NAME).emit('diagnostics', { path: 'c.ts', diagnostics: [] });
     expect(plugin.problems.value.map((f) => f.path)).toEqual(['a.ts', 'b.ts']);
     host.ide(NAME).emit('diagnostics', { path: 'b.ts', diagnostics: [] });
     expect(plugin.problems.value.map((f) => f.path)).toEqual(['a.ts']);
   });
 
-  it('открытый файл видит своё, и только своё', async () => {
+  it('the open file sees its own, and only its own', async () => {
     host.surface.workspaceCurrent.value = PROJECT;
     host.surface.project.value = PROJECT;
     await settle();
     expect(plugin.fileDiagnostics.value).toEqual([]);
     host.plugin(DocPlugin).doc.open.value = { path: 'b.ts', text: '', version: 1, revision: null, readOnly: false } as never;
-    expect(plugin.fileDiagnostics.value.map((d) => d.message)).toEqual(['сломано']);
+    expect(plugin.fileDiagnostics.value.map((d) => d.message)).toEqual(['broken']);
   });
 
-  it('смена проекта обнуляет сказанное, разрыв сокета — нет', async () => {
+  it('changing project resets what was said, a dropped socket does not', async () => {
     host.surface.workspaceCurrent.value = PROJECT;
     host.surface.project.value = PROJECT;
     await settle();
@@ -81,7 +87,16 @@ describe('языковой сервер у плагина', () => {
   });
 });
 
-describe('индикатор обхода', () => {
+/**
+ * The sweep indicator in the toolbar.
+ *
+ * The badge is a widget rather than a panel button, so we take it from the registry
+ * exactly as the toolbar does and call `chip()` by hand. It is a DESCRIPTION rather
+ * than markup: the icon, the words, the colour and the click — and that is precisely
+ * what is checked here. How it looks is the toolbar's business, and checking its work
+ * from here would mean checking somebody else's.
+ */
+describe('the sweep indicator', () => {
   interface Chip {
     text: unknown;
     more?: unknown;
@@ -97,6 +112,7 @@ describe('индикатор обхода', () => {
       .find((one) => one.id === 'lsp-sweep');
   }
 
+  /** The first badge — the one a human sees on the left of the group. */
   function first(): Chip {
     return widget()!.chip()![0]!;
   }
@@ -112,39 +128,39 @@ describe('индикатор обхода', () => {
     ];
   }
 
-  it('просит место в тулбаре справа', () => {
+  it('asks for a place on the right of the toolbar', () => {
     expect(widget()?.side).toBe('right');
   });
 
-  it('обхода не было — молчит', () => {
+  it('there was no sweep — it stays silent', () => {
     say(null);
     expect(widget()!.chip()).toBeNull();
   });
 
-  it('настройка выключает его целиком', () => {
+  it('a setting switches it off entirely', () => {
     say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: null });
     expect(widget()!.chip()).not.toBeNull();
     host.ide(NAME).settings.value = { lsp: { sweepIndicator: false } } as never;
     expect(widget()!.chip()).toBeNull();
   });
 
-  it('у плашки есть подсказка: числа сами по себе ничего не значат', () => {
+  it('the badge has a tooltip: the numbers mean nothing by themselves', () => {
     say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: null });
     expect(first().tip).toContain('lsp.sweep.about');
     expect(first().busy).toBe(true);
   });
 
-  it('за бюджетом сейчас — жёлтая, даже если обход прошёл целиком', () => {
+  it('over budget right now means yellow, even if the sweep went through whole', () => {
     say({ checked: 20, total: 20, mb: 3500, baseMb: 700, budgetMb: 3072, stopped: 'done' });
     expect(first().tone).toBe('warn');
   });
 
-  it('в бюджете — обычная, без предупреждения', () => {
+  it('within budget means ordinary, with no warning', () => {
     say({ checked: 20, total: 20, mb: 1900, baseMb: 700, budgetMb: 3072, stopped: 'done' });
     expect(first().tone).toBeUndefined();
   });
 
-  it('щелчок ведёт к настройке бюджета, а не просто открывает настройки', () => {
+  it('a click leads to the budget setting rather than merely opening the settings', () => {
     const asked: string[] = [];
     host.registry.add('settings.reveal', { id: 'settings', reveal: (q: string) => asked.push(q) }, '@mosetta/ide-plugin-settings');
     say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: 'budget' });
@@ -153,17 +169,26 @@ describe('индикатор обхода', () => {
     expect(asked).toEqual(['memoryBudgetMb']);
   });
 
+  /**
+   * A crashed server is visible in the TOOLBAR.
+   *
+   * The indicator is drawn from `sweep`, and a server that never came up has no sweep
+   * and never will — so there was no badge at all. Together with a silent problems
+   * panel that gave an interface in which NOT ONE place said anything about the broken
+   * tool: the only trace left was a line in the server's journal. Found on Linux, where
+   * `typescript-language-server` was not installed.
+   */
   function down(detail: string): void {
     plugin.lsp.statuses.value = [{ server: 'typescript', state: 'failed', detail, openDocs: 0 }];
   }
 
-  it('сервер упал — плашка есть, хотя обхода не было', () => {
+  it('the server crashed — there is a badge, although there was no sweep', () => {
     down('typescript-language-server: spawn typescript-language-server ENOENT');
     expect(widget()!.chip()).not.toBeNull();
     expect(first().tone).toBe('bad');
   });
 
-  it('щелчок по ней ведёт к строке с командой, а не к бюджету', () => {
+  it('a click on it leads to the row with the command rather than to the budget', () => {
     const asked: string[] = [];
     host.registry.add('settings.reveal', { id: 'settings', reveal: (q: string) => asked.push(q) }, '@mosetta/ide-plugin-settings');
     down('spawn ENOENT');
@@ -171,18 +196,18 @@ describe('индикатор обхода', () => {
     expect(asked).toEqual(['servers']);
   });
 
-  it('сервер здоров и обхода не было — по-прежнему молчит', () => {
+  it('the server is healthy and there was no sweep — it still stays silent', () => {
     plugin.lsp.statuses.value = [{ server: 'typescript', state: 'ready', openDocs: 0 }];
     expect(widget()!.chip()).toBeNull();
   });
 
-  it('настройка гасит и плашку про падение', () => {
+  it('the setting puts out the crash badge too', () => {
     down('spawn ENOENT');
     host.ide(NAME).settings.value = { lsp: { sweepIndicator: false } } as never;
     expect(widget()!.chip()).toBeNull();
   });
 
-  it('без плагина настроек щелчок ничего не ломает', () => {
+  it('without the settings plugin a click breaks nothing', () => {
     say({ checked: 10, total: 20, mb: 100, baseMb: 50, budgetMb: 3072, stopped: 'budget' });
     expect(() => first().onClick!()).not.toThrow();
   });

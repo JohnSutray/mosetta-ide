@@ -3,6 +3,16 @@ import { LspHost } from './host.js';
 import { LSP_DEFAULTS } from './settings.js';
 import type { CompletionAnswer, CompletionDetails, FileDiagnostics, HoverInfo, LspStatus, SymbolSite } from './types.js';
 
+/**
+ * The language servers' server half.
+ *
+ * It stands on the three things the core handed over in the contract for the sake of
+ * this move: `project.memory` (the text comes from memory rather than from disk),
+ * `project.start` (a process in the shared ledger, dying with the project) and
+ * `ide.onProject` (it starts when the project opens — requirement five). The core's
+ * `lsp.*` methods are gone: a tab comes here through `plugins.call`, and diagnostics
+ * travel as events.
+ */
 export default class LspServerPlugin {
   constructor(private readonly ide: Ide) {}
 
@@ -21,6 +31,11 @@ export default class LspServerPlugin {
     return this.host(call).statuses();
   }
 
+  /**
+   * Everything the servers have already counted about the project. Asked on connecting
+   * to a project: a tab may have missed the events — the check runs in the background
+   * and finishes whenever it finishes.
+   */
   @command() protected problems(_params: unknown, call: CallContext): FileDiagnostics[] {
     return this.host(call).known();
   }
@@ -35,6 +50,10 @@ export default class LspServerPlugin {
     return this.host(call).require(path).hover(path, line, character);
   }
 
+  /**
+   * Where a symbol is declared and where it is used. Both questions are asked the same
+   * way, so their parameter parsing is shared too.
+   */
   @command() protected definition(params: unknown, call: CallContext): Promise<SymbolSite[]> {
     const { path, line, character } = spot(params);
     return this.host(call).require(path).definition(path, line, character);
@@ -45,6 +64,10 @@ export default class LspServerPlugin {
     return this.host(call).require(path).references(path, line, character);
   }
 
+  /**
+   * What can be inserted at this place. `trigger` is the character that opened the list
+   * (a dot); without it, "it was called".
+   */
   @command() protected completion(params: unknown, call: CallContext): Promise<CompletionAnswer> {
     const { path, line, character } = spot(params);
     const trigger = (params as { trigger?: unknown }).trigger;
@@ -53,6 +76,7 @@ export default class LspServerPlugin {
       .completion(path, line, character, typeof trigger === 'string' ? trigger : undefined);
   }
 
+  /** Read an item in: the documentation and the auto-import line. */
   @command() protected resolve(params: unknown, call: CallContext): Promise<CompletionDetails> {
     const path = pathOf(params);
     return this.host(call).require(path).resolveCompletion((params as { item?: unknown }).item);
@@ -61,7 +85,7 @@ export default class LspServerPlugin {
 
 function pathOf(params: unknown): string {
   const asked = params as { path?: unknown } | null;
-  if (!asked || typeof asked.path !== 'string') throw new Error('нужен path: string');
+  if (!asked || typeof asked.path !== 'string') throw new Error('path: string required');
   return asked.path;
 }
 
@@ -69,7 +93,7 @@ function spot(params: unknown): { path: string; line: number; character: number 
   const path = pathOf(params);
   const asked = params as { line?: unknown; character?: unknown };
   if (typeof asked.line !== 'number' || typeof asked.character !== 'number') {
-    throw new Error('нужны line и character');
+    throw new Error('line and character required');
   }
   return { path, line: asked.line, character: asked.character };
 }

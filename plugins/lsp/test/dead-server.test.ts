@@ -5,9 +5,11 @@ import type { LspEvent } from '../src/lsp-server.js';
 import type { Logger, ProcessChild, ProcessHandle, ProjectMemory } from '@mosetta/ide-api/server';
 import type { LspServerSettings } from '../src/settings.js';
 
+/** A subprocess a test can drive. */
 class FakeChild implements ProcessChild {
   private readonly handlers = new Map<string, Array<(...args: never[]) => void>>();
   readonly written: string[] = [];
+  /** Whether we write into it — an unborn process's pipe is not writable. */
   writable = true;
 
   readonly stdin = {
@@ -77,8 +79,8 @@ function make(): { server: LspServer; child: FakeChild; events: LspEvent[] } {
   return { server, child, events };
 }
 
-describe('языковой сервер, которого нет', () => {
-  it('команда не нашлась — причина НАСТОЯЩАЯ, а не «не ответил»', async () => {
+describe('a language server that does not exist', () => {
+  it('the command was not found — the reason is the REAL one rather than "did not answer"', async () => {
     const { server, child } = make();
     const booting = server.start();
     child.writable = false;
@@ -88,10 +90,10 @@ describe('языковой сервер, которого нет', () => {
     const status = server.status();
     expect(status.state).toBe('failed');
     expect(status.detail).toBe('typescript-language-server: spawn typescript-language-server ENOENT');
-    expect(status.detail).not.toContain('не ответил');
+    expect(status.detail).not.toContain('did not answer');
   });
 
-  it('причина говорится СРАЗУ, а не через пятнадцать секунд', async () => {
+  it('the reason is said AT ONCE rather than fifteen seconds later', async () => {
     vi.useFakeTimers();
     try {
       const { server, child } = make();
@@ -105,28 +107,28 @@ describe('языковой сервер, которого нет', () => {
     }
   });
 
-  it('процесс умер кодом — так и написано, и тоже сразу', async () => {
+  it('the process died with a code — that is what it says, and at once too', async () => {
     const { server, child } = make();
     const booting = server.start();
     child.emit('exit', 127, null);
     await booting;
-    expect(server.status().detail).toBe('процесс завершился (127)');
+    expect(server.status().detail).toBe('the process exited (127)');
   });
 
-  it('жив, но молчит — вот ТОГДА таймаут', async () => {
+  it('alive but silent — THEN comes the timeout', async () => {
     vi.useFakeTimers();
     try {
       const { server } = make();
       const booting = server.start();
       await vi.advanceTimersByTimeAsync(15_000);
       await booting;
-      expect(server.status().detail).toBe('initialize: сервер не ответил за 15 с');
+      expect(server.status().detail).toBe('initialize: the server did not answer within 15 s');
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it('о смерти объявлено наружу — статусом, а не только в журнал', async () => {
+  it('the death is announced outwards — as a status rather than only in the journal', async () => {
     const { server, child, events } = make();
     const booting = server.start();
     child.writable = false;
@@ -137,7 +139,7 @@ describe('языковой сервер, которого нет', () => {
     expect(said).toEqual(['starting', 'failed']);
   });
 
-  it('одну и ту же беду не повторяет дважды', async () => {
+  it('it does not repeat one and the same trouble twice', async () => {
     const { server, child, events } = make();
     const booting = server.start();
     child.writable = false;

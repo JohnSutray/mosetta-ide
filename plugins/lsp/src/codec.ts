@@ -19,8 +19,7 @@ export class FrameDecoder {
 
       const length = Number(match[1]);
       const start = headerEnd + 4;
-      if (this.buffer.length < start + length) break;
-
+      if (this.buffer.length < start + length) break; 
       const body = this.buffer.subarray(start, start + length).toString('utf8');
       this.buffer = this.buffer.subarray(start + length);
       try {
