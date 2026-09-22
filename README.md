@@ -17,11 +17,15 @@ page, with a daemon the page plays itself.
 On your own project, with Node.js 22 or newer:
 
 ```
-npx @mosetta/ide
+npx @mosetta/ide            # opens the current folder in your browser
+npx @mosetta/ide install    # installs the native app and starts it
 ```
 
-That opens the current folder in your browser. The daemon and the interface run on one
-local port (the first free one from 4177), and Ctrl+C in the terminal stops them.
+The first command runs the daemon and the interface on one local port (the first free
+one from 4177) and opens a browser tab; Ctrl+C stops them. The second installs the
+Electron app into `~/.mosetta/ide`, builds it on your machine and puts a shortcut where
+your system keeps applications — `~/Applications` on macOS, the Start menu on Windows,
+the applications menu on Linux; `npx @mosetta/ide uninstall` takes it away again.
 
 ```
 npx @mosetta/ide ~/code/my-app     # another folder
@@ -31,8 +35,9 @@ npm install -g @mosetta/ide        # then just `mosetta-ide`
 ```
 
 TypeScript checking works out of the box; git features need `git` on your `PATH`. Your
-settings live in `~/.mosetta/ide/config/settings.json`. The first run downloads about
-130 MB, most of it TypeScript and its language server.
+settings live in `~/.mosetta/ide/config/settings.json`, the same file both ways. The
+browser run downloads about 130 MB, most of it TypeScript and its language server; the
+native app adds Electron.
 
 > **Status: early.** Mosetta is used every day on macOS, Windows and Linux, in the
 > browser and in the desktop shell — which is not the same as being ready for you. See
@@ -157,8 +162,7 @@ exactly the way it does in the application (`@mosetta/ide-api/testing`).
 
 ## Embedding it
 
-The IDE mounts into any element of a page; the website is built that way. For now this
-works from a checkout, where the client is the workspace package `@mosetta/ide-client`.
+The IDE mounts into any element of a page; the website is built that way.
 
 ```ts
 import { mount } from '@mosetta/ide-client/embed';
@@ -177,8 +181,9 @@ runs the IDE with no daemon at all.
 The plugin contract and every plugin are published on npm under
 [`@mosetta/`](https://www.npmjs.com/org/mosetta): start from
 [`@mosetta/ide-api`](plugins/api#readme), and each plugin's README says what it does and
-how to use it from another plugin. The client and the daemon are not packaged yet; for
-now they run from a checkout.
+how to use it from another plugin. The IDE itself is [`@mosetta/ide`](app#readme); the
+daemon, the client and the native shell are packages too
+([`-server`](server#readme), [`-client`](client#readme), [`-desktop`](desktop#readme)).
 
 ## Running it from a checkout
 
@@ -200,6 +205,7 @@ client/       the core: the wire, the session, the plugin operator, the frame
 plugins/api/  the contract plugins are written against
 plugins/*     everything else — the editor, the tree, the terminal, git, the debugger…
 desktop/      the Electron shell: the supervisor, the windows, the installer
+app/          `npx @mosetta/ide`: the command and the built interface
 e2e/          checks with a real browser
 site/         ide.mosetta.org: the landing page and the playground
 ```

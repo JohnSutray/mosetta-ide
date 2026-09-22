@@ -30,6 +30,7 @@
 
     <main>
       <section class="hero">
+        <div class="hero-text">
         <p class="eyebrow">Mosetta IDE · open source · MIT</p>
         <h1>An IDE made of plugins —<br />not an IDE with plugins.</h1>
         <p class="lead">
@@ -43,6 +44,8 @@
           <a class="button button-quiet" href="#install">Install</a>
           <a class="button button-quiet" href="#write">Write a plugin</a>
         </div>
+        </div>
+        <div class="hero-mascot" data-mascot></div>
       </section>
 
       <section class="demo" id="demo" aria-label="Live demo">
@@ -76,24 +79,33 @@
 
       <section class="install" id="install">
         <h2>Run it on your own project</h2>
-        <p class="section-lead">One command, with Node.js 22 or newer. It opens the current folder in your browser; the daemon and the interface run on one local port, and Ctrl+C stops them.</p>
+        <p class="section-lead">One command, with Node.js 22 or newer. In the browser it opens the current folder and Ctrl+C stops it; installed, it becomes an application your system knows, with an icon and a tray.</p>
         <div class="install-grid">
-          <figure class="code install-main">
-            <figcaption>terminal</figcaption>
+          <figure class="code">
+            <figcaption>in your browser</figcaption>
 <pre><code><span class="c">$</span> npx @mosetta/ide
 
   Mosetta IDE  http://127.0.0.1:4177/?ws=…
 
   Ctrl+C stops it.</code></pre>
           </figure>
-          <ul class="install-notes">
-            <li><code>npx @mosetta/ide ~/code/my-app</code> — another folder</li>
-            <li><code>npx @mosetta/ide --port 4300</code> — a port of your own</li>
-            <li><code>npm install -g @mosetta/ide</code> — then just <code>mosetta-ide</code></li>
-            <li>TypeScript checking works out of the box; git features need <code>git</code> on your <code>PATH</code>.</li>
-            <li>Settings live in <code>~/.mosetta/ide/config/settings.json</code>. The first run downloads about 130&nbsp;MB, mostly TypeScript and its language server.</li>
-          </ul>
+          <figure class="code">
+            <figcaption>as a native app</figcaption>
+<pre><code><span class="c">$</span> npx @mosetta/ide install
+
+  copying 0.0.13 → ~/.mosetta/ide/app
+  building on this machine
+  creating the shortcut
+  starting Mosetta IDE</code></pre>
+          </figure>
         </div>
+        <ul class="install-notes">
+          <li><code>npx @mosetta/ide ~/code/my-app</code> — another folder; <code>--port 4300</code> — a port of your own</li>
+          <li><code>npm install -g @mosetta/ide</code> — then just <code>mosetta-ide</code></li>
+          <li>The native app is Electron: it builds itself on your machine, puts a shortcut where your system keeps applications, and <code>npx @mosetta/ide uninstall</code> takes it away again.</li>
+          <li>TypeScript checking works out of the box; git features need <code>git</code> on your <code>PATH</code>.</li>
+          <li>Settings live in <code>~/.mosetta/ide/config/settings.json</code>, the same file both ways. The browser run downloads about 130&nbsp;MB, mostly TypeScript and its language server; the native app adds Electron.</li>
+        </ul>
       </section>
 
       <section class="why" id="why">

@@ -78,7 +78,15 @@ main > section {
   padding: 72px var(--gutter);
 }
 
-.hero { padding-top: 88px; padding-bottom: 40px; }
+.hero {
+  padding-top: 88px;
+  padding-bottom: 40px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  gap: 32px;
+  align-items: center;
+}
+.hero-mascot { display: flex; justify-content: center; }
 .eyebrow { color: var(--ink-2); font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 16px; }
 .lead { max-width: 68ch; font-size: 19px; color: var(--ink-2); margin: 16px 0 28px; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -133,9 +141,71 @@ main > section {
 }
 .demo-note { max-width: 80ch; color: var(--ink-2); font-size: 14px; }
 
-.install-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
-.install-main pre { font-size: 15px; }
-.install-notes { margin: 0; display: grid; gap: 10px; color: var(--ink-2); font-size: 15px; }
+.install-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.install-grid pre { font-size: 14px; min-height: 148px; }
+.install-notes { margin: 24px 0 0; display: grid; gap: 10px; color: var(--ink-2); font-size: 15px; max-width: 90ch; }
+
+/* The mascot: the IDE's own sprite, walking on its strip of grass. */
+.mascot { position: relative; width: 280px; height: 170px; }
+.mascot-walk {
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  animation: mascot-walk 14s linear infinite;
+}
+.mascot-sheep { display: block; image-rendering: pixelated; }
+.mascot-body { animation: mascot-bob 620ms steps(1, end) infinite; }
+.mascot-legs { animation: mascot-step 620ms steps(1, end) infinite; }
+.mascot-legs-1 { animation-delay: -310ms; }
+.mascot-grass {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(90deg, var(--green) 0 6px, color-mix(in srgb, var(--green) 70%, black) 6px 12px);
+  opacity: 0.85;
+}
+@keyframes mascot-step {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes mascot-bob {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+@keyframes mascot-walk {
+  0% { transform: translateX(0) scaleX(1); }
+  44% { transform: translateX(190px) scaleX(1); }
+  50% { transform: translateX(190px) scaleX(-1); }
+  94% { transform: translateX(0) scaleX(-1); }
+  100% { transform: translateX(0) scaleX(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-walk, .mascot-body, .mascot-legs { animation: none; }
+  .mascot-legs-1 { display: none; }
+}
+
+/* A copy button in the corner of every snippet. */
+.code { position: relative; }
+.copy {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--page-2);
+  color: var(--ink-2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  opacity: 0.55;
+  transition: opacity 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.code:hover .copy, .copy:focus-visible { opacity: 1; }
+.copy:hover { color: var(--ink); border-color: var(--gold); }
+.copy.is-done { color: var(--green); border-color: var(--green); opacity: 1; }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
 .card {
@@ -212,6 +282,9 @@ a.plugin-card:hover { text-decoration: none; border-color: var(--gold); }
   .top-nav a:not(.button) { display: none; }
   main > section { padding-top: 48px; padding-bottom: 48px; }
   .code-pair, .install-grid { grid-template-columns: 1fr; }
+  .hero { grid-template-columns: 1fr; }
+  .hero-mascot { justify-content: flex-start; }
+  .copy { opacity: 0.8; }
   .demo-ide { height: 70vh; min-height: 360px; }
   .demo-title { display: none; }
 }
