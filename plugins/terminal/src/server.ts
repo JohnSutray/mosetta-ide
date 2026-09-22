@@ -1,4 +1,5 @@
 import { activate, command, type CallContext, type Ide, type Project } from '@mosetta/ide-api/server';
+import { PtyHelper } from './pty-helper.js';
 import { TerminalHost } from './host.js';
 import { TERMINAL_DEFAULTS } from './settings.js';
 import { Shells } from './shells.js';
@@ -34,6 +35,7 @@ export default class TerminalServer {
   }
 
   @activate() protected start(): void {
+    new PtyHelper(this.ide.dir, (message) => this.ide.log.warn(message)).mend();
     this.ide.onProject((project) => {
       this.projects.set(project.root, project);
       project.use('roster', () => ({
