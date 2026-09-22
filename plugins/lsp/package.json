@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-lsp",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "LSP in the daemon: diagnostics for the whole project, hover, definitions, references and completion. TypeScript out of the box.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

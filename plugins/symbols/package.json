@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-symbols",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Go to definition, and the list of usages with a preview \u2014 one key for both.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

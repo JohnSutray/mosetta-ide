@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-find",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Find and replace in the open file, and across the whole project \u2014 unsaved edits included.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

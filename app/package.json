@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Mosetta IDE: an IDE made of plugins. `npx @mosetta/ide` opens the current folder in your browser.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

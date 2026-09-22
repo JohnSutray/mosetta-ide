@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-keys",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Press any key and see what it does \u2014 or why it cannot do anything.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

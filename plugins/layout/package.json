@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-layout",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Panels in columns \u2014 the frame every other plugin draws into.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

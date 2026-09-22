@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-tree",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "The file tree: type to find, drag to move, copy, paste, rename \u2014 with git colours and errors that rise through folders.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

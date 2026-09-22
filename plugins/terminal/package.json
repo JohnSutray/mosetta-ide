@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-terminal",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Real terminals that live in the daemon: TUI programs work, Ctrl+C interrupts, and they survive a reload.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

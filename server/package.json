@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-server",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "The Mosetta IDE daemon: workspaces, the three filesystem layers, config, processes and the plugin host.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

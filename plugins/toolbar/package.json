@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-toolbar",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "The strip on top: a button for every panel, and chips that report state.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
