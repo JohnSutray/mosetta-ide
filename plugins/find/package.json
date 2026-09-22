@@ -4,6 +4,12 @@
   "description": "Find and replace in the open file, and across the whole project \u2014 unsaved edits included.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "directory": "plugins/find"
+  },
+  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

@@ -4,6 +4,12 @@
   "description": "Branches, fetch, pull and push with a preview of what goes out, and the git state everyone else reads.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "directory": "plugins/git"
+  },
+  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

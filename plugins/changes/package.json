@@ -4,6 +4,12 @@
   "description": "Changelists, commits, a shelf of patches outside git, and the diff over the editor.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "directory": "plugins/changes"
+  },
+  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

@@ -4,6 +4,12 @@
   "description": "Panels in columns \u2014 the frame every other plugin draws into.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "directory": "plugins/layout"
+  },
+  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

@@ -4,6 +4,12 @@
   "description": "Run the last npm script again, on one key.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "directory": "plugins/rerun"
+  },
+  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

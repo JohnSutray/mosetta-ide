@@ -4,6 +4,12 @@
   "description": "LSP in the daemon: diagnostics for the whole project, hover, definitions, references and completion. TypeScript out of the box.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "directory": "plugins/lsp"
+  },
+  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",
