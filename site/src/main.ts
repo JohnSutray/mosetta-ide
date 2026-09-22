@@ -8,7 +8,7 @@ import './landing.css';
  * Where the source lives; one constant, so the links move together. `null` until the
  * repository is public: a link to nowhere is worse than no link.
  */
-const REPO: string | null = null;
+const REPO: string | null = 'https://github.com/JohnSutray/mosetta-ide';
 
 for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-repo]')) {
   if (REPO) link.href = REPO;
