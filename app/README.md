@@ -18,6 +18,17 @@ npx @mosetta/ide --verbose        # print the daemon's whole log
 
 Or install it once: `npm install -g @mosetta/ide`, then `mosetta-ide`.
 
+**As a native app**, if you would rather have an icon than a terminal tab:
+
+```
+npx @mosetta/ide install          # builds it on your machine and starts it
+npx @mosetta/ide start
+npx @mosetta/ide uninstall
+```
+
+That hands over to [`@mosetta/ide-desktop`](https://www.npmjs.com/package/@mosetta/ide-desktop),
+which carries Electron; a browser run does not download it.
+
 - **Node.js 22 or newer.** TypeScript checking works out of the box; git features need
   `git` on your `PATH`.
 - **Local only.** The daemon listens on `127.0.0.1` and accepts pages from local

@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { Versions } from './versions.mjs';
 
 /**
- * `npx @mosetta/ide install`.
+ * `npx @mosetta/ide-desktop install` — and `npx @mosetta/ide install`, which hands over
+ * to this.
  *
  * npx has already installed the package together with Electron, vite and every plugin —
  * but into a temporary cache that npm cleans out. So installing means: copy this tree
@@ -41,7 +42,7 @@ class Layout {
   }
 
   packageIn(root) {
-    return path.join(root, 'node_modules', '@mosetta', 'ide');
+    return path.join(root, 'node_modules', '@mosetta', 'ide-desktop');
   }
 
   mainIn(root) {
@@ -249,13 +250,13 @@ class Cli {
   run(argv) {
     const [command = 'install', ...rest] = argv;
     const flags = new Set(rest);
-    if (command === 'install') return this.install(flags.has('--force'));
+    if (command === 'install') return this.install(flags.has('--force'), !flags.has('--no-start'));
     if (command === 'start') return this.launcher.launch();
     if (command === 'uninstall') return this.uninstall(flags.has('--purge'));
     this.fail(`unknown command: ${command}. Use install, start or uninstall.`);
   }
 
-  install(force) {
+  install(force, start = true) {
     const major = Number(process.versions.node.split('.')[0]);
     if (major < 20) this.fail(`Node ${process.versions.node} is too old: Mosetta IDE needs Node 20 or newer.`);
     const root = this.layout.sourceRoot();
@@ -272,7 +273,7 @@ class Cli {
       fs.cpSync(root, target, { recursive: true, verbatimSymlinks: true });
     }
 
-    this.step('building on this machine');
+    this.step('building on this machine (the first time also downloads Electron, about 300 MB)');
     execFileSync(process.execPath, [path.join(this.layout.packageIn(target), 'scripts', 'build.mjs')], { stdio: 'inherit' });
 
     const versions = new Versions(this.layout.apps);
@@ -285,6 +286,7 @@ class Cli {
 
     this.step('creating the shortcut');
     this.launcher.create();
+    if (!start) return this.step(`installed; start it from your applications, or with \`start\``);
     this.step(`starting ${NAME}`);
     this.launcher.launch();
   }

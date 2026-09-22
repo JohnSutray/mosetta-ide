@@ -1,9 +1,24 @@
 {
-  "name": "@mosetta/ide",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@mosetta/ide-desktop",
+  "version": "0.0.13",
+  "description": "Mosetta IDE \u2014 the Electron shell: the windows, the tray and the daemon",
+  "license": "MIT",
+  "homepage": "https://ide.mosetta.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
+    "directory": "desktop"
+  },
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
+  "keywords": [
+    "mosetta",
+    "ide",
+    "electron"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
-  "description": "Mosetta IDE — the Electron shell: the windows, the tray and the daemon",
   "scripts": {
     "start": "node scripts/start.mjs",
     "test": "vitest run"
@@ -21,13 +36,14 @@
     "vitest": "^2.1.9"
   },
   "bin": {
-    "mosetta-ide": "bin/mosetta-ide.mjs"
+    "mosetta-ide-desktop": "bin/mosetta-ide.mjs"
   },
   "files": [
     "bin",
     "scripts",
     "src",
     "assets",
-    "tsconfig.json"
+    "tsconfig.json",
+    "README.md"
   ]
 }

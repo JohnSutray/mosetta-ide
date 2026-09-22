@@ -1,7 +1,22 @@
 {
   "name": "@mosetta/ide-client",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.13",
+  "description": "The Mosetta IDE client: the core that brings plugins up, and `mount()` to put the IDE into any element of a page.",
+  "license": "MIT",
+  "homepage": "https://ide.mosetta.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
+    "directory": "client"
+  },
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
+  "keywords": [
+    "mosetta",
+    "ide"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "exports": {
     "./embed": "./src/embed.ts",
@@ -42,6 +57,8 @@
     "src",
     "index.html",
     "vite.config.ts",
-    "tsconfig.json"
+    "tsconfig.json",
+    "README.md",
+    "!src/**/*.test.*"
   ]
 }

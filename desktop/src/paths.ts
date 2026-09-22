@@ -21,8 +21,8 @@ export class DesktopPaths {
   private readonly require: ReturnType<typeof createRequire>;
 
   /**
-   * `pkg` is the `@mosetta/ide` package's directory: in the repository that is
-   * `desktop/`, in an installation `node_modules/@mosetta/ide`. The neighbours are
+   * `pkg` is the `@mosetta/ide-desktop` package's directory: in the repository that is
+   * `desktop/`, in an installation `node_modules/@mosetta/ide-desktop`. The neighbours are
    * looked up by name.
    */
   constructor(readonly pkg: string) {

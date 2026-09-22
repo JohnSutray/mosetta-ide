@@ -17,8 +17,15 @@ import { fileURLToPath } from 'node:url';
  */
 
 const HELP = `Usage: mosetta-ide [folder] [options]
+       mosetta-ide install | start | uninstall
 
 Opens the folder (the current one by default) in Mosetta IDE in your browser.
+
+Commands:
+  install      install the native app (Electron) into ~/.mosetta/ide and start it;
+               it puts a shortcut where your system keeps applications
+  start        start the installed native app
+  uninstall    remove the native app, keeping settings and state
 
 Options:
   --port <n>   the port to listen on (default: the first free one from 4177)
@@ -32,6 +39,24 @@ if (args.includes('-h') || args.includes('--help')) {
   process.stdout.write(HELP);
   process.exit(0);
 }
+
+/**
+ * The native app lives in a package of its own: it carries Electron, which a browser
+ * run has no use for. `install` hands over to it at the same version, so one command
+ * is enough to remember.
+ */
+const NATIVE = ['install', 'start', 'uninstall'];
+if (NATIVE.includes(args[0])) {
+  const { version } = JSON.parse(
+    await (await import('node:fs/promises')).readFile(new URL('../package.json', import.meta.url), 'utf8'),
+  );
+  const handover = spawn('npx', ['-y', `@mosetta/ide-desktop@${version}`, ...args], { stdio: 'inherit' });
+  handover.on('exit', (code) => process.exit(code ?? 0));
+  handover.on('error', (err) => {
+    process.stderr.write(`could not start the native installer: ${err.message}\nTry: npx @mosetta/ide-desktop ${args.join(' ')}\n`);
+    process.exit(1);
+  });
+} else {
 
 const flag = (name) => args.includes(name);
 const value = (name) => {
@@ -111,3 +136,5 @@ daemon.on('exit', (code) => {
 });
 
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => daemon.kill('SIGTERM'));
+
+}
