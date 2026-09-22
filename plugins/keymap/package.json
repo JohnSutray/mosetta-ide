@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-keymap",
-  "version": "0.1.0",
+  "version": "0.0.11",
   "description": "Keys as data: one dispatcher for every key, a keymap editor, and an honest list of the keys the browser keeps.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

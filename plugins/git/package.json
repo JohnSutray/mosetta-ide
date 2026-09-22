@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-git",
-  "version": "0.1.0",
+  "version": "0.0.11",
   "description": "Branches, fetch, pull and push with a preview of what goes out, and the git state everyone else reads.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

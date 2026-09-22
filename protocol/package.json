@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-protocol",
-  "version": "0.1.0",
+  "version": "0.0.11",
   "description": "The wire between the Mosetta IDE and its daemon: every RPC method and event, as types.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

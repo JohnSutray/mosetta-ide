@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-ui",
-  "version": "0.1.0",
+  "version": "0.0.11",
   "description": "The IDE's windows, lists, menus, chips, tips and icons \u2014 shared by every other plugin.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

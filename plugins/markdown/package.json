@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-markdown",
-  "version": "0.1.0",
+  "version": "0.0.11",
   "description": "Markdown rendered next to its source, updated as you type.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

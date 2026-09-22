@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-search",
-  "version": "0.1.0",
+  "version": "0.0.11",
   "description": "Shift+Shift: one window over files, symbols, scripts, terminals and settings, with a preview and typed tags.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

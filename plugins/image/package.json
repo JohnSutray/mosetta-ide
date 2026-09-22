@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-image",
-  "version": "0.1.0",
+  "version": "0.0.11",
   "description": "Images shown as images, and SVG shown as a picture next to its source.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
