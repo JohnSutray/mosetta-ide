@@ -5,9 +5,9 @@ import { keymapRules } from '../src/rules.js';
 import type { Keymap } from '../src/types.js';
 
 /**
- * My edits to the layout: what goes into my `settings.json` when I move a key in the
- * settings window. The factory one neither disappears nor doubles along the way, and
- * "put it back as it was" puts it back exactly as it was.
+ * The user's edits to the layout: what goes into their `settings.json` when they move a
+ * key in the settings window. The factory one neither disappears nor doubles along the
+ * way, and "put it back as it was" puts it back exactly as it was.
  */
 const mine = new PersonalKeymap();
 const factory: Keymap = {
@@ -19,7 +19,7 @@ const factory: Keymap = {
 };
 const empty: Keymap = { version: 1, bindings: [] };
 
-/** The same way the plugin stacks the layers: the factory one, mine on top. */
+/** The same way the plugin stacks the layers: the factory one, the user's on top. */
 function live(personal: Keymap): Keymap {
   return keymapRules.layer(keymapRules.validate(factory), keymapRules.validate(personal));
 }
@@ -79,10 +79,9 @@ describe('my edits to the layout', () => {
 
 describe('the stack of the layout\'s layers', () => {
   /**
-   * My layer is obliged to lie ON TOP of the factory one, even if it got into the
-   * registry earlier. The human caught this by eye: the row they had removed — "Shift
-   * Shift — Search everywhere" — was both in the list of what was removed and alive in
-   * the general list at once.
+   * The user's layer is obliged to lie ON TOP of the factory one, even if it got into
+   * the registry earlier. Otherwise a removed row — "Shift Shift — Search everywhere" —
+   * is both in the list of what was removed and alive in the general list at once.
    */
   const FACTORY: Keymap = {
     version: 1,

@@ -5,8 +5,8 @@ import { Registry } from '../src/state/registry.js';
 import { SettingsLayers } from '../src/state/settings-layers.js';
 
 /**
- * Settings layers, as entries in a section's key: factory, mine, the project's. An
- * entry's author is its layer, so "where does this value come from" is no longer
+ * Settings layers, as entries in a section's key: factory, the user's, the project's.
+ * An entry's author is its layer, so "where does this value come from" is no longer
  * computed but read.
  */
 

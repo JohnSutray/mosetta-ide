@@ -7,7 +7,7 @@ export const OWN_KINDS = ['file', 'ts'] as const;
 
 export interface IndexHit {
   kind: IndexKind;
-  /** The string that is searched, and that the human sees. */
+  /** The string that is searched, and that the user sees. */
   label: string;
   /** The file a hit leads to. */
   path: string;
@@ -139,7 +139,7 @@ export interface SearchSource {
    * AN EMPTY TERM is a legitimate question, and the answer to it depends on the tags:
    *
    * * `term: ''` with no tags — everybody is asked in turn when the window opens. Only whoever finds emptiness meaningful answers (recent files); the rest stay silent — otherwise a double Shift would dump every setting at once. And they stay silent AT ONCE, without going outwards: a trip into a child process for emptiness would be paid for on every opening of the window;
-   * * `term: ''` with tags (`ts class `) — "show me what you have of that". Here emptiness has been asked for explicitly, and staying silent in reply is not on: the human typed a tag in order to look rather than to see an empty list. The order is its own and the score zero — the window will put whatever turned up more often in past searches first.
+   * * `term: ''` with tags (`ts class `) — "show me what you have of that". Here emptiness has been asked for explicitly, and staying silent in reply is not on: the user typed a tag in order to look rather than to see an empty list. The order is its own and the score zero — the window will put whatever turned up more often in past searches first.
    *
    * When scoring a match with the search matcher, the query is FOLDED first
    * (`textIndex.fold`) — otherwise a capital letter finds nothing.
@@ -178,7 +178,7 @@ export const SOURCE_SCHEMA = {
 /**
  * What goes into `search.icon`: "I draw the icon for hits of this kind".
  *
- * The third mirror of `search.opener`. The user's rule: every element of the interface
+ * The third mirror of `search.opener`. The rule: every element of the interface
  * should have an icon, and a results row is an element. But the KIND is not known to
  * the search: `ts` means a TypeScript symbol only to the plugin that brought those
  * symbols, and a table of kinds in the search would be exactly the closed set that was

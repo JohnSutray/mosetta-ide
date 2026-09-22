@@ -504,7 +504,7 @@ export class PushWindow {
   }
 
   /**
-   * Send. Force is `--force-with-lease` on the server: the human agreed to overwrite
+   * Send. Force is `--force-with-lease` on the server: the user agreed to overwrite
    * WHAT THEY WERE SHOWN rather than what appeared in the remote later.
    */
   async send(): Promise<void> {

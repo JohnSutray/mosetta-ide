@@ -65,7 +65,7 @@ export type RamEvent =
   | { type: 'doc.diverged'; path: string; reason: 'changed' | 'removed' }
   /**
    * The saving did not happen: the disk has moved on. THAT is a conflict — an action
-   * the human asked for cannot carry itself out.
+   * the user asked for cannot carry itself out.
    */
   | { type: 'doc.saveBlocked'; path: string }
   | { type: 'doc.closed'; path: string }
@@ -404,10 +404,10 @@ export class RamFs {
 
   /**
    * A merge's verdict: the assembled text becomes both memory and disk. `null` means
-   * the human accepted the file's deletion.
+   * the user accepted the file's deletion.
    *
    * We write WITHOUT checking the revision, deliberately: both versions have just been
-   * shown to the human whole, and optimistic locking here would argue with the very
+   * shown to the user whole, and optimistic locking here would argue with the very
    * decision it was opened for.
    */
   async resolveDoc(key: string, text: string | null): Promise<void> {
@@ -456,12 +456,12 @@ export class RamFs {
   /**
    * A merge's verdict that stays IN MEMORY.
    *
-   * This is the session's second direction: the human pressed not "save" but "reload",
+   * This is the session's second direction: the user pressed not "save" but "reload",
    * i.e. asked to pull somebody else's version in without throwing their own away. Disk
    * is not touched at all — only what we hold changes, and the document stays exactly
    * as dirty as the result diverged from disk.
    *
-   * `null` means the human accepted the deletion: the document is gone.
+   * `null` means the user accepted the deletion: the document is gone.
    */
   async adoptDoc(key: string, text: string | null): Promise<void> {
     const doc = this.requireDoc(key);
@@ -642,7 +642,7 @@ export class RamFs {
    * Remove from memory a path that is no longer on disk.
    *
    * With one exception: if the document holds unsaved edits, it is NOT thrown away. The
-   * file was deleted from outside while the human's work is still alive — that is an
+   * file was deleted from outside while the user's work is still alive — that is an
    * argument between two versions, and settling it is theirs: accept the deletion, or
    * write their own text back. The edits used to be simply declared dead along with the
    * file.
@@ -719,7 +719,7 @@ export class RamFs {
    * The memory layer is the only one that knows this in full: a tab sees ONE open
    * document, whereas a dirty one lives here even after being closed (closing does not
    * throw unsaved work away). It is asked before a program is launched: the program
-   * reads disk while the human is looking at memory.
+   * reads disk while the user is looking at memory.
    *
    * Ordered by path: the list is shown to a human, and it must not reshuffle depending
    * on the order files happened to enter memory.

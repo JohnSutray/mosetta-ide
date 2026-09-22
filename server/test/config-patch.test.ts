@@ -3,7 +3,7 @@ import { patch } from '../src/config/patch.js';
 import { jsonc } from '../src/config/jsonc.js';
 
 /**
- * Editing `settings.json`. The file belongs to the human: their comments and their key
+ * Editing `settings.json`. The file belongs to the user: their comments and their key
  * order live there, and one setting has no right to sweep them away. What is checked is
  * not "did we get valid JSON" but precisely that — that what stood next to it stayed
  * where it was.

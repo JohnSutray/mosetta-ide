@@ -5,7 +5,7 @@ import { Exec } from '../src/env/exec.js';
 import { Which } from '../src/env/which.js';
 
 /**
- * A launch plan without the human's PATH: the `env/` axis's connections arrive as
+ * A launch plan without the user's PATH: the `env/` axis's connections arrive as
  * arguments.
  */
 const plan = () => new Exec(new Which({ path: null }));
@@ -17,7 +17,7 @@ function fakeShell(stdout: string, ok = true): Harvester {
 
 const MARK = '__IDE_ENV_9f3a__';
 
-describe('the human\'s environment', () => {
+describe('the user\'s environment', () => {
   it('parses a real shell\'s answer', async () => {
     if (process.platform === 'win32') return;
     const env = new ShellEnv();
@@ -133,7 +133,7 @@ describe('the human\'s environment', () => {
   });
 });
 
-describe('the human\'s environment reaches a launch', () => {
+describe('the user\'s environment reaches a launch', () => {
   const node = process.execPath;
   const read = (name: string) => ['-e', `process.stdout.write(String(process.env.${name}))`];
 
@@ -165,7 +165,7 @@ describe('the human\'s environment reaches a launch', () => {
     expect(ran.stdout).toBe(process.env.PATH);
   });
 
-  it('a tool\'s own beats the human\'s environment', async () => {
+  it('a tool\'s own beats the user\'s environment', async () => {
     const processes = new Processes({ current: { FOUND: 'from the shell' } }, plan());
     const ran = await processes.run({
       command: node,

@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import type { SharedModules, Side } from './shared.js';
 
 /**
- * Building a plugin on the human's machine.
+ * Building a plugin on the user's machine.
  *
  * WHY WE BUILD IT OURSELVES. For one thing that cannot be guaranteed otherwise: shared
  * libraries have to exist in exactly ONE copy. If a plugin arrives already built, one

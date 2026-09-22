@@ -32,7 +32,7 @@ const SCRIPTS = new Set(['ts', 'tsx', 'mts', 'cts', 'js', 'jsx', 'mjs', 'cjs']);
  *
  * We look for the expression backwards from the dot: names, dots, `?.`, `!.` and
  * balanced brackets. Parsing without a parser — a mistake costs one extra item, which
- * the human sees and does not choose.
+ * the user sees and does not choose.
  */
 export class Postfix implements Source {
   readonly id = 'postfix';

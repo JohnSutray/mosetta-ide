@@ -3,7 +3,7 @@ import { pixelGrid } from '../src/pixel-grid.js';
 
 /**
  * The seams between cells. Checked by arithmetic, because by eye this is visible only
- * on a screen with a fractional scale — that is, on Windows at 125%, where I do not go.
+ * on a screen with a fractional scale — that is, on Windows at 125%.
  */
 describe('the grid of physical pixels', () => {
   it('a cell\'s edge lands on a whole physical pixel', () => {

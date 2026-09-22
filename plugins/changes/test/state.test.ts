@@ -337,7 +337,7 @@ describe('the changes panel', () => {
     expect(changes.canCommit.value).toBe(false);
   });
 
-  it('the signature travels with the commit explicitly: the human saw it before the press', async () => {
+  it('the signature travels with the commit explicitly: the user saw it before the press', async () => {
     const { changes, asked } = raise({ 'src/a.ts': 'modified' });
     changes.message.value = 'an edit';
     changes.authorName.value = 'Ivan';
@@ -362,7 +362,7 @@ describe('the changes panel', () => {
     expect(changes.message.value, 'what was put in was left untouched — one\'s own came back').toBe('what was started');
   });
 
-  it('an amend does NOT take away what the human wrote over what was put in', async () => {
+  it('an amend does NOT take away what the user wrote over what was put in', async () => {
     const { changes } = raise({ 'src/a.ts': 'modified' });
     changes.message.value = 'what was started';
     await changes.toggleAmend();

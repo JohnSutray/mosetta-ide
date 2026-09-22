@@ -11,12 +11,12 @@ import type { MainOverlay } from './schema.js';
  * We take focus by the fact of being born — and by the fact of the CONTENT CHANGING. A
  * surface with keys of its own has to be able to hold the OS focus: an ordinary `div`
  * does not take it, and Escape would go to the editor lying UNDER the overlay — that
- * is, would close something other than what the human is looking at.
+ * is, would close something other than what the user is looking at.
  *
  * The change matters no less than the birth (found by a live check): an overlay is
  * opened by a CLICK on a list row, and a click leaves focus on the row. A second click
  * on a neighbouring row does not recreate the frame — and without this rule Escape
- * stopped closing right after the human looked at a second file.
+ * stopped closing right after the user looked at a second file.
  */
 export function Overlay({
   overlay,

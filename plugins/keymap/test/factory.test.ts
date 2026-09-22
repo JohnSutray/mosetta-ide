@@ -6,7 +6,7 @@ import { FACTORY_KEYMAP } from '../src/keymap.js';
 
 /**
  * The factory layout is the PLUGIN's DATA: it travels with the plugin, while the
- * human's file holds only their own differences. A distribution test: what we ship is
+ * user's file holds only their own differences. A distribution test: what we ship is
  * obliged to call commands that exist.
  */
 describe('the factory layout', () => {

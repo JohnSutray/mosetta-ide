@@ -26,7 +26,7 @@ export class MergeSessions {
   /**
    * Declare a conflict.
    *
-   * Files from ONE supplier merge into one session: while the human was settling the
+   * Files from ONE supplier merge into one session: while the user was settling the
    * first file, a second could have diverged on disk. Different suppliers queue up:
    * there is one screen for all of them.
    */

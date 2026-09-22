@@ -85,7 +85,7 @@ export const FIND_DEFAULTS: FindSettings = {
   maxHits: 500,
 };
 
-/** The shape of the section's value: the human's file is validated against it. */
+/** The shape of the section's value: the user's file is validated against it. */
 export const FIND_SCHEMA = {
   type: 'object',
   additionalProperties: false,

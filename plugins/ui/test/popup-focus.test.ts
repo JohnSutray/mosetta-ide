@@ -4,7 +4,7 @@ import { Popups } from '../src/windows/popups.js';
 const popups = new Popups();
 
 /**
- * A popup closed means the human returned to where they came from.
+ * A popup closed means the user returned to where they came from.
  *
  * The rule is end-to-end, which is why it lives in the frame rather than in every
  * popup. Checking it by eye is expensive: one would have to open every popup, close it

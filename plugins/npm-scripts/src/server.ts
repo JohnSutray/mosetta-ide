@@ -50,7 +50,7 @@ export interface RunPlan {
 
 export default class NpmScriptsServer {
   /**
-   * The managers are our knowledge; where they are in the human's PATH comes from the
+   * The managers are our knowledge; where they are in the user's PATH comes from the
    * core.
    */
   private readonly managers: PackageManagers;
@@ -70,7 +70,7 @@ export default class NpmScriptsServer {
     });
   }
 
-  /** What to run with: the human's choice from the settings beats the lockfile. */
+  /** What to run with: the user's choice from the settings beats the lockfile. */
   private manager(project: Project): string {
     return this.managers.chosen(this.suggested(project), project.settings('tools', TOOLS_DEFAULTS).packageManager);
   }

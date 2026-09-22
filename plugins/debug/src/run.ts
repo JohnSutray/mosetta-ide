@@ -16,7 +16,7 @@ export interface RunOwner {
   changed(run: DebugRun): void;
   /**
    * Whether this run's program is still alive AFTER a polite stop. It is not the run
-   * that knows this but the host: the program may live in the human's terminal, and
+   * that knows this but the host: the program may live in the user's terminal, and
    * only the terminal can be asked about it.
    */
   stuck(run: DebugRun): Promise<boolean>;

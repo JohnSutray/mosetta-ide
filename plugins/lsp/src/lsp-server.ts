@@ -31,7 +31,7 @@ import type {
  * It used to live in the core — because only core code could stand on memory. Now the
  * contract lends the memory (`project.memory`), the project spawns the process
  * (`project.start`), and there is not one import from the core in the class.
- * Requirement five (it starts when the project opens) is held by the `onProject` hook.
+ * That it starts when the project opens is held by the `onProject` hook.
  */
 
 export type LspEvent =
@@ -832,7 +832,7 @@ function asLocation(item: unknown): { uri: string; line: number; character: numb
  *
  * We recognise an "import" by the line's beginning rather than by parsing: parsing
  * would have to be done per language, and a mistake here costs one extra item in a list
- * the human sees anyway.
+ * the user sees anyway.
  */
 function describe(text: string, line: number): { preview: string; isImport: boolean } {
   const raw = text.split(/\r?\n/)[line] ?? '';

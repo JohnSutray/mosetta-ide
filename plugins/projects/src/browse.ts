@@ -30,7 +30,7 @@ async function resolve(at: { dir: string; partial: string }): Promise<{ dir: str
 
 /**
  * Split what was typed into "where to look" and "what has been typed already". A path
- * ending in a separator is a directory in its entirety — the human has already gone
+ * ending in a separator is a directory in its entirety — the user has already gone
  * inside.
  */
 function split(value: string): { dir: string; partial: string } {

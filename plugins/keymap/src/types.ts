@@ -45,7 +45,7 @@ export type KeyContext =
   /**
    * A file's diff covering the editor. It needs a name of its own for the sake of one
    * key: the editor lies underneath it, and a nameless Escape would close something
-   * other than what the human is looking at.
+   * other than what the user is looking at.
    */
   | 'diff'
   /** The settings editor: the fields edit text, the keys belong to the field. */
@@ -141,7 +141,7 @@ export interface Keymap {
 }
 
 /**
- * Where an edit to a setting goes: into the human's personal file, or into the project
+ * Where an edit to a setting goes: into the user's personal file, or into the project
  * one that lies in the repository itself. A value lives in ONE layer: writing it into
  * one means removing it from the other.
  */

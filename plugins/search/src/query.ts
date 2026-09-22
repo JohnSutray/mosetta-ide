@@ -40,7 +40,7 @@ export class Terms {
    * making every source repeat its own name as a list would mean keeping one piece of
    * knowledge in two places. The match is exact (up to case): a tag is typed out to the
    * end — while it is the last word it is a term — so there is nothing to guess on the
-   * human's behalf.
+   * user's behalf.
    */
   keeps(hit: { kind: string; tags?: string[] }, tags: string[]): boolean {
     if (tags.length === 0) return true;

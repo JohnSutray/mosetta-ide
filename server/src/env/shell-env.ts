@@ -33,7 +33,7 @@ const MARK = '__IDE_ENV_9f3a__';
 const PROBE = `printf %s ${MARK}; env -0`;
 
 /**
- * The probe's own variables rather than the human's.
+ * The probe's own variables rather than the user's.
  *
  * `PWD` is especially harmful: it would point at their home, whereas we run commands in
  * the project root, and a tool trusting `PWD` instead of `getcwd` would go looking for
@@ -50,7 +50,7 @@ export class ShellEnv {
     return this.harvested;
   }
 
-  /** The human's PATH. The tool lookup asks for it. */
+  /** The user's PATH. The tool lookup asks for it. */
   get path(): string | null {
     return this.harvested?.PATH ?? null;
   }
@@ -80,7 +80,7 @@ export class ShellEnv {
   }
 
   /**
-   * The human's login shell — the one that sets up their PATH.
+   * The user's login shell — the one that sets up their PATH.
    *
    * Not the one they chose for our terminal: that is the terminal plugin's business,
    * whereas the core needs the environment for EVERY launch. Login and interactive:

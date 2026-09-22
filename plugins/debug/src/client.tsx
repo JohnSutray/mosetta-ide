@@ -51,7 +51,7 @@ const MOVE_DEBOUNCE_MS = 300;
 /**
  * The debugger — the client half.
  *
- * The server half speaks DAP to the adapter; here is what the human sees: the
+ * The server half speaks DAP to the adapter; here is what the user sees: the
  * breakpoints in the editor's gutter, the line being executed, the panel with the stack
  * and the variables, the value under the cursor, the "debug" button by a script.
  *
@@ -59,7 +59,7 @@ const MOVE_DEBOUNCE_MS = 300;
  * survive a reload of the tab. The tab ASKS for them on attachment and listens to
  * events after that. The tab has a memory of its own for one thing only — the
  * breakpoints, in case the server has been restarted: they come back into place without
- * the human's involvement.
+ * the user's involvement.
  */
 @configSection({ section: 'debug', defaults: DEBUG_DEFAULTS, schema: DEBUG_SCHEMA })
 @plugin({ title: 'plugin.debug' })
@@ -284,7 +284,7 @@ export default class DebugPlugin {
   /**
    * Two doors in the EDITOR's heading: run the open file and debug it.
    *
-   * At first they stood in the debug panel's heading — and were not found: the human's
+   * At first they stood in the debug panel's heading — and were not found: the user's
    * panel is closed, and there is no reason to open it in order to run a file. The
    * buttons have to be where the FILE is. A slot in somebody else's heading is the
    * layout's `panel.action` key: `badges` is written by the panel's owner, and a
@@ -358,7 +358,7 @@ export default class DebugPlugin {
     }
   }
 
-  /** Run under the debugger. The panel opens by itself: the human has only just asked. */
+  /** Run under the debugger. The panel opens by itself: the user has only just asked. */
   async launch(ask: LaunchAsk): Promise<void> {
     if (this.state.stuck.value.length > 0) {
       this.ide.complain(this.ide.t('debug.stuck'));
@@ -816,7 +816,7 @@ function find(list: VarNode[], ref: number): VarNode | null {
   return null;
 }
 
-/** `foo.bar[0].baz` around the position — what the human wants to see. */
+/** `foo.bar[0].baz` around the position — what the user wants to see. */
 export function expressionAt(text: string, character: number): string | null {
   const isWord = (ch: string) => /[\w$]/.test(ch);
   let from = character;

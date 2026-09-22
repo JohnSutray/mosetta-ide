@@ -281,7 +281,7 @@ export class CompletionBridge {
 
   /**
    * The import caught the insertion up. We only apply what is ABOVE the insertion's
-   * line: during those milliseconds the human was typing at the caret, and the lines
+   * line: during those milliseconds the user was typing at the caret, and the lines
    * above it are the ones the server saw; everything below may have shifted.
    */
   private lateImport(details: Details | null, from: number): void {

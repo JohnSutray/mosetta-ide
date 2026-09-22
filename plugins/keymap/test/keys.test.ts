@@ -265,7 +265,7 @@ describe('catching other people\'s effects', () => {
 
 /** A double press of a modifier: a rhythm rather than a chord. */
 describe('double modifiers', () => {
-  it('the layout and the human name the key alike', () => {
+  it('the layout and the user name the key alike', () => {
     expect(keyHost.humanize('double:meta')).toBe(keyHost.isMac ? 'Cmd Cmd' : 'Win Win');
     expect(keyHost.humanize('double:control')).toBe('Control Control');
     expect(keyHost.humanize('double:alt')).toBe(keyHost.isMac ? 'Option Option' : 'Alt Alt');

@@ -22,7 +22,7 @@ export const EDITOR_DEFAULTS: EditorSettings = {
   ligatures: false,
 };
 
-/** The shape of the section's value: the human's file is validated against it. */
+/** The shape of the section's value: the user's file is validated against it. */
 export const EDITOR_SCHEMA = {
   type: 'object',
   additionalProperties: false,

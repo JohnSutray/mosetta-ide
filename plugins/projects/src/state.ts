@@ -202,7 +202,7 @@ export class Projects {
 
   /**
    * A click on a history row. Three cases, and they end IDENTICALLY — the picker closes
-   * and the human sees the project's tree.
+   * and the user sees the project's tree.
    *
    * The cases used to behave differently: a live workspace switched and left the picker
    * on screen, while a click on the project that was already open did nothing at all.

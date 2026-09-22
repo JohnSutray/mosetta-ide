@@ -333,7 +333,7 @@ export const FACTORY_KEYMAP: Keymap = {
 };
 
 /**
- * The shape of the `keymap` section's value: what the human wrote in their own file is
+ * The shape of the `keymap` section's value: what the user wrote in their own file is
  * checked against it. A removal row (`remove`) names no command — it takes one away.
  */
 export const KEYMAP_SCHEMA = {

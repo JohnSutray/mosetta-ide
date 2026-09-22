@@ -1,7 +1,7 @@
 /**
  * The plugin contract.
  *
- * A plugin ships as TypeScript SOURCE and is built on the human's machine. The
+ * A plugin ships as TypeScript SOURCE and is built on the user's machine. The
  * reason is not purity: only building it here makes it possible to reliably
  * substitute the shared singletons. With prebuilt bundles one has to HOPE the
  * author marked their externals correctly, and a single mistake yields two

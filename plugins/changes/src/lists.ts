@@ -13,10 +13,10 @@ interface Stored {
  * Changelists are a WORKSPACE setting rather than a settings file's.
  *
  * "The list of changelists is a persistent workspace setting of the user's", said the
- * human, and it lives where the shelf lives: in the plugin's state directory, next to
- * the project's key. Not in `settings.json` — that travels with the human from machine
+ * user, and it lives where the shelf lives: in the plugin's state directory, next to
+ * the project's key. Not in `settings.json` — that travels with the user from machine
  * to machine, whereas "file X lies in list Y" means something in exactly one working
- * tree. And not in the repository — this is the human's household rather than the
+ * tree. And not in the repository — this is the user's household rather than the
  * project's.
  *
  * Two names are reserved. `changes` is where everything falls by default, and therefore
@@ -71,7 +71,7 @@ export class Changelists {
   }
 
   /**
-   * Set up a list. The name is the human's, the id is our own, so that renaming does
+   * Set up a list. The name is the user's, the id is our own, so that renaming does
    * not touch it.
    */
   async create(root: string, name: string): Promise<Changelist> {

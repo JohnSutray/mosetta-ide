@@ -58,7 +58,7 @@ export function OsIcon({ os }: { os: KeyOs }) {
 
 /**
  * Remove the row. The word `remove` stood on every row and read as part of the text —
- * the human asked for an icon; a bin is recognised at once, and red on hover says the
+ * an icon is better; a bin is recognised at once, and red on hover says the
  * action is not a harmless one.
  */
 export function TrashIcon() {

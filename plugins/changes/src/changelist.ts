@@ -1,5 +1,5 @@
 
-/** A changelist: a name, and the files the human has put aside into it. */
+/** A changelist: a name, and the files the user has put aside into it. */
 export interface Changelist {
   id: string;
   name: string;
@@ -11,5 +11,5 @@ export interface Changelist {
 export const DEFAULT_LIST = 'changes';
 /** Where the conflicts fall. It cannot be deleted either — nor renamed. */
 export const UNRESOLVED_LIST = 'unresolved';
-/** The two reserved names: they are set up by the panel rather than by the human. */
+/** The two reserved names: they are set up by the panel rather than by the user. */
 export const RESERVED = [DEFAULT_LIST, UNRESOLVED_LIST];

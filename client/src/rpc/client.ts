@@ -98,7 +98,7 @@ export class RpcClient {
   }
 
   /**
-   * When to wake up. All four events mean the same thing: the human is looking at the
+   * When to wake up. All four events mean the same thing: the user is looking at the
    * tab again (or the network came back), and it has to work at once rather than after
    * a second of backoff, and certainly not only after F5.
    */

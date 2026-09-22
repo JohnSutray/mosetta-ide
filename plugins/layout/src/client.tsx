@@ -17,11 +17,10 @@ import { STYLE } from './style.js';
 /**
  * The panel layout.
  *
- * Requirement two of the original brief: the interface consists ONLY of panels, no tabs
- * and no sidebars, and a panel above a panel does not happen at all — any split unfolds
- * into a column by one common rule. The tree and git press LEFT, working panels —
- * terminal, scripts, problems — open on the RIGHT, and the editor in the middle takes
- * the remainder.
+ * The interface consists ONLY of panels, no tabs and no sidebars, and a panel above a
+ * panel does not happen at all — any split unfolds into a column by one common rule.
+ * The tree and git press LEFT, working panels — terminal, scripts, problems — open on
+ * the RIGHT, and the editor in the middle takes the remainder.
  *
  * All of that is our idea of what an IDE looks like rather than a property of an IDE.
  * Which is why it is here rather than in the core. The core set aside a slot

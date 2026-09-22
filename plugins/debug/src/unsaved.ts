@@ -1,7 +1,7 @@
 /**
  * What is unsaved BEFORE a program is run.
  *
- * The program reads the DISK while the human looks at the memory. Let those two part
+ * The program reads the DISK while the user looks at the memory. Let those two part
  * company and the debugger stops on the wrong line, or does not stop at all, and the
  * reason will be looked for anywhere but in the unsaved file. So the asking has to come
  * BEFORE the run: said afterwards, it is said when the old code has already set off.
@@ -15,13 +15,13 @@ export interface BeforeRunServices {
   /** What is not saved — as paths; the memory layer is asked rather than the open file. */
   unsaved(): Promise<string[]>;
   /**
-   * Whether the document writes itself: then the human has already answered the
+   * Whether the document writes itself: then the user has already answered the
    * question with a setting.
    */
   autosaves(): boolean;
   /** Write it all down; returns what it did NOT manage to write. */
   save(): Promise<string[]>;
-  /** Ask the human. `true` is "save and run", `false` is a refusal. */
+  /** Ask the user. `true` is "save and run", `false` is a refusal. */
   ask(question: { title: string; text: string; confirm: string }): Promise<boolean>;
   complain(message: string): void;
   t(key: string, params?: Record<string, string | number>): string;

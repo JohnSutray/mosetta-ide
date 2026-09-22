@@ -243,7 +243,7 @@ export class DapSession {
    * V8 ITSELF tells them apart: `new Error().stack`, evaluated in the stopped frame,
    * names the script by its real address — it does not use the map, neither in Node nor
    * in the browser. A counterfeit — we go on and count it; the stop is not shown to the
-   * human at all.
+   * user at all.
    */
   private async arrived(stop: Stop): Promise<void> {
     if (stop.reason === 'exception') stop = { ...stop, description: await this.exceptionText(stop) };

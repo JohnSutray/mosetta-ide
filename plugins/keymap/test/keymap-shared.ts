@@ -3,7 +3,7 @@ import { TOOLBAR_DEFAULTS } from '../../toolbar/src/settings.js';
 import type { KeyBinding, KeyScope, Keymap } from '../src/types.js';
 
 /**
- * The factory layout is the PLUGIN's DATA: the human's file holds only their own
+ * The factory layout is the PLUGIN's DATA: the user's file holds only their own
  * differences, and we check the shipment where it lives — in the code.
  */
 export function keymap(): Keymap {

@@ -72,7 +72,7 @@ describe('what to launch the language server with', () => {
     expect(plan.args.slice(1)).toEqual(['--stdio']);
   });
 
-  it('a command the human named is taken verbatim', () => {
+  it('a command the user named is taken verbatim', () => {
     const plan = own.launchFor(
       'typescript',
       { enabled: true, command: '/opt/my/server', args: ['--stdio'], extensions: ['ts'] },

@@ -25,7 +25,7 @@ export const TOOLBAR_DEFAULTS: ToolbarSettings = {
   ],
 };
 
-/** The shape of the section's value: the human's file is validated against it. */
+/** The shape of the section's value: the user's file is validated against it. */
 export const TOOLBAR_SCHEMA = {
   type: 'object',
   additionalProperties: false,

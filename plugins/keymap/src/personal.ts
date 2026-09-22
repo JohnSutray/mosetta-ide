@@ -2,16 +2,16 @@ import { keymapRules } from './rules.js';
 import type { KeyBinding, Keymap } from './types.js';
 
 /**
- * My edits to the layout: what exactly goes into the `keymap` section of my
- * `settings.json` when I reassign a key in the settings window.
+ * The user's edits to the layout: what exactly goes into the `keymap` section of their
+ * `settings.json` when they reassign a key in the settings window.
  *
  * The logic here is pure — no DOM, no settings — because getting it wrong is expensive:
  * the factory layout must neither disappear nor double, and "put it back as it was" is
  * obliged to put it back EXACTLY as it was.
  *
- * The rule is simple: my row in the same PLACE (key, context, environment) replaces the
- * factory one, a row with `remove` takes it away. So a reassignment is two entries:
- * give up the old place and take the new one.
+ * The rule is simple: the user's row in the same PLACE (key, context, environment)
+ * replaces the factory one, a row with `remove` takes it away. So a reassignment is two
+ * entries: give up the old place and take the new one.
  */
 export class PersonalKeymap {
   /**
@@ -22,7 +22,7 @@ export class PersonalKeymap {
 
   /**
    * Reassign a row: it stops being in the old place and stands in the new one. The
-   * command may change along with it — this is one action by the human rather than two.
+   * command may change along with it — this is one action by the user rather than two.
    */
   rebind(mine: Keymap, factory: Keymap, was: KeyBinding, next: KeyBinding): Keymap {
     const rest = this.without(mine, was);
@@ -34,7 +34,7 @@ export class PersonalKeymap {
     return { ...mine, bindings };
   }
 
-  /** Add a row of my own in a free place. */
+  /** Add a row of the user's own in a free place. */
   add(mine: Keymap, binding: KeyBinding): Keymap {
     return { ...mine, bindings: [...this.without(mine, binding).bindings, binding] };
   }
@@ -43,18 +43,18 @@ export class PersonalKeymap {
    * Bring back the factory one — for THIS COMMAND rather than for this place.
    *
    * The place will not do here, and that cost a live check: a reassignment is two
-   * entries, mine in the new place and a removal in the old one. Taking away only the
-   * first, I gave the command back its old key… which the second entry still removed.
-   * What the human asks for is simple: "let Git branches be as it ships again" — which
-   * means ALL my rows about this command go.
+   * entries, the user's in the new place and a removal in the old one. Taking away only
+   * the first gives the command back its old key… which the second entry still removes.
+   * What the user asks for is simple: "let Git branches be as it ships again" — which
+   * means ALL their rows about this command go.
    */
   restore(mine: Keymap, command: string): Keymap {
     return { ...mine, bindings: mine.bindings.filter((one) => one.command !== command) };
   }
 
   /**
-   * Take the key away altogether: a factory one by a removal, my own by simply throwing
-   * it out.
+   * Take the key away altogether: a factory one by a removal, the user's own by simply
+   * throwing it out.
    */
   drop(mine: Keymap, factory: Keymap, was: KeyBinding): Keymap {
     const rest = this.without(mine, was);
@@ -63,7 +63,7 @@ export class PersonalKeymap {
   }
 
   /**
-   * What I have TAKEN AWAY: the removal rows from my layer.
+   * What the user has TAKEN AWAY: the removal rows from their layer.
    *
    * They are not in the working layout — that is the whole point — and so they will not
    * appear in the list by themselves, and there would be nothing to bring them back
@@ -74,7 +74,7 @@ export class PersonalKeymap {
     return mine.bindings.filter((one) => one.remove === true);
   }
 
-  /** Whether this row is mine — what to offer the human depends on it. */
+  /** Whether this row is the user's — what to offer them depends on it. */
   isMine(mine: Keymap, binding: KeyBinding): boolean {
     const slot = keymapRules.slotOf(binding);
     return mine.bindings.some((one) => keymapRules.slotOf(one) === slot);

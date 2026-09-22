@@ -39,7 +39,7 @@ function machineReadable(): Record<string, string> {
 }
 
 /**
- * Who answers the question "what environment does the human have in their terminal".
+ * Who answers the question "what environment does the user have in their terminal".
  *
  * Under its own type so that it arrives through the constructor: otherwise a test could
  * not substitute its own, and the shell environment would be dragged into every launch
@@ -131,10 +131,10 @@ export class Processes {
   private next = 1;
 
   /**
-   * The human's environment rather than the server's.
+   * The user's environment rather than the server's.
    *
    * We still launch PAST the shell — but the variables we take are the ones it set up.
-   * The ones asking for this are the tools the human installed themselves: git,
+   * The ones asking for this are the tools the user installed themselves: git,
    * language servers, package managers. The system's `open` and `explorer.exe` do not
    * need it: they lie where they have always lain.
    */
@@ -151,7 +151,7 @@ export class Processes {
 
   /**
    * Launch and wait. Does NOT throw: somebody else's refusal is an answer rather than
-   * an accident. What to call it is up to the caller: git shows stderr to the human, a
+   * an accident. What to call it is up to the caller: git shows stderr to the user, a
    * language server moves itself to `failed`, and revealing a file in the file manager
    * is the only one that really is an error.
    */
@@ -237,7 +237,7 @@ export class Processes {
    * machine, opened to plugins.
    *
    * `self: false` means descendants only: that is how a program in a terminal is killed
-   * while the human keeps their shell.
+   * while the user keeps their shell.
    *
    * Returns how many were killed. Descendants are struck FIRST: a parent killed first
    * spawns orphans that can no longer be found through the tree.

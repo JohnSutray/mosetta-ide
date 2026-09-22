@@ -21,7 +21,7 @@ import type { KeyBinding, KeyContext, KeyHost, Keymap, KeyOs, KeyScope, TipsLike
  * What is here besides the list: a KEYBOARD (you see what is held down rather than only
  * the string `meta+shift+s`) and a hint about commands — the id, the caption from the
  * dictionary and the description from the manifest. Assigning a key to a command that
- * does not exist is not offered to the human.
+ * does not exist is not offered to the user.
  */
 export function KeymapEditor({ plugin }: { plugin: KeymapPlugin }) {
   const ide = useIde();

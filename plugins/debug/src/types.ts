@@ -42,7 +42,7 @@ export interface Scope {
 }
 
 /**
- * What the human asked of the breakpoint: a condition, a hit count, a line for the log
+ * What the user asked of the breakpoint: a condition, a hit count, a line for the log
  * instead of a stop (a logpoint). The adapter can do all of that; we only carry it.
  */
 export interface BreakpointAsk {
@@ -57,7 +57,7 @@ export interface BreakpointAsk {
    * WHAT it stands on — the line's text without the indentation.
    *
    * A line number is an address, and anyone changes it: `git pull`, a formatter, a
-   * neighbour on the branch. The text is what the human pointed a finger at. By it the
+   * neighbour on the branch. The text is what the user pointed a finger at. By it the
    * breakpoint finds itself again when the file has been re-read or opened in a new tab
    * (`Anchors`).
    *

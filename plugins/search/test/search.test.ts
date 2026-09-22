@@ -160,7 +160,7 @@ describe('search everywhere', () => {
 /**
  * The commons: the window takes hits from anybody.
  *
- * The user's rule: "search everywhere" stays a MARKETPLACE. A source puts its own into
+ * The rule: "search everywhere" stays a MARKETPLACE. A source puts its own into
  * the `search.source` key and is entitled to go outwards — to the server, into a child
  * process — so it is asked AFTER the typing pause rather than on every letter.
  */

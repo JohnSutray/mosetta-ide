@@ -91,7 +91,7 @@ export interface ProjectMemory {
    * One of the two verbs that end an argument between memory and disk, and the
    * only thing a plugin writes into memory. Not an edit — editing is the
    * editor's job through `doc.edit`. This is a judge's decision, and the judge
-   * is the merge plugin. `null` means the human accepted the deletion.
+   * is the merge plugin. `null` means the user accepted the deletion.
    */
   settle(path: string, text: string | null): Promise<void>;
   /** The verdict, INTO MEMORY: disk is left alone and the document stays as dirty as it diverged. */
@@ -293,13 +293,13 @@ export interface Ide {
    */
   settings<T extends object>(section: string, defaults: T): T;
   /**
-   * The human's environment: their shell's variables rather than our process's.
+   * The user's environment: their shell's variables rather than our process's.
    * Empty until the shell has answered. Needed by whoever spawns a process past
    * `run` — a pseudo-terminal, for example.
    */
   environment(): Record<string, string>;
   /**
-   * Whether such a program exists in the human's PATH — and where. No running,
+   * Whether such a program exists in the user's PATH — and where. No running,
    * only files; on Windows PATHEXT is walked.
    */
   which(name: string): string | null;
@@ -308,7 +308,7 @@ export interface Ide {
    *
    * Not a ban on `spawn`: a plugin is free to start node itself. But everything
    * going through the core gets a launch plan for this OS, one ritual for
-   * killing, the human's environment and a place in the shared ledger — which is
+   * killing, the user's environment and a place in the shared ledger — which is
    * exactly what nobody gets right on their own. Does NOT throw: someone else's
    * refusal is an answer.
    */
@@ -326,7 +326,7 @@ export interface Ide {
    * The root has to be in the core's ledger — we only kill what the IDE started
    * itself; somebody else's pid is a refusal rather than a quiet `kill`.
    * `self: false` means descendants only: that is how a program in a terminal is
-   * killed while the human keeps their shell. Returns how many were killed.
+   * killed while the user keeps their shell. Returns how many were killed.
    */
   killTree(pid: number, options?: { self?: boolean; signal?: 'SIGTERM' | 'SIGKILL' }): Promise<number>;
   readonly log: Logger;

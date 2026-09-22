@@ -37,7 +37,7 @@ export const DEBUG_DEFAULTS: DebugSettings = {
   webRoot: '',
 };
 
-/** The shape of the section's value: the human's file is checked against it. */
+/** The shape of the section's value: the user's file is checked against it. */
 export const DEBUG_SCHEMA = {
   type: 'object',
   additionalProperties: false,

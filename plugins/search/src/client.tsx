@@ -19,8 +19,8 @@ export { matcher, Matcher, type Match } from './matcher.js';
 export { textIndex, TextIndex, type Indexed } from './text.js';
 
 /**
- * "Search everywhere" is a plugin. Requirement four of the brief: a rectangle OVER the
- * panels with a search field, results and a preview, on a double Shift.
+ * "Search everywhere" is a plugin: a rectangle OVER the panels with a search field,
+ * results and a preview, on a double Shift.
  *
  * The index is our server half, standing on borrowed memory; here is what to show, in
  * what order, what to caption the sections with, and who to hand a hit to on Enter. The

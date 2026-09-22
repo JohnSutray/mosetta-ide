@@ -8,10 +8,9 @@ import type { PanelWish } from '../src/schema.js';
 /**
  * The panel layout.
  *
- * Requirement two of the original brief is checked here: an interface of columns,
- * navigation on the left, working panels on the right, the editor in the middle taking
- * the remainder. This used to rest on markup in the core's frame and was checked by
- * nothing but the eye.
+ * Checked here: an interface of columns, navigation on the left, working panels on the
+ * right, the editor in the middle taking the remainder. This used to rest on markup in
+ * the core's frame and was checked by nothing but the eye.
  */
 
 const NAME = '@mosetta/ide-plugin-layout';

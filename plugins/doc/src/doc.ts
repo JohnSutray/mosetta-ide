@@ -84,7 +84,7 @@ export class Doc {
    *
    * Apart from `openEpoch`: that rises when another editor was born, whereas asking to
    * open a file that is already open changes nothing — and neighbours to whom "the
-   * human asked to see the code" matters could not see it. A counter rather than a
+   * user asked to see the code" matters could not see it. A counter rather than a
    * flag: a second request in a row has to work too.
    */
   readonly openAsked = signal(0);
@@ -288,7 +288,7 @@ export class Doc {
    * `auto` means we wrote it OURSELVES (autosave, starting a program) rather than by a
    * keystroke. There is exactly one difference and it is about who asked the question:
    * an argument with disk during our own write does not unfold the merge screen (the
-   * rule says "the human just asked", and here they did not) and it complains with ONE
+   * rule says "the user just asked", and here they did not) and it complains with ONE
    * line per slot — otherwise every loss of focus would add another.
    */
   async save(options?: { auto?: boolean }): Promise<void> {

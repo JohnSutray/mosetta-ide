@@ -50,7 +50,7 @@ export class DocMethods {
 
   /**
    * What is unsaved, as paths. Asked before launching a program: the program reads disk
-   * while the human is looking at memory.
+   * while the user is looking at memory.
    */
   readonly unsaved: Handler<'doc.unsaved'> = (_params, ctx) => {
     return { paths: ctx.session.requireWorkspace().services.ram.unsavedDocs() };

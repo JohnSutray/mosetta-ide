@@ -63,8 +63,8 @@ export default class KeymapPlugin {
   private dispatcher: Dispatcher | null = null;
 
   /**
-   * The whole layout: the factory one plus my own rows, merged BY PLACE — key, context,
-   * environment.
+   * The whole layout: the factory one plus the user's rows, merged BY PLACE — key,
+   * context, environment.
    *
    * The layers lie as entries in their section's key, and the plugin merges them
    * itself: the general rule for settings is "an array is replaced whole", while a
@@ -72,7 +72,7 @@ export default class KeymapPlugin {
    * copy of the entire shipment.
    */
   readonly layout: ReadonlySignal<Keymap>;
-  /** Only MY rows — what lies in my own `settings.json`. */
+  /** Only the user's rows — what lies in their own `settings.json`. */
   readonly personal: ReadonlySignal<Keymap>;
 
   constructor(private readonly ide: Ide) {

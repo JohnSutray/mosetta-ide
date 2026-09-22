@@ -5,7 +5,7 @@ import type { ComponentChildren, JSX } from 'preact';
  *
  * It was born in the project search, and "search everywhere" set up a second one by eye
  * — and they drifted: one had a border, a 4-pixel radius and a height of 20, the other
- * a pill with a radius of 10 and a different font. The user saw it at first glance: the
+ * a pill with a radius of 10 and a different font. It showed at first glance: the
  * search-everywhere chips do not look like the square full-text ones. Two elements with
  * the same meaning and different looks are not style but sloppiness, so the chip moved
  * here, to the other widgets.

@@ -39,7 +39,7 @@ export class Popups {
   /**
    * Where we came into the popup from.
    *
-   * An end-to-end rule: a popup closed means the human returned TO where they opened it
+   * An end-to-end rule: a popup closed means the user returned TO where they opened it
    * from, with the same caret. Otherwise after Escape the focus ends up on `body`: the
    * caret in the editor is in place and visible, but the arrows do not move it and the
    * letters do not type — the panel looks like it works and does not.

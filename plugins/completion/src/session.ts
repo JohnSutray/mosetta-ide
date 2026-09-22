@@ -7,7 +7,7 @@ const PAGE = 8;
 /**
  * How long the list has to hang around for someone to have read it. A late answer
  * before that puts the best one at the top; after it, it leaves the selection alone:
- * the human is already pressing Enter on what they see.
+ * the user is already pressing Enter on what they see.
  */
 const SETTLE_MS = 200;
 
@@ -22,7 +22,7 @@ const SETTLE_MS = 200;
  * without the rule below comes the classic ailment: the list rebuilt at exactly the
  * moment of Enter and the wrong thing was inserted. Typing letters resets the selection
  * to the top — that is a new question; a late answer does not, if the list has already
- * been read or the human has walked it with the arrows.
+ * been read or the user has walked it with the arrows.
  */
 export class CompletionSession {
   readonly active = signal(false);
@@ -42,7 +42,7 @@ export class CompletionSession {
   readonly listed = computed(() => this.items.value.length > 0);
   /**
    * Whether the list is visible. Empty only when called by key and only while somebody
-   * is thinking: the human pressed and is waiting, and silence is indistinguishable
+   * is thinking: the user pressed and is waiting, and silence is indistinguishable
    * from "there is nothing". Auto-opening does not flash an empty frame.
    */
   readonly visible = computed(
@@ -62,7 +62,7 @@ export class CompletionSession {
   private readonly resolving = new Map<string, Promise<Details | null>>();
   private readonly resolved = new Map<string, Details>();
   private generation = 0;
-  /** The human walked the list themselves. */
+  /** The user walked the list themselves. */
   private pinned = false;
   /** When the list first became non-empty; `null` means it has not been shown yet. */
   private shownAt: number | null = null;

@@ -13,9 +13,8 @@ export class KeysWindow {
   /**
    * Which layout we are looking at. `null` means our own. The switch in the window
    * writes here: the layouts live in one file, and they should be configured from one
-   * place rather than by reopening the IDE another way. The user asked for exactly
-   * that: to be able to hold and configure two layouts at once, and enter the IDE
-   * either way.
+   * place rather than by reopening the IDE another way: two layouts are held and
+   * configured at once, and the IDE can be entered either way.
    */
   readonly viewHost = signal<KeyHost | null>(null);
 

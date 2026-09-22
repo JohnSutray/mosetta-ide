@@ -103,7 +103,7 @@ export interface PanelAction {
  *
  * A file's diff is shown over the editor rather than instead of it or beside it: beside
  * means one more column, i.e. the editor squeezed in half for a two-second look;
- * instead means losing the place the human was looking at. Covered, looked at, taken
+ * instead means losing the place the user was looking at. Covered, looked at, taken
  * away — the editor stayed as it was.
  *
  * The key is about the MIDDLE rather than about a panel by name (as `panel.action` is):

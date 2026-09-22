@@ -8,7 +8,7 @@ const STEP = 12;
 const MOST = 40;
 
 /**
- * What the human chose before. This is what WebStorm is loved for without being
+ * What the user chose before. This is what WebStorm is loved for without being
  * noticed: over months the list adapts to your hand. We count by name rather than by
  * place: cruder than IDEA's, but it works from the first day.
  *

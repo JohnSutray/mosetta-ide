@@ -19,9 +19,9 @@ import { STYLE } from './style.js';
  * * raster (`png`, `jpg`, …) — it has NO text, and asking for a document is not on. The bytes arrive on demand, through the third layer of reading;
  * * `svg` — an image MADE OF TEXT. It does need a document: people both edit it and look at it, and we show both at once.
  *
- * A separate plugin rather than "part of the editor", exactly as the user asked: do not
- * drag everything into one plugin; an abstraction that lets one add a viewer or an
- * editor per file type indefinitely has a right to exist.
+ * A separate plugin rather than "part of the editor": everything is not dragged into
+ * one plugin, because an abstraction that lets anyone add a viewer or an editor per
+ * file type has a right to exist.
  */
 @plugin({ title: 'plugin.image' })
 export default class ImagePlugin {

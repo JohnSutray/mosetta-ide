@@ -66,7 +66,7 @@ export function DiffView({
  *
  * It stands by the FIRST row of the hunk and in the column it changes — on the right,
  * where the working tree is. It is always visible rather than only under the cursor:
- * this is the hunk's action rather than an identical button on every row, and the human
+ * this is the hunk's action rather than an identical button on every row, and the user
  * has to find it with their eyes rather than by hovering.
  */
 function RevertHunk({ hunk, onRevert }: { hunk: number; onRevert: (hunk: number) => void }) {

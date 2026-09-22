@@ -224,7 +224,7 @@ export class DebugHost implements ProjectResource, RunOwner {
 
   /**
    * Watch a run's output: the program has printed an address — open it in the browser
-   * under the debugger. We look where the human looks: into the program's terminal;
+   * under the debugger. We look where the user looks: into the program's terminal;
    * with no terminal (Windows) into the output events.
    */
   private awaitServer(run: DebugRun, watch: TerminalRun['watch'] | null): void {
@@ -256,7 +256,7 @@ export class DebugHost implements ProjectResource, RunOwner {
   /**
    * The browser's configuration: the adapter finds Chrome itself (or whatever is named
    * in the setting), gives it a PROFILE of its own in a temporary directory — the
-   * human's windows and bookmarks are left alone — and opens the address. `webRoot` is
+   * user's windows and bookmarks are left alone — and opens the address. `webRoot` is
    * where paths from the page land: `/app.js` → `<root>/app.js`.
    */
   private browserConfiguration(name: string, url: string): Record<string, unknown> {
@@ -411,7 +411,7 @@ export class DebugHost implements ProjectResource, RunOwner {
   /**
    * Where a run's program lives: the terminal's name and the pid of its SHELL. Needed
    * for exactly two questions — whether it is still alive and how to kill it: in a
-   * terminal the program is not our child but a descendant of the human's shell.
+   * terminal the program is not our child but a descendant of the user's shell.
    */
   private readonly shells = new Map<string, { name: string; pid: number | undefined }>();
 
@@ -443,7 +443,7 @@ export class DebugHost implements ProjectResource, RunOwner {
    *
    * A live one is left alone: it is put out by "stop", and the two actions must not be
    * confused. Before this, a finished run only went away by itself when a new one
-   * started WITH THE SAME NAME — that is, having debugged one file the human was left
+   * started WITH THE SAME NAME — that is, having debugged one file the user was left
    * with its badge for ever, and there was nothing to remove it with.
    */
   forget(id: string): RunInfo[] {
@@ -467,7 +467,7 @@ export class DebugHost implements ProjectResource, RunOwner {
   /**
    * Whether the program is alive after a polite stop.
    *
-   * We ask the TERMINAL: there the program is a descendant of the human's shell, and a
+   * We ask the TERMINAL: there the program is a descendant of the user's shell, and a
    * `disconnect` does not always reach it. Where there is no terminal the program was
    * started by the adapter itself and goes away with it — there is nothing to lie about
    * there, and we answer "dead".
@@ -484,7 +484,7 @@ export class DebugHost implements ProjectResource, RunOwner {
 
   /**
    * KILL a run's process tree: the adapter with its descendants, and the program in the
-   * terminal. The human's shell is left alone — we put out only what was started in it.
+   * terminal. The user's shell is left alone — we put out only what was started in it.
    */
   async kill(run: DebugRun): Promise<void> {
     const shell = this.shells.get(run.id);

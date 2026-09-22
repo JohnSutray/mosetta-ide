@@ -42,13 +42,13 @@ export interface MergeSupply {
   title: string;
   files: MergeFile[];
   /**
-   * What to do with the finished text. `null` means the human accepted the deletion.
+   * What to do with the finished text. `null` means the user accepted the deletion.
    * Throwing from here is possible and right: the complaint will be seen by whoever
    * confirmed.
    */
   apply(path: string, text: string | null): Promise<void>;
   /** Every file is settled. Here git continues a rebase, and the shelf removes an entry. */
   finish?(): Promise<void>;
-  /** The human refused. Here git rolls the merge back. */
+  /** The user refused. Here git rolls the merge back. */
   cancel?(): Promise<void>;
 }

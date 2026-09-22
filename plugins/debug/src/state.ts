@@ -65,14 +65,14 @@ const OUTPUT_LINES = 500;
 
 /**
  * The adapter's noise about npm's own source maps: about ten lines per run, all about
- * files the human never wrote. We hide them, but we COUNT them — a silent truncation is
+ * files the user never wrote. We hide them, but we COUNT them — a silent truncation is
  * worse than noise.
  */
 const NOISE = /^Could not read source map for /;
 
 /**
  * The state of debugging in the tab. The truth is on the server; here is what it said
- * with events, and what the human chose with their eyes: which frame we are looking at,
+ * with events, and what the user chose with their eyes: which frame we are looking at,
  * what they expanded in the variables.
  */
 export class DebugState {

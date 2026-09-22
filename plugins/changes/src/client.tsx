@@ -23,7 +23,7 @@ export type { ShelfItem } from './server.js';
  *
  * A plugin of its own rather than a piece of the git plugin. Git is an AXIS: branches,
  * history, what has changed relative to it; the changes panel is the workbench where
- * the human decides which of that will become a commit. Mixing them would give us a
+ * the user decides which of that will become a commit. Mixing them would give us a
  * plugin that cannot be turned off: the IDE gets by without branches, and without a
  * list of changes too, while together they would be one indivisible lump.
  *
@@ -106,7 +106,7 @@ export default class ChangesPlugin implements ChangesRemote {
   private open: { value: boolean } | null = null;
 
   /**
-   * A commit by key, without letting go of them: the human has finished the message and
+   * A commit by key, without letting go of them: the user has finished the message and
    * presses Cmd+Enter without moving their hand to the mouse. A plain Enter belongs to
    * the field — the message is multi-line.
    */

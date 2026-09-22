@@ -41,7 +41,7 @@ export class Session {
   private readonly parts: Array<{ reset(): void }> = [];
   private readonly extraResets: Array<() => void> = [];
 
-  /** We restore from the address exactly once: after that the tab belongs to the human. */
+  /** We restore from the address exactly once: after that the tab belongs to the user. */
   private restored = false;
   private everConnected = false;
   /**

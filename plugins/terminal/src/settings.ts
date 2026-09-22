@@ -13,7 +13,7 @@ export interface TerminalSettings {
 
 export const TERMINAL_DEFAULTS: TerminalSettings = { shell: '', args: [], fontFamily: '' };
 
-/** The shape of the section's value: the human's file is validated against it. */
+/** The shape of the section's value: the user's file is validated against it. */
 export const TERMINAL_SCHEMA = {
   type: 'object',
   additionalProperties: false,

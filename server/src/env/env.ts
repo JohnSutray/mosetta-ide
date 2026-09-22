@@ -5,7 +5,7 @@ import { ShellEnv } from './shell-env.js';
 import { Which } from './which.js';
 
 /**
- * One server's `env/` axis: the human's environment, lookups along their PATH, launch
+ * One server's `env/` axis: the user's environment, lookups along their PATH, launch
  * plans, and the ledger of live processes.
  *
  * These used to be four module-level instances, wired to each other by imports. Two

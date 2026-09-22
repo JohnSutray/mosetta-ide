@@ -47,7 +47,7 @@ function resolveTsserver(root: string, dir: string, log: Logger): string | null 
  * recorded there: a language server that silently failed to come up for want of a
  * dependency is the worst of all possible outcomes. The device used to be applied only
  * to `tsserver.js`, while the language server itself stayed a bare name in PATH — that
- * is, it rested on the human having installed it by hand. On a fresh machine they had
+ * is, it rested on the user having installed it by hand. On a fresh machine they had
  * not, of course, and the IDE opened a project without a single type check.
  *
  * The project's own takes priority — by the same reasoning as with TypeScript: a tool's
@@ -91,7 +91,7 @@ export class Toolchain {
    *
    * An empty string means "the one that came with the editor" — just as an empty
    * `terminal.shell` means "as the system decides" and an empty `terminal.fontFamily`
-   * means "as the editor's". A command the human named we do not touch at all: they
+   * means "as the editor's". A command the user named we do not touch at all: they
    * named it deliberately, and we have no right to substitute our own guess for it.
    *
    * We launch it with THE SAME executable we run in (`process.execPath`), and that is

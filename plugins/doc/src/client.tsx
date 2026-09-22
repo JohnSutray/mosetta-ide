@@ -182,7 +182,7 @@ export default class DocPlugin {
 
   /**
    * Whether the document writes by itself. Asked by a neighbour to whom it matters NOT
-   * to ask the human: with autosave on, "save before running?" is a question about
+   * to ask the user: with autosave on, "save before running?" is a question about
    * something already agreed.
    */
   get autosaves(): boolean {
@@ -217,7 +217,7 @@ export default class DocPlugin {
 
   /**
    * Write everything that diverged from disk onto it. Returns what could NOT be
-   * written: disk moved ahead, which is an argument, and settling it is the human's.
+   * written: disk moved ahead, which is an argument, and settling it is the user's.
    */
   async saveUnsaved(): Promise<string[]> {
     const failed: string[] = [];

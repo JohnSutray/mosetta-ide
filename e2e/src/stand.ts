@@ -17,7 +17,7 @@ const repo = path.resolve(here, '..', '..');
  * (the backend's port arrives as the `VITE_IDE_PORT` variable, as in `dev:scratch`) and
  * Chrome. Specifically the REAL Chrome (`channel: 'chrome'`) rather than the Chromium
  * from Playwright's cache: the question the stand was set up for is "what does the
- * browser the human lives in do with a key".
+ * browser the user lives in do with a key".
  *
  * The config is the stand's (`server/test/fixtures/config`) rather than the personal
  * one: the language servers are off, and there is no point watching the disk.

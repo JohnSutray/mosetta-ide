@@ -18,7 +18,7 @@ import type { Attached, OpenAsk, ShellChoice, ShellInfo, TerminalInfo } from './
  * terminals.
  */
 export default class TerminalServer {
-  /** The machine's shells are our knowledge; the human's PATH comes from the core. */
+  /** The machine's shells are our knowledge; the user's PATH comes from the core. */
   private readonly shells: Shells;
 
   /**
@@ -47,7 +47,7 @@ export default class TerminalServer {
   /**
    * What to open a terminal with, and with what environment. Asked EVERY time: choose
    * another shell in the settings file and the next terminal starts with it, without a
-   * restart. The environment is the human's, from the core.
+   * restart. The environment is the user's, from the core.
    */
   private shell(): ShellChoice {
     return {

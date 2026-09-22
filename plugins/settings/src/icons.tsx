@@ -3,11 +3,10 @@ import type { JSX } from 'preact';
 /**
  * A cogwheel: outlined means the window is closed, filled means open.
  *
- * The teeth are real rather than eight rays from the centre: as rays it read as a SUN —
- * the user pointed at it and called it exactly that. A silhouette is recognised by the
- * shape of its edge, so the edge is what we draw: eight vertices at radius 7.35, the
- * gaps as arcs of 4.95, and the hole as a second contour with `evenodd`, so that it
- * stays a hole when filled.
+ * The teeth are real rather than eight rays from the centre: as rays it read as a SUN.
+ * A silhouette is recognised by the shape of its edge, so the edge is what we draw:
+ * eight vertices at radius 7.35, the gaps as arcs of 4.95, and the hole as a second
+ * contour with `evenodd`, so that it stays a hole when filled.
  */
 const GEAR =
   'M6.72 0.76A7.35 7.35 0 0 1 9.28 0.76L9.32 3.23A4.95 4.95 0 0 1 10.44 3.69L12.22 1.98' +

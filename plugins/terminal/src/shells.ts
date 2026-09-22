@@ -57,7 +57,7 @@ function windowsCandidates(): string[] {
 }
 
 export class Shells {
-  /** `which` comes from the core: it is the one that knows the human's PATH. */
+  /** `which` comes from the core: it is the one that knows the user's PATH. */
   constructor(private readonly which: (name: string) => string | null) {}
 
   /**

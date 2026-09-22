@@ -35,7 +35,7 @@ export interface PatchFile {
  * Why not show the patch itself row by row, as it lies: then the view of what is put
  * aside and the view of the working tree would differ both in look and in what they can
  * do (a patch has no rows between the hunks, so there is nothing to unfold), while the
- * human is looking at one and the same thing — at their own edit.
+ * user is looking at one and the same thing — at their own edit.
  *
  * A class rather than a couple of functions: the parsing and the laying-on are one
  * group of knowledge about one format, and they can be substituted on an instance.

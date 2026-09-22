@@ -53,7 +53,7 @@ function findPos(layer: Layer, pos: number): number {
 }
 
 /**
- * A whole word matched — great value: `dev` in `::dev` is what the human was looking
+ * A whole word matched — great value: `dev` in `::dev` is what the user was looking
  * for, while `dev` in `deviceRenderer` is a coincidence.
  */
 function wholeWordBonus(item: Indexed, positions: number[]): number {

@@ -92,7 +92,7 @@ export interface ShellInfo {
 export interface ShellChoice {
   file: string;
   args: string[];
-  /** The human's environment: PATH from their shell rather than from our process. */
+  /** The user's environment: PATH from their shell rather than from our process. */
   env: Record<string, string>;
   /** The chosen shell does not exist on this machine — we took the system's. */
   problem?: string;

@@ -275,7 +275,7 @@ describe('changes: the commit and the shelf', () => {
     }
   });
 
-  it('it lays onto a file the human has already edited', async () => {
+  it('it lays onto a file the user has already edited', async () => {
     const main = path.join(root, 'src/main.ts');
     await fs.writeFile(main, 'one\ntwo\nthree\nfour\nfive\n');
     await git('commit', '-am', 'multi-line');
@@ -299,7 +299,7 @@ describe('changes: the commit and the shelf', () => {
     expect(await unshelve({ id: put.item!.id })).toEqual({ error: null });
 
     const status = await git('status', '--porcelain');
-    expect(status, 'the human\'s mark is intact').toContain('M  src/util.ts');
+    expect(status, 'the user\'s mark is intact').toContain('M  src/util.ts');
     expect(status, 'ours is in the tree rather than in the index').toContain(' M src/main.ts');
   });
 

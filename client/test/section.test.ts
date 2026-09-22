@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { sectionOf } from '@mosetta/ide-api/section';
 
 /**
- * A settings section over its defaults: the human's file adds to it but does not break
+ * A settings section over its defaults: the user's file adds to it but does not break
  * it. A key of the wrong type falls back to its default; an unknown key stays; a
  * missing section means the defaults whole.
  */

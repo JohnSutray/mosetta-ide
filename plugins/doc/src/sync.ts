@@ -9,7 +9,7 @@ import type { DocWire } from '@mosetta/ide-api/client';
  * rather than in signals: it changes on every keystroke, and there is no point
  * redrawing the interface for it.
  *
- * Edits are glued together by a pause: a language server needs the text after the human
+ * Edits are glued together by a pause: a language server needs the text after the user
  * has stopped rather than thirty times a second.
  */
 export class DocSync {

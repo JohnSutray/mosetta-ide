@@ -183,7 +183,7 @@ export interface Note {
 }
 
 /**
- * The core's voice: what it has said to the human. The notifications plugin
+ * The core's voice: what it has said to the user. The notifications plugin
  * shows and dismisses them; `say`/`complain`/`working` on `Ide` write here. The
  * core keeps no timers — how long to hold a note is up to whoever shows it.
  */
@@ -496,7 +496,7 @@ export interface RegistryHandle<T> {
   readonly all: { readonly value: T[] };
   /**
    * The same, but WITH AUTHORS. Needed wherever "who wrote this" is part of the
-   * meaning: for settings the author of an entry is the LAYER (factory, mine,
+   * meaning: for settings the author of an entry is the LAYER (factory, the user's,
    * the project's), and the editor reads layers from here.
    */
   readonly entries: { readonly value: Array<{ by: string; value: T }> };
@@ -531,7 +531,7 @@ export interface SettingField {
 /**
  * A settings section a plugin declares as its own.
  *
- * Defaults are the plugin's code, differences are the human's file. The
+ * Defaults are the plugin's code, differences are the user's file. The
  * declaration goes into the `settings` registry key, which the core declares:
  * `setSetting` uses it to check that the section and key exist and that the
  * type matches, and the settings screen learns from it what may be edited.
@@ -592,13 +592,13 @@ export const USER_LAYER = 'settings.json';
 export const PROJECT_LAYER = '.mosetta/settings.json';
 
 /**
- * A section's layers in the order they apply: factory, mine, the project's.
+ * A section's layers in the order they apply: factory, the user's, the project's.
  *
- * The order of entries in a key is the order they were put there, and that is a
- * race: the config arrives from the server, the section is declared by a
- * plugin, and either may win. Once that cost a full day of bewilderment — a key
- * I had removed in my file stayed removed there and stayed alive in the list,
- * because the factory layer landed AFTER mine and covered the removal.
+ * The order of entries in a key is the order they were put there, and that is a race:
+ * the config arrives from the server, the section is declared by a plugin, and either
+ * may win. Once that cost a full day of bewilderment — a key removed in the user's file
+ * stayed removed there and stayed alive in the list, because the factory layer landed
+ * AFTER the user's and covered the removal.
  *
  * So the stack is not read "as it lies" but ordered by AUTHOR: the author is
  * the layer.

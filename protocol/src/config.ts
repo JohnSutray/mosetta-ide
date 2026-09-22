@@ -1,5 +1,5 @@
 /**
- * Settings are data, not code. Two files hold them: the human's own, in the
+ * Settings are data, not code. Two files hold them: the user's own, in the
  * IDE config directory, and the project's own, at `<root>/.mosetta/settings.json`.
  * Defaults live in code, and the server is the single source of truth — the
  * client keeps no copy of its own.
@@ -98,7 +98,7 @@ export interface Settings {
 }
 
 /**
- * Where a setting is written: into the human's own file, or into the project
+ * Where a setting is written: into the user's own file, or into the project
  * file that lives in the repository. A value lives in exactly ONE layer —
  * writing it to one removes it from the other.
  */

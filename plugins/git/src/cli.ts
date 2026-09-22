@@ -3,7 +3,7 @@ import type { Ide, RunResult } from '@mosetta/ide-api/server';
 export interface GitResult {
   ok: boolean;
   stdout: string;
-  /** What git said on stderr — that is the human explanation of a refusal. */
+  /** What git said on stderr — that is the user explanation of a refusal. */
   stderr: string;
 }
 
@@ -100,7 +100,7 @@ export class GitCli {
 
   /**
    * Launch git and wait. It never throws: a git failure is a normal answer ("not a
-   * repository", "the branch is not merged"), and it has to be shown to the human
+   * repository", "the branch is not merged"), and it has to be shown to the user
    * rather than bringing the request down with it.
    *
    * Sixteen megabytes is not "with room to spare" but a condition: a `git diff` of a

@@ -42,7 +42,7 @@ export interface ChangesRemote {
   /** The draft message is the project's household rather than the tab's. */
   draftRead(): Promise<{ text: string }>;
   draftWrite(ask: { text: string }): Promise<{ error: string | null }>;
-  /** What the commit is signed with: git's config plus the human's replacement. */
+  /** What the commit is signed with: git's config plus the user's replacement. */
   identity(): Promise<{ name: string; email: string; fromGit: { name: string; email: string } }>;
   identityWrite(ask: { name: string; email: string }): Promise<{ error: string | null }>;
 }
@@ -76,10 +76,10 @@ export interface ChangeRow {
  * The panel has NO idea of its own about what has changed: the list is taken from the
  * git neighbour's snapshot, which is computed in the background and handed over
  * instantly. The panel adds exactly one piece of knowledge of its own to it — which
- * files the human has ticked.
+ * files the user has ticked.
  *
  * The ticks are stored as a list of the UNTICKED rather than of the ticked: a file that
- * has appeared in the work just now is obliged to be ticked — the human has only just
+ * has appeared in the work just now is obliged to be ticked — the user has only just
  * written it and almost certainly wants to commit it. A list of the ticked would give
  * the opposite behaviour and make them tick every new row by hand.
  */
@@ -91,7 +91,7 @@ export class Changes {
      * files.
      */
     private readonly git: () => ReadonlySignal<GitState>,
-    /** Say it out loud: git's grumbling is shown to the human rather than swallowed. */
+    /** Say it out loud: git's grumbling is shown to the user rather than swallowed. */
     private readonly complain: (text: string) => void,
     /** The commit message survives the closing of the panel — it is a draft. */
     readonly message: Signal<string>,
@@ -122,7 +122,7 @@ export class Changes {
   readonly conflicts = signal<string[]>([]);
   /**
    * The files that were not in the tree and have come back from the shelf. Keeping
-   * quiet about that is not allowed: a file has appeared where the human did not leave
+   * quiet about that is not allowed: a file has appeared where the user did not leave
    * it.
    */
   readonly restored = signal<string[]>([]);
@@ -131,7 +131,7 @@ export class Changes {
    * What the amend has put in, and what was there before it.
    *
    * Two strings rather than a flag: turning the amend off is obliged to bring back the
-   * previous message, but ONLY if the human has not touched what was put in. If they
+   * previous message, but ONLY if the user has not touched what was put in. If they
    * have touched it, it is their text now, and taking it away is not allowed.
    */
   private filledByAmend: string | null = null;
@@ -152,7 +152,7 @@ export class Changes {
   readonly authorName = signal('');
   readonly authorEmail = signal('');
   /**
-   * What git itself knows about the signature: by it you can see what the human has
+   * What git itself knows about the signature: by it you can see what the user has
    * replaced it with.
    */
   private gitIdentity = { name: '', email: '' };
@@ -195,7 +195,7 @@ export class Changes {
    * The rows laid out by changelist.
    *
    * There is one rule and it matters more than convenience: the CONFLICTS are always in
-   * `unresolved`, whatever the human says. It was not they who put them there but git,
+   * `unresolved`, whatever the user says. It was not they who put them there but git,
    * and moving a conflict into "their own" list means losing sight of it exactly when
    * it must not be lost.
    *
@@ -465,7 +465,7 @@ export class Changes {
    * Turn `--amend` on or off.
    *
    * Turned on — the message of the commit being edited arrives in the field: that is
-   * exactly what the human is about to add to, and typing it again would be work that
+   * exactly what the user is about to add to, and typing it again would be work that
    * should not exist. Turned off — we bring back the previous one, if what was put in
    * has been left untouched.
    */
@@ -549,7 +549,7 @@ export class Changes {
   }
 
   /**
-   * The signature comes from the server: git's config plus the human's replacement, if
+   * The signature comes from the server: git's config plus the user's replacement, if
    * there is one.
    */
   async loadIdentity(): Promise<void> {
@@ -683,7 +683,7 @@ export class Changes {
   /**
    * One ritual for every action: busy — we said so, an error — we showed it.
    *
-   * The grumble lives IN THE PANEL rather than as a notification on top: the human is
+   * The grumble lives IN THE PANEL rather than as a notification on top: the user is
    * looking here, and the answer to their press has to be where the button is.
    */
   private async working<T extends { error: string | null }>(run: () => Promise<T>): Promise<T | null> {

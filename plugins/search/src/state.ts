@@ -57,7 +57,7 @@ export class Search {
      * asynchronous — a source is entitled to go to the server and into a child process.
      */
     private readonly sources: RegistryHandle<SearchSource>,
-    /** Which kinds of hit the human has seen: the chip row is assembled from them. */
+    /** Which kinds of hit the user has seen: the chip row is assembled from them. */
     private readonly seen: Signal<string[]>,
     /** Which they switched off. Two lists rather than a list of pairs. */
     private readonly hidden: Signal<string[]>,
@@ -77,7 +77,7 @@ export class Search {
   readonly hits = signal<IndexHit[]>([]);
   /**
    * How many matched in total. More than the length of the hits means we are showing
-   * less than everything, and the window says so rather than the human guessing.
+   * less than everything, and the window says so rather than the user guessing.
    */
   readonly total = signal(0);
   /**
@@ -95,7 +95,7 @@ export class Search {
   /**
    * How long we wait before asking THE COMMONS. The index lies in memory and answers on
    * every letter; a source goes outwards, and nudging it on every keystroke means
-   * paying for all the intermediate words the human has already deleted.
+   * paying for all the intermediate words the user has already deleted.
    */
   private readonly sourceDelay = 140;
 
@@ -203,11 +203,11 @@ export class Search {
    * The sources' notes: what each of them does not cover.
    *
    * They are NOT always shown. "Three files have no symbols" used to hang under the
-   * field permanently, on any query and even an empty one, and the user asked: why do I
-   * always see this type. The note was the truth, but a truth written always stops
-   * being read — exactly like red that is always red.
+   * field permanently, on any query and even an empty one, and nobody could tell why it
+   * was there. The note was the truth, but a truth written always stops being read —
+   * exactly like red that is always red.
    *
-   * The moment it is needed is named precisely: **the human asked, and the source did
+   * The moment it is needed is named precisely: **the user asked, and the source did
    * not answer.** Then "why is it empty" is a live question, and coverage answers it.
    * If a source found something, nobody asks about its holes; if nothing was asked at
    * all (an empty field when the window opens) — all the more so.

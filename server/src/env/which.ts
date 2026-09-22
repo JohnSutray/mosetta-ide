@@ -33,7 +33,7 @@ function exists(file: string): boolean {
 }
 
 export class Which {
-  /** The human's environment: their PATH, or `null` until the shell has answered. */
+  /** The user's environment: their PATH, or `null` until the shell has answered. */
   constructor(private readonly env: { readonly path: string | null }) {}
 
   /** Whether such a program exists in PATH. No launching — only files. */

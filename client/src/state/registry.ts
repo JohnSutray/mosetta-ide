@@ -74,7 +74,7 @@ export class Registry {
    *
    * An entry of the wrong shape IS NOT PUT IN. The registry used to complain and put it
    * in anyway — so a toolbar button without a command reached the render, and what
-   * reached the human was not a complaint but a breakage. The complaint names names as
+   * reached the user was not a complaint but a breakage. The complaint names names as
    * it is; refusing makes it required reading.
    */
   add<T>(key: string, value: T, by: string): () => void {
@@ -91,7 +91,8 @@ export class Registry {
    * The same as `all`, but WITH AUTHORS.
    *
    * Who wrote an entry is not a housekeeping field: for settings the author IS the
-   * layer (factory, mine, the project's), and folding the layers is read from here.
+   * layer (factory, the user's, the project's), and folding the layers is read from
+   * here.
    */
   entries<T>(key: string): ReadonlySignal<Array<{ by: string; value: T }>> {
     return this.slot(key) as unknown as ReadonlySignal<Array<{ by: string; value: T }>>;

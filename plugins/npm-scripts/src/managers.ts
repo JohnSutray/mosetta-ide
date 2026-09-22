@@ -35,7 +35,7 @@ export class PackageManagers {
   constructor(private readonly which: (name: string) => string | null) {}
 
   /**
-   * What to run scripts with when the human has not chosen. Determined by the lockfile
+   * What to run scripts with when the user has not chosen. Determined by the lockfile
    * — a fact about the project, so the presence of those files is passed in here rather
    * than worked out here.
    */
@@ -47,7 +47,7 @@ export class PackageManagers {
   }
 
   /**
-   * What to run with: the human's choice beats the lockfile — that is what a setting is
+   * What to run with: the user's choice beats the lockfile — that is what a setting is
    * for.
    */
   chosen(suggested: string, setting: string): string {
@@ -56,7 +56,7 @@ export class PackageManagers {
   }
 
   /**
-   * What was found. `chosen` is the human's choice from the settings, `suggested` is
+   * What was found. `chosen` is the user's choice from the settings, `suggested` is
    * what the project suggests.
    */
   detect(suggested: string, chosen: string, root: string): PackageManagerInfo[] {

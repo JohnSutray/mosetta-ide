@@ -15,7 +15,7 @@ export interface GitSettings {
 
 export const GIT_DEFAULTS: GitSettings = { autoFetchMinutes: 10, statusPollSec: 3 };
 
-/** The shape of the section's value: the human's file is validated against it. */
+/** The shape of the section's value: the user's file is validated against it. */
 export const GIT_SCHEMA = {
   type: 'object',
   additionalProperties: false,

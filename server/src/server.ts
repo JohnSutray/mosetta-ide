@@ -31,7 +31,7 @@ export interface ServerOptions {
   /** Watch the config and re-read it on the fly. Not needed in tests. */
   watchConfig?: boolean;
   /**
-   * Ask the human's shell for its environment.
+   * Ask the user's shell for its environment.
    *
    * Not needed in tests: it is an extra 0.3 s per server brought up, and it is covered
    * by its own tests, where the shell is substituted.

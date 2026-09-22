@@ -48,7 +48,7 @@ function makeGit(ide = fakeIde()) {
  *
  * There used to be thirty-four module-level exports here, and writing this file was
  * impossible: the state lived in the module, a test received it from the previous test,
- * and "set up a git of my own" meant reloading the module. Now it is `new Git(remote,
+ * and "set up a git of its own" meant reloading the module. Now it is `new Git(remote,
  * ide)` — and it knows what it was given, and nothing else.
  */
 

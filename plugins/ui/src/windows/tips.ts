@@ -4,9 +4,8 @@ import { signal } from '@preact/signals';
  * A tooltip over an element — our own rather than the browser's.
  *
  * The native `title` will not do for three reasons at once: it appears after a second
- * and more (the user's words: "even I cannot wait out that tiny, slow little tooltip"),
- * it is drawn in the system style past the theme, and its contents cannot be laid out —
- * the action and the key stick together into one line.
+ * and more, it is drawn in the system style past the theme, and its contents cannot be
+ * laid out — the action and the key stick together into one line.
  *
  * Ours appears instantly and knows about parts: what it does, and what it is called by.
  */

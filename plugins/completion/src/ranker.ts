@@ -21,7 +21,7 @@ const DEPRECATED = 40;
  * The list's order. The sense of intelligence comes from the order rather than from
  * completeness, and it adds up from four terms: how what was typed landed (the
  * matcher), whose item it is (the source's weight), what the checker says (its crude
- * tier) and what the human chose before (the history). Equals go alphabetically: after
+ * tier) and what the user chose before (the history). Equals go alphabetically: after
  * a dot nothing has been typed, and the order of members has to be predictable.
  */
 export class Ranker {

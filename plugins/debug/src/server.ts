@@ -113,7 +113,7 @@ export default class DebugServer {
   }
 
   /**
-   * Run a file WITHOUT the debugger — in a real terminal. A pair to `launch`: the human
+   * Run a file WITHOUT the debugger — in a real terminal. A pair to `launch`: the user
    * has two actions in the panel, the triangle and the bug, as in WebStorm.
    *
    * It lives here next door to the debugger's terminal rather than in a plugin of its

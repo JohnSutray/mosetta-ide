@@ -71,7 +71,7 @@ class FakeProject implements Project {
 
 const silent = { debug() {}, info() {}, warn() {}, error() {} };
 
-/** The human's shell: in a test we take the system's, and without banners. */
+/** The user's shell: in a test we take the system's, and without banners. */
 const shell = () => ({
   file: process.platform === 'win32' ? 'powershell.exe' : '/bin/sh',
   args: [] as string[],

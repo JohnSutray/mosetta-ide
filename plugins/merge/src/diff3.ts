@@ -39,7 +39,7 @@ export interface Region {
   right: string[];
 }
 
-/** What the human said about one side of a hunk. `null` means nothing yet. */
+/** What the user said about one side of a hunk. `null` means nothing yet. */
 export type SideChoice = 'take' | 'skip' | null;
 
 export interface Choice {
@@ -144,7 +144,7 @@ export class Diff3 {
 
   /**
    * The default choice: the uncontested is MERGED IN, the contested waits for the
-   * human.
+   * user.
    *
    * That is the whole point of merging — if the green hunks had to be confirmed one by
    * one too, the tool would turn into rewriting the file by hand. Green can be
@@ -168,10 +168,10 @@ export class Diff3 {
   }
 
   /**
-   * A hunk the human has not spoken about yet. Contested ones only.
+   * A hunk the user has not spoken about yet. Contested ones only.
    *
    * Took AT LEAST ONE side — the argument is settled: silence about the other means "it
-   * is not wanted", and that is exactly what the human meant by pressing one arrow.
+   * is not wanted", and that is exactly what the user meant by pressing one arrow.
    * Demanding the second would be polite pedantry: the first version did that, and by
    * the second conflict it was already irritating.
    *

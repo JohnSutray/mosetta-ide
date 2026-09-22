@@ -19,7 +19,7 @@ import { Shells } from '../src/shells.js';
  * delayed-action mine.
  *
  * `which` comes from the core; here it is substituted and searches this process's PATH,
- * as the real one searches the human's.
+ * as the real one searches the user's.
  */
 
 const WIN = process.platform === 'win32';

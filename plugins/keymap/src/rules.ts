@@ -81,7 +81,7 @@ export class KeymapRules {
    * Personal differences on top of the factory layout.
    *
    * The merge is ROW BY ROW rather than "the whole file": otherwise the first personal
-   * edit of a key would carry off a copy of the entire shipment to the human, and the
+   * edit of a key would carry off a copy of the entire shipment to the user, and the
    * new keys of later versions would never reach them again. A personal row with the
    * same place replaces the factory one, a row with `remove` takes it away, an
    * unfamiliar place is appended.

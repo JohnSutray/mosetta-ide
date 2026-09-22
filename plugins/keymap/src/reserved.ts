@@ -11,11 +11,11 @@ import type { KeyHost, KeyOs, KeyScope } from './types.js';
  *
  * Now it is a table, and it has three jobs:
  *
- * - **show the human**, as a plate of its own in the "Keys" window: here is what is
+ * - **show the user**, as a plate of its own in the "Keys" window: here is what is
  * taken here, and by whom;
  *
- * - **stop me**, by a test: a binding on a taken key does not pass until it says
- * explicitly that it does not work there;
+ * - **stop a contributor**, by a test: a binding on a taken key does not pass until it
+ * says explicitly that it does not work there;
  *
  * - **not to forget**: the list grows as things are found rather than from memory.
  *
@@ -43,7 +43,7 @@ export interface ReservedKey {
    * The difference is a live one. Cmd+T the browser handles at home, the event does not
    * reach the page at all, and no interception will help. Whereas Cmd+← ("back through
    * the tab's history") and Cmd+S ("save page as") are ordinary page events: swallow
-   * them and the key is ours. The human checked both in the console; until then it all
+   * them and the key is ours. Both were checked in the console; until then it all
    * lay in one heap of "impossible", and we were leaving half the keyboard unused for
    * nothing.
    *

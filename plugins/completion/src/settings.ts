@@ -13,7 +13,7 @@ export interface CompletionSettings {
 
 export const COMPLETION_DEFAULTS: CompletionSettings = { auto: true, words: true, postfix: true };
 
-/** The shape of the section's value: the human's file is validated against it. */
+/** The shape of the section's value: the user's file is validated against it. */
 export const COMPLETION_SCHEMA = {
   type: 'object',
   additionalProperties: false,

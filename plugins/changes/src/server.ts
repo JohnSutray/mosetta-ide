@@ -20,7 +20,7 @@ export type { Changelist } from './lists.js';
  * grumbles, and why reading commands must not take the index's lock, belongs to the git
  * plugin rather than to us.
  *
- * What belongs to us: which files the human has ticked, what will go into the commit,
+ * What belongs to us: which files the user has ticked, what will go into the commit,
  * and what the shelf looks like.
  */
 export default class ChangesServer {
@@ -28,7 +28,7 @@ export default class ChangesServer {
   private readonly changelists = new Changelists(() => this.ide.state);
   private readonly draft = new Draft(() => this.ide.state);
   private readonly patches = new PatchReader();
-  /** The commit's signature, if the human has replaced it with one of their own. */
+  /** The commit's signature, if the user has replaced it with one of their own. */
   private readonly signature = new Draft(() => this.ide.state, 'identity', 'json');
 
   constructor(private readonly ide: Ide) {}
@@ -42,7 +42,7 @@ export default class ChangesServer {
    *
    * `git commit -- <paths>` takes the working tree of those paths past the index —
    * exactly what WebStorm does with its changelists. We do not touch the index as a
-   * matter of principle: it is shared with the human working in the terminal next door,
+   * matter of principle: it is shared with the user working in the terminal next door,
    * and quietly moving its contents about would be stealing their state.
    *
    * There is one exception, and it is unavoidable: git does not see an untracked file
@@ -111,11 +111,11 @@ export default class ChangesServer {
    *
    * What is tracked is brought back by `checkout`, what is untracked is deleted by hand
    * — for the same reason as with the shelf: `checkout` for a file git knows only as an
-   * "intent to add" would bring it back EMPTY, and the human would decide they had lost
+   * "intent to add" would bring it back EMPTY, and the user would decide they had lost
    * the text.
    *
    * Asking for consent is the client's job: it is the client that knows what to show
-   * the human, and it is the client that draws the dangerous button.
+   * the user, and it is the client that draws the dangerous button.
    */
   @command() protected async revert(params: unknown, call: CallContext): Promise<{ error: string | null }> {
     const files = paths((params as { files?: unknown } | null)?.files);
@@ -158,7 +158,7 @@ export default class ChangesServer {
    *
    * We ask git itself (`git config user.name`): it folds the local config together with
    * the global one anyway, and there is no point setting up a second rule about the
-   * order of layers. On top of that comes the human's replacement, if they have written
+   * order of layers. On top of that comes the user's replacement, if they have written
    * one in: it is THIS working tree's household and lives next to the draft.
    *
    * Empty in both is no small thing: `git commit` in that state refuses to work, and
@@ -252,7 +252,7 @@ export default class ChangesServer {
    * applied as many times as you like. Hence the whole ritual around `apply` as well:
    * it works THROUGH the index and requires the tree and the index to agree. Before,
    * they did not — which meant "does not match index" instead of an application, and
-   * the human got it in exactly two cases: on the second attempt, and on a file they
+   * the user got it in exactly two cases: on the second attempt, and on a file they
    * had already edited. So the index is TAKEN OFF and PUT BACK: we bring it together
    * with the tree for the duration of the application, and then put back exactly what
    * was there.
@@ -425,7 +425,7 @@ export default class ChangesServer {
    * The text the patch was computed FROM.
    *
    * The view needs it: while the patch fits onto today's commit, "how it was" is taken
-   * from there — the human looks at their own edit in today's words. And when the
+   * from there — the user looks at their own edit in today's words. And when the
    * commit has moved on there was nothing to show at all, and that is untrue: the edit
    * is lying on the shelf after all. The preimage is named in the patch itself (`index
    * <was>..<became>`) and lies in the object store — which means "how it was" is always

@@ -44,7 +44,7 @@ export interface SettingGroup {
 
 /**
  * The settings editor's model: from the section declarations, the live config and the
- * human's file — rows grouped by owner. No DOM, hence a test.
+ * user's file — rows grouped by owner. No DOM, hence a test.
  */
 export class SettingsModel {
   kindOf(fallback: unknown, options?: readonly string[]): SettingKind {
@@ -60,9 +60,9 @@ export class SettingsModel {
    * Rows from the declarations and the LAYERS.
    *
    * The layers arrive from the section's key through the registry, and an entry's
-   * author is its layer: the factory one is signed by the plugin, mine by the personal
-   * settings file, the project's by its own. The model no longer knows a separate "what
-   * the file says", and it has two fewer sources.
+   * author is its layer: the factory one is signed by the plugin, the user's by the
+   * personal settings file, the project's by its own. The model no longer knows a
+   * separate "what the file says", and it has two fewer sources.
    */
   groups(
     entries: readonly SettingsEntry[],

@@ -77,7 +77,7 @@ interface Props {
   onEdit: (text: string) => void;
   /**
    * The keyboard left the text. What that means is not the editor's decision: it
-   * reports a FACT, as it does about the caret — and the document, if the human asked
+   * reports a FACT, as it does about the caret — and the document, if the user asked
    * for it, writes itself to disk.
    */
   onBlur: () => void;

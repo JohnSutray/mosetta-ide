@@ -13,7 +13,7 @@ export interface PatchResult {
  * Values used to be found by a regular expression, and it handled exactly the flat
  * ones: a string, a number, a flag, a `[…]` without nesting. A keymap is an array of
  * OBJECTS, and such an expression tripped over the first inner brace, sending the file
- * off for a full rebuild — along with the human's comments.
+ * off for a full rebuild — along with the user's comments.
  *
  * So we count brackets, with strings and comments accounted for: a `{` inside a string
  * or after `// …` is not a bracket.
@@ -176,7 +176,7 @@ function tryMinimal(
 
 /**
  * The fallback: assemble the file afresh. Comments are lost in the process, and one may
- * not keep quiet about it — the caller is obliged to tell the human.
+ * not keep quiet about it — the caller is obliged to tell the user.
  */
 function rewrite(text: string, section: string, key: string, value: SettingValue): string {
   let parsed: Record<string, unknown> = {};
@@ -193,7 +193,7 @@ function rewrite(text: string, section: string, key: string, value: SettingValue
   return `${JSON.stringify({ ...parsed, [section]: merged }, null, 2)}\n`;
 }
 
-/** A surgical edit of one setting: the file belongs to the human. */
+/** A surgical edit of one setting: the file belongs to the user. */
 function valueAt(text: string, section: string, key: string): unknown {
   try {
     return jsonc.parse<Record<string, Record<string, unknown>>>(text, 'settings.json')?.[section]?.[key];
@@ -252,7 +252,7 @@ function tryRemove(text: string, section: string, key: string): string | null {
 
 /**
  * A section whose last key has been removed. An empty `"find": {}` is litter: moving a
- * setting into the project and back must leave no trace, otherwise the human's file
+ * setting into the project and back must leave no trace, otherwise the user's file
  * grows shells around things it no longer holds.
  *
  * A section WITH A COMMENT inside is not considered empty: those are their words, and
@@ -320,11 +320,11 @@ export class Patch {
   /**
    * Write a whole section in as ready-made TEXT: this is how a keymap moves into
    * `settings.json` when migrating from an old separate file. The value arrives as text
-   * rather than as an object, because it may contain the human's comments — which
+   * rather than as an object, because it may contain the user's comments — which
    * `JSON.stringify` knows nothing about.
    *
    * If the section is already there, we leave it alone: overwriting it blind would mean
-   * losing what the human wrote there.
+   * losing what the user wrote there.
    */
   section(raw: string, key: string, valueText: string, note?: string): PatchResult {
     const text = raw.trim() === '' ? '{\n}\n' : raw;

@@ -24,8 +24,8 @@ export class LspHost implements ProjectResource {
   }
 
   /**
-   * Bring every enabled server up. Requirement five: when the project opens rather than
-   * on the first `.ts` file — called from `onProject`.
+   * Bring every enabled server up: when the project opens rather than on the first
+   * `.ts` file — called from `onProject`.
    */
   start(): void {
     const lsp = this.project.settings('lsp', LSP_DEFAULTS);

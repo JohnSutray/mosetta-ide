@@ -25,7 +25,7 @@ afterAll(async () => {
 });
 
 describe('what to run scripts with', () => {
-  it('the lockfile decides when the human has not chosen', () => {
+  it('the lockfile decides when the user has not chosen', () => {
     expect(tools.suggested((file) => file === 'pnpm-lock.yaml')).toBe('pnpm');
     expect(tools.suggested((file) => file === 'yarn.lock')).toBe('yarn');
     expect(tools.suggested((file) => file === 'bun.lockb')).toBe('bun');
@@ -34,7 +34,7 @@ describe('what to run scripts with', () => {
     expect(tools.chosen('pnpm', ' yarn ')).toBe('yarn');
   });
 
-  it('the human\'s choice beats the lockfile', () => {
+  it('the user\'s choice beats the lockfile', () => {
     const list = tools.detect('pnpm', 'yarn', root);
     expect(list.find((item) => item.current)?.name).toBe('yarn');
     expect(list.find((item) => item.suggested)?.name).toBe('pnpm');

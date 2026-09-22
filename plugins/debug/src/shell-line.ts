@@ -2,7 +2,7 @@
  * A run line for a POSIX shell.
  *
  * The adapter asks for the program to be carried out IN A TERMINAL and hands over the
- * argv and the environment separately. A terminal is the human's live shell, and its
+ * argv and the environment separately. A terminal is the user's live shell, and its
  * environment cannot be changed, so the variables travel IN THE LINE ITSELF through
  * `env`: that way the command works both in a fresh shell and in one already open under
  * that name. The quotes are single, the only kind with which the shell does not touch

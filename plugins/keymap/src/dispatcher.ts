@@ -175,7 +175,7 @@ export class KeyRules {
    *
    * The rule used to be narrower than it was meant to be: only a chord with the MAIN
    * modifier was swallowed, and in the browser on a Mac the main one was Option. Cmd+S
-   * is perfectly well swallowed by a prevent, and the human showed that in the console:
+   * is perfectly well swallowed by a prevent, as a check in the console showed:
    * the "Save page as…" window opened not because there was no other way, but because
    * we had never tried.
    *
@@ -215,7 +215,7 @@ export class KeyRules {
   }
 
   /**
-   * The human is TYPING text into an input field.
+   * The user is TYPING text into an input field.
    *
    * A rule that runs through everything: an input field owns the keys text is edited
    * with, and no layout overrides them. Without it, Backspace in the project path field

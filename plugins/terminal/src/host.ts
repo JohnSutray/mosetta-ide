@@ -32,7 +32,7 @@ export interface OpenOptions {
   cols?: number;
   rows?: number;
   /**
-   * Variables ON TOP of the human's environment: the debugger asks for a shell carrying
+   * Variables ON TOP of the user's environment: the debugger asks for a shell carrying
    * its adapter's address. For a new shell only — a live one's environment cannot be
    * changed, and `runIn` knows what to do about that.
    */
@@ -208,7 +208,7 @@ export class TerminalHost {
    *
    * Busyness is asked OF THE PTY right now rather than taken from the last poll:
    * between the previous program ending and this call there are milliseconds, the poll
-   * runs twice a second, and a stale "busy" would cost the human their buffer.
+   * runs twice a second, and a stale "busy" would cost the user their buffer.
    */
   runIn(options: OpenOptions & { command: string; sameShell?: string }): TerminalInfo {
     const existing = this.terminals.get(options.name);
@@ -246,7 +246,7 @@ export class TerminalHost {
    * The debugger needs exactly this: it asked a program to stop, and the question "is
    * it still alive?" decides whether to show the skull button. We hand over the SHELL's
    * pid: the program itself is its descendant, and it is killed as a tree, leaving the
-   * human their shell.
+   * user their shell.
    */
   running(name: string): { pid: number | undefined } | null {
     const terminal = this.terminals.get(name);
@@ -273,7 +273,7 @@ export class TerminalHost {
    *
    * This is not a guess from the output, nor a heuristic of "after Enter we count it
    * busy" — the pty knows exactly whose the foreground process group is, and node-pty
-   * hands over its name. If it is the same shell we started with, the human is standing
+   * hands over its name. If it is the same shell we started with, the user is standing
    * at the prompt and the terminal is free, even if the screen is full of text. It
    * costs one system call, so there is no reluctance to poll.
    *
@@ -364,9 +364,9 @@ export class TerminalHost {
   }
 
   /**
-   * The terminal's environment: the human's, plus our own.
+   * The terminal's environment: the user's, plus our own.
    *
-   * PATH and the rest come from the human's shell — otherwise, running under Electron,
+   * PATH and the rest come from the user's shell — otherwise, running under Electron,
    * neither `node` nor `pnpm` would be found in the terminal. The colour we add
    * ourselves: that is knowledge ABOUT THE TERMINAL, and it has nowhere else to live.
    */

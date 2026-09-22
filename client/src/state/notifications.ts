@@ -58,7 +58,7 @@ export class Notifications {
     this.notes.value = [];
   }
 
-  /** Tell the human. */
+  /** Tell the user. */
   say(message: string): void {
     this.notify(message, 'info');
   }

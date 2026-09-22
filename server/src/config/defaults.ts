@@ -4,7 +4,7 @@ export class Defaults {
   /**
    * The defaults of the CORE SECTIONS live here; a settings file holds only the
    * differences from them. Plugin sections are not named here: their defaults are the
-   * plugin's code, and the human's file carries them as they are.
+   * plugin's code, and the user's file carries them as they are.
    */
   readonly settings: Settings = {
     ui: { locale: 'en' },

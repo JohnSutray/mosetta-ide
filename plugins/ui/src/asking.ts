@@ -12,7 +12,7 @@ export interface Ask {
    * The value is a FILE NAME: then on opening, the name without its extension is
    * selected, since that is usually what gets edited. Everything else (a changelist's
    * name, a shelf entry's name) has no extension, and "clever" selection would leave
-   * the human a tail like `.ts`.
+   * the user a tail like `.ts`.
    */
   filename?: boolean;
   confirm: string;

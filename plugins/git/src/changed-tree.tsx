@@ -108,7 +108,7 @@ function build(changes: GitChange[]): Node {
 
 /**
  * `a` → `b` → `c/file` becomes `a/b/c`. We collapse only while a directory is an ONLY
- * child with no files of its own: otherwise we would be hiding from the human what lies
+ * child with no files of its own: otherwise we would be hiding from the user what lies
  * along the way.
  */
 function collapse(node: Node): void {

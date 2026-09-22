@@ -6,7 +6,7 @@ import type { KeyBinding, KeyContext } from '../src/types.js';
 /**
  * The order of the rows in the editor: the surface first, and within it the shipping
  * order. It is checked because it is the LOOK of the screen: mixing up the groups means
- * showing the human three identical chords in a row with no explanation of which one is
+ * showing the user three identical chords in a row with no explanation of which one is
  * theirs.
  */
 const order = new KeymapOrder();

@@ -118,7 +118,7 @@ export function SettingsPopup({
 
 /**
  * Where a value lives and where an edit will go — one slider with three positions:
- * factory, mine, the project's.
+ * factory, the user's, the project's.
  *
  * The position does not only show but ACTS: a click moves the value into that layer,
  * and `default` removes it from everywhere. A value has one home, so the switch cannot

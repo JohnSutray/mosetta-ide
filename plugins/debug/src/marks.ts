@@ -133,7 +133,7 @@ function reanchor(value: RangeSet<Mark>, tr: Transaction): RangeSet<Mark> {
 /**
  * The breakpoints after an edit: they travel with the text, and a breakpoint on an
  * ERASED line disappears. A bare `map` would leave it where it was — and it would stick
- * to the neighbouring line, where the human never put it.
+ * to the neighbouring line, where the user never put it.
  */
 function survive(value: RangeSet<Mark>, tr: Transaction): RangeSet<Mark> {
   if (replacedWhole(tr)) return reanchor(value, tr);

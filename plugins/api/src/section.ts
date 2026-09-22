@@ -1,7 +1,7 @@
 /**
  * A settings section laid over its defaults.
  *
- * The defaults belong to whoever reads the section, the human's file belongs to
+ * The defaults belong to whoever reads the section, the user's file belongs to
  * the server. This function brings them together, and does so WITHOUT trusting
  * the file: a key absent from the defaults is left as it is (the reader is
  * entitled not to know it), and a key of the wrong type falls back to its
@@ -14,7 +14,7 @@ export function sectionOf<T extends object>(all: object | null | undefined, sect
 
 /**
  * One layer over another, with the same distrust as above. A section has up to
- * three layers — factory, mine, the project's — and they are folded together in
+ * three layers — factory, the user's, the project's — and they are folded together in
  * turn by this very function.
  */
 export function overlay<T extends object>(defaults: T, raw: unknown): T {

@@ -7,7 +7,7 @@ import { connect, makeProject, removeProject, withServer, type TestClient } from
 
 /**
  * Project settings live inside the repository itself: `.mosetta/settings.json`, a layer
- * over the human's personal file.
+ * over the user's personal file.
  *
  * Checked over a real socket and with real files: the whole point here is WHAT ended up
  * on disk, and in which file.

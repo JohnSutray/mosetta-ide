@@ -9,7 +9,7 @@ export interface ShelfItem {
    * `2026-09-16T21-04-11-1a2b`.
    */
   id: string;
-  /** What the human called it. By default, the first line of the commit message. */
+  /** What the user called it. By default, the first line of the commit message. */
   name: string;
   /** When it was put aside, ISO. Shown next to the name. */
   at: string;

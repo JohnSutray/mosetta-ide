@@ -82,7 +82,7 @@ export class SymbolCache implements ProjectResource {
    * We parse only what is resident: the truth for us is the project's memory, and the
    * preload budget limits the symbols' coverage — silently, unless it is said. Those in
    * the queue do not count: they are in progress rather than skipped. Nor does an
-   * excluded directory: the human said so themselves, and the tree writes "not indexed"
+   * excluded directory: the user said so themselves, and the tree writes "not indexed"
    * next to it.
    */
   get uncovered(): { absent: number; tooBig: number } {

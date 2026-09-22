@@ -61,7 +61,7 @@ describe('the real config', () => {
    * No file at all is the normal state: the repository ships no settings of its own, and
    * a fresh machine has none either. The store comes up on the code's defaults and says
    * so by naming no sources — which is what the settings window reads to tell a factory
-   * value from mine.
+   * value from the user's.
    */
   it('a missing directory is legitimate: the defaults, and no sources', async () => {
     const store = await ConfigStore.load(path.join(os.tmpdir(), 'ide-config-absent', String(Date.now())));
@@ -129,7 +129,7 @@ describe('a broken config', () => {
 
 /**
  * Choosing a shell is the one setting the server writes itself. Checked end to end:
- * written → re-read → the bundle holds the new value, and the human's comments are
+ * written → re-read → the bundle holds the new value, and the user's comments are
  * still in place.
  */
 describe('writing a setting', () => {

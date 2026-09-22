@@ -1,9 +1,9 @@
 /**
  * A breakpoint remembers a PLACE rather than a NUMBER.
  *
- * The human's rule: "not 'I am standing on line five' but 'I am standing on `return
+ * The rule: "not 'I am standing on line five' but 'I am standing on `return
  * value`'". A number is an address that anyone changes: `git pull`, a formatter, a
- * neighbour on the branch. The line's text is what the human pointed a finger at, and
+ * neighbour on the branch. The line's text is what the user pointed a finger at, and
  * it survives a shift.
  *
  * While the file is open the breakpoint is carried by CodeMirror itself: it travels
@@ -43,7 +43,7 @@ export class Anchors {
    * there is one rule rather than "as luck has it";
    *
    * 3. none found at all — we leave the number as it was. Throwing the breakpoint away
-   * silently is not allowed (the human set it by hand), and lying about a new place
+   * silently is not allowed (the user set it by hand), and lying about a new place
    * even less so: let it stand where it stood, and that is visible to the eye.
    *
    * An empty anchor is not searched for at all: an empty line matches any empty line,

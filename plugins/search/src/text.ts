@@ -39,7 +39,7 @@ function isDigit(ch: string): boolean {
 
 /**
  * Pieces of the original string, each with its own position. The positions are needed
- * in order to highlight a match in THE SAME string the human sees.
+ * in order to highlight a match in THE SAME string the user sees.
  */
 export interface Piece {
   text: string;

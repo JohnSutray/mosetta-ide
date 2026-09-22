@@ -189,7 +189,7 @@ export class LineDiff {
 
   /**
    * Steps to hunks. A deletion immediately followed by an insertion is a REPLACEMENT:
-   * the human was editing a line rather than throwing one away and writing another, and
+   * the user was editing a line rather than throwing one away and writing another, and
    * there should be one strip.
    */
   private toHunks(steps: Step[], before: string[]): Hunk[] {

@@ -15,7 +15,7 @@ export const CHANGES_DEFAULTS: ChangesSettings = {
   diffMode: 'split',
 };
 
-/** The shape of the section's value: the human's file is checked against it. */
+/** The shape of the section's value: the user's file is checked against it. */
 export const CHANGES_SCHEMA = {
   type: 'object',
   additionalProperties: false,

@@ -86,7 +86,7 @@ export interface ToolbarChip {
   /** A second number — muted, after a separating dot. */
   more?: unknown;
   /**
-   * The colour speaks of STATE: `warn` means we hit a limit the human set themselves,
+   * The colour speaks of STATE: `warn` means we hit a limit the user set themselves,
    * `bad` means broken and not working at all.
    */
   tone?: 'plain' | 'warn' | 'bad';

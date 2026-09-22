@@ -21,7 +21,7 @@ export interface IndexSettings {
 
 export const INDEX_DEFAULTS: IndexSettings = { enabled: true, maxResults: 50, recentFiles: 15, symbolsMaxKb: 512 };
 
-/** The shape of the section's value: the human's file is validated against it. */
+/** The shape of the section's value: the user's file is validated against it. */
 export const INDEX_SCHEMA = {
   type: 'object',
   additionalProperties: false,

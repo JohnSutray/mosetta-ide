@@ -74,7 +74,7 @@ export class Diff {
    * current look alike.
    */
   readonly from = signal('');
-  /** Which folds the human has opened. Reset along with the file. */
+  /** Which folds the user has opened. Reset along with the file. */
   readonly opened = signal<number[]>([]);
 
   /** How many rows we leave around an edit when we fold the middle. */
@@ -115,7 +115,7 @@ export class Diff {
   /**
    * Show a file's diff.
    *
-   * A late answer does NOT rearrange what is on show: the human has managed to click on
+   * A late answer does NOT rearrange what is on show: the user has managed to click on
    * the next row, and what they must see is that row rather than the one that answered
    * first.
    */
@@ -149,7 +149,7 @@ export class Diff {
    *
    * The texts arrive ready-made: they were assembled by the one who can read a patch.
    * Everything else is the same — the folds, the two columns, the highlighting: the
-   * human is looking at their own edit, and where it lies is no business of the view's.
+   * user is looking at their own edit, and where it lies is no business of the view's.
    */
   showShelved(path: string, before: string, after: string, from: string): void {
     batch(() => {

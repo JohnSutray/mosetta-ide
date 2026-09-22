@@ -11,7 +11,7 @@ import { keyRules } from './dispatcher.js';
  * (`@mosetta/ide-plugin-keys`); the echo is handed to it from the table (`keys.echo`).
  *
  * The echo turns silence into an answer: you see the STRING the press turned into, the
- * context it happened in, and the command that was found (or was not). If the human
+ * context it happened in, and the command that was found (or was not). If the user
  * presses Control and Option arrives, that will be written down.
  */
 

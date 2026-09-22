@@ -32,7 +32,7 @@ const LIST_KEEP = 120;
 /**
  * The changes panel: what has changed, what we are committing, what is on the shelf.
  *
- * It reads top to bottom in exactly the order the human works in: the list of files
+ * It reads top to bottom in exactly the order the user works in: the list of files
  * with tick boxes → the message → the buttons → the shelf. The shelf is at the bottom
  * because it is turned to less often, but it is obliged to be visible: a shelf that has
  * been forgotten is work that has been lost.

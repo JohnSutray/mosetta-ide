@@ -7,12 +7,12 @@
  * focus, and before running. There are two occasions today, and both are named.
  */
 export type Autosave =
-  /** Do not save by itself. Factory: writing to disk is the human's decision. */
+  /** Do not save by itself. Factory: writing to disk is the user's decision. */
   | 'off'
   /**
    * The keyboard has left the text: a click into the tree, the search opened, away into
    * another window. The same occasion WebStorm writes on, and the one on which the
-   * human is no longer typing.
+   * user is no longer typing.
    */
   | 'focusLost';
 
@@ -24,7 +24,7 @@ export const DOC_DEFAULTS: DocSettings = {
   autosave: 'off',
 };
 
-/** The shape of the section's value: the human's file is validated against it. */
+/** The shape of the section's value: the user's file is validated against it. */
 export const DOC_SCHEMA = {
   type: 'object',
   additionalProperties: false,

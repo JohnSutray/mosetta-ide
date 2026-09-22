@@ -77,7 +77,7 @@ export class PluginHost {
     private readonly stateDir: string,
     /** The shared table: what was brought up once and is imported by name. */
     private readonly shared: SharedModules,
-    /** The machine and the human behind it; without them, empty answers. */
+    /** The machine and the user behind it; without them, empty answers. */
     private readonly machine: Machine = {
       settings: () => {
         throw new Error('this plugin host was given no settings');

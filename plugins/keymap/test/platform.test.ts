@@ -6,9 +6,9 @@ import { KeyHostInfo } from '../src/host.js';
  * leading modifier, what the system and the browser have taken away, which chords apply
  * at all.
  *
- * The test came dear. `navigator.platform` was declared deprecated, I replaced it with
- * `userAgentData.platform` and compared against `Mac` — and that answers `macOS`, with
- * a small letter. The IDE quietly moved to the Windows layout: Option+4 stopped
+ * The test came dear. `navigator.platform` was declared deprecated, it was replaced
+ * with `userAgentData.platform` and compared against `Mac` — and that answers `macOS`,
+ * with a small letter. The IDE quietly moved to the Windows layout: Option+4 stopped
  * working, and the hint advised Control+Alt+9. That is not caught by eye — it looks
  * like "the key does not work", and people go looking in the layout file.
  */

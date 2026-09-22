@@ -3,7 +3,7 @@
  *
  * VS Code does this at home (`serverReadyAction`) rather than in the adapter: it
  * watches the console and, on seeing an address, raises a second session — the browser.
- * We watch where the human watches: the program's terminal (or the output events, if
+ * We watch where the user watches: the program's terminal (or the output events, if
  * there is no terminal).
  *
  * The output arrives in pieces, in colours and with carriage returns, so a buffer
@@ -30,7 +30,7 @@ export class ServerReady {
   }
 
   /**
-   * From the setting — with a fallback expression, if the human has written a broken
+   * From the setting — with a fallback expression, if the user has written a broken
    * one.
    */
   static compile(source: string, fallback: string): RegExp {

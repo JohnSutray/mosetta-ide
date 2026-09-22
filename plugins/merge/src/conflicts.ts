@@ -13,8 +13,8 @@ import type { MergeFile, MergeSession } from './types.js';
  * There are exactly two actions that can run into it, and they differ not in the
  * argument's content but in WHERE the result goes:
  *
- * * a save — the result goes to DISK (the human asked for it to be written)
- * * a reload — the result goes into MEMORY (the human asked to pull somebody else's in)
+ * * a save — the result goes to DISK (the user asked for it to be written)
+ * * a reload — the result goes into MEMORY (the user asked to pull somebody else's in)
  */
 export class FsConflicts {
   private readonly off: () => void;

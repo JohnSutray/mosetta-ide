@@ -70,7 +70,7 @@ export interface Api {
     result: { section: string; key: string; value: SettingValue };
   };
   /**
-   * Reset to factory: the key leaves the files. BOTH files — the human's and the
+   * Reset to factory: the key leaves the files. BOTH files — the user's and the
    * project's — because "factory" means the value is nowhere, otherwise the
    * scope slider in the settings window would be lying.
    */

@@ -26,7 +26,7 @@ export class Merge {
   private readonly decisions = signal<Map<string, Choice[]>>(new Map());
 
   /**
-   * The hunk under the caret: the keys work on it. `null` means the human has not stood
+   * The hunk under the caret: the keys work on it. `null` means the user has not stood
    * anywhere yet, and then the caret itself stands on the FIRST argument.
    *
    * Zero will not do here: hunk zero is almost always the file's common beginning, and

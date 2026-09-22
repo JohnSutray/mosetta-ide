@@ -20,8 +20,8 @@ export const PROJECT_SETTINGS = '.mosetta/settings.json';
 /**
  * What the project file does not override.
  *
- * The keymap: a cloned repository must not silently change what my keys do. The plugin
- * set MAY be overridden — a project is entitled to ask for its own tool.
+ * The keymap: a cloned repository must not silently change what your keys do. The
+ * plugin set MAY be overridden — a project is entitled to ask for its own tool.
  */
 const NOT_FROM_PROJECT = ['keymap'];
 

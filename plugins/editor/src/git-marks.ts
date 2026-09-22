@@ -120,7 +120,7 @@ export class GitMarks {
 
   /**
    * Revert a hunk to what is in the commit. It works by LINE NUMBERS rather than by
-   * remembered positions: between the click and the button press the human could type
+   * remembered positions: between the click and the button press the user could type
    * anything, and a remembered offset would point at the wrong place.
    */
   revert(view: EditorView, hunk: Hunk): void {

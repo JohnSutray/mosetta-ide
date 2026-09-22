@@ -10,7 +10,7 @@ import path from 'node:path';
  * again; a second tab of the same project knew nothing of their text at all. Its place
  * is the same as the shelf's and the changelists': a file in the plugin's state
  * directory, keyed by the project's path. Not `settings.json` — that travels with the
- * human from machine to machine, whereas an unfinished message means something in
+ * user from machine to machine, whereas an unfinished message means something in
  * exactly one working tree.
  *
  * It is written with a delay (the client does that): a file per keystroke is a bad

@@ -34,7 +34,7 @@ export interface Screen {
  * The terminal's screen.
  *
  * Under it is a real console on the server; here there is only xterm: it draws, and
- * everything the human types goes into the pty as it is — Ctrl+C, the arrows, TUIs.
+ * everything the user types goes into the pty as it is — Ctrl+C, the arrows, TUIs.
  *
  * The instance is recreated when the terminal changes and replays the accumulated
  * output afresh, so a tab reload does not lose the screen.

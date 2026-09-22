@@ -7,7 +7,7 @@ import { build as bundle } from 'esbuild';
 /**
  * Build the IDE on this machine.
  *
- * There is no built code in the package — the human's choice: the IDE is built where it
+ * There is no built code in the package, deliberately: the IDE is built where it
  * is going to live. Two steps: the client (vite) and Electron's main process (esbuild).
  * The server runs from sources, and it builds the plugins itself. Packages are looked
  * up by name: in the repository they are neighbours in a directory, in an installation
