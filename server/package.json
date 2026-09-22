@@ -1,7 +1,27 @@
 {
   "name": "@mosetta/ide-server",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.12",
+  "description": "The Mosetta IDE daemon: workspaces, the three filesystem layers, config, processes and the plugin host.",
+  "license": "MIT",
+  "homepage": "https://ide.mosetta.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
+    "directory": "server"
+  },
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
+  "keywords": [
+    "mosetta",
+    "ide"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "!src/**/*.test.*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/main.ts",
@@ -48,12 +68,12 @@
     "typescript": "^5.7.2",
     "ws": "^8.18.0",
     "tsx": "^4.19.2",
-    "@mosetta/ide-client": "workspace:*",
     "@mosetta/ide-plugin-settings": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@types/ws": "^8.5.13",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "@mosetta/ide-client": "workspace:*"
   }
 }

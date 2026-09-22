@@ -12,7 +12,17 @@ const idleMs = process.env.IDE_WORKSPACE_IDLE_MS
 const stateDir = process.env.IDE_STATE_DIR ? path.resolve(process.env.IDE_STATE_DIR) : undefined;
 const trustedOrigins = (process.env.IDE_TRUSTED_ORIGINS ?? '').split(',').filter((one) => one !== '');
 
-const server = await boot.start({ port, idleMs, stateDir, trustedOrigins });
+const staticDir = process.env.IDE_STATIC_DIR ? path.resolve(process.env.IDE_STATIC_DIR) : undefined;
+const clientDir = process.env.IDE_CLIENT_DIR ? path.resolve(process.env.IDE_CLIENT_DIR) : undefined;
+
+const server = await boot.start({
+  port,
+  idleMs,
+  stateDir,
+  trustedOrigins,
+  ...(staticDir ? { staticDir } : {}),
+  ...(clientDir ? { clientDir } : {}),
+});
 
 process.send?.({ type: 'listening', port: server.port });
 

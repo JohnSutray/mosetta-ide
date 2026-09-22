@@ -19,8 +19,9 @@ const SRC = fileURLToPath(new URL('../src', import.meta.url));
  * the OS layer, its watching half, and the half of THAT where the recursion is ours
  * rather than the OS's; the config store, which reads its own `settings.json`; the
  * defaults, because the factory keymap is shipped as package data; the one-off move from
- * the old `keymap.json`; the search for a program along the user's PATH; and the plugin
- * host with its shared table, which reads package manifests and the contract's source.
+ * the old `keymap.json`; the search for a program along the user's PATH; the plugin
+ * host with its shared table, which reads package manifests and the contract's source;
+ * and the static server, which reads the client's own build rather than the project.
  */
 const MAY_TOUCH_DISK = [
   'fs/os-fs.ts',
@@ -32,6 +33,7 @@ const MAY_TOUCH_DISK = [
   'env/which.ts',
   'plugins/host.ts',
   'plugins/shared.ts',
+  'static.ts',
 ];
 
 /**

@@ -13,6 +13,7 @@ import { journal } from './log.js';
 import { Session } from './rpc/session.js';
 import { WorkspaceRegistry } from './workspace/registry.js';
 import { disk } from './fs/os-fs.js';
+import { StaticFiles } from './static.js';
 
 const log = journal.logger('server');
 
@@ -22,8 +23,8 @@ export interface ServerOptions {
   /** How long a workspace lives without a single tab. */
   idleMs?: number;
   /**
-   * Where to read the settings file from. By default, the `config` directory next to
-   * the packages; `IDE_CONFIG_DIR` overrides it.
+   * Where to read the settings file from. By default `~/.mosetta/ide/config`;
+   * `IDE_CONFIG_DIR` overrides it.
    */
   configDir?: string;
   /** Where to keep the machine's state (the project history). */
@@ -42,6 +43,16 @@ export interface ServerOptions {
    * live on their own `mosetta://app` scheme.
    */
   trustedOrigins?: string[];
+  /**
+   * Where the client's build lies, to be served from the daemon's own port. Empty means
+   * the client is served by somebody else (Vite in development, Electron's scheme).
+   */
+  staticDir?: string;
+  /**
+   * Where `preact` and CodeMirror resolve from when plugins are built. By default the
+   * client package in this workspace; an installed IDE points it at itself.
+   */
+  clientDir?: string;
 }
 
 export interface RunningServer {
@@ -100,7 +111,9 @@ export class Boot {
       void env.shellEnv.prime((spec) => env.processes.run(spec), env.shellEnv.loginShell(), os.homedir());
     }
     const here = fileURLToPath(new URL('..', import.meta.url));
-    const client = path.dirname(createRequire(import.meta.url).resolve('@mosetta/ide-client/package.json'));
+    const client =
+      options.clientDir ?? path.dirname(createRequire(import.meta.url).resolve('@mosetta/ide-client/package.json'));
+    const files = options.staticDir ? new StaticFiles(path.resolve(options.staticDir)) : null;
     const shared = new SharedModules(here, client);
     const plugins = new PluginHost(log, stateDir, shared, {
       settings: () => config.settings,
@@ -119,7 +132,13 @@ export class Boot {
         res.end(JSON.stringify({ ok: true, uptimeMs: Date.now() - startedAt }));
         return;
       }
-      res.writeHead(404).end();
+      if (!files) {
+        res.writeHead(404).end();
+        return;
+      }
+      void files.serve(req, res).then((served) => {
+        if (!served) res.writeHead(404).end();
+      });
     });
 
     const wss = new WebSocketServer({ noServer: true });

@@ -5,6 +5,7 @@ packages:
   - desktop
   - e2e
   - site
+  - app
   - plugins/*
 
 # esbuild and node-pty build a binary in a postinstall script, and Electron downloads

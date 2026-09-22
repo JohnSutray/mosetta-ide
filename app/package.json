@@ -1,0 +1,54 @@
+{
+  "name": "@mosetta/ide",
+  "version": "0.0.12",
+  "description": "Mosetta IDE: an IDE made of plugins. `npx @mosetta/ide` opens the current folder in your browser.",
+  "license": "MIT",
+  "homepage": "https://ide.mosetta.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
+    "directory": "app"
+  },
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
+  "keywords": [
+    "mosetta",
+    "ide",
+    "editor"
+  ],
+  "type": "module",
+  "bin": {
+    "mosetta-ide": "bin/mosetta-ide.js"
+  },
+  "files": [
+    "bin",
+    "client",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "node ../scripts/with-env.mjs VITE_IDE_PORT=0 -- pnpm --dir ../client exec vite build --outDir ../app/client --emptyOutDir",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "@mosetta/ide-server": "workspace:*",
+    "tsx": "^4.19.2",
+    "preact": "^10.25.3",
+    "@preact/signals": "^1.3.1",
+    "@lezer/highlight": "^1.2.1",
+    "@codemirror/commands": "^6.7.1",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.9",
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/lang-markdown": "^6.3.1",
+    "@codemirror/language": "^6.10.8",
+    "@codemirror/search": "^6.5.8",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.35.3"
+  }
+}
