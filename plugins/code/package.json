@@ -1,15 +1,15 @@
 {
   "name": "@mosetta/ide-plugin-code",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "The one way code is shown: languages, highlighting, line diffs and a read-only code view.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
     "directory": "plugins/code"
   },
-  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

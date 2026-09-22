@@ -1,15 +1,15 @@
 {
   "name": "@mosetta/ide-plugin-notifications",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "What the IDE has to say, as lines that go away \u2014 never as a modal dialog.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
     "directory": "plugins/notifications"
   },
-  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

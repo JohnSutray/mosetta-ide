@@ -1,15 +1,15 @@
 {
   "name": "@mosetta/ide-plugin-daemon",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "How much memory the daemon holds, and how much everything it started holds \u2014 on the toolbar.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
     "directory": "plugins/daemon"
   },
-  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

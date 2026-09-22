@@ -1,15 +1,15 @@
 {
   "name": "@mosetta/ide-plugin-debug",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "DAP through vscode-js-debug: breakpoints that remember their line, stepping, variables, and a browser opened under the debugger when your server prints its address.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
     "directory": "plugins/debug"
   },
-  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

@@ -1,15 +1,15 @@
 {
   "name": "@mosetta/ide-plugin-editor",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "The panel in the middle: CodeMirror 6 with git strips, diagnostics and hovers, and the empty pasture.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
     "directory": "plugins/editor"
   },
-  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

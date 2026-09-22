@@ -1,15 +1,15 @@
 {
   "name": "@mosetta/ide-plugin-symbols",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Go to definition, and the list of usages with a preview \u2014 one key for both.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
     "directory": "plugins/symbols"
   },
-  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

@@ -1,15 +1,15 @@
 {
   "name": "@mosetta/ide-plugin-keys",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Press any key and see what it does \u2014 or why it cannot do anything.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
     "directory": "plugins/keys"
   },
-  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

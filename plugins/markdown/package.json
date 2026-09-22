@@ -1,15 +1,15 @@
 {
   "name": "@mosetta/ide-plugin-markdown",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Markdown rendered next to its source, updated as you type.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
     "directory": "plugins/markdown"
   },
-  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

@@ -1,15 +1,15 @@
 {
   "name": "@mosetta/ide-plugin-keymap",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Keys as data: one dispatcher for every key, a keymap editor, and an honest list of the keys the browser keeps.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
     "directory": "plugins/keymap"
   },
-  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

@@ -1,15 +1,15 @@
 {
   "name": "@mosetta/ide-plugin-visits",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Back and forward through the places your caret has been, across files \u2014 and the recent files in search everywhere.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
     "directory": "plugins/visits"
   },
-  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",

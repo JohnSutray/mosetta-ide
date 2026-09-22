@@ -1,15 +1,15 @@
 {
   "name": "@mosetta/ide-plugin-projects",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Open a project by path with completion, and switch between recent ones \u2014 like changing gloves.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JohnSutray/mosetta-ide.git",
+    "url": "git+https://github.com/mosetta/mosetta-ide.git",
     "directory": "plugins/projects"
   },
-  "bugs": "https://github.com/JohnSutray/mosetta-ide/issues",
+  "bugs": "https://github.com/mosetta/mosetta-ide/issues",
   "keywords": [
     "mosetta",
     "ide",
