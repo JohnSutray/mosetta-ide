@@ -9,9 +9,9 @@ and a plugin is an ordinary npm package written in TypeScript and Preact.
 
 It runs in a browser tab and as a desktop app, with the same code in both.
 
-```
-npx @mosetta/ide install
-```
+**[Try it in your browser →](https://ide.mosetta.org)** The real client, mounted into the
+page, with a daemon the page plays itself. To run it on your own project, see
+[running it from a checkout](#running-it-from-a-checkout).
 
 > **Status: early.** Mosetta is used every day on macOS, Windows and Linux, in the
 > browser and in the desktop shell — which is not the same as being ready for you. See
@@ -134,6 +134,30 @@ each other through registry keys (`search.source`, `editor.extension`, `panel.ac
 calling it looks like calling a method. In tests a plugin comes up under a fake host
 exactly the way it does in the application (`@mosetta/ide-api/testing`).
 
+## Embedding it
+
+The IDE mounts into any element of a page; the website is built that way. For now this
+works from a checkout, where the client is the workspace package `@mosetta/ide-client`.
+
+```ts
+import { mount } from '@mosetta/ide-client/embed';
+
+const ide = mount(document.querySelector('#ide')!); // talks to the local daemon
+ide.commands.run('search.everywhere');
+```
+
+Keys and pointer events are listened for on that element, the plugins' styles are fenced
+in to it, and the page's title, address and scroll position are left alone. `mount`
+takes a `dial` option — anything shaped like a `WebSocket` — which is how the website
+runs the IDE with no daemon at all.
+
+## Packages
+
+The plugin contract and every plugin are npm packages under `@mosetta/`: start from
+[`@mosetta/ide-api`](plugins/api#readme), and each plugin's README says what it does and
+how to use it from another plugin. The client and the daemon are not packaged yet; for
+now they run from a checkout.
+
 ## Running it from a checkout
 
 ```
@@ -155,6 +179,7 @@ plugins/api/  the contract plugins are written against
 plugins/*     everything else — the editor, the tree, the terminal, git, the debugger…
 desktop/      the Electron shell: the supervisor, the windows, the installer
 e2e/          checks with a real browser
+site/         ide.mosetta.org: the landing page and the playground
 ```
 
 The UI and the daemon are two processes on purpose: the front end has no `fs`, so

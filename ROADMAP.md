@@ -14,10 +14,13 @@ the rest of the IDE.
   what it depends on, and a switch to turn it on or off.
 - **Split panels.** Any panel split into two to four columns — the oldest promise of the
   layout.
-- **A plugin template.** `npm create mosetta-plugin`, and a guide for plugin authors
-  built on the contract's JSDoc.
-- **Packages and CI.** The `@mosetta/ide-*` packages on npm, tests and type checks on
-  macOS, Windows and Linux for every pull request, a contributing guide.
+- **A plugin template.** `npm create mosetta-plugin`.
+- **Packages and CI.** The contract and the plugins are ready as `@mosetta/ide-*`
+  packages, each with a README; next come the first release on npm, tests and type
+  checks on macOS, Windows and Linux for every pull request, and a contributing guide.
+- **Documentation.** A guide for plugin authors built on the contract's JSDoc, reference
+  pages generated from the code — commands and keys, settings, registry keys — and every
+  package's README on [ide.mosetta.org](https://ide.mosetta.org).
 
 ## Next — a web developer's working day
 
@@ -49,8 +52,10 @@ the rest of the IDE.
 - **A remote daemon.** The interface in your browser, the daemon on a development
   machine or in a container — with authentication and TLS. This is what will make "runs
   where your browser runs" true without any footnote.
-- **Embedding.** The IDE already mounts into any element on a page; playgrounds and
-  interactive documentation are the obvious uses.
+- **Embedding.** The IDE already mounts into any element on a page — the website is built
+  that way. Still to come: the client on npm, and a shadow root around it, so that a host
+  page's own class names cannot reach inside. Playgrounds and interactive documentation
+  are the obvious uses.
 - **A plugin catalogue** to discover plugins, not only install them by name.
 - **Debugging beyond JavaScript** through other DAP adapters.
 
