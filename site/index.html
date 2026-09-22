@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mosetta IDE — an IDE made of plugins</title>
+    <meta name="description" content="Mosetta is a code editor built on the web platform. Everything you see is a plugin, and a plugin is an npm package written in TypeScript and Preact. Try the real client right on this page." />
+    <meta property="og:title" content="Mosetta IDE — an IDE made of plugins" />
+    <meta property="og:description" content="Not an IDE with plugins: an IDE made of them. Try the real client right on the page." />
+    <meta property="og:url" content="https://ide.mosetta.org/" />
+    <meta name="theme-color" content="#2b2b2b" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/"><img src="/sheep.svg" alt="" width="28" height="21" /> Mosetta</a>
+      <nav class="top-nav">
+        <a href="#demo">Demo</a>
+        <a href="#plugins">Plugins</a>
+        <a href="#write">Write a plugin</a>
+        <a href="#embed">Embed</a>
+        <a href="#roadmap">Roadmap</a>
+        <a class="button button-quiet" data-repo href="#">Source</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">Mosetta IDE · open source · MIT</p>
+        <h1>An IDE made of plugins —<br />not an IDE with plugins.</h1>
+        <p class="lead">
+          A code editor built on the web platform. The core only brings plugins up and connects
+          them to a local daemon. The editor, the file tree, the terminal, git, the debugger,
+          even the toolbar and the column layout are plugins. A plugin is an ordinary npm
+          package written in TypeScript and Preact.
+        </p>
+        <div class="actions">
+          <a class="button" href="#demo">Try it on this page</a>
+          <a class="button button-quiet" href="#write">Write a plugin</a>
+        </div>
+      </section>
+
+      <section class="demo" id="demo" aria-label="Live demo">
+        <div class="demo-bar">
+          <div class="demo-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+          <span class="demo-title">pasture — the real Mosetta client, with a daemon played by this page</span>
+          <span class="demo-state" data-demo-state>loading…</span>
+          <a class="demo-full" href="/play/" target="_blank" rel="noopener">full screen ↗</a>
+        </div>
+        <div class="demo-frame">
+          <div class="demo-ide" id="ide" data-ide></div>
+        </div>
+        <div class="tour" data-tour>
+          <span class="tour-label">Try:</span>
+          <button class="chip" data-run="search.everywhere"><kbd>⇧</kbd><kbd>⇧</kbd> Search everywhere</button>
+          <button class="chip" data-run="panel.terminal">Terminal</button>
+          <button class="chip" data-run="panel.changes">Changes &amp; diff</button>
+          <button class="chip" data-run="panel.problems">Problems</button>
+          <button class="chip" data-run="git.branches">Branches</button>
+          <button class="chip" data-run="find.files">Find in files</button>
+          <button class="chip" data-run="settings.show">Settings</button>
+          <button class="chip" data-run="keys.show">Keys</button>
+        </div>
+        <p class="demo-note">
+          Nothing leaves your tab. Files, git, the language server and the terminal are
+          played by a daemon made of memory; search and find-in-files run the plugins' real
+          server code. Anything that needs a machine says so instead of pretending.
+          The buttons above call the IDE's commands from this page, the same way a key does.
+        </p>
+      </section>
+
+      <section class="why" id="why">
+        <h2>Why Mosetta</h2>
+        <div class="cards">
+          <article class="card">
+            <h3>Made of plugins</h3>
+            <p>About 80% of the code lives in 31 plugin packages. The core, plugin contract included, is around 10,000 lines. Turn the toolbar off with one line and the IDE still starts, then tells you which plugin was supposed to draw it.</p>
+          </article>
+          <article class="card">
+            <h3>Plugins are npm packages</h3>
+            <p>TypeScript and Preact, a manifest in <code>package.json</code>, and no build step for the author: the IDE builds a plugin from its sources, so there is one copy of Preact and CodeMirror for everyone.</p>
+          </article>
+          <article class="card">
+            <h3>Runs where your browser runs</h3>
+            <p>The same interface in a browser tab or in the Electron shell. Several projects side by side are just several tabs. And, as this page shows, it mounts into any element of your own page.</p>
+          </article>
+          <article class="card">
+            <h3>Disposable UI, durable work</h3>
+            <p>Terminals and language servers live in a local daemon. Reload the tab and it picks up exactly where it was: same terminals, same scrollback, same unsaved edits.</p>
+          </article>
+          <article class="card">
+            <h3>No keystroke waits</h3>
+            <p>Git state and file contents are read from memory kept current in the background. Twenty git status reads in a row fit in 300&nbsp;ms, and a test holds it to that.</p>
+          </article>
+          <article class="card">
+            <h3>An honest interface</h3>
+            <p>A list cut short says so: "2000 of 2010 files checked". A broken tool says it is broken instead of showing an empty panel.</p>
+          </article>
+          <article class="card">
+            <h3>Everything is data</h3>
+            <p>Keys, settings and labels are JSON files, one per machine and one per project. The settings window writes the same file you edit by hand, comments included.</p>
+          </article>
+          <article class="card">
+            <h3>Workflows worth switching for</h3>
+            <p>Search everywhere with typed tags, changelists and a shelf of patches, a three-way merge screen, a debugger that follows your server into the browser.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="plugins" id="plugins">
+        <h2>31 plugins, zero special cases</h2>
+        <p class="section-lead">Each one is a package you can read, replace or switch off. The core has no commands, no panels and no word about windows of its own.</p>
+        <ul class="plugin-grid" data-plugins></ul>
+      </section>
+
+      <section class="write" id="write">
+        <h2>A web developer can already write a plugin</h2>
+        <p class="section-lead">A plugin is a package with an <code>ide</code> field in its <code>package.json</code>, and a class. This is the whole of a real one: it re-runs the last npm script, using another plugin as a typed neighbour.</p>
+        <div class="code-pair">
+          <figure class="code">
+            <figcaption>package.json</figcaption>
+<pre><code>{
+  "name": "@mosetta/ide-plugin-rerun",
+  "type": "module",
+  "ide": {
+    "client": "src/client.ts",
+    "strings": { "en": "src/en.json" }
+  }
+}</code></pre>
+          </figure>
+          <figure class="code">
+            <figcaption>src/client.ts</figcaption>
+<pre><code><span class="k">import</span> { command, plugin, <span class="k">type</span> Ide } <span class="k">from</span> <span class="s">'@mosetta/ide-api/client'</span>;
+<span class="k">import</span> NpmScripts <span class="k">from</span> <span class="s">'@mosetta/ide-plugin-npm-scripts'</span>;
+
+<span class="a">@plugin</span>({ title: <span class="s">'plugin.rerun'</span> })
+<span class="k">export default class</span> Rerun {
+  <span class="k">private</span> last: string | <span class="k">null</span> = <span class="k">null</span>;
+
+  <span class="k">constructor</span>(<span class="k">private readonly</span> ide: Ide) {}
+
+  <span class="a">@command</span>(<span class="s">'scripts.rerun'</span>)
+  <span class="k">protected</span> rerun(): <span class="k">void</span> {
+    <span class="k">const</span> npm = <span class="k">this</span>.ide.getPlugin(NpmScripts);
+    <span class="k">const</span> id = <span class="k">this</span>.last ?? npm.scripts()[<span class="n">0</span>]?.id ?? <span class="k">null</span>;
+    <span class="k">if</span> (!id) <span class="k">return this</span>.ide.say(<span class="k">this</span>.ide.t(<span class="s">'rerun.nothing'</span>));
+    <span class="k">this</span>.last = id;
+    <span class="k">void</span> npm.run(id);
+  }
+}</code></pre>
+          </figure>
+        </div>
+        <ul class="points">
+          <li><strong>Commands</strong> get a key in the keymap and a button wherever you like.</li>
+          <li><strong>Plugins extend each other</strong> through registry keys (<code>search.source</code>, <code>editor.extension</code>, <code>panel.action</code>…), never by patching one another.</li>
+          <li><strong>A server half</strong> runs in the daemon, and calling it looks like calling a method.</li>
+          <li><strong>Tests</strong> bring a plugin up under a fake host exactly the way the application does: <code>@mosetta/ide-api/testing</code>.</li>
+        </ul>
+      </section>
+
+      <section class="embed" id="embed">
+        <h2>It mounts into your page</h2>
+        <p class="section-lead">The demo above is not an iframe. This page is a plain site with its own styles, and the IDE is mounted into one of its <code>div</code>s. Keys, pointer events and styles stay inside that element, and the page's title, address and scroll position are left alone. (The client is not on npm yet: today this works from a checkout.)</p>
+        <figure class="code">
+          <figcaption>your-page.ts</figcaption>
+<pre><code><span class="k">import</span> { mount } <span class="k">from</span> <span class="s">'@mosetta/ide-client/embed'</span>;
+
+<span class="k">const</span> ide = mount(document.querySelector(<span class="s">'#ide'</span>)!, {
+  <span class="c">// optional: anything shaped like a WebSocket; this page passes a daemon made of memory</span>
+  dial: () =&gt; <span class="k">new</span> WebSocket(<span class="s">'ws://127.0.0.1:4177/rpc'</span>),
+});
+
+document.querySelector(<span class="s">'#search'</span>)!.addEventListener(<span class="s">'click'</span>, () =&gt;
+  ide.commands.run(<span class="s">'search.everywhere'</span>),
+);</code></pre>
+        </figure>
+      </section>
+
+      <section class="principles" id="principles">
+        <h2>Ten rules a contribution is reviewed against</h2>
+        <ol class="rules">
+          <li><strong>Made of plugins, not with plugins.</strong> If a feature cannot be turned off with one line, it lives in the wrong place.</li>
+          <li><strong>No keystroke waits for an external process.</strong> Anything the interface needs is read from memory, and memory is updated by events.</li>
+          <li><strong>The interface does not lie.</strong> A silent truncation is the worst kind of bug; an empty panel always explains itself.</li>
+          <li><strong>Everything is data.</strong> A second way to edit a setting is never a second source of truth.</li>
+          <li><strong>The interface is disposable, the state lives in the daemon.</strong></li>
+          <li><strong>One thing, one way.</strong> A button and a shortcut call the same command.</li>
+          <li><strong>A rule is written as a test, not as a comment.</strong></li>
+          <li><strong>A web developer can already write a plugin.</strong> TypeScript, Preact, npm and vitest.</li>
+          <li><strong>Classic controls.</strong> Mouse and keyboard are equals, with no modes.</li>
+          <li><strong>The interface has a face.</strong> An empty editor is a pasture of pixel sheep.</li>
+        </ol>
+        <p class="aside">Many of the answers to hard IDE problems here — search everywhere, changelists, the shelf, a keymap that explains itself — are borrowed from WebStorm and rebuilt on the web platform.</p>
+      </section>
+
+      <section class="roadmap" id="roadmap">
+        <h2>Where it is going</h2>
+        <div class="lanes">
+          <div class="lane">
+            <h3>Now</h3>
+            <ul>
+              <li>Plugins installed from npm, with a clear refusal on a contract mismatch</li>
+              <li>A plugins panel: what is installed, its README, a switch</li>
+              <li>Split panels, two to four columns</li>
+              <li><code>npm create mosetta-plugin</code></li>
+              <li>CI on macOS, Windows and Linux</li>
+            </ul>
+          </div>
+          <div class="lane">
+            <h3>Next</h3>
+            <ul>
+              <li>Quick fixes, Prettier and ESLint on a key</li>
+              <li>Hints, outline, rename with a preview</li>
+              <li>Local history of every file</li>
+              <li>Blame, file history, a commit graph</li>
+              <li>A test runner panel, terminal links</li>
+            </ul>
+          </div>
+          <div class="lane">
+            <h3>Later</h3>
+            <ul>
+              <li>AI as a plugin, like everything else</li>
+              <li>A remote daemon with authentication and TLS</li>
+              <li>A plugin catalogue</li>
+              <li>Debugging beyond JavaScript</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="status">
+        <p><strong>Status: early.</strong> Mosetta is used every day on macOS, Windows and Linux, in the browser and in the desktop shell, which is not the same as being ready for you. Installing third-party plugins from npm and a remote daemon are on the roadmap, not in the build.</p>
+      </section>
+    </main>
+
+    <footer class="bottom">
+      <span><img src="/sheep.svg" alt="" width="20" height="15" /> Mosetta IDE · MIT</span>
+      <span><a data-repo href="#">Source</a></span>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

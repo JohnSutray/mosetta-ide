@@ -4,11 +4,15 @@ packages:
   - client
   - desktop
   - e2e
+  - site
   - plugins/*
 
 # esbuild and node-pty build a binary in a postinstall script, and Electron downloads
 # one; pnpm refuses to run those without being told to, and fails the install.
+# workerd comes with wrangler for local Workers runs; deploying the site does not need
+# it, so its download stays off.
 allowBuilds:
   esbuild: true
   node-pty: true
   electron: true
+  workerd: false

@@ -1,0 +1,33 @@
+{
+  "name": "@mosetta/ide-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ide.mosetta.org: the landing page, with the real client running against a daemon made of memory",
+  "scripts": {
+    "snapshot": "tsx scripts/snapshot.ts",
+    "dev": "pnpm snapshot && vite",
+    "build": "pnpm snapshot && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "deploy": "pnpm build && wrangler deploy",
+    "media": "tsx scripts/media.ts"
+  },
+  "dependencies": {
+    "@mosetta/ide-client": "workspace:*",
+    "@mosetta/ide-protocol": "workspace:*",
+    "@mosetta/ide-api": "workspace:*",
+    "preact": "^10.25.3"
+  },
+  "devDependencies": {
+    "@mosetta/ide-server": "workspace:*",
+    "@preact/preset-vite": "^2.9.3",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.9",
+    "wrangler": "4.131.2",
+    "playwright-core": "^1.63.0"
+  }
+}
