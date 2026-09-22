@@ -19,6 +19,7 @@
       <a class="brand" href="/"><img src="/sheep.svg" alt="" width="28" height="21" /> Mosetta</a>
       <nav class="top-nav">
         <a href="#demo">Demo</a>
+        <a href="#install">Install</a>
         <a href="#plugins">Plugins</a>
         <a href="#write">Write a plugin</a>
         <a href="#embed">Embed</a>
@@ -39,6 +40,7 @@
         </p>
         <div class="actions">
           <a class="button" href="#demo">Try it on this page</a>
+          <a class="button button-quiet" href="#install">Install</a>
           <a class="button button-quiet" href="#write">Write a plugin</a>
         </div>
       </section>
@@ -70,6 +72,28 @@
           server code. Anything that needs a machine says so instead of pretending.
           The buttons above call the IDE's commands from this page, the same way a key does.
         </p>
+      </section>
+
+      <section class="install" id="install">
+        <h2>Run it on your own project</h2>
+        <p class="section-lead">One command, with Node.js 22 or newer. It opens the current folder in your browser; the daemon and the interface run on one local port, and Ctrl+C stops them.</p>
+        <div class="install-grid">
+          <figure class="code install-main">
+            <figcaption>terminal</figcaption>
+<pre><code><span class="c">$</span> npx @mosetta/ide
+
+  Mosetta IDE  http://127.0.0.1:4177/?ws=…
+
+  Ctrl+C stops it.</code></pre>
+          </figure>
+          <ul class="install-notes">
+            <li><code>npx @mosetta/ide ~/code/my-app</code> — another folder</li>
+            <li><code>npx @mosetta/ide --port 4300</code> — a port of your own</li>
+            <li><code>npm install -g @mosetta/ide</code> — then just <code>mosetta-ide</code></li>
+            <li>TypeScript checking works out of the box; git features need <code>git</code> on your <code>PATH</code>.</li>
+            <li>Settings live in <code>~/.mosetta/ide/config/settings.json</code>. The first run downloads about 130&nbsp;MB, mostly TypeScript and its language server.</li>
+          </ul>
+        </div>
       </section>
 
       <section class="why" id="why">

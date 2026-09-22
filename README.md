@@ -10,8 +10,29 @@ and a plugin is an ordinary npm package written in TypeScript and Preact.
 It runs in a browser tab and as a desktop app, with the same code in both.
 
 **[Try it in your browser →](https://ide.mosetta.org)** The real client, mounted into the
-page, with a daemon the page plays itself. To run it on your own project, see
-[running it from a checkout](#running-it-from-a-checkout).
+page, with a daemon the page plays itself.
+
+## Install
+
+On your own project, with Node.js 22 or newer:
+
+```
+npx @mosetta/ide
+```
+
+That opens the current folder in your browser. The daemon and the interface run on one
+local port (the first free one from 4177), and Ctrl+C in the terminal stops them.
+
+```
+npx @mosetta/ide ~/code/my-app     # another folder
+npx @mosetta/ide --port 4300       # a port of your own
+npx @mosetta/ide --no-open         # print the address, do not open a browser
+npm install -g @mosetta/ide        # then just `mosetta-ide`
+```
+
+TypeScript checking works out of the box; git features need `git` on your `PATH`. Your
+settings live in `~/.mosetta/ide/config/settings.json`. The first run downloads about
+130 MB, most of it TypeScript and its language server.
 
 > **Status: early.** Mosetta is used every day on macOS, Windows and Linux, in the
 > browser and in the desktop shell — which is not the same as being ready for you. See

@@ -133,6 +133,10 @@ main > section {
 }
 .demo-note { max-width: 80ch; color: var(--ink-2); font-size: 14px; }
 
+.install-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.install-main pre { font-size: 15px; }
+.install-notes { margin: 0; display: grid; gap: 10px; color: var(--ink-2); font-size: 15px; }
+
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
 .card {
   padding: 22px;
@@ -207,7 +211,7 @@ a.plugin-card:hover { text-decoration: none; border-color: var(--gold); }
 @media (max-width: 760px) {
   .top-nav a:not(.button) { display: none; }
   main > section { padding-top: 48px; padding-bottom: 48px; }
-  .code-pair { grid-template-columns: 1fr; }
+  .code-pair, .install-grid { grid-template-columns: 1fr; }
   .demo-ide { height: 70vh; min-height: 360px; }
   .demo-title { display: none; }
 }
