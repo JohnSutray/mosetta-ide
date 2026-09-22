@@ -1,7 +1,21 @@
 {
   "name": "@mosetta/ide-api",
   "version": "0.1.0",
-  "private": true,
+  "description": "The types, decorators and fake host every Mosetta plugin is written and tested against.",
+  "license": "MIT",
+  "homepage": "https://ide.mosetta.org",
+  "keywords": [
+    "mosetta",
+    "ide"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "!src/**/*.test.*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "exports": {
     "./client": "./src/client.ts",

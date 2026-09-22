@@ -1,7 +1,22 @@
 {
   "name": "@mosetta/ide-plugin-toolbar",
   "version": "0.1.0",
-  "private": true,
+  "description": "The strip on top: a button for every panel, and chips that report state.",
+  "license": "MIT",
+  "homepage": "https://ide.mosetta.org",
+  "keywords": [
+    "mosetta",
+    "ide",
+    "mosetta-plugin"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "!src/**/*.test.*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "scripts": {
     "test": "vitest run"

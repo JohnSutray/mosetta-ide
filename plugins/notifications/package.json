@@ -1,7 +1,22 @@
 {
   "name": "@mosetta/ide-plugin-notifications",
   "version": "0.1.0",
-  "private": true,
+  "description": "What the IDE has to say, as lines that go away \u2014 never as a modal dialog.",
+  "license": "MIT",
+  "homepage": "https://ide.mosetta.org",
+  "keywords": [
+    "mosetta",
+    "ide",
+    "mosetta-plugin"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "!src/**/*.test.*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "scripts": {
     "test": "vitest run"

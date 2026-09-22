@@ -1,12 +1,29 @@
 {
   "name": "@mosetta/ide-plugin-sheep",
   "version": "0.1.0",
-  "private": true,
+  "description": "Pixel sheep grazing in an empty editor.",
+  "license": "MIT",
+  "homepage": "https://ide.mosetta.org",
+  "keywords": [
+    "mosetta",
+    "ide",
+    "mosetta-plugin"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "!src/**/*.test.*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "scripts": {
     "test": "vitest run"
   },
-  "exports": { ".": "./src/client.tsx" },
+  "exports": {
+    ".": "./src/client.tsx"
+  },
   "ide": {
     "client": "src/client.tsx",
     "strings": "src/en.json"

@@ -1,7 +1,22 @@
 {
   "name": "@mosetta/ide-plugin-changes",
   "version": "0.1.0",
-  "private": true,
+  "description": "Changelists, commits, a shelf of patches outside git, and the diff over the editor.",
+  "license": "MIT",
+  "homepage": "https://ide.mosetta.org",
+  "keywords": [
+    "mosetta",
+    "ide",
+    "mosetta-plugin"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "!src/**/*.test.*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "scripts": {
     "test": "vitest run"

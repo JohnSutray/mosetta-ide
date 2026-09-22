@@ -1,7 +1,22 @@
 {
   "name": "@mosetta/ide-plugin-visits",
   "version": "0.1.0",
-  "private": true,
+  "description": "Back and forward through the places your caret has been, across files \u2014 and the recent files in search everywhere.",
+  "license": "MIT",
+  "homepage": "https://ide.mosetta.org",
+  "keywords": [
+    "mosetta",
+    "ide",
+    "mosetta-plugin"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "!src/**/*.test.*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "scripts": {
     "test": "vitest run"

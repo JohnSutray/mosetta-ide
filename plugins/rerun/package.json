@@ -1,7 +1,22 @@
 {
   "name": "@mosetta/ide-plugin-rerun",
   "version": "0.1.0",
-  "private": true,
+  "description": "Run the last npm script again, on one key.",
+  "license": "MIT",
+  "homepage": "https://ide.mosetta.org",
+  "keywords": [
+    "mosetta",
+    "ide",
+    "mosetta-plugin"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "!src/**/*.test.*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "scripts": {
     "test": "vitest run"
