@@ -9,7 +9,7 @@ import type { CompletionAnswer, CompletionDetails, FileDiagnostics, HoverInfo, L
  * It stands on the three things the core handed over in the contract for the sake of
  * this move: `project.memory` (the text comes from memory rather than from disk),
  * `project.start` (a process in the shared ledger, dying with the project) and
- * `ide.onProject` (it starts when the project opens — requirement five). The core's
+ * `ide.onProject` (it starts when the project opens, not on the first file). The core's
  * `lsp.*` methods are gone: a tab comes here through `plugins.call`, and diagnostics
  * travel as events.
  */

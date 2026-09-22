@@ -24,7 +24,7 @@ export interface LspServerSettings {
 }
 
 export interface LspSettings {
-  /** Start when the project opens rather than on the first file (requirement five). */
+  /** Start when the project opens rather than on the first file. */
   startOnOpen: boolean;
   checkProject: boolean;
   /**
