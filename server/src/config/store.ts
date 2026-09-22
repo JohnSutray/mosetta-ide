@@ -1,7 +1,7 @@
+import os from 'node:os';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { ConfigBundle, Settings } from '@mosetta/ide-protocol';
 import type { SettingValue } from '@mosetta/ide-protocol';
 import { journal } from '../log.js';
@@ -201,8 +201,13 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Where the user's settings live when nobody says otherwise: `~/.mosetta/ide/config`,
+ * the same directory for a checkout, `npx @mosetta/ide` and the desktop app, so one
+ * `settings.json` follows the user whichever way the IDE was started.
+ * `IDE_CONFIG_DIR` overrides it; tests pass their own directory.
+ */
 function defaultConfigDir(): string {
   if (process.env.IDE_CONFIG_DIR) return path.resolve(process.env.IDE_CONFIG_DIR);
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(here, '..', '..', '..', 'config');
+  return path.join(os.homedir(), '.mosetta', 'ide', 'config');
 }
