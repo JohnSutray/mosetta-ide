@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-problems",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Every error and warning in the project, in one panel, by file.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

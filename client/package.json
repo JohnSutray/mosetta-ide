@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-client",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "The Mosetta IDE client: the core that brings plugins up, and `mount()` to put the IDE into any element of a page.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

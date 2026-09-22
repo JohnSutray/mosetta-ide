@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-completion",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "The completion list: the language server, the file's own words and postfix templates, ranked by what you actually pick.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

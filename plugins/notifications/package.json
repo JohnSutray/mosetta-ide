@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-notifications",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "What the IDE has to say, as lines that go away \u2014 never as a modal dialog.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

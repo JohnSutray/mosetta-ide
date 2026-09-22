@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-doc",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "What is open, what is unsaved, and what changed on disk behind your back.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-theme",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Darcula, as a palette of CSS variables \u2014 and the shared look of fields, buttons and scrollbars.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

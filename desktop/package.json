@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-desktop",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Mosetta IDE \u2014 the Electron shell: the windows, the tray and the daemon",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

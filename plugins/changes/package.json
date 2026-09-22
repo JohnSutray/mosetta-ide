@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-changes",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Changelists, commits, a shelf of patches outside git, and the diff over the editor.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

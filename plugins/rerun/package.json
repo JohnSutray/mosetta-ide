@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-rerun",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Run the last npm script again, on one key.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

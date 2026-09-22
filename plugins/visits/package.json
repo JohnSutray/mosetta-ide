@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-visits",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Back and forward through the places your caret has been, across files \u2014 and the recent files in search everywhere.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

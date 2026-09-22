@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-npm-scripts",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Every script of every package.json in the project, one key away, each run in its own terminal.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

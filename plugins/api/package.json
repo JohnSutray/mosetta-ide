@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-api",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "The types, decorators and fake host every Mosetta plugin is written and tested against.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",

@@ -1,6 +1,6 @@
 {
   "name": "@mosetta/ide-plugin-daemon",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "How much memory the daemon holds, and how much everything it started holds \u2014 on the toolbar.",
   "license": "MIT",
   "homepage": "https://ide.mosetta.org",
