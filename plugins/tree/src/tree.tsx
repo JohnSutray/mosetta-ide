@@ -62,7 +62,7 @@ export function Tree(props: TreeProps) {
   useEffect(() => {
     if (!focused) return;
     const row = document.querySelector(`.tree-row[data-path="${cssEscape(focused)}"]`);
-    row?.scrollIntoView({ block: 'nearest' });
+    ide.mount.reveal(row);
   }, [focused]);
 
   if (!ws || !children) return <div class="tree-empty">…</div>;

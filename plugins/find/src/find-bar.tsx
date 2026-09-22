@@ -54,7 +54,7 @@ export function FindBar({ keysFor, windows, find }: { keysFor: (command: string)
   useEffect(() => {
     const el = field.current;
     if (!el) return;
-    el.focus();
+    el.focus({ preventScroll: true });
     if (multiline) el.setSelectionRange(el.value.length, el.value.length);
     else el.select();
   }, [epoch, multiline]);

@@ -1,0 +1,103 @@
+.mosetta-ide,
+.mosetta-ide *,
+.mosetta-ide *::before,
+.mosetta-ide *::after { box-sizing: border-box; }
+
+.mosetta-ide :focus, .mosetta-ide :focus-visible { outline: none; }
+
+.mosetta-ide {
+  background: var(--bg, #2b2b2b);
+  color: var(--fg, #a9b7c6);
+  font: 13px/1.35 var(--font, monospace);
+  text-align: left;
+  text-transform: none;
+  text-indent: 0;
+  letter-spacing: normal;
+  word-spacing: normal;
+  white-space: normal;
+  cursor: default;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * A host page styles elements by name — `a`, `button`, `code`, `h2` — and on an
+ * embedding page those rules reach into the IDE. Everything the IDE draws is styled by
+ * class, so the names are handed back to the browser's defaults here, one class deeper
+ * than the host's rule and one shallower than any plugin's.
+ */
+.mosetta-ide :is(a, button, input, textarea, select, label, code, kbd, pre, p, ul, ol, li,
+    h1, h2, h3, h4, h5, h6, table, th, td, blockquote, hr, figure, figcaption) {
+  all: revert;
+  box-sizing: border-box;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.app-waiting { flex: 1; }
+
+.splash {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg, #2b2b2b);
+  animation: splash-in 160ms ease-out both;
+}
+.splash.is-leaving {
+  animation: splash-out 220ms ease-in both;
+  pointer-events: none;
+}
+.splash-sheep {
+  animation: splash-bob 620ms steps(1, end) infinite;
+}
+.splash-legs { animation: splash-step 620ms steps(1, end) infinite; }
+.splash-legs-1 { animation-delay: -310ms; }
+@keyframes splash-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes splash-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes splash-bob {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+@keyframes splash-step {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-sheep { animation: none; }
+  .splash-legs-1 { display: none; }
+}
+
+.no-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+}
+.no-shell-title { color: var(--fg); font-size: 15px; }
+.no-shell-why { max-width: 60ch; margin: 0; line-height: 1.5; }
+.no-shell-why code { color: var(--fg); }
+
+.placeholder {
+  padding: 12px;
+  color: var(--muted);
+}
+

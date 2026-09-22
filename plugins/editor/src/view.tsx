@@ -32,7 +32,9 @@ import type { HoverSource } from './schema.js';
  * and the page scrolled by a second screenful. In a zero-sized `fixed` layer the
  * container is zero-sized and out of the flow, while the tooltips inside it stay
  * `fixed` — measured from the window, as they need to be. There is one layer per
- * document: it is found by id rather than held in a variable.
+ * document: it is found by id rather than held in a variable. It carries the IDE's root
+ * class, because the IDE's styles hang from that class and the tooltips live outside
+ * the root.
  */
 class TooltipLayer {
   private readonly id = 'cm-tooltip-layer';
@@ -42,6 +44,7 @@ class TooltipLayer {
     if (known) return known;
     const layer = doc.createElement('div');
     layer.id = this.id;
+    layer.className = 'mosetta-ide';
     layer.style.cssText = 'position: fixed; top: 0; left: 0; width: 0; height: 0; z-index: 200;';
     doc.body.append(layer);
     return layer;

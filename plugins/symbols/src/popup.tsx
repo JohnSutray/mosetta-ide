@@ -34,9 +34,7 @@ export function SymbolsPopup({ windows, symbols, code }: { windows: Windows; sym
   };
 
   useEffect(() => {
-    body.current?.querySelector('.symbols-row.is-current > *')?.scrollIntoView({
-      block: 'nearest',
-    });
+    ide.mount.reveal(body.current?.querySelector('.symbols-row.is-current > *'));
   }, [list?.at, list?.sites.length, symbols.hideImports.value]);
 
   if (!list || !editor) return null;

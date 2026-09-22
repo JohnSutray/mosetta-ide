@@ -220,7 +220,13 @@ export class FakeSurface implements IdeServices {
     title: (text) => {
       this.titles.push(text);
     },
+    reveal: (el) => {
+      if (el) this.revealed.push(el);
+    },
   };
+
+  /** What was asked to be scrolled into view, in order. */
+  readonly revealed: Element[] = [];
 
   /** The tip on screen right now. */
   tip: Tip | null = null;

@@ -1,4 +1,4 @@
-import { useT } from '@mosetta/ide-api/client';
+import { useIde, useT } from '@mosetta/ide-api/client';
 import type { Size } from './windows/geometry.js';
 import type { Windows } from './windows/windows.js';
 import { Fragment } from 'preact';
@@ -77,6 +77,7 @@ export function PickPopup<T>({ windows,
   onMouseDown,
 }: PickProps<T>) {
   const t = useT();
+  const ide = useIde();
   const field = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState('');
@@ -99,11 +100,11 @@ export function PickPopup<T>({ windows,
   }, [items, filter, section]);
 
   useEffect(() => {
-    field.current?.focus();
+    field.current?.focus({ preventScroll: true });
   }, []);
 
   useEffect(() => {
-    list.current?.querySelector('.pick-row.is-current')?.scrollIntoView({ block: 'nearest' });
+    ide.mount.reveal(list.current?.querySelector('.pick-row.is-current'));
   }, [at, shown.length]);
 
   useEffect(() => {

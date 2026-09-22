@@ -56,7 +56,7 @@ export function AskPopup({
 
   useEffect(() => {
     if (!ask?.field) return;
-    field.current?.focus();
+    field.current?.focus({ preventScroll: true });
     const value = field.current?.value ?? '';
     const dot = ask.filename ? value.lastIndexOf('.') : -1;
     field.current?.setSelectionRange(0, dot > 0 ? dot : value.length);

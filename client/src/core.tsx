@@ -22,7 +22,7 @@ import { Commands } from './keys/commands.js';
 import { Session } from './state/session.js';
 import { Registry } from './state/registry.js';
 import { Plugins } from './state/plugins.js';
-import { RootMount, type MountOptions } from './state/mount.js';
+import { RootMount, type CoreOptions } from './state/mount.js';
 import { FS_SCHEMA, UI_SCHEMA, legacyNames } from '@mosetta/ide-protocol';
 import { App } from './ui/app.js';
 
@@ -74,7 +74,7 @@ export class Core {
    */
   constructor(
     private readonly root: HTMLElement,
-    options: MountOptions,
+    private readonly options: CoreOptions,
   ) {
     this.memory.migrate((key) => {
       const at = key.indexOf('/', key.indexOf('/') + 1);
@@ -83,6 +83,7 @@ export class Core {
       return name === null ? null : name + key.slice(at);
     });
     this.mount = new RootMount(root, options);
+    this.session.keepInUrl(options.page);
     this.services = this.serve();
     this.session.onConfigChanged(() => this.applyLayers());
     this.store.declare('chrome.top', 'core');
@@ -135,7 +136,7 @@ export class Core {
 
   /** Bring the tab up: the network, the frame, then the plugins. */
   start(): void {
-    this.rpc.connect();
+    this.rpc.connect(this.options.dial);
     this.startup.begin();
     render(<App core={this} />, this.root);
     void this.plugins.load(this.services, this.store);

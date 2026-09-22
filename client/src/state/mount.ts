@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Bounds, Mount } from '@mosetta/ide-api/client';
+import type { Dial } from '../rpc/client.js';
 
 export interface MountOptions {
   /**
@@ -9,10 +10,25 @@ export interface MountOptions {
   page: boolean;
 }
 
+/** The class on the IDE's root; every rule of the IDE's styles hangs from it. */
+export const ROOT_CLASS = 'mosetta-ide';
+
+/** How the IDE is brought up: where it lives, and optionally what it talks to. */
+export interface CoreOptions extends MountOptions {
+  /**
+   * Opens the connection to the daemon instead of the default socket. Anything shaped
+   * like a `WebSocket` will do, which is how the website runs the IDE with no daemon at
+   * all.
+   */
+  dial?: Dial;
+}
+
 /**
  * Where the IDE is mounted.
  *
- * The root gets `contain: layout`, so an overlay's `position: fixed` is measured from
+ * The root gets the `mosetta-ide` class, which every rule of the core's own stylesheet
+ * hangs from, so none of them reaches the rest of a page the IDE is embedded in. It gets
+ * `contain: layout`, so an overlay's `position: fixed` is measured from
  * it rather than from the window. It is also focusable (`tabIndex=-1`): a click on
  * empty space leaves focus inside the IDE rather than on the page body. Its size
  * arrives as a signal (`ResizeObserver`) and as the CSS variables `--mount-w` and
@@ -25,6 +41,7 @@ export class RootMount implements Mount {
     private readonly root: HTMLElement,
     private readonly options: MountOptions,
   ) {
+    root.classList.add(ROOT_CLASS);
     root.style.contain = 'layout';
     root.style.outline = 'none';
     root.tabIndex = -1;
@@ -61,6 +78,22 @@ export class RootMount implements Mount {
     if (this.options.page) document.title = text;
   }
 
+  reveal(el: Element | null | undefined, block: 'nearest' | 'center' = 'nearest'): void {
+    if (!el) return;
+    let box = el.parentElement;
+    while (box && !scrollsItself(box)) box = box.parentElement;
+    if (!box) return;
+    const inner = el.getBoundingClientRect();
+    const outer = box.getBoundingClientRect();
+    const top = inner.top - outer.top - box.clientTop;
+    const left = inner.left - outer.left - box.clientLeft;
+    if (block === 'center') box.scrollTop += top - (box.clientHeight - inner.height) / 2;
+    else if (top < 0) box.scrollTop += top;
+    else if (top + inner.height > box.clientHeight) box.scrollTop += top + inner.height - box.clientHeight;
+    if (left < 0) box.scrollLeft += left;
+    else if (left + inner.width > box.clientWidth) box.scrollLeft += left + inner.width - box.clientWidth;
+  }
+
   private measure(): void {
     const box = this.root.getBoundingClientRect();
     const w = Math.round(box.width);
@@ -71,4 +104,13 @@ export class RootMount implements Mount {
     this.root.style.setProperty('--mount-w', `${w}px`);
     this.root.style.setProperty('--mount-h', `${h}px`);
   }
+}
+
+function scrollsItself(el: HTMLElement): boolean {
+  const style = getComputedStyle(el);
+  const scrollable = (value: string) => value === 'auto' || value === 'scroll' || value === 'overlay';
+  return (
+    (scrollable(style.overflowY) && el.scrollHeight > el.clientHeight) ||
+    (scrollable(style.overflowX) && el.scrollWidth > el.clientWidth)
+  );
 }

@@ -332,6 +332,15 @@ export interface Mount {
   ): () => void;
   /** The tab's name. An embedded IDE leaves the host page's title alone. */
   title(text: string): void;
+  /**
+   * Scroll an element into view inside the box that scrolls it, and nowhere else.
+   *
+   * `scrollIntoView` moves every scrolling ancestor up to the window. In a tab of its
+   * own that is harmless, but an IDE embedded in somebody else's page would drag their
+   * page to the row being selected. `nearest` does as little as it takes to show the
+   * whole element, `center` puts it in the middle.
+   */
+  reveal(el: Element | null | undefined, block?: 'nearest' | 'center'): void;
 }
 
 const IdeContext = createContext<IdeServices | null>(null);

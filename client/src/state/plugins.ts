@@ -31,6 +31,8 @@ import {
 } from '@mosetta/ide-api/client';
 import type { Memory } from './persist.js';
 import { sharedModules } from './shared-modules.js';
+import { CssScope } from './css-scope.js';
+import { ROOT_CLASS } from './mount.js';
 import type { Registry } from './registry.js';
 import type { I18n } from '../i18n/index.js';
 
@@ -79,6 +81,8 @@ export class Plugins {
    * inferred from the same object.
    */
   private readonly instances = new Map<unknown, unknown>();
+  /** Moves every rule of a plugin's stylesheet under the IDE's root. */
+  private readonly scope = new CssScope(`.${ROOT_CLASS}`);
   /** One line per slot: a note's id, by the slot's name. */
   private readonly slots = new Map<string, number>();
 
@@ -269,11 +273,13 @@ export class Plugins {
       /**
        * Your own styles in one piece. The tag is marked with the plugin's name:
        * otherwise there would be no way to answer "where does this padding come from".
+       * The rules are moved under the IDE's root on the way, so that a plugin's
+       * `.button` stays the IDE's business on a page the IDE is embedded in.
        */
-      css(text: string) {
+      css: (text: string) => {
         const tag = document.createElement('style');
         tag.dataset.plugin = name;
-        tag.textContent = text;
+        tag.textContent = this.scope.apply(text);
         document.head.append(tag);
       },
       /**

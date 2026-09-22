@@ -53,7 +53,7 @@ export function Menu({ windows,
       windows.popups.leave('menu');
       const here = document.activeElement;
       const mine = here === box.current || (here !== null && box.current?.contains(here));
-      if (mine || mount.idle(here)) came?.focus();
+      if (mine || mount.idle(here)) came?.focus({ preventScroll: true });
     };
   }, []);
 

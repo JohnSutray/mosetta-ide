@@ -78,7 +78,7 @@ export function SettingsPopup({
               title={t('settings.clear')}
               onClick={() => {
                 win.term.value = '';
-                field.current?.focus();
+                field.current?.focus({ preventScroll: true });
               }}
             >
               ×

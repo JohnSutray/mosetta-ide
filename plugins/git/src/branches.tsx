@@ -1,4 +1,4 @@
-import { useT } from '@mosetta/ide-api/client';
+import { useIde, useT } from '@mosetta/ide-api/client';
 import type { BranchesWindow, Git, PushWindow } from './state.js';
 import { useEffect, useRef } from 'preact/hooks';
 import type { GitBranch } from './types.js';
@@ -18,16 +18,17 @@ export interface BranchesProps {
 
 export function Branches({ windows, git, window, push }: BranchesProps) {
   const t = useT();
+  const ide = useIde();
   const list = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
   const nameField = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (window.open.value) field.current?.focus();
+    if (window.open.value) field.current?.focus({ preventScroll: true });
   }, [window.open.value]);
 
   useEffect(() => {
-    list.current?.querySelector('.branch-row.is-current')?.scrollIntoView({ block: 'nearest' });
+    ide.mount.reveal(list.current?.querySelector('.branch-row.is-current'));
   }, [window.selected.value, git.branches.value]);
 
   const prompt = window.prompt.value;

@@ -22,7 +22,7 @@ export function ProjectsPopup({ windows, projects }: { windows: Windows; project
 
   useEffect(() => {
     if (!shown) return;
-    input.current?.focus();
+    input.current?.focus({ preventScroll: true });
     void projects.load();
   }, [shown]);
 

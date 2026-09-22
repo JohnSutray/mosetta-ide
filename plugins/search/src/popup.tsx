@@ -10,7 +10,7 @@ import type { Search } from './state.js';
 
 /**
  * A double Shift: a rectangle OVER the panels with a search field, results and a
- * preview — requirement four of the brief.
+ * preview.
  *
  * This is an ordinary div rather than a separate window. The whole class of problems
  * that made an earlier codebase need a decision record of its own (the mouse over a
@@ -39,14 +39,12 @@ export function SearchEverywhere({
 
   useEffect(() => {
     if (!search.open.value) return;
-    input.current?.focus();
+    input.current?.focus({ preventScroll: true });
     input.current?.select();
   }, [search.open.value]);
 
   useEffect(() => {
-    list.current
-      ?.querySelector('.se-row.is-current')
-      ?.scrollIntoView({ block: 'nearest' });
+    ide.mount.reveal(list.current?.querySelector('.se-row.is-current'));
   }, [search.selected.value, search.hits.value]);
 
   const editor = ide.settingsOf('editor', EDITOR_DEFAULTS).value;

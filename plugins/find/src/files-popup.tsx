@@ -82,12 +82,12 @@ export function FindFilesPopup({
           : focus.field === 'exclude'
             ? exclude
             : query;
-    target.current?.focus();
+    target.current?.focus({ preventScroll: true });
     if (focus.field !== 'mask' && focus.field !== 'exclude') target.current?.select();
   }, [files.open.value, focus]);
 
   useEffect(() => {
-    list.current?.querySelector('.fif-row.is-current')?.scrollIntoView({ block: 'nearest' });
+    ide.mount.reveal(list.current?.querySelector('.fif-row.is-current'));
   }, [files.selected.value, files.hits.value]);
 
   const editor = ide.settingsOf('editor', EDITOR_DEFAULTS).value;

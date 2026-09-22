@@ -64,6 +64,21 @@ export class Session {
   }
 
   /** Who will lay the arriving config out. Called once, while assembling. */
+  /**
+   * Whether the open project lives in the page's address. A tab of its own keeps it
+   * there, so a reload comes back to the same project; an IDE embedded in somebody
+   * else's page has no business rewriting their address.
+   */
+  private inUrl = true;
+
+  keepInUrl(on: boolean): void {
+    this.inUrl = on;
+  }
+
+  private remember(root: string): void {
+    if (this.inUrl) rememberInUrl(root);
+  }
+
   onConfigChanged(handler: () => void): void {
     this.onConfig = handler;
   }
@@ -83,7 +98,7 @@ export class Session {
       const info = await this.rpc.call('workspace.open', { root });
       this.reset();
       this.current.value = info;
-      rememberInUrl(info.root);
+      this.remember(info.root);
       await this.afterAttach();
     } catch (err) {
       this.notes.complain(describe(err));
@@ -96,7 +111,7 @@ export class Session {
       const info = await this.rpc.call('workspace.attach', { id });
       this.reset();
       this.current.value = info;
-      rememberInUrl(info.root);
+      this.remember(info.root);
       await this.afterAttach();
     } catch (err) {
       this.notes.complain(describe(err));
@@ -143,7 +158,7 @@ export class Session {
   private restoreFromUrl(list: WorkspaceInfo[]): void {
     if (this.restored) return;
     this.restored = true;
-    const wanted = projectFromUrl();
+    const wanted = this.inUrl ? projectFromUrl() : null;
     if (!wanted || this.current.value) return;
     const alive = list.find((ws) => ws.root === wanted);
     void (alive ? this.switchProject(alive.id) : this.openProject(wanted));
@@ -173,7 +188,7 @@ export class Session {
       if (info?.id !== this.current.value?.id) this.reset();
       this.current.value = info;
       this.attached.value = info;
-      if (info) rememberInUrl(info.root);
+      if (info) this.remember(info.root);
     });
 
     this.rpc.on('workspace.closed', ({ id }) => {

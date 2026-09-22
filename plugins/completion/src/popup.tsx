@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'preact/hooks';
 import type { JSX } from 'preact';
-import { useT } from '@mosetta/ide-api/client';
+import { useIde, useT } from '@mosetta/ide-api/client';
 import type CodePlugin from '@mosetta/ide-plugin-code';
 import type { Ranked } from './ranker.js';
 import type { CompletionSession } from './session.js';
@@ -54,6 +54,7 @@ interface Props {
  */
 export function CompletionList({ session, path, onPick, code }: Props) {
   const t = useT();
+  const ide = useIde();
   const items = session.items.value;
   const selected = session.selected.value;
   const details = session.details.value;
@@ -61,7 +62,7 @@ export function CompletionList({ session, path, onPick, code }: Props) {
   const list = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    (list.current?.children[selected] as HTMLElement | undefined)?.scrollIntoView({ block: 'nearest' });
+    ide.mount.reveal(list.current?.children[selected]);
   }, [selected, items]);
 
   if (items.length === 0 && !loading) return null;

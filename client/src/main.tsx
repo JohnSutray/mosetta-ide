@@ -1,4 +1,5 @@
 import { Core } from './core.js';
+import './ide.css';
 import './styles.css';
 
 const root = document.getElementById('root');

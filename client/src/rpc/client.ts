@@ -27,6 +27,13 @@ export class RpcFailure extends Error {
 type Pending = { resolve: (v: unknown) => void; reject: (e: unknown) => void };
 
 /**
+ * Opens the socket. By default a real `WebSocket` to the local daemon; an embedder may
+ * hand in anything that behaves like one — the demo on the website answers from memory
+ * instead of from a daemon, and the rest of the client cannot tell the difference.
+ */
+export type Dial = () => WebSocket;
+
+/**
  * One socket per tab, with JSON-RPC on top of it. Calls made before the connection is
  * up pile up and leave once it opens — panels do not need to know that the connection
  * is not ready yet.
@@ -54,7 +61,11 @@ export class RpcClient {
   private readonly pulseMs = 15_000;
   private readonly pulseTimeoutMs = 10_000;
 
-  constructor(private readonly url = defaultUrl()) {}
+  private dial: Dial;
+
+  constructor(url = defaultUrl()) {
+    this.dial = () => new WebSocket(url);
+  }
 
   /**
    * The connection is opened EXPLICITLY, from the entry point, rather than on module
@@ -62,8 +73,9 @@ export class RpcClient {
    * cannot be safely pulled into somebody else's context — and the panel registry does
    * need covering.
    */
-  connect(): void {
+  connect(dial?: Dial): void {
     if (this.socket) return;
+    if (dial) this.dial = dial;
     this.watchPage();
     this.open();
   }
@@ -140,7 +152,7 @@ export class RpcClient {
   }
 
   private open(): void {
-    const socket = new WebSocket(this.url);
+    const socket = this.dial();
     this.socket = socket;
     const mine = () => this.socket === socket;
 

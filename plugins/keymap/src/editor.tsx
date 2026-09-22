@@ -326,7 +326,7 @@ function Chord({
   const picks = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    picks.current?.querySelector('.is-on')?.scrollIntoView({ block: 'nearest' });
+    ide.mount.reveal(picks.current?.querySelector('.is-on'));
   }, [command]);
 
   useEffect(() => {
