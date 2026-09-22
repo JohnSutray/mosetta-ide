@@ -151,11 +151,22 @@ export const STYLE = `
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: calc(var(--mount-h, 100vh) * 0.08);
+  padding: clamp(20px, calc(var(--mount-h, 100vh) * 0.08), 80px) 20px 20px;
   z-index: 50;
 }
 .se-backdrop.is-clear { background: transparent; }
-.se-backdrop.is-full { padding-top: 0; align-items: stretch; }
+.se-backdrop.is-full { padding: 0; align-items: stretch; }
+/*
+ * A window never touches an edge: the padding above is a wish, these two are the
+ * promise. Without them a remembered size taller than what is left below the offset
+ * hung over the bottom edge, and on a small mount — an embedded IDE, a narrow window —
+ * the corner could not be grabbed at all. An anchored window sizes itself against the
+ * caret and keeps its own edges.
+ */
+.popup:not(.is-anchored) {
+  max-width: 100%;
+  max-height: 100%;
+}
 .popup.is-anchored { position: fixed; }
 .popup:focus, .popup:focus-visible { outline: none; }
 .popup {
