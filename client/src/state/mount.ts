@@ -88,9 +88,9 @@ export class RootMount implements Mount {
     const top = inner.top - outer.top - box.clientTop;
     const left = inner.left - outer.left - box.clientLeft;
     if (block === 'center') box.scrollTop += top - (box.clientHeight - inner.height) / 2;
-    else if (top < 0) box.scrollTop += top;
+    else if (top < 0 || inner.height > box.clientHeight) box.scrollTop += top;
     else if (top + inner.height > box.clientHeight) box.scrollTop += top + inner.height - box.clientHeight;
-    if (left < 0) box.scrollLeft += left;
+    if (left < 0 || inner.width > box.clientWidth) box.scrollLeft += left;
     else if (left + inner.width > box.clientWidth) box.scrollLeft += left + inner.width - box.clientWidth;
   }
 

@@ -338,7 +338,8 @@ export interface Mount {
    * `scrollIntoView` moves every scrolling ancestor up to the window. In a tab of its
    * own that is harmless, but an IDE embedded in somebody else's page would drag their
    * page to the row being selected. `nearest` does as little as it takes to show the
-   * whole element, `center` puts it in the middle.
+   * whole element, `center` puts it in the middle; an element larger than the box is
+   * aligned to its start, so a wide tree row keeps its name in view.
    */
   reveal(el: Element | null | undefined, block?: 'nearest' | 'center'): void;
 }
