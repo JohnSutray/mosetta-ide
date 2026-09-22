@@ -153,7 +153,8 @@ runs the IDE with no daemon at all.
 
 ## Packages
 
-The plugin contract and every plugin are npm packages under `@mosetta/`: start from
+The plugin contract and every plugin are published on npm under
+[`@mosetta/`](https://www.npmjs.com/org/mosetta): start from
 [`@mosetta/ide-api`](plugins/api#readme), and each plugin's README says what it does and
 how to use it from another plugin. The client and the daemon are not packaged yet; for
 now they run from a checkout.

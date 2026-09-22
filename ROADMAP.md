@@ -15,9 +15,9 @@ the rest of the IDE.
 - **Split panels.** Any panel split into two to four columns — the oldest promise of the
   layout.
 - **A plugin template.** `npm create mosetta-plugin`.
-- **Packages and CI.** The contract and the plugins are ready as `@mosetta/ide-*`
-  packages, each with a README; next come the first release on npm, tests and type
-  checks on macOS, Windows and Linux for every pull request, and a contributing guide.
+- **Packages and CI.** The contract and the plugins are on npm as `@mosetta/ide-*`
+  (early 0.0.x releases), each with a README; next come tests and type checks on
+  macOS, Windows and Linux for every pull request, and a contributing guide.
 - **Documentation.** A guide for plugin authors built on the contract's JSDoc, reference
   pages generated from the code — commands and keys, settings, registry keys — and every
   package's README on [ide.mosetta.org](https://ide.mosetta.org).
