@@ -145,18 +145,23 @@ main > section {
 .install-grid pre { font-size: 14px; min-height: 148px; }
 .install-notes { margin: 24px 0 0; display: grid; gap: 10px; color: var(--ink-2); font-size: 15px; max-width: 90ch; }
 
-/* The mascot: the IDE's own sprite, walking on its strip of grass. */
-.mascot { position: relative; width: 280px; height: 170px; }
+/* The mascot: the IDE's own sprite, wandering a little on its strip of grass. */
+.mascot { position: relative; width: 280px; height: 120px; }
 .mascot-walk {
   position: absolute;
-  bottom: 18px;
-  left: 0;
-  animation: mascot-walk 14s linear infinite;
+  bottom: 20px;
+  left: 96px;
+  animation: mascot-wander 16s ease-in-out infinite;
 }
-.mascot-sheep { display: block; image-rendering: pixelated; }
-.mascot-body { animation: mascot-bob 620ms steps(1, end) infinite; }
-.mascot-legs { animation: mascot-step 620ms steps(1, end) infinite; }
-.mascot-legs-1 { animation-delay: -310ms; }
+/* The bob and the turn go on the svg ELEMENT: inside it, a pixel would be a sprite unit. */
+.mascot-sheep {
+  display: block;
+  image-rendering: pixelated;
+  animation: mascot-bob 640ms steps(1, end) infinite;
+}
+.mascot-legs { animation: mascot-step 640ms steps(1, end) infinite; }
+.mascot-legs-1 { animation-delay: -320ms; }
+.mascot-lid { opacity: 0; animation: mascot-blink 5.2s steps(1, end) infinite; }
 .mascot-grass {
   position: absolute;
   left: 0;
@@ -175,15 +180,23 @@ main > section {
   0% { transform: translateY(0); }
   50% { transform: translateY(-2px); }
 }
-@keyframes mascot-walk {
-  0% { transform: translateX(0) scaleX(1); }
-  44% { transform: translateX(190px) scaleX(1); }
-  50% { transform: translateX(190px) scaleX(-1); }
-  94% { transform: translateX(0) scaleX(-1); }
-  100% { transform: translateX(0) scaleX(1); }
+@keyframes mascot-blink {
+  0%, 96% { opacity: 0; }
+  97%, 99% { opacity: 1; }
+}
+/*
+ * A few steps the way it faces, a pause, a turn, a few steps back. `scaleX(-1)` happens
+ * during the pauses, never mid-stride: a sheep turning while walking is a sheep sliding.
+ */
+@keyframes mascot-wander {
+  0%, 6% { transform: translateX(0) scaleX(1); }
+  34%, 46% { transform: translateX(-56px) scaleX(1); }
+  50%, 56% { transform: translateX(-56px) scaleX(-1); }
+  84%, 94% { transform: translateX(0) scaleX(-1); }
+  98%, 100% { transform: translateX(0) scaleX(1); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mascot-walk, .mascot-body, .mascot-legs { animation: none; }
+  .mascot-walk, .mascot-sheep, .mascot-legs, .mascot-lid { animation: none; }
   .mascot-legs-1 { display: none; }
 }
 
